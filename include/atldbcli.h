@@ -48,19 +48,19 @@ namespace ATL
 {
 
 #define DEFINE_OLEDB_TYPE_FUNCTION(ctype, oledbtype) \
-	inline DBTYPE _GetOleDBType(ctype&) throw ()\
+	inline DBTYPE _GetOleDBType(_In_ ctype&) throw ()\
 	{ \
 		return oledbtype; \
 	}
-	inline DBTYPE _GetOleDBType(BYTE[]) throw ()
+	inline DBTYPE _GetOleDBType(_In_ BYTE[]) throw ()
 	{
 		return DBTYPE_BYTES;
 	}
-	inline DBTYPE _GetOleDBType(CHAR[]) throw ()
+	inline DBTYPE _GetOleDBType(_In_ CHAR[]) throw ()
 	{
 		return DBTYPE_STR;
 	}
-	inline DBTYPE _GetOleDBType(WCHAR[]) throw()
+	inline DBTYPE _GetOleDBType(_In_ WCHAR[]) throw()
 	{
 		return DBTYPE_WSTR;
 	}
@@ -127,7 +127,14 @@ public:
 	{
 		return 0;
 	}
-	static HRESULT _GetBindEntries(LPOLESTR*, DBORDINAL*, DBBINDING*, ULONG, bool*, BYTE* pBuffer = NULL, bool bClearOnly = false) throw ()
+	static HRESULT _GetBindEntries(
+		_In_opt_z_ LPOLESTR*,
+		_In_opt_ DBORDINAL*,
+		_In_opt_ DBBINDING*,
+		_In_ ULONG,
+		_In_opt_ bool*,
+		_In_opt_ BYTE* pBuffer = NULL,
+		_In_ bool bClearOnly = false) throw ()
 	{
 		(bClearOnly);
 		(pBuffer);
@@ -142,7 +149,12 @@ public:
 	{
 		return false;
 	}
-	static HRESULT _GetParamEntries(LPOLESTR*, DBORDINAL*, DBBINDING*, BYTE* pBuffer = NULL, bool bClearOnly = false) throw ()
+	static HRESULT _GetParamEntries(
+		_In_opt_z_ LPOLESTR*,
+		_In_opt_ DBORDINAL*,
+		_In_opt_ DBBINDING*,
+		_In_opt_ BYTE* pBuffer = NULL,
+		_In_ bool bClearOnly = false) throw ()
 	{
 		(bClearOnly);
 		(pBuffer);
@@ -153,7 +165,8 @@ public:
 class _CNoCommand
 {
 public:
-	static HRESULT GetDefaultCommand(LPCWSTR* /*ppszCommand*/) throw ()
+	static HRESULT GetDefaultCommand(
+		_In_opt_z_ LPCWSTR* /*ppszCommand*/) throw ()
 	{
 		return S_OK;
 	}
@@ -175,13 +188,14 @@ typedef _CNoCommand         _CommandClass;
 	/* If pBindings == NULL means we only return the column number */ \
 	/* If pBuffer != NULL then it points to the accessor buffer and */ \
 	/* we release any appropriate memory e.g. BSTR's or interface pointers */ \
-	inline static HRESULT _GetBindEntries(LPOLESTR* pColumnNames, \
-											DBORDINAL* pColumns, \
-											DBBINDING *pBinding, \
-											ULONG nAccessor, \
-											bool* pAuto, \
-											BYTE* pBuffer = NULL, \
-											bool bClearOnly = false) \
+	inline static HRESULT _GetBindEntries( \
+		_Out_opt_ _Deref_post_z_cap_(*pColumns) LPOLESTR* pColumnNames, \
+		_Out_ DBORDINAL* pColumns, \
+		_In_opt_ DBBINDING *pBinding, \
+		_In_ ULONG nAccessor, \
+		_Inout_opt_ bool* pAuto, \
+		_In_opt_ BYTE* pBuffer = NULL, \
+		_In_ bool bClearOnly = false) \
 	{ \
 		ATLENSURE(pColumns != NULL); \
 		DBPARAMIO eParamIO = DBPARAMIO_NOTPARAM; \
@@ -192,7 +206,10 @@ typedef _CNoCommand         _CommandClass;
 	if (nAccessor == num) \
 	{ \
 		if (pBinding != NULL) \
-			*pAuto = bAuto;
+		{ \
+			ATLASSUME(pAuto != NULL); \
+			*pAuto = bAuto; \
+		}
 
 #define END_ACCESSOR() \
 	} \
@@ -422,11 +439,12 @@ typedef _CNoCommand         _CommandClass;
 	typedef x _classtype; \
 	typedef x _ParamClass; \
 	static bool HasParameters() throw () { return true; } \
-	static HRESULT _GetParamEntries(LPOLESTR* pColumnNames, \
-									DBORDINAL* pColumns, \
-									DBBINDING *pBinding, \
-									BYTE* pBuffer = NULL, \
-									bool bClearOnly = false) \
+	static HRESULT _GetParamEntries( \
+		_Out_opt_ _Deref_post_z_cap_(*pColumns) LPOLESTR* pColumnNames, \
+		_Out_ DBORDINAL* pColumns, \
+		_In_opt_ DBBINDING *pBinding, \
+		_In_opt_ BYTE* pBuffer = NULL, \
+		_In_ bool bClearOnly = false) \
 	{ \
 		ATLENSURE(pColumns != NULL); \
 		DBPARAMIO eParamIO = DBPARAMIO_INPUT; \
@@ -479,7 +497,10 @@ class CDBErrorInfo
 public:
 	// Use to get the number of error record when you want to explicitly check that
 	// the passed interface set the error information
-	HRESULT GetErrorRecords(IUnknown* pUnk, const IID& iid, ULONG* pcRecords) throw()
+	HRESULT GetErrorRecords(
+		_Inout_ IUnknown* pUnk,
+		_In_ const IID& iid,
+		_Out_ ULONG* pcRecords) throw()
 	{
 		ATLENSURE_RETURN(pUnk);
 		ATLENSURE_RETURN(pcRecords);
@@ -495,7 +516,7 @@ public:
 		return GetErrorRecords(pcRecords);
 	}
 	// Use to get the number of error records
-	HRESULT GetErrorRecords(ULONG* pcRecords) throw ()
+	HRESULT GetErrorRecords(_Out_ ULONG* pcRecords) throw ()
 	{
 		ATLENSURE_RETURN(pcRecords != NULL);
 		HRESULT hr;
@@ -518,9 +539,14 @@ public:
 	}
 	// Get the error information for the passed record number. GetErrorRecords must
 	// be called before this function is called.
-	HRESULT GetAllErrorInfo(ULONG ulRecordNum, LCID lcid, BSTR* pbstrDescription,
-		BSTR* pbstrSource = NULL, GUID* pguid = NULL, DWORD* pdwHelpContext = NULL,
-		BSTR* pbstrHelpFile = NULL) const throw() 
+	HRESULT GetAllErrorInfo(
+		_In_ ULONG ulRecordNum,
+		_In_ LCID lcid,
+		_Deref_opt_out_z_ BSTR* pbstrDescription,
+		_Deref_opt_out_z_ BSTR* pbstrSource = NULL,
+		_Out_opt_ GUID* pguid = NULL,
+		_Out_opt_ DWORD* pdwHelpContext = NULL,
+		_Deref_opt_out_z_ BSTR* pbstrHelpFile = NULL) const throw()
 	{
 		CComPtr<IErrorInfo> spErrorInfo;
 
@@ -557,22 +583,36 @@ public:
 		return S_OK;
 	}
 	// Get the error information for the passed record number
-	HRESULT GetBasicErrorInfo(ULONG ulRecordNum, ERRORINFO* pErrorInfo) const throw ()
+	HRESULT GetBasicErrorInfo(
+		_In_ ULONG ulRecordNum,
+		_Out_ ERRORINFO* pErrorInfo) const throw ()
 	{
 		return m_spErrorRecords->GetBasicErrorInfo(ulRecordNum, pErrorInfo);
 	}
+
+ATLPREFAST_SUPPRESS(6387)	
 	// Get the custom error object for the passed record number
-	HRESULT GetCustomErrorObject(ULONG ulRecordNum, REFIID riid, IUnknown** ppObject) const throw ()
+	HRESULT GetCustomErrorObject(
+		_In_ ULONG ulRecordNum,
+		_In_ REFIID riid,
+		_Deref_out_ IUnknown** ppObject) const throw ()
 	{
 		return m_spErrorRecords->GetCustomErrorObject(ulRecordNum, riid, ppObject);
 	}
+ATLPREFAST_UNSUPPRESS();
+
 	// Get the IErrorInfo interface for the passed record number
-	HRESULT GetErrorInfo(ULONG ulRecordNum, LCID lcid, IErrorInfo** ppErrorInfo) const throw () 
+	HRESULT GetErrorInfo(
+		_In_ ULONG ulRecordNum,
+		_In_ LCID lcid,
+		_Deref_out_ IErrorInfo** ppErrorInfo) const throw ()
 	{
 		return m_spErrorRecords->GetErrorInfo(ulRecordNum, lcid, ppErrorInfo);
 	}
 	// Get the error parameters for the passed record number
-	HRESULT GetErrorParameters(ULONG ulRecordNum, DISPPARAMS* pdispparams) const throw () 
+	HRESULT GetErrorParameters(
+		_In_ ULONG ulRecordNum,
+		_Out_ DISPPARAMS* pdispparams) const throw ()
 	{
 		return m_spErrorRecords->GetErrorParameters(ulRecordNum, pdispparams);
 	}
@@ -583,7 +623,7 @@ public:
 };
 
 #ifdef _DEBUG
-inline void AtlTraceErrorRecords(HRESULT hrErr = S_OK)
+inline void AtlTraceErrorRecords(_In_ HRESULT hrErr = S_OK)
 {
 	CDBErrorInfo ErrorInfo;
 	ULONG        cRecords;
@@ -631,14 +671,18 @@ inline void AtlTraceErrorRecords(HRESULT hrErr = S_OK)
 	}
 }
 #else
-inline void AtlTraceErrorRecords(HRESULT hrErr = S_OK) throw() { (hrErr); }
+inline void AtlTraceErrorRecords(_In_ HRESULT hrErr = S_OK) throw()
+{
+	(hrErr);
+}
 #endif
 
 
 ///////////////////////////////////////////////////////////////////////////
 // class CDBPropSet
 
-class CDBPropSet : public tagDBPROPSET
+class CDBPropSet :
+	public tagDBPROPSET
 {
 public:
 	CDBPropSet()
@@ -646,13 +690,13 @@ public:
 		rgProperties    = NULL;
 		cProperties     = 0;
 	}
-	CDBPropSet(const GUID& guid)
+	CDBPropSet(_In_ const GUID& guid)
 	{
 		rgProperties    = NULL;
 		cProperties     = 0;
 		guidPropertySet = guid;
 	}
-	CDBPropSet(const CDBPropSet& propset)
+	CDBPropSet(_In_ const CDBPropSet& propset)
 	{
 		InternalCopy(propset);
 	}
@@ -663,23 +707,26 @@ public:
 
 		CoTaskMemFree(rgProperties);
 	}
-	CDBPropSet& operator=(CDBPropSet& propset) throw()
+	CDBPropSet& operator=(_In_ CDBPropSet& propset) throw()
 	{
 		if(this!=&propset)
 		{
 			this->~CDBPropSet();
 			InternalCopy(propset);
-        	}
+        }
 		return *this;
 	}
 	// Set the GUID of the property set this class represents.
 	// Use if you didn't pass the GUID to the constructor.
-	void SetGUID(const GUID& guid) throw()
+	void SetGUID(_In_ const GUID& guid) throw()
 	{
 		guidPropertySet = guid;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, const VARIANT& var, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ const VARIANT& var,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
 	{
 		HRESULT hr;
 		if (!Add(propoptions))
@@ -692,7 +739,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, LPCSTR szValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_z_ LPCSTR szValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
 	{
 		if (!Add(propoptions))
 		{
@@ -715,7 +765,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, LPCWSTR szValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_z_ LPCWSTR szValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
 	{
 		if (!Add(propoptions))
 		{
@@ -738,7 +791,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, bool bValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ bool bValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
 	{
 		if (!Add(propoptions))
 			return false;
@@ -749,7 +805,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, BYTE bValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ BYTE bValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
 	{
 		if (!Add(propoptions))
 			return false;
@@ -760,7 +819,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, short nValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ short nValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
 	{
 		if (!Add(propoptions))
 			return false;
@@ -771,7 +833,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, long nValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ long nValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
 	{
 		if (!Add(propoptions))
 			return false;
@@ -782,7 +847,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, float fltValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ float fltValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED)
 	{
 		if (!Add(propoptions))
 			return false;
@@ -793,7 +861,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, double dblValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ double dblValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
 	{
 		if (!Add(propoptions))
 			return false;
@@ -804,7 +875,10 @@ public:
 		return true;
 	}
 	// Add the passed property to the property set
-	_Check_return_ bool AddProperty(DWORD dwPropertyID, CY cyValue, DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
+	_Check_return_ bool AddProperty(
+		_In_ DWORD dwPropertyID,
+		_In_ CY cyValue,
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
 	{
 		if (!Add(propoptions))
 			return false;
@@ -816,7 +890,8 @@ public:
 	}
 // Implementation
 	// Create memory to add a new property
-	_Check_return_ bool Add(DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
+	_Check_return_ bool Add(
+		_In_ DBPROPOPTIONS propoptions = DBPROPOPTIONS_REQUIRED) throw()
 	{
 		if (((cProperties + 1) < cProperties))
 		{
@@ -832,7 +907,7 @@ public:
 		return true;
 	}
 	// Copies in the passed value now it this value been cleared
-	void InternalCopy(const CDBPropSet& propset) throw()
+	void InternalCopy(_In_ const CDBPropSet& propset) throw()
 	{
 		cProperties     = propset.cProperties;
 		rgProperties    = (DBPROP*)::ATL::AtlCoTaskMemCAlloc(cProperties, static_cast<ULONG>(sizeof(DBPROP)));
@@ -867,7 +942,8 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 // class CDBPropIDSet
 
-class CDBPropIDSet : public tagDBPROPIDSET
+class CDBPropIDSet :
+	public tagDBPROPIDSET
 {
 // Constructors and Destructors
 public:
@@ -876,13 +952,13 @@ public:
 		rgPropertyIDs   = NULL;
 		cPropertyIDs    = 0;
 	}
-	CDBPropIDSet(const GUID& guid)
+	CDBPropIDSet(_In_ const GUID& guid)
 	{
 		rgPropertyIDs   = NULL;
 		cPropertyIDs    = 0;
 		guidPropertySet = guid;
 	}
-	CDBPropIDSet(const CDBPropIDSet& propidset)
+	CDBPropIDSet(_In_ const CDBPropIDSet& propidset)
 	{
 		InternalCopy(propidset);
 	}
@@ -890,19 +966,19 @@ public:
 	{
 		free(rgPropertyIDs);
 	}
-	CDBPropIDSet& operator=(CDBPropIDSet& propset) throw()
+	CDBPropIDSet& operator=(_In_ CDBPropIDSet& propset) throw()
 	{
 		this->~CDBPropIDSet();
 		InternalCopy(propset);
 		return *this;
 	}
 	// Set the GUID of the property ID set
-	void SetGUID(const GUID& guid) throw()
+	void SetGUID(_In_ const GUID& guid) throw()
 	{
 		guidPropertySet = guid;
 	}
 	// Add a property ID to the set
-	bool AddPropertyID(DBPROPID propid) throw()
+	bool AddPropertyID(_In_ DBPROPID propid) throw()
 	{
 		if (!Add())
 			return false;
@@ -920,7 +996,7 @@ public:
 		rgPropertyIDs = pTempID;
 		return true;
 	}
-	void InternalCopy(const CDBPropIDSet& propidset) throw()
+	void InternalCopy(_In_ const CDBPropIDSet& propidset) throw()
 	{
 		cPropertyIDs    = propidset.cPropertyIDs;
 		rgPropertyIDs   = NULL;
@@ -956,11 +1032,18 @@ public:
 // class CBookmark
 
 template <DBLENGTH nSize = 0>
-class CBookmark : public CBookmarkBase
+class CBookmark :
+	public CBookmarkBase
 {
 public:
-	virtual DBLENGTH   GetSize() const throw() { return nSize; }
-	virtual BYTE*   GetBuffer() const throw() { return (BYTE*)m_rgBuffer; }
+	virtual DBLENGTH GetSize() const throw()
+	{
+		return nSize;
+	}
+	_Ret_count_x_(nSize) virtual BYTE* GetBuffer() const throw()
+	{
+		return (BYTE*)m_rgBuffer;
+	}
 
 // Implementation
 	BYTE m_rgBuffer[nSize];
@@ -970,7 +1053,8 @@ public:
 // Size of 0 means that the memory for the bookmark will be allocated
 // at run time.
 template <>
-class CBookmark<0> : public CBookmarkBase
+class CBookmark<0> :
+	public CBookmarkBase
 {
 public:
 	CBookmark()
@@ -978,7 +1062,7 @@ public:
 		m_nSize = 0;
 		m_pBuffer = NULL;
 	}
-	CBookmark(DBLENGTH nSize)
+	CBookmark(_In_ DBLENGTH nSize)
 	{
 		m_pBuffer = NULL;
 		ATLTRY(m_pBuffer = new BYTE[nSize]);
@@ -988,7 +1072,7 @@ public:
 	{
 		delete [] m_pBuffer;
 	}
-	CBookmark& operator=(const CBookmark& bookmark) throw()
+	CBookmark& operator=(_In_ const CBookmark& bookmark) throw()
 	{
 		if(this!=&bookmark)
 		{
@@ -996,10 +1080,18 @@ public:
 		}
 		return *this;
 	}
-	virtual DBLENGTH GetSize() const throw() { return m_nSize; }
-	virtual BYTE* GetBuffer() const throw() { return m_pBuffer; }
+	virtual DBLENGTH GetSize() const throw()
+	{
+		return m_nSize;
+	}
+	_Ret_count_x_(m_nSize) virtual BYTE* GetBuffer() const throw()
+	{
+		return m_pBuffer;
+	}
 	// Sets the bookmark to the passed value
-	HRESULT SetBookmark(DBLENGTH nSize, BYTE* pBuffer) throw()
+	HRESULT SetBookmark(
+		_In_ DBLENGTH nSize,
+		_In_count_(nSize) BYTE* pBuffer) throw()
 	{
 		ATLENSURE_RETURN(pBuffer != NULL);
 		delete [] m_pBuffer;
@@ -1042,15 +1134,18 @@ public:
 		ATLASSUME(m_pAccessorInfo == NULL);
 	}
 	// Get the number of accessors that have been created
-	ULONG GetNumAccessors() const throw() { return m_nAccessors; }
-	// Get the handle of the passed accessor (offset from 0)
-	HACCESSOR GetHAccessor(ULONG nAccessor) const throw() 
+	ULONG GetNumAccessors() const throw()
 	{
-		ATLENSURE_RETURN_VAL(nAccessor<m_nAccessors, NULL);
+		return m_nAccessors;
+	}
+	// Get the handle of the passed accessor (offset from 0)
+	HACCESSOR GetHAccessor(_In_ ULONG nAccessor) const throw()
+	{
+		ATLENSURE_RETURN_VAL(nAccessor<m_nAccessors, 0);
 		return m_pAccessorInfo[nAccessor].hAccessor;
 	};
 	// Called during Close to release the accessor information
-	HRESULT ReleaseAccessors(IUnknown* pUnk) throw()
+	HRESULT ReleaseAccessors(_Inout_ IUnknown* pUnk) throw()
 	{
 		ATLENSURE_RETURN(pUnk != NULL);
 		HRESULT hr = S_OK;
@@ -1072,7 +1167,7 @@ public:
 	}
 	// Returns true or false depending upon whether data should be
 	// automatically retrieved for the passed accessor.
-	bool IsAutoAccessor(ULONG nAccessor) const throw()
+	bool IsAutoAccessor(_In_ ULONG nAccessor) const throw()
 	{
 		ATLENSURE_RETURN_VAL(nAccessor < m_nAccessors, false);
 		ATLENSURE_RETURN_VAL(m_pAccessorInfo != NULL, false);
@@ -1081,12 +1176,12 @@ public:
 
 // Implementation
 	// Used by the rowset class to find out where to place the data
-	BYTE* GetBuffer() const throw() 
+	BYTE* GetBuffer() const throw()
 	{
 		return m_pBuffer;
 	}
 	// Set the buffer that is used to retrieve the data
-	void SetBuffer(BYTE* pBuffer) throw()
+	void SetBuffer(_In_opt_ BYTE* pBuffer) throw()
 	{
 		m_pBuffer = pBuffer;
 	}
@@ -1097,7 +1192,7 @@ public:
 	}
 
 	// Allocate internal memory for the passed number of accessors
-	HRESULT AllocateAccessorMemory(int nAccessors) throw()
+	HRESULT AllocateAccessorMemory(_In_ int nAccessors) throw()
 	{
 		// Can't be called twice without calling ReleaseAccessors first
 		ATLASSUME(m_pAccessorInfo == NULL);
@@ -1109,12 +1204,22 @@ public:
 		return S_OK;
 	}
 	// BindParameters will be overriden if parameters are used
-	HRESULT BindParameters(HACCESSOR*, ICommand*, void**) throw() { return S_OK; }
+	HRESULT BindParameters(
+		_In_opt_ HACCESSOR*,
+		_In_opt_ ICommand*,
+		_In_opt_ void**) throw()
+	{
+		return S_OK;
+	}
 
 	// Create an accessor for the passed binding information. The created accessor is
 	// returned through the pHAccessor parameter.
-	static HRESULT BindEntries(DBBINDING* pBindings, DBORDINAL nColumns, HACCESSOR* pHAccessor,
-		DBLENGTH nSize, IAccessor* pAccessor) throw()
+	static HRESULT BindEntries(
+		_In_bytecount_x_(nColumns * sizeof(DBBINDING)) DBBINDING* pBindings,
+		_In_ DBORDINAL nColumns,
+		_Out_ HACCESSOR* pHAccessor,
+		_In_ DBLENGTH nSize,
+		_Inout_ IAccessor* pAccessor) throw()
 	{
 		ATLENSURE_RETURN(pBindings  != NULL);
 		ATLENSURE_RETURN(pHAccessor != NULL);
@@ -1151,10 +1256,18 @@ public:
 
 	// Set up the binding structure pointed to by pBindings based upon
 	// the other passed parameters.
-	static void Bind(DBBINDING* pBinding, DBORDINAL nOrdinal, DBTYPE wType,
-		DBLENGTH nLength, BYTE nPrecision, BYTE nScale, DBPARAMIO eParamIO,
-		DBBYTEOFFSET nDataOffset, DBBYTEOFFSET nLengthOffset = NULL, DBBYTEOFFSET nStatusOffset = NULL,
-		DBOBJECT* pdbobject = NULL)
+	static void Bind(
+		_Out_opt_ DBBINDING* pBinding,
+		_In_ DBORDINAL nOrdinal,
+		_In_ DBTYPE wType,
+		_In_ DBLENGTH nLength,
+		_In_ BYTE nPrecision,
+		_In_ BYTE nScale,
+		_In_ DBPARAMIO eParamIO,
+		_In_ DBBYTEOFFSET nDataOffset,
+		_In_ DBBYTEOFFSET nLengthOffset = 0,
+		_In_ DBBYTEOFFSET nStatusOffset = 0,
+		_In_opt_ DBOBJECT* pdbobject = NULL)
 	{
 		ATLENSURE(pBinding != NULL);
 
@@ -1182,12 +1295,12 @@ public:
 		pBinding->cbMaxLen      = nLength;
 
 		pBinding->dwPart = DBPART_VALUE;
-		if (nLengthOffset != NULL)
+		if (nLengthOffset != 0)
 		{
 			pBinding->dwPart |= DBPART_LENGTH;
 			pBinding->obLength = nLengthOffset;
 		}
-		if (nStatusOffset != NULL)
+		if (nStatusOffset != 0)
 		{
 			pBinding->dwPart |= DBPART_STATUS;
 			pBinding->obStatus = nStatusOffset;
@@ -1195,7 +1308,10 @@ public:
 	}
 
 	// Free memory if appropriate
-	static inline void FreeType(DBTYPE wType, BYTE* pValue, IRowset* pRowset = NULL) throw()
+	static inline void FreeType(
+		_In_ DBTYPE wType,
+		_In_opt_ BYTE* pValue,
+		_Inout_opt_ IRowset* pRowset = NULL) throw()
 	{
 		if (pValue == NULL)
 			return;
@@ -1240,7 +1356,7 @@ public:
 			CoTaskMemFree(((DBVECTOR*)pValue)->ptr);
 	}
 
-	void FreeRecordMemory(IRowset* /*pRowset*/) throw()
+	void FreeRecordMemory(_Inout_opt_ IRowset* /*pRowset*/) throw()
 	{
 	}
 
@@ -1263,13 +1379,13 @@ public:
 	{
 		m_pXMLAccessor = NULL;
 		m_pAccessor = NULL;
-		m_hRow      = NULL;
+		m_hRow      = 0;
 	}
-	CRowset(IRowset* pRowset)
+	CRowset(_In_opt_ IRowset* pRowset)
 	{
 		m_pXMLAccessor = NULL;
 		m_pAccessor = NULL;
-		m_hRow      = NULL;
+		m_hRow      = 0;
 		m_spRowset  = pRowset;
 	}
 	~CRowset()
@@ -1277,7 +1393,7 @@ public:
 		Close();
 	}
 
-	HRESULT GetXMLColumnInfo( CSimpleStringW& strOutput ) throw()
+	HRESULT GetXMLColumnInfo(_Inout_ CSimpleStringW& strOutput) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		HRESULT hr;
@@ -1300,10 +1416,12 @@ public:
 		return m_pXMLAccessor->GetXMLColumnData( strOutput );
 	}
 
-	HRESULT GetXMLRow( CSimpleStringW& strOutput, bool bAppend = false ) throw()
+	HRESULT GetXMLRow(
+		_Inout_ CSimpleStringW& strOutput,
+		_In_ bool bAppend = false) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
-		ATLASSUME(m_hRow != NULL);
+		ATLASSUME(m_hRow != 0);
 
 		HRESULT hr;
 		if( m_pXMLAccessor == NULL )
@@ -1362,10 +1480,10 @@ public:
 		ATLASSUME(m_spRowset != NULL);
 		HRESULT hr = S_OK;
 
-		if (m_hRow != NULL)
+		if (m_hRow != 0)
 		{
 			hr = m_spRowset->ReleaseRows(1, &m_hRow, NULL, NULL, NULL);
-			m_hRow = NULL;
+			m_hRow = 0;
 		}
 		return hr;
 	}
@@ -1376,7 +1494,10 @@ public:
 	}
 
 	// Compare two bookmarks with each other
-	HRESULT Compare(const CBookmarkBase& bookmark1, const CBookmarkBase& bookmark2, DBCOMPARE* pComparison) const throw()
+	HRESULT Compare(
+		_In_ const CBookmarkBase& bookmark1,
+		_In_ const CBookmarkBase& bookmark2,
+		_Out_ DBCOMPARE* pComparison) const throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		CComPtr<IRowsetLocate> spLocate;
@@ -1389,7 +1510,7 @@ public:
 	}
 
 	// Compare the passed hRow with the current row
-	HRESULT IsSameRow(HROW hRow) const throw() 
+	HRESULT IsSameRow(_In_ HROW hRow) const throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		if (m_hRow == hRow)
@@ -1418,7 +1539,9 @@ public:
 	}
 
 	// Move lSkip records forward or backward
-	HRESULT MoveNext(LONG lSkip, bool bForward = true) throw()
+	HRESULT MoveNext(
+		_In_ LONG lSkip,
+		_In_ bool bForward = true) throw()
 	{
 		HRESULT hr;
 		DBCOUNTITEM ulRowsFetched = 0;
@@ -1434,7 +1557,7 @@ public:
 
 		// Get the row handle
 		HROW* phRow = &m_hRow;
-		hr = m_spRowset->GetNextRows(NULL, lSkip, (bForward) ? 1 : -1, &ulRowsFetched, &phRow);
+		hr = m_spRowset->GetNextRows(0, lSkip, (bForward) ? 1 : -1, &ulRowsFetched, &phRow);
 		if (hr != S_OK)
 			return hr;
 
@@ -1508,7 +1631,9 @@ public:
 		return S_OK;
 	}
 	// Move to the passed bookmark
-	HRESULT MoveToBookmark(const CBookmarkBase& bookmark, LONG lSkip = 0) throw()
+	HRESULT MoveToBookmark(
+		_In_ const CBookmarkBase& bookmark,
+		_In_ LONG lSkip = 0) throw()
 	{
 		// Check the data was opened successfully and the accessor
 		// has been set.
@@ -1563,11 +1688,11 @@ public:
 	}
 
 	// Get the data for the passed accessor. Use for a non-auto accessor
-	HRESULT GetData(int nAccessor) throw()
+	HRESULT GetData(_In_ int nAccessor) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		ATLASSUME(m_pAccessor != NULL);
-		ATLASSUME(m_hRow != NULL);
+		ATLASSUME(m_hRow != 0);
 
 		// Note that we are using the specified buffer if it has been set,
 		// otherwise we use the accessor for the data.
@@ -1575,18 +1700,20 @@ public:
 	}
 
 	// Get the data for the passed accessor. Use for a non-auto accessor
-	HRESULT GetDataHere(int nAccessor, void* pBuffer) throw()
+	HRESULT GetDataHere(
+		_In_ int nAccessor,
+		_Out_ void* pBuffer) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		ATLASSUME(m_pAccessor != NULL);
-		ATLASSUME(m_hRow != NULL);
+		ATLASSUME(m_hRow != 0);
 
 		// Note that we are using the specified buffer if it has been set,
 		// otherwise we use the accessor for the data.
 		return m_spRowset->GetData(m_hRow, m_pAccessor->GetHAccessor(nAccessor), pBuffer);
 	}
 
-	HRESULT GetDataHere(void* pBuffer) throw()
+	HRESULT GetDataHere(_Out_ void* pBuffer) throw()
 	{
 		HRESULT hr = S_OK;
 
@@ -1601,7 +1728,9 @@ public:
 	}
 
 	// Insert the current record
-	HRESULT Insert(int nAccessor = 0, bool bGetHRow = false) throw()
+	HRESULT Insert(
+		_In_ int nAccessor = 0,
+		_In_ bool bGetHRow = false) throw()
 	{
 		ATLASSUME(m_pAccessor != NULL);
 		HRESULT hr;
@@ -1627,7 +1756,7 @@ public:
 	}
 
 	// Delete the current record
-	HRESULT Delete() const throw() 
+	HRESULT Delete() const throw()
 	{
 		ATLASSUME(m_pAccessor != NULL);
 		HRESULT hr;
@@ -1656,7 +1785,7 @@ public:
 	}
 
 	// Update the current record with the data in the passed accessor
-	HRESULT SetData(int nAccessor) const throw()
+	HRESULT SetData(_In_ int nAccessor) const throw()
 	{
 		ATLASSUME(m_pAccessor != NULL);
 		HRESULT hr;
@@ -1695,7 +1824,7 @@ public:
 	}
 
 	// Get the status of the current row
-	HRESULT GetRowStatus(DBPENDINGSTATUS* pStatus) const throw()
+	HRESULT GetRowStatus(_Out_ DBPENDINGSTATUS* pStatus) const throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		ATLASSERT(pStatus != NULL);
@@ -1710,7 +1839,10 @@ public:
 
 	// Undo any changes made to the current row since it was last fetched or Update
 	// was called for it
-	HRESULT Undo(DBCOUNTITEM* pcRows = NULL, HROW* phRow = NULL, DBROWSTATUS* pStatus = NULL) throw()
+	HRESULT Undo(
+		_In_opt_ DBCOUNTITEM* pcRows = NULL,
+		_Out_opt_ HROW* phRow = NULL,
+		_Out_opt_ DBROWSTATUS* pStatus = NULL) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 
@@ -1738,7 +1870,10 @@ public:
 
 	// Transmits any pending changes made to a row since it was last fetched or Update was
 	// called for it. Also see SetData.
-	HRESULT Update(DBCOUNTITEM* pcRows = NULL, HROW* phRow = NULL, DBROWSTATUS* pStatus = NULL) throw()
+	HRESULT Update(
+		_In_opt_ DBCOUNTITEM* pcRows = NULL,
+		_Out_opt_ HROW* phRow = NULL,
+		_Out_opt_ DBROWSTATUS* pStatus = NULL) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 
@@ -1765,8 +1900,11 @@ public:
 	}
 	// Transmits any pending changes to all rows made since it was last fetched or Update was
 	// alled for it.  Differs from Update in that it will do every row (even if we don't hold
-	// the handle for it).  
-	HRESULT UpdateAll(DBCOUNTITEM* pcRows = NULL, HROW** pphRow = NULL, DBROWSTATUS** ppStatus = NULL) throw()
+	// the handle for it).
+	HRESULT UpdateAll(
+		_In_opt_ DBCOUNTITEM* pcRows = NULL,
+		_Deref_opt_out_ HROW** pphRow = NULL,
+		_Deref_opt_out_ DBROWSTATUS** ppStatus = NULL) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 
@@ -1781,10 +1919,10 @@ public:
 		CComHeapPtr<DBROWSTATUS>	spRowStatus;
 
 		// Passing zero for the 2nd parameter tells the provider to update ALL pending rows.
-		// The 3rd parameter, prghRows is ignored.  
+		// The 3rd parameter, prghRows is ignored.
 		hr =  spRowsetUpdate->Update(NULL, 0, NULL, &cRowsReturned, &sprgRows, &spRowStatus);
 
-		// NOTE, the user must CoTaskMemFree *pphRow and *ppStatus after return, if they 
+		// NOTE, the user must CoTaskMemFree *pphRow and *ppStatus after return, if they
 		// are non-NULL.  Otherwise, we'll CoTaskMemFree if they are NULL.
 		if (pcRows != NULL)
 			*pcRows = cRowsReturned;
@@ -1799,7 +1937,10 @@ public:
 	}
 
 	// Get the approximate position of the row corresponding to the passed bookmark
-	HRESULT GetApproximatePosition(const CBookmarkBase* pBookmark, DBCOUNTITEM* pPosition, DBCOUNTITEM* pcRows) throw()
+	HRESULT GetApproximatePosition(
+		_In_ const CBookmarkBase* pBookmark,
+		_Out_opt_ DBCOUNTITEM* pPosition,
+		_Out_opt_ DBCOUNTITEM* pcRows) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 
@@ -1818,7 +1959,10 @@ public:
 
 	}
 	// Move to a fractional position in the rowset
-	HRESULT MoveToRatio(DBCOUNTITEM nNumerator, DBCOUNTITEM nDenominator, bool bForward = true) throw()
+	HRESULT MoveToRatio(
+		_In_ DBCOUNTITEM nNumerator,
+		_In_ DBCOUNTITEM nDenominator,
+		_In_ bool bForward = true) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		DBCOUNTITEM nRowsFetched;
@@ -1840,8 +1984,15 @@ public:
 		return hr;
 	}
 
-	HRESULT FindNextRow(DBCOMPAREOP op, BYTE* pData, DBTYPE wType, DBLENGTH nLength,
-		BYTE bPrecision, BYTE bScale, BOOL bSkipCurrent = TRUE, CBookmarkBase* pBookmark = NULL) throw()
+	HRESULT FindNextRow(
+		_In_ DBCOMPAREOP op,
+		_In_ BYTE* pData,
+		_In_ DBTYPE wType,
+		_In_ DBLENGTH nLength,
+		_In_ BYTE bPrecision,
+		_In_ BYTE bScale,
+		_In_ BOOL bSkipCurrent = TRUE,
+		_In_opt_ CBookmarkBase* pBookmark = NULL) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		DBBINDING   binding;
@@ -1896,7 +2047,7 @@ public:
 		return __uuidof(IRowset);
 	}
 
-	IRowset* GetInterface() const throw() 
+	IRowset* GetInterface() const throw()
 	{
 		return m_spRowset;
 	}
@@ -1913,12 +2064,12 @@ public:
 			m_spRowset->QueryInterface(&m_spRowsetChange);
 	}
 
-	HRESULT BindFinished() const throw() 
-	{ 
-		return S_OK; 
+	HRESULT BindFinished() const throw()
+	{
+		return S_OK;
 	}
 
-	void SetAccessor(TAccessor* pAccessor) throw()
+	void SetAccessor(_In_opt_ TAccessor* pAccessor) throw()
 	{
 		m_pAccessor = pAccessor;
 	}
@@ -1934,7 +2085,8 @@ public:
 // class CBulkRowset
 
 template <class TAccessor>
-class CBulkRowset : public CRowset<TAccessor>
+class CBulkRowset : 
+	public CRowset<TAccessor>
 {
 public:
 	CBulkRowset()
@@ -1967,7 +2119,7 @@ public:
 	// Set the number of row handles that will be retrieved in each
 	// bulk row fetch. The default is 10 and this function must be called
 	// before Open if you wish to change it.
-	void SetRows(DBROWCOUNT nRows) throw()
+	void SetRows(_In_ DBROWCOUNT nRows) throw()
 	{
 		if (nRows == 0)
 			nRows = 10;
@@ -1992,7 +2144,7 @@ public:
 		ATLASSUME(m_spRowset != NULL);
 		// We're going to Release the rows so reset the current row position
 		m_nCurrentRow = 0;
-		m_hRow        = NULL;
+		m_hRow        = 0;
 		DBCOUNTITEM nCurrentRows = m_nCurrentRows;
 		m_nCurrentRows = 0;
 		return m_spRowset->ReleaseRows(nCurrentRows, m_phRow, NULL, NULL, NULL);
@@ -2038,7 +2190,9 @@ public:
 		return MoveNext(-2);
 	}
 	// Move lSkip records forward or backward
-	HRESULT MoveNext(DBROWOFFSET lSkip, bool bForward = true) throw()
+	HRESULT MoveNext(
+		_In_ DBROWOFFSET lSkip,
+		_In_ bool bForward = true) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		ATLASSUME(m_phRow    != NULL);
@@ -2096,7 +2250,9 @@ public:
 		return GetData();
 	}
 	// Move to the passed bookmark
-	HRESULT MoveToBookmark(const CBookmarkBase& bookmark, DBCOUNTITEM lSkip = 0) throw()
+	HRESULT MoveToBookmark(
+		_In_ const CBookmarkBase& bookmark,
+		_In_ DBCOUNTITEM lSkip = 0) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 		CComPtr<IRowsetLocate> spLocate;
@@ -2116,7 +2272,9 @@ public:
 		return GetData();
 	}
 	// Move to a fractional position in the rowset
-	HRESULT MoveToRatio(DBCOUNTITEM nNumerator, DBCOUNTITEM nDenominator) throw()
+	HRESULT MoveToRatio(
+		_In_ DBCOUNTITEM nNumerator,
+		_In_ DBCOUNTITEM nDenominator) throw()
 	{
 		ATLASSUME(m_spRowset != NULL);
 
@@ -2136,7 +2294,9 @@ public:
 		return GetData();
 	}
 	// Insert the current record
-	HRESULT Insert(int nAccessor = 0, bool bGetHRow = false) throw()
+	HRESULT Insert(
+		_In_ int nAccessor = 0,
+		_In_ bool bGetHRow = false) throw()
 	{
 		ReleaseRows();
 		return CRowset< TAccessor >::Insert(nAccessor, bGetHRow);
@@ -2175,24 +2335,29 @@ template <class T>
 class CVBufHelper
 {
 public:
-	virtual T* operator()(T* pCurrent) {return pCurrent;}
+	virtual T* operator()(_In_opt_ T* pCurrent)
+	{
+		return pCurrent;
+	}
 };
 
 template <class T>
 class CVirtualBuffer
 {
 protected:
-	CVirtualBuffer() {}
+	CVirtualBuffer()
+	{
+	}
 	T* m_pTop;
 	int m_nMaxElements;
 public:
 	T* m_pBase;
 	T* m_pCurrent;
-	CVirtualBuffer(int nMaxElements)
+	explicit CVirtualBuffer(_In_ int nMaxElements)
 	{
 		//in case of overflow throw exception
 		ATLENSURE(nMaxElements>=0);
-			
+
 		ATLENSURE(nMaxElements <=size_t(-1)/sizeof(T)); //overflow check
 		m_nMaxElements = nMaxElements;
  		m_pBase = (T*) VirtualAlloc(NULL,sizeof(T)*nMaxElements,	MEM_RESERVE, PAGE_READWRITE);
@@ -2208,7 +2373,7 @@ public:
 	{
 		VirtualFree(m_pBase, 0, MEM_RELEASE);
 	}
-	int Except(LPEXCEPTION_POINTERS lpEP)
+	int Except(_In_ LPEXCEPTION_POINTERS lpEP)
 	{
 		EXCEPTION_RECORD* pExcept = lpEP->ExceptionRecord;
 		if (pExcept->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
@@ -2217,13 +2382,13 @@ public:
 
 		// The address is out of this buffer arrange means AV is not conflicted with this buffer.
 		BYTE* pTmp = reinterpret_cast<BYTE*>(m_pBase);
-		if ((pAddress < pTmp) || (pAddress >= pTmp + (sizeof(T) * m_nMaxElements))) 
+		if ((pAddress < pTmp) || (pAddress >= pTmp + (sizeof(T) * m_nMaxElements)))
 			return EXCEPTION_CONTINUE_SEARCH;
 
 		VirtualAlloc(pAddress, sizeof(T), MEM_COMMIT, PAGE_READWRITE);
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-	bool Seek(int nElement)
+	bool Seek(_In_ int nElement)
 	{
 		ATLASSERT(nElement >= 0 && nElement < m_nMaxElements);
 		if(nElement < 0 || nElement >= m_nMaxElements)
@@ -2231,73 +2396,80 @@ public:
 		m_pCurrent = &m_pBase[nElement];
 		return true;
 	}
-	void SetAt(int nElement, const T& Element)
+
+#define ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()							\
+	__pragma(warning(push))												\
+	/* we never return EXCEPTION_EXECUTE_HANDLER in Except */			\
+	/* hence, we can safely ignore this warning about the handler */	\
+	/* being empty */													\
+	__pragma(warning(disable:6322))										\
+	__try																\
+	{																	\
+		/**/
+# define ATL_DBCLI_END_VBUF_GUARDED_REGION()							\
+	} /* try { */														\
+	__except(Except(GetExceptionInformation()))							\
+	{																	\
+		/*EMPTY*/														\
+	}																	\
+	__pragma(warning(pop))												\
+		/**/
+
+	void SetAt(
+		_In_ int nElement,
+		_In_ const T& Element)
 	{
 		ATLASSERT(nElement >= 0 && nElement < m_nMaxElements);
-		__try
-		{
+
+		ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()
 			T* p = &m_pBase[nElement];
 			*p = Element;
 			m_pTop = p++ > m_pTop ? p : m_pTop;
-		}
-		__except(Except(GetExceptionInformation()))
-		{
-		}
-
+		ATL_DBCLI_END_VBUF_GUARDED_REGION()
 	}
 	template <class Q>
-	void WriteBulk(Q& helper)
+	void WriteBulk(_In_ Q& helper)
 	{
-		__try
-		{
+		ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()
 			m_pCurrent = helper(m_pBase);
 			m_pTop = m_pCurrent > m_pTop ? m_pCurrent : m_pTop;
-		}
-		__except(Except(GetExceptionInformation()))
-		{
-		}
+		ATL_DBCLI_END_VBUF_GUARDED_REGION()
 	}
-	void Write(const T& Element)
+	void Write(_In_ const T& Element)
 	{
-		__try
-		{
+		ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()
 			*m_pCurrent = Element;
 			m_pCurrent++;
 			m_pTop = m_pCurrent > m_pTop ? m_pCurrent : m_pTop;
-		}
-		__except(Except(GetExceptionInformation()))
-		{
-		}
+		ATL_DBCLI_END_VBUF_GUARDED_REGION()
 	}
 	T& Read()
 	{
 		return *m_pCurrent;
 	}
-	operator BSTR()
+	_Ret_opt_z_ operator BSTR()
 	{
 		BSTR bstrTemp = NULL ;
-		__try
-		{
+		ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()
 			bstrTemp = SysAllocStringByteLen((char*) m_pBase,
 				(UINT) ((BYTE*)m_pTop - (BYTE*)m_pBase));
-		}
-		__except(Except(GetExceptionInformation()))
-		{
-		}
+		ATL_DBCLI_END_VBUF_GUARDED_REGION()
 		return bstrTemp;
 	}
-	const T& operator[](int nElement) const
+	const T& operator[](_In_ int nElement) const
 	{
 		if(nElement < 0 || nElement >= m_nMaxElements)
-			_AtlRaiseException((DWORD)EXCEPTION_ARRAY_BOUNDS_EXCEEDED);		
-	
+			_AtlRaiseException((DWORD)EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
+
 		return m_pBase[nElement];
 	}
 	operator T*()
 	{
 		return m_pBase;
 	}
+
 };
+
 
 typedef CVirtualBuffer<BYTE> CVirtualBytes;
 
@@ -2313,11 +2485,12 @@ class CArrayRowset :
 	protected CBulkRowset<TAccessor>
 {
 public:
-	CArrayRowset(int nMax = 100000) : CVirtualBuffer<TAccessor::DataClass>(nMax)
+	CArrayRowset(_In_ int nMax = 100000) :
+		CVirtualBuffer<TAccessor::DataClass>(nMax)
 	{
 		m_nRowsRead = 0;
 	}
-	typename TAccessor::DataClass& operator[](int nRow)
+	typename TAccessor::DataClass& operator[](_In_ int nRow)
 	{
 		ATLASSERT(nRow >= 0);
 		if( nRow < 0 )
@@ -2330,16 +2503,12 @@ public:
 		while ((ULONG)nRow >= m_nRowsRead)
 		{
 			m_pAccessor->SetBuffer(reinterpret_cast<BYTE*>(pCurrent));
-			__try
-			{
+			ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()
 				// Get the row
 				hr = MoveNext();
 				if (hr != S_OK)
 					break;
-			}
-			__except(Except(GetExceptionInformation()))
-			{
-			}
+			ATL_DBCLI_END_VBUF_GUARDED_REGION()
 			m_nRowsRead++;
 			pCurrent++;
 		}
@@ -2349,7 +2518,7 @@ public:
 			ATLASSERT(hr != DB_S_ENDOFROWSET);	// if you're getting this assertion, then
 												// most likely you are trying to access an
 												// out of bounds element of CArrayRowset
-												// (ex. table[100].data where table has only 
+												// (ex. table[100].data where table has only
 												// 50 records)
 			AtlThrow(hr);
 		}
@@ -2364,13 +2533,9 @@ public:
 		ATLASSUME(m_spRowset != NULL);
 		TAccessor::DataClass* pCurrent = m_pBase;
 		m_pAccessor->SetBuffer(reinterpret_cast<BYTE*>(pCurrent));
-		__try
-		{
+		ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()
 			hr = MoveFirst();
-		}
-		__except(Except(GetExceptionInformation()))
-		{
-		}
+		ATL_DBCLI_END_VBUF_GUARDED_REGION()
 		if (FAILED(hr))
 			return hr;
 		do
@@ -2378,19 +2543,18 @@ public:
 			m_nRowsRead++;
 			pCurrent++;
 			m_pAccessor->SetBuffer(reinterpret_cast<BYTE*>(pCurrent));
-			__try
-			{
+			ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION()
 				hr = MoveNext();
-			}
-			__except(Except(GetExceptionInformation()))
-			{
-			}
+			ATL_DBCLI_END_VBUF_GUARDED_REGION()
 		} while (SUCCEEDED(hr) &&  hr != DB_S_ENDOFROWSET);
 
 		return (hr == DB_S_ENDOFROWSET) ? S_OK : hr;
 	}
 	ULONG   m_nRowsRead;
 };
+
+#undef ATL_DBCLI_BEGIN_VBUF_GUARDED_REGION
+#undef ATL_DBCLI_END_VBUF_GUARDED_REGION
 
 // Used when you don't need any parameters or output columns
 class CNoAccessor
@@ -2399,21 +2563,73 @@ public:
 	// We don't need any typedef's here as the default
 	// global typedef is not to have any parameters and
 	// output columns.
-	HRESULT BindColumns(IUnknown*) throw() { return S_OK; }
-	HRESULT BindParameters(HACCESSOR*, ICommand*, void**) throw() { return S_OK; }
-	void    Close() throw() { }
-	HRESULT ReleaseAccessors(IUnknown*) throw() { return S_OK; }
-	void FreeRecordMemory(IRowset* /*pRowset*/) throw() { }
-	void FreeRecordMemory(int /*nAccessor*/, IRowset* /*pRowset*/) throw() { }
-	HRESULT GetColumnInfo(IRowset*, DBORDINAL*, DBCOLUMNINFO**) throw() { return E_FAIL; }
-	ULONG GetNumAccessors() const throw() { return 0; }
-	bool IsAutoAccessor(ULONG /*nAccessor*/) const throw() { return false; }
-	HACCESSOR GetHAccessor(ULONG /*nAccessor*/) const throw() { return NULL; }
-	BYTE* GetBuffer() const throw() { ATLASSERT(FALSE); return NULL; }
-	static void Bind(DBBINDING*, DBORDINAL, DBTYPE, DBLENGTH, BYTE, BYTE, DBPARAMIO,
-		DBBYTEOFFSET, DBBYTEOFFSET = NULL, DBBYTEOFFSET = NULL, DBOBJECT* = NULL) throw()
-	{ ATLASSERT(FALSE); }
-	bool NoBindOnNullRowset() const throw() { return false; }
+	HRESULT BindColumns(_In_opt_ IUnknown*) throw()
+	{
+		return S_OK;
+	}
+	HRESULT BindParameters(
+		_In_opt_ HACCESSOR*,
+		_In_opt_ ICommand*,
+		_Deref_opt_out_ void**) throw()
+	{
+		return S_OK;
+	}
+	void Close() throw()
+	{
+	}
+	HRESULT ReleaseAccessors(_In_opt_ IUnknown*) throw()
+	{
+		return S_OK;
+	}
+	void FreeRecordMemory(_Inout_opt_ IRowset* /*pRowset*/) throw()
+	{
+	}
+	void FreeRecordMemory(_In_ int /*nAccessor*/, _Inout_opt_ IRowset* /*pRowset*/) throw()
+	{
+	}
+	HRESULT GetColumnInfo(
+		_In_opt_ IRowset*,
+		_In_opt_ DBORDINAL*,
+		_In_opt_ DBCOLUMNINFO**) throw()
+	{
+		return E_FAIL;
+	}
+	ULONG GetNumAccessors() const throw()
+	{
+		return 0;
+	}
+	bool IsAutoAccessor(_In_ ULONG /*nAccessor*/) const throw()
+	{
+		return false;
+	}
+	HACCESSOR GetHAccessor(_In_ ULONG /*nAccessor*/) const throw()
+	{
+		return 0;
+	}
+	BYTE* GetBuffer() const throw()
+	{
+		ATLASSERT(FALSE);
+		return NULL;
+	}
+	static void Bind(
+		_In_opt_ DBBINDING*,
+		_In_ DBORDINAL,
+		_In_ DBTYPE,
+		_In_ DBLENGTH,
+		_In_ BYTE,
+		_In_ BYTE,
+		_In_ DBPARAMIO,
+		_In_ DBBYTEOFFSET,
+		_In_ DBBYTEOFFSET = 0,
+		_In_ DBBYTEOFFSET = 0,
+		_In_opt_ DBOBJECT* = NULL) throw()
+	{
+		ATLASSERT(FALSE);
+	}
+	bool NoBindOnNullRowset() const throw()
+	{
+		return false;
+	}
 };
 
 // Used when a rowset will not be returned from the command
@@ -2421,14 +2637,31 @@ template <class TAccessor = CAccessorBase>
 class CNoRowset
 {
 public:
-	HRESULT             BindFinished() throw() { return S_OK; }
-	void                Close() throw() { }
-	static const IID&   GetIID() throw() { return IID_NULL; }
-	IRowset*            GetInterface() const throw() { return NULL; }
-	IRowset**           GetInterfacePtr() throw() { return NULL; }
-	void                SetAccessor(void*) throw() { }
-	void                SetupOptionalRowsetInterfaces() throw() { }
-
+	HRESULT BindFinished() throw()
+	{
+		return S_OK;
+	}
+	void Close() throw()
+	{
+	}
+	static const IID& GetIID() throw()
+	{
+		return IID_NULL;
+	}
+	IRowset* GetInterface() const throw()
+	{
+		return NULL;
+	}
+	IRowset** GetInterfacePtr() throw()
+	{
+		return NULL;
+	}
+	void SetAccessor(_In_opt_ void*) throw()
+	{
+	}
+	void SetupOptionalRowsetInterfaces() throw()
+	{
+	}
 };
 
 // Used with SQL Server 2000, a rowset will not be returned from the command, but instead
@@ -2455,7 +2688,6 @@ public:
 			m_spStream.Release();
 	}
 
-
 	// Implementation
 	static const IID& GetIID()
 	{
@@ -2470,9 +2702,16 @@ public:
 		return &m_spStream;
 	}
 
-	HRESULT             BindFinished() throw() { return S_OK; }
-	void                SetAccessor(void*) throw() { }
-	void                SetupOptionalRowsetInterfaces() throw() { }
+	HRESULT BindFinished() throw()
+	{
+		return S_OK;
+	}
+	void SetAccessor(_In_opt_ void*) throw()
+	{
+	}
+	void SetupOptionalRowsetInterfaces() throw()
+	{
+	}
 
 	CComPtr<ISequentialStream> m_spStream;
 };
@@ -2480,8 +2719,8 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////
 // class CAccessor
-
 // T is the class that contains the data that will be accessed.
+ATLPREFAST_SUPPRESS(6387)
 template <class T>
 class CAccessor :
 	public CAccessorBase,
@@ -2491,7 +2730,7 @@ public:
 	typedef T DataClass;
 
 // Implementation
-	HRESULT ReleaseAccessors(IUnknown* pUnk) throw()
+	HRESULT ReleaseAccessors(_Inout_ IUnknown* pUnk) throw()
 	{
 		FreeRecordMemory( (IRowset*) pUnk );
 		return CAccessorBase::ReleaseAccessors(pUnk);
@@ -2499,7 +2738,9 @@ public:
 
 	// Free's any columns in the current record that need to be freed.
 	// E.g. Calls SysFreeString on any BSTR's and Release on any interfaces.
-	void FreeRecordMemory(int nAccessor, IRowset* /* pRowset */) throw() 
+	void FreeRecordMemory(
+		_In_ int nAccessor,
+		_In_opt_ IRowset* /* pRowset */) throw()
 	{
 		(nAccessor);
 		__if_exists(_GetBindEntries)
@@ -2511,13 +2752,22 @@ public:
 			_GetBindEntries(NULL, &nColumns, NULL, nAccessor, NULL, m_pBuffer);
 		}
 	}
-	void FreeRecordMemory(IRowset* pRowset) throw()
+	void FreeRecordMemory(_Inout_opt_ IRowset* pRowset) throw()
 	{
 		for (ULONG i = 0; i < GetNumAccessors(); i++)
 			FreeRecordMemory(i, pRowset);
 	}
 
-	HRESULT GetColumnInfo(IRowset*, DBORDINAL*, DBCOLUMNINFO**) throw() { return E_FAIL; }
+	HRESULT GetColumnInfo(
+		_In_opt_ IRowset*,
+		_In_opt_ DBORDINAL*,
+		_Deref_out_opt_ DBCOLUMNINFO** ppColumnInfo) throw()
+	{
+		ATLASSERT(ppColumnInfo != NULL);
+		*ppColumnInfo = NULL;
+
+		return E_FAIL;
+	}
 
 	void ClearRecordMemory() throw()
 	{
@@ -2531,7 +2781,7 @@ public:
 		}
 	}
 
-	HRESULT BindColumns(IUnknown* pUnk) throw()
+	HRESULT BindColumns(_Inout_ IUnknown* pUnk) throw()
 	{
 		HRESULT hr;
 		ULONG   nAccessors;
@@ -2545,7 +2795,10 @@ public:
 		hr = BindAccessors(nAccessors, nSize, pUnk);
 		return hr;
 	}
-	HRESULT BindAccessors(ULONG nAccessors, DBLENGTH nSize, IUnknown* pUnk) throw()
+	HRESULT BindAccessors(
+		_In_ ULONG nAccessors,
+		_In_ DBLENGTH nSize,
+		_Inout_ IUnknown* pUnk) throw()
 	{
 		ATLENSURE_RETURN(pUnk != NULL);
 		HRESULT hr;
@@ -2569,11 +2822,14 @@ public:
 		return hr;
 	}
 
-	HRESULT BindAccessor(IAccessor* pAccessor, ULONG nAccessor, DBLENGTH nSize) throw()
+	HRESULT BindAccessor(
+		_Inout_ IAccessor* pAccessor,
+		_In_ ULONG nAccessor,
+		_In_ DBLENGTH nSize) throw()
 	{
 		CAutoVectorPtr<DBBINDING>	spBindings;
 		CAutoVectorPtr<LPOLESTR>	spColumnNames;
-		DBORDINAL					nColumns;
+		DBORDINAL					nColumns = 0;
 		bool						bAuto = false;
 		HRESULT						hr;
 		CComHeapPtr<DBCOLUMNINFO>	spColumnInfo;
@@ -2582,6 +2838,8 @@ public:
 
 		// First time just get the number of entries by passing in &nColumns
 		_OutputColumnsClass::_GetBindEntries(NULL, &nColumns, NULL, nAccessor, NULL);
+
+		ATLASSERT(nColumns > 0);
 
 		// Allocate the binding structures
 		if( !spBindings.Allocate(nColumns) )
@@ -2631,7 +2889,10 @@ public:
 		return hr;
 	}
 
-	HRESULT BindParameters(HACCESSOR* pHAccessor, ICommand* pCommand, void** ppParameterBuffer) throw()
+	HRESULT BindParameters(
+		_In_ HACCESSOR* pHAccessor,
+		_Inout_ ICommand* pCommand,
+		_Deref_out_ void** ppParameterBuffer) throw()
 	{
 		HRESULT				hr = S_OK;
 		ATLENSURE_RETURN(ppParameterBuffer);
@@ -2702,7 +2963,11 @@ public:
 	}
 
 protected:
-	bool GetOridinalColumnNo(LPCOLESTR pOleColumnName, DBORDINAL& nColumn, DBCOLUMNINFO* pColumnInfo, DBORDINAL nColumns ) throw()
+	bool GetOridinalColumnNo(
+		_In_z_ LPCOLESTR pOleColumnName,
+		_Out_ DBORDINAL& nColumn,
+		_In_count_(nColumns) DBCOLUMNINFO* pColumnInfo,
+		_In_ DBORDINAL nColumns) throw()
 	{
 		ATLASSERT(pOleColumnName != NULL);
 		ATLASSERT(pColumnInfo != NULL);
@@ -2721,8 +2986,12 @@ protected:
 		}
 		return false;   // Not Found
 	}
-
-	HRESULT GetColumnNames( IAccessor* pAccessor, DBCOLUMNINFO** ppColumnInfo, OLECHAR** ppStringsBuffer, DBORDINAL* pnColumns ) throw()
+	
+	HRESULT GetColumnNames(
+		_Inout_ IAccessor* pAccessor,
+		_Deref_out_ DBCOLUMNINFO** ppColumnInfo,
+		_Deref_out_z_ OLECHAR** ppStringsBuffer,
+		_Out_ DBORDINAL* pnColumns) throw()
 	{
 		ATLASSERT( ppColumnInfo != NULL );
 		ATLASSERT( ppStringsBuffer != NULL );
@@ -2743,8 +3012,12 @@ protected:
 
 		return S_OK;
 	}
-
-	bool GetOridinalParameterNo(LPCOLESTR pOleParameterName, DB_UPARAMS& nParameter, DBPARAMINFO* pParameterInfo, DB_UPARAMS nParameters ) throw()
+	
+	bool GetOridinalParameterNo(
+		_In_z_ LPCOLESTR pOleParameterName,
+		_Out_ DB_UPARAMS& nParameter,
+		_In_count_(nParameters) DBPARAMINFO* pParameterInfo,
+		_In_ DB_UPARAMS nParameters) throw()
 	{
 		ATLASSERT(pOleParameterName != NULL);
 		ATLASSERT(pParameterInfo != NULL);
@@ -2764,7 +3037,11 @@ protected:
 		return false;   // Not Found
 	}
 
-	HRESULT GetParameterNames( ICommand* pCmd, DBPARAMINFO** ppParameterInfo, OLECHAR** ppStringsBuffer, DB_UPARAMS* pnParameters ) throw()
+	HRESULT GetParameterNames(
+		_Inout_ ICommand* pCmd,
+		_Deref_out_ DBPARAMINFO** ppParameterInfo,
+		_Deref_out_z_ OLECHAR** ppStringsBuffer,
+		_Out_ DB_UPARAMS* pnParameters) throw()
 	{
 		ATLASSERT( ppParameterInfo != NULL );
 		ATLASSERT( ppStringsBuffer != NULL );
@@ -2785,9 +3062,8 @@ protected:
 
 		return S_OK;
 	}
-
 };
-
+ATLPREFAST_UNSUPPRESS()
 
 enum DBBLOBHANDLINGENUM
 {
@@ -2798,15 +3074,16 @@ enum DBBLOBHANDLINGENUM
 
 ///////////////////////////////////////////////////////////////////////////
 // CDynamicAccessor
-
 class CDynamicAccessor :
 	public CAccessorBase
 {
 public:
-	CDynamicAccessor( DBBLOBHANDLINGENUM eBlobHandling = DBBLOBHANDLING_DEFAULT, DBLENGTH nBlobSize = 8000 )
+	CDynamicAccessor(
+		_In_ DBBLOBHANDLINGENUM eBlobHandling = DBBLOBHANDLING_DEFAULT,
+		_In_ DBLENGTH nBlobSize = 8000)
 	{
-		ATLASSERT( eBlobHandling == DBBLOBHANDLING_DEFAULT || 
-				   eBlobHandling == DBBLOBHANDLING_NOSTREAMS || 
+		ATLASSERT( eBlobHandling == DBBLOBHANDLING_DEFAULT ||
+				   eBlobHandling == DBBLOBHANDLING_NOSTREAMS ||
 				   eBlobHandling == DBBLOBHANDLING_SKIP );
 
 		m_nColumns        = 0;
@@ -2822,13 +3099,13 @@ public:
 		Close();
 	}
 
-	HRESULT ReleaseAccessors(IUnknown* pUnk) throw()
+	HRESULT ReleaseAccessors(_Inout_ IUnknown* pUnk) throw()
 	{
 		FreeRecordMemory( (IRowset*) pUnk );
 		return CAccessorBase::ReleaseAccessors(pUnk);
 	}
 
-	bool SetBlobHandling( DBBLOBHANDLINGENUM eBlobHandling )
+	bool SetBlobHandling(_In_ DBBLOBHANDLINGENUM eBlobHandling)
 	{
 		switch( eBlobHandling )
 		{
@@ -2848,7 +3125,7 @@ public:
 		return m_eBlobHandling;
 	}
 
-	void SetBlobSizeLimit( DBLENGTH nBlobSize )
+	void SetBlobSizeLimit(_In_ DBLENGTH nBlobSize)
 	{
 		m_nBlobSize = nBlobSize;
 	}
@@ -2881,7 +3158,9 @@ public:
 		CAccessorBase::Close();
 	}
 
-	bool GetColumnType(DBORDINAL nColumn, DBTYPE* pType) const throw()
+	bool GetColumnType(
+		_In_ DBORDINAL nColumn,
+		_Out_ DBTYPE* pType) const throw()
 	{
 		if (TranslateColumnNo(nColumn))
 		{
@@ -2893,7 +3172,9 @@ public:
 			return false;
 	}
 
-	bool GetColumnFlags(DBORDINAL nColumn, DBCOLUMNFLAGS* pFlags) const throw()
+	bool GetColumnFlags(
+		_In_ DBORDINAL nColumn,
+		_Out_ DBCOLUMNFLAGS* pFlags) const throw()
 	{
 		if (TranslateColumnNo(nColumn))
 		{
@@ -2904,7 +3185,9 @@ public:
 		else
 			return false;
 	}
-	bool GetOrdinal(const CHAR* pColumnName, DBORDINAL* pOrdinal) const throw()
+	bool GetOrdinal(
+		_In_z_ const CHAR* pColumnName,
+		_Out_ DBORDINAL* pOrdinal) const throw()
 	{
 		ATLENSURE_RETURN_VAL(pColumnName != NULL, false);
 		DBORDINAL nColumn;
@@ -2917,7 +3200,9 @@ public:
 		else
 			return false;
 	}
-	bool GetOrdinal(const WCHAR* pColumnName, DBORDINAL* pOrdinal) const throw()
+	bool GetOrdinal(
+		_In_z_ const WCHAR* pColumnName,
+		_Out_ DBORDINAL* pOrdinal) const throw()
 	{
 		ATLENSURE_RETURN_VAL(pColumnName != NULL, false);
 		DBORDINAL nColumn;
@@ -2931,7 +3216,7 @@ public:
 			return false;
 	}
 
-	void* GetValue(DBORDINAL nColumn) const throw()
+	void* GetValue(_In_ DBORDINAL nColumn) const throw()
 	{
 		if (TranslateColumnNo(nColumn))
 			return _GetDataPtr(nColumn);
@@ -2939,7 +3224,7 @@ public:
 			return NULL;
 	}
 
-	void* GetValue(const CHAR* pColumnName) const throw()
+	void* GetValue(_In_z_ const CHAR* pColumnName) const throw()
 	{
 		ATLENSURE_RETURN_VAL(pColumnName != NULL, NULL);
 		DBORDINAL nColumn;
@@ -2949,7 +3234,7 @@ public:
 			return NULL;    // Not Found
 	}
 
-	void* GetValue(const WCHAR* pColumnName) const throw()
+	void* GetValue(_In_z_ const WCHAR* pColumnName) const throw()
 	{
 		ATLENSURE_RETURN_VAL(pColumnName != NULL, NULL);
 		DBORDINAL nColumn;
@@ -2960,22 +3245,28 @@ public:
 	}
 
 	template <class ctype>
-	void _GetValue(DBORDINAL nColumn, ctype* pData) const throw()
+	void _GetValue(
+		_In_ DBORDINAL nColumn,
+		_Out_ ctype* pData) const throw()
 	{
-		ATLASSERT(pData != NULL);
+		ATLASSUME(pData != NULL);
 		ATLASSUME(m_pColumnInfo[nColumn].ulColumnSize == sizeof(ctype));
 		ctype* pBuffer = (ctype*)_GetDataPtr(nColumn);
 		*pData = *pBuffer;
 	}
 	template <class ctype>
-	void _SetValue(DBORDINAL nColumn, const ctype& data) throw()
+	void _SetValue(
+		_In_ DBORDINAL nColumn,
+		_In_ const ctype& data) throw()
 	{
 		ATLASSUME(m_pColumnInfo[nColumn].ulColumnSize == sizeof(ctype));
 		ctype* pBuffer = (ctype*)_GetDataPtr(nColumn);
 		*pBuffer = (ctype)data;
 	}
 	template <class ctype>
-	bool GetValue(DBORDINAL nColumn, ctype* pData) const throw()
+	bool GetValue(
+		_In_ DBORDINAL nColumn,
+		_Out_ ctype* pData) const throw()
 	{
 		ATLENSURE_RETURN_VAL(pData, false);
 		if (TranslateColumnNo(nColumn))
@@ -2986,7 +3277,9 @@ public:
 		return false;
 	}
 	template <class ctype>
-	bool SetValue(DBORDINAL nColumn, const ctype& data) throw()
+	bool SetValue(
+		_In_ DBORDINAL nColumn,
+		_In_ const ctype& data) throw()
 	{
 		if (TranslateColumnNo(nColumn))
 		{
@@ -2996,7 +3289,9 @@ public:
 		return false;
 	}
 	template <class ctype>
-	bool GetValue(const CHAR *pColumnName, ctype* pData) const throw()
+	bool GetValue(
+		_In_z_ const CHAR *pColumnName,
+		_Out_ ctype* pData) const throw()
 	{
 		ATLENSURE_RETURN_VAL(pColumnName != NULL, false);
 		ATLENSURE_RETURN_VAL(pData, false);
@@ -3009,7 +3304,9 @@ public:
 		return false;
 	}
 	template <class ctype>
-	bool GetValue(const WCHAR *pColumnName, ctype* pData) const throw()
+	bool GetValue(
+		_In_z_ const WCHAR *pColumnName,
+		_Out_ ctype* pData) const throw()
 	{
 		ATLENSURE_RETURN_VAL(pColumnName != NULL, false);
 		ATLENSURE_RETURN_VAL(pData, false);
@@ -3022,7 +3319,9 @@ public:
 		return false;
 	}
 	template <class ctype>
-	bool SetValue(const CHAR *pColumnName, const ctype& data) throw()
+	bool SetValue(
+		_In_z_ const CHAR *pColumnName,
+		_In_ const ctype& data) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -3034,7 +3333,9 @@ public:
 		return false;
 	}
 	template <class ctype>
-	bool SetValue(const WCHAR *pColumnName, const ctype& data) throw()
+	bool SetValue(
+		_In_z_ const WCHAR *pColumnName,
+		_In_ const ctype& data) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -3045,7 +3346,9 @@ public:
 		}
 		return false;
 	}
-	bool GetLength(DBORDINAL nColumn, DBLENGTH* pLength) const
+	bool GetLength(
+		_In_ DBORDINAL nColumn,
+		_Out_ DBLENGTH* pLength) const
 	{
 		ATLENSURE(pLength != NULL);
 		if (TranslateColumnNo(nColumn))
@@ -3058,7 +3361,9 @@ public:
 		else
 			return false;
 	}
-	bool SetLength(DBORDINAL nColumn, DBLENGTH nLength) throw()
+	bool SetLength(
+		_In_ DBORDINAL nColumn,
+		_In_ DBLENGTH nLength) throw()
 	{
 		if (TranslateColumnNo(nColumn))
 		{
@@ -3070,7 +3375,9 @@ public:
 		else
 			return false;
 	}
-	bool GetLength(const CHAR* pColumnName, DBLENGTH* pLength) const 
+	bool GetLength(
+		_In_z_ const CHAR* pColumnName,
+		_Out_ DBLENGTH* pLength) const
 	{
 		ATLENSURE(pColumnName != NULL);
 		ATLENSURE(pLength != NULL);
@@ -3085,7 +3392,9 @@ public:
 		else
 			return false;
 	}
-	bool GetLength(const WCHAR* pColumnName, DBLENGTH* pLength) const 
+	bool GetLength(
+		_In_z_ const WCHAR* pColumnName,
+		_Out_ DBLENGTH* pLength) const
 	{
 		ATLENSURE(pColumnName != NULL);
 		ATLENSURE(pLength != NULL);
@@ -3100,7 +3409,9 @@ public:
 		else
 			return false;
 	}
-	bool SetLength(const CHAR* pColumnName, DBLENGTH nLength) throw()
+	bool SetLength(
+		_In_z_ const CHAR* pColumnName,
+		_In_ DBLENGTH nLength) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -3114,7 +3425,9 @@ public:
 		else
 			return false;
 	}
-	bool SetLength(const WCHAR* pColumnName, DBLENGTH nLength) throw()
+	bool SetLength(
+		_In_z_ const WCHAR* pColumnName,
+		_In_ DBLENGTH nLength) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -3128,7 +3441,9 @@ public:
 		else
 			return false;
 	}
-	bool GetStatus(DBORDINAL nColumn, DBSTATUS* pStatus) const 
+	bool GetStatus(
+		_In_ DBORDINAL nColumn,
+		_Out_ DBSTATUS* pStatus) const
 	{
 		ATLENSURE(pStatus != NULL);
 		if (TranslateColumnNo(nColumn))
@@ -3142,7 +3457,9 @@ public:
 		else
 			return false;
 	}
-	bool SetStatus(DBORDINAL nColumn, DBSTATUS status) throw()
+	bool SetStatus(
+		_In_ DBORDINAL nColumn,
+		_In_ DBSTATUS status) throw()
 	{
 		if (TranslateColumnNo(nColumn))
 		{
@@ -3155,7 +3472,9 @@ public:
 		else
 			return false;
 	}
-	bool GetStatus(const CHAR* pColumnName, DBSTATUS* pStatus) const
+	bool GetStatus(
+		_In_z_ const CHAR* pColumnName,
+		_Out_ DBSTATUS* pStatus) const
 	{
 		ATLENSURE(pColumnName != NULL);
 		ATLENSURE(pStatus != NULL);
@@ -3171,7 +3490,9 @@ public:
 		else
 			return false;
 	}
-	bool GetStatus(const WCHAR* pColumnName, DBSTATUS* pStatus) const
+	bool GetStatus(
+		_In_z_ const WCHAR* pColumnName,
+		_Out_ DBSTATUS* pStatus) const
 	{
 		ATLENSURE(pColumnName != NULL);
 		ATLENSURE(pStatus != NULL);
@@ -3187,7 +3508,9 @@ public:
 		else
 			return false;
 	}
-	bool SetStatus(const CHAR* pColumnName, DBSTATUS status) throw()
+	bool SetStatus(
+		_In_z_ const CHAR* pColumnName,
+		_In_ DBSTATUS status) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -3202,7 +3525,9 @@ public:
 		else
 			return false;
 	}
-	bool SetStatus(const WCHAR* pColumnName, DBSTATUS status) throw()
+	bool SetStatus(
+		_In_z_ const WCHAR* pColumnName,
+		_In_ DBSTATUS status) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -3219,7 +3544,7 @@ public:
 	}
 
 	// Returns true if a bookmark is available
-	HRESULT GetBookmark(CBookmark<>* pBookmark) const throw()
+	HRESULT GetBookmark(_Inout_ CBookmark<>* pBookmark) const throw()
 	{
 		ATLENSURE_RETURN(pBookmark);
 		HRESULT hr;
@@ -3235,7 +3560,7 @@ public:
 		return m_nColumns;
 	}
 
-	LPOLESTR GetColumnName(DBORDINAL nColumn) const throw()
+	LPOLESTR GetColumnName(_In_ DBORDINAL nColumn) const throw()
 	{
 		if (TranslateColumnNo(nColumn))
 			return m_pColumnInfo[nColumn].pwszName;
@@ -3244,9 +3569,17 @@ public:
 	}
 
 	ATL_DEPRECATED("CDynamicAccessor::GetColumnInfo must be passed an array of string buffers too.")
-	HRESULT GetColumnInfo(IRowset* pRowset, DBORDINAL* pColumns, DBCOLUMNINFO** ppColumnInfo);
+	HRESULT GetColumnInfo(
+		_Inout_ IRowset* pRowset,
+		_In_opt_ DBORDINAL* pColumns,
+		_Deref_opt_out_ DBCOLUMNINFO** ppColumnInfo);
 
-	HRESULT GetColumnInfo(IRowset* pRowset, DBORDINAL* pColumns, DBCOLUMNINFO** ppColumnInfo, OLECHAR** ppStringsBuffer) throw()
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetColumnInfo(
+		_Inout_ IRowset* pRowset,
+		_Out_ DBORDINAL* pColumns,
+		_Deref_out_  DBCOLUMNINFO** ppColumnInfo,
+		_Deref_out_z_ OLECHAR** ppStringsBuffer) throw()
 	{
 		CComPtr<IColumnsInfo> spColumnsInfo;
 		HRESULT hr = pRowset->QueryInterface(&spColumnsInfo);
@@ -3255,8 +3588,9 @@ public:
 
 		return hr;
 	}
-
-	HRESULT AddBindEntry(const DBCOLUMNINFO& info) throw()
+ATLPREFAST_UNSUPPRESS()
+	
+	HRESULT AddBindEntry(_In_ const DBCOLUMNINFO& info) throw()
 	{
 		if ((m_nColumns + 1 < m_nColumns))
 		{
@@ -3280,7 +3614,7 @@ public:
 // Implementation
 	// Free's any columns in the current record that need to be freed.
 	// E.g. Calls SysFreeString on any BSTR's and Release on any interfaces.
-	void FreeRecordMemory(IRowset* pRowset) throw()
+	void FreeRecordMemory(_Inout_ IRowset* pRowset) throw()
 	{
 		ULONG i;
 
@@ -3320,25 +3654,17 @@ public:
 	{
 		for (ULONG i = 0; i < m_nColumns; i++)
 		{
-			DBLENGTH uLength = m_pColumnInfo[i].ulColumnSize;
-			switch (m_pColumnInfo[i].wType)
-			{
-			case DBTYPE_STR :
-				uLength += 1;
-				break;
-			case DBTYPE_WSTR :
-				uLength = (uLength + 1) * 2;
-				break;
-			}
-			memset((BYTE*)_GetDataPtr(i), 0, uLength);
+			memset((BYTE*)_GetDataPtr(i), 0, m_pColumnInfo[i].ulColumnSize);
 		}
 	}
 
-	void* _GetDataPtr(DBORDINAL nColumn) const throw()
+	void* _GetDataPtr(_In_ DBORDINAL nColumn) const throw()
 	{
 		return m_pBuffer + (DBBYTEOFFSET)(ULONG_PTR)m_pColumnInfo[nColumn].pTypeInfo;
 	}
-	bool GetInternalColumnNo(const CHAR* pColumnName, DBORDINAL* pColumn) const
+	bool GetInternalColumnNo(
+		_In_z_ const CHAR* pColumnName,
+		_Out_ DBORDINAL* pColumn) const
 	{
 		ATLENSURE(pColumnName != NULL);
 		ATLENSURE(pColumn != NULL);
@@ -3366,7 +3692,9 @@ public:
 			return false;   // Not Found
 		}
 	}
-	bool GetInternalColumnNo(const WCHAR* pColumnName, DBORDINAL* pColumn) const
+	bool GetInternalColumnNo(
+		_In_z_ const WCHAR* pColumnName,
+		_Out_ DBORDINAL* pColumn) const
 	{
 		ATLENSURE(pColumnName != NULL);
 		ATLASSERT(pColumn != NULL);
@@ -3382,7 +3710,7 @@ public:
 				memcmp(m_pColumnInfo[i].pwszName, bstrColumnName.m_str, nSize) == 0)
 				break;
 		}
-		
+
 		if (i < m_nColumns && pColumn)
 		{
 			*pColumn = i;
@@ -3394,10 +3722,20 @@ public:
 
 	// Set up the binding structure pointed to by pBindings based upon
 	// the other passed parameters.
-	static void BindEx(DBBINDING* pBinding, DBORDINAL nOrdinal, DBTYPE wType,
-		DBLENGTH nLength, BYTE nPrecision, BYTE nScale, DBPARAMIO eParamIO,
-		DBBYTEOFFSET nDataOffset, DBBYTEOFFSET nLengthOffset, DBBYTEOFFSET nStatusOffset,
-		DBOBJECT* pdbobject, DBMEMOWNER dwMemOwner, bool fSkipData = false )
+	static void BindEx(
+		_Inout_ DBBINDING* pBinding,
+		_In_ DBORDINAL nOrdinal,
+		_In_ DBTYPE wType,
+		_In_ DBLENGTH nLength,
+		_In_ BYTE nPrecision,
+		_In_ BYTE nScale,
+		_In_ DBPARAMIO eParamIO,
+		_In_ DBBYTEOFFSET nDataOffset,
+		_In_ DBBYTEOFFSET nLengthOffset,
+		_In_ DBBYTEOFFSET nStatusOffset,
+		_In_opt_ DBOBJECT* pdbobject,
+		_In_ DBMEMOWNER dwMemOwner,
+		_In_ bool fSkipData = false )
 	{
 		ATLENSURE(pBinding != NULL);
 
@@ -3426,20 +3764,23 @@ public:
 			pBinding->dwPart |= DBPART_VALUE;
 			pBinding->obValue = nDataOffset;
 		}
-		if (nLengthOffset != NULL) // skip length
+		if (nLengthOffset != 0) // skip length
 		{
 			pBinding->dwPart |= DBPART_LENGTH;
 			pBinding->obLength = nLengthOffset;
 		}
-		if (nStatusOffset != NULL) // skip status
+		if (nStatusOffset != 0) // skip status
 		{
 			pBinding->dwPart |= DBPART_STATUS;
 			pBinding->obStatus = nStatusOffset;
 		}
 	}
 
-
-	HRESULT GetRowsetProperties( IUnknown* pUnk, DBPROPID* prgPropertyIDs, BOOL* pbValues, ULONG nPropCount ) throw()
+	HRESULT GetRowsetProperties(
+		_Inout_ IUnknown* pUnk,
+		_In_ DBPROPID* prgPropertyIDs,
+		_Out_cap_(nPropCount) BOOL* pbValues,
+		_In_ ULONG nPropCount) throw()
 	{
 		ULONG t;
 
@@ -3485,7 +3826,7 @@ public:
 		return hr;
 	}
 
-	HRESULT BindColumns(IUnknown* pUnk) throw()
+	HRESULT BindColumns(_Inout_ IUnknown* pUnk) throw()
 	{
 		IID iidStreamToUse = __uuidof(ISequentialStream);
 		bool fIStreamSupportTested = false;
@@ -3552,6 +3893,9 @@ public:
 #endif
 		DBBINDING* pCurrent = pBinding;
 		DBOBJECT*  pObject;
+
+		ATLASSUME(m_pColumnInfo != NULL || m_nColumns == 0);
+
 		for (i = 0; i < m_nColumns; i++)
 		{
 			// If it's a BLOB or the column size is large enough for us to treat it as
@@ -3790,7 +4134,7 @@ public:
 	}
 
 	// Translate the column number to the index into the column info array
-	bool TranslateColumnNo(DBORDINAL& nColumn) const throw()
+	bool TranslateColumnNo(_Inout_ DBORDINAL& nColumn) const throw()
 	{
 		ATLASSUME(m_pColumnInfo != NULL);
 		// If the user has overriden the binding then we need to search
@@ -3822,7 +4166,7 @@ public:
 		}
 	}
 
-	static size_t GetAlignment(DBTYPE bType) throw()
+	static size_t GetAlignment(_In_ DBTYPE bType) throw()
 	{
 		if( bType & DBTYPE_BYREF )
 			return __alignof(void*);
@@ -3948,7 +4292,10 @@ public:
 		}
 	}
 
-	inline static DBBYTEOFFSET AlignAndIncrementOffset( DBBYTEOFFSET& nOffset, DBLENGTH nSize, size_t nAlign ) throw()
+	inline static DBBYTEOFFSET AlignAndIncrementOffset(
+		_Inout_ DBBYTEOFFSET& nOffset,
+		_In_ DBLENGTH nSize,
+		_In_ size_t nAlign) throw()
 	{
 		DBBYTEOFFSET nResult;
 
@@ -3959,14 +4306,20 @@ public:
 		return nResult;
 	}
 
-	inline static void IncrementAndAlignOffset( DBBYTEOFFSET& nOffset, DBLENGTH nSize, size_t nAlign ) throw()
+	inline static void IncrementAndAlignOffset(
+		_Inout_ DBBYTEOFFSET& nOffset,
+		_In_ DBLENGTH nSize,
+		_In_ size_t nAlign) throw()
 	{
 		nOffset += nSize;
 		nOffset = AtlAlignUp( nOffset, (ULONG)nAlign );
 	}
 
 	typedef CDynamicAccessor _OutputColumnsClass;
-	static bool HasOutputColumns() throw() { return true; }
+	static bool HasOutputColumns() throw()
+	{
+		return true;
+	}
 
 	DBORDINAL           m_nColumns;
 	bool*				m_pfClientOwnedMemRef;
@@ -3978,53 +4331,63 @@ public:
 	DBBLOBHANDLINGENUM  m_eBlobHandling;
 	DBLENGTH            m_nBlobSize;
 };
-
-template< typename BaseType > 
-inline void strcpyT( BaseType *strDest, size_t maxCount, const BaseType *strSource)
+	
+template< typename BaseType >
+inline void strcpyT(
+	_Out_z_cap_(maxCount) BaseType *strDest,
+	_In_ size_t maxCount,
+	_In_z_ const BaseType *strSource)
 {
 	return NULL;
 }
 
-template< typename BaseType > 
-inline size_t strlenT( const BaseType *string )
+template< typename BaseType >
+inline size_t strlenT(_In_z_ const BaseType *string)
 {
 	return NULL;
 }
 
-template<> 
-inline void strcpyT<CHAR>( _Out_z_cap_(maxCount) CHAR *strDest, _In_ size_t maxCount, _In_ const CHAR *strSource)
+template<>
+inline void strcpyT<CHAR>(
+	_Out_z_cap_(maxCount) CHAR *strDest,
+	_In_ size_t maxCount,
+	_In_z_ const CHAR *strSource)
 {
 	Checked::strcpy_s( strDest, maxCount, strSource);
 }
 
-template<> 
-inline size_t strlenT<CHAR>( _In_z_ const CHAR *string )
+template<>
+inline size_t strlenT<CHAR>(_In_z_ const CHAR *string)
 {
 	return strlen( string );
 }
 
-template<> 
-inline void strcpyT<WCHAR>( _Out_z_cap_(maxCount) WCHAR *strDest, _In_ size_t maxCount, _In_ const WCHAR *strSource)
+template<>
+inline void strcpyT<WCHAR>(
+	_Out_z_cap_(maxCount) WCHAR *strDest,
+	_In_ size_t maxCount,
+	_In_z_ const WCHAR *strSource)
 {
 	Checked::wcscpy_s( strDest, maxCount, strSource);
 }
 
-template<> 
-inline size_t strlenT<WCHAR>( _In_z_ const WCHAR *string )
+template<>
+inline size_t strlenT<WCHAR>(_In_z_ const WCHAR *string)
 {
 	return wcslen( string );
 }
 
 template< typename BaseType, DBTYPEENUM OleDbType >
-class CDynamicStringAccessorT : public CDynamicAccessor
+class CDynamicStringAccessorT :
+	public CDynamicAccessor
 {
 public:
-	explicit CDynamicStringAccessorT(DBLENGTH nBlobSize = 8000)
+	explicit CDynamicStringAccessorT(_In_ DBLENGTH nBlobSize = 8000)
 		: CDynamicAccessor( DBBLOBHANDLING_DEFAULT, nBlobSize )
 	{
 	}
 
-	HRESULT BindColumns(IUnknown* pUnk) throw()
+	HRESULT BindColumns(_Inout_ IUnknown* pUnk) throw()
 	{
 		ATLENSURE_RETURN(pUnk != NULL);
 		CComPtr<IAccessor> spAccessor;
@@ -4069,6 +4432,8 @@ public:
 		}
 
 		DBBINDING* pCurrent = pBinding;
+
+		ATLASSUME(m_pColumnInfo != NULL || m_nColumns == 0);
 
 		for (i = 0; i < m_nColumns; i++)
 		{
@@ -4244,7 +4609,7 @@ public:
 		return hr;
 	}
 
-	BaseType* GetString(DBORDINAL nColumn) const throw()
+	BaseType* GetString(_In_ DBORDINAL nColumn) const throw()
 	{
 		if (TranslateColumnNo(nColumn))
 		{
@@ -4257,7 +4622,7 @@ public:
 			return NULL;
 	}
 
-	BaseType* GetString(const CHAR* pColumnName) const throw()
+	BaseType* GetString(_In_z_ const CHAR* pColumnName) const throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -4272,7 +4637,7 @@ public:
 			return NULL;    // Not Found
 	}
 
-	BaseType* GetString(const WCHAR* pColumnName) const throw()
+	BaseType* GetString(_In_z_ const WCHAR* pColumnName) const throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -4287,14 +4652,18 @@ public:
 			return NULL;    // Not Found
 	}
 
-	void _SetLength(DBORDINAL nColumn, DBLENGTH nLength ) throw()
+	void _SetLength(
+		_In_ DBORDINAL nColumn,
+		_In_ DBLENGTH nLength) throw()
 	{
 		DBBYTEOFFSET nOffset = (DBBYTEOFFSET)(ULONG_PTR)m_pColumnInfo[nColumn].pTypeInfo;
 		IncrementAndAlignOffset( nOffset, m_pColumnInfo[nColumn].ulColumnSize, __alignof(DBLENGTH) );
 		*(DBLENGTH*)( m_pBuffer + nOffset ) = nLength;
 	}
 
-	HRESULT _SetString(DBORDINAL nColumn, BaseType* data) throw()
+	HRESULT _SetString(
+		_In_ DBORDINAL nColumn,
+		_In_z_ BaseType* data) throw()
 	{
 		DBLENGTH stringLen = (DBLENGTH)strlenT<BaseType>( data );
 
@@ -4302,14 +4671,14 @@ public:
 		{
 			BaseType** pBuffer = (BaseType**)_GetDataPtr(nColumn);
 
-        
-     
+
+
 			//in case of overflow throw exception
-			if (stringLen + 1>(size_t(-1)/sizeof(BaseType)))                       
+			if (stringLen + 1>(size_t(-1)/sizeof(BaseType)))
 			{
-				return(E_FAIL);//arithmetic overflow 
+				return(E_FAIL);//arithmetic overflow
 			}
-		
+
 			BaseType* pNewBuffer = (BaseType*)::ATL::AtlCoTaskMemRecalloc( *pBuffer, (stringLen + 1), sizeof(BaseType));
 			if( pNewBuffer == NULL )
 				return E_OUTOFMEMORY;
@@ -4337,14 +4706,18 @@ public:
 		return S_OK;
 	}
 
-	HRESULT SetString(DBORDINAL nColumn, BaseType* data) throw()
+	HRESULT SetString(
+		_In_ DBORDINAL nColumn,
+		_In_z_ BaseType* data) throw()
 	{
 		if (TranslateColumnNo(nColumn))
 			return _SetString(nColumn, data);
 		else
 			return DB_S_ERRORSOCCURRED;
 	}
-	HRESULT SetString(const CHAR* pColumnName, BaseType* data) throw()
+	HRESULT SetString(
+		_In_z_ const CHAR* pColumnName,
+		_In_z_ BaseType* data) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -4353,7 +4726,9 @@ public:
 		else
 			return DB_S_ERRORSOCCURRED;
 	}
-	HRESULT SetString(const WCHAR* pColumnName, BaseType* data) throw()
+	HRESULT SetString(
+		_In_z_ const WCHAR* pColumnName,
+		_In_z_ BaseType* data) throw()
 	{
 		ATLASSERT(pColumnName != NULL);
 		DBORDINAL nColumn;
@@ -4374,11 +4749,12 @@ typedef CDynamicStringAccessorW CDynamicStringAccessor;
 typedef CDynamicStringAccessorA CDynamicStringAccessor;
 #endif
 
-class CXMLAccessor : public CDynamicStringAccessorW
+class CXMLAccessor :
+	public CDynamicStringAccessorW
 {
 public:
 
-	HRESULT GetXMLColumnData(CSimpleStringW& strOutput) throw()
+	HRESULT GetXMLColumnData(_Inout_ CSimpleStringW& strOutput) throw()
 	{
 		_ATLTRY
 		{
@@ -4387,7 +4763,7 @@ public:
 			DBORDINAL nColumns = m_nColumns;
 			//If Bookmark column -> index is 0 based starting at bookmark - index 0.
 			if (m_pColumnInfo->iOrdinal == 0 && m_nColumns > 0)
-			{	
+			{
 				--nColumns;
 			}
 			for (ULONG i=1; i <= nColumns; i++)
@@ -4490,7 +4866,9 @@ public:
 		}
 	}
 
-	HRESULT GetXMLRowData(CSimpleStringW& strOutput, bool bAppend = false) throw()
+	HRESULT GetXMLRowData(
+		_Inout_ CSimpleStringW& strOutput,
+		_In_ bool bAppend = false) throw()
 	{
 		_ATLTRY
 		{
@@ -4501,7 +4879,7 @@ public:
 			DBORDINAL nColumns = m_nColumns;
 			//If Bookmark column -> index is 0 based starting at bookmark - index 0.
 			if (m_pColumnInfo->iOrdinal == 0 && m_nColumns > 0)
-			{	
+			{
 				--nColumns;
 			}
 			for (ULONG i=1; i<=nColumns; i++)
@@ -4533,10 +4911,11 @@ public:
 };
 
 // Like CDynamicAccessor but everything is bound as a DBTYPE_VARIANT
-class CDynamicVariantAccessor : public CDynamicAccessor
+class CDynamicVariantAccessor :
+	public CDynamicAccessor
 {
 public:
-	HRESULT BindColumns(IUnknown* pUnk) throw()
+	HRESULT BindColumns(_Inout_ IUnknown* pUnk) throw()
 	{
 		ATLENSURE_RETURN(pUnk != NULL);
 		CComPtr<IAccessor> spAccessor;
@@ -4576,6 +4955,9 @@ public:
 
 		DBBINDING* pCurrent = pBinding;
 		DBOBJECT*  pObject;
+
+		ATLASSUME(m_pColumnInfo != NULL || m_nColumns == 0);
+
 		for (i = 0; i < m_nColumns; i++)
 		{
 			// If it's a BLOB or the column size is large enough for us to treat it as
@@ -4652,12 +5034,15 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 // class CDynamicParameterAccessor
 
-class CDynamicParameterAccessor : public CDynamicAccessor
+class CDynamicParameterAccessor :
+	public CDynamicAccessor
 {
 // Constructors and Destructors
 public:
 	typedef CDynamicParameterAccessor _ParamClass;
-	CDynamicParameterAccessor( DBBLOBHANDLINGENUM eBlobHandling = DBBLOBHANDLING_DEFAULT, DBLENGTH nBlobSize = 8000 )
+	CDynamicParameterAccessor(
+			_In_ DBBLOBHANDLINGENUM eBlobHandling = DBBLOBHANDLING_DEFAULT,
+			_In_ DBLENGTH nBlobSize = 8000 )
 		: CDynamicAccessor( eBlobHandling, nBlobSize )
 	{
 		m_pParameterEntry       = NULL;
@@ -4678,7 +5063,9 @@ public:
 		delete m_pParameterBuffer;
 	};
 
-	bool GetParamSize(DBORDINAL nParam, DBLENGTH *pLength) const
+	bool GetParamSize(
+		_In_ DBORDINAL nParam,
+		_Out_ DBLENGTH *pLength) const
 	{
 		ATLENSURE( pLength != NULL );
 
@@ -4689,7 +5076,9 @@ public:
 		return true;
 	}
 
-	bool GetParamIO(DBORDINAL nParam, DBPARAMIO *pParamIO) const
+	bool GetParamIO(
+		_In_ DBORDINAL nParam,
+		_Out_ DBPARAMIO *pParamIO) const
 	{
 		ATLENSURE( pParamIO != NULL );
 
@@ -4700,7 +5089,9 @@ public:
 		return true;
 	}
 
-	bool GetParamType(DBORDINAL nParam, DBTYPE *pType) const 
+	bool GetParamType(
+		_In_ DBORDINAL nParam,
+		_Out_ DBTYPE *pType) const
 	{
 		ATLENSURE( pType != NULL );
 
@@ -4710,7 +5101,9 @@ public:
 		*pType = m_pParameterEntry[nParam].wType;
 		return true;
 	}
-	bool GetParamLength(DBORDINAL nParam, DBLENGTH *pLength)
+	bool GetParamLength(
+		_In_ DBORDINAL nParam,
+		_Out_ DBLENGTH *pLength)
 	{
 		ATLENSURE( pLength != NULL );
 
@@ -4720,7 +5113,9 @@ public:
 		*pLength = *pBuffer;
 		return true;
 	}
-	bool SetParamLength(DBORDINAL nParam, DBLENGTH length)
+	bool SetParamLength(
+		_In_ DBORDINAL nParam,
+		_In_ DBLENGTH length)
 	{
 		DBLENGTH* pBuffer = GetParamLength(nParam);
 		if (pBuffer == NULL)
@@ -4728,7 +5123,9 @@ public:
 		*pBuffer = length;
 		return true;
 	}
-	bool GetParamStatus(DBORDINAL nParam, DBSTATUS *pStatus)
+	bool GetParamStatus(
+		_In_ DBORDINAL nParam,
+		_Out_ DBSTATUS *pStatus)
 	{
 		ATLENSURE( pStatus != NULL );
 
@@ -4738,7 +5135,9 @@ public:
 		*pStatus = *pBuffer;
 		return true;
 	}
-	bool SetParamStatus(DBORDINAL nParam, DBSTATUS status)
+	bool SetParamStatus(
+		_In_ DBORDINAL nParam,
+		_In_ DBSTATUS status)
 	{
 		DBSTATUS* pBuffer = GetParamStatus(nParam);
 		if (pBuffer == NULL)
@@ -4747,7 +5146,9 @@ public:
 		return true;
 	}
 	template <class ctype>
-	bool GetParam(DBORDINAL nParam, ctype* pData) const throw()
+	bool GetParam(
+		_In_ DBORDINAL nParam,
+		_Out_ ctype* pData) const throw()
 	{
 		ATLENSURE_RETURN_VAL( pData != NULL, false);
 		ctype* pBuffer = (ctype*)GetParam(nParam);
@@ -4757,7 +5158,9 @@ public:
 		return true;
 	}
 
-	bool GetParamString(DBORDINAL nParam, CSimpleStringA& strOutput ) throw()
+	bool GetParamString(
+		_In_ DBORDINAL nParam,
+		_Inout_ CSimpleStringA& strOutput) throw()
 	{
 		CHAR* pData = (CHAR*)GetParam(nParam);
 		if (pData == NULL)
@@ -4767,7 +5170,9 @@ public:
 		return true;
 	}
 
-	bool GetParamString(DBORDINAL nParam, CSimpleStringW& strOutput ) throw()
+	bool GetParamString(
+		_In_ DBORDINAL nParam,
+		_Inout_ CSimpleStringW& strOutput) throw()
 	{
 		WCHAR* pData = (WCHAR*)GetParam(nParam);
 		if (pData == NULL)
@@ -4777,7 +5182,10 @@ public:
 		return true;
 	}
 
-	bool GetParamString(_In_ DBORDINAL nParam, _Out_opt_z_cap_post_count_(*pMaxLen, *pMaxLen) CHAR* pBuffer, _Inout_ size_t* pMaxLen) throw()
+	bool GetParamString(
+		_In_ DBORDINAL nParam,
+		_Out_opt_z_cap_post_count_(*pMaxLen, *pMaxLen) CHAR* pBuffer,
+		_Inout_ size_t* pMaxLen) throw()
 	{
 		ATLASSERT( pMaxLen != NULL );
 
@@ -4802,7 +5210,10 @@ public:
 		return true;
 	}
 
-	bool GetParamString(_In_ DBORDINAL nParam, _Out_opt_z_cap_post_count_(*pMaxLen, *pMaxLen) WCHAR* pBuffer, _Inout_ size_t* pMaxLen) throw()
+	bool GetParamString(
+		_In_ DBORDINAL nParam,
+		_Out_opt_z_cap_post_count_(*pMaxLen, *pMaxLen) WCHAR* pBuffer,
+		_Inout_ size_t* pMaxLen) throw()
 	{
 		ATLASSERT( pMaxLen != NULL );
 
@@ -4828,7 +5239,10 @@ public:
 	}
 
 	template <class ctype>
-	bool SetParam(DBORDINAL nParam, const ctype* pData, DBSTATUS status = DBSTATUS_S_OK )
+	bool SetParam(
+		_In_ DBORDINAL nParam,
+		_In_ const ctype* pData,
+		_In_ DBSTATUS status = DBSTATUS_S_OK)
 	{
 		ATLENSURE( pData != NULL );
 
@@ -4848,7 +5262,10 @@ public:
 		return true;
 	}
 
-	bool SetParamString(DBORDINAL nParam, const CHAR* pString, DBSTATUS status = DBSTATUS_S_OK ) 
+	bool SetParamString(
+		_In_ DBORDINAL nParam,
+		_In_z_ const CHAR* pString,
+		_In_ DBSTATUS status = DBSTATUS_S_OK )
 	{
 		ATLENSURE( pString != NULL );
 
@@ -4875,7 +5292,10 @@ public:
 		return true;
 	}
 
-	bool SetParamString(DBORDINAL nParam, const WCHAR* pString, DBSTATUS status = DBSTATUS_S_OK ) throw()
+	bool SetParamString(
+		_In_ DBORDINAL nParam,
+		_In_z_ const WCHAR* pString,
+		_In_ DBSTATUS status = DBSTATUS_S_OK ) throw()
 	{
 		ATLASSUME( pString != NULL );
 
@@ -4903,7 +5323,9 @@ public:
 	}
 
 	template <class ctype>
-	bool GetParam(_In_z_ TCHAR* pParamName, _Out_ ctype* pData) const throw()
+	bool GetParam(
+		_In_z_ TCHAR* pParamName,
+		_Out_ ctype* pData) const throw()
 	{
 		ATLENSURE_RETURN_VAL( pData != NULL, false);
 
@@ -4920,7 +5342,10 @@ public:
 	}
 
 	template <class ctype>
-	bool SetParam(_In_z_ TCHAR* pParamName, _In_ const ctype* pData, _In_ DBSTATUS status = DBSTATUS_S_OK ) throw()
+	bool SetParam(
+		_In_z_ TCHAR* pParamName,
+		_In_ const ctype* pData,
+		_In_ DBSTATUS status = DBSTATUS_S_OK) throw()
 	{
 		ATLASSERT( pData != NULL );
 
@@ -4944,7 +5369,7 @@ public:
 		return true;
 	}
 
-	void* GetParam(DBORDINAL nParam) const throw()
+	void* GetParam(_In_ DBORDINAL nParam) const throw()
 	{
 		if( !TranslateParameterNo( nParam ) )
 			return NULL;
@@ -4952,7 +5377,7 @@ public:
 		return _GetParam( nParam );
 	}
 
-	DBLENGTH* GetParamLength(DBORDINAL nParam) const throw()
+	DBLENGTH* GetParamLength(_In_ DBORDINAL nParam) const throw()
 	{
 		if( !TranslateParameterNo( nParam ) )
 			return NULL;
@@ -4960,7 +5385,7 @@ public:
 		return _GetParamLength( nParam );
 	}
 
-	DBSTATUS* GetParamStatus(DBORDINAL nParam) const throw()
+	DBSTATUS* GetParamStatus(_In_ DBORDINAL nParam) const throw()
 	{
 		if( !TranslateParameterNo( nParam ) )
 			return NULL;
@@ -4968,7 +5393,7 @@ public:
 		return _GetParamStatus( nParam );
 	}
 
-	void* GetParam(TCHAR* pParamName) const throw()
+	void* GetParam(_In_z_ TCHAR* pParamName) const throw()
 	{
 		ATLENSURE_RETURN_VAL( pParamName, NULL);
 		DBORDINAL nParam = 0;
@@ -4985,7 +5410,7 @@ public:
 	}
 
 	// Get the parameter name for the passed parameter number
-	LPOLESTR GetParamName(DBORDINAL nParam) const throw()
+	LPOLESTR GetParamName(_In_ DBORDINAL nParam) const throw()
 	{
 		if( !TranslateParameterNo( nParam ) )
 			return NULL;
@@ -4993,7 +5418,7 @@ public:
 		return m_ppParamName[nParam];
 	}
 
-	bool TranslateParameterNo( DBORDINAL& nParam ) const throw()
+	bool TranslateParameterNo(_Inout_ DBORDINAL& nParam) const throw()
 	{
 		for( DBORDINAL i = 0; i < m_nParams; i++ )
 		{
@@ -5007,7 +5432,9 @@ public:
 		return false;
 	}
 
-	bool _GetParameterNo(_In_z_  TCHAR* pParamName, _In_ DBORDINAL& nParam ) const throw()
+	bool _GetParameterNo(
+		_In_z_ TCHAR* pParamName,
+		_Out_ DBORDINAL& nParam) const throw()
 	{
 		if( pParamName == NULL )
 			return false;
@@ -5028,12 +5455,12 @@ public:
 		return false;    // Not Found
 	}
 
-	void* _GetParam(DBORDINAL nParam) const throw()
+	void* _GetParam(_In_ DBORDINAL nParam) const throw()
 	{
 		return m_pParameterBuffer + m_pParameterEntry[nParam].obValue;
 	}
 
-	DBLENGTH* _GetParamLength(DBORDINAL nParam) const throw()
+	DBLENGTH* _GetParamLength(_In_ DBORDINAL nParam) const throw()
 	{
 		if( m_pParameterEntry[nParam].obLength == 0 )
 			return NULL;
@@ -5041,7 +5468,7 @@ public:
 			return (DBLENGTH*)(m_pParameterBuffer + m_pParameterEntry[nParam].obLength);
 	}
 
-	DBSTATUS* _GetParamStatus(DBORDINAL nParam) const throw()
+	DBSTATUS* _GetParamStatus(_In_ DBORDINAL nParam) const throw()
 	{
 		if( m_pParameterEntry[nParam].obStatus == 0 )
 			return NULL;
@@ -5050,12 +5477,16 @@ public:
 	}
 
 // Implementation
-	HRESULT BindParameters(HACCESSOR* pHAccessor, ICommand* pCommand,
-				void** ppParameterBuffer, bool fBindLength = false, bool fBindStatus = false ) throw()
+	HRESULT BindParameters(
+		_In_ HACCESSOR* pHAccessor,
+		_Inout_ ICommand* pCommand,
+		_Deref_out_ void** ppParameterBuffer,
+		_In_ bool fBindLength = false,
+		_In_ bool fBindStatus = false) throw()
 	{
 		// If we have already bound the parameters then just return
 		// the pointer to the parameter buffer
-		if (*pHAccessor != NULL)
+		if (*pHAccessor != 0)
 		{
 			*ppParameterBuffer = m_pParameterBuffer;
 			return S_OK;
@@ -5168,7 +5599,7 @@ public:
 	{
 		return true;
 	}
-	HRESULT AllocateParameterInfo(DB_UPARAMS nParamEntries) throw()
+	HRESULT AllocateParameterInfo(_In_ DB_UPARAMS nParamEntries) throw()
 	{
 		// Allocate memory for the bind structures
 		m_pParameterEntry = NULL;
@@ -5211,7 +5642,7 @@ class CManualAccessor :
 public:
 	CManualAccessor()
 	{
-		// By default we don't have any parameters unless CreateParameterAccessor 
+		// By default we don't have any parameters unless CreateParameterAccessor
 		// is called
 		m_pEntry          = NULL;
 		m_nParameters     = 0;
@@ -5225,13 +5656,16 @@ public:
 		delete [] m_pParameterEntry;
 	}
 
-	HRESULT ReleaseAccessors(IUnknown* pUnk) throw()
+	HRESULT ReleaseAccessors(_Inout_ IUnknown* pUnk) throw()
 	{
 		FreeRecordMemory( (IRowset*) pUnk );
 		return CAccessorBase::ReleaseAccessors(pUnk);
 	}
 
-	HRESULT CreateAccessor(int nBindEntries, void* pBuffer, DBLENGTH nBufferSize) throw()
+	HRESULT CreateAccessor(
+		_In_ int nBindEntries,
+		_In_bytecount_(nBufferSize) void* pBuffer,
+		_In_ DBLENGTH nBufferSize) throw()
 	{
 		m_pBuffer     = (BYTE*)pBuffer;
 		m_nBufferSize = nBufferSize;
@@ -5252,7 +5686,10 @@ public:
 
 		return S_OK;
 	}
-	HRESULT CreateParameterAccessor(int nBindEntries, void* pBuffer, DBLENGTH nBufferSize) throw()
+	HRESULT CreateParameterAccessor(
+		_In_ int nBindEntries,
+		_In_bytecount_(nBufferSize) void* pBuffer,
+		_In_ DBLENGTH nBufferSize) throw()
 	{
 		// Should be called only once.  But, if you really insist on doing this...
 		if (m_pParameterEntry != NULL)
@@ -5275,8 +5712,13 @@ public:
 
 		return S_OK;
 	}
-	void AddBindEntry(DBORDINAL nOrdinal, DBTYPE wType, DBLENGTH nColumnSize,
-			void* pData, void* pLength = NULL, void* pStatus = NULL) throw()
+	void AddBindEntry(
+		_In_ DBORDINAL nOrdinal,
+		_In_ DBTYPE wType,
+		_In_ DBLENGTH nColumnSize,
+		_In_ void* pData,
+		_In_opt_ void* pLength = NULL,
+		_In_opt_ void* pStatus = NULL) throw()
 	{
 		ATLASSUME(m_nEntry < m_nColumns);
 		DBBYTEOFFSET   nLengthOffset, nStatusOffset;
@@ -5296,9 +5738,14 @@ public:
 
 		m_nEntry++;
 	}
-	void AddParameterEntry(DBORDINAL nOrdinal, DBTYPE wType, DBLENGTH nColumnSize,
-			void* pData, void* pLength = NULL, void* pStatus = NULL,
-			DBPARAMIO eParamIO = DBPARAMIO_INPUT) throw()
+	void AddParameterEntry(
+		_In_ DBORDINAL nOrdinal,
+		_In_ DBTYPE wType,
+		_In_ DBLENGTH nColumnSize,
+		_In_ void* pData,
+		_In_opt_ void* pLength = NULL,
+		_In_opt_ void* pStatus = NULL,
+		_In_ DBPARAMIO eParamIO = DBPARAMIO_INPUT) throw()
 	{
 		ATLASSUME(m_nCurrentParameter < m_nParameters);
 		DBBYTEOFFSET nLengthOffset, nStatusOffset;
@@ -5322,7 +5769,7 @@ public:
 // Implementation
 	// Free's any columns in the current record that need to be freed.
 	// E.g. Calls SysFreeString on any BSTR's and Release on any interfaces.
-	void FreeRecordMemory(IRowset* pRowset) throw ()
+	void FreeRecordMemory(_Inout_ IRowset* pRowset) throw ()
 	{
 		ULONG i;
 
@@ -5335,7 +5782,7 @@ public:
 		memset(m_pBuffer, 0, m_nBufferSize);
 	}
 
-	HRESULT BindColumns(IUnknown* pUnk) throw()
+	HRESULT BindColumns(_Inout_ IUnknown* pUnk) throw()
 	{
 		ATLENSURE_RETURN(pUnk != NULL);
 		CComPtr<IAccessor> spAccessor;
@@ -5355,14 +5802,17 @@ public:
 		return BindEntries(m_pEntry, m_nColumns, &m_pAccessorInfo->hAccessor, m_nBufferSize, spAccessor);
 	}
 
-	HRESULT BindParameters(HACCESSOR* pHAccessor, ICommand* pCommand, void** ppParameterBuffer) throw()
+	HRESULT BindParameters(
+		_In_ HACCESSOR* pHAccessor,
+		_Inout_ ICommand* pCommand,
+		_Deref_out_ void** ppParameterBuffer) throw()
 	{
 		HRESULT hr;
 		ATLENSURE_RETURN(ppParameterBuffer);
 		*ppParameterBuffer = m_pParameterBuffer;
 
 		// Only bind the parameter if we haven't done so yet
-		if (*pHAccessor == NULL)
+		if (*pHAccessor == 0)
 		{
 			// Get the IAccessor from the passed IUnknown
 			CComPtr<IAccessor> spAccessor;
@@ -5379,10 +5829,18 @@ public:
 
 		return hr;
 	}
+
 	typedef CManualAccessor _ParamClass;
-	bool HasParameters() throw() { return (m_nParameters > 0); }
 	typedef CManualAccessor _OutputColumnsClass;
-	bool HasOutputColumns() throw() { return (m_nColumns > 0); }
+
+	bool HasParameters() throw()
+	{
+		return (m_nParameters > 0);
+	}
+	bool HasOutputColumns() throw()
+	{
+		return (m_nColumns > 0);
+	}
 	DBORDINAL GetColumnCount() const throw()
 	{
 		return m_nColumns;
@@ -5420,7 +5878,7 @@ public:
 	{
 		delete m_pParams;
 	}
-	BOOL AddBinding(DBBINDING& binding)
+	BOOL AddBinding(_In_ DBBINDING& binding)
 	{
 		return m_rgBinding.Add(binding);
 	}
@@ -5432,7 +5890,8 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////
 // CColumnAccessor
-class CColumnAccessor : public CAccessorBase
+class CColumnAccessor :
+	public CAccessorBase
 {
 public:
 	CColumnAccessor()
@@ -5444,15 +5903,21 @@ public:
 		delete m_pParamInfo;
 	}
 
-	HRESULT ReleaseAccessors(IUnknown* pUnk) throw()
+	HRESULT ReleaseAccessors(_Inout_ IUnknown* pUnk) throw()
 	{
 		FreeRecordMemory( (IRowset*) pUnk );
 		return CAccessorBase::ReleaseAccessors(pUnk);
 	}
 
 	// pUnk is the interface the accessor will be created upon
-	HRESULT CreateAccessor(IUnknown* pUnk, DBORDINAL nOrdinal, DBTYPE wType, DBLENGTH nColumnSize,
-			BYTE nPrecision, BYTE nScale, void* pData) throw()
+	HRESULT CreateAccessor(
+		_Inout_ IUnknown* pUnk,
+		_In_ DBORDINAL nOrdinal,
+		_In_ DBTYPE wType,
+		_In_ DBLENGTH nColumnSize,
+		_In_ BYTE nPrecision,
+		_In_ BYTE nScale,
+		_In_ void* pData) throw()
 	{
 		(nPrecision);
 		(nScale);
@@ -5478,11 +5943,11 @@ public:
 	}
 	// Bind columns doesn't have to do anything here as we bind each accessor when
 	// CreateAccessor is called
-	HRESULT BindColumns(IUnknown*) throw()
+	HRESULT BindColumns(_In_opt_ IUnknown*) throw()
 	{
 		return S_OK;
 	}
-	HRESULT SetParameterBuffer(BYTE* pBuffer) throw()
+	HRESULT SetParameterBuffer(_In_opt_ BYTE* pBuffer) throw()
 	{
 		// This should only be called once.
 		ATLASSUME(m_pParamInfo == NULL);
@@ -5494,8 +5959,14 @@ public:
 		m_pParamInfo->m_pBuffer = pBuffer;
 		return S_OK;
 	}
-	HRESULT AddParameter(DBPARAMIO paramio, DBORDINAL nOrdinal, DBTYPE wType, DBLENGTH nColumnSize,
-			BYTE /* nPrecision*/, BYTE /* nScale */, void* pData) throw()
+	HRESULT AddParameter(
+		_In_ DBPARAMIO paramio,
+		_In_ DBORDINAL nOrdinal,
+		_In_ DBTYPE wType,
+		_In_ DBLENGTH nColumnSize,
+		_In_ BYTE /* nPrecision*/,
+		_In_ BYTE /* nScale */,
+		_In_ void* pData) throw()
 	{
 		ATLASSUME(m_pParamInfo != NULL);
 
@@ -5521,13 +5992,16 @@ public:
 		return (m_pParamInfo != NULL) ? true : false;
 	}
 	// Called to bind the parameters created
-	HRESULT BindParameters(HACCESSOR* pHAccessor, ICommand* pCommand, void** ppParameterBuffer)
+	HRESULT BindParameters(
+		_In_ HACCESSOR* pHAccessor,
+		_Inout_ ICommand* pCommand,
+		_Deref_out_ void** ppParameterBuffer)
 	{
 		ATLASSUME(m_pParamInfo != NULL);
 		HRESULT hr = S_OK;
 
 		// Only bind the parameters if we haven't already done it
-		if (*pHAccessor == NULL)
+		if (*pHAccessor == 0)
 		{
 			// Get the IAccessor from the passed ICommand
 			CComPtr<IAccessor> spAccessor;
@@ -5547,6 +6021,7 @@ public:
 // Implementation
 	typedef CColumnAccessor _ParamClass;
 	typedef CColumnAccessor _OutputColumnsClass;
+
 	HRESULT AddAccessorInfo() throw()
 	{
 		_ATL_ACCESSOR_INFO* pAccessorInfo = NULL;
@@ -5568,7 +6043,6 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////
 // CAccessorRowset
-
 template <class TAccessor = CNoAccessor, template <typename T> class TRowset = CRowset>
 class CAccessorRowset :
 	public TAccessor,
@@ -5587,10 +6061,13 @@ public:
 	{
 		Close();
 	}
+ATLPREFAST_SUPPRESS(6387)
 	// Used to get the column information from the opened rowset. The user is responsible
 	// for freeing the returned column information and string buffer.
-	HRESULT GetColumnInfo(DBORDINAL* pulColumns,
-		DBCOLUMNINFO** ppColumnInfo, LPOLESTR* ppStrings) const throw()
+	HRESULT GetColumnInfo(
+		_In_ DBORDINAL* pulColumns,
+		_Deref_out_ DBCOLUMNINFO** ppColumnInfo,
+		_Deref_out_z_ LPOLESTR* ppStrings) const throw()
 	{
 		if (ppColumnInfo == NULL || pulColumns == NULL || ppStrings == NULL)
 			return E_POINTER;
@@ -5605,19 +6082,25 @@ public:
 
 		return hr;
 	}
-
+ATLPREFAST_UNSUPPRESS()
+	
 	// Used to get the column information when overriding the bindings using CDynamicAccessor
 	// The user should CoTaskMemFree the column information pointer that is returned.
-	HRESULT GetColumnInfo(DBORDINAL* pColumns, DBCOLUMNINFO** ppColumnInfo) throw()
+	HRESULT GetColumnInfo(
+		_In_ DBORDINAL* pColumns,
+		_Deref_out_ DBCOLUMNINFO** ppColumnInfo) throw()
 	{
 		// If you get a compilation here, then you are most likely calling this function
 		// from a class that is not using CDynamicAccessor.
 		ATLASSERT(GetInterface() != NULL);
 		if (GetInterface() == NULL)
 			return E_FAIL;
+
+		ATLASSUME(ppColumnInfo != NULL);
+
 		return TAccessor::GetColumnInfo(GetInterface(), pColumns, ppColumnInfo);
 	}
-
+	
 	// Call to bind the output columns
 	HRESULT Bind() throw()
 	{
@@ -5652,7 +6135,6 @@ public:
 	}
 };
 
-
 ///////////////////////////////////////////////////////////////////////////
 // class CEnumeratorAccessor
 
@@ -5679,10 +6161,11 @@ END_COLUMN_MAP()
 ///////////////////////////////////////////////////////////////////////////
 // class CEnumerator
 
-class CEnumerator : public CAccessorRowset<CAccessor<CEnumeratorAccessor> >
+class CEnumerator :
+	public CAccessorRowset<CAccessor<CEnumeratorAccessor> >
 {
 public:
-	HRESULT Open(LPMONIKER pMoniker) throw()
+	HRESULT Open(_In_ LPMONIKER pMoniker) throw()
 	{
 		if (pMoniker == NULL)
 			return E_FAIL;
@@ -5699,7 +6182,7 @@ public:
 
 		return Bind();
 	}
-	HRESULT Open(const CEnumerator& enumerator) throw()
+	HRESULT Open(_In_ const CEnumerator& enumerator) throw()
 	{
 		HRESULT hr;
 		CComPtr<IMoniker> spMoniker;
@@ -5710,7 +6193,7 @@ public:
 
 		return Open(spMoniker);
 	}
-	HRESULT Open(const CLSID* pClsid = &CLSID_OLEDB_ENUMERATOR) throw()
+	HRESULT Open(_In_ const CLSID* pClsid = &CLSID_OLEDB_ENUMERATOR) throw()
 	{
 		if (pClsid == NULL)
 			return E_FAIL;
@@ -5741,7 +6224,7 @@ public:
 		CAccessorRowset<CAccessor<CEnumeratorAccessor> >::Close();
 	}
 
-	HRESULT GetMoniker(LPMONIKER* ppMoniker) const throw()
+	HRESULT GetMoniker(_Deref_out_ LPMONIKER* ppMoniker) const throw()
 	{
 		CComPtr<IParseDisplayName> spParse;
 		HRESULT hr;
@@ -5762,7 +6245,9 @@ public:
 		return hr;
 	}
 
-	HRESULT GetMoniker(LPMONIKER* ppMoniker, LPCTSTR lpszDisplayName) const throw()
+	HRESULT GetMoniker(
+		_Deref_out_ LPMONIKER* ppMoniker,
+		_In_z_ LPCTSTR lpszDisplayName) const throw()
 	{
 		CComPtr<IParseDisplayName> spParse;
 		HRESULT hr;
@@ -5783,7 +6268,7 @@ public:
 		return hr;
 	}
 
-	bool Find(TCHAR* szSearchName) throw()
+	bool Find(_In_z_ TCHAR* szSearchName) throw()
 	{
 		CT2W ctSearchName(szSearchName);
 		WCHAR *wszSearchName = ctSearchName;
@@ -5809,7 +6294,10 @@ public:
 class CDataSource
 {
 public:
-	HRESULT Open(const CLSID& clsid, DBPROPSET* pPropSet = NULL, ULONG nPropertySets=1) throw()
+	HRESULT Open(
+		_In_ const CLSID& clsid,
+		_Inout_opt_cap_(nPropertySets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG nPropertySets=1) throw()
 	{
 		HRESULT hr;
 
@@ -5822,20 +6310,25 @@ public:
 		// Initialize the provider
 		return OpenWithProperties(pPropSet, nPropertySets);
 	}
-	HRESULT Open(const CLSID& clsid, LPCTSTR pName, LPCTSTR pUserName = NULL,
-		LPCTSTR pPassword = NULL, long nInitMode = 0) throw()
+	HRESULT Open(
+		_In_ const CLSID& clsid,
+		_In_z_ LPCTSTR pName,
+		_In_opt_z_ LPCTSTR pUserName = NULL,
+		_In_opt_z_ LPCTSTR pPassword = NULL,
+		_In_ long nInitMode = 0) throw()
 	{
-		HRESULT   hr;
-
 		m_spInit.Release();
-		hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, __uuidof(IDBInitialize),
+		HRESULT hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, __uuidof(IDBInitialize),
 				(void**)&m_spInit);
 		if (FAILED(hr))
 			return hr;
 
 		return OpenWithNameUserPassword(pName, pUserName, pPassword, nInitMode);
 	}
-	HRESULT Open(LPCSTR szProgID, DBPROPSET* pPropSet = NULL, ULONG nPropertySets=1) throw()
+	HRESULT Open(
+		_In_z_ LPCSTR szProgID,
+		_Inout_opt_cap_(nPropertySets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG nPropertySets=1) throw()
 	{
 		HRESULT hr;
 		CLSID   clsid;
@@ -5848,19 +6341,25 @@ public:
 
 		return Open(clsid, pPropSet, nPropertySets);
 	}
-	HRESULT Open(LPCWSTR szProgID, LPCTSTR pName, LPCTSTR pUserName = NULL,
-		LPCTSTR pPassword = NULL, long nInitMode = 0) throw()
+	HRESULT Open(
+		_In_z_ LPCWSTR szProgID,
+		_In_z_ LPCTSTR pName,
+		_In_opt_z_ LPCTSTR pUserName = NULL,
+		_In_opt_z_ LPCTSTR pPassword = NULL,
+		_In_ long nInitMode = 0) throw()
 	{
-		HRESULT hr;
-		CLSID   clsid;
+		CLSID clsid;
 
-		hr = CLSIDFromProgID(szProgID, &clsid);
+		HRESULT hr = CLSIDFromProgID(szProgID, &clsid);
 		if (FAILED(hr))
 			return hr;
 
 		return Open(clsid, pName, pUserName, pPassword, nInitMode);
 	}
-	HRESULT Open(LPCWSTR szProgID, DBPROPSET* pPropSet = NULL, ULONG nPropertySets=1) throw()
+	HRESULT Open(
+		_In_z_ LPCWSTR szProgID,
+		_Inout_opt_cap_(nPropertySets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG nPropertySets=1) throw()
 	{
 		HRESULT hr;
 		CLSID   clsid;
@@ -5871,13 +6370,16 @@ public:
 
 		return Open(clsid, pPropSet, nPropertySets);
 	}
-	HRESULT Open(LPCSTR szProgID, LPCTSTR pName, LPCTSTR pUserName = NULL,
-		LPCTSTR pPassword = NULL, long nInitMode = 0) throw()
+	HRESULT Open(
+		_In_z_ LPCSTR szProgID,
+		_In_z_ LPCTSTR pName,
+		_In_opt_z_ LPCTSTR pUserName = NULL,
+		_In_opt_z_ LPCTSTR pPassword = NULL,
+		_In_ long nInitMode = 0) throw()
 	{
-		HRESULT hr;
 		CLSID   clsid;
 
-		hr = CLSIDFromProgID(CComBSTR(szProgID), &clsid);
+		HRESULT hr = CLSIDFromProgID(CComBSTR(szProgID), &clsid);
 		if (FAILED(hr))
 		{
 			return hr;
@@ -5885,12 +6387,14 @@ public:
 
 		return Open(clsid, pName, pUserName, pPassword, nInitMode);
 	}
-	HRESULT Open(const CEnumerator& enumerator, DBPROPSET* pPropSet = NULL, ULONG nPropertySets=1) throw()
+	HRESULT Open(
+		_In_ const CEnumerator& enumerator,
+		_Inout_opt_cap_(nPropertySets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG nPropertySets=1) throw()
 	{
 		CComPtr<IMoniker> spMoniker;
-		HRESULT   hr;
 
-		hr = enumerator.GetMoniker(&spMoniker);
+		HRESULT hr = enumerator.GetMoniker(&spMoniker);
 		if (FAILED(hr))
 			return hr;
 
@@ -5902,13 +6406,16 @@ public:
 
 		return OpenWithProperties(pPropSet, nPropertySets);
 	}
-	HRESULT Open(const CEnumerator& enumerator, LPCTSTR pName, LPCTSTR pUserName = NULL,
-		LPCTSTR pPassword = NULL, long nInitMode = 0) throw()
+	HRESULT Open(
+		_In_ const CEnumerator& enumerator,
+		_In_z_ LPCTSTR pName,
+		_In_opt_z_ LPCTSTR pUserName = NULL,
+		_In_opt_z_ LPCTSTR pPassword = NULL,
+		_In_ long nInitMode = 0) throw()
 	{
 		CComPtr<IMoniker> spMoniker;
-		HRESULT   hr;
 
-		hr = enumerator.GetMoniker(&spMoniker);
+		HRESULT hr = enumerator.GetMoniker(&spMoniker);
 		if (FAILED(hr))
 			return hr;
 
@@ -5921,7 +6428,9 @@ public:
 		return OpenWithNameUserPassword(pName, pUserName, pPassword, nInitMode);
 	}
 	// Invoke the data links dialog and open the selected database
-	HRESULT Open(HWND hWnd = GetActiveWindow(), DBPROMPTOPTIONS dwPromptOptions = DBPROMPTOPTIONS_WIZARDSHEET) throw()
+	HRESULT Open(
+		_In_ HWND hWnd = GetActiveWindow(),
+		_In_ DBPROMPTOPTIONS dwPromptOptions = DBPROMPTOPTIONS_WIZARDSHEET) throw()
 	{
 		CComPtr<IDBPromptInitialize> spDBInit;
 
@@ -5943,18 +6452,20 @@ public:
 		return hr;
 	}
 	// Opens a data source using the service components
-	HRESULT OpenWithServiceComponents(const CLSID& clsid, DBPROPSET* pPropSet = NULL, ULONG nPropertySets=1) throw()
+	HRESULT OpenWithServiceComponents(
+		_In_ const CLSID& clsid,
+		_In_opt_count_(nPropertySets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG nPropertySets=1) throw()
 	{
 		CComPtr<IDataInitialize> spDataInit;
-		HRESULT hr;
 
-		hr = CoCreateInstance(__uuidof(MSDAINITIALIZE), NULL, CLSCTX_INPROC_SERVER, 
+		HRESULT hr = CoCreateInstance(__uuidof(MSDAINITIALIZE), NULL, CLSCTX_INPROC_SERVER,
 			__uuidof(IDataInitialize), (void**)&spDataInit);
 		if (FAILED(hr))
 			return hr;
 
 		m_spInit.Release();
-		hr = spDataInit->CreateDBInstance(clsid, NULL, CLSCTX_INPROC_SERVER, NULL, 
+		hr = spDataInit->CreateDBInstance(clsid, NULL, CLSCTX_INPROC_SERVER, NULL,
 			__uuidof(IDBInitialize), (IUnknown**)&m_spInit);
 		if (FAILED(hr))
 			return hr;
@@ -5963,12 +6474,14 @@ public:
 		return OpenWithProperties(pPropSet, nPropertySets);
 	}
 	// Opens a data source using the service components
-	HRESULT OpenWithServiceComponents(LPCTSTR szProgID, DBPROPSET* pPropSet = NULL, ULONG nPropertySets=1) throw()
+	HRESULT OpenWithServiceComponents(
+		_In_z_ LPCTSTR szProgID,
+		_In_opt_count_(nPropertySets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG nPropertySets=1) throw()
 	{
-		HRESULT hr;
-		CLSID   clsid;
+		CLSID clsid;
 
-		hr = CLSIDFromProgID(CComBSTR(szProgID), &clsid);
+		HRESULT hr = CLSIDFromProgID(CComBSTR(szProgID), &clsid);
 		if (FAILED(hr))
 			return hr;
 
@@ -5976,8 +6489,10 @@ public:
 	}
 	// Bring up the "Organize Dialog" which allows the user to select a previously created data link
 	// file (.UDL file). The selected file will be used to open the datbase.
-	HRESULT OpenWithPromptFileName(HWND hWnd = GetActiveWindow(), DBPROMPTOPTIONS dwPromptOptions = DBPROMPTOPTIONS_NONE,
-		LPCOLESTR szInitialDirectory = NULL) throw()
+	HRESULT OpenWithPromptFileName(
+		_In_ HWND hWnd = GetActiveWindow(),
+		_In_ DBPROMPTOPTIONS dwPromptOptions = DBPROMPTOPTIONS_NONE,
+		_In_opt_z_ LPCOLESTR szInitialDirectory = NULL) throw()
 	{
 		CComPtr<IDBPromptInitialize> spDBInit;
 
@@ -6005,7 +6520,7 @@ public:
 		return hr;
 	}
 	// Open the datasource specified by the passed filename, typically a .UDL file
-	HRESULT OpenFromFileName(LPCOLESTR szFileName) throw()
+	HRESULT OpenFromFileName(_In_z_ LPCOLESTR szFileName) throw()
 	{
 		CComPtr<IDataInitialize> spDataInit;
 		CComHeapPtr<OLECHAR>     spszInitString;
@@ -6022,7 +6537,9 @@ public:
 		return OpenFromInitializationString(spszInitString);
 	}
 	// Open the datasource specified by the passed initialization string
-	HRESULT OpenFromInitializationString(LPCOLESTR szInitializationString, bool fPromptForInfo = false) throw()
+	HRESULT OpenFromInitializationString(
+		_In_z_ LPCOLESTR szInitializationString,
+		_In_ bool fPromptForInfo = false) throw()
 	{
 		CComPtr<IDataInitialize> spDataInit;
 
@@ -6062,9 +6579,12 @@ public:
 
 		return m_spInit->Initialize();
 	}
+ATLPREFAST_SUPPRESS(6387)
 	// Get the initialization string from the currently open data source. The returned string
 	// must be CoTaskMemFree'd when finished with.
-	HRESULT GetInitializationString(BSTR* pInitializationString, bool bIncludePassword=false) throw()
+	HRESULT GetInitializationString(
+		_Deref_out_z_ BSTR* pInitializationString,
+		_In_ bool bIncludePassword=false) throw()
 	{
 		// If the datasource isn't open then we're not going to get an init string
 		ATLASSUME(m_spInit != NULL);
@@ -6088,8 +6608,13 @@ public:
 
 		return hr;
 	}
-	HRESULT GetProperties(ULONG ulPropIDSets, const DBPROPIDSET* pPropIDSet,
-				ULONG* pulPropertySets, DBPROPSET** ppPropsets) const throw()
+ATLPREFAST_UNSUPPRESS()
+	
+	HRESULT GetProperties(
+		_In_ ULONG ulPropIDSets,
+		_In_count_(ulPropIDSets) const DBPROPIDSET* pPropIDSet,
+		_Out_ ULONG* pulPropertySets,
+		_Out_cap_x_(*pulPropertySets) DBPROPSET** ppPropsets) const throw()
 	{
 		CComPtr<IDBProperties> spProperties;
 
@@ -6105,7 +6630,10 @@ public:
 		return hr;
 	}
 
-	HRESULT GetProperty(const GUID& guid, DBPROPID propid, VARIANT* pVariant) const throw()
+	HRESULT GetProperty(
+		_In_ const GUID& guid,
+		_In_ DBPROPID propid,
+		_Out_ VARIANT* pVariant) const throw()
 	{
 		ATLENSURE_RETURN(pVariant != NULL);
 		CComPtr<IDBProperties> spProperties;
@@ -6141,15 +6669,14 @@ public:
 	}
 
 // Implementation
-	HRESULT OpenFromIDBProperties(IDBProperties* pIDBProperties) throw()
+	HRESULT OpenFromIDBProperties(_Inout_ IDBProperties* pIDBProperties) throw()
 	{
 		ATLENSURE_RETURN(pIDBProperties);
 
 		CComPtr<IPersist> spPersist;
 		CLSID   clsid;
-		HRESULT hr;
 
-		hr = pIDBProperties->QueryInterface(__uuidof(IPersist), (void**)&spPersist);
+		HRESULT hr = pIDBProperties->QueryInterface(__uuidof(IPersist), (void**)&spPersist);
 		if (FAILED(hr))
 			return hr;
 
@@ -6161,6 +6688,8 @@ public:
 
 		hr = Open(clsid, &pPropSets[0], ulPropSets);
 
+		ATLASSUME(pPropSets != NULL || ulPropSets == 0);
+
 		for (ULONG i=0; i < ulPropSets; i++)
 			(pPropSets+i)->~CDBPropSet();
 		CoTaskMemFree(pPropSets);
@@ -6168,13 +6697,16 @@ public:
 		return hr;
 	}
 
-	HRESULT OpenWithNameUserPassword(LPCTSTR pName, LPCTSTR pUserName, LPCTSTR pPassword, long nInitMode = 0) throw()
+	HRESULT OpenWithNameUserPassword(
+		_In_opt_z_ LPCTSTR pName,
+		_In_opt_z_ LPCTSTR pUserName,
+		_In_opt_z_ LPCTSTR pPassword,
+		_In_ long nInitMode = 0) throw()
 	{
 		ATLASSUME(m_spInit != NULL);
 		CComPtr<IDBProperties>  spProperties;
-		HRESULT                 hr;
 
-		hr = m_spInit->QueryInterface(__uuidof(IDBProperties), (void**)&spProperties);
+		HRESULT hr = m_spInit->QueryInterface(__uuidof(IDBProperties), (void**)&spProperties);
 		if (FAILED(hr))
 			return hr;
 
@@ -6221,7 +6753,9 @@ public:
 		// Initialize the provider
 		return m_spInit->Initialize();
 	}
-	HRESULT OpenWithProperties(DBPROPSET* pPropSet, ULONG nPropertySets=1) throw()
+	HRESULT OpenWithProperties(
+		_Inout_opt_cap_(nPropertySets) DBPROPSET* pPropSet,
+		_In_ ULONG nPropertySets=1) throw()
 	{
 		ATLASSUME(m_spInit != NULL);
 
@@ -6260,7 +6794,10 @@ public:
 	}
 
 	// Create a session on the passed datasource
-	HRESULT Open(const CDataSource& ds, DBPROPSET *pPropSet = NULL, ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_In_ const CDataSource& ds,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET *pPropSet = NULL,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		CComPtr<IDBCreateSession> spSession;
 
@@ -6295,8 +6832,11 @@ public:
 		m_spOpenRowset.Release();
 	}
 	// Start a transaction
-	HRESULT StartTransaction(ISOLEVEL isoLevel = ISOLATIONLEVEL_READCOMMITTED, ULONG isoFlags = 0,
-		ITransactionOptions* pOtherOptions = NULL, ULONG* pulTransactionLevel = NULL) const throw()
+	HRESULT StartTransaction(
+		_In_ ISOLEVEL isoLevel = ISOLATIONLEVEL_READCOMMITTED,
+		_In_ ULONG isoFlags = 0,
+		_In_opt_ ITransactionOptions* pOtherOptions = NULL,
+		_Out_opt_ ULONG* pulTransactionLevel = NULL) const throw()
 	{
 		ATLASSUME(m_spOpenRowset != NULL);
 		CComPtr<ITransactionLocal> spTransactionLocal;
@@ -6308,7 +6848,10 @@ public:
 		return hr;
 	}
 	// Abort the current transaction
-	HRESULT Abort(BOID* pboidReason = NULL, BOOL bRetaining = FALSE, BOOL bAsync = FALSE) const throw()
+	HRESULT Abort(
+		_In_opt_ BOID* pboidReason = NULL,
+		_In_ BOOL bRetaining = FALSE,
+		_In_ BOOL bAsync = FALSE) const throw()
 	{
 		ATLASSUME(m_spOpenRowset != NULL);
 		CComPtr<ITransaction> spTransaction;
@@ -6320,7 +6863,10 @@ public:
 		return hr;
 	}
 	// Commit the current transaction
-	HRESULT Commit(BOOL bRetaining = FALSE, DWORD grfTC = XACTTC_SYNC, DWORD grfRM = 0) const throw()
+	HRESULT Commit(
+		_In_ BOOL bRetaining = FALSE,
+		_In_ DWORD grfTC = XACTTC_SYNC,
+		_In_ DWORD grfRM = 0) const throw()
 	{
 		ATLASSUME(m_spOpenRowset != NULL);
 		CComPtr<ITransaction> spTransaction;
@@ -6332,7 +6878,7 @@ public:
 		return hr;
 	}
 	// Get information for the current transaction
-	HRESULT GetTransactionInfo(XACTTRANSINFO* pInfo) const throw()
+	HRESULT GetTransactionInfo(_Out_ XACTTRANSINFO* pInfo) const throw()
 	{
 		ATLASSUME(m_spOpenRowset != NULL);
 		CComPtr<ITransaction> spTransaction;
@@ -6357,19 +6903,19 @@ public:
 	{
 	}
 
-	CDataConnection(const CDataConnection &ds)
+	CDataConnection(_In_ const CDataConnection &ds)
 	{
 		Copy(ds);
 	}
 
-	CDataConnection& Copy(const CDataConnection &ds) throw()
+	CDataConnection& Copy(_In_ const CDataConnection &ds) throw()
 	{
 		m_source.m_spInit = ds.m_source.m_spInit;
 		m_session.m_spOpenRowset = ds.m_session.m_spOpenRowset;
 		return *this;
 	}
 
-	HRESULT Open(LPCOLESTR szInitString) throw()
+	HRESULT Open(_In_z_ LPCOLESTR szInitString) throw()
 	{
 		HRESULT hr = E_FAIL;
 		hr = m_source.OpenFromInitializationString(szInitString);
@@ -6380,7 +6926,7 @@ public:
 		return hr;
 	}
 
-	HRESULT OpenNewSession(CSession &session) throw()
+	HRESULT OpenNewSession(_In_ CSession &session) throw()
 	{
 		return session.Open(m_source);
 	}
@@ -6405,7 +6951,7 @@ public:
 		return &m_source;
 	}
 
-	CDataConnection& operator=(const CDataConnection &ds) throw()
+	CDataConnection& operator=(_In_ const CDataConnection &ds) throw()
 	{
 		return Copy(ds);
 	}
@@ -6424,7 +6970,7 @@ public:
 	{
 		m_session.Close();
 		m_source.Close();
-	} 
+	}
 
 	CSession m_session;
 	CDataSource m_source;
@@ -6434,12 +6980,16 @@ public:
 // CTable
 
 template <class TAccessor = CNoAccessor, template <typename T> class TRowset = CRowset>
-class CTable : public CAccessorRowset<TAccessor, TRowset>
+class CTable :
+	public CAccessorRowset<TAccessor, TRowset>
 {
 public:
 	// Open a rowset on the passed name
-	HRESULT Open(const CSession& session, LPCWSTR wszTableName, DBPROPSET* pPropSet = NULL, 
-				ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_In_ const CSession& session,
+		_In_z_ LPCWSTR wszTableName,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		DBID    idTable;
 
@@ -6449,26 +6999,31 @@ public:
 		return Open(session, idTable, pPropSet, ulPropSets);
 	}
 
-	HRESULT Open(const CSession& session, LPCSTR szTableName, DBPROPSET* pPropSet = NULL, 
-				ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_In_ const CSession& session,
+		_In_z_ LPCSTR szTableName,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		return Open( session, CComBSTR(szTableName), pPropSet, ulPropSets );
 	}
 
 	// Open the a rowset on the passed DBID
-	HRESULT Open(const CSession& session, DBID& dbid, DBPROPSET* pPropSet = NULL,
-				ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_In_ const CSession& session,
+		_In_ DBID& dbid,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET* pPropSet = NULL,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		// Check the session is valid
 		ATLENSURE_RETURN(session.m_spOpenRowset != NULL);
-		HRESULT hr;
 
-		// If the user didn't specify the default parameter, use one for 
+		// If the user didn't specify the default parameter, use one for
 		// backward compatibility
 		if (pPropSet != NULL && ulPropSets == 0)
 			ulPropSets = 1;
 
-		hr = session.m_spOpenRowset->OpenRowset(NULL, &dbid, NULL, GetIID(),
+		HRESULT hr = session.m_spOpenRowset->OpenRowset(NULL, &dbid, NULL, GetIID(),
 			ulPropSets, pPropSet, (IUnknown**)GetInterfacePtr());
 		if (SUCCEEDED(hr))
 		{
@@ -6496,7 +7051,7 @@ class CCommandBase
 public:
 	CCommandBase()
 	{
-		m_hParameterAccessor = NULL;
+		m_hParameterAccessor = 0;
 	}
 
 	~CCommandBase()
@@ -6504,7 +7059,7 @@ public:
 		ReleaseCommand();
 	}
 	// Create the command
-	HRESULT CreateCommand(const CSession& session) throw()
+	HRESULT CreateCommand(_In_ const CSession& session) throw()
 	{
 		// Before creating the command, release the old one if necessary.
 		ReleaseCommand();
@@ -6521,7 +7076,7 @@ public:
 		return spCreateCommand->CreateCommand(NULL, __uuidof(ICommand), (IUnknown**)&m_spCommand);
 	}
 	// Prepare the command
-	HRESULT Prepare(ULONG cExpectedRuns = 0) throw()
+	HRESULT Prepare(_In_ ULONG cExpectedRuns = 0) throw()
 	{
 		CComPtr<ICommandPrepare> spCommandPrepare;
 		HRESULT hr = m_spCommand->QueryInterface(&spCommandPrepare);
@@ -6541,8 +7096,10 @@ public:
 		return hr;
 	}
 	// Create the command and set the command text
-	HRESULT Create(const CSession& session, LPCWSTR wszCommand,
-		REFGUID guidCommand = DBGUID_DEFAULT) throw()
+	HRESULT Create(
+		_In_ const CSession& session,
+		_In_z_ LPCWSTR wszCommand,
+		_In_ REFGUID guidCommand = DBGUID_DEFAULT) throw()
 	{
 		HRESULT hr;
 
@@ -6556,8 +7113,10 @@ public:
 		}
 		return hr;
 	}
-	HRESULT Create(const CSession& session, LPCSTR szCommand,
-		REFGUID guidCommand = DBGUID_DEFAULT) throw()
+	HRESULT Create(
+		_In_ const CSession& session,
+		_In_z_ LPCSTR szCommand,
+		_In_ REFGUID guidCommand = DBGUID_DEFAULT) throw()
 	{
 		return Create( session, CComBSTR(szCommand), guidCommand );
 	}
@@ -6566,21 +7125,23 @@ public:
 	void ReleaseCommand() throw()
 	{
 		// Release the parameter accessor if necessary, before releasing the command
-		if (m_hParameterAccessor != NULL && m_spCommand != NULL )
+		if (m_hParameterAccessor != 0 && m_spCommand != NULL )
 		{
 			CComPtr<IAccessor> spAccessor;
 			HRESULT hr = m_spCommand->QueryInterface(&spAccessor);
 			if (SUCCEEDED(hr))
 			{
 				spAccessor->ReleaseAccessor(m_hParameterAccessor, NULL);
-				m_hParameterAccessor = NULL;
+				m_hParameterAccessor = 0;
 			}
 		}
 		m_spCommand.Release();
 	}
 	// Get the parameter information from the command
-	HRESULT GetParameterInfo(DB_UPARAMS* pParams, DBPARAMINFO** ppParamInfo,
-				OLECHAR** ppNamesBuffer) throw()
+	HRESULT GetParameterInfo(
+		_Out_ DB_UPARAMS* pParams,
+		_Out_capcount_x_(*pParams) DBPARAMINFO** ppParamInfo,
+		_Out_cap_x_(*pParams) _Deref_post_z_ OLECHAR** ppNamesBuffer) throw()
 	{
 		CComPtr<ICommandWithParameters> spCommandParameters;
 		HRESULT hr = m_spCommand->QueryInterface(&spCommandParameters);
@@ -6593,8 +7154,10 @@ public:
 		return hr;
 	}
 	// Set the parameter information for the command
-	HRESULT SetParameterInfo(DB_UPARAMS ulParams, const DBORDINAL* pOrdinals,
-				const DBPARAMBINDINFO* pParamInfo) throw()
+	HRESULT SetParameterInfo(
+		_In_ DB_UPARAMS ulParams,
+		_In_count_(ulParams) const DBORDINAL* pOrdinals,
+		_In_opt_count_(ulParams) const DBPARAMBINDINFO* pParamInfo) throw()
 	{
 		CComPtr<ICommandWithParameters> spCommandParameters;
 		HRESULT hr = m_spCommand->QueryInterface(&spCommandParameters);
@@ -6615,9 +7178,18 @@ public:
 class CMultipleResults
 {
 public:
-	bool UseMultipleResults() throw() { return true; }
-	IMultipleResults** GetMultiplePtrAddress() throw() { return &m_spMultipleResults.p; }
-	IMultipleResults* GetMultiplePtr() throw() { return m_spMultipleResults; }
+	bool UseMultipleResults() throw()
+	{
+		return true;
+	}
+	IMultipleResults** GetMultiplePtrAddress() throw()
+	{
+		return &m_spMultipleResults.p;
+	}
+	IMultipleResults* GetMultiplePtr() throw()
+	{
+		return m_spMultipleResults;
+	}
 
 	CComPtr<IMultipleResults> m_spMultipleResults;
 };
@@ -6626,16 +7198,25 @@ public:
 class CNoMultipleResults
 {
 public:
-	bool UseMultipleResults() throw() { return false; }
-	IMultipleResults** GetMultiplePtrAddress() throw() { return NULL; }
-	IMultipleResults* GetMultiplePtr() throw() { return NULL; }
+	bool UseMultipleResults() throw()
+	{
+		return false;
+	}
+	IMultipleResults** GetMultiplePtrAddress() throw()
+	{
+		return NULL;
+	}
+	IMultipleResults* GetMultiplePtr() throw()
+	{
+		return NULL;
+	}
 };
 
 
 ///////////////////////////////////////////////////////////////////////////
 // CCommand
 
-template <class TAccessor = CNoAccessor, template <typename T> class TRowset = CRowset, 
+template <class TAccessor = CNoAccessor, template <typename T> class TRowset = CRowset,
 			class TMultiple = CNoMultipleResults>
 class CCommand :
 	public CAccessorRowset<TAccessor, TRowset>,
@@ -6644,12 +7225,17 @@ class CCommand :
 {
 public:
 	// Create a command on the session and execute it
-	HRESULT Open(const CSession& session, LPCWSTR wszCommand,
-		DBPROPSET *pPropSet = NULL, DBROWCOUNT* pRowsAffected = NULL,
-		REFGUID guidCommand = DBGUID_DEFAULT, bool bBind = true,
-		ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_In_ const CSession& session,
+		_In_opt_z_ LPCWSTR wszCommand,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET *pPropSet = NULL,
+		_Out_opt_ DBROWCOUNT* pRowsAffected = NULL,
+		_In_ REFGUID guidCommand = DBGUID_DEFAULT,
+		_In_ bool bBind = true,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		HRESULT hr;
+
 		if (wszCommand == NULL)
 		{
 			hr = _CommandClass::GetDefaultCommand(&wszCommand);
@@ -6663,10 +7249,14 @@ public:
 		return Open(pPropSet, pRowsAffected, bBind, ulPropSets);
 	}
 
-	HRESULT Open(const CSession& session, LPCSTR szCommand,
-		DBPROPSET *pPropSet = NULL, DBROWCOUNT* pRowsAffected = NULL,
-		REFGUID guidCommand = DBGUID_DEFAULT, bool bBind = true,
-		ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_In_ const CSession& session,
+		_In_opt_z_ LPCSTR szCommand,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET *pPropSet = NULL,
+		_Out_opt_ DBROWCOUNT* pRowsAffected = NULL,
+		_In_ REFGUID guidCommand = DBGUID_DEFAULT,
+		_In_ bool bBind = true,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		if( szCommand == NULL )
 		{
@@ -6679,22 +7269,29 @@ public:
 	}
 
 	// this version of Open, takes an INT instead of a string pointer.
-	// this is to resolve an ambiguity when calling 
+	// this is to resolve an ambiguity when calling
 	// Open( session, NULL, ... ) or Open( session )
-	HRESULT Open(const CSession& session, INT szCommand = NULL,
-		DBPROPSET *pPropSet = NULL, DBROWCOUNT* pRowsAffected = NULL,
-		REFGUID guidCommand = DBGUID_DEFAULT, bool bBind = true,
-		ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_In_ const CSession& session,
+		_In_ INT szCommand = NULL,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET *pPropSet = NULL,
+		_Out_opt_ DBROWCOUNT* pRowsAffected = NULL,
+		_In_ REFGUID guidCommand = DBGUID_DEFAULT,
+		_In_ bool bBind = true,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
-		szCommand;
+		UNREFERENCED_PARAMETER(szCommand);
 		ATLASSERT( szCommand == NULL );
 
 		return Open( session, (LPCWSTR)NULL, pPropSet, pRowsAffected, guidCommand, bBind, ulPropSets );
 	}
 
 	// Used if you have previously created the command
-	HRESULT Open(DBPROPSET *pPropSet = NULL, DBROWCOUNT* pRowsAffected = NULL, 
-		bool bBind = true, ULONG ulPropSets = 0) throw()
+	HRESULT Open(
+		_Inout_opt_cap_(ulPropSets) DBPROPSET *pPropSet = NULL,
+		_Out_opt_ DBROWCOUNT* pRowsAffected = NULL,
+		_In_ bool bBind = true,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		HRESULT     hr;
 		DBPARAMS    params;
@@ -6719,7 +7316,9 @@ public:
 		return ExecuteAndBind(pParams, pPropSet, pRowsAffected, bBind, ulPropSets);
 	}
 	// Get the next rowset when using multiple result sets
-	HRESULT GetNextResult(DBROWCOUNT* pulRowsAffected, bool bBind = true) throw()
+	HRESULT GetNextResult(
+		_Out_ DBROWCOUNT* pulRowsAffected,
+		_In_ bool bBind = true) throw()
 	{
 		// This function should only be called if CMultipleResults is being
 		// used as the third template parameter
@@ -6745,10 +7344,14 @@ public:
 	}
 
 // Implementation
-	HRESULT ExecuteAndBind(DBPARAMS* pParams, DBPROPSET* pPropSet = NULL, 
-		DBROWCOUNT* pRowsAffected = NULL, bool bBind = true, ULONG ulPropSets = 0) throw()
+	HRESULT ExecuteAndBind(
+		_In_opt_ DBPARAMS* pParams,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET* pPropSet = NULL,
+		_Out_opt_ DBROWCOUNT* pRowsAffected = NULL,
+		_In_ bool bBind = true,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
-		HRESULT hr = Execute((IUnknown**)GetInterfacePtr(), pParams, pPropSet, 
+		HRESULT hr = Execute((IUnknown**)GetInterfacePtr(), pParams, pPropSet,
 							pRowsAffected, ulPropSets);
 		if (FAILED(hr))
 			return hr;
@@ -6764,17 +7367,24 @@ public:
 		}
 		else
 			return hr;
-
 	}
 
-	HRESULT Execute(IRowset** ppRowset, DBPARAMS* pParams, DBPROPSET *pPropSet, 
-		DBROWCOUNT* pRowsAffected, ULONG ulPropSets = 0) throw()
+	HRESULT Execute(
+		_Deref_out_ IRowset** ppRowset,
+		_Inout_opt_cap_(ulPropSets) DBPARAMS* pParams,
+		_In_ DBPROPSET *pPropSet,
+		_Out_opt_ DBROWCOUNT* pRowsAffected,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		return Execute( (IUnknown**)ppRowset, pParams, pPropSet, pRowsAffected, ulPropSets );
 	}
 
-	HRESULT Execute(IUnknown** ppInterface, DBPARAMS* pParams, DBPROPSET *pPropSet, 
-		DBROWCOUNT* pRowsAffected, ULONG ulPropSets = 0) throw()
+	HRESULT Execute(
+		_Deref_out_ IUnknown** ppInterface,
+		_In_opt_ DBPARAMS* pParams,
+		_Inout_opt_cap_(ulPropSets) DBPROPSET *pPropSet,
+		_Out_opt_ DBROWCOUNT* pRowsAffected,
+		_In_ ULONG ulPropSets = 0) throw()
 	{
 		HRESULT hr;
 
@@ -6833,35 +7443,36 @@ public:
 // It is supplied so that if you only want to implement one of the
 // notifications you don't have to supply empty functions for the
 // other methods.
-class ATL_NO_VTABLE IRowsetNotifyImpl : public IRowsetNotify
+class ATL_NO_VTABLE IRowsetNotifyImpl :
+	public IRowsetNotify
 {
 public:
 	STDMETHOD(OnFieldChange)(
-			/* [in] */ IRowset* /* pRowset */,
-			/* [in] */ HROW /* hRow */,
-			/* [in] */ DBORDINAL /* cColumns */,
-			/* [size_is][in] */ DBORDINAL /* rgColumns*/ [] ,
-			/* [in] */ DBREASON /* eReason */,
-			/* [in] */ DBEVENTPHASE /* ePhase */,
-			/* [in] */ BOOL /* fCantDeny */)
+			_In_opt_ IRowset* /* pRowset */,
+			_In_ HROW /* hRow */,
+			_In_ DBORDINAL /* cColumns */,
+			_In_ DBORDINAL /* rgColumns*/ [] ,
+			_In_ DBREASON /* eReason */,
+			_In_ DBEVENTPHASE /* ePhase */,
+			_In_ BOOL /* fCantDeny */)
 	{
 		ATLTRACENOTIMPL(_T("IRowsetNotifyImpl::OnFieldChange"));
 	}
 	STDMETHOD(OnRowChange)(
-			/* [in] */ IRowset* /* pRowset */,
-			/* [in] */ DBCOUNTITEM /* cRows */,
-			/* [size_is][in] */ const HROW /* rghRows*/ [] ,
-			/* [in] */ DBREASON /* eReason */,
-			/* [in] */ DBEVENTPHASE /* ePhase */,
-			/* [in] */ BOOL /* fCantDeny */)
+			_In_opt_ IRowset* /* pRowset */,
+			_In_ DBCOUNTITEM /* cRows */,
+			_In_ const HROW /* rghRows*/ [] ,
+			_In_ DBREASON /* eReason */,
+			_In_ DBEVENTPHASE /* ePhase */,
+			_In_ BOOL /* fCantDeny */)
 	{
 		ATLTRACENOTIMPL(_T("IRowsetNotifyImpl::OnRowChange"));
 	}
 	STDMETHOD(OnRowsetChange)(
-		/* [in] */ IRowset* /* pRowset */,
-		/* [in] */ DBREASON /* eReason */,
-		/* [in] */ DBEVENTPHASE /* ePhase */,
-		/* [in] */ BOOL /* fCantDeny*/)
+		_In_opt_ IRowset* /* pRowset */,
+		_In_ DBREASON /* eReason */,
+		_In_ DBEVENTPHASE /* ePhase */,
+		_In_ BOOL /* fCantDeny*/)
 	{
 		ATLTRACENOTIMPL(_T("IRowsetNotifyImpl::OnRowsetChange"));
 	}

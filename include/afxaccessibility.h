@@ -7,6 +7,7 @@
 // electronic documentation provided with the library.
 // See these sources for detailed information regarding the
 // Microsoft Foundation Classes product.
+//
 
 #pragma once
 

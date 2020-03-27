@@ -199,8 +199,8 @@ DWORD CMultiLock::Lock(DWORD dwTimeOut /* = INFINITE */,
 		dwResult = ::WaitForMultipleObjects(m_dwCount,
 			m_pHandleArray, bWaitForAll, dwTimeOut);
 	else
-		dwResult = ::MsgWaitForMultipleObjects(m_dwCount,
-			m_pHandleArray, bWaitForAll, dwTimeOut, dwWakeMask);
+		dwResult = ::MsgWaitForMultipleObjectsEx(m_dwCount,
+			m_pHandleArray, dwTimeOut, dwWakeMask, bWaitForAll ? MWMO_WAITALL : MWMO_INPUTAVAILABLE);
 
 	DWORD dwUpperBound = (DWORD)WAIT_OBJECT_0 + m_dwCount;
 	if (dwResult >= WAIT_OBJECT_0 && dwResult < dwUpperBound)

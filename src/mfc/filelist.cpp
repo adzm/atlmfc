@@ -11,7 +11,12 @@
 #include "stdafx.h"
 #include "sal.h"
 
+#if (WINVER >= 0x0601)
+#include <ShlObj.h>
+#endif
 
+#include <AtlConv.h>
+#include "afxglobals.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // lpszCanon = C:\MYAPP\DEBUGS\C\TESWIN.C
@@ -180,6 +185,142 @@ void CRecentFileList::Add(LPCTSTR lpszPathName)
 	}
 	// place this one at the beginning
 	m_arrNames[0] = szTemp;
+
+	// any addition to the MRU should also be added to recent docs
+#ifdef UNICODE
+	SHAddToRecentDocs(SHARD_PATHW, lpszPathName);
+#else
+	SHAddToRecentDocs(SHARD_PATHA, lpszPathName);
+#endif
+}
+
+void CRecentFileList::Add(LPCTSTR lpszPathName, LPCTSTR lpszAppID)
+{
+	if (!afxGlobalData.bIsWindows7)
+	{
+		Add(lpszPathName);
+		return;
+	}
+
+	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
+
+#if (WINVER >= 0x0601)
+	ASSERT(AfxIsValidString(lpszPathName));
+
+	Add(lpszPathName);
+
+	HRESULT hr = S_OK;
+	CComPtr<IShellItem> psi = NULL;
+
+#ifdef UNICODE
+	hr = afxGlobalData.ShellCreateItemFromParsingName(lpszPathName, NULL, IID_IShellItem, reinterpret_cast<void**>(&psi));
+#else
+	{
+		USES_CONVERSION;
+		LPOLESTR lpWPath = A2W(lpszPathName);
+		hr = afxGlobalData.ShellCreateItemFromParsingName(lpWPath, NULL, IID_IShellItem, (LPVOID*)&psi);
+	}
+#endif
+
+	ENSURE(SUCCEEDED(hr));
+
+	Add(psi, strAppID);
+#endif
+}
+void CRecentFileList::Add(IShellItem* pItem, LPCTSTR lpszAppID)
+{
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return;
+	}
+
+	ASSERT(pItem != NULL);
+
+	if (pItem == NULL)
+	{
+		return;
+	}
+
+	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
+
+#if (WINVER >= 0x0601)
+	SHARDAPPIDINFO info;
+
+#ifdef UNICODE
+	info.pszAppID = strAppID;
+#else
+	{
+		USES_CONVERSION;
+		info.pszAppID = A2W(strAppID);
+	}
+#endif
+
+	info.psi = pItem;
+	SHAddToRecentDocs(SHARD_APPIDINFO, &info);
+#endif
+}
+
+void CRecentFileList::Add(IShellLink* pLink, LPCTSTR lpszAppID)
+{
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return;
+	}
+
+	ASSERT(pLink != NULL);
+
+	if (pLink == NULL)
+	{
+		return;
+	}
+
+	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
+
+#if (WINVER >= 0x0601)
+	SHARDAPPIDINFOLINK info;
+
+#ifdef UNICODE
+	info.pszAppID = strAppID;
+#else
+	{
+		USES_CONVERSION;
+		info.pszAppID = A2W(strAppID);
+	}
+#endif
+
+	info.psl = pLink;
+	if (strAppID.GetLength() == 0)
+		SHAddToRecentDocs(SHARD_LINK, &info);
+	else
+		SHAddToRecentDocs(SHARD_APPIDINFOLINK, &info);
+#endif
+}
+
+void CRecentFileList::Add(PIDLIST_ABSOLUTE pidl, LPCTSTR lpszAppID)
+{
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return;
+	}
+
+	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
+
+#if (WINVER >= 0x0601)
+	SHARDAPPIDINFOIDLIST info;
+
+#ifdef UNICODE
+	info.pszAppID = strAppID;
+#else
+	{
+		USES_CONVERSION;
+		info.pszAppID = A2W(strAppID);
+	}
+#endif
+
+	info.pidl = pidl;
+	SHAddToRecentDocs(SHARD_APPIDINFOIDLIST, &info);
+#endif
+
 }
 
 void CRecentFileList::Remove(int nIndex)
@@ -302,7 +443,8 @@ void CRecentFileList::UpdateMenu(CCmdUI* pCmdUI)
 
 		// insert mnemonic + the file name
 		TCHAR buf[10];
-		int nItem = (iMRU + 1 + m_nStart) % _AFX_MRU_MAX_COUNT;
+		int nItem = ((iMRU + m_nStart) % _AFX_MRU_MAX_COUNT) + 1;
+
 
 		// number &1 thru &9, then 1&0, then 11 thru ...
 		if (nItem > 10)

@@ -12,7 +12,6 @@
 #include "stdafx.h"
 #include "afxribbonedit.h"
 #include "afxvisualmanager.h"
-#include "afxvisualmanageroffice2007.h"
 #include "afxglobals.h"
 #include "afxribbonbar.h"
 #include "afxribbonpanel.h"
@@ -129,6 +128,7 @@ void CMFCRibbonEdit::CommonInit()
 	m_nAlign = ES_LEFT;
 	m_szMargin = CSize(2, 3);
 	m_nLabelImageWidth = 0;
+	m_bNotifyCommand = TRUE;
 }
 
 CMFCRibbonEdit::~CMFCRibbonEdit()
@@ -711,6 +711,65 @@ void CMFCRibbonEdit::OnHighlight(BOOL bHighlight)
 	}
 }
 
+void CMFCRibbonEdit::OnSetFocus(BOOL bSet)
+{
+	ASSERT_VALID(this);
+
+	CMFCRibbonButton::OnSetFocus(bSet);
+
+	if (m_pWndEdit->GetSafeHwnd() != NULL && m_pWndEdit->IsWindowVisible())
+	{
+		if (bSet)
+		{
+			m_pWndEdit->SetFocus();
+			m_pWndEdit->SetSel(0, -1);
+		}
+		else
+		{
+			CMFCRibbonBar* pRibbonBar = DYNAMIC_DOWNCAST(CMFCRibbonBar, m_pWndEdit->GetParent());
+			if (pRibbonBar != NULL)
+			{
+				ASSERT_VALID(pRibbonBar);
+				
+				pRibbonBar->m_bDontSetKeyTips = TRUE;
+				pRibbonBar->SetFocus();
+			}
+			else
+			{
+				CMFCRibbonPanelMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCRibbonPanelMenuBar, m_pWndEdit->GetParent());
+				if (pMenuBar != NULL)
+				{
+					ASSERT_VALID(pMenuBar);
+
+					if (pMenuBar->GetParent() != NULL)
+					{
+						pMenuBar->GetParent()->SetFocus();
+					}
+				}
+
+				m_bIsEditFocused = FALSE;
+				m_pWndEdit->SetSel(0, 0);
+				Redraw();
+			}
+		}
+
+		m_pWndEdit->RedrawWindow();
+	}
+}
+
+BOOL CMFCRibbonEdit::PreLMouseDown(CPoint point)
+{
+	ASSERT_VALID(this);
+
+	if (m_rect.PtInRect(point) || !m_bIsEditFocused || m_bIsFocused)
+	{
+		return FALSE;
+	}
+
+	OnSetFocus(FALSE);
+	return TRUE;
+}
+
 void CMFCRibbonEdit::OnEnable(BOOL bEnable)
 {
 	ASSERT_VALID(this);
@@ -834,6 +893,8 @@ BOOL CMFCRibbonEdit::SetACCData(CWnd* pParent, CAccessibilityData& data)
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonRichEditCtrl
 
+IMPLEMENT_DYNAMIC(CMFCRibbonRichEditCtrl, CRichEditCtrl)
+
 CMFCRibbonRichEditCtrl::CMFCRibbonRichEditCtrl(CMFCRibbonEdit& edit) : m_edit(edit)
 {
 	m_bTracked = FALSE;
@@ -850,8 +911,6 @@ BEGIN_MESSAGE_MAP(CMFCRibbonRichEditCtrl, CRichEditCtrl)
 	ON_WM_SETFOCUS()
 	ON_WM_KILLFOCUS()
 	ON_WM_PAINT()
-	ON_WM_MOUSEMOVE()
-	ON_WM_KEYDOWN()
 	ON_WM_CONTEXTMENU()
 	ON_MESSAGE(WM_MOUSELEAVE, &CMFCRibbonRichEditCtrl::OnMouseLeave)
 	ON_CONTROL_REFLECT(EN_CHANGE, &CMFCRibbonRichEditCtrl::OnChange)
@@ -873,8 +932,18 @@ BOOL CMFCRibbonRichEditCtrl::PreTranslateMessage(MSG* pMsg)
 		return CRichEditCtrl::PreTranslateMessage(pMsg);
 	}
 
+	if (pMsg->message == WM_LBUTTONDOWN && m_edit.m_bIsEditFocused && !m_edit.m_bIsFocused && pMsg->hwnd != GetSafeHwnd())
+	{
+		m_edit.OnSetFocus(FALSE);
+	}
+
 	if (pMsg->message == WM_MOUSEMOVE && !m_edit.IsDisabled())
 	{
+		if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0 && GetFocus() != this)
+		{
+			return TRUE;
+		}
+
 		if (!m_bTracked)
 		{
 			m_bTracked = TRUE;
@@ -912,6 +981,13 @@ BOOL CMFCRibbonRichEditCtrl::PreTranslateMessage(MSG* pMsg)
 
 		switch (pMsg->wParam)
 		{
+		case VK_TAB:
+			if (!m_edit.IsFocused())
+			{
+				return TRUE;
+			}
+			break;
+
 		case VK_DOWN:
 			if (m_edit.m_bHasDropDownList && !m_edit.IsDroppedDown())
 			{
@@ -929,15 +1005,6 @@ BOOL CMFCRibbonRichEditCtrl::PreTranslateMessage(MSG* pMsg)
 			}
 			break;
 
-		case VK_TAB:
-			if (m_edit.GetParentPanel() != NULL)
-			{
-				ASSERT_VALID(m_edit.GetParentPanel());
-				m_edit.GetParentPanel()->OnKey(VK_TAB);
-				return TRUE;
-			}
-			break;
-
 		case VK_RETURN:
 			if (!m_edit.IsDroppedDown())
 			{
@@ -947,7 +1014,7 @@ BOOL CMFCRibbonRichEditCtrl::PreTranslateMessage(MSG* pMsg)
 				m_edit.SetEditText(str);
 				m_edit.NotifyCommand(TRUE);
 
-				if (m_edit.m_pParentMenu != NULL)
+				if (m_edit.m_pParentMenu != NULL && m_edit.m_pParentMenu->GetParent()->GetSafeHwnd() == CMFCPopupMenu::GetActiveMenu()->GetSafeHwnd())
 				{
 					ASSERT_VALID(m_edit.m_pParentMenu);
 
@@ -960,6 +1027,7 @@ BOOL CMFCRibbonRichEditCtrl::PreTranslateMessage(MSG* pMsg)
 
 				if (GetTopLevelFrame() != NULL)
 				{
+					m_edit.m_bNotifyCommand = FALSE;
 					GetTopLevelFrame()->SetFocus();
 					return TRUE;
 				}
@@ -1031,6 +1099,7 @@ void CMFCRibbonRichEditCtrl::OnSetFocus(CWnd* pOldWnd)
 	CRichEditCtrl::OnSetFocus(pOldWnd);
 
 	m_edit.m_bIsEditFocused = TRUE;
+	m_edit.m_bNotifyCommand = TRUE;
 	m_edit.Redraw();
 
 	GetWindowText(m_strOldText);
@@ -1048,7 +1117,12 @@ void CMFCRibbonRichEditCtrl::OnKillFocus(CWnd* pNewWnd)
 
 	GetWindowText(m_strOldText);
 	m_edit.m_strEdit = m_strOldText;
-	m_edit.NotifyCommand(TRUE);
+
+	if (m_edit.m_bNotifyCommand)
+	{
+		m_edit.NotifyCommand(TRUE); 
+		m_edit.m_bNotifyCommand = TRUE;
+	}
 }
 
 void CMFCRibbonRichEditCtrl::OnPaint()
@@ -1056,17 +1130,9 @@ void CMFCRibbonRichEditCtrl::OnPaint()
 	CRect rect;
 	GetClientRect(rect);
 
-	BOOL bIsHighlighted = m_edit.IsHighlighted() || m_edit.IsDroppedDown() || m_edit.IsFocused() || m_bIsHighlighted;
-	BOOL bIsDisabled = m_edit.IsDisabled();
-	COLORREF clrBackground = (bIsHighlighted && !bIsDisabled) ? afxGlobalData.clrWindow : afxGlobalData.clrBarFace;
-
-	CMFCVisualManager* pVisualManager = CMFCVisualManager::GetInstance();
-	CMFCVisualManagerOffice2007* pVisualManager2007 = DYNAMIC_DOWNCAST(CMFCVisualManagerOffice2007, pVisualManager);
-	if (pVisualManager2007 != NULL)
-	{
-		clrBackground = pVisualManager2007->GetRibbonEditBackgroundColor(bIsHighlighted, bIsDisabled);
-	}
-
+	CMFCRibbonPanel* pPanel = m_edit.GetParentPanel();
+	COLORREF clrBackground = CMFCVisualManager::GetInstance()->GetRibbonEditBackgroundColor(this,
+		m_edit.IsHighlighted() || m_edit.IsDroppedDown() || m_edit.IsFocused() || m_bIsHighlighted, pPanel != NULL && pPanel->IsHighlighted(), m_edit.IsDisabled());
 	SetBackgroundColor(FALSE, clrBackground);
 	Default();
 
@@ -1083,18 +1149,6 @@ void CMFCRibbonRichEditCtrl::OnPaint()
 	}
 }
 
-void CMFCRibbonRichEditCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
-{
-	int nOldX = GetCharPos(0).x;
-
-	CRichEditCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
-
-	if (nOldX != GetCharPos(0).x)
-	{
-		RedrawWindow();
-	}
-}
-
 LRESULT CMFCRibbonRichEditCtrl::OnMouseLeave(WPARAM,LPARAM)
 {
 	if (m_edit.GetParentWnd() != NULL)
@@ -1108,6 +1162,7 @@ LRESULT CMFCRibbonRichEditCtrl::OnMouseLeave(WPARAM,LPARAM)
 		RedrawWindow();
 	}
 
+	m_bTracked = FALSE;
 	return 0;
 }
 
@@ -1130,8 +1185,3 @@ void CMFCRibbonRichEditCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 		m_bIsContextMenu = FALSE;
 	}
 }
-
-
-
-
-

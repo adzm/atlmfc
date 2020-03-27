@@ -21,6 +21,7 @@ BEGIN_MESSAGE_MAP(CFormView, CScrollView)
 	//{{AFX_MSG_MAP(CFormView)
 	ON_WM_SETFOCUS()
 	ON_WM_CREATE()
+	ON_MESSAGE(WM_PRINTCLIENT, &CFormView::OnPrintClient)
 	//}}AFX_MSG_MAP
 #ifndef _AFX_NO_OCC_SUPPORT
 	ON_MESSAGE(WM_INITDIALOG, &CFormView::HandleInitDialog)
@@ -195,6 +196,11 @@ void CFormView::OnSetFocus(CWnd*)
 	}
 	// otherwise, set focus to the last known focus window
 	::SetFocus(m_hWndFocus);
+}
+
+LRESULT CFormView::OnPrintClient(WPARAM wParam, LPARAM lParam)
+{
+	return CView::OnPrintClient(wParam, lParam);
 }
 
 BOOL CFormView::PreTranslateMessage(MSG* pMsg)

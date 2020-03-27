@@ -9,6 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
+#include "afxcontrolbarutil.h"
 
 #ifndef _AFX_NO_OCX_SUPPORT
 
@@ -26,6 +27,13 @@ BOOL COleControlModule::InitInstance()
 #ifdef _AFXDLL
 	// wire up resources from OLE DLL
 	AfxOleInitModule();
+#endif
+
+	// Since we don't call CWinApp::InitInstance here, but do call CWinApp::ExitInstance
+	// from COleControlModule::ExitInstance, we need to call AfxGlobalsAddRef in order to
+	// keep the reference count on the afxGlobalData object consistent (when using MFC DLL).
+#ifdef _AFXDLL
+	AfxGlobalsAddRef();
 #endif
 
 	COleObjectFactory::RegisterAll();

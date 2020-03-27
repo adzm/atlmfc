@@ -15,7 +15,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-BOOL AFXAPI AfxWinInit(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
+BOOL AFXAPI AfxWinInit(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_z_ LPTSTR lpCmdLine, _In_ int nCmdShow)
 {
 	ASSERT(hPrevInstance == NULL);
@@ -46,13 +46,6 @@ BOOL AFXAPI AfxWinInit(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
 	// initialize thread specific data (for main thread)
 	if (!afxContextIsDLL)
 		AfxInitThread();
-
-	// Initialize CWnd::m_pfnNotifyWinEvent
-	HMODULE hModule = ::GetModuleHandle(_T("user32.dll"));
-	if (hModule != NULL)
-	{
-		CWnd::m_pfnNotifyWinEvent = (CWnd::PFNNOTIFYWINEVENT)::GetProcAddress(hModule, "NotifyWinEvent");
-	}
 
 	return TRUE;
 }
@@ -94,6 +87,8 @@ void CWinApp::SetCurrentHandles()
 
 	TCHAR szExeName[_MAX_PATH];
 	TCHAR szTitle[256];
+	TCHAR szAppID[256];
+
 	// get the exe title from the full path name [no extension]
 	dwRet = AfxGetFileName(szBuff, szExeName, _MAX_PATH);
 	ASSERT( dwRet == 0 );
@@ -125,6 +120,25 @@ void CWinApp::SetCurrentHandles()
 		}
 		AfxEnableMemoryTracking(bEnable);
 		if(!m_pszAppName)
+		{
+			AfxThrowMemoryException();
+		}
+	}
+
+	// application user model ID
+	if (m_pszAppID == NULL)
+	{
+		BOOL bEnable = AfxEnableMemoryTracking(FALSE);
+		if (AfxLoadString(AFX_IDS_APP_ID, szAppID) != 0)
+		{
+			m_pszAppID = _tcsdup(szAppID);
+		}
+		else
+		{
+			m_pszAppID = _T("");   // empty
+		}
+		AfxEnableMemoryTracking(bEnable);
+		if(!m_pszAppID)
 		{
 			AfxThrowMemoryException();
 		}

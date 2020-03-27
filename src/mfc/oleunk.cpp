@@ -21,10 +21,11 @@ typedef void (*PFNMFCM_ReleaseManagedReferences)(IUnknown*);
 
 #ifdef _DEBUG
 // Helper for converting IID into useful string.  Only for debugging.
-LPCTSTR AFXAPI AfxGetIIDString(REFIID iid)
+CString AFXAPI AfxGetIIDString(REFIID iid)
 {
 	USES_CONVERSION;
-	static TCHAR szIID[100];
+
+	TCHAR szIID[100];
 	szIID[0]			= NULL;
 	DWORD dwSize		= sizeof(szIID);
 	HKEY hKey			= NULL;
@@ -55,7 +56,9 @@ LPCTSTR AFXAPI AfxGetIIDString(REFIID iid)
 		}
 	}
 	CoTaskMemFree(pszGUID);
-	return szIID;
+
+	CString strIID = szIID;
+	return strIID;
 }
 #endif
 
@@ -195,7 +198,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 #ifdef _DEBUG
 		if (IsTracingEnabled(traceOle, 1))
 		{
-			LPCTSTR strIID = AfxGetIIDString(*(IID*)(iid));
+			CString strIID = AfxGetIIDString(*(IID*)(iid));
 			TRACE(traceOle, 1, _T("QueryInterface(%s) succeeded\n"), strIID);
 		}
 #endif
@@ -228,7 +231,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 #ifdef _DEBUG
 					if (IsTracingEnabled(traceOle, 1))
 					{
-						LPCTSTR strIID = AfxGetIIDString(*(IID*)(iid));
+						CString strIID = AfxGetIIDString(*(IID*)(iid));
 						TRACE(traceOle, 1, _T("QueryInterface(%s) succeeded\n"), strIID);
 					}
 #endif
@@ -250,7 +253,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 #ifdef _DEBUG
 		if (IsTracingEnabled(traceOle, 1))
 		{
-			LPCTSTR strIID = AfxGetIIDString(*(IID*)(iid));
+			CString strIID = AfxGetIIDString(*(IID*)(iid));
 			TRACE(traceOle, 1, _T("QueryInterface(%s) failed\n"), strIID);
 		}
 #endif
@@ -279,7 +282,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 #ifdef _DEBUG
 					if (IsTracingEnabled(traceOle, 1))
 					{
-						LPCTSTR strIID = AfxGetIIDString(*(IID*)(iid));
+						CString strIID = AfxGetIIDString(*(IID*)(iid));
 						TRACE(traceOle, 1, _T("QueryInterface(%s) succeeded\n"), strIID);
 					}
 #endif
@@ -302,7 +305,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 #ifdef _DEBUG
 	if (IsTracingEnabled(traceOle, 1))
 	{
-		LPCTSTR strIID = AfxGetIIDString(*(IID*)(iid));
+		CString strIID = AfxGetIIDString(*(IID*)(iid));
 		TRACE(traceOle, 1, _T("QueryInterface(%s) failed\n"), strIID);
 	}
 #endif
@@ -386,7 +389,7 @@ DWORD CCmdTarget::ExternalQueryInterface(const void* iid,
 #ifdef _DEBUG
 		if (IsTracingEnabled(traceOle, 1))
 		{
-			LPCTSTR strIID = AfxGetIIDString(*(IID*)(iid));
+			CString strIID = AfxGetIIDString(*(IID*)(iid));
 			if (SUCCEEDED(hRes))
 				TRACE(traceOle, 1, _T("QueryInterface(%s) succeeded\n"), strIID);
 			else

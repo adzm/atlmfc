@@ -33,19 +33,21 @@
 #endif
 
 #ifndef __oledb_h__
-struct tagDBTIMESTAMP;
-typedef tagDBTIMESTAMP DBTIMESTAMP;
-#endif
- 
- 
+#include <oledb.h>
+#endif // __oledb_h__
+
 namespace ATL
 {
 class CTimeSpan
 {
 public:
 	CTimeSpan() throw();
-	CTimeSpan( __time64_t time ) throw();
-	CTimeSpan( LONG lDays, int nHours, int nMins, int nSecs ) throw();
+	CTimeSpan(_In_ __time64_t time) throw();
+	CTimeSpan(
+		_In_ LONG lDays,
+		_In_ int nHours,
+		_In_ int nMins,
+		_In_ int nSecs) throw();
 
 	LONGLONG GetDays() const throw();
 	LONGLONG GetTotalHours() const throw();
@@ -57,27 +59,27 @@ public:
 
 	__time64_t GetTimeSpan() const throw();
 
-	CTimeSpan operator+( CTimeSpan span ) const throw();
-	CTimeSpan operator-( CTimeSpan span ) const throw();
-	CTimeSpan& operator+=( CTimeSpan span ) throw();
-	CTimeSpan& operator-=( CTimeSpan span ) throw();
-	bool operator==( CTimeSpan span ) const throw();
-	bool operator!=( CTimeSpan span ) const throw();
-	bool operator<( CTimeSpan span ) const throw();
-	bool operator>( CTimeSpan span ) const throw();
-	bool operator<=( CTimeSpan span ) const throw();
-	bool operator>=( CTimeSpan span ) const throw();
+	CTimeSpan operator+(_In_ CTimeSpan span) const throw();
+	CTimeSpan operator-(_In_ CTimeSpan span) const throw();
+	CTimeSpan& operator+=(_In_ CTimeSpan span) throw();
+	CTimeSpan& operator-=(_In_ CTimeSpan span) throw();
+	bool operator==(_In_ CTimeSpan span) const throw();
+	bool operator!=(_In_ CTimeSpan span) const throw();
+	bool operator<(_In_ CTimeSpan span) const throw();
+	bool operator>(_In_ CTimeSpan span) const throw();
+	bool operator<=(_In_ CTimeSpan span) const throw();
+	bool operator>=(_In_ CTimeSpan span) const throw();
 
 public:
-	CString Format( LPCTSTR pszFormat ) const;
-	CString Format( UINT nID ) const;
+	CString Format(_In_z_ LPCTSTR pszFormat) const;
+	CString Format(_In_ UINT nID) const;
 #if defined(_AFX) && defined(_UNICODE)
 	// for compatibility with MFC 3.x
-	CString Format(LPCSTR pFormat) const;
+	CString Format(_In_z_ LPCSTR pFormat) const;
 #endif
 
 #ifdef _AFX
-	CArchive& Serialize64(CArchive& ar);
+	CArchive& Serialize64(_In_ CArchive& ar);
 #endif
 
 private:
@@ -88,40 +90,53 @@ class CTime
 {
 public:
 	static CTime WINAPI GetCurrentTime() throw();
-	static BOOL WINAPI IsValidFILETIME(const FILETIME& ft) throw();
+	static BOOL WINAPI IsValidFILETIME(_In_ const FILETIME& ft) throw();
 
 	CTime() throw();
-	CTime( __time64_t time ) throw();
-	CTime( int nYear, int nMonth, int nDay, int nHour, int nMin, int nSec,
-		int nDST = -1 );
-	CTime( WORD wDosDate, WORD wDosTime, int nDST = -1 );
-	CTime( const SYSTEMTIME& st, int nDST = -1 );
-	CTime( const FILETIME& ft, int nDST = -1 );
-#ifdef __oledb_h__
-	CTime( const DBTIMESTAMP& dbts, int nDST = -1 ) throw();
-#endif
+	CTime(_In_ __time64_t time) throw();
+	CTime(
+		_In_ int nYear,
+		_In_ int nMonth,
+		_In_ int nDay,
+		_In_ int nHour,
+		_In_ int nMin,
+		_In_ int nSec,
+		_In_ int nDST = -1);
+	CTime(
+		_In_ WORD wDosDate,
+		_In_ WORD wDosTime,
+		_In_ int nDST = -1);
+	CTime(
+		_In_ const SYSTEMTIME& st,
+		_In_ int nDST = -1);
+	CTime(
+		_In_ const FILETIME& ft,
+		_In_ int nDST = -1);
+	CTime(
+		_In_ const DBTIMESTAMP& dbts,
+		_In_ int nDST = -1) throw();
 
-	CTime& operator=( __time64_t time ) throw();
+	CTime& operator=(_In_ __time64_t time) throw();
 
-	CTime& operator+=( CTimeSpan span ) throw();
-	CTime& operator-=( CTimeSpan span ) throw();
+	CTime& operator+=(_In_ CTimeSpan span) throw();
+	CTime& operator-=(_In_ CTimeSpan span) throw();
 
-	CTimeSpan operator-( CTime time ) const throw();
-	CTime operator-( CTimeSpan span ) const throw();
-	CTime operator+( CTimeSpan span ) const throw();
+	CTimeSpan operator-(_In_ CTime time) const throw();
+	CTime operator-(_In_ CTimeSpan span) const throw();
+	CTime operator+(_In_ CTimeSpan span) const throw();
 
-	bool operator==( CTime time ) const throw();
-	bool operator!=( CTime time ) const throw();
-	bool operator<( CTime time ) const throw();
-	bool operator>( CTime time ) const throw();
-	bool operator<=( CTime time ) const throw();
-	bool operator>=( CTime time ) const throw();
+	bool operator==(_In_ CTime time) const throw();
+	bool operator!=(_In_ CTime time) const throw();
+	bool operator<(_In_ CTime time) const throw();
+	bool operator>(_In_ CTime time) const throw();
+	bool operator<=(_In_ CTime time) const throw();
+	bool operator>=(_In_ CTime time) const throw();
 
-	struct tm* GetGmtTm( struct tm* ptm ) const;
-	struct tm* GetLocalTm( struct tm* ptm ) const;
+	struct tm* GetGmtTm(_Out_ struct tm* ptm) const;
+	struct tm* GetLocalTm(_Out_ struct tm* ptm) const;
 
-	bool GetAsSystemTime( SYSTEMTIME& st ) const throw();
-	bool GetAsDBTIMESTAMP( DBTIMESTAMP& dbts ) const throw();
+	bool GetAsSystemTime(_Out_ SYSTEMTIME& st) const throw();
+	bool GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const throw();
 
 	__time64_t GetTime() const throw();
 
@@ -134,19 +149,19 @@ public:
 	int GetDayOfWeek() const throw();
 
 	// formatting using "C" strftime
-	CString Format( LPCTSTR pszFormat ) const;
-	CString FormatGmt( LPCTSTR pszFormat ) const;
-	CString Format( UINT nFormatID ) const;
-	CString FormatGmt( UINT nFormatID ) const;
+	CString Format(_In_z_ LPCTSTR pszFormat) const;
+	CString FormatGmt(_In_z_ LPCTSTR pszFormat) const;
+	CString Format(_In_ UINT nFormatID) const;
+	CString FormatGmt(_In_ UINT nFormatID) const;
 
 #if defined(_AFX) && defined(_UNICODE)
 	// for compatibility with MFC 3.x
-	CString Format(LPCSTR pFormat) const;
-	CString FormatGmt(LPCSTR pFormat) const;
+	CString Format(_In_z_ LPCSTR pFormat) const;
+	CString FormatGmt(_In_z_ LPCSTR pFormat) const;
 #endif
 
 #ifdef _AFX
-	CArchive& Serialize64(CArchive& ar);
+	CArchive& Serialize64(_In_ CArchive& ar);
 #endif
 
 private:
@@ -157,26 +172,26 @@ class CFileTimeSpan
 {
 public:
 	CFileTimeSpan() throw();
-	CFileTimeSpan( const CFileTimeSpan& span ) throw();
-	CFileTimeSpan( LONGLONG nSpan ) throw();
+	CFileTimeSpan(_In_ const CFileTimeSpan& span) throw();
+	CFileTimeSpan(_In_ LONGLONG nSpan) throw();
 
-	CFileTimeSpan& operator=( const CFileTimeSpan& span ) throw();
+	CFileTimeSpan& operator=(_In_ const CFileTimeSpan& span) throw();
 
-	CFileTimeSpan& operator+=( CFileTimeSpan span ) throw();
-	CFileTimeSpan& operator-=( CFileTimeSpan span ) throw();
+	CFileTimeSpan& operator+=(_In_ CFileTimeSpan span) throw();
+	CFileTimeSpan& operator-=(_In_ CFileTimeSpan span) throw();
 
-	CFileTimeSpan operator+( CFileTimeSpan span ) const throw();
-	CFileTimeSpan operator-( CFileTimeSpan span ) const throw();
+	CFileTimeSpan operator+(_In_ CFileTimeSpan span) const throw();
+	CFileTimeSpan operator-(_In_ CFileTimeSpan span) const throw();
 
-	bool operator==( CFileTimeSpan span ) const throw();
-	bool operator!=( CFileTimeSpan span ) const throw();
-	bool operator<( CFileTimeSpan span ) const throw();
-	bool operator>( CFileTimeSpan span ) const throw();
-	bool operator<=( CFileTimeSpan span ) const throw();
-	bool operator>=( CFileTimeSpan span ) const throw();
+	bool operator==(_In_ CFileTimeSpan span) const throw();
+	bool operator!=(_In_ CFileTimeSpan span) const throw();
+	bool operator<(_In_ CFileTimeSpan span) const throw();
+	bool operator>(_In_ CFileTimeSpan span) const throw();
+	bool operator<=(_In_ CFileTimeSpan span) const throw();
+	bool operator>=(_In_ CFileTimeSpan span) const throw();
 
 	LONGLONG GetTimeSpan() const throw();
-	void SetTimeSpan( LONGLONG nSpan ) throw();
+	void SetTimeSpan(_In_ LONGLONG nSpan) throw();
 
 protected:
 	LONGLONG m_nSpan;
@@ -187,29 +202,29 @@ class CFileTime :
 {
 public:
 	CFileTime() throw();
-	CFileTime( const FILETIME& ft ) throw();
-	CFileTime( ULONGLONG nTime ) throw();
+	CFileTime(_In_ const FILETIME& ft) throw();
+	CFileTime(_In_ ULONGLONG nTime) throw();
 
 	static CFileTime WINAPI GetCurrentTime() throw();
 
-	CFileTime& operator=( const FILETIME& ft ) throw();
+	CFileTime& operator=(_In_ const FILETIME& ft) throw();
 
-	CFileTime& operator+=( CFileTimeSpan span ) throw();
-	CFileTime& operator-=( CFileTimeSpan span ) throw();
+	CFileTime& operator+=(_In_ CFileTimeSpan span) throw();
+	CFileTime& operator-=(_In_ CFileTimeSpan span) throw();
 
-	CFileTime operator+( CFileTimeSpan span ) const throw();
-	CFileTime operator-( CFileTimeSpan span ) const throw();
-	CFileTimeSpan operator-( CFileTime ft ) const throw();
+	CFileTime operator+(_In_ CFileTimeSpan span) const throw();
+	CFileTime operator-(_In_ CFileTimeSpan span) const throw();
+	CFileTimeSpan operator-(_In_ CFileTime ft) const throw();
 
-	bool operator==( CFileTime ft ) const throw();
-	bool operator!=( CFileTime ft ) const throw();
-	bool operator<( CFileTime ft ) const throw();
-	bool operator>( CFileTime ft ) const throw();
-	bool operator<=( CFileTime ft ) const throw();
-	bool operator>=( CFileTime ft ) const throw();
+	bool operator==(_In_ CFileTime ft) const throw();
+	bool operator!=(_In_ CFileTime ft) const throw();
+	bool operator<(_In_ CFileTime ft) const throw();
+	bool operator>(_In_ CFileTime ft) const throw();
+	bool operator<=(_In_ CFileTime ft) const throw();
+	bool operator>=(_In_ CFileTime ft) const throw();
 
 	ULONGLONG GetTime() const throw();
-	void SetTime( ULONGLONG nTime ) throw();
+	void SetTime(_In_ ULONGLONG nTime) throw();
 
 	CFileTime UTCToLocal() const throw();
 	CFileTime LocalToUTC() const throw();
@@ -229,30 +244,25 @@ extern __declspec(selectany) const TCHAR * const szInvalidDateTimeSpan = _T("Inv
 const int maxTimeBufferSize = 128;
 const long maxDaysInSpan  =	3615897L;
 
-
-}
-
- 
+} // namespace ATL
 
 #ifndef _DEBUG
 #define ATLTIME_INLINE inline
 #include <atltime.inl>
 #endif
 
-
- 
 namespace ATL
 {
 
 enum _CTIMESPANFORMATSTEP
 {
-	_CTFS_NONE   = 0,	
+	_CTFS_NONE   = 0,
 	_CTFS_FORMAT = 1,
 	_CTFS_NZ     = 2
 };
 #define _CTIMESPANFORMATS 3
 
-inline CString CTimeSpan::Format(LPCTSTR pFormat) const
+inline CString CTimeSpan::Format(_In_z_ LPCTSTR pFormat) const
 // formatting timespans is a little trickier than formatting CTimes
 //  * we are only interested in relative time formats, ie. it is illegal
 //      to format anything dealing with absolute time (i.e. years, months,
@@ -330,7 +340,7 @@ inline CString CTimeSpan::Format(LPCTSTR pFormat) const
 	return strBuffer;
 }
 
-inline CString CTimeSpan::Format(UINT nFormatID) const
+inline CString CTimeSpan::Format(_In_ UINT nFormatID) const
 {
 	CString strFormat;
 	ATLENSURE(strFormat.LoadString(nFormatID));
@@ -338,14 +348,16 @@ inline CString CTimeSpan::Format(UINT nFormatID) const
 }
 
 #if defined(_AFX) && defined(_UNICODE)
-inline CString CTimeSpan::Format(LPCSTR pFormat) const
+inline CString CTimeSpan::Format(_In_z_ LPCSTR pFormat) const
 {
 	return Format(CString(pFormat));
 }
 #endif
 
 #ifdef __oledb_h__
-inline CTime::CTime( const DBTIMESTAMP& dbts, int nDST ) throw()
+inline CTime::CTime(
+	_In_ const DBTIMESTAMP& dbts,
+	_In_ int nDST) throw()
 {
 	struct tm atm;
 	atm.tm_sec = dbts.second;
@@ -361,7 +373,7 @@ inline CTime::CTime( const DBTIMESTAMP& dbts, int nDST ) throw()
 }
 #endif
 
-inline CString CTime::Format(LPCTSTR pFormat) const
+inline CString CTime::Format(_In_z_ LPCTSTR pFormat) const
 {
 	if(pFormat == NULL)
 	{
@@ -369,10 +381,14 @@ inline CString CTime::Format(LPCTSTR pFormat) const
 	}
 
 	TCHAR szBuffer[maxTimeBufferSize];
-
 	struct tm ptmTemp;
-	errno_t err = _localtime64_s(&ptmTemp, &m_time);
-	if (err != 0 || !_tcsftime(szBuffer, maxTimeBufferSize, pFormat, &ptmTemp))
+
+	if (_localtime64_s(&ptmTemp, &m_time) != 0)
+	{
+		AtlThrow(E_INVALIDARG);
+	}
+
+	if (!_tcsftime(szBuffer, maxTimeBufferSize, pFormat, &ptmTemp))
 	{
 		szBuffer[0] = '\0';
 	}
@@ -380,7 +396,7 @@ inline CString CTime::Format(LPCTSTR pFormat) const
 	return szBuffer;
 }
 
-inline CString CTime::FormatGmt(LPCTSTR pFormat) const
+inline CString CTime::FormatGmt(_In_z_ LPCTSTR pFormat) const
 {
 	if(pFormat == NULL)
 	{
@@ -388,10 +404,14 @@ inline CString CTime::FormatGmt(LPCTSTR pFormat) const
 	}
 
 	TCHAR szBuffer[maxTimeBufferSize];
-
 	struct tm ptmTemp;
-	errno_t err = _gmtime64_s(&ptmTemp, &m_time);
-	if (err != 0 || !_tcsftime(szBuffer, maxTimeBufferSize, pFormat, &ptmTemp))
+
+	if (_gmtime64_s(&ptmTemp, &m_time) != 0)
+	{
+		AtlThrow(E_INVALIDARG);
+	}
+
+	if (!_tcsftime(szBuffer, maxTimeBufferSize, pFormat, &ptmTemp))
 	{
 		szBuffer[0] = '\0';
 	}
@@ -399,14 +419,14 @@ inline CString CTime::FormatGmt(LPCTSTR pFormat) const
 	return szBuffer;
 }
 
-inline CString CTime::Format(UINT nFormatID) const
+inline CString CTime::Format(_In_ UINT nFormatID) const
 {
 	CString strFormat;
 	ATLENSURE(strFormat.LoadString(nFormatID));
 	return Format(strFormat);
 }
 
-inline CString CTime::FormatGmt(UINT nFormatID) const
+inline CString CTime::FormatGmt(_In_ UINT nFormatID) const
 {
 	CString strFormat;
 	ATLENSURE(strFormat.LoadString(nFormatID));
@@ -414,12 +434,12 @@ inline CString CTime::FormatGmt(UINT nFormatID) const
 }
 
 #if defined (_AFX) && defined(_UNICODE)
-inline CString CTime::Format(LPCSTR pFormat) const
+inline CString CTime::Format(_In_z_ LPCSTR pFormat) const
 {
 	return Format(CString(pFormat));
 }
 
-inline CString CTime::FormatGmt(LPCSTR pFormat) const
+inline CString CTime::FormatGmt(_In_z_ LPCSTR pFormat) const
 {
 	return FormatGmt(CString(pFormat));
 }

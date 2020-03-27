@@ -20,17 +20,17 @@ STRINGTABLE DISCARDABLE
 BEGIN
 #ifndef _ATL_NO_DATETIME_RESOURCES_
 
-	ATL_IDS_DATETIME_INVALID		"Invalid DateTime"
-	ATL_IDS_DATETIMESPAN_INVALID	"Invalid DateTimeSpan"
+	ATL_IDS_DATETIME_INVALID		"Недействительное значение DateTime"
+	ATL_IDS_DATETIMESPAN_INVALID	"Недействительное значение DateTimeSpan"
 	
 #endif
 
 #ifndef _ATL_NO_MODULE_RESOURCES_
-	ATL_SERVICE_MANAGER_OPEN_ERROR	"Could not open Service Manager"
-	ATL_SERVICE_START_ERROR			"Could not start service"
-	ATL_SERVICE_OPEN_ERROR			"Could not open service"
-	ATL_SERVICE_STOP_ERROR			"Could not stop service"
-	ATL_SERVICE_DELETE_ERROR		"Could not delete service"
+	ATL_SERVICE_MANAGER_OPEN_ERROR	"Не удалось открыть диспетчер служб"
+	ATL_SERVICE_START_ERROR			"Не удалось запустить службу"
+	ATL_SERVICE_OPEN_ERROR			"Не удалось открыть службу"
+	ATL_SERVICE_STOP_ERROR			"Не удалось остановить службу"
+	ATL_SERVICE_DELETE_ERROR		"Не удалось удалить службу"
 #endif
 
 END

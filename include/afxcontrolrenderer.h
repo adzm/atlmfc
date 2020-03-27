@@ -64,6 +64,12 @@ public:
 public:
 	virtual BOOL Create(const CMFCControlRendererInfo& params, BOOL bFlipvert = FALSE);
 
+	/// <summary> 
+	/// Smoothly resizes images.</summary>
+	/// <param name="dblScale"> Scale ratio.</param>
+	/// <returns> TRUE if resize succeeds; otherwise FALSE.</returns>
+	BOOL SmoothResize(double dblScale);
+
 	virtual void Draw(CDC* pDC, CRect rect, UINT index = 0, BYTE alphaSrc = 255);
 	virtual void DrawFrame(CDC* pDC, CRect rect, UINT index = 0, BYTE alphaSrc = 255);
 	virtual void FillInterior(CDC* pDC, CRect rect, UINT index = 0, BYTE alphaSrc = 255);
@@ -98,11 +104,20 @@ public:
 		return m_Bitmap.GetCount();
 	}
 
+	/// <summary>
+	/// Tells whether this control renderer works with scaled (resized) images.</summary>
+	/// <returns>Returns TRUE if this control renderer works with resized (scaled) images.</returns>
+	BOOL IsScaled() const
+	{
+		return m_bIsScaled;
+	}
+
 // Attributes:
 protected:
-	CMFCToolBarImages         m_Bitmap;
+	CMFCToolBarImages       m_Bitmap;
 	CMFCControlRendererInfo m_Params;
-	BOOL                   m_bMirror;
+	BOOL                    m_bMirror;
+	BOOL                    m_bIsScaled;
 };
 
 class CMFCShadowRenderer : public CMFCControlRenderer  
@@ -115,9 +130,7 @@ public:
 
 // Operations:
 public:
-	virtual BOOL Create (int nDepth,
-						 COLORREF clrBase,
-                         int iMinBrightness = 0, int iMaxBrightness = 100);
+	virtual BOOL Create (int nDepth, COLORREF clrBase, int iMinBrightness = 0, int iMaxBrightness = 100);
 
 	virtual void OnSysColorChange ();
 	virtual void Draw (CDC* pDC, CRect rect, UINT index = 0, BYTE alphaSrc = 255);

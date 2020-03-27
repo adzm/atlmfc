@@ -23,6 +23,8 @@
 #include "afxvisualmanager.h"
 #include "afxglobalutils.h"
 
+#pragma comment(lib,"imm32") // ImmXxx
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -131,6 +133,12 @@ BOOL CFrameWndEx::PreTranslateMessage(MSG* pMsg)
 		}
 
 	case WM_CONTEXTMENU:
+		if (!afxGlobalData.m_bSysUnderlineKeyboardShortcuts && !afxGlobalData.m_bUnderlineKeyboardShortcuts)
+		{
+			afxGlobalData.m_bUnderlineKeyboardShortcuts = TRUE;
+			CMFCToolBar::RedrawUnderlines ();
+		}
+
 		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd) && pMsg->wParam == VK_MENU)
 		{
 			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
@@ -565,19 +573,29 @@ void CFrameWndEx::OnDestroy()
 	m_dockManager.m_bEnableAdjustLayout = FALSE;
 
 	CList<HWND, HWND> lstChildren;
-	CWnd* pNextWnd = GetTopWindow();
-	while (pNextWnd != NULL)
-	{
-		lstChildren.AddTail(pNextWnd->m_hWnd);
-		pNextWnd = pNextWnd->GetNextWindow();
-	}
 
-	for (POSITION pos = lstChildren.GetHeadPosition(); pos != NULL;)
+	for (int i = 0; i < 2; i++)
 	{
-		HWND hwndNext = lstChildren.GetNext(pos);
-		if (IsWindow(hwndNext) && ::GetParent(hwndNext) == m_hWnd)
+		CWnd* pNextWnd = GetTopWindow();
+		while (pNextWnd != NULL)
 		{
-			::DestroyWindow(hwndNext);
+			const BOOL bIsPaneDivider = pNextWnd->IsKindOf(RUNTIME_CLASS(CPaneDivider));
+
+			if ((i == 0 && !bIsPaneDivider) || (i == 1 && bIsPaneDivider))
+			{
+				lstChildren.AddTail(pNextWnd->m_hWnd);
+			}
+
+			pNextWnd = pNextWnd->GetNextWindow();
+		}
+
+		for (POSITION pos = lstChildren.GetHeadPosition(); pos != NULL;)
+		{
+			HWND hwndNext = lstChildren.GetNext(pos);
+			if (IsWindow(hwndNext) && ::GetParent(hwndNext) == m_hWnd)
+			{
+				::DestroyWindow(hwndNext);
+			}
 		}
 	}
 
@@ -683,7 +701,7 @@ void CFrameWndEx::AdjustClientArea()
 
 		pChildWnd->CalcWindowRect(rectClientAreaBounds);
 
-		if (!pChildWnd->IsKindOf(RUNTIME_CLASS(CSplitterWnd)))
+		if (!pChildWnd->IsKindOf(RUNTIME_CLASS(CSplitterWnd)) && !pChildWnd->IsKindOf(RUNTIME_CLASS(CFormView)))
 		{
 			pChildWnd->ModifyStyle(0, WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
 		}

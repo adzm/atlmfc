@@ -38,7 +38,7 @@ BOOL AFXAPI _AfxOlePropertiesEnabled()
 }
 
 SCODE _AfxParseDisplayName(LPMONIKER lpmk, LPBC lpbc, _In_z_ LPTSTR lpszRemainder,
-	ULONG* cchEaten, LPMONIKER* plpmkOut)
+						   ULONG* cchEaten, LPMONIKER* plpmkOut)
 {
 	ASSERT(lpmk != NULL);
 	ASSERT(AfxIsValidString(lpszRemainder));
@@ -95,6 +95,17 @@ COleUILinkInfo::COleUILinkInfo(COleDocument* pDocument)
 	ASSERT(pDocument == NULL ||
 		pDocument->IsKindOf(RUNTIME_CLASS(COleDocument)));
 	m_pDocument = pDocument;
+	m_pItem = NULL;
+	m_pSelectedItem = NULL;
+	m_pos = NULL;
+	m_bUpdateLinks = FALSE;
+	m_bUpdateEmbeddings = FALSE;
+}
+
+COleUILinkInfo::COleUILinkInfo(COleClientItem *pItem)
+{
+	m_pDocument = NULL;
+	m_pItem = pItem;
 	m_pSelectedItem = NULL;
 	m_pos = NULL;
 	m_bUpdateLinks = FALSE;
@@ -122,28 +133,31 @@ STDMETHODIMP_(DWORD) COleUILinkInfo::GetNextLink(
 {
 	ASSERT(m_pDocument != NULL);
 
-	POSITION posItem = m_pDocument->GetStartPosition();
-	COleClientItem* pItem;
-	// Skip to first item after dwLink
-	for( ULONG iSkipLink = 0; iSkipLink < dwLink; ++iSkipLink )
+	if (m_pDocument != NULL)
 	{
-		pItem = m_pDocument->GetNextClientItem(posItem);
-	}
+		POSITION posItem = m_pDocument->GetStartPosition();
+		COleClientItem* pItem;
+		// Skip to first item after dwLink
+		for( ULONG iSkipLink = 0; iSkipLink < dwLink; ++iSkipLink )
+		{
+			pItem = m_pDocument->GetNextClientItem(posItem);
+		}
 
-	ULONG iLink = dwLink+1;
-	while (posItem != NULL)
-	{
-		pItem = m_pDocument->GetNextClientItem(posItem);
-		if (NULL == pItem)
+		ULONG iLink = dwLink+1;
+		while (posItem != NULL)
 		{
-			break; //m_DocItemList may contain COleServerItem(s) and not COleClientItem(s)
+			pItem = m_pDocument->GetNextClientItem(posItem);
+			if (NULL == pItem)
+			{
+				break; //m_DocItemList may contain COleServerItem(s) and not COleClientItem(s)
+			}
+			OLE_OBJTYPE objType = pItem->GetType();
+			if ((m_bUpdateLinks && objType == OT_LINK) || (m_bUpdateEmbeddings && objType == OT_EMBEDDED))
+			{
+				return iLink;
+			}
+			iLink++;
 		}
-		OLE_OBJTYPE objType = pItem->GetType();
-		if ((m_bUpdateLinks && objType == OT_LINK) || (m_bUpdateEmbeddings && objType == OT_EMBEDDED))
-		{
-			return iLink;
-		}
-		iLink++;
 	}
 
 	// End of list
@@ -152,11 +166,19 @@ STDMETHODIMP_(DWORD) COleUILinkInfo::GetNextLink(
 
 COleClientItem* COleUILinkInfo::GetLinkItem( DWORD dwLink )
 {
-	POSITION posItem = m_pDocument->GetStartPosition();
 	COleClientItem* pItem = NULL;
-	for (ULONG iLink = 0; iLink < dwLink; ++iLink)
+
+	if (m_pDocument != NULL)
 	{
-		pItem = m_pDocument->GetNextClientItem(posItem);
+		POSITION posItem = m_pDocument->GetStartPosition();
+		for (ULONG iLink = 0; iLink < dwLink; ++iLink)
+		{
+			pItem = m_pDocument->GetNextClientItem(posItem);
+		}
+	}
+	else
+	{
+		pItem = m_pItem;
 	}
 
 	return pItem;
@@ -168,10 +190,10 @@ STDMETHODIMP COleUILinkInfo::SetLinkUpdateOptions(
 	SCODE sc;
 	TRY
 	{
-	    COleClientItem* pItem = GetLinkItem(dwLink);;
-	    ENSURE_VALID(pItem);
-	    ASSERT_KINDOF(COleClientItem, pItem);
-	    ASSERT(pItem->GetType() == OT_LINK);
+		COleClientItem* pItem = GetLinkItem(dwLink);;
+		ENSURE_VALID(pItem);
+		ASSERT_KINDOF(COleClientItem, pItem);
+		ASSERT(pItem->GetType() == OT_LINK);
 
 		// item is a link -- get its link options
 		pItem->SetLinkUpdateOptions((OLEUPDATE)dwUpdateOpt);
@@ -193,9 +215,9 @@ STDMETHODIMP COleUILinkInfo::GetLinkUpdateOptions(
 	SCODE sc;
 	TRY
 	{
-	    COleClientItem* pItem = GetLinkItem(dwLink);
-	    ENSURE_VALID(pItem);
-	    ASSERT_KINDOF(COleClientItem, pItem);
+		COleClientItem* pItem = GetLinkItem(dwLink);
+		ENSURE_VALID(pItem);
+		ASSERT_KINDOF(COleClientItem, pItem);
 
 		if (pItem->GetType() == OT_LINK)
 			*lpdwUpdateOpt = pItem->GetLinkUpdateOptions();
@@ -347,77 +369,77 @@ STDMETHODIMP COleUILinkInfo::GetLinkSource(
 	SCODE sc=S_OK;
 	TRY
 	{
-	    COleClientItem* pItem = GetLinkItem(dwLink);
-	    ENSURE_VALID(pItem);
-	    ASSERT_KINDOF(COleClientItem, pItem);
-	    ASSERT(pItem->GetType() == OT_LINK);
+		COleClientItem* pItem = GetLinkItem(dwLink);
+		ENSURE_VALID(pItem);
+		ASSERT_KINDOF(COleClientItem, pItem);
+		ASSERT(pItem->GetType() == OT_LINK);
 
-	    // set OUT params to NULL
-	    ASSERT(lplpszDisplayName != NULL);
-	    *lplpszDisplayName  = NULL;
-	    if (lplpszFullLinkType != NULL)
-		    *lplpszFullLinkType = NULL;
-	    if (lplpszShortLinkType != NULL)
-		    *lplpszShortLinkType = NULL;
-	    if (lplenFileName != NULL)
-		    *lplenFileName = 0;
-	    if (lpfSourceAvailable != NULL)
-		    *lpfSourceAvailable = !pItem->m_bLinkUnavail;
+		// set OUT params to NULL
+		ASSERT(lplpszDisplayName != NULL);
+		*lplpszDisplayName  = NULL;
+		if (lplpszFullLinkType != NULL)
+			*lplpszFullLinkType = NULL;
+		if (lplpszShortLinkType != NULL)
+			*lplpszShortLinkType = NULL;
+		if (lplenFileName != NULL)
+			*lplenFileName = 0;
+		if (lpfSourceAvailable != NULL)
+			*lpfSourceAvailable = !pItem->m_bLinkUnavail;
 
-	    // get IOleLink interface
-	    LPOLELINK lpOleLink = QUERYINTERFACE(pItem->m_lpObject, IOleLink);
-	    ASSERT(lpOleLink != NULL);
+		// get IOleLink interface
+		LPOLELINK lpOleLink = QUERYINTERFACE(pItem->m_lpObject, IOleLink);
+		ASSERT(lpOleLink != NULL);
 
-	    // get moniker & object information
-	    LPMONIKER lpmk;
-	    if (lpOleLink->GetSourceMoniker(&lpmk) == S_OK)
-	    {
-		    if (lplenFileName != NULL)
-			    *lplenFileName = _AfxOleGetLenFilePrefixOfMoniker(lpmk);
-		    lpmk->Release();
-	    }
+		// get moniker & object information
+		LPMONIKER lpmk;
+		if (lpOleLink->GetSourceMoniker(&lpmk) == S_OK)
+		{
+			if (lplenFileName != NULL)
+				*lplenFileName = _AfxOleGetLenFilePrefixOfMoniker(lpmk);
+			lpmk->Release();
+		}
 
 
-	    // attempt to get the type names of the link
-	    if (lplpszFullLinkType != NULL)
-	    {
-		    LPOLESTR lpOleStr = NULL;
-		    pItem->m_lpObject->GetUserType(USERCLASSTYPE_FULL, &lpOleStr);
-		    *lplpszFullLinkType = TASKSTRINGOLE2T(lpOleStr);
-		    if (*lplpszFullLinkType == NULL)
-		    {
-			    TCHAR szUnknown[256];
-			    VERIFY(AfxLoadString(AFX_IDS_UNKNOWNTYPE, szUnknown, _countof(szUnknown)) != 0);
-			    *lplpszFullLinkType = AtlAllocTaskString(szUnknown);
-		    }
-	    }
-	    if (lplpszShortLinkType != NULL)
-	    {
-		    LPOLESTR lpOleStr = NULL;
-		    pItem->m_lpObject->GetUserType(USERCLASSTYPE_SHORT, &lpOleStr);
-		    *lplpszShortLinkType = TASKSTRINGOLE2T(lpOleStr);
-		    if (*lplpszShortLinkType == NULL)
-		    {
-			    TCHAR szUnknown[256];
-			    VERIFY(AfxLoadString(AFX_IDS_UNKNOWNTYPE, szUnknown, _countof(szUnknown)) != 0);
-			    *lplpszShortLinkType = AtlAllocTaskString(szUnknown);
-		    }
-	    }
+		// attempt to get the type names of the link
+		if (lplpszFullLinkType != NULL)
+		{
+			LPOLESTR lpOleStr = NULL;
+			pItem->m_lpObject->GetUserType(USERCLASSTYPE_FULL, &lpOleStr);
+			*lplpszFullLinkType = TASKSTRINGOLE2T(lpOleStr);
+			if (*lplpszFullLinkType == NULL)
+			{
+				TCHAR szUnknown[256];
+				VERIFY(AfxLoadString(AFX_IDS_UNKNOWNTYPE, szUnknown, _countof(szUnknown)) != 0);
+				*lplpszFullLinkType = AtlAllocTaskString(szUnknown);
+			}
+		}
+		if (lplpszShortLinkType != NULL)
+		{
+			LPOLESTR lpOleStr = NULL;
+			pItem->m_lpObject->GetUserType(USERCLASSTYPE_SHORT, &lpOleStr);
+			*lplpszShortLinkType = TASKSTRINGOLE2T(lpOleStr);
+			if (*lplpszShortLinkType == NULL)
+			{
+				TCHAR szUnknown[256];
+				VERIFY(AfxLoadString(AFX_IDS_UNKNOWNTYPE, szUnknown, _countof(szUnknown)) != 0);
+				*lplpszShortLinkType = AtlAllocTaskString(szUnknown);
+			}
+		}
 
-	    // get source display name for moniker
-	    LPOLESTR lpOleStr = NULL;
-	    SCODE sc = lpOleLink->GetSourceDisplayName(&lpOleStr);
-	    *lplpszDisplayName = TASKSTRINGOLE2T(lpOleStr);
-	    lpOleLink->Release();
-	    if (sc != S_OK)
-		    return sc;
+		// get source display name for moniker
+		LPOLESTR lpOleStr = NULL;
+		SCODE sc = lpOleLink->GetSourceDisplayName(&lpOleStr);
+		*lplpszDisplayName = TASKSTRINGOLE2T(lpOleStr);
+		lpOleLink->Release();
+		if (sc != S_OK)
+			return sc;
 
-	    // see if item is selected if specified
-	    if (lpfIsSelected)
-	    {
-		    *lpfIsSelected = (m_pSelectedItem == pItem);
-	    }
-    }
+		// see if item is selected if specified
+		if (lpfIsSelected)
+		{
+			*lpfIsSelected = (m_pSelectedItem == pItem);
+		}
+	}
 	CATCH_ALL(e)
 	{
 		sc = COleException::Process(e);
@@ -425,7 +447,7 @@ STDMETHODIMP COleUILinkInfo::GetLinkSource(
 	}
 	END_CATCH_ALL
 
-    return sc;
+	return sc;
 }
 
 STDMETHODIMP COleUILinkInfo::OpenLinkSource(DWORD dwLink)
@@ -433,10 +455,10 @@ STDMETHODIMP COleUILinkInfo::OpenLinkSource(DWORD dwLink)
 	SCODE sc;
 	TRY
 	{
-	    COleClientItem* pItem = GetLinkItem(dwLink);
-	    ENSURE_VALID(pItem);
-	    ASSERT_KINDOF(COleClientItem, pItem);
-	    ASSERT(pItem->GetType() == OT_LINK);
+		COleClientItem* pItem = GetLinkItem(dwLink);
+		ENSURE_VALID(pItem);
+		ASSERT_KINDOF(COleClientItem, pItem);
+		ASSERT(pItem->GetType() == OT_LINK);
 
 		// Note: no need for valid CView* since links don't activate inplace
 		pItem->DoVerb(OLEIVERB_SHOW, NULL);
@@ -453,15 +475,15 @@ STDMETHODIMP COleUILinkInfo::OpenLinkSource(DWORD dwLink)
 }
 
 STDMETHODIMP COleUILinkInfo::UpdateLink(
-	DWORD dwLink, BOOL /*fErrorMessage*/, BOOL /*fErrorAction*/)
+										DWORD dwLink, BOOL /*fErrorMessage*/, BOOL /*fErrorAction*/)
 {
 	COleClientItem* pItem=NULL;
 	SCODE sc=E_FAIL;
 	TRY
 	{
-	    pItem = GetLinkItem(dwLink);
-	    ENSURE_VALID(pItem);
-	    ASSERT_KINDOF(COleClientItem, pItem);
+		pItem = GetLinkItem(dwLink);
+		ENSURE_VALID(pItem);
+		ASSERT_KINDOF(COleClientItem, pItem);
 
 		// link not up-to-date, attempt to update it
 		if (!pItem->UpdateLink())
@@ -529,7 +551,7 @@ STDMETHODIMP COleUILinkInfo::GetLastUpdate(DWORD dwLink, FILETIME*)
 // InsertObject dialog wrapper
 
 COleInsertDialog::COleInsertDialog(DWORD dwFlags, CWnd* pParentWnd)
-	: COleDialog(pParentWnd)
+: COleDialog(pParentWnd)
 {
 	memset(&m_io, 0, sizeof(m_io)); // initialize structure to 0/NULL
 
@@ -553,7 +575,7 @@ COleInsertDialog::~COleInsertDialog()
 }
 
 void COleInsertDialog::AddClassIDToList(LPCLSID& lpList,
-	int& nListCount, int& nBufferLen, LPCLSID lpNewID)
+										int& nListCount, int& nBufferLen, LPCLSID lpNewID)
 {
 	// if the list doesn't exist, create it
 
@@ -604,26 +626,26 @@ INT_PTR COleInsertDialog::DoModal(DWORD dwFlags)
 		DWORD dwIndex = 0;
 		TCHAR szName[MAX_PATH+1];
 
-		if (RegOpenKeyEx(HKEY_CLASSES_ROOT, NULL, 0, KEY_READ,
-				&hkClassesRoot) == ERROR_SUCCESS)
+		if (RegOpenKeyExW(HKEY_CLASSES_ROOT, NULL, 0, KEY_READ,
+			&hkClassesRoot) == ERROR_SUCCESS)
 		{
-			if(RegOpenKeyEx(hkClassesRoot, _T("CLSID"), 0,
+			if(RegOpenKeyExW(hkClassesRoot, L"CLSID", 0,
 				KEY_ENUMERATE_SUB_KEYS, &hkCLSID) == ERROR_SUCCESS)
 			{
 				while(RegEnumKey(hkCLSID, dwIndex++,
-							szName, sizeof(szName)/sizeof(TCHAR)) == ERROR_SUCCESS)
+					szName, sizeof(szName)/sizeof(TCHAR)) == ERROR_SUCCESS)
 				{
 					if (RegOpenKeyEx(hkCLSID, szName, 0,
-							KEY_READ, &hkItem) == ERROR_SUCCESS)
+						KEY_READ, &hkItem) == ERROR_SUCCESS)
 					{
-						if ((RegOpenKeyEx(hkItem, _T("Insertable"), 0,
-								KEY_READ, &hkDocObject) == ERROR_SUCCESS) ||
-							 (RegOpenKeyEx(hkItem, _T("Ole1Class"),0,
-								KEY_READ, &hkDocObject) == ERROR_SUCCESS))
+						if ((RegOpenKeyExW(hkItem, L"Insertable", 0,
+							KEY_READ, &hkDocObject) == ERROR_SUCCESS) ||
+							(RegOpenKeyExW(hkItem, L"Ole1Class",0,
+							KEY_READ, &hkDocObject) == ERROR_SUCCESS))
 						{
 							RegCloseKey(hkDocObject);
-							if ((RegOpenKeyEx(hkItem, _T("DocObject"), 0,
-									KEY_READ, &hkDocObject) != ERROR_SUCCESS ) )
+							if ((RegOpenKeyExW(hkItem, L"DocObject", 0,
+								KEY_READ, &hkDocObject) != ERROR_SUCCESS ) )
 							{
 								CLSID clsid;
 								CStringW ws(szName);
@@ -638,7 +660,7 @@ INT_PTR COleInsertDialog::DoModal(DWORD dwFlags)
 				}
 				RegCloseKey(hkCLSID);
 			}
-    		RegCloseKey(hkClassesRoot);
+			RegCloseKey(hkClassesRoot);
 		}
 	}
 
@@ -799,7 +821,7 @@ void COleInsertDialog::Dump(CDumpContext& dc) const
 // COleConvertDialog
 
 COleConvertDialog::COleConvertDialog(COleClientItem* pItem, DWORD dwFlags,
-	CLSID* pClassID, CWnd* pParentWnd) : COleDialog(pParentWnd)
+									 CLSID* pClassID, CWnd* pParentWnd) : COleDialog(pParentWnd)
 {
 	if (pItem != NULL)
 		ASSERT_VALID(pItem);
@@ -983,7 +1005,7 @@ void COleConvertDialog::Dump(CDumpContext& dc) const
 // COleChangeIconDialog
 
 COleChangeIconDialog::COleChangeIconDialog(COleClientItem* pItem,
-	DWORD dwFlags, CWnd* pParentWnd) : COleDialog(pParentWnd)
+										   DWORD dwFlags, CWnd* pParentWnd) : COleDialog(pParentWnd)
 {
 	if (pItem != NULL)
 		ASSERT_VALID(pItem);
@@ -1067,8 +1089,8 @@ void COleChangeIconDialog::Dump(CDumpContext& dc) const
 // COleLinksDialog
 
 COleLinksDialog::COleLinksDialog(COleDocument* pDoc, CView* pView,
-	DWORD dwFlags, CWnd* pParentWnd) : COleDialog(pParentWnd),
-	m_xLinkInfo(pDoc)
+								 DWORD dwFlags, CWnd* pParentWnd) : COleDialog(pParentWnd),
+								 m_xLinkInfo(pDoc)
 {
 	ASSERT_VALID(pDoc);
 	if (pView != NULL)
@@ -1143,8 +1165,8 @@ void COleLinksDialog::AssertValid() const
 // COleUpdateDialog
 
 COleUpdateDialog::COleUpdateDialog(COleDocument* pDoc,
-	BOOL bUpdateLinks, BOOL bUpdateEmbeddings, CWnd* pParentWnd)
-		: COleLinksDialog(pDoc, NULL, 0, pParentWnd)
+								   BOOL bUpdateLinks, BOOL bUpdateEmbeddings, CWnd* pParentWnd)
+								   : COleLinksDialog(pDoc, NULL, 0, pParentWnd)
 {
 	ASSERT_VALID(pDoc);
 	ASSERT(bUpdateLinks || bUpdateEmbeddings);
@@ -1197,7 +1219,7 @@ void COleUpdateDialog::Dump(CDumpContext& dc) const
 // COlePasteSpecialDialog
 
 COlePasteSpecialDialog::COlePasteSpecialDialog(DWORD dwFlags,
-	COleDataObject* pDataObject, CWnd* pParentWnd) : COleDialog(pParentWnd)
+											   COleDataObject* pDataObject, CWnd* pParentWnd) : COleDialog(pParentWnd)
 {
 	memset(&m_ps, 0, sizeof(m_ps)); // initialize structure to 0/NULL
 
@@ -1267,7 +1289,7 @@ UINT COlePasteSpecialDialog::GetSelectionType() const
 		selType = pasteLink;
 	}
 	else if (cf == _oleData.cfEmbedSource || cf == _oleData.cfEmbeddedObject ||
-			cf == _oleData.cfLinkSource)
+		cf == _oleData.cfLinkSource)
 	{
 		selType = pasteNormal;
 	}
@@ -1338,7 +1360,7 @@ OLEUIPASTEFLAG COlePasteSpecialDialog::AddLinkEntry(UINT cf)
 }
 
 void COlePasteSpecialDialog::AddFormat(UINT cf, DWORD tymed, UINT nFormatID,
-	BOOL bEnableIcon, BOOL bLink)
+									   BOOL bEnableIcon, BOOL bLink)
 {
 	TCHAR szFormat[256];
 	if (AfxLoadString(nFormatID, szFormat, _countof(szFormat)) == 0)
@@ -1357,7 +1379,7 @@ void COlePasteSpecialDialog::AddFormat(UINT cf, DWORD tymed, UINT nFormatID,
 		sizeof(OLEUIPASTEENTRY) * (m_ps.cPasteEntries +1));
 	if (p == NULL)
 		AfxThrowMemoryException();
-		
+
 	m_ps.arrPasteEntries = p;
 
 	OLEUIPASTEENTRY* pEntry = &m_ps.arrPasteEntries[m_ps.cPasteEntries];
@@ -1383,7 +1405,7 @@ void COlePasteSpecialDialog::AddFormat(UINT cf, DWORD tymed, UINT nFormatID,
 // if the flags parameter includes a LINKTYPE# flag, it should be obtained
 // from AddLinkEntry
 void COlePasteSpecialDialog::AddFormat(const FORMATETC& formatEtc,
-	_In_z_ LPTSTR lpszFormat, _In_z_ LPTSTR lpszResult, DWORD dwFlags)
+									   _In_z_ LPTSTR lpszFormat, _In_z_ LPTSTR lpszResult, DWORD dwFlags)
 {
 	ASSERT_VALID(this);
 
@@ -1393,7 +1415,7 @@ void COlePasteSpecialDialog::AddFormat(const FORMATETC& formatEtc,
 		m_ps.arrPasteEntries, sizeof(OLEUIPASTEENTRY) * (m_ps.cPasteEntries +1));
 	if (p == NULL)
 		AfxThrowMemoryException();
-		
+
 	m_ps.arrPasteEntries = p;
 	OLEUIPASTEENTRY* pEntry = &m_ps.arrPasteEntries[m_ps.cPasteEntries];
 	pEntry->fmtetc = formatEtc;

@@ -32,8 +32,6 @@ typedef struct _TEB {
     /* .... Don't need any thing below this*/
 } TEB, *PTEB;
  
-_inline struct _TEB * Atl_NtCurrentTeb( void ) { __asm mov eax, fs:[0x18] }
- 
 }
 
 #if !defined(_X86_)
@@ -60,19 +58,6 @@ __InitializeThunkPool (
     VOID
     );
 
-typedef
-PSINGLE_LIST_ENTRY
-(__stdcall *PINTERLOCKED_PUSH_ENTRY_SLIST) (
-     PSLIST_HEADER ListHead,
-     PSINGLE_LIST_ENTRY ListEntry
-    );
-
-typedef
-PSINGLE_LIST_ENTRY
-(__stdcall *PINTERLOCKED_POP_ENTRY_SLIST) (
-     PSLIST_HEADER ListHead
-    );
-
 //
 // An ATL thunk structure, used to manage free thunks in the pool
 //
@@ -95,9 +80,6 @@ PSLIST_HEADER __AtlThunkPool = NULL;
 
 #define ATLTHUNK_USE_HEAP_VALUE (PSLIST_HEADER)UlongToPtr(1)
 #define ATLTHUNK_USE_HEAP()     (__AtlThunkPool == ATLTHUNK_USE_HEAP_VALUE)
-
-PINTERLOCKED_PUSH_ENTRY_SLIST __AtlInterlockedPushEntrySList = NULL;
-PINTERLOCKED_POP_ENTRY_SLIST  __AtlInterlockedPopEntrySList = NULL;
 
 
 PVOID
@@ -146,7 +128,7 @@ Return Value:
 
         thunkEntry = (PATL_THUNK_ENTRY)HeapAlloc(GetProcessHeap(),
                                                  0,
-												 sizeof(ATL::_stdcallthunk));
+                                                 sizeof(ATL::_stdcallthunk));
         if (thunkEntry == NULL) {
             goto outOfMemory;
         }
@@ -158,7 +140,7 @@ Return Value:
     // Attempt to pop a thunk structure from the list and return it
     // 
 
-    thunkEntry = (PATL_THUNK_ENTRY)__AtlInterlockedPopEntrySList(__AtlThunkPool);
+    thunkEntry = (PATL_THUNK_ENTRY) InterlockedPopEntrySList(__AtlThunkPool);
     if (thunkEntry != NULL) {
         return &thunkEntry->Thunk;
     }
@@ -186,7 +168,7 @@ Return Value:
     //
 
     *(DWORD volatile *)thunkPage;
-    thunkEntry = (PATL_THUNK_ENTRY)__AtlInterlockedPopEntrySList(__AtlThunkPool);
+    thunkEntry = (PATL_THUNK_ENTRY) InterlockedPopEntrySList(__AtlThunkPool);
     if (thunkEntry != NULL) {
 
         //
@@ -208,7 +190,7 @@ Return Value:
     thunkEntry = (PATL_THUNK_ENTRY)thunkPage;
     lastThunkEntry = thunkEntry + ATL_THUNKS_PER_PAGE - 1;
     do {
-        __AtlInterlockedPushEntrySList(__AtlThunkPool,&thunkEntry->SListEntry);
+        InterlockedPushEntrySList(__AtlThunkPool,&thunkEntry->SListEntry);
         thunkEntry += 1;
     } while (thunkEntry < lastThunkEntry);
 
@@ -261,7 +243,7 @@ Return Value:
         //
     
         thunkEntry = (PATL_THUNK_ENTRY)Thunk;
-        __AtlInterlockedPushEntrySList(__AtlThunkPool,&thunkEntry->SListEntry);
+        InterlockedPushEntrySList(__AtlThunkPool,&thunkEntry->SListEntry);
     }
 }
 
@@ -312,10 +294,9 @@ Return Value:
     // - Downlevel OSs may not offer the SLIST functionality
     // 
 
-    HMODULE kernel32Module;
     BOOL result;
 
-    result = IsProcessorFeaturePresent( 12 /*PF_NX_ENABLED*/ );
+    result = IsProcessorFeaturePresent(PF_NX_ENABLED);
     if (result == FALSE) {
 
         //
@@ -329,36 +310,8 @@ Return Value:
         return TRUE;
     }
 
-    //
-    // We are running on Windows NT5.1 or later.  Get the kernel32 pointers to
-    // InterlockedPushEntrySList and InterlockedPopEntrySList.  They can't be
-    // simply imported as this library may run in environments without those
-    // routines.
-    // 
-
-    kernel32Module = LoadLibrary( "kernel32.dll" );
-    if (kernel32Module != NULL) {
-
-        __AtlInterlockedPushEntrySList = (PINTERLOCKED_PUSH_ENTRY_SLIST)
-            GetProcAddress( kernel32Module, "InterlockedPushEntrySList" );
-
-        __AtlInterlockedPopEntrySList = (PINTERLOCKED_POP_ENTRY_SLIST)
-            GetProcAddress( kernel32Module, "InterlockedPopEntrySList" );
-    }
-
-    if (__AtlInterlockedPushEntrySList == NULL ||
-        __AtlInterlockedPopEntrySList == NULL) {
-
-        //
-        // If either address could not be retrieved then fail the
-        // initialization.
-        //
-
-        return FALSE;
-    }
-
     atlThunkPoolPtr =
-        (PSLIST_HEADER *)((PCHAR)(Atl_NtCurrentTeb()->ProcessEnvironmentBlock) + PEB_POINTER_OFFSET);
+        (PSLIST_HEADER *)((PCHAR)(NtCurrentTeb()->ProcessEnvironmentBlock) + PEB_POINTER_OFFSET);
 
     atlThunkPool = *atlThunkPoolPtr;
     if (atlThunkPool == NULL) {
@@ -445,5 +398,3 @@ __stdcall __FreeStdCallThunk (
 }
 
 }   // namespace ATL
-
-

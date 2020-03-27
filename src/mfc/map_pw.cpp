@@ -16,10 +16,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-
-
-
-
+#include <afxtempl.h>
 
 #define new DEBUG_NEW
 
@@ -41,8 +38,7 @@ CMapPtrToWord::CMapPtrToWord(INT_PTR nBlockSize)
 
 inline UINT CMapPtrToWord::HashKey(void* key) const
 {
-	// default identity hash - works for most primitive values
-	return UINT(DWORD_PTR(key)>>4);
+	return (::HashKey<DWORD_PTR>((DWORD_PTR)key));
 }
 
 void CMapPtrToWord::InitHashTable(

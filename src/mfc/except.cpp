@@ -26,15 +26,11 @@ void PASCAL CException::operator delete(void* pbData)
 		CObject::operator delete(pbData);
 }
 
-#if _MSC_VER >= 1200
 void PASCAL CException::operator delete(void* pbData,
 	LPCSTR /* lpszFileName */, int /* nLine */)
 {
 	operator delete(pbData);
 }
-#endif
-
-
 
 #define new DEBUG_NEW
 #endif

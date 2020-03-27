@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #if defined(__ATLBASE_H__) || defined (_INC_CRTDBG)
@@ -63,7 +63,7 @@ __declspec(selectany) AtlAllocRecord* g_pMemStats = NULL;
 __declspec(selectany) int g_nAllocedRecords = 0;
 __declspec(selectany) int g_nRecords = 0;
 
-inline int __cdecl AtlNewHandler(size_t /* nSize */)
+inline int __cdecl AtlNewHandler(_In_ size_t /* nSize */)
 {
 	return 0;
 }
@@ -75,7 +75,7 @@ inline _PNH AtlGetNewHandler(void)
 	return _atlNewHandler;
 }
 
-inline _PNH AtlSetNewHandler(_PNH pfnNewHandler)
+inline _PNH AtlSetNewHandler(_In_ _PNH pfnNewHandler)
 {
 	_PNH pfnOldHandler = _atlNewHandler;
 	_atlNewHandler = pfnNewHandler;
@@ -125,7 +125,11 @@ inline void __cdecl operator delete[](void* p)
 	::operator delete(p);
 }
 
-inline void* __cdecl operator new(size_t nSize, int nType, LPCSTR lpszFileName, int nLine)
+inline void* __cdecl operator new(
+	_In_ size_t nSize,
+	_In_ int nType,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	ATLDBG_UNUSED(nType);
 	ATLDBG_UNUSED(lpszFileName);
@@ -148,7 +152,11 @@ inline void* __cdecl operator new(size_t nSize, int nType, LPCSTR lpszFileName, 
 #endif // _ATL_NO_DEBUG_CRT
 }
 
-inline void __cdecl operator delete(void* p, int nType, LPCSTR /* lpszFileName */, int /* nLine */)
+inline void __cdecl operator delete(
+	_Inout_opt_ void* p,
+	_In_ int nType,
+	_In_opt_z_ LPCSTR /* lpszFileName */,
+	_In_ int /* nLine */)
 {
 	ATLDBG_UNUSED(nType);
 #if !defined(_ATL_NO_DEBUG_CRT) && defined(_DEBUG)
@@ -158,32 +166,52 @@ inline void __cdecl operator delete(void* p, int nType, LPCSTR /* lpszFileName *
 #endif // !defined(_ATL_NO_DEBUG_CRT) && defined(_DEBUG)
 }
 
-inline void* __cdecl operator new[](size_t nSize, int nType, LPCSTR lpszFileName, int nLine)
+inline void* __cdecl operator new[](
+	_In_ size_t nSize,
+	_In_ int nType,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	return ::operator new(nSize, nType, lpszFileName, nLine);
 }
 
-inline void __cdecl operator delete[](void* p, int nType, LPCSTR lpszFileName, int nLine)
+inline void __cdecl operator delete[](
+	_Inout_opt_ void* p,
+	_In_ int nType,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	::operator delete(p, nType, lpszFileName, nLine);
 }
 
-inline void* __cdecl operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
+inline void* __cdecl operator new(
+	_In_ size_t nSize,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	return ::operator new(nSize, _NORMAL_BLOCK, lpszFileName, nLine);
 }
 
-inline void* __cdecl operator new[](size_t nSize, LPCSTR lpszFileName, int nLine)
+inline void* __cdecl operator new[](
+	_In_ size_t nSize,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	return ::operator new[](nSize, _NORMAL_BLOCK, lpszFileName, nLine);
 }
 
-inline void __cdecl operator delete(void* pData, LPCSTR /* lpszFileName */, int /* nLine */)
+inline void __cdecl operator delete(
+	_Inout_opt_ void* pData,
+	_In_opt_z_ LPCSTR /* lpszFileName */,
+	_In_ int /* nLine */)
 {
 	::operator delete(pData);
 }
 
-inline void __cdecl operator delete[](void* pData, LPCSTR /* lpszFileName */, int /* nLine */)
+inline void __cdecl operator delete[](
+	_Inout_opt_ void* pData,
+	_In_opt_z_ LPCSTR /* lpszFileName */,
+	_In_ int /* nLine */)
 {
 	::operator delete(pData);
 }
@@ -193,14 +221,19 @@ inline void __cdecl operator delete[](void* pData, LPCSTR /* lpszFileName */, in
 namespace ATL
 {
 
-inline void* AtlAllocMemoryDebug(size_t nSize, LPCSTR lpszFileName, int nLine)
+inline void* AtlAllocMemoryDebug(
+	_In_ size_t nSize,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
+	ATLDBG_UNUSED(nSize);
 	ATLDBG_UNUSED(lpszFileName);
 	ATLDBG_UNUSED(nLine);
 	return _malloc_dbg(nSize, _NORMAL_BLOCK, lpszFileName, nLine);
 }
 
-inline void AtlFreeMemoryDebug(void* pbData)
+inline void AtlFreeMemoryDebug(
+	_Inout_opt_ void* pbData)
 {
 	_free_dbg(pbData, _NORMAL_BLOCK);
 }
@@ -210,7 +243,9 @@ inline void AtlFreeMemoryDebug(void* pbData)
 /////////////////////////////////////////////////////////////////////////////
 // allocation failure hook, tracking turn on
 
-inline void _AtlDbgMemTrace(LPCSTR szBuf, int nLen)
+inline void _AtlDbgMemTrace(
+	_In_z_count_(nLen) LPCSTR szBuf,
+	_In_ int nLen)
 {
 	ATLTRACE(atlTraceAllocation, 0, szBuf);
 
@@ -226,24 +261,41 @@ inline void _AtlDbgMemTrace(LPCSTR szBuf, int nLen)
 	}
 }
 
-inline void _AtlRecordAllocation(LPCSTR szFileName, int nLine, LPCSTR szAllocType, size_t nSize, int nRequest = 0)
+inline void _AtlRecordAllocation(
+	_In_opt_z_ LPCSTR szFileName,
+	_In_ int nLine,
+	_In_z_ LPCSTR szAllocType,
+	_In_ size_t nSize,
+	_In_ int nRequest = 0)
 {
 	const int c_nSize = 512;
 	char szBuf[c_nSize];
 	int nLen;
 
 	if (szFileName)
-		nLen = sprintf_s(szBuf, c_nSize, "%s(%d): Memory operation: %s a %d-byte block (# %ld)\r\n",
-			szFileName, nLine, szAllocType, nSize, nRequest);
+	{
+#ifdef _WIN64
+		nLen = sprintf_s(szBuf, c_nSize, "%s(%d): Memory operation: %s a %I64d-byte block (# %ld)\r\n",	szFileName, nLine, szAllocType, nSize, nRequest);
+#else
+		nLen = sprintf_s(szBuf, c_nSize, "%s(%d): Memory operation: %s a %d-byte block (# %ld)\r\n", szFileName, nLine, szAllocType, nSize, nRequest);
+#endif
+	}
 	else
+	{
+#ifdef _WIN64
+		nLen = sprintf_s(szBuf, c_nSize, "Memory operation: %s a %I64d-byte block (# %ld)\r\n", szAllocType, nSize, nRequest);
+#else
 		nLen = sprintf_s(szBuf, c_nSize, "Memory operation: %s a %d-byte block (# %ld)\r\n", szAllocType, nSize, nRequest);
+#endif
+	}
+
 
 	if(nLen == -1 || nLen >= c_nSize)
 	{
 		// Truncate it
 		szBuf[c_nSize -1] = '\0';
 	}
-	
+
 	if (g_dwFlags & atlDbgMemTrackIndividualAllocations)
 		_AtlDbgMemTrace(szBuf, nLen);
 
@@ -267,7 +319,7 @@ inline void _AtlRecordAllocation(LPCSTR szFileName, int nLine, LPCSTR szAllocTyp
 			if (g_nAllocedRecords == g_nRecords)
 			{
 				int nNewAllocSize = g_nAllocedRecords * 2;
-				if ((nNewAllocSize<0) || 
+				if ((nNewAllocSize<0) ||
 					(nNewAllocSize>(INT_MAX/sizeof(AtlAllocRecord))))
 				{
 					ATLASSERT(FALSE);
@@ -296,8 +348,14 @@ inline void _AtlRecordAllocation(LPCSTR szFileName, int nLine, LPCSTR szAllocTyp
 	}
 }
 
-inline int __cdecl _AtlAllocReportHook(int nAllocType, void* /* pvData */, size_t nSize, int nBlockUse, long lRequest,
-	const unsigned char* szFileName, int nLine)
+inline int __cdecl _AtlAllocReportHook(
+	_In_ int nAllocType,
+	_In_opt_ void* /* pvData */,
+	_In_ size_t nSize,
+	_In_ int nBlockUse,
+	_In_ long lRequest,
+	_In_z_ const unsigned char* szFileName,
+	_In_ int nLine)
 {
 	char *operation[] = { "", "allocating", "re-allocating", "freeing" };
 
@@ -321,7 +379,7 @@ inline void AtlSetAllocHook()
 		pfnCrtAllocHook = _CrtSetAllocHook(_AtlAllocReportHook);
 }
 
-inline void AtlSetReportFile(HANDLE hReportFile)
+inline void AtlSetReportFile(_In_ HANDLE hReportFile)
 {
 	if (g_hMemMutex == NULL)
 		g_hMemMutex = CreateMutex(NULL, FALSE, NULL);
@@ -330,7 +388,7 @@ inline void AtlSetReportFile(HANDLE hReportFile)
 		g_hReportFile = hReportFile;
 }
 
-inline void AtlEnableAllocationTracking(DWORD dwFlags = atlDbgMemTrackAll)
+inline void AtlEnableAllocationTracking(_In_ DWORD dwFlags = atlDbgMemTrackAll)
 {
 	g_dwFlags = dwFlags;
 
@@ -364,11 +422,21 @@ inline BOOL AtlDumpMemoryStats()
 
 		for (int n=0; n<g_nRecords; n++)
 		{
-			int nLen = sprintf_s(szBuf, nSize, "%s(%d): %d operations of size %d\r\n",
+#ifdef _WIN64
+			nLen = sprintf_s(szBuf, nSize, "%s(%d): %d operations of size %I64d\r\n",
 				g_pMemStats[n].szPath,
 				g_pMemStats[n].nLine,
 				g_pMemStats[n].nAllocations,
 				g_pMemStats[n].nSize);
+
+#else
+			nLen = sprintf_s(szBuf, nSize, "%s(%d): %d operations of size %d\r\n",
+				g_pMemStats[n].szPath,
+				g_pMemStats[n].nLine,
+				g_pMemStats[n].nAllocations,
+				g_pMemStats[n].nSize);
+#endif
+
 			if(nLen == -1 || nLen >= _countof(szBuf))
 			{
 				szBuf[nSize - 1] = '\0';
@@ -384,9 +452,9 @@ inline BOOL AtlDumpMemoryStats()
 
 // This can be set to TRUE to override all AtlEnableMemoryTracking calls,
 // allowing all allocations to be tracked.
-BOOL _atlMemoryLeakOverride = FALSE;
+__declspec(selectany) BOOL _atlMemoryLeakOverride = FALSE;
 
-inline BOOL AtlEnableMemoryTracking(BOOL bTrack)
+inline BOOL AtlEnableMemoryTracking(_In_ BOOL bTrack)
 {
 	if (_atlMemoryLeakOverride)
 		return TRUE;
@@ -403,7 +471,7 @@ inline BOOL AtlEnableMemoryTracking(BOOL bTrack)
 // stop on a specific memory request
 
 // Obsolete API
-inline void AtlSetAllocStop(LONG lRequestNumber)
+inline void AtlSetAllocStop(_In_ LONG lRequestNumber)
 {
 	ATLDBG_UNUSED(lRequestNumber);
 	_CrtSetBreakAlloc(lRequestNumber);
@@ -417,8 +485,10 @@ inline BOOL AtlCheckMemory()
 
 // -- true if block of exact size, allocated on the heap
 // -- set *plRequestNumber to request number (or 0)
-inline BOOL AtlIsMemoryBlock(const void* pData, UINT nBytes,
-		LONG* plRequestNumber)
+inline BOOL AtlIsMemoryBlock(
+	_In_ const void* pData,
+	_In_ UINT nBytes,
+	_Out_opt_ LONG* plRequestNumber)
 {
 	ATLDBG_UNUSED(plRequestNumber);
 	ATLDBG_UNUSED(nBytes);
@@ -433,19 +503,32 @@ inline BOOL AtlDumpMemoryLeaks()
 
 /////////////////////////////////////////////////////////////////////////////
 
-inline HANDLE __stdcall _AtlHeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize, LPCSTR lpszFileName, int nLine)
+inline HANDLE __stdcall _AtlHeapCreate(
+	_In_ DWORD flOptions,
+	_In_ SIZE_T dwInitialSize,
+	_In_ SIZE_T dwMaximumSize,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "HeapCreate", 0);
 	return HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
 }
 
-inline BOOL __stdcall _AtlHeapDestroy(HANDLE hHeap, LPCSTR lpszFileName, int nLine)
+inline BOOL __stdcall _AtlHeapDestroy(
+	_In_ HANDLE hHeap,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "HeapDestroy", 0);
 	return HeapDestroy(hHeap);
 }
 
-inline LPVOID __stdcall _AtlHeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T nSize, LPCSTR lpszFileName, int nLine)
+inline LPVOID __stdcall _AtlHeapAlloc(
+	_In_ HANDLE hHeap,
+	_In_ DWORD dwFlags,
+	_In_ SIZE_T nSize,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	LPVOID p = NULL;
 #ifndef _ATL_NO_TRACK_HEAP
@@ -459,7 +542,13 @@ inline LPVOID __stdcall _AtlHeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T nSize,
 	return p;
 }
 
-inline LPVOID __stdcall _AtlHeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T nSize, LPCSTR lpszFileName, int nLine)
+inline LPVOID __stdcall _AtlHeapReAlloc(
+	_In_ HANDLE hHeap,
+	_In_ DWORD dwFlags,
+	_Inout_opt_ LPVOID lpMem,
+	_In_ SIZE_T nSize,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	LPVOID p = NULL;
 #ifndef _ATL_NO_TRACK_HEAP
@@ -474,7 +563,12 @@ inline LPVOID __stdcall _AtlHeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMe
 	return p;
 }
 
-inline BOOL __stdcall _AtlHeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, LPCSTR lpszFileName, int nLine)
+inline BOOL __stdcall _AtlHeapFree(
+	_In_ HANDLE hHeap,
+	_In_ DWORD dwFlags,
+	_Inout_opt_ LPVOID lpMem,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "HeapFree", 0);
 #ifndef _ATL_NO_TRACK_HEAP
@@ -487,31 +581,57 @@ inline BOOL __stdcall _AtlHeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, LP
 #endif
 }
 
-inline SIZE_T __stdcall _AtlHeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem, LPCSTR lpszFileName, int nLine)
+inline SIZE_T __stdcall _AtlHeapSize(
+	_In_ HANDLE hHeap,
+	_In_ DWORD dwFlags,
+	_In_ LPCVOID lpMem,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "HeapSize", 0);
 	return HeapSize(hHeap, dwFlags, lpMem);
 }
 
-inline BOOL __stdcall _AtlHeapValidate(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem, LPCSTR lpszFileName, int nLine)
+inline BOOL __stdcall _AtlHeapValidate(
+	_In_ HANDLE hHeap,
+	_In_ DWORD dwFlags,
+	_In_opt_ LPCVOID lpMem,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "HeapValidate", 0);
 	return HeapValidate(hHeap, dwFlags, lpMem);
 }
 
-inline LPVOID __stdcall _AtlVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect, LPCSTR lpszFileName, int nLine)
+inline LPVOID __stdcall _AtlVirtualAlloc(
+	_In_ LPVOID lpAddress,
+	_In_ SIZE_T dwSize,
+	_In_ DWORD flAllocationType,
+	_In_ DWORD flProtect,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "VirtualAlloc", dwSize);
 	return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 }
 
-inline BOOL __stdcall _AtlVirtualFree(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType, LPCSTR lpszFileName, int nLine)
+inline BOOL __stdcall _AtlVirtualFree(
+	_In_ LPVOID lpAddress,
+	_In_ SIZE_T dwSize,
+	_In_ DWORD dwFreeType,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "VirtualFree", 0);
 	return VirtualFree(lpAddress, dwSize, dwFreeType);
 }
 
-inline SIZE_T __stdcall _AtlVirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, DWORD dwLength, LPCSTR lpszFileName, int nLine)
+inline SIZE_T __stdcall _AtlVirtualQuery(
+	_In_ LPCVOID lpAddress,
+	_Out_ PMEMORY_BASIC_INFORMATION lpBuffer,
+	_In_ DWORD dwLength,
+	_In_z_ LPCSTR lpszFileName,
+	_In_ int nLine)
 {
 	_AtlRecordAllocation(lpszFileName, nLine, "VirtualQuery", 0);
 	return VirtualQuery(lpAddress, lpBuffer, dwLength);

@@ -107,7 +107,9 @@ protected:
 	afx_msg void OnReturn(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnDestroy();
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	HIMAGELIST GetShellImageList(BOOL bLarge);

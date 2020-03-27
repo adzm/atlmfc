@@ -333,12 +333,12 @@ HICON COleClientItem::GetIconFromRegistry(CLSID& clsid)
 		return NULL;
 
 	// first, try for the real icon
-	if (AfxRegOpenKeyEx(HKEY_CLASSES_ROOT, _T("clsid"), 0, KEY_READ, &hkeyCLSID) == ERROR_SUCCESS)
+	if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"CLSID", 0, KEY_READ, &hkeyCLSID) == ERROR_SUCCESS)
 	{
 		CString strCLSID(szCLSID);
 		if (RegOpenKeyEx(hkeyCLSID, strCLSID.GetString(), 0, KEY_READ, &hkeyObj) == ERROR_SUCCESS)
 		{
-			if (RegOpenKeyEx(hkeyObj, _T("DefaultIcon"), 0, KEY_READ, &hkeyDefIcon) == ERROR_SUCCESS)
+			if (RegOpenKeyExW(hkeyObj, L"DefaultIcon", 0, KEY_READ, &hkeyDefIcon) == ERROR_SUCCESS)
 			{
 				DWORD dwCount;
 				dwCount = sizeof(szName);
@@ -363,9 +363,9 @@ HICON COleClientItem::GetIconFromRegistry(CLSID& clsid)
 	// if we didn't get the real icon, try the default icon
 	if (hIcon == NULL)
 	{
-		if (AfxRegOpenKeyEx(HKEY_CLASSES_ROOT, _T("DocShortcut"), 0, KEY_READ,&hkeyObj) == ERROR_SUCCESS)
+		if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"DocShortcut", 0, KEY_READ,&hkeyObj) == ERROR_SUCCESS)
 		{
-			if (RegOpenKeyEx(hkeyObj, _T("DefaultIcon"), 0, KEY_READ, &hkeyDefIcon) == ERROR_SUCCESS)
+			if (RegOpenKeyExW(hkeyObj, L"DefaultIcon", 0, KEY_READ, &hkeyDefIcon) == ERROR_SUCCESS)
 			{
 				DWORD dwCount;
 				dwCount = sizeof(szName);
@@ -1046,9 +1046,21 @@ void COleClientItem::ReadItemCompound(CArchive& ar)
 		// open storage for this item
 		LPSTORAGE lpStorage;
 		CStringW strItemName(szItemName);
+		DWORD grfMode = STGM_READWRITE | STGM_SHARE_EXCLUSIVE;
+
+		if (!pDoc->IsSearchAndOrganizeHandler())
+			grfMode |= STGM_TRANSACTED;
+
 		SCODE sc = pDoc->m_lpRootStg->OpenStorage(strItemName.GetString(), NULL,
-			STGM_READWRITE|STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE,
-			0, 0, &lpStorage);
+			grfMode, 0, 0, &lpStorage);
+
+		if (sc != S_OK)
+		{
+			TRACE(traceOle, 0, _T("Warning: unable to open child storage for write. Opening for read only %s.\n"), szItemName);
+			sc = pDoc->m_lpRootStg->OpenStorage(strItemName.GetString(), NULL,
+				STGM_READ | STGM_SHARE_EXCLUSIVE, 0, 0, &lpStorage);
+		}
+
 		if (sc != S_OK)
 		{
 			TRACE(traceOle, 0, _T("Warning: unable to open child storage %s.\n"), szItemName);

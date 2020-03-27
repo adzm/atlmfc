@@ -33,7 +33,6 @@ DWORD CDateTimeCtrl::GetRange(_Out_ CTime* pMinTime, _Out_ CTime* pMaxTime) cons
 	SYSTEMTIME sysTimes[2];
 	memset(sysTimes, 0, sizeof(sysTimes));
 
-	//IA64: Assume retval of DTM_GETRANGE is still 32-bit
 	DWORD dwResult = DWORD(::SendMessage(m_hWnd, DTM_GETRANGE, 0, (LPARAM) sysTimes));
 
 	if (pMinTime != NULL)
@@ -59,7 +58,6 @@ DWORD CDateTimeCtrl::GetRange(_Out_ COleDateTime* pMinTime, _Out_ COleDateTime* 
 	SYSTEMTIME sysTimes[2];
 	memset(sysTimes, 0, sizeof(sysTimes));
 
-	//IA64: Assume retval of DTM_GETRANGE is still 32-bit
 	DWORD dwResult = DWORD(::SendMessage(m_hWnd, DTM_GETRANGE, 0, (LPARAM) sysTimes));
 	if (pMinTime != NULL)
 	{

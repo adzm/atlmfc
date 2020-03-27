@@ -1147,8 +1147,8 @@ BOOL CPreviewView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 		{
 			HINSTANCE hInst = AfxFindResourceHandle(
 				ATL_MAKEINTRESOURCE(AFX_IDC_MAGNIFY), ATL_RT_GROUP_CURSOR);
-			m_hMagnifyCursor = ::LoadCursor(hInst,
-				ATL_MAKEINTRESOURCE(AFX_IDC_MAGNIFY));
+			m_hMagnifyCursor = ::LoadCursorW(hInst,
+				ATL_MAKEINTRESOURCEW(AFX_IDC_MAGNIFY));
 		}
 		::SetCursor(m_hMagnifyCursor);
 	}

@@ -76,12 +76,7 @@ public:
 
 	static void __stdcall Draw(CDC* pDC, CMenuImages::IMAGES_IDS id, const CPoint& ptImage, CMenuImages::IMAGE_STATE state = CMenuImages::ImageBlack, const CSize& sizeImage = CSize(0, 0));
 	static void __stdcall Draw(CDC* pDC, CMenuImages::IMAGES_IDS id, const CRect& rectImage, CMenuImages::IMAGE_STATE state = CMenuImages::ImageBlack, const CSize& sizeImage = CSize(0, 0));
-	static CSize __stdcall Size()
-	{
-		Initialize();
-		return m_ImagesBlack.GetImageSize();
-	}
-
+	static CSize __stdcall Size();
 	static void __stdcall SetColor(CMenuImages::IMAGE_STATE state, COLORREF color);	// color == -1: default
 	static void __stdcall CleanUp();
 
@@ -95,6 +90,8 @@ protected:
 	AFX_IMPORT_DATA static CMFCToolBarImages m_ImagesLtGray;
 	AFX_IMPORT_DATA static CMFCToolBarImages m_ImagesWhite;
 	AFX_IMPORT_DATA static CMFCToolBarImages m_ImagesBlack2;
+
+	static BOOL m_bInitializing;
 };
 
 #ifdef _AFX_MINREBUILD

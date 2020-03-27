@@ -21,6 +21,7 @@
 #include "afxwindowsmanagerdialog.h"
 #include "afxusertoolsmanager.h"
 #include "afxcontextmenumanager.h"
+#include "afxpanedivider.h"
 
 #include "afxdockablepane.h"
 #include "afxtabbedpane.h"
@@ -28,11 +29,15 @@
 #include "afxribbonbar.h"
 #include "afxribbonstatusbar.h"
 
+#pragma comment(lib,"imm32") // ImmXxx
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 #pragma comment(lib, "imm32.lib")
+
+typedef BOOL (STDAPICALLTYPE *PFNCHANGEWINDOWMESSAGEFILTER)(UINT, DWORD);
 
 /////////////////////////////////////////////////////////////////////////////
 // CMDIFrameWndEx
@@ -48,6 +53,22 @@ CMDIFrameWndEx::CMDIFrameWndEx() :
 	m_bShowWindowsDlgAlways(FALSE), m_bShowWindowsDlgHelpButton(FALSE), m_bWasMaximized(FALSE), m_bIsMinimized(FALSE),
 	m_bClosing(FALSE), m_nFrameID(0), m_pPrintPreviewFrame(NULL), m_bCanConvertControlBarToMDIChild(FALSE)
 {
+	// Allow WM_DWMSENDICONICTHUMBNAIL and WM_DWMSENDICONICLIVEPREVIEWBITMAP through the UIPI filter, so
+	// an MFC application running as administrator can show thumbnails correctly in the Windows7 taskbar.
+	if (afxGlobalData.bIsWindows7)
+	{
+		HMODULE hUser = AfxCtxLoadLibraryW(L"USER32.DLL");
+		if (hUser != NULL)
+		{
+			PFNCHANGEWINDOWMESSAGEFILTER pfnChangeWindowMessageFilter = (PFNCHANGEWINDOWMESSAGEFILTER)GetProcAddress(hUser, "ChangeWindowMessageFilter");
+			if (pfnChangeWindowMessageFilter != NULL)
+			{
+				BOOL bFilter;
+				bFilter = pfnChangeWindowMessageFilter(WM_DWMSENDICONICTHUMBNAIL, MSGFLT_ADD);
+				bFilter = pfnChangeWindowMessageFilter(WM_DWMSENDICONICLIVEPREVIEWBITMAP, MSGFLT_ADD);
+			}
+		}
+	}
 }
 
 #pragma warning(default : 4355)
@@ -206,6 +227,12 @@ BOOL CMDIFrameWndEx::PreTranslateMessage(MSG* pMsg)
 		}
 
 	case WM_CONTEXTMENU:
+		if (!afxGlobalData.m_bSysUnderlineKeyboardShortcuts && !afxGlobalData.m_bUnderlineKeyboardShortcuts)
+		{
+			afxGlobalData.m_bUnderlineKeyboardShortcuts = TRUE;
+			CMFCToolBar::RedrawUnderlines ();
+		}
+
 		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd) &&
 			pMsg->wParam == VK_MENU)
 		{
@@ -479,7 +506,7 @@ BOOL CMDIFrameWndEx::ShowPopupMenu(CMFCPopupMenu* pMenuPopup)
 			CMenu* pMenu = CMenu::FromHandle(m_hmenuWindow);
 			if (pMenu != NULL)
 			{
-				int iCount = (int) pMenu->GetMenuItemCount();
+				int iCount = pMenu->GetMenuItemCount();
 				BOOL bIsFirstWindowItem = TRUE;
 				BOOL bIsStandradWindowsDlg = FALSE;
 
@@ -759,14 +786,24 @@ void CMDIFrameWndEx::OnDestroy()
 	m_dockManager.m_bEnableAdjustLayout = FALSE;
 
 	CList<HWND, HWND> lstChildren;
-	CWnd* pNextWnd = GetTopWindow();
-	while (pNextWnd != NULL)
+
+	for (int i = 0; i < 2; i++)
 	{
-		if (m_wndClientArea.m_hWnd != pNextWnd->m_hWnd)
+		CWnd* pNextWnd = GetTopWindow();
+		while (pNextWnd != NULL)
 		{
-			lstChildren.AddTail(pNextWnd->m_hWnd);
+			if (m_wndClientArea.m_hWnd != pNextWnd->m_hWnd)
+			{
+				const BOOL bIsPaneDivider = pNextWnd->IsKindOf(RUNTIME_CLASS(CPaneDivider));
+
+				if ((i == 0 && !bIsPaneDivider) || (i == 1 && bIsPaneDivider))
+				{
+					lstChildren.AddTail(pNextWnd->m_hWnd);
+				}
+			}
+
+			pNextWnd = pNextWnd->GetNextWindow();
 		}
-		pNextWnd = pNextWnd->GetNextWindow();
 	}
 
 	for (POSITION pos = lstChildren.GetHeadPosition(); pos != NULL;)
@@ -1304,6 +1341,7 @@ void CMDIFrameWndEx::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	if (m_wndClientArea.GetMDITabs().GetSafeHwnd() == NULL)
 	{
+		Default();
 		return;
 	}
 
@@ -1363,6 +1401,10 @@ void CMDIFrameWndEx::OnContextMenu(CWnd* pWnd, CPoint point)
 			wndTab.SetActiveTab(nTab);
 			OnShowMDITabContextMenu(point, GetMDITabsContextMenuAllowedItems(), FALSE);
 		}
+	}
+	else
+	{
+		Default();
 	}
 }
 
@@ -1556,6 +1598,75 @@ void CMDIFrameWndEx::UpdateMDITabbedBarsIcons()
 
 		hwndMDIChild = ::GetWindow(hwndMDIChild, GW_HWNDNEXT);
 	}
+}
+
+void CMDIFrameWndEx::RegisterAllMDIChildrenWithTaskbar(BOOL bRegister)
+{
+	ASSERT_VALID(this);
+
+	HWND hwndMDIChild = ::GetWindow(m_hWndMDIClient, GW_CHILD);
+
+	while (hwndMDIChild != NULL)
+	{
+		CMDIChildWndEx* pMDIChildFrame = DYNAMIC_DOWNCAST(CMDIChildWndEx, CWnd::FromHandle(hwndMDIChild));
+
+		if (pMDIChildFrame != NULL)
+		{
+			if (bRegister)
+			{
+				// add at the end
+				pMDIChildFrame->RegisterTaskbarTab(NULL);
+			}
+			else
+			{
+				pMDIChildFrame->UnregisterTaskbarTab(FALSE);
+			}
+		}
+
+		hwndMDIChild = ::GetWindow(hwndMDIChild, GW_HWNDNEXT);
+	}
+
+	if (bRegister)
+	{
+		// if we are registering we need to set clip for the active child, which is done internally in InvalidateIconicBitmaps
+		BOOL bMax = FALSE;
+		CMDIChildWndEx* pMDIChildFrame = DYNAMIC_DOWNCAST(CMDIChildWndEx, MDIGetActive(&bMax));
+		if (pMDIChildFrame != NULL)
+		{
+			pMDIChildFrame->InvalidateIconicBitmaps();
+		}
+	}
+	else
+	{
+		// if we're unregistering we need to reset clip rect on the main frame
+		ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+		if (pTaskbarList3 != NULL)
+		{
+			pTaskbarList3->SetThumbnailClip(GetSafeHwnd(), NULL);
+		}
+	}
+}
+
+int CMDIFrameWndEx::GetRegisteredWithTaskBarMDIChildCount()
+{
+	ASSERT_VALID(this);
+
+	int nCount = 0;
+	HWND hwndMDIChild = ::GetWindow(m_hWndMDIClient, GW_CHILD);
+
+	while (hwndMDIChild != NULL)
+	{
+		CMDIChildWndEx* pMDIChildFrame = DYNAMIC_DOWNCAST(CMDIChildWndEx, CWnd::FromHandle(hwndMDIChild));
+
+		if (pMDIChildFrame != NULL && pMDIChildFrame->IsRegisteredWithTaskbarTabs())
+		{
+			nCount++;	
+		}
+
+		hwndMDIChild = ::GetWindow(hwndMDIChild, GW_HWNDNEXT);
+	}
+
+	return nCount;
 }
 
 BOOL CMDIFrameWndEx::OnShowMDITabContextMenu(CPoint point, DWORD dwAllowedItems, BOOL /*bTabDrop*/)

@@ -80,11 +80,17 @@ void COleDataObject::BeginEnumFormats()
 	// release old enumerator
 	RELEASE(m_lpEnumerator);
 	if (m_lpDataObject == NULL)
+	{
 		return;
+	}
 
 	// get the new enumerator
 	SCODE sc = m_lpDataObject->EnumFormatEtc(DATADIR_GET, &m_lpEnumerator);
 	ASSERT(sc != S_OK || m_lpEnumerator != NULL);
+	if (sc != S_OK)
+	{
+		m_lpEnumerator = NULL;
+	}
 }
 
 BOOL COleDataObject::GetNextFormat(LPFORMATETC lpFormatEtc)
@@ -94,7 +100,9 @@ BOOL COleDataObject::GetNextFormat(LPFORMATETC lpFormatEtc)
 
 	// return FALSE if enumerator is already NULL
 	if (m_lpEnumerator == NULL)
+	{
 		return FALSE;
+	}
 
 	// attempt to retrieve the next format with the enumerator
 	SCODE sc = m_lpEnumerator->Next(1, lpFormatEtc, NULL);
@@ -105,6 +113,7 @@ BOOL COleDataObject::GetNextFormat(LPFORMATETC lpFormatEtc)
 		RELEASE(m_lpEnumerator);
 		return FALSE;   // enumeration has ended
 	}
+
 	// otherwise, continue
 	return TRUE;
 }
@@ -114,10 +123,16 @@ CFile* COleDataObject::GetFileData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatEtc)
 	EnsureClipboardObject();
 	ASSERT(m_bClipboard || m_lpDataObject != NULL);
 	if (m_lpDataObject == NULL)
+	{
 		return NULL;
+	}
 
-	ASSERT(lpFormatEtc == NULL ||
-		AfxIsValidAddress(lpFormatEtc, sizeof(FORMATETC), FALSE));
+	ASSERT(lpFormatEtc == NULL || AfxIsValidAddress(lpFormatEtc, sizeof(FORMATETC), FALSE));
+
+	if ((cfFormat == 0) && (lpFormatEtc == NULL))
+	{
+		return NULL;
+	}
 
 	// fill in FORMATETC struct
 	FORMATETC formatEtc;
@@ -128,7 +143,9 @@ CFile* COleDataObject::GetFileData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatEtc)
 	STGMEDIUM stgMedium;
 	SCODE sc = m_lpDataObject->GetData(lpFormatEtc, &stgMedium);
 	if (FAILED(sc))
-		return FALSE;
+	{
+		return NULL;
+	}
 
 	// STGMEDIUMs with pUnkForRelease need to be copied first
 	if (stgMedium.pUnkForRelease != NULL)
@@ -141,6 +158,7 @@ CFile* COleDataObject::GetFileData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatEtc)
 			::ReleaseStgMedium(&stgMedium);
 			return FALSE;
 		}
+
 		// release original and replace with new
 		::ReleaseStgMedium(&stgMedium);
 		stgMedium = stgMediumDest;
@@ -201,10 +219,16 @@ HGLOBAL COleDataObject::GetGlobalData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatE
 	EnsureClipboardObject();
 	ASSERT(m_bClipboard || m_lpDataObject != NULL);
 	if (m_lpDataObject == NULL)
+	{
 		return NULL;
+	}
 
-	ASSERT(lpFormatEtc == NULL ||
-		AfxIsValidAddress(lpFormatEtc, sizeof(FORMATETC), FALSE));
+	ASSERT(lpFormatEtc == NULL || AfxIsValidAddress(lpFormatEtc, sizeof(FORMATETC), FALSE));
+
+	if ((cfFormat == 0) && (lpFormatEtc == NULL))
+	{
+		return NULL;
+	}
 
 	// fill in FORMATETC struct
 	FORMATETC formatEtc;
@@ -220,7 +244,9 @@ HGLOBAL COleDataObject::GetGlobalData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatE
 	STGMEDIUM stgMedium;
 	SCODE sc = m_lpDataObject->GetData(lpFormatEtc, &stgMedium);
 	if (FAILED(sc))
-		return FALSE;
+	{
+		return NULL;
+	}
 
 	// handle just hGlobal types
 	switch (stgMedium.tymed)
@@ -228,7 +254,9 @@ HGLOBAL COleDataObject::GetGlobalData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatE
 	case TYMED_MFPICT:
 	case TYMED_HGLOBAL:
 		if (stgMedium.pUnkForRelease == NULL)
+		{
 			return stgMedium.hGlobal;
+		}
 
 		STGMEDIUM stgMediumDest;
 		stgMediumDest.tymed = TYMED_NULL;
@@ -238,6 +266,7 @@ HGLOBAL COleDataObject::GetGlobalData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatE
 			::ReleaseStgMedium(&stgMedium);
 			return NULL;
 		}
+
 		::ReleaseStgMedium(&stgMedium);
 		return stgMediumDest.hGlobal;
 
@@ -248,15 +277,21 @@ HGLOBAL COleDataObject::GetGlobalData(CLIPFORMAT cfFormat, LPFORMATETC lpFormatE
 	return NULL;
 }
 
-BOOL COleDataObject::GetData(CLIPFORMAT cfFormat, LPSTGMEDIUM lpStgMedium,
-	LPFORMATETC lpFormatEtc)
+BOOL COleDataObject::GetData(CLIPFORMAT cfFormat, LPSTGMEDIUM lpStgMedium, LPFORMATETC lpFormatEtc)
 {
 	EnsureClipboardObject();
 	ASSERT(m_bClipboard || m_lpDataObject != NULL);
 	if (m_lpDataObject == NULL)
+	{
 		return FALSE;
+	}
 
 	ASSERT(AfxIsValidAddress(lpStgMedium, sizeof(STGMEDIUM), FALSE));
+
+	if ((cfFormat == 0) && (lpFormatEtc == NULL))
+	{
+		return FALSE;
+	}
 
 	// fill in FORMATETC struct
 	FORMATETC formatEtc;
@@ -265,7 +300,9 @@ BOOL COleDataObject::GetData(CLIPFORMAT cfFormat, LPSTGMEDIUM lpStgMedium,
 	// attempt to get the data
 	SCODE sc = m_lpDataObject->GetData(lpFormatEtc, lpStgMedium);
 	if (FAILED(sc))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -281,8 +318,12 @@ BOOL COleDataObject::IsDataAvailable(CLIPFORMAT cfFormat, LPFORMATETC lpFormatEt
 	else
 	{
 		ASSERT(m_lpDataObject != NULL);
-		ASSERT(lpFormatEtc == NULL ||
-			AfxIsValidAddress(lpFormatEtc, sizeof(FORMATETC), FALSE));
+		ASSERT(lpFormatEtc == NULL || AfxIsValidAddress(lpFormatEtc, sizeof(FORMATETC), FALSE));
+
+		if ((cfFormat == 0) && (lpFormatEtc == NULL))
+		{
+			return FALSE;
+		}
 
 		// fill in FORMATETC struct
 		FORMATETC formatEtc;

@@ -15,7 +15,6 @@
 #include "afxribbonbar.h"
 #include "afxvisualmanager.h"
 #include "afxribbonpanelmenu.h"
-#include "multimon.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -28,6 +27,8 @@ static const int nPanelMarginBottom = 4;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonTab
+
+IMPLEMENT_DYNAMIC(CMFCRibbonTab, CMFCRibbonBaseElement)
 
 CMFCRibbonTab::CMFCRibbonTab()
 {
@@ -140,6 +141,12 @@ BOOL CMFCRibbonTab::OnKey(BOOL /*bIsMenuKey*/)
 		return FALSE;
 	}
 
+	if (m_pParent->GetParentMenuBar() != NULL)
+	{
+		// Already dropped-down
+		return TRUE;
+	}
+
 	pBar->SetActiveCategory(m_pParent);
 
 	if ((pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS) == 0)
@@ -197,6 +204,26 @@ BOOL CMFCRibbonTab::SetACCData(CWnd* pParent, CAccessibilityData& data)
 	return TRUE;
 }
 
+void CMFCRibbonTab::Redraw()
+{
+	ASSERT_VALID(this);
+
+	if (m_rect.IsRectEmpty())
+	{
+		return;
+	}
+
+	ASSERT_VALID(m_pParent);
+
+	CMFCRibbonBar* pBar = m_pParent->GetParentRibbonBar();
+	ASSERT_VALID(pBar);
+
+	CRect rect = m_rect;
+
+	rect.InflateRect(10, 10);
+	pBar->RedrawWindow(rect);
+}
+
 CSize CMFCRibbonTab::GetRegularSize(CDC* /*pDC*/)
 {
 	return CSize(0, 0);
@@ -217,7 +244,7 @@ void CMFCRibbonTab::OnLButtonDblClk(CPoint /*point*/)
 
 	if (m_pParent->IsActive())
 	{
-		if (m_pParent->m_ActiveTime != (clock_t)-1 && clock () - m_pParent->m_ActiveTime < (int) GetDoubleClickTime ())
+		if (m_pParent->m_ActiveTime != (clock_t)-1 && clock() - m_pParent->m_ActiveTime <(int) GetDoubleClickTime())
 		{
 			return;
 		}
@@ -249,108 +276,78 @@ void CMFCRibbonTab::OnLButtonDblClk(CPoint /*point*/)
 BOOL CMFCRibbonTab::IsSelected() const
 {
 	ASSERT_VALID(this);
-	ASSERT_VALID(m_pParent);
-
-	if (!m_pParent->IsActive())
-	{
-		return FALSE;
-	}
-
-	CMFCRibbonBar* pRibbonBar = m_pParent->GetParentRibbonBar();
-	ASSERT_VALID(pRibbonBar);
-
-	if (pRibbonBar != CWnd::GetFocus())
-	{
-		return FALSE;
-	}
-
-	if (pRibbonBar->GetKeyboardNavigationLevel() < 0)
-	{
-		return FALSE;
-	}
-
-	if (pRibbonBar->GetQATDroppedDown() != NULL)
-	{
-		return FALSE;
-	}
-
-	if (pRibbonBar->GetApplicationButton() != NULL && pRibbonBar->GetApplicationButton()->IsDroppedDown())
-	{
-		return FALSE;
-	}
-
-	return TRUE;
+	return m_bIsFocused;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // CRibbonCategoryScroll
 
-CRibbonCategoryScroll::CRibbonCategoryScroll ()
+CRibbonCategoryScroll::CRibbonCategoryScroll()
 {
 	m_bIsLeft = FALSE;
 }
 
-void CRibbonCategoryScroll::CopyFrom (const CMFCRibbonBaseElement& s)
+void CRibbonCategoryScroll::CopyFrom(const CMFCRibbonBaseElement& s)
 {
-	CMFCRibbonButton::CopyFrom (s);
+	CMFCRibbonButton::CopyFrom(s);
 
 	CRibbonCategoryScroll& src = (CRibbonCategoryScroll&) s;
 	m_bIsLeft = src.m_bIsLeft;
 }
 
-void CRibbonCategoryScroll::OnDraw (CDC* pDC)
+void CRibbonCategoryScroll::OnDraw(CDC* pDC)
 {
-	ASSERT_VALID (this);
-	ASSERT_VALID (pDC);
+	ASSERT_VALID(this);
+	ASSERT_VALID(pDC);
 
-	if (m_rect.IsRectEmpty ())
+	if (m_rect.IsRectEmpty())
 	{
 		return;
 	}
 
-	CMFCVisualManager::GetInstance ()->OnDrawRibbonCategoryScroll (
+	CMFCVisualManager::GetInstance()->OnDrawRibbonCategoryScroll(
 		pDC, this);
 }
 
-BOOL CRibbonCategoryScroll::OnAutoRepeat ()
+BOOL CRibbonCategoryScroll::OnAutoRepeat()
 {
-	ASSERT_VALID (this);
-	ASSERT_VALID (m_pParent);
+	ASSERT_VALID(this);
+	ASSERT_VALID(m_pParent);
 
-	if (m_rect.IsRectEmpty ())
+	if (m_rect.IsRectEmpty())
 	{
 		return FALSE;
 	}
 
-	return m_pParent->OnScrollHorz (m_bIsLeft);
+	return m_pParent->OnScrollHorz(m_bIsLeft);
 }
 
 void CRibbonCategoryScroll::OnMouseMove(CPoint point) 
 {
-	ASSERT_VALID (this);
-	ASSERT_VALID (m_pParent);
+	ASSERT_VALID(this);
+	ASSERT_VALID(m_pParent);
 
-	if (m_rect.IsRectEmpty ())
+	if (m_rect.IsRectEmpty())
 	{
 		m_bIsHighlighted = FALSE;
 		return;
 	}
 
 	BOOL bWasHighlighted = m_bIsHighlighted;
-	m_bIsHighlighted = m_rect.PtInRect (point);
+	m_bIsHighlighted = m_rect.PtInRect(point);
 
 	if (bWasHighlighted != m_bIsHighlighted)
 	{
-		if (m_pParent->GetParentMenuBar () != NULL)
+		if (m_pParent->GetParentMenuBar() != NULL)
 		{
-			m_pParent->GetParentMenuBar ()->PopTooltip ();
+			m_pParent->GetParentMenuBar()->PopTooltip();
 		}
-		else if (m_pParent->GetParentRibbonBar () != NULL)
+		else if (m_pParent->GetParentRibbonBar() != NULL)
 		{
-			m_pParent->GetParentRibbonBar ()->PopTooltip ();
+			m_pParent->GetParentRibbonBar()->PopTooltip();
 		}
 
-		Redraw ();
+		Redraw();
 	}
 }
 
@@ -400,19 +397,38 @@ void CMFCRibbonCategory::CommonInit(CMFCRibbonBar* pParentRibbonBar, LPCTSTR lps
 		m_LargeImages.SetImageSize(sizeLargeImage);
 	}
 
-	if (uiSmallImagesResID > 0)
+	m_uiSmallImagesResID = uiSmallImagesResID;
+	m_uiLargeImagesResID = uiLargeImagesResID;
+
+	if (m_uiSmallImagesResID > 0)
 	{
-		if (!m_SmallImages.Load(uiSmallImagesResID))
+		if (!m_SmallImages.Load(m_uiSmallImagesResID))
 		{
+			m_uiSmallImagesResID = 0;
 			ASSERT(FALSE);
 		}
 	}
 
-	if (uiLargeImagesResID > 0)
+	if (m_uiLargeImagesResID > 0)
 	{
-		if (!m_LargeImages.Load(uiLargeImagesResID))
+		if (!m_LargeImages.Load(m_uiLargeImagesResID))
 		{
+			m_uiLargeImagesResID = 0;
 			ASSERT(FALSE);
+		}
+	}
+
+	const double dblScale = afxGlobalData.GetRibbonImageScale();
+	if (dblScale != 1.0)
+	{
+		if (sizeSmallImage == CSize(16, 16))
+		{
+			m_SmallImages.SmoothResize(dblScale);
+		}
+
+		if (sizeLargeImage == CSize(32, 32))
+		{
+			m_LargeImages.SmoothResize(dblScale);
 		}
 	}
 
@@ -465,15 +481,15 @@ void CMFCRibbonCategory::OnDraw(CDC* pDC)
 
 	CRgn rgnClip;
 
-	if (!m_ScrollLeft.GetRect ().IsRectEmpty () ||
-		!m_ScrollRight.GetRect ().IsRectEmpty ())
+	if (!m_ScrollLeft.GetRect().IsRectEmpty() ||
+		!m_ScrollRight.GetRect().IsRectEmpty())
 	{
 		CRect rectClient = m_rect;
-		rectClient.DeflateRect (nPanelMarginLeft, nPanelMarginTop, 
+		rectClient.DeflateRect(nPanelMarginLeft, nPanelMarginTop, 
 			nPanelMarginRight, nPanelMarginBottom);
 
-		rgnClip.CreateRectRgnIndirect (rectClient);
-		pDC->SelectClipRgn (&rgnClip);
+		rgnClip.CreateRectRgnIndirect(rectClient);
+		pDC->SelectClipRgn(&rgnClip);
 
 		bClip = TRUE;
 	}
@@ -488,11 +504,11 @@ void CMFCRibbonCategory::OnDraw(CDC* pDC)
 
 	if (bClip)
 	{
-		pDC->SelectClipRgn (NULL);
+		pDC->SelectClipRgn(NULL);
 	}
 
-	m_ScrollLeft.OnDraw (pDC);
-	m_ScrollRight.OnDraw (pDC);
+	m_ScrollLeft.OnDraw(pDC);
+	m_ScrollRight.OnDraw(pDC);
 }
 
 CMFCRibbonPanel* CMFCRibbonCategory::AddPanel(LPCTSTR lpszPanelName, HICON hIcon, CRuntimeClass* pRTI)
@@ -522,12 +538,37 @@ CMFCRibbonPanel* CMFCRibbonCategory::AddPanel(LPCTSTR lpszPanelName, HICON hIcon
 	m_arPanels.Add(pPanel);
 
 	pPanel->m_pParent = this;
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	pPanel->m_btnLaunch.m_pParent = this;
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	pPanel->m_btnDefault.m_pParent = this;
 
 	m_nLastCategoryWidth = -1;
 	m_nMinWidth = -1;
 	return pPanel;
+}
+
+BOOL CMFCRibbonCategory::RemovePanel (int nIndex, BOOL bDelete)
+{
+	ASSERT_VALID (this);
+
+	if (nIndex < 0 || nIndex >= m_arPanels.GetSize ())
+	{
+		ASSERT (FALSE);
+		return FALSE;
+	}
+
+	CMFCRibbonPanel* pPanel = m_arPanels [nIndex];
+	ASSERT_VALID (pPanel);
+
+	m_arPanels.RemoveAt (nIndex);
+
+	if (bDelete)
+	{
+		delete pPanel;
+	}
+
+	return TRUE;
 }
 
 int CMFCRibbonCategory::GetPanelCount() const
@@ -599,7 +640,7 @@ void CMFCRibbonCategory::RecalcLayout(CDC* pDC)
 	BOOL bRedrawScroll = FALSE;
 
 	const DWORD dwRibbonHideFlags = GetParentRibbonBar()->m_dwHideFlags;
-	const BOOL bHideAll = (dwRibbonHideFlags & AFX_RIBBONBAR_HIDE_ALL) || (dwRibbonHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS);
+	const BOOL bHideAll = (dwRibbonHideFlags & AFX_RIBBONBAR_HIDE_ALL) ||(dwRibbonHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS);
 
 	if (m_nMinWidth < 0)
 	{
@@ -630,18 +671,18 @@ void CMFCRibbonCategory::RecalcLayout(CDC* pDC)
 
 		ResetPanelsLayout();
 
-		if (rectClient.Width () <= m_nMinWidth)
+		if (rectClient.Width() <= m_nMinWidth)
 		{
 			//-------------------------
 			// Just collapse all panes:
 			//-------------------------
-			for (i = 0; i < m_arPanels.GetSize (); i++)
+			for (i = 0; i < m_arPanels.GetSize(); i++)
 			{
 				CMFCRibbonPanel* pPanel = m_arPanels [i];
-				ASSERT_VALID (pPanel);
+				ASSERT_VALID(pPanel);
 
 				pPanel->m_bForceCollpapse = TRUE;
-				pPanel->m_nCurrWidthIndex = (int) pPanel->m_arWidths.GetSize () - 1;
+				pPanel->m_nCurrWidthIndex = (int) pPanel->m_arWidths.GetSize() - 1;
 			}
 		}
 		else
@@ -740,27 +781,29 @@ void CMFCRibbonCategory::RecalcLayout(CDC* pDC)
 		bRedrawScroll = TRUE;
 	}
 
-	UpdateScrollButtons ();
+	UpdateScrollButtons();
 
-	if (bRedrawScroll && GetParentRibbonBar ()->GetSafeHwnd() != NULL)
+	if (bRedrawScroll && GetParentRibbonBar()->GetSafeHwnd() != NULL)
 	{
-		if (!m_ScrollLeft.GetRect ().IsRectEmpty() ||
-			!m_ScrollRight.GetRect ().IsRectEmpty())
+		if (!m_ScrollLeft.GetRect().IsRectEmpty() ||
+			!m_ScrollRight.GetRect().IsRectEmpty())
 		{
-			GetParentRibbonBar ()->RedrawWindow(m_rect);
+			GetParentRibbonBar()->RedrawWindow(m_rect);
 		}
 	}
 }
 
-void CMFCRibbonCategory::UpdateScrollButtons ()
+void CMFCRibbonCategory::UpdateScrollButtons()
 {
 	m_ScrollLeft.m_pParentMenu = m_pParentMenuBar;
 	m_ScrollRight.m_pParentMenu = m_pParentMenuBar;
 
-	const int cxScrollWidth = (int) (afxGlobalData.GetRibbonImageScale () * 13);
+	CRect rectScrollRightOld = m_ScrollRight.GetRect();
 
-	CRect rectScrollLeft (0, 0, 0, 0);
-	CRect rectScrollRight (0, 0, 0, 0);
+	const int cxScrollWidth = (int)(afxGlobalData.GetRibbonImageScale() * 13);
+
+	CRect rectScrollLeft(0, 0, 0, 0);
+	CRect rectScrollRight(0, 0, 0, 0);
 
 	if (m_nScrollOffset > 0)
 	{
@@ -768,59 +811,64 @@ void CMFCRibbonCategory::UpdateScrollButtons ()
 		rectScrollLeft.right = rectScrollLeft.left + cxScrollWidth;
 	}
 
-	if (m_rect.Width () + m_nScrollOffset < m_nMinWidth)
+	if (m_rect.Width() + m_nScrollOffset < m_nMinWidth)
 	{
 		rectScrollRight = m_rect;
 		rectScrollRight.left = rectScrollRight.right - cxScrollWidth;
 	}
 
-	m_ScrollLeft.SetRect (rectScrollLeft);
-	m_ScrollRight.SetRect (rectScrollRight);
+	m_ScrollLeft.SetRect(rectScrollLeft);
+	m_ScrollRight.SetRect(rectScrollRight);
+
+	if (rectScrollRight.IsRectEmpty () && !rectScrollRightOld.IsRectEmpty ())
+	{
+		GetParentRibbonBar ()->RedrawWindow (rectScrollRightOld);
+	}
 }
 
-void CMFCRibbonCategory::ReposPanels (CDC* pDC)
+void CMFCRibbonCategory::ReposPanels(CDC* pDC)
 {
-	ASSERT_VALID (this);
-	ASSERT_VALID (pDC);
+	ASSERT_VALID(this);
+	ASSERT_VALID(pDC);
 
 	CRect rectClient = m_rect;
-	rectClient.DeflateRect (nPanelMarginLeft * 2, nPanelMarginTop, 
+	rectClient.DeflateRect(nPanelMarginLeft * 2, nPanelMarginTop, 
 							nPanelMarginRight * 2, nPanelMarginBottom);
 
-	const BOOL bForceCollpapse = (rectClient.Width () <= m_nMinWidth);
+	const BOOL bForceCollpapse = (rectClient.Width() <= m_nMinWidth);
 
 	int x = rectClient.left - m_nScrollOffset;
 
-	for (int i = 0; i < m_arPanels.GetSize (); i++)
+	for (int i = 0; i < m_arPanels.GetSize(); i++)
 	{
 		CMFCRibbonPanel* pPanel = m_arPanels [i];
-		ASSERT_VALID (pPanel);
+		ASSERT_VALID(pPanel);
 
 		if (bForceCollpapse)
 		{
 			pPanel->m_bForceCollpapse = TRUE;
-			pPanel->m_nCurrWidthIndex = (int) pPanel->m_arWidths.GetSize () - 1;
+			pPanel->m_nCurrWidthIndex = (int) pPanel->m_arWidths.GetSize() - 1;
 		}
 
 		const int nCurrPanelWidth = 
 			pPanel->m_arWidths [pPanel->m_nCurrWidthIndex] + 
 			2 * pPanel->m_nXMargin;
 
-		CRect rectPanel = CRect (x, rectClient.top, 
+		CRect rectPanel = CRect(x, rectClient.top, 
 								x + nCurrPanelWidth, rectClient.bottom);
 
-		pPanel->Reposition (pDC, rectPanel);
+		pPanel->Reposition(pDC, rectPanel);
 
 		x = pPanel->m_rect.right + nPanelMarginRight;
 
 		if (rectPanel.right <= rectClient.left + 2 * nPanelMarginLeft ||
 			rectPanel.left >= rectClient.right - 2 * nPanelMarginRight)
 		{
-			rectPanel.SetRectEmpty ();
+			rectPanel.SetRectEmpty();
 
 
 
-			pPanel->Reposition (pDC, rectPanel);
+			pPanel->Reposition(pDC, rectPanel);
 		}
 
 		if (bForceCollpapse)
@@ -828,7 +876,7 @@ void CMFCRibbonCategory::ReposPanels (CDC* pDC)
 			pPanel->m_bForceCollpapse = TRUE;
 		}
 
-		pPanel->OnAfterChangeRect (pDC);
+		pPanel->OnAfterChangeRect(pDC);
 	}
 }
 
@@ -898,10 +946,10 @@ void CMFCRibbonCategory::OnMouseMove(CPoint point)
 {
 	ASSERT_VALID(this);
 
-	m_ScrollLeft.OnMouseMove (point);
-	m_ScrollRight.OnMouseMove (point);
+	m_ScrollLeft.OnMouseMove(point);
+	m_ScrollRight.OnMouseMove(point);
 
-	if (m_ScrollLeft.IsHighlighted () || m_ScrollRight.IsHighlighted ())
+	if (m_ScrollLeft.IsHighlighted() || m_ScrollRight.IsHighlighted())
 	{
 		return;
 	}
@@ -913,7 +961,7 @@ CMFCRibbonBaseElement* CMFCRibbonCategory::HitTest(CPoint point, BOOL bCheckPane
 {
 	ASSERT_VALID(this);
 
-	CMFCRibbonBaseElement* pBtnScroll = HitTestScrollButtons (point);
+	CMFCRibbonBaseElement* pBtnScroll = HitTestScrollButtons(point);
 	if (pBtnScroll != NULL)
 	{
 		return pBtnScroll;
@@ -929,18 +977,18 @@ CMFCRibbonBaseElement* CMFCRibbonCategory::HitTest(CPoint point, BOOL bCheckPane
 	return NULL;
 }
 
-CMFCRibbonBaseElement* CMFCRibbonCategory::HitTestScrollButtons (CPoint point) const
+CMFCRibbonBaseElement* CMFCRibbonCategory::HitTestScrollButtons(CPoint point) const
 {
-	ASSERT_VALID (this);
+	ASSERT_VALID(this);
 
-	if (m_ScrollLeft.GetRect ().PtInRect (point))
+	if (m_ScrollLeft.GetRect().PtInRect(point))
 	{
-		return (CMFCRibbonBaseElement*)&m_ScrollLeft;
+		return(CMFCRibbonBaseElement*)&m_ScrollLeft;
 	}
 
-	if (m_ScrollRight.GetRect ().PtInRect (point))
+	if (m_ScrollRight.GetRect().PtInRect(point))
 	{
-		return (CMFCRibbonBaseElement*)&m_ScrollRight;
+		return(CMFCRibbonBaseElement*)&m_ScrollRight;
 	}
 
 	return NULL;
@@ -1034,13 +1082,13 @@ void CMFCRibbonCategory::OnCancelMode()
 
 CMFCRibbonBaseElement* CMFCRibbonCategory::OnLButtonDown(CPoint point)
 {
-	CMFCRibbonBaseElement* pBtnScroll = HitTestScrollButtons (point);
+	CMFCRibbonBaseElement* pBtnScroll = HitTestScrollButtons(point);
 	if (pBtnScroll != NULL)
 	{
 		ASSERT_VALID(pBtnScroll);
-		pBtnScroll->OnAutoRepeat ();
+		pBtnScroll->OnAutoRepeat();
 
-		if (HitTestScrollButtons (point) == pBtnScroll)
+		if (HitTestScrollButtons(point) == pBtnScroll)
 		{
 			return pBtnScroll;
 		}
@@ -1137,7 +1185,7 @@ void CMFCRibbonCategory::SetActive(BOOL bIsActive)
 		pPanel->OnShow(bIsActive);
 	}
 
-	m_ActiveTime = bIsActive ? clock () : (clock_t)-1;
+	m_ActiveTime = bIsActive ? clock() :(clock_t)-1;
 }
 
 void CMFCRibbonCategory::ShowElements(BOOL bShow)
@@ -1332,15 +1380,7 @@ BOOL CMFCRibbonCategory::OnDrawImage(CDC* pDC, CRect rect, CMFCRibbonBaseElement
 	}
 
 	image.SetTransparentColor(afxGlobalData.clrBtnFace);
-
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
-	{
-		image.PrepareDrawImage(ds, sizeImage);
-	}
-	else
-	{
-		image.PrepareDrawImage(ds);
-	}
+	image.PrepareDrawImage(ds, sizeImage);
 
 	image.Draw(pDC, ptImage.x, ptImage.y, nImageIndex, FALSE, pElement->IsDisabled());
 
@@ -1353,16 +1393,7 @@ CSize CMFCRibbonCategory::GetImageSize(BOOL bIsLargeImage) const
 	ASSERT_VALID(this);
 
 	const CMFCToolBarImages& image = bIsLargeImage ? m_LargeImages : m_SmallImages;
-	const CSize sizeImage = image.GetImageSize();
-
-	if (afxGlobalData.GetRibbonImageScale() == 1.)
-	{
-		return sizeImage;
-	}
-
-	return CSize(
-		(int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cx),
-		(int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cy));
+	return image.GetImageSize();
 }
 
 void CMFCRibbonCategory::GetElements(CArray <CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements)
@@ -1471,10 +1502,13 @@ void CMFCRibbonCategory::CopyFrom(CMFCRibbonCategory& src)
 	m_arCollapseOrder.RemoveAll();
 	m_arCollapseOrder.Copy(src.m_arCollapseOrder);
 
-	m_ScrollLeft.CopyFrom (src.m_ScrollLeft);
+	m_ScrollLeft.CopyFrom(src.m_ScrollLeft);
 	m_ScrollLeft.m_pParent = this;
-	m_ScrollRight.CopyFrom (src.m_ScrollRight);
+	m_ScrollRight.CopyFrom(src.m_ScrollRight);
 	m_ScrollRight.m_pParent = this;
+
+	m_uiSmallImagesResID = src.m_uiSmallImagesResID;
+	m_uiLargeImagesResID = src.m_uiLargeImagesResID;
 }
 
 CMFCRibbonBaseElement* CMFCRibbonCategory::GetParentButton() const
@@ -1606,13 +1640,13 @@ void CMFCRibbonCategory::ResetPanelsLayout()
 		ASSERT_VALID(pPanel);
 
 		pPanel->m_nCurrWidthIndex = 0;
-		pPanel->m_bTrancateCaption = FALSE;
+		pPanel->m_bTruncateCaption = FALSE;
 	}
 
 	m_nScrollOffset = 0;
 }
 
-BOOL CMFCRibbonCategory::OnScrollHorz (BOOL bScrollLeft, int nScrollOffset/* = 0*/)
+BOOL CMFCRibbonCategory::OnScrollHorz(BOOL bScrollLeft, int nScrollOffset/* = 0*/)
 {
 	ASSERT_VALID(this);
 
@@ -1632,77 +1666,77 @@ BOOL CMFCRibbonCategory::OnScrollHorz (BOOL bScrollLeft, int nScrollOffset/* = 0
 		m_nScrollOffset += nScrollOffset;
 	}
 
-	m_nScrollOffset = min (m_nMinWidth - m_rect.Width (), max (0, m_nScrollOffset));
+	m_nScrollOffset = min(m_nMinWidth - m_rect.Width(), max(0, m_nScrollOffset));
 
-	CMFCRibbonBar* pRibbonBar = GetParentRibbonBar ();
-	ASSERT_VALID (pRibbonBar);
+	CMFCRibbonBar* pRibbonBar = GetParentRibbonBar();
+	ASSERT_VALID(pRibbonBar);
 
-	CClientDC dc (pRibbonBar);
+	CClientDC dc(pRibbonBar);
 
-	CFont* pOldFont = dc.SelectObject (pRibbonBar->GetFont ());
-	ASSERT (pOldFont != NULL);
+	CFont* pOldFont = dc.SelectObject(pRibbonBar->GetFont());
+	ASSERT(pOldFont != NULL);
 
-	ReposPanels (&dc);
+	ReposPanels(&dc);
 
-	dc.SelectObject (pOldFont);
+	dc.SelectObject(pOldFont);
 
-	UpdateScrollButtons ();
+	UpdateScrollButtons();
 
 	if (m_pParentMenuBar != NULL)
 	{
-		ASSERT_VALID (m_pParentMenuBar);
-		m_pParentMenuBar->RedrawWindow ();
+		ASSERT_VALID(m_pParentMenuBar);
+		m_pParentMenuBar->RedrawWindow();
 	}
 	else
 	{
-		pRibbonBar->RedrawWindow (m_rect);
+		pRibbonBar->RedrawWindow(m_rect);
 	}
 
 	return nPrevScrollOffset != m_nScrollOffset;
 }
 
-void CMFCRibbonCategory::EnsureVisible (CMFCRibbonButton* pButton)
+void CMFCRibbonCategory::EnsureVisible(CMFCRibbonButton* pButton)
 {
 	ASSERT_VALID(this);
 	ASSERT_VALID(pButton);
 
-	if (m_rect.IsRectEmpty ())
+	if (m_rect.IsRectEmpty())
 	{
 		return;
 	}
 
 	CRect rectClient = m_rect;
-	rectClient.DeflateRect (nPanelMarginLeft * 2, nPanelMarginTop, 
+	rectClient.DeflateRect(nPanelMarginLeft * 2, nPanelMarginTop, 
 		nPanelMarginRight * 2, nPanelMarginBottom);
 
-	CRect rectButton = pButton->GetRect ();
-	if (rectButton.IsRectEmpty ())
+	CRect rectButton = pButton->GetRect();
+	if (rectButton.IsRectEmpty())
 	{
-		CMFCRibbonPanel* pParentPanel = pButton->GetParentPanel ();
+		CMFCRibbonPanel* pParentPanel = pButton->GetParentPanel();
 		if (pParentPanel == NULL)
 		{
 			return;
 		}
 
 		ASSERT_VALID(pParentPanel);
-		ASSERT(pParentPanel->GetRect ().IsRectEmpty ());
+		ASSERT(pParentPanel->GetRect().IsRectEmpty());
 
 		int nPanelIndex = -1;
 		int nFirstVisiblePanel = -1;
 		int nLastVisiblePanel = -1;
 		int i = 0;
 
-		for (i = 0; i < m_arPanels.GetSize (); i++)
+		for (i = 0; i < m_arPanels.GetSize(); i++)
 		{
 			CMFCRibbonPanel* pPanel = m_arPanels [i];
-			ASSERT_VALID (pPanel);
+			ASSERT_VALID(pPanel);
 
 			if (pPanel == pParentPanel)
 			{
 				nPanelIndex = i;
 			}
 
-			if (!pPanel->GetRect ().IsRectEmpty ())
+			if (!pPanel->GetRect().IsRectEmpty())
 			{
 				if (nFirstVisiblePanel < 0)
 				{
@@ -1720,10 +1754,10 @@ void CMFCRibbonCategory::EnsureVisible (CMFCRibbonButton* pButton)
 
 		if (nPanelIndex < nFirstVisiblePanel)
 		{
-			while (OnScrollHorz (TRUE))
+			while (OnScrollHorz(TRUE))
 			{
-				if (!pParentPanel->GetRect ().IsRectEmpty () &&
-					pParentPanel->GetRect ().left >= rectClient.left)
+				if (!pParentPanel->GetRect().IsRectEmpty() &&
+					pParentPanel->GetRect().left >= rectClient.left)
 				{
 					break;
 				}
@@ -1731,10 +1765,10 @@ void CMFCRibbonCategory::EnsureVisible (CMFCRibbonButton* pButton)
 		}
 		else if (nPanelIndex > nLastVisiblePanel)
 		{
-			while (OnScrollHorz (FALSE))
+			while (OnScrollHorz(FALSE))
 			{
-				if (!pParentPanel->GetRect ().IsRectEmpty () &&
-					pParentPanel->GetRect ().right <= rectClient.right)
+				if (!pParentPanel->GetRect().IsRectEmpty() &&
+					pParentPanel->GetRect().right <= rectClient.right)
 				{
 					break;
 				}
@@ -1746,37 +1780,279 @@ void CMFCRibbonCategory::EnsureVisible (CMFCRibbonButton* pButton)
 
 	if (rectButton.left < m_rect.left - nPanelMarginRight)
 	{
-		OnScrollHorz (TRUE, rectClient.left - rectButton.left);
+		OnScrollHorz(TRUE, rectClient.left - rectButton.left);
 	}
 	else if (rectButton.right > m_rect.right + nPanelMarginRight)
 	{
-		OnScrollHorz (FALSE, rectButton.right - rectClient.right);
+		OnScrollHorz(FALSE, rectButton.right - rectClient.right);
 	}
 }
 
-void CMFCRibbonCategory::NormalizeFloatingRect (CMFCRibbonBar* pRibbonBar, CRect& rectCategory)
+void CMFCRibbonCategory::NormalizeFloatingRect(CMFCRibbonBar* pRibbonBar, CRect& rectCategory)
 {
-	ASSERT_VALID (this);
-	ASSERT_VALID (pRibbonBar);
+	ASSERT_VALID(this);
+	ASSERT_VALID(pRibbonBar);
 
 	CRect rectRibbon;
-	pRibbonBar->GetWindowRect (rectRibbon);
+	pRibbonBar->GetWindowRect(rectRibbon);
 
 	CRect rectScreen;
 
 	MONITORINFO mi;
-	mi.cbSize = sizeof (MONITORINFO);
-	if (GetMonitorInfo (MonitorFromPoint (rectRibbon.TopLeft (), MONITOR_DEFAULTTONEAREST), &mi))
+	mi.cbSize = sizeof(MONITORINFO);
+	if (GetMonitorInfo(MonitorFromPoint(rectRibbon.TopLeft(), MONITOR_DEFAULTTONEAREST), &mi))
 	{
 		rectScreen = mi.rcWork;
 	}
 	else
 	{
-		::SystemParametersInfo (SPI_GETWORKAREA, 0, &rectScreen, 0);
+		::SystemParametersInfo(SPI_GETWORKAREA, 0, &rectScreen, 0);
 	}
 
-	rectCategory.right = min (rectCategory.right, rectScreen.right);
-	rectCategory.left = max (rectCategory.left, rectScreen.left);
+	rectCategory.right = min(rectCategory.right, rectScreen.right);
+	rectCategory.left = max(rectCategory.left, rectScreen.left);
 }
 
+BOOL CMFCRibbonCategory::IsWindows7Look() const
+{
+	CMFCRibbonBar* pBar = GetParentRibbonBar();
+	if (pBar == NULL)
+	{
+		ASSERT(FALSE);
+		return FALSE;
+	}
 
+	return pBar->IsWindows7Look();
+}
+
+CMFCRibbonBaseElement* CMFCRibbonCategory::GetFirstVisibleElement() const
+{
+	ASSERT_VALID(this);
+
+	if (m_arPanels.GetSize() == 0)
+	{
+		return NULL;
+	}
+
+	//------------------------------------------------------
+	// If the category is scrolled right, scroll left first:
+	//------------------------------------------------------
+	if (m_nScrollOffset > 0)
+	{
+		((CMFCRibbonCategory*) this)->OnScrollHorz(TRUE, m_nScrollOffset);
+	}
+
+	CMFCRibbonPanel* pPanel = m_arPanels [0];
+	ASSERT_VALID(pPanel);
+
+	if (pPanel->IsCollapsed())
+	{
+		return &pPanel->GetDefaultButton();
+	}
+
+	return pPanel->GetElement(0);
+}
+
+CMFCRibbonBaseElement* CMFCRibbonCategory::GetLastVisibleElement() const
+{
+	ASSERT_VALID(this);
+
+	if (m_arPanels.GetSize() == 0)
+	{
+		return NULL;
+	}
+
+	//--------------------
+	// Scroll right first:
+	//--------------------
+	while (!m_ScrollRight.GetRect().IsRectEmpty())
+	{
+		((CMFCRibbonCategory*) this)->OnScrollHorz(FALSE);
+	}
+
+	CMFCRibbonPanel* pPanel = m_arPanels [m_arPanels.GetSize() - 1];
+	ASSERT_VALID(pPanel);
+
+	if (pPanel->IsCollapsed())
+	{
+		return &pPanel->GetDefaultButton();
+	}
+
+	if (pPanel->GetCount() == 0)
+	{
+		return NULL;
+	}
+
+	return pPanel->GetElement(pPanel->GetCount() - 1);
+}
+
+CMFCRibbonBaseElement* CMFCRibbonCategory::GetFocused()
+{
+	ASSERT_VALID(this);
+
+	for (int i = 0; i < m_arPanels.GetSize(); i++)
+	{
+		CMFCRibbonPanel* pPanel = m_arPanels [i];
+		ASSERT_VALID(pPanel);
+
+		CMFCRibbonBaseElement* pElem = pPanel->GetFocused();
+		if (pElem != NULL)
+		{
+			ASSERT_VALID(pElem);
+			return pElem;
+		}
+	}
+
+	return NULL;
+}
+
+CMFCRibbonBaseElement* CMFCRibbonCategory::GetHighlighted()
+{
+	ASSERT_VALID(this);
+
+	for (int i = 0; i < m_arPanels.GetSize(); i++)
+	{
+		CMFCRibbonPanel* pPanel = m_arPanels [i];
+		ASSERT_VALID(pPanel);
+
+		CMFCRibbonBaseElement* pElem = pPanel->GetHighlighted();
+		if (pElem != NULL)
+		{
+			ASSERT_VALID(pElem);
+			return pElem;
+		}
+	}
+
+	return NULL;
+}
+
+void CMFCRibbonCategory::GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons)
+{
+	ASSERT_VALID(this);
+
+	for (int i = 0; i < m_arPanels.GetSize(); i++)
+	{
+		CMFCRibbonPanel* pPanel = m_arPanels [i];
+		ASSERT_VALID(pPanel);
+
+		pPanel->GetVisibleElements(arButtons);
+	}
+}
+
+BOOL CMFCRibbonCategory::OnKey(UINT nChar)
+{
+	ASSERT_VALID(this);
+
+	CMFCRibbonBaseElement* pFocused = NULL;
+	CMFCRibbonBaseElement* pFocusedNew = NULL;
+
+	switch (nChar)
+	{
+	case VK_LEFT:
+	case VK_RIGHT:
+	case VK_DOWN:
+	case VK_UP:
+	case VK_TAB:
+		{
+			CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arElems;
+			GetVisibleElements(arElems);
+
+			if (arElems.GetSize() == 0)
+			{
+				return FALSE;
+			}
+
+			if ((pFocused = GetFocused()) == NULL)
+			{
+				for (int i = 0; i < arElems.GetSize(); i++)
+				{
+					CMFCRibbonBaseElement* pElem = arElems [i];
+					ASSERT_VALID(pElem);
+
+					if (pElem->IsTabStop() && !pElem->GetRect().IsRectEmpty())
+					{
+						pFocusedNew = pElem;
+						break;
+					}
+				}
+			}
+			else
+			{
+				ASSERT_VALID(pFocused);
+
+				int nScroll = 0;
+
+				BOOL bIsScrollLeftAvailable = !m_ScrollLeft.GetRect().IsRectEmpty();
+				BOOL bIsScrollRightAvailable = !m_ScrollRight.GetRect().IsRectEmpty();
+
+				pFocusedNew = CMFCRibbonBar::FindNextFocusedElement(
+					nChar, arElems, m_rect, pFocused,
+					bIsScrollLeftAvailable, bIsScrollRightAvailable, nScroll);
+
+				if (nScroll != 0)
+				{
+					switch (nScroll)
+					{
+					case -2:
+						pFocusedNew = GetFirstVisibleElement();
+						break;
+
+					case 2:
+						pFocusedNew = GetLastVisibleElement();
+						break;
+
+					case -1:
+					case 1:
+						OnScrollHorz(nScroll < 0);
+					}
+				}
+			}
+		}
+		break;
+
+	case VK_RETURN:
+	case VK_SPACE:
+		if ((pFocused = GetFocused()) != NULL)
+		{
+			ASSERT_VALID(pFocused);
+			pFocused->OnKey(FALSE);
+
+			return TRUE;
+		}
+		return FALSE;;
+
+	default:
+		return FALSE;
+	}
+
+	if (pFocusedNew == pFocused)
+	{
+		return TRUE;
+	}
+
+	if (pFocusedNew == NULL)
+	{
+		return FALSE;
+	}
+
+	if (m_pParentRibbonBar != NULL)
+	{
+		ASSERT_VALID(m_pParentRibbonBar);
+		m_pParentRibbonBar->DeactivateKeyboardFocus(FALSE);
+	}
+
+	if (pFocused != NULL)
+	{
+		pFocused->m_bIsHighlighted = pFocused->m_bIsFocused = FALSE;
+		pFocused->OnSetFocus(FALSE);
+		pFocused->Redraw();
+	}
+
+	ASSERT_VALID(pFocusedNew);
+
+	pFocusedNew->m_bIsFocused = TRUE;
+	pFocusedNew->OnSetFocus(TRUE);
+	pFocusedNew->Redraw();
+
+	return TRUE;
+}

@@ -682,31 +682,11 @@ DWORD CDC::SetMapperFlags(DWORD dwFlag)
 	return dwRetVal;
 }
 
-typedef DWORD (CALLBACK* AFX_GDIGETLAYOUTPROC)(HDC);
-typedef DWORD (CALLBACK* AFX_GDISETLAYOUTPROC)(HDC, DWORD);
-
 DWORD CDC::GetLayout() const
 {
 	ASSERT(m_hDC != NULL);
 
-	HINSTANCE hInst = ::GetModuleHandleA("GDI32.DLL");
-	ASSERT(hInst != NULL);
-
-	DWORD dwGetLayout = LAYOUT_LTR;
-
-	AFX_GDIGETLAYOUTPROC pfn;
-	pfn = (AFX_GDIGETLAYOUTPROC) GetProcAddress(hInst, "GetLayout");
-
-	// if they API is available, just call it. If it is not
-	// available, indicate an error.
-
-	if (pfn != NULL)
-		dwGetLayout = (*pfn)(m_hDC);
-	else
-	{
-		dwGetLayout = GDI_ERROR;
-		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	}
+	DWORD dwGetLayout = ::GetLayout(m_hDC);
 
 	return dwGetLayout;
 }
@@ -715,24 +695,7 @@ DWORD CDC::SetLayout(DWORD dwSetLayout)
 {
 	ASSERT(m_hDC != NULL);
 
-	HINSTANCE hInst = ::GetModuleHandleA("GDI32.DLL");
-	ASSERT(hInst != NULL);
-
-	DWORD dwGetLayout = LAYOUT_LTR;
-
-	AFX_GDISETLAYOUTPROC pfn;
-	pfn = (AFX_GDISETLAYOUTPROC) GetProcAddress(hInst, "SetLayout");
-
-	// If the API is availalbe, just call it. If it's not available,
-	// setting anything other than LAYOUT_LTR is an error.
-
-	if (pfn != NULL)
-		dwGetLayout = (*pfn)(m_hDC, dwSetLayout);
-	else if (dwSetLayout != LAYOUT_LTR)
-	{
-		dwGetLayout = GDI_ERROR;
-		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	}
+	DWORD dwGetLayout = ::SetLayout(m_hDC, dwSetLayout);
 
 	return dwGetLayout;
 }

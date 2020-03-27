@@ -20,8 +20,8 @@
 
 extern "C"
 {
-	LONG __cdecl _InterlockedIncrement( LONG volatile * pn );
-	LONG __cdecl _InterlockedDecrement( LONG volatile * pn );
+	LONG __cdecl _InterlockedIncrement(/* _Inout_ */ LONG volatile * pn);
+	LONG __cdecl _InterlockedDecrement(/* _Inout_ */ LONG volatile * pn);
 };
 
 #pragma intrinsic( _InterlockedIncrement )
@@ -37,11 +37,16 @@ __interface IAtlStringMgr
 {
 public:
 	// Allocate a new CStringData
-	CStringData* Allocate( int nAllocLength, int nCharSize ) throw();
+	CStringData* Allocate(
+		_In_ int nAllocLength,
+		_In_ int nCharSize) throw();
 	// Free an existing CStringData
-	void Free( CStringData* pData ) throw();
+	void Free(_Inout_ CStringData* pData) throw();
 	// Change the size of an existing CStringData
-	CStringData* Reallocate( CStringData* pData, int nAllocLength, int nCharSize ) throw();
+	CStringData* Reallocate(
+		_Inout_ CStringData* pData,
+		_In_ int nAllocLength,
+		_In_ int nCharSize) throw();
 	// Get the CStringData for a Nil string
 	CStringData* GetNilString() throw();
 	IAtlStringMgr* Clone() throw();
@@ -91,7 +96,7 @@ struct CStringData
 	}
 	bool IsShared() const throw()
 	{
-		return( nRefs > 1 ); 
+		return( nRefs > 1 );
 	}
 	void Lock() throw()
 	{
@@ -140,7 +145,7 @@ public:
 		achNil[1] = 0;
 	}
 
-	void SetManager( _In_ IAtlStringMgr* pMgr ) throw()
+	void SetManager(_In_ IAtlStringMgr* pMgr) throw()
 	{
 		ATLASSERT( pStringMgr == NULL );
 		pStringMgr = pMgr;
@@ -154,7 +159,7 @@ template< typename BaseType, const int t_nSize >
 class CStaticString
 {
 public:
-	CStaticString( _In_ const BaseType* psz ) :
+	CStaticString(_In_z_ const BaseType* psz) :
 		m_psz( psz )
 	{
 	}
@@ -164,7 +169,7 @@ public:
 		return m_psz;
 	}
 
-	static int __cdecl GetLength() 
+	static int __cdecl GetLength()
 	{
 		return (t_nSize/sizeof( BaseType ))-1;
 	}
@@ -173,8 +178,8 @@ private:
 	const BaseType* m_psz;
 
 private:
-	CStaticString( const CStaticString& str ) throw();
-	CStaticString& operator=( const CStaticString& str ) throw();
+	CStaticString(_In_ const CStaticString& str) throw();
+	CStaticString& operator=(_In_ const CStaticString& str) throw();
 };
 
 #define _ST( psz ) ATL::CStaticString< TCHAR, sizeof( _T( psz ) ) >( _T( psz ) )
@@ -221,28 +226,30 @@ public:
 	typedef typename ChTraitsBase< BaseType >::PCYSTR PCYSTR;
 
 public:
-	explicit CSimpleStringT( _In_ IAtlStringMgr* pStringMgr )
+	explicit CSimpleStringT(_Inout_ IAtlStringMgr* pStringMgr)
 	{
 		ATLENSURE( pStringMgr != NULL );
 		CStringData* pData = pStringMgr->GetNilString();
 		Attach( pData );
 	}
-	
-	CSimpleStringT( _In_ const CSimpleStringT& strSrc )
+
+	CSimpleStringT(_In_ const CSimpleStringT& strSrc)
 	{
 		CStringData* pSrcData = strSrc.GetData();
 		CStringData* pNewData = CloneData( pSrcData );
 		Attach( pNewData );
 	}
-	
-	CSimpleStringT( _In_ const CSimpleStringT<BaseType, !t_bMFCDLL>& strSrc )
+
+	CSimpleStringT(_In_ const CSimpleStringT<BaseType, !t_bMFCDLL>& strSrc)
 	{
 		CStringData* pSrcData = strSrc.GetData();
 		CStringData* pNewData = CloneData( pSrcData );
 		Attach( pNewData );
 	}
-	
-	CSimpleStringT( _In_ PCXSTR pszSrc, _In_ IAtlStringMgr* pStringMgr )
+
+	CSimpleStringT(
+		_In_z_ PCXSTR pszSrc,
+		_Inout_ IAtlStringMgr* pStringMgr)
 	{
 		ATLENSURE( pStringMgr != NULL );
 
@@ -256,10 +263,13 @@ public:
 		SetLength( nLength );
 		CopyChars( m_pszData, nLength, pszSrc, nLength );
 	}
-	CSimpleStringT( _In_ const XCHAR* pchSrc, _In_ int nLength, _In_ IAtlStringMgr* pStringMgr )
+	CSimpleStringT(
+		_In_count_(nLength) const XCHAR* pchSrc,
+		_In_ int nLength,
+		_Inout_ IAtlStringMgr* pStringMgr)
 	{
 		ATLENSURE( pStringMgr != NULL );
-		
+
 		if(pchSrc == NULL && nLength != 0)
 			AtlThrow(E_INVALIDARG);
 
@@ -277,13 +287,13 @@ public:
 		CStringData* pData = GetData();
 		pData->Release();
 	}
-	
+
 	operator CSimpleStringT<BaseType, !t_bMFCDLL>&()
 	{
 		return *(CSimpleStringT<BaseType, !t_bMFCDLL>*)this;
 	}
 
-	CSimpleStringT& operator=( _In_ const CSimpleStringT& strSrc )
+	CSimpleStringT& operator=(_In_ const CSimpleStringT& strSrc)
 	{
 		CStringData* pSrcData = strSrc.GetData();
 		CStringData* pOldData = GetData();
@@ -303,8 +313,8 @@ public:
 
 		return( *this );
 	}
-	
-	CSimpleStringT& operator=( _In_ const CSimpleStringT<BaseType, !t_bMFCDLL>& strSrc )
+
+	CSimpleStringT& operator=(_In_ const CSimpleStringT<BaseType, !t_bMFCDLL>& strSrc)
 	{
 		CStringData* pSrcData = strSrc.GetData();
 		CStringData* pOldData = GetData();
@@ -324,67 +334,67 @@ public:
 
 		return( *this );
 	}
-	
-	CSimpleStringT& operator=( _In_opt_ PCXSTR pszSrc )
+
+	CSimpleStringT& operator=(_In_opt_z_ PCXSTR pszSrc)
 	{
 		SetString( pszSrc );
 
 		return( *this );
 	}
 
-	CSimpleStringT& operator+=( _In_ const CSimpleStringT& strSrc )
+	CSimpleStringT& operator+=(_In_ const CSimpleStringT& strSrc)
 	{
 		Append( strSrc );
 
 		return( *this );
 	}
 	template <bool bMFCDLL>
-	CSimpleStringT& operator+=( _In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc )
+	CSimpleStringT& operator+=(_In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc)
 	{
 		Append( strSrc );
 
 		return( *this );
 	}
-	
-	CSimpleStringT& operator+=( _In_opt_z_ PCXSTR pszSrc )
+
+	CSimpleStringT& operator+=(_In_z_ PCXSTR pszSrc)
 	{
 		Append( pszSrc );
 
 		return( *this );
 	}
 	template< int t_nSize >
-	CSimpleStringT& operator+=( _In_ const CStaticString< XCHAR, t_nSize >& strSrc )
+	CSimpleStringT& operator+=(_In_ const CStaticString< XCHAR, t_nSize >& strSrc)
 	{
 		Append( static_cast<const XCHAR *>(strSrc), strSrc.GetLength() );
 
 		return( *this );
 	}
-	CSimpleStringT& operator+=( _In_ char ch )
+	CSimpleStringT& operator+=(_In_ char ch)
 	{
 		AppendChar( XCHAR( ch ) );
 
 		return( *this );
 	}
-	CSimpleStringT& operator+=( _In_ unsigned char ch )
+	CSimpleStringT& operator+=(_In_ unsigned char ch)
 	{
 		AppendChar( XCHAR( ch ) );
 
 		return( *this );
 	}
-	CSimpleStringT& operator+=( _In_ wchar_t ch )
+	CSimpleStringT& operator+=(_In_ wchar_t ch)
 	{
 		AppendChar( XCHAR( ch ) );
 
 		return( *this );
 	}
 
-	XCHAR operator[]( _In_ int iChar ) const
+	XCHAR operator[](_In_ int iChar) const
 	{
 		ATLASSERT( (iChar >= 0) && (iChar <= GetLength()) );  // Indexing the '\0' is OK
-		
+
 		if( (iChar < 0) || (iChar > GetLength()) )
 			AtlThrow(E_INVALIDARG);
-			
+
 		return( m_pszData[iChar] );
 	}
 
@@ -393,11 +403,13 @@ public:
 		return( m_pszData );
 	}
 
-	void Append( _In_opt_z_ PCXSTR pszSrc )
+	void Append(_In_z_ PCXSTR pszSrc)
 	{
 		Append( pszSrc, StringLength( pszSrc ) );
 	}
-	void Append( _In_opt_z_count_(nLength) PCXSTR pszSrc, _In_ int nLength )
+	void Append(
+		_In_count_(nLength) PCXSTR pszSrc,
+		_In_ int nLength)
 	{
 		// See comment in SetString() about why we do this
 		UINT_PTR nOffset = pszSrc-GetString();
@@ -408,7 +420,7 @@ public:
 			// protects from underflow
 			nOldLength = 0;
 		}
-		
+
 		//Make sure the nLength is greater than zero
 		ATLENSURE_THROW(nLength >=0, E_INVALIDARG);
 
@@ -429,7 +441,7 @@ public:
 		CopyChars( pszBuffer+nOldLength, nLength, pszSrc, nLength );
 		ReleaseBufferSetLength( nNewLength );
 	}
-	void AppendChar( _In_ XCHAR ch )
+	void AppendChar(_In_ XCHAR ch)
 	{
 		UINT nOldLength = GetLength();
 		int nNewLength = nOldLength+1;
@@ -437,15 +449,15 @@ public:
 		pszBuffer[nOldLength] = ch;
 		ReleaseBufferSetLength( nNewLength );
 	}
-	void Append( _In_ const CSimpleStringT& strSrc )
+	void Append(_In_ const CSimpleStringT& strSrc)
 	{
 		Append( strSrc.GetString(), strSrc.GetLength() );
 	}
 	template <bool bMFCDLL>
-	void Append( _In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc )
+	void Append(_In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc)
 	{
 		Append( strSrc.GetString(), strSrc.GetLength() );
-	}	
+	}
 	void Empty() throw()
 	{
 		CStringData* pOldData = GetData();
@@ -485,8 +497,8 @@ public:
 				SetLength( nLength );
 				return;
 			}
-			
-			CopyChars( PXSTR( pNewData->data() ), nLength, 
+
+			CopyChars( PXSTR( pNewData->data() ), nLength,
 				PCXSTR( pOldData->data() ), nLength );
 
 			pOldData->Release();
@@ -499,12 +511,12 @@ public:
 	{
 		return( GetData()->nAllocLength );
 	}
-	XCHAR GetAt( _In_ int iChar ) const
+	XCHAR GetAt(_In_ int iChar) const
 	{
 		ATLASSERT( (iChar >= 0) && (iChar <= GetLength()) );  // Indexing the '\0' is OK
 		if( (iChar < 0) || (iChar > GetLength()) )
-			AtlThrow(E_INVALIDARG);		
-			
+			AtlThrow(E_INVALIDARG);
+
 		return( m_pszData[iChar] );
 	}
 	PXSTR GetBuffer()
@@ -517,11 +529,11 @@ public:
 
 		return( m_pszData );
 	}
-	_Ret_cap_(nMinBufferLength + 1) PXSTR GetBuffer( _In_ int nMinBufferLength )
+	_Ret_cap_(nMinBufferLength + 1) PXSTR GetBuffer(_In_ int nMinBufferLength)
 	{
 		return( PrepareWrite( nMinBufferLength ) );
 	}
-	_Ret_cap_(nLength + 1) PXSTR GetBufferSetLength( _In_ int nLength )
+	_Ret_cap_(nLength + 1) PXSTR GetBufferSetLength(_In_ int nLength)
 	{
 		PXSTR pszBuffer = GetBuffer( nLength );
 		SetLength( nLength );
@@ -563,11 +575,11 @@ public:
 		CStringData* pData = GetData();
 		pData->Unlock();
 	}
-	void Preallocate( _In_ int nLength )
+	void Preallocate(_In_ int nLength)
 	{
 		PrepareWrite( nLength );
 	}
-	void ReleaseBuffer( _In_ int nNewLength = -1 )
+	void ReleaseBuffer(_In_ int nNewLength = -1)
 	{
 		if( nNewLength == -1 )
 		{
@@ -576,31 +588,33 @@ public:
 		}
 		SetLength( nNewLength );
 	}
-	void ReleaseBufferSetLength( _In_ int nNewLength )
+	void ReleaseBufferSetLength(_In_ int nNewLength)
 	{
 		ATLASSERT( nNewLength >= 0 );
 		SetLength( nNewLength );
 	}
-	void Truncate( _In_ int nNewLength )
+	void Truncate(_In_ int nNewLength)
 	{
 		ATLASSERT( nNewLength <= GetLength() );
 		GetBuffer( nNewLength );
 		ReleaseBufferSetLength( nNewLength );
 	}
-	void SetAt( _In_ int iChar, _In_ XCHAR ch )
+	void SetAt(
+		_In_ int iChar,
+		_In_ XCHAR ch)
 	{
 		ATLASSERT( (iChar >= 0) && (iChar < GetLength()) );
 
 		if( (iChar < 0) || (iChar >= GetLength()) )
-			AtlThrow(E_INVALIDARG);		
-			
+			AtlThrow(E_INVALIDARG);
+
 		int nLength = GetLength();
 		PXSTR pszBuffer = GetBuffer();
 		pszBuffer[iChar] = ch;
 		ReleaseBufferSetLength( nLength );
-			
+
 	}
-	void SetManager( _In_ IAtlStringMgr* pStringMgr )
+	void SetManager(_Inout_ IAtlStringMgr* pStringMgr)
 	{
 		ATLASSERT( IsEmpty() );
 
@@ -609,11 +623,13 @@ public:
 		pData = pStringMgr->GetNilString();
 		Attach( pData );
 	}
-	void SetString( _In_opt_ PCXSTR pszSrc )
+	void SetString(_In_opt_z_ PCXSTR pszSrc)
 	{
 		SetString( pszSrc, StringLength( pszSrc ) );
 	}
-	void SetString( _In_opt_count_(nLength) PCXSTR pszSrc, _In_ int nLength )
+	void SetString(
+		_In_opt_count_(nLength) PCXSTR pszSrc,
+		_In_ int nLength)
 	{
 		if( nLength == 0 )
 		{
@@ -621,24 +637,24 @@ public:
 		}
 		else
 		{
-			// It is possible that pszSrc points to a location inside of our 
-			// buffer.  GetBuffer() might change m_pszData if (1) the buffer 
-			// is shared or (2) the buffer is too small to hold the new 
+			// It is possible that pszSrc points to a location inside of our
+			// buffer.  GetBuffer() might change m_pszData if (1) the buffer
+			// is shared or (2) the buffer is too small to hold the new
 			// string.  We detect this aliasing, and modify pszSrc to point
 			// into the newly allocated buffer instead.
-			
+
 			if(pszSrc == NULL)
-				AtlThrow(E_INVALIDARG);			
-				
+				AtlThrow(E_INVALIDARG);
+
 			UINT nOldLength = GetLength();
 			UINT_PTR nOffset = pszSrc-GetString();
-			// If 0 <= nOffset <= nOldLength, then pszSrc points into our 
+			// If 0 <= nOffset <= nOldLength, then pszSrc points into our
 			// buffer
 
 			PXSTR pszBuffer = GetBuffer( nLength );
 			if( nOffset <= nOldLength )
 			{
-				CopyCharsOverlapped( pszBuffer, GetAllocLength(), 
+				CopyCharsOverlapped( pszBuffer, GetAllocLength(),
 					pszBuffer+nOffset, nLength );
 			}
 			else
@@ -652,7 +668,7 @@ public:
 public:
 	friend CSimpleStringT operator+(
 		_In_ const CSimpleStringT& str1,
-		_In_ const CSimpleStringT& str2 )
+		_In_ const CSimpleStringT& str2)
 	{
 		CSimpleStringT s( str1.GetManager() );
 
@@ -663,7 +679,7 @@ public:
 
 	friend CSimpleStringT operator+(
 		_In_ const CSimpleStringT& str1,
-		_In_ PCXSTR psz2 )
+		_In_z_ PCXSTR psz2)
 	{
 		CSimpleStringT s( str1.GetManager() );
 
@@ -673,8 +689,8 @@ public:
 	}
 
 	friend CSimpleStringT operator+(
-		_In_ PCXSTR psz1,
-		_In_ const CSimpleStringT& str2 )
+		_In_z_ PCXSTR psz1,
+		_In_ const CSimpleStringT& str2)
 	{
 		CSimpleStringT s( str2.GetManager() );
 
@@ -684,37 +700,47 @@ public:
 	}
 
 	_ATL_INSECURE_DEPRECATE("CSimpleStringT::CopyChars must be passed a buffer size")
-	static void __cdecl CopyChars
-		( _Out_cap_(nChars) XCHAR* pchDest, _In_opt_count_(nChars) const XCHAR* pchSrc, _In_ int nChars ) throw()
+	static void __cdecl CopyChars(
+		_Out_cap_(nChars) XCHAR* pchDest,
+		_In_opt_count_(nChars) const XCHAR* pchSrc,
+		_In_ int nChars) throw()
 	{
 		#pragma warning (push)
 		#pragma warning(disable : 4996)
 		memcpy( pchDest, pchSrc, nChars*sizeof( XCHAR ) );
 		#pragma warning (pop)
 	}
-	static void __cdecl CopyChars
-		( _Out_cap_post_count_(nDestLen,nChars) XCHAR* pchDest, _In_ size_t nDestLen, _In_opt_count_(nChars) const XCHAR* pchSrc, _In_ int nChars ) throw()
+	static void __cdecl CopyChars(
+		_Out_cap_post_count_(nDestLen,nChars) XCHAR* pchDest,
+		_In_ size_t nDestLen,
+		_In_opt_count_(nChars) const XCHAR* pchSrc,
+		_In_ int nChars) throw()
 	{
-		memcpy_s( pchDest, nDestLen*sizeof( XCHAR ), 
+		memcpy_s( pchDest, nDestLen*sizeof( XCHAR ),
 			pchSrc, nChars*sizeof( XCHAR ) );
 	}
 
 	_ATL_INSECURE_DEPRECATE("CSimpleStringT::CopyCharsOverlapped must be passed a buffer size")
-	static void __cdecl CopyCharsOverlapped
-		( _Out_cap_(nChars) XCHAR* pchDest, _In_count_(nChars) const XCHAR* pchSrc, _In_ int nChars ) throw()
+	static void __cdecl CopyCharsOverlapped(
+		_Out_cap_(nChars) XCHAR* pchDest,
+		_In_count_(nChars) const XCHAR* pchSrc,
+		_In_ int nChars) throw()
 	{
 		#pragma warning (push)
 		#pragma warning(disable : 4996)
 		memmove( pchDest, pchSrc, nChars*sizeof( XCHAR ) );
 		#pragma warning (pop)
 	}
-	static void __cdecl CopyCharsOverlapped
-		( _Out_cap_post_count_(nDestLen, nDestLen) XCHAR* pchDest, _In_ size_t nDestLen, _In_count_(nChars) const XCHAR* pchSrc, _In_ int nChars ) throw()
+	static void __cdecl CopyCharsOverlapped(
+		_Out_cap_post_count_(nDestLen, nDestLen) XCHAR* pchDest,
+		_In_ size_t nDestLen,
+		_In_count_(nChars) const XCHAR* pchSrc,
+		_In_ int nChars) throw()
 	{
-		memmove_s( pchDest, nDestLen*sizeof( XCHAR ), 
+		memmove_s( pchDest, nDestLen*sizeof( XCHAR ),
 			pchSrc, nChars*sizeof( XCHAR ) );
 	}
-	static int __cdecl StringLength( _In_opt_z_ const char* psz ) throw()
+	static int __cdecl StringLength(_In_opt_z_ const char* psz) throw()
 	{
 		if( psz == NULL )
 		{
@@ -722,7 +748,7 @@ public:
 		}
 		return( int( strlen( psz ) ) );
 	}
-	static int __cdecl StringLength( _In_opt_z_ const wchar_t* psz ) throw()
+	static int __cdecl StringLength(_In_opt_z_ const wchar_t* psz) throw()
 	{
 		if( psz == NULL )
 		{
@@ -730,7 +756,9 @@ public:
 		}
 		return( int( wcslen( psz ) ) );
 	}
-	static int __cdecl StringLengthN( _In_opt_z_ const char* psz, _In_ size_t sizeInXChar ) throw()
+	static int __cdecl StringLengthN(
+		_In_opt_z_count_(sizeInXChar) const char* psz,
+		_In_ size_t sizeInXChar) throw()
 	{
 		if( psz == NULL )
 		{
@@ -738,7 +766,9 @@ public:
 		}
 		return( int( strnlen( psz, sizeInXChar ) ) );
 	}
-	static int __cdecl StringLengthN( _In_opt_z_ const wchar_t* psz, _In_ size_t sizeInXChar ) throw()
+	static int __cdecl StringLengthN(
+		_In_opt_z_count_(sizeInXChar) const wchar_t* psz,
+		_In_ size_t sizeInXChar) throw()
 	{
 		if( psz == NULL )
 		{
@@ -748,7 +778,12 @@ public:
 	}
 
 protected:
-	static void __cdecl Concatenate( _Out_ CSimpleStringT& strResult, _In_count_(nLength1) PCXSTR psz1, _In_ int nLength1, _In_count_(nLength2) PCXSTR psz2, _In_ int nLength2 )
+	static void __cdecl Concatenate(
+		_Inout_ CSimpleStringT& strResult,
+		_In_count_(nLength1) PCXSTR psz1,
+		_In_ int nLength1,
+		_In_count_(nLength2) PCXSTR psz2,
+		_In_ int nLength2)
 	{
 		int nNewLength = nLength1+nLength2;
 		PXSTR pszBuffer = strResult.GetBuffer( nNewLength );
@@ -763,11 +798,11 @@ protected:
 
 // Implementation
 private:
-	void Attach( _In_ CStringData* pData ) throw()
+	void Attach(_Inout_ CStringData* pData) throw()
 	{
 		m_pszData = static_cast< PXSTR >( pData->data() );
 	}
-	ATL_NOINLINE void Fork( _In_ int nLength )
+	ATL_NOINLINE void Fork(_In_ int nLength)
 	{
 		CStringData* pOldData = GetData();
 		int nOldLength = pOldData->nDataLength;
@@ -777,7 +812,7 @@ private:
 			ThrowMemoryException();
 		}
 		int nCharsToCopy = ((nOldLength < nLength) ? nOldLength : nLength)+1;  // Copy '\0'
-		CopyChars( PXSTR( pNewData->data() ), nCharsToCopy, 
+		CopyChars( PXSTR( pNewData->data() ), nCharsToCopy,
 			PCXSTR( pOldData->data() ), nCharsToCopy );
 		pNewData->nDataLength = nOldLength;
 		pOldData->Release();
@@ -787,8 +822,11 @@ private:
 	{
 		return( reinterpret_cast< CStringData* >( m_pszData )-1 );
 	}
-	PXSTR PrepareWrite( _In_ int nLength )
+	PXSTR PrepareWrite(_In_ int nLength)
 	{
+		if (nLength < 0)
+			AtlThrow(E_INVALIDARG);
+
 		CStringData* pOldData = GetData();
 		int nShared = 1-pOldData->nRefs;  // nShared < 0 means true, >= 0 means false
 		int nTooShort = pOldData->nAllocLength-nLength;  // nTooShort < 0 means true, >= 0 means false
@@ -799,7 +837,7 @@ private:
 
 		return( m_pszData );
 	}
-	ATL_NOINLINE void PrepareWrite2( _In_ int nLength )
+	ATL_NOINLINE void PrepareWrite2(_In_ int nLength)
 	{
 		CStringData* pOldData = GetData();
 		if( pOldData->nDataLength > nLength )
@@ -812,15 +850,16 @@ private:
 		}
 		else if( pOldData->nAllocLength < nLength )
 		{
-			// Grow exponentially, until we hit 1K.
+			// Grow exponentially, until we hit 1G, then by 1M thereafter.
 			int nNewLength = pOldData->nAllocLength;
-			if( nNewLength > 1024 )
+			if( nNewLength > 1024 * 1024 * 1024 )
 			{
-				nNewLength += 1024;
+				nNewLength += 1024 * 1024;
 			}
 			else
 			{
-				nNewLength *= 2;
+				// Exponential growth factor is 1.5.
+				nNewLength = nNewLength + nNewLength / 2;
 			}
 			if( nNewLength < nLength )
 			{
@@ -829,7 +868,7 @@ private:
 			Reallocate( nNewLength );
 		}
 	}
-	ATL_NOINLINE void Reallocate( _In_ int nLength )
+	ATL_NOINLINE void Reallocate(_In_ int nLength)
 	{
 		CStringData* pOldData = GetData();
 		ATLASSERT( pOldData->nAllocLength < nLength );
@@ -847,19 +886,19 @@ private:
 		Attach( pNewData );
 	}
 
-	void SetLength( _In_ int nLength )
+	void SetLength(_In_ int nLength)
 	{
 		ATLASSERT( nLength >= 0 );
 		ATLASSERT( nLength <= GetData()->nAllocLength );
 
 		if( nLength < 0 || nLength > GetData()->nAllocLength)
 			AtlThrow(E_INVALIDARG);
-			
+
 		GetData()->nDataLength = nLength;
 		m_pszData[nLength] = 0;
 	}
 
-	static CStringData* __cdecl CloneData( _In_ CStringData* pData )
+	static CStringData* __cdecl CloneData(_Inout_ CStringData* pData)
 	{
 		CStringData* pNewData = NULL;
 
@@ -888,7 +927,7 @@ public :
 	typedef CStrBufT<BaseType, t_bMFCDLL> CStrBuf;
 private:
 	PXSTR m_pszData;
-	
+
 	friend class CSimpleStringT<BaseType, !t_bMFCDLL>;
 };
 
@@ -905,7 +944,7 @@ public:
 	static const DWORD SET_LENGTH = 0x02;  // Set the length of the string object at GetBuffer time
 
 public:
-	explicit CStrBufT( _In_ StringType& str ) throw( ... ) :
+	explicit CStrBufT(_In_ StringType& str) throw( ... ) :
 		m_str( str ),
 		m_pszBuffer( NULL ),
 #ifdef _DEBUG
@@ -915,8 +954,11 @@ public:
 	{
 		m_pszBuffer = m_str.GetBuffer();
 	}
-	
-	CStrBufT( _In_ StringType& str, _In_ int nMinLength, _In_ DWORD dwFlags = AUTO_LENGTH ) throw( ... ) :
+
+	CStrBufT(
+			_In_ StringType& str,
+			_In_ int nMinLength,
+			_In_ DWORD dwFlags = AUTO_LENGTH) throw( ... ) :
 		m_str( str ),
 		m_pszBuffer( NULL ),
 #ifdef _DEBUG
@@ -948,14 +990,14 @@ public:
 		return( m_pszBuffer );
 	}
 
-	void SetLength( _In_ int nLength )
+	void SetLength(_In_ int nLength)
 	{
-		ATLASSERT( nLength >= 0 );		
+		ATLASSERT( nLength >= 0 );
 		ATLASSERT( nLength <= m_nBufferLength );
 
 		if( nLength < 0 )
 			AtlThrow(E_INVALIDARG);
-		
+
 		m_nLength = nLength;
 	}
 
@@ -970,8 +1012,8 @@ private:
 
 // Private copy constructor and copy assignment operator to prevent accidental use
 private:
-	CStrBufT( const CStrBufT& ) throw();
-	CStrBufT& operator=( const CStrBufT& ) throw();
+	CStrBufT(_In_ const CStrBufT&) throw();
+	CStrBufT& operator=(_In_ const CStrBufT& ) throw();
 };
 
 typedef CSimpleStringT< TCHAR > CSimpleString;

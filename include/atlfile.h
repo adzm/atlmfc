@@ -15,28 +15,41 @@
 
 #include <atlbase.h>
 
-
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
 
-class CAtlFile : public CHandle
+class CAtlFile :
+	public CHandle
 {
 public:
-	CAtlFile() throw()
+	/// <summary>
+	/// CAtlFile constructor</summary>
+	CAtlFile() throw():
+		m_pTM( NULL )
 	{
 	}
-	CAtlFile( _In_ CAtlFile& file ) throw() :
-		CHandle( file )  // Transfers ownership
+
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	explicit CAtlFile(_In_opt_ CAtlTransactionManager* pTM) throw() :
+		m_pTM( pTM )
 	{
 	}
-	explicit CAtlFile( _In_ HANDLE hFile ) throw() :
-		CHandle( hFile )  // Takes ownership
+
+	CAtlFile(_In_ CAtlFile& file) throw() :
+		CHandle( file ),  // Transfers ownership
+		m_pTM( file.m_pTM )
+	{
+	}
+
+	explicit CAtlFile(_In_ HANDLE hFile) throw() :
+		CHandle( hFile ),  // Takes ownership
+		m_pTM( NULL )
 	{
 	}
 
 	HRESULT Create(
-		_In_ LPCTSTR szFilename,
+		_In_z_ LPCTSTR szFilename,
 		_In_ DWORD dwDesiredAccess,
 		_In_ DWORD dwShareMode,
 		_In_ DWORD dwCreationDisposition,
@@ -46,14 +59,23 @@ public:
 	{
 		ATLASSUME(m_h == NULL);
 
-		HANDLE hFile = ::CreateFile(
-			szFilename,
-			dwDesiredAccess,
-			dwShareMode,
-			lpsa,
-			dwCreationDisposition,
-			dwFlagsAndAttributes,
-			hTemplateFile);
+		HANDLE hFile = m_pTM != NULL ?
+			m_pTM->CreateFile(
+				szFilename,
+				dwDesiredAccess,
+				dwShareMode,
+				lpsa,
+				dwCreationDisposition,
+				dwFlagsAndAttributes,
+				hTemplateFile) :
+			::CreateFile(
+				szFilename,
+				dwDesiredAccess,
+				dwShareMode,
+				lpsa,
+				dwCreationDisposition,
+				dwFlagsAndAttributes,
+				hTemplateFile);
 
 		if (hFile == INVALID_HANDLE_VALUE)
 			return AtlHresultFromLastError();
@@ -64,7 +86,7 @@ public:
 
 	HRESULT Read(
 		_Out_bytecap_(nBufSize) LPVOID pBuffer,
-		DWORD nBufSize) throw()
+		_In_ DWORD nBufSize) throw()
 	{
 		ATLASSUME(m_h != NULL);
 
@@ -97,7 +119,7 @@ public:
 	HRESULT Read(
 		_Out_bytecap_(nBufSize) LPVOID pBuffer,
 		_In_ DWORD nBufSize,
-		_In_opt_ LPOVERLAPPED pOverlapped) throw()
+		_Inout_opt_ LPOVERLAPPED pOverlapped) throw()
 	{
 		ATLASSUME(m_h != NULL);
 
@@ -145,7 +167,7 @@ public:
 	HRESULT Write(
 		_In_bytecount_(nBufSize) LPCVOID pBuffer,
 		_In_ DWORD nBufSize,
-		_In_opt_ LPOVERLAPPED pOverlapped) throw()
+		_Inout_opt_ LPOVERLAPPED pOverlapped) throw()
 	{
 		ATLASSUME(m_h != NULL);
 
@@ -160,7 +182,7 @@ public:
 		_In_bytecount_(nBufSize) LPCVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Inout_ LPOVERLAPPED pOverlapped,
-		_In_ LPOVERLAPPED_COMPLETION_ROUTINE pfnCompletionRoutine) throw()
+		_In_opt_ LPOVERLAPPED_COMPLETION_ROUTINE pfnCompletionRoutine) throw()
 	{
 		ATLASSUME(m_h != NULL);
 
@@ -185,7 +207,9 @@ public:
 		return S_OK;
 	}
 
-	HRESULT Seek(_In_ LONGLONG nOffset, _In_ DWORD dwFrom = FILE_CURRENT) throw()
+	HRESULT Seek(
+		_In_ LONGLONG nOffset,
+		_In_ DWORD dwFrom = FILE_CURRENT) throw()
 	{
 		ATLASSUME(m_h != NULL);
 		ATLASSERT(dwFrom == FILE_BEGIN || dwFrom == FILE_END || dwFrom == FILE_CURRENT);
@@ -235,7 +259,9 @@ public:
 		return S_OK;
 	}
 
-	HRESULT LockRange(_In_ ULONGLONG nPos, _In_ ULONGLONG nCount) throw()
+	HRESULT LockRange(
+		_In_ ULONGLONG nPos,
+		_In_ ULONGLONG nCount) throw()
 	{
 		ATLASSUME(m_h != NULL);
 
@@ -251,7 +277,9 @@ public:
 		return S_OK;
 	}
 
-	HRESULT UnlockRange(_In_ ULONGLONG nPos, _In_ ULONGLONG nCount) throw()
+	HRESULT UnlockRange(
+		_In_ ULONGLONG nPos,
+		_In_ ULONGLONG nCount) throw()
 	{
 		ATLASSUME(m_h != NULL);
 
@@ -300,6 +328,11 @@ public:
 
 		return S_OK;
 	}
+
+protected:
+	/// <summary>
+	/// Pointer to CAtlTransactionManager object</summary>
+	CAtlTransactionManager* m_pTM;
 };
 
 // This class allows the creation of a temporary file that is written to.
@@ -322,10 +355,12 @@ public:
 		}
 	}
 
-	HRESULT Create(_In_opt_ LPCTSTR pszDir = NULL, _In_ DWORD dwDesiredAccess = GENERIC_WRITE) throw()
+	HRESULT Create(
+		_In_opt_z_ LPCTSTR pszDir = NULL,
+		_In_ DWORD dwDesiredAccess = GENERIC_WRITE) throw()
 	{
-		TCHAR szPath[_MAX_PATH]; 
-		TCHAR tmpFileName[_MAX_PATH]; 
+		TCHAR szPath[_MAX_PATH];
+		TCHAR tmpFileName[_MAX_PATH];
 
 		ATLASSUME(m_file.m_h == NULL);
 
@@ -374,11 +409,11 @@ public:
 			&secatt);
 	}
 
-	HRESULT Close(_In_opt_ LPCTSTR szNewName = NULL) throw()
+	HRESULT Close(_In_opt_z_ LPCTSTR szNewName = NULL) throw()
 	{
 		ATLASSUME(m_file.m_h != NULL);
 
-		// This routine is called when we are finished writing to the 
+		// This routine is called when we are finished writing to the
 		// temporary file, so we now just want to close it and copy
 		// it to the actual filename we want it to be called.
 
@@ -443,7 +478,9 @@ public:
 		return m_file.Write(pBuffer, nBufSize, pnBytesWritten);
 	}
 
-	HRESULT Seek(_In_ LONGLONG nOffset, _In_ DWORD dwFrom = FILE_CURRENT) throw()
+	HRESULT Seek(
+		_In_ LONGLONG nOffset,
+		_In_ DWORD dwFrom = FILE_CURRENT) throw()
 	{
 		return m_file.Seek(nOffset, dwFrom);
 	}
@@ -458,12 +495,16 @@ public:
 		return m_file.Flush();
 	}
 
-	HRESULT LockRange(_In_ ULONGLONG nPos, _In_ ULONGLONG nCount) throw()
+	HRESULT LockRange(
+		_In_ ULONGLONG nPos,
+		_In_ ULONGLONG nCount) throw()
 	{
 		return m_file.LockRange(nPos, nCount);
 	}
 
-	HRESULT UnlockRange(_In_ ULONGLONG nPos, _In_ ULONGLONG nCount) throw()
+	HRESULT UnlockRange(
+		_In_ ULONGLONG nPos,
+		_In_ ULONGLONG nCount) throw()
 	{
 		return m_file.UnlockRange(nPos, nCount);
 	}
@@ -552,7 +593,7 @@ public:
 
 	HRESULT MapSharedMem(
 		_In_ SIZE_T nMappingSize,
-		_In_ LPCTSTR szName,
+		_In_z_ LPCTSTR szName,
 		_Out_opt_ BOOL* pbAlreadyExisted = NULL,
 		_In_opt_ LPSECURITY_ATTRIBUTES lpsa = NULL,
 		_In_ DWORD dwMappingProtection = PAGE_READWRITE,
@@ -593,7 +634,7 @@ public:
 	}
 
 	HRESULT OpenMapping(
-		_In_ LPCTSTR szName,
+		_In_z_ LPCTSTR szName,
 		_In_ SIZE_T nMappingSize,
 		_In_ ULONGLONG nOffset = 0,
 		_In_ DWORD dwViewDesiredAccess = FILE_MAP_ALL_ACCESS) throw()
@@ -622,7 +663,6 @@ public:
 			m_hMapping = NULL;
 			return hr;
 		}
-
 
 		return S_OK;
 	}
@@ -720,7 +760,8 @@ private:
 };
 
 template <typename T = char>
-class CAtlFileMapping : public CAtlFileMappingBase
+class CAtlFileMapping : 
+	public CAtlFileMappingBase
 {
 public:
 	operator T*() const throw()

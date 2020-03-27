@@ -11,11 +11,12 @@
 // STDAFX.H is the header that includes the standard includes that are used
 //  for most of the project.  These are compiled into a pre-compiled header
 
-#define WINVER	0x0600	// Target Windows Vista
-#ifdef _WIN32_WINNT
+#include <winsdkver.h>
+
 #undef _WIN32_WINNT
-#endif
-#define _WIN32_WINNT	0x0600
+#define _WIN32_WINNT _WIN32_WINNT_MAXVER
+
+#include <sdkddkver.h>
 
 // turn off warnings for /W4 (just for MFC implementation)
 #ifndef ALL_WARNINGS
@@ -159,6 +160,10 @@
 #ifndef _AFX_NO_DHTML_SUPPORT
 	#include "afxdhtml.h"
 #endif
+
+#if (0x0600 <= WINVER) && defined(_UNICODE)
+	#include "afxtaskdialog.h"
+#endif 
 
 #include <winreg.h>
 #include <winnls.h>

@@ -29,6 +29,8 @@
 #pragma component(minrebuild, off)
 #endif
 
+#define _AFX_USING_CONTROL_BARS
+
 inline BOOL IsStandardCommand(UINT uiCmd)
 {
 	return((uiCmd >= ID_FILE_MRU_FILE1 && uiCmd <= ID_FILE_MRU_FILE16) || // MRU commands,
@@ -39,6 +41,11 @@ inline BOOL IsStandardCommand(UINT uiCmd)
 }
 
 void ControlBarCleanUp();
+
+#ifdef _AFXDLL
+void AfxGlobalsAddRef();
+void AfxGlobalsRelease();
+#endif
 
 extern CFrameWnd* g_pTopLevelFrame;
 
@@ -106,3 +113,13 @@ protected:
 #ifdef _AFX_PACKING
 #pragma pack(pop)
 #endif
+
+// Smart docking theme:
+typedef enum AFX_SMARTDOCK_THEME
+{
+	AFX_SDT_DEFAULT = 0,	// Visual Manager-specific theme
+	AFX_SDT_VS2005 = 1,		// VS 2005-style
+	AFX_SDT_VS2008 = 2		// VS 2008-style
+};
+
+

@@ -13,37 +13,10 @@
 #define new DEBUG_NEW
 
 /////////////////////////////////////////////////////////////////////////////
-// DLL Load Helper
-
-inline HMODULE AfxLoadSystemLibraryUsingFullPath(const WCHAR *pszLibrary)
-{
-	WCHAR wszLoadPath[MAX_PATH+1];
-	if (::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath)) == 0)
-	{
-		return NULL;
-	}
-
-	if (wszLoadPath[wcslen(wszLoadPath)-1] != L'\\')
-	{
-		if (wcscat_s(wszLoadPath, _countof(wszLoadPath), L"\\") != 0)
-		{
-			return NULL;
-		}
-	}
-
-	if (wcscat_s(wszLoadPath, _countof(wszLoadPath), pszLibrary) != 0)
-	{
-		return NULL;
-	}
-
-	return(::AfxCtxLoadLibraryW(wszLoadPath));
-}
-
-/////////////////////////////////////////////////////////////////////////////
 // CThemeHelper
 void* CThemeHelper::GetProc(LPCSTR szProc, void* pfnFail)
 {
-	static HMODULE hThemeDll = AfxLoadSystemLibraryUsingFullPath(L"UxTheme.dll");
+	static HMODULE hThemeDll = AfxCtxLoadLibraryW(L"UxTheme.dll");
 
 	void* pRet = pfnFail;
 	if (hThemeDll != NULL)

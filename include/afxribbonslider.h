@@ -40,6 +40,8 @@ public:
 	int GetRangeMin() const { return m_nMin; }
 	int GetRangeMax() const { return m_nMax; }
 
+	int GetWidth() const { return m_nWidth; }
+
 	void SetPos(int nPos, BOOL bRedraw = TRUE);
 
 	int GetPos() const { return m_nPos; }

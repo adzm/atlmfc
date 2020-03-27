@@ -71,7 +71,20 @@ BOOL CMFCRibbonGalleryIcon::SetACCData(CWnd* pParent, CAccessibilityData& data)
 
 	case nScrollUpID:
 	case nScrollDownID:
-		data.m_strAccName = GetToolTipText();
+		if (m_nIndex == nMenuID)
+		{
+			if (m_pOwner != NULL)
+			{
+				ASSERT_VALID(m_pOwner);
+				data.m_strAccName = m_pOwner->GetText();
+			}
+		}
+		else
+		{
+			data.m_strAccName.LoadString(m_nIndex == nScrollUpID ? IDS_AFXBARRES_GALLERY_ROW_UP : IDS_AFXBARRES_GALLERY_ROW_DOWN);
+		}
+
+		data.m_strAccValue = GetToolTipText();
 		break;
 
 	default:
@@ -175,6 +188,9 @@ void CMFCRibbonGalleryIcon::OnClick(CPoint point)
 		{
 			m_pOwner->SetNotifyParentID(TRUE);
 		}
+
+		m_pOwner->m_bIsFocused = FALSE;
+		m_pOwner->OnSetFocus(FALSE);
 
 		pParentMenu->OnClickButton(m_pOwner, point);
 	}
@@ -372,11 +388,18 @@ CMFCRibbonGallery::CMFCRibbonGallery(UINT nID, LPCTSTR lpszText, int nSmallImage
 	{
 		ASSERT(cxPaletteImage != 0);
 
-		m_imagesPalette.Load(uiImagesPaletteResID);
+		m_imagesPalette.Load(uiImagesPaletteResID, NULL, TRUE);
 
 		BITMAP bmp;
 		GetObject(m_imagesPalette.GetImageWell(), sizeof(BITMAP), &bmp);
 		m_imagesPalette.SetImageSize(CSize(cxPaletteImage, bmp.bmHeight), TRUE);
+
+		const double dblScale = afxGlobalData.GetRibbonImageScale();
+		if (dblScale != 1.0)
+		{
+			m_imagesPalette.SetTransparentColor(afxGlobalData.clrBtnFace);
+			m_imagesPalette.SmoothResize(dblScale);
+		}
 
 		m_nIcons = m_imagesPalette.GetCount();
 		CreateIcons();
@@ -411,26 +434,22 @@ void CMFCRibbonGallery::AddGroup(LPCTSTR lpszGroupName, UINT uiImagesPaletteResI
 		return;
 	}
 
-	m_arGroupNames.Add(lpszGroupName);
-	m_arGroupLen.Add(m_imagesPalette.GetCount());
+	CMFCToolBarImages imagesGroup;
+	imagesGroup.Load(uiImagesPaletteResID, NULL, !m_imagesPalette.IsValid() || m_imagesPalette.GetCount() == 0);
 
-	if (m_imagesPalette.GetCount() == 0)
+	BITMAP bmp;
+	GetObject(imagesGroup.GetImageWell(), sizeof(BITMAP), &bmp);
+
+	imagesGroup.SetImageSize(CSize(cxPaletteImage, bmp.bmHeight), TRUE);
+
+	const double dblScale = afxGlobalData.GetRibbonImageScale();
+	if (dblScale != 1.0)
 	{
-		m_imagesPalette.Load(uiImagesPaletteResID);
-
-		BITMAP bmp;
-		GetObject(m_imagesPalette.GetImageWell(), sizeof(BITMAP), &bmp);
-
-		m_imagesPalette.SetImageSize(CSize(cxPaletteImage, bmp.bmHeight), TRUE);
-	}
-	else
-	{
-		ASSERT(cxPaletteImage == m_imagesPalette.GetImageSize().cx);
-		m_imagesPalette.Load(uiImagesPaletteResID, NULL, TRUE);
+		imagesGroup.SetTransparentColor(afxGlobalData.clrBtnFace);
+		imagesGroup.SmoothResize(dblScale);
 	}
 
-	m_nIcons = m_imagesPalette.GetCount();
-	RemoveAll();
+	AddGroup(lpszGroupName, imagesGroup);
 }
 
 void CMFCRibbonGallery::AddGroup(LPCTSTR lpszGroupName, CMFCToolBarImages& imagesGroup)
@@ -554,7 +573,7 @@ void CMFCRibbonGallery::SetPalette(UINT uiImagesPaletteResID, int cxPaletteImage
 
 	Clear();
 
-	m_imagesPalette.Load(uiImagesPaletteResID);
+	m_imagesPalette.Load(uiImagesPaletteResID, NULL, TRUE);
 
 	BITMAP bmp;
 	GetObject(m_imagesPalette.GetImageWell(), sizeof(BITMAP), &bmp);
@@ -667,7 +686,7 @@ CSize CMFCRibbonGallery::GetRegularSize(CDC* pDC)
 		sizePanelSmallImage = m_pParent->GetImageSize(FALSE);
 	}
 
-	m_bSmallIcons = (sizeImage.cx <= sizePanelSmallImage.cx * 3 / 2);
+	m_bSmallIcons = (sizeImage.cy <= sizePanelSmallImage.cy * 3 / 2);
 
 	if (m_bResetColumns && !m_bSmallIcons)
 	{
@@ -794,8 +813,8 @@ void CMFCRibbonGallery::OnAfterChangeRect(CDC* pDC)
 
 	rectImages.right -= cxMenu;
 
-	m_nImagesInRow = rectImages.Width() /(sizeImage.cx + 2 * nMargin);
-	m_nImagesInColumn = rectImages.Height() /(sizeImage.cy + 2 * nMargin);
+	m_nImagesInRow = rectImages.Width() / (sizeImage.cx + 2 * nMargin);
+	m_nImagesInColumn = rectImages.Height() / (sizeImage.cy + 2 * nMargin);
 
 	if (m_nImagesInRow == 0)
 	{
@@ -1507,6 +1526,25 @@ CRect CMFCRibbonGallery::GetKeyTipRect(CDC* pDC, BOOL bIsMenu)
 
 	rectKeyTip.left = m_rect.right - sizeKeyTip.cx / 2;
 	rectKeyTip.top = m_rect.bottom - sizeKeyTip.cy / 2;
+
+	// Find 'nMenuID' button:
+	if (m_arIcons.GetSize() > 0)
+	{
+		CMFCRibbonGalleryIcon* pMenuButton = DYNAMIC_DOWNCAST(CMFCRibbonGalleryIcon, m_arIcons [m_arIcons.GetSize() - 1]);
+		if (pMenuButton != NULL)
+		{
+			ASSERT_VALID(pMenuButton);
+
+			const CRect rectMenu = pMenuButton->GetRect();
+
+			if (pMenuButton->m_nIndex == nMenuID && !rectMenu.IsRectEmpty())
+			{
+				rectKeyTip.left = rectMenu.CenterPoint().x;
+				rectKeyTip.top = rectMenu.bottom - 3;
+			}
+		}
+	}
+
 	rectKeyTip.right = rectKeyTip.left + sizeKeyTip.cx;
 	rectKeyTip.bottom = rectKeyTip.top + sizeKeyTip.cy;
 
@@ -1517,17 +1555,7 @@ CSize CMFCRibbonGallery::GetIconSize() const
 {
 	ASSERT_VALID(this);
 
-	CSize sizeImage = m_imagesPalette.GetImageSize();
-
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
-	{
-		const double dblScale = 1. +(afxGlobalData.GetRibbonImageScale() - 1.) / 2;
-
-		sizeImage.cx = (int)(.5 + dblScale * sizeImage.cx);
-		sizeImage.cy = (int)(.5 + dblScale * sizeImage.cy);
-	}
-
-	return sizeImage;
+	return m_imagesPalette.GetImageSize();
 }
 
 void CMFCRibbonGallery::OnRTLChanged(BOOL bIsRTL)
@@ -1537,6 +1565,29 @@ void CMFCRibbonGallery::OnRTLChanged(BOOL bIsRTL)
 	CMFCRibbonButton::OnRTLChanged(bIsRTL);
 
 	m_imagesPalette.Mirror();
+}
+
+void CMFCRibbonGallery::OnSetFocus(BOOL bSet)
+{
+	ASSERT_VALID(this);
+
+	CMFCRibbonButton::OnSetFocus(bSet);
+
+	for (int i = (int)m_arIcons.GetSize() - 1; i >= 0; i--)
+	{
+		CMFCRibbonGalleryIcon* pIcon = DYNAMIC_DOWNCAST(CMFCRibbonGalleryIcon, m_arIcons[i]);
+		if (pIcon != NULL)
+		{
+			ASSERT_VALID(pIcon);
+
+			if (pIcon->m_nIndex == nMenuID)
+			{
+				pIcon->m_bIsFocused = bSet;
+				pIcon->Redraw();
+				break;
+			}
+		}
+	}
 }
 
 ////////////////////////////////////////////////

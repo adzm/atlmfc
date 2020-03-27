@@ -10,14 +10,6 @@
 
 #include "stdafx.h"
 
-
-#pragma comment(lib, "imagehlp.lib")
-#pragma comment(lib, "comctl32.lib")
-#pragma comment(lib, "shell32.lib")
-#pragma comment(lib, "comdlg32.lib")
-#pragma comment(lib, "winspool.lib")
-#pragma comment(lib, "advapi32.lib")
-
 /////////////////////////////////////////////////////////////////////////////
 // AfxGetPropSheetFont
 
@@ -68,8 +60,6 @@ static BOOL IsFontInstalled(LPCTSTR pszFace)
 	return bInstalled;
 }
 
-typedef LANGID (WINAPI* PFNGETUSERDEFAULTUILANGUAGE)();
-
 BOOL AFXAPI AfxGetPropSheetFont(CString& strFace, WORD& wSize, BOOL bWizard)
 {
 	_AFX_PROPPAGEFONTINFO* pFontInfo = _afxPropPageFontInfo.GetData();
@@ -84,28 +74,21 @@ BOOL AFXAPI AfxGetPropSheetFont(CString& strFace, WORD& wSize, BOOL bWizard)
 		{
 			HRSRC hResource = NULL;
 			WORD wLang = 0;
-			HMODULE hKernel32 = ::GetModuleHandleA("KERNEL32.DLL");
-			PFNGETUSERDEFAULTUILANGUAGE pfnGetUserDefaultUILanguage;
-			pfnGetUserDefaultUILanguage = (PFNGETUSERDEFAULTUILANGUAGE)::GetProcAddress(
-				hKernel32, "GetUserDefaultUILanguage");
-			if (pfnGetUserDefaultUILanguage != NULL)
-			{
-				LANGID langid;
-				langid = pfnGetUserDefaultUILanguage();
-				if ((PRIMARYLANGID(langid) == LANG_JAPANESE) && 
-					IsFontInstalled(_T("MS UI Gothic")))
-					wLang = MAKELANGID(LANG_JAPANESE, 0x3f);
-			}
+			LANGID langid;
+			langid = GetUserDefaultUILanguage();
+			if ((PRIMARYLANGID(langid) == LANG_JAPANESE) && IsFontInstalled(_T("MS UI Gothic")))
+				wLang = MAKELANGID(LANG_JAPANESE, 0x3f);
+
 			if (wLang != 0)
 			{
-				hResource = ::FindResourceEx(hInst, RT_DIALOG, 
-					MAKEINTRESOURCE(bWizard ? IDD_WIZARD : IDD_PROPSHEET), wLang);
+				hResource = ::FindResourceExW(hInst, (LPWSTR) RT_DIALOG,
+					MAKEINTRESOURCEW(bWizard ? IDD_WIZARD : IDD_PROPSHEET), wLang);
 			}
 			if (hResource == NULL)
 			{
-				hResource = ::FindResource(hInst,
-					MAKEINTRESOURCE(bWizard ? IDD_WIZARD : IDD_PROPSHEET),
-					RT_DIALOG);
+				hResource = ::FindResourceW(hInst,
+					MAKEINTRESOURCEW(bWizard ? IDD_WIZARD : IDD_PROPSHEET),
+					(LPWSTR) RT_DIALOG);
 			}
 			if(hResource!=NULL)
 			{

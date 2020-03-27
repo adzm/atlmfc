@@ -12,7 +12,8 @@
 #include <malloc.h>
 #include "sal.h"
 
-
+#include "afxglobals.h"
+#include "afxdatarecovery.h"
 
 AFX_STATIC_DATA const TCHAR _afxFileSection[] = _T("Recent File List");
 AFX_STATIC_DATA const TCHAR _afxFileEntry[] = _T("File%d");
@@ -40,14 +41,12 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // _AFX_WIN_STATE implementation
 
-typedef BOOL (WINAPI *PFNFINDACTCTXSECTIONSTRING)(DWORD, const GUID *, ULONG, LPCTSTR, PACTCTX_SECTION_KEYED_DATA);
 
 static HINSTANCE _AfxLoadLangDLL(LPCTSTR pszFormat, LPCTSTR pszPath, LCID lcid)
 {
 	TCHAR szLangDLL[_MAX_PATH+14];
 	TCHAR szLangCode[4];
-	HINSTANCE hInstance = NULL;
-
+	HINSTANCE hInstance;
 	if (lcid == LOCALE_SYSTEM_DEFAULT)
 	{
 		Checked::tcscpy_s(szLangCode, _countof(szLangCode), _T("LOC"));
@@ -55,7 +54,6 @@ static HINSTANCE _AfxLoadLangDLL(LPCTSTR pszFormat, LPCTSTR pszPath, LCID lcid)
 	else
 	{
 		int nResult;
-
 		nResult = ::GetLocaleInfo(lcid, LOCALE_SABBREVLANGNAME, szLangCode, 4);
 		if (nResult == 0)
 			return NULL;
@@ -70,39 +68,10 @@ static HINSTANCE _AfxLoadLangDLL(LPCTSTR pszFormat, LPCTSTR pszPath, LCID lcid)
 		return NULL;
 	}
 
-	TCHAR *pszFilename = ::PathFindFileName(szLangDLL);
-
-	ACTCTX_SECTION_KEYED_DATA data = {sizeof(data)};
-	HMODULE hKernel = GetModuleHandle(_T("KERNEL32"));
-	PFNFINDACTCTXSECTIONSTRING pfnFindActCtxSectionString = NULL;
-
-	if (hKernel != NULL)
-	{
-#ifdef _UNICODE
-		pfnFindActCtxSectionString = (PFNFINDACTCTXSECTIONSTRING)GetProcAddress(hKernel, "FindActCtxSectionStringW");
-#else
-		pfnFindActCtxSectionString = (PFNFINDACTCTXSECTIONSTRING)GetProcAddress(hKernel, "FindActCtxSectionStringA");
-#endif
-	}
-
-	if (pfnFindActCtxSectionString &&
-		pfnFindActCtxSectionString(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, pszFilename, &data))
-	{
-		// Load using the dll name only...
-		hInstance = ::LoadLibraryEx(pszFilename, NULL, 0);
-	}
-	else
-	{
-		// Load using the full path...
-		hInstance = ::LoadLibraryEx(szLangDLL, NULL, 0);
-	}
-
+	hInstance = ::LoadLibraryEx(szLangDLL, NULL, 0);
 
 	return hInstance;
 }
-
-typedef LANGID (WINAPI*PFNGETUSERDEFAULTUILANGUAGE)();
-typedef LANGID (WINAPI*PFNGETSYSTEMDEFAULTUILANGUAGE)();
 
 static BOOL CALLBACK _AfxEnumResLangProc(HMODULE /*hModule*/, LPCTSTR /*pszType*/, 
 	LPCTSTR /*pszName*/, WORD langid, LONG_PTR lParam)
@@ -122,54 +91,9 @@ protected :
 	HANDLE m_hCtxt;
 	ULONG_PTR m_uCookie;
 
-	// If pointers are NULL then we are on a platform that does not support WinSXS.
-	typedef HANDLE (WINAPI * PFNCreateActCtx)(PCACTCTX);
-	static PFNCreateActCtx s_pfnCreateActCtx;
-	
-	typedef void (WINAPI * PFNReleaseActCtx)(HANDLE);
-	static PFNReleaseActCtx s_pfnReleaseActCtx;
-	
-	typedef BOOL (WINAPI * PFNActivateActCtx)(HANDLE, ULONG_PTR*);
-	static PFNActivateActCtx s_pfnActivateActCtx;
-	
-	typedef BOOL (WINAPI * PFNDeactivateActCtx)(DWORD, ULONG_PTR);
-	static PFNDeactivateActCtx s_pfnDeactivateActCtx;
-
-	static bool s_bPFNInitialized;
-
 public:
 	CActivationContext(HANDLE hCtxt = INVALID_HANDLE_VALUE) : m_hCtxt( hCtxt ), m_uCookie( 0 )
 	{
-		// Multiple threads initializing is fine since they will initialize the pointers to the
-		// same value.
-		if (!s_bPFNInitialized)
-		{
-			HMODULE hKernel = GetModuleHandle(_T("KERNEL32"));
-			ENSURE (hKernel != NULL);
-#ifdef _UNICODE
-			s_pfnCreateActCtx = (PFNCreateActCtx) GetProcAddress(hKernel, "CreateActCtxW");
-#else
-			s_pfnCreateActCtx = (PFNCreateActCtx) GetProcAddress(hKernel, "CreateActCtxA");
-#endif
-			s_pfnReleaseActCtx = (PFNReleaseActCtx) GetProcAddress(hKernel, "ReleaseActCtx");
-			s_pfnActivateActCtx = (PFNActivateActCtx) GetProcAddress(hKernel, "ActivateActCtx");
-			s_pfnDeactivateActCtx = (PFNDeactivateActCtx) GetProcAddress(hKernel, "DeactivateActCtx");
-			if (s_pfnCreateActCtx != NULL)
-			{
-				// If one of the functions is present then all the functions have to be present.
-				ENSURE( s_pfnReleaseActCtx != NULL && 
-					s_pfnActivateActCtx != NULL &&
-					s_pfnDeactivateActCtx != NULL);
-			}
-			else
-			{
-				// If one of the functions is not present then all the functions should not be present.
-				ENSURE( s_pfnReleaseActCtx == NULL && 
-					s_pfnActivateActCtx == NULL &&
-					s_pfnDeactivateActCtx == NULL);
-			}
-			s_bPFNInitialized = true;
-		}
 	};
 	
 	~CActivationContext()
@@ -179,12 +103,6 @@ public:
 
 	bool Create( PCACTCTX pactctx )
 	{
-		// NULL on a platform that do not support WinSXS
-		if (s_pfnCreateActCtx == NULL)
-		{
-			return true;
-		}
-
 		ASSERT( pactctx != NULL );
 		if ( pactctx == NULL )
 		{
@@ -197,32 +115,20 @@ public:
 			return false;
 		}
 
-		return ( ( m_hCtxt = s_pfnCreateActCtx( pactctx ) ) != INVALID_HANDLE_VALUE );
+		return ( ( m_hCtxt = CreateActCtx( pactctx ) ) != INVALID_HANDLE_VALUE );
 	}
 
 	void Release()
 	{
-		// NULL on a platform that do not support WinSXS
-		if (s_pfnReleaseActCtx == NULL)
-		{
-			return;
-		}
-
 		if ( m_hCtxt != INVALID_HANDLE_VALUE )
 		{
 			Deactivate();
-			s_pfnReleaseActCtx( m_hCtxt );
+			ReleaseActCtx( m_hCtxt );
 		}
 	}
 
 	bool Activate()
 	{
-		// NULL on a platform that do not support WinSXS
-		if (s_pfnActivateActCtx == NULL)
-		{
-			return true;
-		}
-
 		ASSERT( m_hCtxt != INVALID_HANDLE_VALUE );
 		if ( m_hCtxt == INVALID_HANDLE_VALUE )
 		{
@@ -235,38 +141,28 @@ public:
 			return false;
 		}
 	
-		return ( s_pfnActivateActCtx( m_hCtxt, &m_uCookie) == TRUE );
+		return ( ActivateActCtx( m_hCtxt, &m_uCookie) == TRUE );
 	}
 	
 	bool Deactivate()
 	{
-		// NULL on a platform that do not support WinSXS
-		if (s_pfnDeactivateActCtx == NULL)
-		{
-			return true;
-		}
-
 		if ( m_uCookie != 0 )
 		{
 			ULONG_PTR uCookie = m_uCookie;
 			m_uCookie = 0;
-			return ( s_pfnDeactivateActCtx(0, uCookie) == TRUE );
+			return ( DeactivateActCtx(0, uCookie) == TRUE );
 		}
 		return true;
 	}
 };
 
 
-CActivationContext::PFNCreateActCtx CActivationContext::s_pfnCreateActCtx = NULL;
-CActivationContext::PFNReleaseActCtx CActivationContext::s_pfnReleaseActCtx = NULL;
-CActivationContext::PFNActivateActCtx CActivationContext::s_pfnActivateActCtx = NULL;
-CActivationContext::PFNDeactivateActCtx CActivationContext::s_pfnDeactivateActCtx = NULL;
-bool CActivationContext::s_bPFNInitialized = false;
-
-
 // HINSTANCE of the module
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 BOOL g_fLoadingResourcesForMFCDLL = FALSE;
+
+typedef BOOL (WINAPI *PFNGETPREFERREDUILANGS)(DWORD, PULONG, PZZWSTR, PULONG);
+const int nMaxExpectedPreferredLangs = 20;
 
 HINSTANCE AFXAPI AfxLoadLangResourceDLL(LPCTSTR pszFormat, LPCTSTR pszPath)
 {
@@ -275,105 +171,70 @@ HINSTANCE AFXAPI AfxLoadLangResourceDLL(LPCTSTR pszFormat, LPCTSTR pszPath)
 	int nPrimaryLang = 0;
 	int nSubLang = 0;
 	LCID lcid = 0;
-	PFNGETUSERDEFAULTUILANGUAGE pfnGetUserDefaultUILanguage;
-	PFNGETSYSTEMDEFAULTUILANGUAGE pfnGetSystemDefaultUILanguage;
-	HINSTANCE hKernel32;
-	LCID alcidSearch[5];
+	LCID alcidSearch[nMaxExpectedPreferredLangs + 5];
 	int nLocales;
 
 	nLocales = 0;
-	hKernel32 = ::GetModuleHandle(_T("kernel32.dll"));
-	ASSERT(hKernel32 != NULL);
-	pfnGetUserDefaultUILanguage = (PFNGETUSERDEFAULTUILANGUAGE)::GetProcAddress(hKernel32, "GetUserDefaultUILanguage");
-	if(pfnGetUserDefaultUILanguage != NULL)
+
+	// First, get the thread preferred UI languages (if supported)
+	HMODULE hKernel = AfxCtxLoadLibrary(_T("KERNEL32.DLL"));
+	if (hKernel != NULL)
 	{
-		// First, try the user's UI language
-		langid = pfnGetUserDefaultUILanguage();
-		nPrimaryLang = PRIMARYLANGID(langid);
-		nSubLang = SUBLANGID(langid);
-
-		lcid = MAKELCID(MAKELANGID(nPrimaryLang, nSubLang), SORT_DEFAULT);
-		alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-		nLocales++;
-
-		lcid = MAKELCID(MAKELANGID(nPrimaryLang, SUBLANG_NEUTRAL), SORT_DEFAULT);
-		alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-		nLocales++;
-
-		// Then, try the system's default UI language
-		pfnGetSystemDefaultUILanguage = (PFNGETSYSTEMDEFAULTUILANGUAGE)::GetProcAddress(hKernel32, "GetSystemDefaultUILanguage");
-		if( pfnGetSystemDefaultUILanguage != NULL )
+		PFNGETPREFERREDUILANGS pfnGetThreadPreferredUILanguages = (PFNGETPREFERREDUILANGS)GetProcAddress(hKernel, "GetThreadPreferredUILanguages");
+		if (pfnGetThreadPreferredUILanguages != NULL)
 		{
-		    langid = pfnGetSystemDefaultUILanguage();
-		    nPrimaryLang = PRIMARYLANGID(langid);
-		    nSubLang = SUBLANGID(langid);
-
-		    lcid = MAKELCID(MAKELANGID(nPrimaryLang, nSubLang), SORT_DEFAULT);
-		    alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-		    nLocales++;
-
-		    lcid = MAKELCID(MAKELANGID(nPrimaryLang, SUBLANG_NEUTRAL), SORT_DEFAULT);
-		    alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-		    nLocales++;
-		}
-	}
-	else
-	{
-		// The UI language is the same as the language of the version resource in ntdll.dll
-		HMODULE hNTDLL = ::GetModuleHandle( _T( "ntdll.dll" ) );
-		if (hNTDLL != NULL)
-		{
-			langid = 0;
-			::EnumResourceLanguages( hNTDLL, RT_VERSION, MAKEINTRESOURCE( 1 ), 
-				_AfxEnumResLangProc, reinterpret_cast< LONG_PTR >( &langid ) );
-			if (langid != 0)
+			BOOL bGotPreferredLangs = FALSE;
+			ULONG nLanguages = 0;
+			WCHAR wszLanguages[(5 * nMaxExpectedPreferredLangs) + 1] = {0}; // each lang has four chars plus NULL, plus terminating NULL
+			ULONG cchLanguagesBuffer = _countof(wszLanguages);
+			bGotPreferredLangs = pfnGetThreadPreferredUILanguages(MUI_LANGUAGE_ID | MUI_UI_FALLBACK, &nLanguages, wszLanguages, &cchLanguagesBuffer);
+			if (bGotPreferredLangs)
 			{
-				nPrimaryLang = PRIMARYLANGID(langid);
-				nSubLang = SUBLANGID(langid);
-
-				lcid = MAKELCID(MAKELANGID(nPrimaryLang, nSubLang), SORT_DEFAULT);
-				alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-				nLocales++;
-
-				lcid = MAKELCID(MAKELANGID(nPrimaryLang, SUBLANG_NEUTRAL), SORT_DEFAULT);
-				alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-				nLocales++;
+				WCHAR *pwz = wszLanguages;
+				while ((*pwz != 0) && (nLocales < nMaxExpectedPreferredLangs))
+				{
+					ULONG ulLangID = wcstoul(pwz, NULL, 16);
+					if ((ulLangID != 0) && (errno != ERANGE))
+					{
+						alcidSearch[nLocales] = (LCID)ulLangID;
+						nLocales++;
+					}
+					pwz += wcslen(pwz) + 1;  // move to next ID in list
+				}
 			}
 		}
 	}
+
+	// Next, try the user's UI language
+	langid = GetUserDefaultUILanguage();
+	nPrimaryLang = PRIMARYLANGID(langid);
+	nSubLang = SUBLANGID(langid);
+
+	lcid = MAKELCID(MAKELANGID(nPrimaryLang, nSubLang), SORT_DEFAULT);
+	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
+	nLocales++;
+
+	lcid = MAKELCID(MAKELANGID(nPrimaryLang, SUBLANG_NEUTRAL), SORT_DEFAULT);
+	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
+	nLocales++;
+
+	// Then, try the system's default UI language
+	langid = GetSystemDefaultUILanguage();
+	nPrimaryLang = PRIMARYLANGID(langid);
+	nSubLang = SUBLANGID(langid);
+
+	lcid = MAKELCID(MAKELANGID(nPrimaryLang, nSubLang), SORT_DEFAULT);
+	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
+	nLocales++;
+
+	lcid = MAKELCID(MAKELANGID(nPrimaryLang, SUBLANG_NEUTRAL), SORT_DEFAULT);
+	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
+	nLocales++;
 
 	if (!g_fLoadingResourcesForMFCDLL)
 	{
 		alcidSearch[nLocales] = LOCALE_SYSTEM_DEFAULT;
 		nLocales++;
-	}
-
-	// get path for our module	
-	TCHAR rgchFullModulePath[MAX_PATH + 2];
-	rgchFullModulePath[_countof(rgchFullModulePath) - 1] = 0;
-	rgchFullModulePath[_countof(rgchFullModulePath) - 2] = 0;
-	DWORD dw = GetModuleFileName(reinterpret_cast<HMODULE>(&__ImageBase), rgchFullModulePath, _countof(rgchFullModulePath)-1);
-	if (dw == 0)
-	{
-		return NULL;
-	}
-
-	// Set activation context for loc assembly.
-	ACTCTX actctx;
-	memset(&actctx, 0, sizeof(actctx));
-	actctx.cbSize = sizeof(actctx);
-	actctx.lpSource = rgchFullModulePath;
-	actctx.lpResourceName = MAKEINTRESOURCE(ID_MFCLOC_MANIFEST);
-	actctx.hModule = reinterpret_cast<HINSTANCE>(&__ImageBase);
-
-	actctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
-	
-	CActivationContext ctxt;
-	// Load library will look in WinSXS directory on success
-	// On Failure Load library will look for the DLLs on the path
-	if (ctxt.Create(&actctx))
-	{
-		ctxt.Activate();
 	}
 
 	for(int iLocale = 0; iLocale < nLocales; iLocale++)
@@ -431,6 +292,7 @@ CWinApp::CWinApp(LPCTSTR lpszAppName)
 	m_atomApp = m_atomSystemTopic = NULL;
 	m_lpCmdLine = NULL;
 	m_pCmdInfo = NULL;
+	m_pDataRecoveryHandler = NULL;
 
 	// initialize wait cursor state
 	m_nWaitCursorCount = 0;
@@ -448,6 +310,11 @@ CWinApp::CWinApp(LPCTSTR lpszAppName)
 	m_bHelpMode = FALSE;
 	m_eHelpType = afxWinHelp;
 	m_nSafetyPoolSize = 512;        // default size
+
+	m_dwRestartManagerSupportFlags = 0;    // don't support Restart Manager by default
+	m_nAutosaveInterval = 5 * 60 * 1000;   // default autosave interval is 5 minutes (only has effect if autosave flag is set)
+
+	m_bTaskbarInteractionEnabled = TRUE;
 }
 
 BOOL CWinApp::LoadSysPolicies() 
@@ -587,6 +454,20 @@ BOOL CWinApp::InitInstance()
 		_AtlBaseModule.SetResourceInstance(m_hLangResourceDLL);
 	}
 
+	// Register the application with the Restart Manager, if supported.
+	if (SupportsRestartManager())
+	{
+		RegisterWithRestartManager(SupportsApplicationRecovery(), _T(""));
+	}
+
+	// If the application is linked statically to MFC, then cleanup of the globals
+	// does not need to be reference counted.  Otherwise, we need to make sure that
+	// the last CWinApp to exit does the cleanup of all the globals.
+
+#ifdef _AFXDLL
+	AfxGlobalsAddRef();
+#endif
+
 	return TRUE;
 }
 
@@ -644,8 +525,35 @@ void CWinApp::ParseCommandLine(CCommandLineInfo& rCmdInfo)
 	}
 }
 
+BOOL CWinApp::RestartInstance()
+{
+	BOOL bRet = FALSE;
+
+	CDataRecoveryHandler *pHandler = GetDataRecoveryHandler();
+	if (pHandler)
+	{
+		// First read the set of previously opened documents (and associated autosaves) from the registry.
+		// ReadOpenDocumentList will return TRUE only if at least one document name was read.
+		if (pHandler->ReadOpenDocumentList())
+		{
+			// Then reopen the previously opened documents (handler will check whether this is enabled).
+			bRet = pHandler->ReopenPreviousDocuments();
+
+			// Finally restore the the associated autosaves (handler will check whether this is enabled and query user).
+			pHandler->RestoreAutosavedDocuments();
+		}
+	}
+
+	// Return TRUE if any documents were opened, else return FALSE to indicate
+	// that a new document should be opened as in the normal startup scenario.
+	return bRet;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CCommandLineInfo implementation
+
+#define RESTART_COMMAND_LINE_ARG "RestartByRestartManager"  // command-line argument used when restarting the application
+#define RESTART_IDENTIFIER_LEN   36                         // length of restart identifier (GUID) used when restarting
 
 CCommandLineInfo::CCommandLineInfo()
 {
@@ -694,36 +602,50 @@ void CCommandLineInfo::ParseParamFlag(const char* pszParam)
 		m_nShellCommand = FilePrintTo;
 	else if (lstrcmpA(pszParam, "p") == 0)
 		m_nShellCommand = FilePrint;
-    else if (::AfxInvariantStrICmp(pszParam, "Register") == 0 ||
-             ::AfxInvariantStrICmp(pszParam, "Regserver") == 0)
+	else if (::AfxInvariantStrICmp(pszParam, "Register") == 0 ||
+		::AfxInvariantStrICmp(pszParam, "Regserver") == 0)
 		m_nShellCommand = AppRegister;
 	else if (::AfxInvariantStrICmp(pszParam, "RegisterPerUser") == 0 ||
-			 ::AfxInvariantStrICmp(pszParam, "RegserverPerUser") == 0)
+		::AfxInvariantStrICmp(pszParam, "RegserverPerUser") == 0)
 	{
 		m_nShellCommand = AppRegister;
 		m_bRegisterPerUser = TRUE;
 	}
-    else if (::AfxInvariantStrICmp(pszParam, "Unregister") == 0 ||
-             ::AfxInvariantStrICmp(pszParam, "Unregserver") == 0)
+	else if (::AfxInvariantStrICmp(pszParam, "Unregister") == 0 ||
+		::AfxInvariantStrICmp(pszParam, "Unregserver") == 0)
 		m_nShellCommand = AppUnregister;
 	else if (::AfxInvariantStrICmp(pszParam, "UnregisterPerUser") == 0 ||
-			 ::AfxInvariantStrICmp(pszParam, "UnregserverPerUser") == 0)
+		::AfxInvariantStrICmp(pszParam, "UnregserverPerUser") == 0)
 	{
 		m_nShellCommand = AppUnregister;
 		m_bRegisterPerUser = TRUE;
+	}
+	else if (_strnicmp(pszParam, RESTART_COMMAND_LINE_ARG, _countof(RESTART_COMMAND_LINE_ARG) - 1) == 0)
+	{
+		CString strParam = pszParam;
+		if (strParam.GetLength() == _countof(RESTART_COMMAND_LINE_ARG) + RESTART_IDENTIFIER_LEN)
+		{
+			m_nShellCommand = RestartByRestartManager;
+			m_strRestartIdentifier = strParam.Right(RESTART_IDENTIFIER_LEN);
+		}
+	}
+	else if (lstrcmpA(pszParam, "ddenoshow") == 0)
+	{
+		AfxOleSetUserCtrl(FALSE);
+		m_nShellCommand = FileDDENoShow;
 	}
 	else if (lstrcmpA(pszParam, "dde") == 0)
 	{
 		AfxOleSetUserCtrl(FALSE);
 		m_nShellCommand = FileDDE;
 	}
-    else if (::AfxInvariantStrICmp(pszParam, "Embedding") == 0)
+	else if (::AfxInvariantStrICmp(pszParam, "Embedding") == 0)
 	{
 		AfxOleSetUserCtrl(FALSE);
 		m_bRunEmbedded = TRUE;
 		m_bShowSplash = FALSE;
 	}
-    else if (::AfxInvariantStrICmp(pszParam, "Automation") == 0)
+	else if (::AfxInvariantStrICmp(pszParam, "Automation") == 0)
 	{
 		AfxOleSetUserCtrl(FALSE);
 		m_bRunAutomated = TRUE;
@@ -781,6 +703,10 @@ CWinApp::~CWinApp()
 	// free recent file list
 	if (m_pRecentFileList != NULL)
 		delete m_pRecentFileList;
+
+	// free data recovery handler
+	if (m_pDataRecoveryHandler != NULL)
+		delete m_pDataRecoveryHandler;
 
 	// free static list of document templates
 	if (!afxContextIsDLL)
@@ -856,6 +782,16 @@ int CWinApp::ExitInstance()
 		if (!afxContextIsDLL)
 			SaveStdProfileSettings();
 	}
+
+	// If the application is linked statically to MFC, then cleanup of the globals
+	// does not need to be reference counted.  Otherwise, we need to make sure that
+	// the last CWinApp to exit does the cleanup of all the globals.
+
+#ifdef _AFXDLL
+	AfxGlobalsRelease();
+#else
+	ControlBarCleanUp();
+#endif
 
 	// Cleanup DAO if necessary
 	if (m_lpfnDaoTerm != NULL)
@@ -949,6 +885,184 @@ void CWinApp::WinHelpInternal(DWORD_PTR dwData, UINT nCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// Restart Manager support
+
+// Restart Manager is only supported on Vista+, so we dynamically load the exports we need
+typedef HRESULT (WINAPI *PFNREGISTERAPPLICATIONRESTART)(PCWSTR, DWORD);
+typedef HRESULT (WINAPI *PFNREGISTERAPPLICATIONRECOVERYCALLBACK)(APPLICATION_RECOVERY_CALLBACK, PVOID, DWORD, DWORD);
+typedef HRESULT (WINAPI *PFNAPPLICATIONRECOVERYINPROGRESS)(PBOOL);
+typedef VOID    (WINAPI *PFNAPPLICATIONRECOVERYFINISHED)(BOOL);
+
+DWORD WINAPI AfxApplicationRecoveryWrapper(LPVOID lpvParam)
+{
+	DWORD dwRet = 0;
+	CWinApp *pApp = AfxGetApp();
+	if (pApp != NULL)
+	{
+		ASSERT_VALID(pApp);
+		dwRet = pApp->ApplicationRecoveryCallback(lpvParam);
+	}
+
+	return dwRet;
+}
+
+HRESULT CWinApp::RegisterWithRestartManager(BOOL bRegisterRecoveryCallback, const CString &strRestartIdentifierParam)
+{
+	// This method may be called twice.  It will be called from CWinApp::InitInstance with an empty restart identifier string,
+	// and a new restart identifier string will be generated.  It may then be called from CWinApp::ProcessShellCommand with the
+	// restart identifier string that was passed in on the command line, if the application was restarted by the Restart Manager.
+
+	// The restart identifier is the key name where the list of documents is stored in the registry.
+	// It is unique per application instance.
+
+	HRESULT hr = S_OK;
+	CString strCommandLineArgs, strCommandLineArgsAppend, strRestartIdentifier = strRestartIdentifierParam;
+
+	// Generate the unique ID for the restart information for this instance
+	if (strRestartIdentifier.IsEmpty())
+	{
+		GUID guidRestartIdentifier = GUID_NULL;
+		CoCreateGuid(&guidRestartIdentifier);
+
+		CString strGuid;
+		strRestartIdentifier.Format(_T("%08lX-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X"),
+			guidRestartIdentifier.Data1, guidRestartIdentifier.Data2, guidRestartIdentifier.Data3,
+			guidRestartIdentifier.Data4[0], guidRestartIdentifier.Data4[1], guidRestartIdentifier.Data4[2], guidRestartIdentifier.Data4[3],
+			guidRestartIdentifier.Data4[4], guidRestartIdentifier.Data4[5], guidRestartIdentifier.Data4[6], guidRestartIdentifier.Data4[7]);
+	}
+
+	// Set up the command line to be used if the Restart Manager restarts this instance
+	strCommandLineArgs = m_lpCmdLine;
+
+	strCommandLineArgsAppend += _T(RESTART_COMMAND_LINE_ARG);
+	strCommandLineArgsAppend += _T(":");
+	strCommandLineArgsAppend += strRestartIdentifier;
+
+	// If this instance of the application was restarted, then the command line already
+	// contains the restart command line arguments, so they do not need to be appended.
+	if (strCommandLineArgs.Find(strCommandLineArgsAppend, 0) == -1)
+	{
+		strCommandLineArgs += _T(" /");
+		strCommandLineArgs += strCommandLineArgsAppend;
+	}
+
+	// Create the data recovery handler
+	CDataRecoveryHandler *pHandler = GetDataRecoveryHandler();
+	if (pHandler != NULL)
+	{
+		pHandler->SetRestartIdentifier(strRestartIdentifier);
+	}
+
+	if (bRegisterRecoveryCallback)
+	{
+		hr = RegisterWithRestartManager(CComBSTR(strCommandLineArgs), GetApplicationRestartFlags(), AfxApplicationRecoveryWrapper, GetApplicationRecoveryParameter(), GetApplicationRecoveryPingInterval(), 0);
+	}
+	else
+	{
+		hr = RegisterWithRestartManager(CComBSTR(strCommandLineArgs), GetApplicationRestartFlags(), NULL, NULL, 0, 0);
+	}
+
+	return hr;
+}
+
+HRESULT CWinApp::RegisterWithRestartManager(LPCWSTR pwzCommandLineArgs, DWORD dwRestartFlags, APPLICATION_RECOVERY_CALLBACK pRecoveryCallback, LPVOID lpvParam, DWORD dwPingInterval, DWORD dwCallbackFlags)
+{
+	HRESULT hr = S_OK;
+
+	HMODULE hKernel = GetModuleHandleW(L"KERNEL32.DLL");
+	ENSURE(hKernel != NULL);
+	PFNREGISTERAPPLICATIONRESTART pfnRegisterApplicationRestart = (PFNREGISTERAPPLICATIONRESTART)GetProcAddress(hKernel, "RegisterApplicationRestart");
+	PFNREGISTERAPPLICATIONRECOVERYCALLBACK pfnRegisterApplicationRecoveryCallback = (PFNREGISTERAPPLICATIONRECOVERYCALLBACK)GetProcAddress(hKernel, "RegisterApplicationRecoveryCallback");
+
+	if (pfnRegisterApplicationRestart && pfnRegisterApplicationRecoveryCallback)
+	{
+		// Register for restart by the Restart Manager (component update scenario)
+		// Note that according to MSDN, UnregisterApplicationRestart does not need to be called on normal
+		// application shutdown, but only if the application for some reason can no longer be restarted.
+		hr = pfnRegisterApplicationRestart(pwzCommandLineArgs, dwRestartFlags);
+		if (hr != S_OK)
+		{
+			return hr;
+		}
+
+		if (pRecoveryCallback != NULL)
+		{
+			// Register for application recovery (application hang or crash scenario)
+			// Note that according to MSDN, UnregisterApplicationRecoveryCallback does not need to be called on normal
+			// application shutdown, but only if the application for some reason can no longer do recovery.
+			hr = pfnRegisterApplicationRecoveryCallback(pRecoveryCallback, lpvParam, dwPingInterval, dwCallbackFlags);
+			if (hr != S_OK)
+			{
+				return hr;
+			}
+		}
+	}
+
+	return S_OK;
+}
+
+DWORD CWinApp::ApplicationRecoveryCallback(LPVOID /* lpvParam */)
+{
+	// To change this behavior, either override CWinApp::ApplicationRecoveryCallback or
+	// call CWinApp::RegisterWithRestartManager using your own recovery callback function.
+
+	HMODULE hKernel = GetModuleHandleW(L"KERNEL32.DLL");
+	ENSURE(hKernel != NULL);
+	PFNAPPLICATIONRECOVERYINPROGRESS pfnApplicationRecoveryInProgress = (PFNAPPLICATIONRECOVERYINPROGRESS)GetProcAddress(hKernel, "ApplicationRecoveryInProgress");
+	PFNAPPLICATIONRECOVERYFINISHED pfnApplicationRecoveryFinished = (PFNAPPLICATIONRECOVERYFINISHED)GetProcAddress(hKernel, "ApplicationRecoveryFinished");
+
+	if (pfnApplicationRecoveryInProgress && pfnApplicationRecoveryFinished)
+	{
+		// ApplicationRecoveryInProgress must be called before the ping interval has elapsed. The ping interval
+		// is set via the dwPingInterval parameter in the call to RegisterApplicationRecoveryCallback above.
+		BOOL bRecoveryCanceled = FALSE;
+		pfnApplicationRecoveryInProgress(&bRecoveryCanceled);
+		if (bRecoveryCanceled)
+		{
+			// Recovery has been canceled, so terminate the application.
+			return 0;
+		}
+
+		BOOL bRecoverySuccessful = TRUE;
+		CDataRecoveryHandler *pHandler = GetDataRecoveryHandler();
+		if (pHandler)
+		{
+			// Save the list of open documents to the registry.  Since an exception has already
+			// occurred, we do as little as possible here, so we don't do any document autosaves.
+			bRecoverySuccessful = pHandler->SaveOpenDocumentList();
+		}
+
+		// Once recovery is complete, call ApplicationRecoveryFinished so the Restart Manager can restart the app.
+		pfnApplicationRecoveryFinished(bRecoverySuccessful);
+	}
+
+	return 0;
+}
+
+CDataRecoveryHandler *CWinApp::GetDataRecoveryHandler()
+{
+	static BOOL bTriedOnce = FALSE;
+
+	// Since the application restart and application recovery are supported only on Windows
+	// Vista and above, we don't need a recovery handler on Windows versions less than Vista.
+	if (afxGlobalData.bIsWindowsVista && (SupportsRestartManager() || SupportsApplicationRecovery()))
+	{
+		if (!bTriedOnce && m_pDataRecoveryHandler == NULL)
+		{
+			m_pDataRecoveryHandler = new CDataRecoveryHandler(m_dwRestartManagerSupportFlags, m_nAutosaveInterval);
+			if (!m_pDataRecoveryHandler->Initialize())
+			{
+				delete m_pDataRecoveryHandler;
+				m_pDataRecoveryHandler = NULL;
+			}
+		}
+	}
+
+	bTriedOnce = TRUE;
+	return m_pDataRecoveryHandler;
+}
+
+/////////////////////////////////////////////////////////////////////////////
 // Special exception handling
 
 LRESULT CWinApp::ProcessWndProcException(CException* e, const MSG* pMsg)
@@ -1002,7 +1116,17 @@ BOOL CWinApp::OnIdle(LONG lCount)
 		{
 			CDocTemplate* pTemplate = m_pDocManager->GetNextDocTemplate(pos);
 			ASSERT_KINDOF(CDocTemplate, pTemplate);
+			// if auto-save is enabled, the auto-save will be performed in the
+			// document's OnIdle method, called from the template's OnIdle method
 			pTemplate->OnIdle();
+		}
+
+		CDataRecoveryHandler *pHandler = GetDataRecoveryHandler();
+		if (pHandler)
+		{
+			// clear the auto-save on idle flag--it will be set
+			// again the next time the auto-save timer ticks.
+			pHandler->SetSaveDocumentInfoOnIdle(FALSE);
 		}
 	}
 	else if (lCount == 1)

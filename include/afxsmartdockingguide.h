@@ -32,6 +32,7 @@ public:
 	BOOL Create(LPRECT pWndRect, HBITMAP hbmpFace, HRGN hrgnShape, CWnd* pwndOwner, BOOL bIsDefaultImage, BOOL bIsVert);
 	BOOL Assign(HBITMAP hbmpFace, BOOL bRedraw);
 	void Highlight(BOOL bSet);
+	void UpdateLayered();
 
 // Attributes
 protected:
@@ -87,6 +88,7 @@ protected:
 	SDMarkerPlace  m_nSideNo;
 	CSmartDockingStandaloneGuideWnd  m_wndBmp;
 	CMFCToolBarImages m_Image;
+	CMFCToolBarImages m_ImageHot;
 
 	CRgn m_Rgn;
 	int  m_cx;
@@ -113,6 +115,8 @@ protected:
 	CSmartDockingGroupGuidesWnd();
 
 public:
+	void Update ();
+
 	afx_msg void OnPaint();
 	afx_msg void OnClose();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -145,7 +149,7 @@ protected:
 	virtual void Create(SDMarkerPlace nSideNo, CSmartDockingGroupGuidesManager* pCentralGroup);
 	virtual void DestroyImages();
 
-	virtual void Draw(CDC& dc);
+	virtual void Draw(CDC& dc, BOOL bAlpha = FALSE);
 
 	CSmartDockingGroupGuidesManager* m_pCentralGroup;
 	COLORREF m_clrFrame;
@@ -194,6 +198,8 @@ protected:
 
 	CSmartDockingGroupGuide m_arMarkers [5];
 
+	CMFCToolBarImages m_Image;
+
 	CRgn m_rgnBase;
 	BOOL m_bCreated;
 	BOOL m_bMiddleIsOn;
@@ -203,7 +209,7 @@ protected:
 	friend class CSmartDockingGroupGuide;
 	friend class CSmartDockingManager;
 
-	void DrawCentralGroupGuides(CDC& dc, CBrush& brBaseBackground, CBrush& brBaseBorder);
+	void DrawCentralGroupGuides(CDC& dc, CBrush& brBaseBackground, CBrush& brBaseBorder, CRect rectClient);
 };
 
 // provide window class name for specified class style

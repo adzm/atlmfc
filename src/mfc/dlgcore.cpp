@@ -11,7 +11,7 @@
 #include "stdafx.h"
 #include "occimpl.h"
 
-
+#include "afxdatarecovery.h"
 
 #define new DEBUG_NEW
 
@@ -44,6 +44,8 @@ BEGIN_MESSAGE_MAP(CDialog, CWnd)
 	ON_MESSAGE(WM_INITDIALOG, &CDialog::HandleInitDialog)
 	ON_MESSAGE(WM_SETFONT, &CDialog::HandleSetFont)
 	ON_WM_PAINT()
+	ON_WM_QUERYENDSESSION()
+	ON_WM_ENDSESSION()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -125,7 +127,8 @@ BOOL CDialog::OnCmdMsg(UINT nID, int nCode, void* pExtra,
 CDialog::CDialog()
 {
 	ASSERT(m_hWnd == NULL);
-	AFX_ZERO_INIT_OBJECT(CWnd);
+
+	Initialize();
 }
 
 CDialog::~CDialog()
@@ -138,12 +141,61 @@ CDialog::~CDialog()
 	}
 }
 
+void CDialog::Initialize()
+{
+	m_nIDHelp = 0;
+	m_lpszTemplateName = NULL;
+	m_hDialogTemplate = NULL;
+	m_lpDialogTemplate = NULL;
+	m_lpDialogInit = NULL;
+	m_pParentWnd = NULL;
+	m_hWndTop = NULL;
+#ifndef _AFX_NO_OCC_SUPPORT
+	m_pOccDialogInfo = NULL;
+#endif
+}
+
 void CDialog::OnPaint()
 {
 	CPaintDC dc(this);
 	if (PaintWindowlessControls(&dc))
 	   return;
 	Default();
+}
+
+BOOL CDialog::OnQueryEndSession()
+{
+	CWinApp* pApp = AfxGetApp();
+	if (pApp != NULL && pApp->m_pMainWnd == this)
+	{
+		if (AfxGetThreadState()->m_lastSentMsg.lParam & ENDSESSION_CLOSEAPP)
+		{
+			// Restart Manager is querying about restarting the application
+			return pApp->SupportsRestartManager();
+		}
+	}
+
+	return TRUE;
+}
+
+void CDialog::OnEndSession(BOOL bEnding)
+{
+	if (!bEnding)
+		return;
+
+	CWinApp* pApp = AfxGetApp();
+	if (pApp != NULL && pApp->m_pMainWnd == this)
+	{
+		if (AfxGetThreadState()->m_lastSentMsg.lParam & ENDSESSION_CLOSEAPP)
+		{
+			// Restart Manager is restarting the application
+			CDataRecoveryHandler *pHandler = pApp->GetDataRecoveryHandler();
+			if (pHandler)
+			{
+				pHandler->SetShutdownByRestartManager(TRUE);
+			}
+		}
+	}
 }
 
 BOOL CDialog::Create(LPCTSTR lpszTemplateName, CWnd* pParentWnd)
@@ -270,6 +322,8 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 #ifdef _UNICODE
 		AfxInitNetworkAddressControl();
 #endif
+
+		AfxRegisterMFCCtrlClasses();
 
 #ifndef _AFX_NO_OCC_SUPPORT
 		// separately create OLE controls in the dialog template
@@ -437,7 +491,7 @@ CDialog::CDialog(LPCTSTR lpszTemplateName, CWnd* pParentWnd)
 	ASSERT(IS_INTRESOURCE(lpszTemplateName) ||
 		AfxIsValidString(lpszTemplateName));
 
-	AFX_ZERO_INIT_OBJECT(CWnd);
+	Initialize();
 
 	m_pParentWnd = pParentWnd;
 	m_lpszTemplateName = lpszTemplateName;
@@ -447,7 +501,7 @@ CDialog::CDialog(LPCTSTR lpszTemplateName, CWnd* pParentWnd)
 
 CDialog::CDialog(UINT nIDTemplate, CWnd* pParentWnd)
 {
-	AFX_ZERO_INIT_OBJECT(CWnd);
+	Initialize();
 
 	m_pParentWnd = pParentWnd;
 	m_lpszTemplateName = MAKEINTRESOURCE(nIDTemplate);

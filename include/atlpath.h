@@ -31,370 +31,432 @@ namespace ATL
 namespace ATLPath
 {
 
-inline char* AddBackslash( _Inout_ char* pszPath )
+_Ret_opt_z_ inline char* AddBackslash(
+	_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	return ::PathAddBackslashA( pszPath );
 }
 
-inline wchar_t* AddBackslash( _Inout_ wchar_t* pszPath )
+_Ret_opt_z_ inline wchar_t* AddBackslash(
+	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathAddBackslashW( pszPath );
 }
 
-inline BOOL AddExtension( _Inout_ char* pszPath, _In_ const char* pszExtension )
+inline BOOL AddExtension(
+	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_In_z_ const char* pszExtension)
 {
 	return ::PathAddExtensionA( pszPath, pszExtension );
 }
 
-inline BOOL AddExtension( _Inout_ wchar_t* pszPath, _In_ const wchar_t* pszExtension )
+inline BOOL AddExtension(
+	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_In_z_ const wchar_t* pszExtension)
 {
 	return ::PathAddExtensionW( pszPath, pszExtension );
 }
 
-inline BOOL Append( _Inout_ char* pszPath, _In_ const char* pszMore )
+inline BOOL Append(
+	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_In_z_ const char* pszMore)
 {
 	return ::PathAppendA( pszPath, pszMore );
 }
 
-inline BOOL Append( _Inout_ wchar_t* pszPath, _In_ const wchar_t* pszMore )
+inline BOOL Append(
+	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_In_z_ const wchar_t* pszMore)
 {
 	return ::PathAppendW( pszPath, pszMore );
 }
 
-inline char* BuildRoot( _Out_cap_c_(4) char* pszPath, _In_ int iDrive )
+_Ret_z_ inline char* BuildRoot(
+	_Out_z_cap_c_(4) char* pszPath,
+	_In_ int iDrive)
 {
 	return ::PathBuildRootA( pszPath, iDrive );
 }
 
-inline wchar_t* BuildRoot( _Out_cap_c_(4) wchar_t* pszPath, _In_ int iDrive )
+_Ret_z_ inline wchar_t* BuildRoot(
+	_Out_z_cap_c_(4) wchar_t* pszPath,
+	_In_ int iDrive)
 {
 	return ::PathBuildRootW( pszPath, iDrive );
 }
 
-inline BOOL Canonicalize(_Out_z_cap_c_(MAX_PATH) char* pszDest, _In_ const char* pszSrc )
+inline BOOL Canonicalize(
+	_Out_z_cap_c_(MAX_PATH) char* pszDest,
+	_In_z_ const char* pszSrc)
 {
 	return ::PathCanonicalizeA( pszDest, pszSrc );
 }
 
-inline BOOL Canonicalize( _Out_z_cap_c_(MAX_PATH) wchar_t* pszDest, _In_ const wchar_t* pszSrc )
+inline BOOL Canonicalize(
+	_Out_z_cap_c_(MAX_PATH) wchar_t* pszDest,
+	_In_z_ const wchar_t* pszSrc)
 {
 	return ::PathCanonicalizeW( pszDest, pszSrc );
 }
 
-inline char* Combine( _Out_z_cap_c_(MAX_PATH) char* pszDest, _In_ const char* pszDir,
-	_In_ const char* pszFile )
+_Ret_opt_z_ inline char* Combine(
+	_Out_z_cap_c_(MAX_PATH) char* pszDest,
+	_In_z_ const char* pszDir,
+	_In_z_ const char* pszFile)
 {
 	return ::PathCombineA( pszDest, pszDir, pszFile );
 }
 
-inline wchar_t* Combine( _Out_z_cap_c_(MAX_PATH) wchar_t* pszDest, _In_ const wchar_t* pszDir,
-	_In_ const wchar_t* pszFile )
+_Ret_opt_z_ inline wchar_t* Combine(
+	_Out_z_cap_c_(MAX_PATH) wchar_t* pszDest,
+	_In_ const wchar_t* pszDir,
+	_In_ const wchar_t* pszFile)
 {
 	return ::PathCombineW( pszDest, pszDir, pszFile );
 }
 
-inline int CommonPrefix( _In_ const char* pszFile1, _In_ const char* pszFile2,
-	_Out_z_cap_c_(MAX_PATH) char* pszDest )
+inline int CommonPrefix(
+	_In_z_ const char* pszFile1,
+	_In_z_ const char* pszFile2,
+	_Out_z_cap_c_(MAX_PATH) char* pszDest)
 {
 	return ::PathCommonPrefixA( pszFile1, pszFile2, pszDest );
 }
 
-inline int CommonPrefix( _In_ const wchar_t* pszFile1, _In_ const wchar_t* pszFile2,
-	_Out_z_cap_c_(MAX_PATH) wchar_t* pszDest )
+inline int CommonPrefix(
+	_In_z_ const wchar_t* pszFile1,
+	_In_z_ const wchar_t* pszFile2,
+	_Out_z_cap_c_(MAX_PATH) wchar_t* pszDest)
 {
 	return ::PathCommonPrefixW( pszFile1, pszFile2, pszDest );
 }
 
-inline BOOL FileExists( _In_ const char* pszPath )
+inline BOOL FileExists(_In_z_ const char* pszPath)
 {
 	return ::PathFileExistsA( pszPath );
 }
 
-inline BOOL FileExists( _In_ const wchar_t* pszPath )
+inline BOOL FileExists(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathFileExistsW( pszPath );
 }
 
-inline char* FindExtension( _In_ const char* pszPath )
+_Ret_z_ inline char* FindExtension(_In_z_ const char* pszPath)
 {
 	return ::PathFindExtensionA( pszPath );
 }
 
-inline wchar_t* FindExtension( _In_ const wchar_t* pszPath )
+_Ret_z_ inline wchar_t* FindExtension(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathFindExtensionW( pszPath );
 }
 
-inline char* FindFileName( _In_ const char* pszPath )
+inline char* FindFileName(_In_z_ const char* pszPath)
 {
 	return ::PathFindFileNameA( pszPath );
 }
 
-inline wchar_t* FindFileName( _In_ const wchar_t* pszPath )
+inline wchar_t* FindFileName(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathFindFileNameW( pszPath );
 }
 
-inline int GetDriveNumber( _In_ const char* pszPath )
+inline int GetDriveNumber(_In_z_ const char* pszPath)
 {
 	return ::PathGetDriveNumberA( pszPath );
 }
 
-inline int GetDriveNumber( _In_ const wchar_t* pszPath )
+inline int GetDriveNumber(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathGetDriveNumberW( pszPath );
 }
 
-inline BOOL IsDirectory( _In_ const char* pszPath )
+inline BOOL IsDirectory(_In_z_ const char* pszPath)
 {
 	return ::PathIsDirectoryA( pszPath );
 }
 
-inline BOOL IsDirectory( _In_ const wchar_t* pszPath )
+inline BOOL IsDirectory(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsDirectoryW( pszPath );
 }
 
-inline BOOL IsFileSpec( _In_ const char* pszPath )
+inline BOOL IsFileSpec(_In_z_ const char* pszPath)
 {
 	return ::PathIsFileSpecA( pszPath );
 }
 
-inline BOOL IsFileSpec( _In_ const wchar_t* pszPath )
+inline BOOL IsFileSpec(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsFileSpecW( pszPath );
 }
 
-inline BOOL IsPrefix( _In_ const char* pszPrefix, _In_ const char* pszPath )
+inline BOOL IsPrefix(
+	_In_z_ const char* pszPrefix,
+	_In_z_ const char* pszPath)
 {
 	return ::PathIsPrefixA( pszPrefix, pszPath );
 }
 
-inline BOOL IsPrefix( _In_ const wchar_t* pszPrefix, _In_ const wchar_t* pszPath )
+inline BOOL IsPrefix(
+	_In_z_ const wchar_t* pszPrefix,
+	_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsPrefixW( pszPrefix, pszPath );
 }
 
-inline BOOL IsRelative( _In_ const char* pszPath )
+inline BOOL IsRelative(_In_z_ const char* pszPath)
 {
 	return ::PathIsRelativeA( pszPath );
 }
 
-inline BOOL IsRelative( _In_ const wchar_t* pszPath )
+inline BOOL IsRelative(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsRelativeW( pszPath );
 }
 
-inline BOOL IsRoot( _In_ const char* pszPath )
+inline BOOL IsRoot(_In_z_ const char* pszPath)
 {
 	return ::PathIsRootA( pszPath );
 }
 
-inline BOOL IsRoot( _In_ const wchar_t* pszPath )
+inline BOOL IsRoot(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsRootW( pszPath );
 }
 
-inline BOOL IsSameRoot( _In_ const char* pszPath1, _In_ const char* pszPath2 )
+inline BOOL IsSameRoot(
+	_In_z_ const char* pszPath1,
+	_In_z_ const char* pszPath2)
 {
 	return ::PathIsSameRootA( pszPath1, pszPath2 );
 }
 
-inline BOOL IsSameRoot( _In_ const wchar_t* pszPath1, _In_ const wchar_t* pszPath2 )
+inline BOOL IsSameRoot(
+	_In_z_ const wchar_t* pszPath1,
+	_In_z_ const wchar_t* pszPath2)
 {
 	return ::PathIsSameRootW( pszPath1, pszPath2 );
 }
 
-inline BOOL IsUNC( _In_ const char* pszPath )
+inline BOOL IsUNC(_In_z_ const char* pszPath)
 {
 	return ::PathIsUNCA( pszPath );
 }
 
-inline BOOL IsUNC( _In_ const wchar_t* pszPath )
+inline BOOL IsUNC(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsUNCW( pszPath );
 }
 
-inline BOOL IsUNCServer( _In_ const char* pszPath )
+inline BOOL IsUNCServer(_In_z_ const char* pszPath)
 {
 	return ::PathIsUNCServerA( pszPath );
 }
 
-inline BOOL IsUNCServer( _In_ const wchar_t* pszPath )
+inline BOOL IsUNCServer(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsUNCServerW( pszPath );
 }
 
-inline BOOL IsUNCServerShare( _In_ const char* pszPath )
+inline BOOL IsUNCServerShare(_In_z_ const char* pszPath)
 {
 	return ::PathIsUNCServerShareA( pszPath );
 }
 
-inline BOOL IsUNCServerShare( _In_ const wchar_t* pszPath )
+inline BOOL IsUNCServerShare(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathIsUNCServerShareW( pszPath );
 }
 
-inline BOOL MakePretty( _Inout_ char* pszPath )
+inline BOOL MakePretty(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	return ::PathMakePrettyA( pszPath );
 }
 
-inline BOOL MakePretty( _Inout_ wchar_t* pszPath )
+inline BOOL MakePretty(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathMakePrettyW( pszPath );
 }
 
-inline BOOL MatchSpec( _In_ const char* pszPath, _In_ const char* pszSpec )
+inline BOOL MatchSpec(
+	_In_z_ const char* pszPath,
+	_In_z_ const char* pszSpec)
 {
 	return ::PathMatchSpecA( pszPath, pszSpec );
 }
 
-inline BOOL MatchSpec( _In_ const wchar_t* pszPath, _In_ const wchar_t* pszSpec )
+inline BOOL MatchSpec(
+	_In_z_ const wchar_t* pszPath,
+	_In_z_ const wchar_t* pszSpec)
 {
 	return ::PathMatchSpecW( pszPath, pszSpec );
 }
 
-inline void QuoteSpaces( _Inout_ char* pszPath )
+inline void QuoteSpaces(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	::PathQuoteSpacesA( pszPath );
 }
 
-inline void QuoteSpaces( _Inout_ wchar_t* pszPath )
+inline void QuoteSpaces(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathQuoteSpacesW( pszPath );
 }
 
-inline BOOL RelativePathTo( _Out_z_cap_c_(MAX_PATH) char* pszPath, _In_ const char* pszFrom,
-	_In_ DWORD dwAttrFrom, _In_ const char* pszTo, _In_ DWORD dwAttrTo )
+inline BOOL RelativePathTo(
+	_Out_z_cap_c_(MAX_PATH) char* pszPath,
+	_In_z_ const char* pszFrom,
+	_In_ DWORD dwAttrFrom,
+	_In_z_ const char* pszTo,
+	_In_ DWORD dwAttrTo)
 {
 	return ::PathRelativePathToA( pszPath, pszFrom, dwAttrFrom, pszTo, dwAttrTo );
 }
 
-inline BOOL RelativePathTo( _Out_z_cap_c_(MAX_PATH) wchar_t* pszPath, _In_ const wchar_t* pszFrom,
-	_In_ DWORD dwAttrFrom, _In_ const wchar_t* pszTo, _In_ DWORD dwAttrTo )
+inline BOOL RelativePathTo(
+	_Out_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_In_z_ const wchar_t* pszFrom,
+	_In_ DWORD dwAttrFrom,
+	_In_z_ const wchar_t* pszTo,
+	_In_ DWORD dwAttrTo)
 {
 	return ::PathRelativePathToW( pszPath, pszFrom, dwAttrFrom, pszTo, dwAttrTo );
 }
 
-inline void RemoveArgs( _Inout_ char* pszPath )
+inline void RemoveArgs(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	::PathRemoveArgsA( pszPath );
 }
 
-inline void RemoveArgs( _Inout_ wchar_t* pszPath )
+inline void RemoveArgs(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathRemoveArgsW( pszPath );
 }
 
-inline char* RemoveBackslash( _Inout_ char* pszPath )
+inline char* RemoveBackslash(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	return ::PathRemoveBackslashA( pszPath );
 }
 
-inline wchar_t* RemoveBackslash( _Inout_ wchar_t* pszPath )
+inline wchar_t* RemoveBackslash(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathRemoveBackslashW( pszPath );
 }
 
-inline void RemoveBlanks( _Inout_ char* pszPath )
+inline void RemoveBlanks(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	::PathRemoveBlanksA( pszPath );
 }
 
-inline void RemoveBlanks( _Inout_ wchar_t* pszPath )
+inline void RemoveBlanks(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathRemoveBlanksW( pszPath );
 }
 
-inline void RemoveExtension( _Inout_ char* pszPath )
+inline void RemoveExtension(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	::PathRemoveExtensionA( pszPath );
 }
 
-inline void RemoveExtension( _Inout_ wchar_t* pszPath )
+inline void RemoveExtension(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathRemoveExtensionW( pszPath );
 }
 
-inline BOOL RemoveFileSpec( _Inout_ char* pszPath )
+inline BOOL RemoveFileSpec(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	return ::PathRemoveFileSpecA( pszPath );
 }
 
-inline BOOL RemoveFileSpec( _Inout_ wchar_t* pszPath )
+inline BOOL RemoveFileSpec(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathRemoveFileSpecW( pszPath );
 }
 
-inline BOOL RenameExtension( _Inout_ char* pszPath, _In_ const char* pszExt )
+inline BOOL RenameExtension(
+	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_In_z_ const char* pszExt)
 {
 	return ::PathRenameExtensionA( pszPath, pszExt );
 }
 
-inline BOOL RenameExtension( _Inout_ wchar_t* pszPath, _In_ const wchar_t* pszExt )
+inline BOOL RenameExtension(
+	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_In_z_ const wchar_t* pszExt)
 {
 	return ::PathRenameExtensionW( pszPath, pszExt );
 }
 
-inline char* SkipRoot( _In_ const char* pszPath )
+inline char* SkipRoot(_In_z_ const char* pszPath)
 {
 	return ::PathSkipRootA( pszPath );
 }
 
-inline wchar_t* SkipRoot( _In_ const wchar_t* pszPath )
+inline wchar_t* SkipRoot(_In_z_ const wchar_t* pszPath)
 {
 	return ::PathSkipRootW( pszPath );
 }
 
-inline void StripPath( _Inout_ char* pszPath )
+inline void StripPath(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	::PathStripPathA( pszPath );
 }
 
-inline void StripPath( _Inout_ wchar_t* pszPath )
+inline void StripPath(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathStripPathW( pszPath );
 }
 
-inline BOOL StripToRoot( _Inout_ char* pszPath )
+inline BOOL StripToRoot(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
 {
 	return ::PathStripToRootA( pszPath );
 }
 
-inline BOOL StripToRoot( _Inout_ wchar_t* pszPath )
+inline BOOL StripToRoot(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathStripToRootW( pszPath );
 }
 
-inline void UnquoteSpaces( _Inout_ char* pszPath )
+inline void UnquoteSpaces(_Inout_z_ char* pszPath)
 {
 	::PathUnquoteSpacesA( pszPath );
 }
 
-inline void UnquoteSpaces( _Inout_ wchar_t* pszPath )
+inline void UnquoteSpaces(_Inout_z_ wchar_t* pszPath)
 {
 	::PathUnquoteSpacesW( pszPath );
 }
 
-inline BOOL CompactPath( _In_ HDC hDC, _Inout_ char* pszPath, _In_ UINT dx )
+inline BOOL CompactPath(
+	_In_ HDC hDC,
+	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_In_ UINT dx)
 {
 	return ::PathCompactPathA( hDC, pszPath, dx );
 }
 
-inline BOOL CompactPath( _In_ HDC hDC, _Inout_ wchar_t* pszPath, _In_ UINT dx )
+inline BOOL CompactPath(
+	_In_ HDC hDC,
+	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_In_ UINT dx)
 {
 	return ::PathCompactPathW( hDC, pszPath, dx );
 }
 
-inline BOOL CompactPathEx( _Out_cap_(nMaxChars) char* pszDest, _In_ const char* pszSrc,
-	_In_ UINT nMaxChars, _In_ DWORD dwFlags )
+inline BOOL CompactPathEx(
+	_Out_z_cap_(nMaxChars) char* pszDest,
+	_In_z_ const char* pszSrc,
+	_In_ UINT nMaxChars,
+	_In_ DWORD dwFlags)
 {
 	return ::PathCompactPathExA( pszDest, pszSrc, nMaxChars, dwFlags );
 }
 
-inline BOOL CompactPathEx( _Out_cap_(nMaxChars) wchar_t* pszDest, _In_ const wchar_t* pszSrc,
-	_In_ UINT nMaxChars, _In_ DWORD dwFlags )
+inline BOOL CompactPathEx(
+	_Out_z_cap_(nMaxChars) wchar_t* pszDest,
+	_In_z_ const wchar_t* pszSrc,
+	_In_ UINT nMaxChars,
+	_In_ DWORD dwFlags)
 {
 	return ::PathCompactPathExW( pszDest, pszSrc, nMaxChars, dwFlags );
 }
@@ -413,11 +475,11 @@ public:
 	CPathT() throw()
 	{
 	}
-	CPathT( const CPathT< StringType >& path ) :
+	CPathT(_In_ const CPathT< StringType >& path) :
 		m_strPath( path.m_strPath )
 	{
 	}
-	CPathT( PCXSTR pszPath ) :
+	CPathT(_In_z_ PCXSTR pszPath) :
 		m_strPath( pszPath )
 	{
 	}
@@ -434,7 +496,7 @@ public:
 	{
 		return m_strPath;
 	}
-	CPathT< StringType >& operator+=( _In_ PCXSTR pszMore )
+	CPathT< StringType >& operator+=(_In_z_ PCXSTR pszMore)
 	{
 		Append( pszMore );
 
@@ -443,98 +505,84 @@ public:
 
 	void AddBackslash()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+1 );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+1 );
 		ATLPath::AddBackslash( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
-	BOOL AddExtension( _In_ PCXSTR pszExtension )
+	BOOL AddExtension(_In_z_ PCXSTR pszExtension)
 	{
-		PXSTR pszBuffer;
-		BOOL bResult;
-
 		// If NULL is passed, shlwapi's PathAddExtension API adds ".EXE"
 		int nLenExtension = (pszExtension == NULL) ? 4 : StringType::StringLength(pszExtension);
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+nLenExtension);
-		bResult = ATLPath::AddExtension( pszBuffer, pszExtension );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+nLenExtension);
+		BOOL bResult = ATLPath::AddExtension( pszBuffer, pszExtension );
 		m_strPath.ReleaseBuffer();
 
 		return bResult;
 	}
-	BOOL Append( _In_ PCXSTR pszMore )
+	BOOL Append(_In_z_ PCXSTR pszMore)
 	{
-		PXSTR pszBuffer;
-		BOOL bResult;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+StringType::StringLength( pszMore )+1 );
-		bResult = ATLPath::Append( pszBuffer, pszMore );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+StringType::StringLength( pszMore )+1 );
+		BOOL bResult = ATLPath::Append( pszBuffer, pszMore );
 		m_strPath.ReleaseBuffer();
 
 		return bResult;
 	}
-	void BuildRoot( _In_ int iDrive )
+	void BuildRoot(_In_ int iDrive)
 	{
-		PXSTR pszBuffer;
-
 		ATLASSERT( iDrive >= 0 );
 		ATLASSERT( iDrive <= 25 );
 
-		pszBuffer = m_strPath.GetBuffer( 3 );
+		PXSTR pszBuffer = m_strPath.GetBuffer( 3 );
 		ATLPath::BuildRoot( pszBuffer, iDrive );
 		m_strPath.ReleaseBuffer();
 	}
 	void Canonicalize()
 	{
-		PXSTR pszBuffer;
 		StringType strResult;
 
-		pszBuffer = strResult.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = strResult.GetBuffer( MAX_PATH );
 		ATLPath::Canonicalize( pszBuffer, m_strPath );
 		strResult.ReleaseBuffer();
 
 		m_strPath = strResult;
 	}
-	void Combine( _In_ PCXSTR pszDir, _In_ PCXSTR pszFile )
+	void Combine(
+		_In_z_ PCXSTR pszDir,
+		_In_z_ PCXSTR pszFile)
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( MAX_PATH );
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
 		ATLPath::Combine( pszBuffer, pszDir, pszFile );
 		m_strPath.ReleaseBuffer();
 	}
-	CPathT< StringType > CommonPrefix( _In_ PCXSTR pszOther )
+	CPathT< StringType > CommonPrefix(_In_z_ PCXSTR pszOther)
 	{
-		PXSTR pszBuffer;
-		int nLength;
 		CPathT< StringType > pathResult;
 
-		pszBuffer = pathResult.m_strPath.GetBuffer( __max( m_strPath.GetLength(), StringType::StringLength( pszOther ) ) );
-		nLength = ATLPath::CommonPrefix( m_strPath, pszOther, pszBuffer );
+		PXSTR pszBuffer = pathResult.m_strPath.GetBuffer( __max( m_strPath.GetLength(), StringType::StringLength( pszOther ) ) );
+		int nLength = ATLPath::CommonPrefix( m_strPath, pszOther, pszBuffer );
 		pathResult.m_strPath.ReleaseBuffer( nLength );
 
 		return pathResult;
 	}
-	BOOL CompactPath( _In_ HDC hDC, _In_ UINT nWidth )
+	BOOL CompactPath(
+		_In_ HDC hDC,
+		_In_ UINT nWidth)
 	{
-		PXSTR pszBuffer;
-		BOOL bResult;
-
 		// PathCompactPath can actually _increase_ the length of the path
-		pszBuffer = m_strPath.GetBuffer( MAX_PATH );
-		bResult = ATLPath::CompactPath( hDC, pszBuffer, nWidth );
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
+		BOOL bResult = ATLPath::CompactPath( hDC, pszBuffer, nWidth );
 		m_strPath.ReleaseBuffer();
 
 		return bResult;
 	}
-	BOOL CompactPathEx( _In_ UINT nMaxChars, _In_ DWORD dwFlags = 0 )
+	BOOL CompactPathEx(
+		_In_ UINT nMaxChars,
+		_In_ DWORD dwFlags = 0)
 	{
 		StringType strResult;
-		BOOL bResult;
-		PXSTR pszBuffer;
 
-		pszBuffer = strResult.GetBuffer( nMaxChars );
-		bResult = ATLPath::CompactPathEx( pszBuffer, m_strPath, nMaxChars,
+		PXSTR pszBuffer = strResult.GetBuffer( nMaxChars );
+		BOOL bResult = ATLPath::CompactPathEx( pszBuffer, m_strPath, nMaxChars,
 			dwFlags );
 		strResult.ReleaseBuffer();
 
@@ -548,11 +596,8 @@ public:
 	}
 	int FindExtension() const
 	{
-		PCXSTR pszBuffer;
-		PCXSTR pszExtension;
-
-		pszBuffer = m_strPath;
-		pszExtension = ATLPath::FindExtension( pszBuffer );
+		PCXSTR pszBuffer = m_strPath;
+		PCXSTR pszExtension = ATLPath::FindExtension( pszBuffer );
 		if( *pszExtension == 0 )
 			return -1;
 		else
@@ -560,11 +605,8 @@ public:
 	}
 	int FindFileName() const
 	{
-		PCXSTR pszBuffer;
-		PCXSTR pszFileName;
-
-		pszBuffer = m_strPath;
-		pszFileName = ATLPath::FindFileName( pszBuffer );
+		PCXSTR pszBuffer = m_strPath;
+		PCXSTR pszFileName = ATLPath::FindFileName( pszBuffer );
 		if( *pszFileName == 0 )
 			return -1;
 		else
@@ -594,7 +636,7 @@ public:
 	{
 		return ATLPath::IsFileSpec( m_strPath );
 	}
-	BOOL IsPrefix( PCXSTR pszPrefix ) const
+	BOOL IsPrefix(_In_z_ PCXSTR pszPrefix) const
 	{
 		return ATLPath::IsPrefix( pszPrefix, m_strPath );
 	}
@@ -606,7 +648,7 @@ public:
 	{
 		return ATLPath::IsRoot( m_strPath );
 	}
-	BOOL IsSameRoot( PCXSTR pszOther ) const
+	BOOL IsSameRoot(_In_z_ PCXSTR pszOther) const
 	{
 		return ATLPath::IsSameRoot( m_strPath, pszOther );
 	}
@@ -624,35 +666,30 @@ public:
 	}
 	BOOL MakePretty()
 	{
-		PXSTR pszBuffer;
-		BOOL bResult;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
-		bResult = ATLPath::MakePretty( pszBuffer );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		BOOL bResult = ATLPath::MakePretty( pszBuffer );
 		m_strPath.ReleaseBuffer();
 
 		return bResult;
 	}
-	BOOL MatchSpec( _In_ PCXSTR pszSpec ) const
+	BOOL MatchSpec(_In_z_ PCXSTR pszSpec) const
 	{
 		return ATLPath::MatchSpec( m_strPath, pszSpec );
 	}
 	void QuoteSpaces()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+2 );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+2 );
 		ATLPath::QuoteSpaces( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
-	BOOL RelativePathTo( _In_ PCXSTR pszFrom, _In_ DWORD dwAttrFrom, 
-		_In_ PCXSTR pszTo, _In_ DWORD dwAttrTo )
+	BOOL RelativePathTo(
+		_In_z_ PCXSTR pszFrom,
+		_In_ DWORD dwAttrFrom,
+		_In_z_ PCXSTR pszTo,
+		_In_ DWORD dwAttrTo)
 	{
-		PXSTR pszBuffer;
-		BOOL bResult;
-
-		pszBuffer = m_strPath.GetBuffer( MAX_PATH );
-		bResult = ATLPath::RelativePathTo( pszBuffer, pszFrom, dwAttrFrom,
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
+		BOOL bResult = ATLPath::RelativePathTo( pszBuffer, pszFrom, dwAttrFrom,
 			pszTo, dwAttrTo );
 		m_strPath.ReleaseBuffer();
 
@@ -660,91 +697,68 @@ public:
 	}
 	void RemoveArgs()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
 		ATLPath::RemoveArgs( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
 	void RemoveBackslash()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
 		ATLPath::RemoveBackslash( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
 	void RemoveBlanks()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
 		ATLPath::RemoveBlanks( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
 	void RemoveExtension()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
 		ATLPath::RemoveExtension( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
 	BOOL RemoveFileSpec()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
 		BOOL bResult = ATLPath::RemoveFileSpec( pszBuffer );
 		m_strPath.ReleaseBuffer();
 
 		return bResult;
 	}
-	BOOL RenameExtension( _In_ PCXSTR pszExtension )
+	BOOL RenameExtension(_In_z_ PCXSTR pszExtension)
 	{
-		PXSTR pszBuffer;
-		BOOL bResult;
-
-		pszBuffer = m_strPath.GetBuffer( MAX_PATH );
-		bResult = ATLPath::RenameExtension( pszBuffer, pszExtension );
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
+		BOOL bResult = ATLPath::RenameExtension( pszBuffer, pszExtension );
 		m_strPath.ReleaseBuffer();
 
 		return bResult;
 	}
 	int SkipRoot() const
 	{
-		PCXSTR pszBuffer;
-		PXSTR pszResult;
-
-		pszBuffer = m_strPath;
-		pszResult = ATLPath::SkipRoot( pszBuffer );
+		PCXSTR pszBuffer = m_strPath;
+		PXSTR pszResult = ATLPath::SkipRoot( pszBuffer );
 
 		return int( pszResult-pszBuffer );
 	}
 	void StripPath()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
 		ATLPath::StripPath( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
 	BOOL StripToRoot()
 	{
-		PXSTR pszBuffer;
-		BOOL bResult;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
-		bResult = ATLPath::StripToRoot( pszBuffer );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		BOOL bResult = ATLPath::StripToRoot( pszBuffer );
 		m_strPath.ReleaseBuffer();
 
 		return bResult;
 	}
 	void UnquoteSpaces()
 	{
-		PXSTR pszBuffer;
-
-		pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
+		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength() );
 		ATLPath::UnquoteSpaces( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}

@@ -105,7 +105,9 @@ public:
 	COLORREF    m_clrBaseBorder;
 	UINT        m_uiMarkerBmpResID [AFX_SD_MARKERS_NUM];
 	UINT        m_uiMarkerLightBmpResID [AFX_SD_MARKERS_NUM];
+	UINT		m_uiBaseBmpResID;
 	BOOL        m_bUseThemeColorInShading;
+	BOOL		m_bIsAlphaMarkers;
 };
 
 class CDockingManager : public CObject
@@ -284,10 +286,25 @@ public:
 
 	static AFX_DOCK_TYPE __stdcall GetDockingMode() { return m_dockModeGlobal; }
 
-	static void __stdcall SetDockingMode(AFX_DOCK_TYPE dockMode);
+	/// <summary>
+	/// Sets docking mode.</summary>
+	/// <param name="dockMode">Specifies a docking mode to set. It should be one of the following 
+	/// enumerated values: DT_IMMEDIATE, DT_STANDARD or combination of DT_IMMEDIATE and DT_SMART.</param>
+	/// <param name="theme">Specifies the theme to be used for smart docking markers. It can be 
+	/// one of the following enumerated values: AFX_SDT_DEFAULT, AFX_SDT_VS2005, AFX_SDT_VS2008.</param>
+	static void __stdcall SetDockingMode(AFX_DOCK_TYPE dockMode, AFX_SMARTDOCK_THEME theme = AFX_SDT_DEFAULT);
 
 	static void __stdcall SetSmartDockingParams(CSmartDockingInfo& params);
 	static CSmartDockingInfo& __stdcall GetSmartDockingParams() { return m_SDParams; }
+
+	/// <summary>
+	/// A static method that returns a theme used to display smart docking markers.</summary>
+	/// <returns> 
+	/// Returns one of the following enumerated values: AFX_SDT_DEFAULT, AFX_SDT_VS2005, AFX_SDT_VS2008.</returns>
+	static AFX_SMARTDOCK_THEME __stdcall GetSmartDockingTheme()
+	{
+		return m_SDTheme;
+	}
 
 	static void __stdcall EnableDockSiteMenu(BOOL bEnable = TRUE) { m_bDockBarMenu = bEnable; }
 	static BOOL __stdcall IsDockSiteMenu() { return m_bDockBarMenu; }
@@ -359,6 +376,7 @@ protected:
 	AFX_IMPORT_DATA static CSmartDockingInfo m_SDParams;
 	AFX_IMPORT_DATA static BOOL m_bSDParamsModified;
 	AFX_IMPORT_DATA static BOOL m_bDockBarMenu;
+	AFX_IMPORT_DATA static AFX_SMARTDOCK_THEME m_SDTheme;
 
 	// Map of control bars that appear in context menu:
 	CMap<UINT,UINT,CPane*,CPane*> m_mapControlBarsInMenu;

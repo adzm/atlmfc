@@ -558,20 +558,7 @@ void CMFCTabCtrl::OnPaint()
 
 	if (!m_rectResize.IsRectEmpty())
 	{
-		pDC->FillRect(m_rectResize, pbrFace);
-
-		pDC->SelectObject(&penDark);
-
-		if (m_ResizeMode == RESIZE_VERT)
-		{
-			pDC->MoveTo(m_rectResize.left, m_rectResize.top);
-			pDC->LineTo(m_rectResize.left, m_rectResize.bottom);
-		}
-		else
-		{
-			pDC->MoveTo(m_rectResize.left, m_rectResize.top);
-			pDC->LineTo(m_rectResize.right, m_rectResize.top);
-		}
+		CMFCVisualManager::GetInstance ()->OnDrawTabResizeBar(pDC, this, m_ResizeMode == RESIZE_VERT, m_rectResize, pbrFace, &penDark);
 	}
 
 	pDC->SelectObject(pOldFont);
@@ -1538,6 +1525,11 @@ BOOL CMFCTabCtrl::PreTranslateMessage(MSG* pMsg)
 		break;
 	}
 
+	if (pMsg->message == WM_LBUTTONDBLCLK && pMsg->hwnd == m_btnClose.GetSafeHwnd())
+	{
+		return TRUE;
+	}
+
 	return CMFCBaseTabCtrl::PreTranslateMessage(pMsg);
 }
 
@@ -2309,6 +2301,7 @@ void CMFCTabCtrl::SetTabsHeight()
 
 		lf.lfCharSet = lfDefault.lfCharSet;
 		lf.lfHeight = lfDefault.lfHeight;
+		lf.lfQuality = CLEARTYPE_QUALITY;
 		lstrcpy(lf.lfFaceName, AFX_TABS_FONT);
 
 		CClientDC dc(this);
@@ -3013,7 +3006,7 @@ void CMFCTabCtrl::OnShowTabDocumentsMenu(CPoint point)
 		// Insert sorted:
 		BOOL bInserted = FALSE;
 
-		for (UINT iMenu = 0; iMenu < menu.GetMenuItemCount(); iMenu++)
+		for (int iMenu = 0; iMenu < menu.GetMenuItemCount(); iMenu++)
 		{
 			CString strMenuItem;
 			menu.GetMenuString(iMenu, strMenuItem, MF_BYPOSITION);

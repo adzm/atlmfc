@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #include "stdafx.h"
@@ -18,7 +18,9 @@
 #pragma comment(lib, "advapi32.lib")
 #pragma warning(disable : 4711)	// function selected for automatic inline expansion
 
-bool CAtlAllocator::Init(const CHAR *pszFileName, DWORD dwMaxSize)
+bool CAtlAllocator::Init(
+	_In_z_ const CHAR *pszFileName,
+	_In_ DWORD dwMaxSize)
 {
 	// We're relying on syncronization provided by the startup code (CRT DllMain/WinMain)
 	Close();
@@ -28,7 +30,7 @@ bool CAtlAllocator::Init(const CHAR *pszFileName, DWORD dwMaxSize)
 	HANDLE hThreadToken = NULL;
 	__try
 	{
-		// If we're being loaded while impersonating a different client, 
+		// If we're being loaded while impersonating a different client,
 		// we need to revert to self before we open the shared memory section
 		BOOL bOpen = OpenThreadToken(GetCurrentThread(), TOKEN_IMPERSONATE|TOKEN_DUPLICATE, TRUE, &hThreadToken);
 		if( bOpen && hThreadToken != NULL )
@@ -67,7 +69,7 @@ bool CAtlAllocator::Init(const CHAR *pszFileName, DWORD dwMaxSize)
 
 			// Looks like it's already mapped into this process space.
 			// Let's do some checking...
-			if(( m_pProcess==NULL ) || ( m_pProcess->Base()==NULL ) || 
+			if(( m_pProcess==NULL ) || ( m_pProcess->Base()==NULL ) ||
 				( 0 != memcmp(m_pBufferStart, m_pProcess->Base(), m_pProcess->m_dwFrontAlloc )))
 			{
 				// something's not right
@@ -133,7 +135,7 @@ bool CAtlAllocator::Init(const CHAR *pszFileName, DWORD dwMaxSize)
 	return m_bValid;
 }
 
-bool CAtlAllocator::Open(const CHAR *pszFileName)
+bool CAtlAllocator::Open(_In_z_ const CHAR *pszFileName)
 {
 	Close();
 
@@ -178,7 +180,7 @@ bool CAtlAllocator::Open(const CHAR *pszFileName)
 	return m_bValid;
 }
 
-void CAtlAllocator::Close(bool bForceUnmap)
+void CAtlAllocator::Close(_In_ bool bForceUnmap)
 {
 	if(m_bValid)
 	{
@@ -193,8 +195,13 @@ void CAtlAllocator::Close(bool bForceUnmap)
 	}
 }
 
-CAtlTraceModule *CAtlAllocator::GetModule(int iModule) const
+CAtlTraceModule *CAtlAllocator::GetModule(_In_ int iModule) const
 {
+	if (!m_bValid)
+	{
+		return NULL;
+	}
+
 	if( iModule == -1 )
 	{
 		return NULL;
@@ -207,11 +214,15 @@ CAtlTraceModule *CAtlAllocator::GetModule(int iModule) const
 		return reinterpret_cast<CAtlTraceModule *>(pb) + iModule;
 	}
 	else
+	{
 		return NULL;
+	}
 }
 
 /*
-CAtlTraceCategory *CAtlAllocator::GetCategory(unsigned nModule, unsigned nCategory) const
+CAtlTraceCategory *CAtlAllocator::GetCategory(
+	_In_ unsigned nModule,
+	_In_ unsigned nCategory) const
 {
 	ATLASSERT(nModule < m_pProcess->ModuleCount());
 
@@ -241,16 +252,23 @@ CAtlTraceCategory *CAtlAllocator::GetCategory(unsigned nModule, unsigned nCatego
 */
 
 /*
-bool CAtlAllocator::IsValidCategoryIndex(unsigned nIndex) const
+bool CAtlAllocator::IsValidCategoryIndex(_In_ unsigned nIndex) const
 {
 	return nIndex < m_pProcess->CategoryCount();
 }
 */
 
-CAtlTraceCategory *CAtlAllocator::GetCategory(int iCategory) const
+CAtlTraceCategory *CAtlAllocator::GetCategory(_In_ int iCategory) const
 {
-	if(iCategory == m_pProcess->CategoryCount())
+	if (!m_bValid)
+	{
 		return NULL;
+	}
+
+	if(iCategory == m_pProcess->CategoryCount())
+	{
+		return NULL;
+	}
 
 	ATLASSERT((iCategory < m_pProcess->CategoryCount()) || (iCategory == -1));
 	CAtlTraceCategory *pCategory = NULL;
@@ -262,8 +280,13 @@ CAtlTraceCategory *CAtlAllocator::GetCategory(int iCategory) const
 	return pCategory;
 }
 
-int CAtlAllocator::GetCategoryCount(int iModule) const
+int CAtlAllocator::GetCategoryCount(_In_ int iModule) const
 {
+	if (!m_bValid)
+	{
+		return 0;
+	}
+
 	UINT nCategories = 0;
 	CAtlTraceModule* pModule = GetModule(iModule);
 	ATLASSERT(pModule != NULL);
@@ -275,8 +298,13 @@ int CAtlAllocator::GetCategoryCount(int iModule) const
 	return nCategories;
 }
 
-int CAtlAllocator::GetCategoryCount(const CAtlTraceModule& rModule) const
+int CAtlAllocator::GetCategoryCount(_In_ const CAtlTraceModule& rModule) const
 {
+	if (!m_bValid)
+	{
+		return 0;
+	}
+
 	UINT nCategories = 0;
 	int iCategory = rModule.m_iFirstCategory;
 	while( iCategory != -1 )
@@ -292,27 +320,48 @@ int CAtlAllocator::GetCategoryCount(const CAtlTraceModule& rModule) const
 
 int CAtlAllocator::GetModuleCount() const
 {
+	if (!m_bValid)
+	{
+		return 0;
+	}
+
 	ATLASSERT(m_pProcess);
 	return m_pProcess->ModuleCount();
 }
 
 const ULONG kModuleBatchSize = 10;
 
-bool CAtlAllocator::FindModule(const WCHAR *pszModulePath, unsigned *pnModule) const
+bool CAtlAllocator::FindModule(
+	_In_z_ const WCHAR *pszModulePath,
+	_Out_ unsigned *pnModule) const
 {
+	if (!m_bValid)
+	{
+		return false;
+	}
+
 	if(pnModule)
+	{
 		for(int i = 0; i < m_pProcess->ModuleCount(); i++)
+		{
 			if(0 == _wcsicmp(GetModule(i)->Path(), pszModulePath))
 			{
 				*pnModule = i;
 				return true;
 			}
+		}
+	}
 
 	return false;
 }
 
-int CAtlAllocator::AddModule(HINSTANCE hInst)
+int CAtlAllocator::AddModule(_In_ HINSTANCE hInst)
 {
+	if (!m_bValid)
+	{
+		return -1;
+	}
+
 	CAtlTraceProcess *pProcess = GetProcess();
 	ATLASSERT(pProcess);
 	int iFoundModule = -1;
@@ -351,8 +400,15 @@ int CAtlAllocator::AddModule(HINSTANCE hInst)
 
 const ULONG kCategoryBatchSize = 10;
 
-int CAtlAllocator::AddCategory(int iModule, const WCHAR *szCategoryName)
+int CAtlAllocator::AddCategory(
+	_In_ int iModule,
+	_In_z_ const WCHAR *szCategoryName)
 {
+	if (!m_bValid)
+	{
+		return -1;
+	}
+
 	int iFoundCategory = -1;
 	CAtlTraceProcess *pProcess = GetProcess();
 	ATLASSERT(pProcess);
@@ -402,8 +458,13 @@ int CAtlAllocator::AddCategory(int iModule, const WCHAR *szCategoryName)
 	return( iFoundCategory );
 }
 
-bool CAtlAllocator::RemoveModule(int iModule)
+bool CAtlAllocator::RemoveModule(_In_ int iModule)
 {
+	if (!m_bValid)
+	{
+		return false;
+	}
+
 	CAtlTraceModule* pModule = GetModule(iModule);
 	if(pModule)
 	{
@@ -435,6 +496,11 @@ void CAtlAllocator::CleanUp()
 
 void CAtlAllocator::TakeSnapshot()
 {
+	if (!m_bValid)
+	{
+		return;
+	}
+
 	if( m_bSnapshot )
 	{
 		ReleaseSnapshot();
@@ -500,6 +566,11 @@ void CAtlAllocator::TakeSnapshot()
 
 void CAtlAllocator::ReleaseSnapshot()
 {
+	if (!m_bValid)
+	{
+		return;
+	}
+
 	if( m_bSnapshot )
 	{
 		for( int iModule = 0; iModule < m_snapshot.m_aModules.GetSize(); iModule++ )

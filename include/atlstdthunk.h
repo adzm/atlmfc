@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef __ATLSTDTHUNK_H__
@@ -16,11 +16,6 @@
 #pragma push_macro("new")
 #undef new
 
-
-
- 
-
- 
 namespace ATL
 {
 
@@ -29,7 +24,7 @@ namespace ATL
 
 #if defined(_M_IX86)
 PVOID __stdcall __AllocStdCallThunk(VOID);
-VOID  __stdcall __FreeStdCallThunk(PVOID);
+VOID  __stdcall __FreeStdCallThunk(_In_opt_ PVOID);
 
 #pragma pack(push,1)
 struct _stdcallthunk
@@ -38,7 +33,9 @@ struct _stdcallthunk
 	DWORD   m_this;         //
 	BYTE    m_jmp;          // jmp WndProc
 	DWORD   m_relproc;      // relative jmp
-	BOOL Init(DWORD_PTR proc, void* pThis)
+	BOOL Init(
+		_In_ DWORD_PTR proc,
+		_In_opt_ void* pThis)
 	{
 		m_mov = 0x042444C7;  //C7 44 24 0C
 		m_this = PtrToUlong(pThis);
@@ -54,11 +51,11 @@ struct _stdcallthunk
 	{
 		return this;
 	}
-	void* operator new(size_t)
+	_Ret_opt_bytecount_x_(sizeof(_stdcallthunk)) void* operator new(_In_ size_t)
 	{
         return __AllocStdCallThunk();
     }
-    void operator delete(void* pThunk)
+    void operator delete(_In_opt_ void* pThunk)
     {
         __FreeStdCallThunk(pThunk);
     }
@@ -72,14 +69,16 @@ VOID  __FreeStdCallThunk(PVOID);
 struct _stdcallthunk
 {
     USHORT  RcxMov;         // mov rcx, pThis
-    ULONG64 RcxImm;         // 
+    ULONG64 RcxImm;         //
     USHORT  RaxMov;         // mov rax, target
     ULONG64 RaxImm;         //
     USHORT  RaxJmp;         // jmp target
-    BOOL Init(DWORD_PTR proc, void *pThis)
+    BOOL Init(
+		_In_ DWORD_PTR proc,
+		_In_opt_ void *pThis)
     {
         RcxMov = 0xb948;          // mov rcx, pThis
-        RcxImm = (ULONG64)pThis;  // 
+        RcxImm = (ULONG64)pThis;  //
         RaxMov = 0xb848;          // mov rax, target
         RaxImm = (ULONG64)proc;   //
         RaxJmp = 0xe0ff;          // jmp rax
@@ -91,43 +90,14 @@ struct _stdcallthunk
 	{
 		return this;
 	}
-	void* operator new(size_t)
+	_Ret_opt_bytecount_x_(sizeof(_stdcallthunk)) void* operator new(_In_ size_t)
 	{
         return __AllocStdCallThunk();
     }
-    void operator delete(void* pThunk)
+    void operator delete(_In_opt_ void* pThunk)
     {
         __FreeStdCallThunk(pThunk);
     }
-};
-#pragma pack(pop)
-#elif defined (_M_ALPHA)
-// For ALPHA we will stick the this pointer into a0, which is where
-// the HWND is.  However, we don't actually need the HWND so this is OK.
-#pragma pack(push,4)
-struct _stdcallthunk //this should come out to 20 bytes
-{
-	DWORD ldah_at;      //  ldah    at, HIWORD(func)
-	DWORD ldah_a0;      //  ldah    a0, HIWORD(this)
-	DWORD lda_at;       //  lda     at, LOWORD(func)(at)
-	DWORD lda_a0;       //  lda     a0, LOWORD(this)(a0)
-	DWORD jmp;          //  jmp     zero,(at),0
-	BOOL Init(DWORD_PTR proc, void* pThis)
-	{
-		ldah_at = (0x279f0000 | HIWORD(proc)) + (LOWORD(proc)>>15);
-		ldah_a0 = (0x261f0000 | HIWORD(pThis)) + (LOWORD(pThis)>>15);
-		lda_at = 0x239c0000 | LOWORD(proc);
-		lda_a0 = 0x22100000 | LOWORD(pThis);
-		jmp = 0x6bfc0000;
-		// write block from data cache and
-		//  flush from instruction cache
-		FlushInstructionCache(GetCurrentProcess(), this, sizeof(_stdcallthunk));
-		return TRUE;
-	}
-	void* GetCodeAddress()
-	{
-		return this;
-	}
 };
 #pragma pack(pop)
 #elif defined(_SH3_)
@@ -140,7 +110,9 @@ struct _stdcallthunk // this should come out to 16 bytes
 	WORD	m_nop;			// nop
 	DWORD	m_pFunc;
 	DWORD	m_pThis;
-	BOOL Init(DWORD_PTR proc, void* pThis)
+	BOOL Init(
+		_In_ DWORD_PTR proc,
+		_In_opt_ void* pThis)
 	{
 		m_mov_r0 = 0xd001;
 		m_mov_r1 = 0xd402;
@@ -172,7 +144,9 @@ struct _stdcallthunk
 	DWORD	m_jr_t0;		// jr		t0
 	WORD	m_pThisLo;
 	WORD	m_ori_a0;		// ori		a0,PTHIS_LOW
-	BOOL Init(DWORD_PTR proc, void* pThis)
+	BOOL Init(
+		_In_ DWORD_PTR proc,
+		_In_opt_ void* pThis)
 	{
 		m_pFuncHi = HIWORD(proc);
 		m_lui_t0  = 0x3c08;
@@ -202,7 +176,9 @@ struct _stdcallthunk // this should come out to 16 bytes
 	DWORD	m_mov_pc;		// mov	pc, pFunc
 	DWORD	m_pThis;
 	DWORD	m_pFunc;
-	BOOL Init(DWORD_PTR proc, void* pThis)
+	BOOL Init(
+		_In_ DWORD_PTR proc,
+		_In_opt_ void* pThis)
 	{
 		m_mov_r0 = 0xE59F0000;
 		m_mov_pc = 0xE59FF000;
@@ -232,7 +208,10 @@ struct _stdcallthunk
     _FuncDesc m_funcdesc;
     void* m_pFunc;
     void* m_pThis;
-    BOOL Init(DWORD_PTR proc, void* pThis)
+
+    BOOL Init(
+		_In_ DWORD_PTR proc,
+		_In_opt_ void* pThis)
     {
         m_funcdesc.pfn = ((_FuncDesc*)(&_StdCallThunkProcProc))->pfn;  // Pointer to actual beginning of StdCallThunkProc
         m_funcdesc.gp = &m_pFunc;
@@ -254,7 +233,7 @@ struct _stdcallthunk
 
 
 #if defined(_M_IX86) || defined (_M_AMD64)
- 
+
 #pragma pack(push,8)
 class CDynamicStdCallThunk
 {
@@ -274,9 +253,11 @@ public:
 		}
 	}
 
-	BOOL Init(DWORD_PTR proc, void *pThis)
+	BOOL Init(
+		_In_ DWORD_PTR proc,
+		_In_opt_ void *pThis)
 	{
-		if (pThunk == NULL) 
+		if (pThunk == NULL)
 		{
 			pThunk = new _stdcallthunk;
 			if (pThunk == NULL)
@@ -286,7 +267,7 @@ public:
 		}
 		return pThunk->Init(proc, pThis);
 	}
-	
+
 
 	void* GetCodeAddress()
 	{
@@ -301,7 +282,7 @@ typedef _stdcallthunk CStdCallThunk;
 #endif  // _M_IX86 || _M_AMD64
 
 }   // namespace ATL
- 
+
 
 #pragma pop_macro("new")
 

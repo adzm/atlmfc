@@ -146,7 +146,7 @@ public:
 
 protected:
 	void Initialize();
-	void FillInterior(CDC* pDC, const CRect& rect, BOOL bHighlight);
+	void FillInterior(CDC* pDC, const CRect& rect, BOOL bHighlight, BOOL bMenuImage = FALSE);
 
 // Attributes:
 public:

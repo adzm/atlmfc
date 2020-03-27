@@ -187,6 +187,20 @@ BOOL CMFCToolBarsMenuPropertyPage::OnInitDialog()
 		m_hmenuSelected = m_hmenuCurr;
 		m_wndMenuesList.SetCurSel(iCurrMenu);
 
+		// Add menu animation values
+		CString strAnimation;
+
+		ENSURE(strAnimation.LoadString(IDS_AFXBARRES_MENU_ANIMATION_NONE));
+		m_wndMenuAnimations.InsertString(-1, strAnimation);
+		ENSURE(strAnimation.LoadString(IDS_AFXBARRES_MENU_ANIMATION_UNFOLD));
+		m_wndMenuAnimations.InsertString(-1, strAnimation);
+		ENSURE(strAnimation.LoadString(IDS_AFXBARRES_MENU_ANIMATION_SLIDE));
+		m_wndMenuAnimations.InsertString(-1, strAnimation);
+		ENSURE(strAnimation.LoadString(IDS_AFXBARRES_MENU_ANIMATION_FADE));
+		m_wndMenuAnimations.InsertString(-1, strAnimation);
+		ENSURE(strAnimation.LoadString(IDS_AFXBARRES_MENU_ANIMATION_DEFAULT));
+		m_wndMenuAnimations.InsertString(-1, strAnimation);
+
 		UpdateData(FALSE);
 		OnSelchangeMenuList();
 	}
@@ -345,6 +359,7 @@ void CMFCToolBarsMenuPropertyPage::OnDestroy()
 	// Release the context menu resources:
 	if (m_pContextMenu != NULL)
 	{
+		m_pContextMenu->GetMenuBar()->SendMessage(WM_CANCELMODE);
 		SaveMenu();
 		m_pContextMenu->SendMessage(WM_CLOSE);
 	}
@@ -533,7 +548,7 @@ void CMFCToolBarsMenuPropertyPage::OnResetFrameMenu()
 
 		hOldMenu = pTemplate->m_hMenuShared;
 
-		pTemplate->m_hMenuShared = ::LoadMenu(hInst, MAKEINTRESOURCE(pTemplate->GetResId()));
+		pTemplate->m_hMenuShared = ::LoadMenuW(hInst, MAKEINTRESOURCEW(pTemplate->GetResId()));
 		m_pMenuBar->CreateFromMenu(pTemplate->m_hMenuShared, FALSE);
 
 		CMFCMenuBar::UpdateMDIChildrenMenus(pTemplate);
@@ -563,7 +578,7 @@ void CMFCToolBarsMenuPropertyPage::OnResetFrameMenu()
 
 			hOldMenu = m_pMenuBar->m_hDefaultMenu;
 
-			HMENU hDefaultMenu = ::LoadMenu(hInst, MAKEINTRESOURCE(uiDefMenuResId));
+			HMENU hDefaultMenu = ::LoadMenuW(hInst, MAKEINTRESOURCEW(uiDefMenuResId));
 			m_pMenuBar->OnDefaultMenuLoaded(hDefaultMenu);
 
 			m_pMenuBar->CreateFromMenu(hDefaultMenu, TRUE);
@@ -629,5 +644,3 @@ BOOL CMFCToolBarsMenuPropertyPage::SelectMenu(CDocTemplate* pTemplate, BOOL bSav
 
 	return FALSE;
 }
-
-

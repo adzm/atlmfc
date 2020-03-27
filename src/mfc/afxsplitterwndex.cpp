@@ -20,6 +20,8 @@
 /////////////////////////////////////////////////////////////////////////////
 // CSplitterWndEx
 
+IMPLEMENT_DYNAMIC(CSplitterWndEx, CSplitterWnd)
+
 CSplitterWndEx::CSplitterWndEx()
 {
 }

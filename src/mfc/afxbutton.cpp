@@ -18,6 +18,8 @@
 #include "afxvisualmanager.h"
 #include "afxdrawmanager.h"
 #include "afxtooltipmanager.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -72,6 +74,8 @@ CMFCButton::CMFCButton()
 	m_bDontUseWinXPTheme = FALSE;
 	m_bWasDblClk = FALSE;
 	m_pToolTip = NULL;
+
+	EnableActiveAccessibility();
 }
 
 CMFCButton::~CMFCButton()
@@ -115,6 +119,7 @@ BEGIN_MESSAGE_MAP(CMFCButton, CButton)
 	ON_MESSAGE(BM_SETCHECK, &CMFCButton::OnSetCheck)
 	ON_MESSAGE(BM_SETIMAGE, &CMFCButton::OnSetImage)
 	ON_MESSAGE(BM_GETIMAGE, &CMFCButton::OnGetImage)
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCButton::OnInitControl)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCButton::OnUpdateToolTips)
 END_MESSAGE_MAP()
 //}}AFX_MSG_MAP
@@ -1466,5 +1471,186 @@ LRESULT CMFCButton::OnUpdateToolTips(WPARAM wp, LPARAM)
 	return 0;
 }
 
+static HICON __stdcall ButtonLoadIcon(UINT uiIconResId)
+{
+	if (uiIconResId == 0)
+	{
+		return NULL;
+	}
 
+	LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiIconResId);
+	ENSURE(lpszResourceName != NULL);
 
+	HINSTANCE hinstRes = AfxFindResourceHandle(lpszResourceName, RT_ICON);
+	if (hinstRes == NULL)
+	{
+		return NULL;
+	}
+
+	return (HICON) ::LoadIcon(hinstRes, lpszResourceName);;
+}
+
+LRESULT CMFCButton::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
+
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	CString strStyle;
+	if (tagManager.ExcludeTag(PS_MFCButton_Style, strStyle))
+	{
+		if (!strStyle.IsEmpty())
+		{
+			int nStyle = _ttoi((LPCTSTR)strStyle);
+			switch (nStyle)
+			{
+			case MFC_BTN_STYLE_3D:
+				m_nFlatStyle = CMFCButton::BUTTONSTYLE_3D;
+				break;
+			case MFC_BTN_STYLE_FLAT:
+				m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+				break;
+			case MFC_BTN_STYLE_NOBORDERS:
+				m_nFlatStyle = CMFCButton::BUTTONSTYLE_NOBORDERS;
+				break;
+			case MFC_BTN_MODE_STYLE_SEMIFLAT:
+				m_nFlatStyle = CMFCButton::BUTTONSTYLE_SEMIFLAT;
+				break;
+			}
+		}
+	}
+
+	BOOL bAutosize = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCButton_Autosize, bAutosize))
+	{
+		if (bAutosize)
+		{
+			SizeToContent();
+		}
+	}
+
+	CString strTooltip;
+	if (tagManager.ExcludeTag(PS_MFCButton_Tooltip, strTooltip))
+	{
+		SetTooltip(strTooltip);
+	}
+
+	CString strFullTextTooltip;
+	if (tagManager.ExcludeTag(PS_MFCButton_FullTextTooltip, strFullTextTooltip))
+	{
+		if (!strFullTextTooltip.IsEmpty())
+		{
+			strFullTextTooltip.MakeUpper();
+			EnableFullTextTooltip(strFullTextTooltip == PS_True);
+		}
+	}
+
+	CString strCursorType;
+	if (tagManager.ExcludeTag(PS_MFCButton_CursorType, strCursorType))
+	{
+		if (!strCursorType.IsEmpty())
+		{
+			int nCursorType = _ttoi((LPCTSTR)strCursorType);
+			switch (nCursorType)
+			{
+			case MFC_BTN_CURSORTYPE_NONE:
+			case MFC_BTN_CURSORTYPE_CUSTOM:
+				SetMouseCursor(NULL);
+				break;
+
+			case MFC_BTN_CURSORTYPE_HAND:
+				SetMouseCursorHand();
+				break;
+			}
+		}
+	}
+
+	CString strImageType;
+	if (tagManager.ExcludeTag(PS_MFCButton_ImageType, strImageType))
+	{
+		if (!strImageType.IsEmpty())
+		{
+			int nImageType = _ttoi((LPCTSTR)strImageType);
+			switch (nImageType)
+			{
+			case MFC_BTN_IMAGETYPE_NONE:
+				SetImage((HBITMAP)NULL);
+				break;
+			case MFC_BTN_IMAGETYPE_ICON:
+			case MFC_BTN_IMAGETYPE_BITMAP:
+				{
+					CString strImage;
+					if (tagManager.ExcludeTag(PS_MFCButton_ImageID, strImage))
+					{
+						if (!strImage.IsEmpty())
+						{
+							int nImageID = _ttoi((LPCTSTR)strImage);
+
+							// Load resource by ID
+							if (nImageType == MFC_BTN_IMAGETYPE_BITMAP)
+							{
+								SetImage((UINT)nImageID);
+							}
+							else if (nImageType == MFC_BTN_IMAGETYPE_ICON)
+							{
+								HICON hIcon = ButtonLoadIcon((UINT)nImageID);
+								SetImage(hIcon);
+							}
+						}
+						else
+						{
+							SetImage((HBITMAP)NULL);
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	BOOL bImageOnTop = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCButton_ImageOnTop, bImageOnTop))
+	{
+		m_bTopImage = bImageOnTop;
+	}
+
+	BOOL bImageOnRight = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCButton_ImageOnRight, bImageOnRight))
+	{
+		m_bRightImage = bImageOnRight;
+	}
+
+	return 0;
+}
+
+HRESULT CMFCButton::get_accState(VARIANT varChild, VARIANT *pvarState)
+{
+	HRESULT hr = CButton::get_accState(varChild, pvarState);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
+
+	if (m_bHighlighted)
+	{
+		pvarState->lVal |= STATE_SYSTEM_HOTTRACKED;
+	}
+
+	if (m_bChecked)
+	{
+		if (m_bRadioButton)
+		{
+			pvarState->lVal |= STATE_SYSTEM_SELECTED;
+		}
+		else
+		{
+			pvarState->lVal |= STATE_SYSTEM_CHECKED;
+		}
+	}
+
+	return hr;
+}

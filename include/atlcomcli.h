@@ -42,8 +42,14 @@ ATL_NOINLINE inline HRESULT AtlHresultFromWin32(_In_ DWORD nError) throw()
 /////////////////////////////////////////////////////////////////////////////
 // Smart Pointer helpers
 
-ATLAPI_(IUnknown*) AtlComPtrAssign(_Inout_opt_ _Deref_post_opt_valid_  IUnknown** pp, _In_opt_ IUnknown* lp);
-ATLAPI_(IUnknown*) AtlComQIPtrAssign(_Inout_opt_ _Deref_post_opt_valid_ IUnknown** pp, _In_opt_ IUnknown* lp, REFIID riid);
+ATLAPI_(IUnknown*) AtlComPtrAssign(
+	_Inout_opt_ _Deref_pre_maybenull_ _Deref_post_maybenull_ IUnknown** pp, 
+	_In_opt_ IUnknown* lp);
+
+ATLAPI_(IUnknown*) AtlComQIPtrAssign(
+	_Inout_opt_ _Deref_pre_maybenull_ _Deref_post_maybenull_ IUnknown** pp, 
+	_In_opt_ IUnknown* lp, 
+	_In_ REFIID riid);
 
 /////////////////////////////////////////////////////////////////////////////
 // Safe Ole Object Reading 
@@ -51,21 +57,25 @@ ATLAPI_(IUnknown*) AtlComQIPtrAssign(_Inout_opt_ _Deref_post_opt_valid_ IUnknown
 union ClassesAllowedInStream 
 {
 	const CLSID *rgclsidAllowed;
-	HRESULT (*pfnClsidAllowed)(_In_ const CLSID& clsid, _In_ REFIID iidInterface, _Inout_ _Deref_post_opt_valid_ void** ppvObj);
+	HRESULT (*pfnClsidAllowed)(
+		_In_ const CLSID& clsid, 
+		_In_ REFIID iidInterface, 
+		_Deref_out_opt_ void** ppvObj);
 };
 
-#if !defined(_ATL_DLL_IMPL)
-inline HRESULT AtlInternalOleLoadFromStream(
+_Check_return_ inline HRESULT AtlInternalOleLoadFromStream(
 	_Inout_ IStream* pStm, 
 	_In_ REFIID iidInterface, 
-	_Out_ _Deref_post_opt_valid_ void** ppvObj, 
+	_Deref_out_ void** ppvObj, 
 	_In_ ClassesAllowedInStream rgclsidAllowed, 
 	_In_ DWORD cclsidAllowed);
-#endif
+
 
 #ifndef _ATL_DLL
 
-ATLINLINE ATLAPI_(IUnknown*) AtlComPtrAssign(_Inout_opt_ _Deref_post_opt_valid_  IUnknown** pp, _In_opt_ IUnknown* lp)
+ATLINLINE ATLAPI_(IUnknown*) AtlComPtrAssign(
+	_Inout_opt_ _Deref_pre_maybenull_ _Deref_post_maybenull_ IUnknown** pp, 
+	_In_opt_ IUnknown* lp)
 {
 	if (pp == NULL)
 		return NULL;
@@ -78,7 +88,10 @@ ATLINLINE ATLAPI_(IUnknown*) AtlComPtrAssign(_Inout_opt_ _Deref_post_opt_valid_ 
 	return lp;
 }
 
-ATLINLINE ATLAPI_(IUnknown*) AtlComQIPtrAssign(_Inout_opt_ _Deref_post_opt_valid_ IUnknown** pp, _In_opt_ IUnknown* lp, REFIID riid)
+ATLINLINE ATLAPI_(IUnknown*) AtlComQIPtrAssign(
+	_Inout_opt_ _Deref_pre_maybenull_ _Deref_post_maybenull_ IUnknown** pp, 
+	_In_opt_ IUnknown* lp, 
+	_In_ REFIID riid)
 {
 	if (pp == NULL)
 		return NULL;
@@ -98,14 +111,17 @@ ATLINLINE ATLAPI_(IUnknown*) AtlComQIPtrAssign(_Inout_opt_ _Deref_post_opt_valid
 // COM Smart pointers
 
 template <class T>
-class _NoAddRefReleaseOnCComPtr : public T
+class _NoAddRefReleaseOnCComPtr : 
+	public T
 {
 	private:
 		STDMETHOD_(ULONG, AddRef)()=0;
 		STDMETHOD_(ULONG, Release)()=0;
 };
 
-_Check_return_ inline HRESULT AtlSetChildSite(_Inout_ IUnknown* punkChild, _In_opt_ IUnknown* punkParent)
+_Check_return_ inline HRESULT AtlSetChildSite(
+	_Inout_ IUnknown* punkChild, 
+	_Inout_opt_ IUnknown* punkParent)
 {
 	if (punkChild == NULL)
 		return E_POINTER;
@@ -132,13 +148,7 @@ protected:
 	{
 		p = NULL;
 	}
-	CComPtrBase(_In_ int nNull) throw()
-	{
-		ATLASSERT(nNull == 0);
-		(void)nNull;
-		p = NULL;
-	}
-	CComPtrBase(_In_opt_ T* lp) throw()
+	CComPtrBase(_Inout_opt_ T* lp) throw()
 	{
 		p = lp;
 		if (p != NULL)
@@ -173,7 +183,7 @@ public:
 		return (_NoAddRefReleaseOnCComPtr<T>*)p;
 	}
 	bool operator!() const throw()
-	{
+	{	
 		return (p == NULL);
 	}
 	bool operator<(_In_opt_ T* pT) const throw()
@@ -200,7 +210,7 @@ public:
 		}
 	}
 	// Compare two objects for equivalence
-	bool IsEqualObject(_In_opt_ IUnknown* pOther) throw()
+	bool IsEqualObject(_Inout_opt_ IUnknown* pOther) throw()
 	{
 		if (p == NULL && pOther == NULL)
 			return true;	// They are both NULL objects
@@ -238,20 +248,29 @@ public:
 			p->AddRef();
 		return S_OK;
 	}
-	_Check_return_ HRESULT SetSite(_In_opt_ IUnknown* punkParent) throw()
+	_Check_return_ HRESULT SetSite(_Inout_opt_ IUnknown* punkParent) throw()
 	{
 		return AtlSetChildSite(p, punkParent);
 	}
-	_Check_return_ HRESULT Advise(_In_ IUnknown* pUnk, _In_ const IID& iid, _Out_ LPDWORD pdw) throw()
+	_Check_return_ HRESULT Advise(
+		_Inout_ IUnknown* pUnk, 
+		_In_ const IID& iid, 
+		_Out_ LPDWORD pdw) throw()
 	{
 		return AtlAdvise(p, pUnk, iid, pdw);
 	}
-	_Check_return_ HRESULT CoCreateInstance(_In_ REFCLSID rclsid, _In_opt_ LPUNKNOWN pUnkOuter = NULL, _In_ DWORD dwClsContext = CLSCTX_ALL) throw()
+	_Check_return_ HRESULT CoCreateInstance(
+		_In_ REFCLSID rclsid, 
+		_Inout_opt_ LPUNKNOWN pUnkOuter = NULL, 
+		_In_ DWORD dwClsContext = CLSCTX_ALL) throw()
 	{
 		ATLASSERT(p == NULL);
 		return ::CoCreateInstance(rclsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
 	}
-	_Check_return_ HRESULT CoCreateInstance(_In_ LPCOLESTR szProgID, _In_opt_ LPUNKNOWN pUnkOuter = NULL, _In_ DWORD dwClsContext = CLSCTX_ALL) throw()
+	_Check_return_ HRESULT CoCreateInstance(
+		_In_z_ LPCOLESTR szProgID, 
+		_Inout_opt_ LPUNKNOWN pUnkOuter = NULL, 
+		_In_ DWORD dwClsContext = CLSCTX_ALL) throw()
 	{
 		CLSID clsid;
 		HRESULT hr = CLSIDFromProgID(szProgID, &clsid);
@@ -261,7 +280,7 @@ public:
 		return hr;
 	}
 	template <class Q>
-	_Check_return_ HRESULT QueryInterface(_Deref_out_opt_ Q** pp) const throw()
+	_Check_return_ HRESULT QueryInterface(_Deref_out_ Q** pp) const throw()
 	{
 		ATLASSERT(pp != NULL);
 		return p->QueryInterface(__uuidof(Q), (void**)pp);
@@ -270,26 +289,22 @@ public:
 };
 
 template <class T>
-class CComPtr : public CComPtrBase<T>
+class CComPtr : 
+	public CComPtrBase<T>
 {
 public:
 	CComPtr() throw()
 	{
 	}
-	CComPtr(int nNull) throw() :
-		CComPtrBase<T>(nNull)
-	{
-	}
-	CComPtr(T* lp) throw() :
+	CComPtr(_Inout_opt_ T* lp) throw() :
 		CComPtrBase<T>(lp)
-
 	{
 	}
-	CComPtr(_In_ const CComPtr<T>& lp) throw() :
+	CComPtr(_Inout_ const CComPtr<T>& lp) throw() :
 		CComPtrBase<T>(lp.p)
-	{
+	{	
 	}
-	T* operator=(_In_opt_ T* lp) throw()
+	T* operator=(_Inout_opt_ T* lp) throw()
 	{
         if(*this!=lp)
         {
@@ -298,7 +313,7 @@ public:
         return *this;
 	}
 	template <typename Q>
-	T* operator=(_In_ const CComPtr<Q>& lp) throw()
+	T* operator=(_Inout_ const CComPtr<Q>& lp) throw()
 	{
         if( !IsEqualObject(lp) )
         {
@@ -306,33 +321,52 @@ public:
         }
         return *this;
 	}
-	T* operator=(_In_ const CComPtr<T>& lp) throw()
+	T* operator=(_Inout_ const CComPtr<T>& lp) throw()
 	{
         if(*this!=lp)
         {
     		return static_cast<T*>(AtlComPtrAssign((IUnknown**)&p, lp));
         }
         return *this;
+	}	
+	CComPtr(_Inout_ CComPtr<T>&& lp) throw() :	
+		CComPtrBase<T>()
+	{	
+		p = lp.p;		
+		lp.p = NULL;
+	}	
+	T* operator=(_Inout_ CComPtr<T>&& lp) throw()
+	{			
+		if (*this != lp)
+		{
+			if (p != NULL)			
+				p->Release();
+			
+			p = lp.p;
+			lp.p = NULL;
+		}
+		return *this;		
 	}
 };
 
 //specialization for IDispatch
 template <>
-class CComPtr<IDispatch> : public CComPtrBase<IDispatch>
+class CComPtr<IDispatch> : 
+	public CComPtrBase<IDispatch>
 {
 public:
 	CComPtr() throw()
 	{
 	}
-	CComPtr(IDispatch* lp) throw() :
+	CComPtr(_Inout_opt_ IDispatch* lp) throw() :
 		CComPtrBase<IDispatch>(lp)
 	{
 	}
-	CComPtr(const CComPtr<IDispatch>& lp) throw() :
+	CComPtr(_Inout_ const CComPtr<IDispatch>& lp) throw() :
 		CComPtrBase<IDispatch>(lp.p)
 	{
-	}
-	IDispatch* operator=(IDispatch* lp) throw()
+	}		
+	IDispatch* operator=(_Inout_opt_ IDispatch* lp) throw()
 	{
         if(*this!=lp)
         {
@@ -340,17 +374,36 @@ public:
         }
         return *this;
 	}
-	IDispatch* operator=(const CComPtr<IDispatch>& lp) throw()
+	IDispatch* operator=(_Inout_ const CComPtr<IDispatch>& lp) throw()
 	{
         if(*this!=lp)
         {
     		return static_cast<IDispatch*>(AtlComPtrAssign((IUnknown**)&p, lp.p));
         }
         return *this;
+	}	
+	CComPtr(_Inout_ CComPtr<IDispatch>&& lp) throw() :	
+		CComPtrBase<IDispatch>()
+	{		
+		p = lp.p;		
+		lp.p = NULL;
 	}
-
+	IDispatch* operator=(_Inout_ CComPtr<IDispatch>&& lp) throw()
+	{		
+		if (*this != lp)
+		{
+			if (p != NULL)			
+				p->Release();
+			
+			p = lp.p;
+			lp.p = NULL;
+		}		
+		return *this;
+	}	
 // IDispatch specific stuff
-	_Check_return_ HRESULT GetPropertyByName(_In_ LPCOLESTR lpsz, _Out_ VARIANT* pVar) throw()
+	_Check_return_ HRESULT GetPropertyByName(
+		_In_z_ LPCOLESTR lpsz, 
+		_Out_ VARIANT* pVar) throw()
 	{
 		ATLASSERT(p);
 		ATLASSERT(pVar);
@@ -360,11 +413,15 @@ public:
 			hr = GetProperty(dwDispID, pVar);
 		return hr;
 	}
-	_Check_return_ HRESULT GetProperty(_In_ DISPID dwDispID, _Out_ VARIANT* pVar) throw()
+	_Check_return_ HRESULT GetProperty(
+		_In_ DISPID dwDispID, 
+		_Out_ VARIANT* pVar) throw()
 	{
 		return GetProperty(p, dwDispID, pVar);
 	}
-	_Check_return_ HRESULT PutPropertyByName(_In_ LPCOLESTR lpsz, _In_ VARIANT* pVar) throw()
+	_Check_return_ HRESULT PutPropertyByName(
+		_In_z_ LPCOLESTR lpsz, 
+		_In_ VARIANT* pVar) throw()
 	{
 		ATLASSERT(p);
 		ATLASSERT(pVar);
@@ -374,22 +431,30 @@ public:
 			hr = PutProperty(dwDispID, pVar);
 		return hr;
 	}
-	_Check_return_ HRESULT PutProperty(_In_ DISPID dwDispID, _In_ VARIANT* pVar) throw()
+	_Check_return_ HRESULT PutProperty(
+		_In_ DISPID dwDispID, 
+		_In_ VARIANT* pVar) throw()
 	{
 		return PutProperty(p, dwDispID, pVar);
 	}
-	_Check_return_ HRESULT GetIDOfName(_In_ LPCOLESTR lpsz, _Out_ DISPID* pdispid) throw()
+	_Check_return_ HRESULT GetIDOfName(
+		_In_z_ LPCOLESTR lpsz, 
+		_Out_ DISPID* pdispid) throw()
 	{
 		return p->GetIDsOfNames(IID_NULL, const_cast<LPOLESTR*>(&lpsz), 1, LOCALE_USER_DEFAULT, pdispid);
 	}
 	// Invoke a method by DISPID with no parameters
-	_Check_return_ HRESULT Invoke0(_In_ DISPID dispid, _Out_opt_ VARIANT* pvarRet = NULL) throw()
+	_Check_return_ HRESULT Invoke0(
+		_In_ DISPID dispid, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw()
 	{
 		DISPPARAMS dispparams = { NULL, NULL, 0, 0};
 		return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
 	}
 	// Invoke a method by name with no parameters
-	_Check_return_ HRESULT Invoke0(_In_ LPCOLESTR lpszName, _Out_opt_ VARIANT* pvarRet = NULL) throw()
+	_Check_return_ HRESULT Invoke0(
+		_In_z_ LPCOLESTR lpszName, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw()
 	{
 		HRESULT hr;
 		DISPID dispid;
@@ -399,41 +464,61 @@ public:
 		return hr;
 	}
 	// Invoke a method by DISPID with a single parameter
-	_Check_return_ HRESULT Invoke1(_In_ DISPID dispid, VARIANT* pvarParam1, _Out_opt_ VARIANT* pvarRet = NULL) throw()
+	_Check_return_ HRESULT Invoke1(
+		_In_ DISPID dispid, 
+		_In_ VARIANT* pvarParam1, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw()
 	{
 		DISPPARAMS dispparams = { pvarParam1, NULL, 1, 0};
 		return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
 	}
 	// Invoke a method by name with a single parameter
-	_Check_return_ HRESULT Invoke1(_In_ LPCOLESTR lpszName, VARIANT* pvarParam1, _Out_opt_ VARIANT* pvarRet = NULL) throw()
-	{
-		HRESULT hr;
+	_Check_return_ HRESULT Invoke1(
+		_In_z_ LPCOLESTR lpszName, 
+		_In_ VARIANT* pvarParam1, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw()
+	{		 
 		DISPID dispid;
-		hr = GetIDOfName(lpszName, &dispid);
+		HRESULT hr = GetIDOfName(lpszName, &dispid);
 		if (SUCCEEDED(hr))
 			hr = Invoke1(dispid, pvarParam1, pvarRet);
 		return hr;
 	}
 	// Invoke a method by DISPID with two parameters
-	_Check_return_ HRESULT Invoke2(_In_ DISPID dispid, _In_ VARIANT* pvarParam1, _In_ VARIANT* pvarParam2, _Out_opt_ VARIANT* pvarRet = NULL) throw();
+	_Check_return_ HRESULT Invoke2(
+		_In_ DISPID dispid, 
+		_In_ VARIANT* pvarParam1, 
+		_In_ VARIANT* pvarParam2, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw();
 	// Invoke a method by name with two parameters
-	_Check_return_ HRESULT Invoke2(_In_ LPCOLESTR lpszName, _In_ VARIANT* pvarParam1, _In_ VARIANT* pvarParam2, _Out_opt_ VARIANT* pvarRet = NULL) throw()
+	_Check_return_ HRESULT Invoke2(
+		_In_z_ LPCOLESTR lpszName, 
+		_In_ VARIANT* pvarParam1, 
+		_In_ VARIANT* pvarParam2, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw()
 	{
-		HRESULT hr;
 		DISPID dispid;
-		hr = GetIDOfName(lpszName, &dispid);
+		HRESULT hr = GetIDOfName(lpszName, &dispid);
 		if (SUCCEEDED(hr))
 			hr = Invoke2(dispid, pvarParam1, pvarParam2, pvarRet);
 		return hr;
 	}
 	// Invoke a method by DISPID with N parameters
-	_Check_return_ HRESULT InvokeN(DISPID dispid, VARIANT* pvarParams, int nParams, VARIANT* pvarRet = NULL) throw()
+	_Check_return_ HRESULT InvokeN(
+		_In_ DISPID dispid, 
+		_In_ VARIANT* pvarParams, 
+		_In_ int nParams, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw()
 	{
 		DISPPARAMS dispparams = { pvarParams, NULL, nParams, 0};
 		return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
 	}
 	// Invoke a method by name with Nparameters
-	_Check_return_ HRESULT InvokeN(LPCOLESTR lpszName, VARIANT* pvarParams, int nParams, VARIANT* pvarRet = NULL) throw()
+	_Check_return_ HRESULT InvokeN(
+		_In_z_ LPCOLESTR lpszName, 
+		_In_ VARIANT* pvarParams, 
+		_In_ int nParams, 
+		_Out_opt_ VARIANT* pvarRet = NULL) throw()
 	{
 		HRESULT hr;
 		DISPID dispid;
@@ -442,7 +527,10 @@ public:
 			hr = InvokeN(dispid, pvarParams, nParams, pvarRet);
 		return hr;
 	}
-	_Check_return_ static HRESULT PutProperty(_Inout_ IDispatch* p, _In_ DISPID dwDispID, _In_ VARIANT* pVar) throw()
+	_Check_return_ static HRESULT PutProperty(
+		_In_ IDispatch* p, 
+		_In_ DISPID dwDispID, 
+		_In_ VARIANT* pVar) throw()
 	{
 		ATLASSERT(p);
 		ATLASSERT(pVar != NULL);
@@ -471,7 +559,10 @@ public:
 				LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
 				&dispparams, NULL, NULL, NULL);
 	}
-	_Check_return_ static HRESULT GetProperty(_In_ IDispatch* p, _In_ DISPID dwDispID, _Out_ VARIANT* pVar) throw()
+	_Check_return_ static HRESULT GetProperty(
+		_In_ IDispatch* p, 
+		_In_ DISPID dwDispID, 
+		_Out_ VARIANT* pVar) throw()
 	{
 		ATLASSERT(p);
 		ATLASSERT(pVar != NULL);
@@ -490,26 +581,27 @@ public:
 };
 
 template <class T, const IID* piid = &__uuidof(T)>
-class CComQIPtr : public CComPtr<T>
+class CComQIPtr : 
+	public CComPtr<T>
 {
 public:
 	CComQIPtr() throw()
 	{
 	}
-	CComQIPtr(_In_opt_ T* lp) throw() :
+	CComQIPtr(_Inout_opt_ T* lp) throw() :
 		CComPtr<T>(lp)
 	{
 	}
-	CComQIPtr(_In_ const CComQIPtr<T,piid>& lp) throw() :
+	CComQIPtr(_Inout_ const CComQIPtr<T,piid>& lp) throw() :
 		CComPtr<T>(lp.p)
 	{
 	}
-	CComQIPtr(_In_opt_ IUnknown* lp) throw()
+	CComQIPtr(_Inout_opt_ IUnknown* lp) throw()
 	{
 		if (lp != NULL)
 			lp->QueryInterface(*piid, (void **)&p);
 	}
-	T* operator=(_In_opt_ T* lp) throw()
+	T* operator=(_Inout_opt_ T* lp) throw()
 	{
         if(*this!=lp)
         {
@@ -517,7 +609,7 @@ public:
         }
         return *this;
 	}
-	T* operator=(_In_ const CComQIPtr<T,piid>& lp) throw()
+	T* operator=(_Inout_ const CComQIPtr<T,piid>& lp) throw()
 	{
         if(*this!=lp)
         {
@@ -525,7 +617,7 @@ public:
         }
         return *this;
 	}
-	T* operator=(_In_opt_ IUnknown* lp) throw()
+	T* operator=(_Inout_opt_ IUnknown* lp) throw()
 	{
         if(*this!=lp)
         {
@@ -537,23 +629,24 @@ public:
 
 //Specialization to make it work
 template<>
-class CComQIPtr<IUnknown, &IID_IUnknown> : public CComPtr<IUnknown>
+class CComQIPtr<IUnknown, &IID_IUnknown> : 
+	public CComPtr<IUnknown>
 {
 public:
 	CComQIPtr() throw()
 	{
 	}
-	CComQIPtr(_In_opt_ IUnknown* lp) throw()
+	CComQIPtr(_Inout_opt_ IUnknown* lp) throw()
 	{
 		//Actually do a QI to get identity
 		if (lp != NULL)
 			lp->QueryInterface(__uuidof(IUnknown), (void **)&p);
 	}
-	CComQIPtr(_In_ const CComQIPtr<IUnknown,&IID_IUnknown>& lp) throw() :
+	CComQIPtr(_Inout_ const CComQIPtr<IUnknown,&IID_IUnknown>& lp) throw() :
 		CComPtr<IUnknown>(lp.p)
 	{
 	}
-	IUnknown* operator=(_In_opt_ IUnknown* lp) throw()
+	IUnknown* operator=(_Inout_opt_ IUnknown* lp) throw()
 	{
         if(*this!=lp)
         {
@@ -563,7 +656,7 @@ public:
         return *this;
 	}
 
-	IUnknown* operator=(_In_ const CComQIPtr<IUnknown,&IID_IUnknown>& lp) throw()
+	IUnknown* operator=(_Inout_ const CComQIPtr<IUnknown,&IID_IUnknown>& lp) throw()
 	{
         if(*this!=lp)
         {
@@ -593,10 +686,21 @@ public:
 		m_str = NULL;
 	}
 
+#ifdef _ATL_CCOMBSTR_EXPLICIT_CONSTRUCTORS
+	explicit CComBSTR(_In_ int nSize)
+#else
 	CComBSTR(_In_ int nSize)
+#endif
 	{
+		if (nSize < 0)
+		{
+			AtlThrow(E_INVALIDARG);
+		}
+		
 		if (nSize == 0)
+		{
 			m_str = NULL;
+		}
 		else
 		{
 			m_str = ::SysAllocStringLen(NULL, nSize);
@@ -609,6 +713,11 @@ public:
 
 	CComBSTR(_In_ int nSize, _In_opt_count_(nSize) LPCOLESTR sz)
 	{
+		if (nSize < 0)
+		{
+			AtlThrow(E_INVALIDARG);
+		}
+		
 		if (nSize == 0)
         {
 			m_str = NULL;
@@ -623,7 +732,7 @@ public:
 		}
 	}
 
-	CComBSTR(_In_opt_ LPCOLESTR pSrc)
+	CComBSTR(_In_opt_z_ LPCOLESTR pSrc)
 	{
 		if (pSrc == NULL)
         {
@@ -646,7 +755,7 @@ public:
         {
 			AtlThrow(E_OUTOFMEMORY);
         }
-	}
+	}	
 
 	CComBSTR(_In_ REFGUID guid)
 	{
@@ -673,7 +782,7 @@ public:
 		return *this;
 	}
 
-	CComBSTR& operator=(_In_opt_ LPCOLESTR pSrc)
+	CComBSTR& operator=(_In_opt_z_ LPCOLESTR pSrc)
 	{
 		if (pSrc != m_str)
 		{
@@ -693,7 +802,23 @@ public:
 		}
 		return *this;
 	}
-
+	CComBSTR(_Inout_ CComBSTR&& src)
+	{
+		m_str = src.m_str;
+		src.m_str = NULL;
+	}
+	
+	CComBSTR& operator=(_Inout_ CComBSTR&& src)
+	{
+		if (m_str != src.m_str)
+		{
+			::SysFreeString(m_str);
+			m_str = src.m_str;
+			src.m_str = NULL;
+		}
+		return *this;
+	}
+	
 	~CComBSTR() throw();
 
 	unsigned int Length() const throw()
@@ -721,18 +846,12 @@ public:
 	BSTR* operator&() throw()
 	{
 #ifndef ATL_NO_CCOMBSTR_ADDRESS_OF_ASSERT
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "We are deliberately checking if this has already been allocated")
 		ATLASSERT(!*this);
-#pragma prefast(pop)
-#pragma warning(pop)
 #endif
 		return &m_str;
 	}
 
-	BSTR Copy() const throw()
+	_Ret_opt_z_ BSTR Copy() const throw()
 	{
 		if (!*this)
 		{
@@ -748,7 +867,7 @@ public:
 		}
 	}
 
-	_Check_return_ HRESULT CopyTo(_Inout_opt_ BSTR* pbstr) const throw()
+	_Check_return_ HRESULT CopyTo(_Deref_out_opt_z_ BSTR* pbstr) const throw()
 	{
 		ATLASSERT(pbstr != NULL);
 		if (pbstr == NULL)
@@ -756,21 +875,16 @@ public:
 			return E_POINTER;
         }
 		*pbstr = Copy();
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "We are checking allocation semantics here")
+
 		if ((*pbstr == NULL) && (m_str != NULL))
         {
 			return E_OUTOFMEMORY;
         }
-#pragma prefast(pop)
-#pragma warning(pop)
 		return S_OK;
 	}
 
 	// copy BSTR to VARIANT
-	_Check_return_ HRESULT CopyTo(_Out_opt_ VARIANT *pvarDest) const throw()
+	_Check_return_ HRESULT CopyTo(_Out_ VARIANT *pvarDest) const throw()
 	{
 		ATLASSERT(pvarDest != NULL);
 		HRESULT hRes = E_POINTER;
@@ -778,16 +892,11 @@ public:
 		{
 			pvarDest->vt = VT_BSTR;
 			pvarDest->bstrVal = Copy();
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "We are checking allocation semantics here")
+
 			if (pvarDest->bstrVal == NULL && m_str != NULL)
             {
 				hRes = E_OUTOFMEMORY;
             }
-#pragma prefast(pop)
-#pragma warning(pop)
 			else
             {
 				hRes = S_OK;
@@ -796,7 +905,7 @@ public:
 		return hRes;
 	}
 
-	void Attach(_In_opt_ BSTR src) throw()
+	void Attach(_In_opt_z_ BSTR src) throw()
 	{
 		if (m_str != src)
 		{
@@ -805,7 +914,7 @@ public:
 		}
 	}
 
-	BSTR Detach() throw()
+	_Ret_opt_z_ BSTR Detach() throw()
 	{
 		BSTR s = m_str;
 		m_str = NULL;
@@ -820,13 +929,7 @@ public:
 
 	bool operator!() const throw()
 	{
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
 		return (m_str == NULL);
-#pragma prefast(pop)
-#pragma warning(pop)
 	}
 
 	_Check_return_ HRESULT Append(_In_ const CComBSTR& bstrSrc) throw()
@@ -834,15 +937,14 @@ public:
 		return AppendBSTR(bstrSrc.m_str);
 	}
 
-	_Check_return_ HRESULT Append(_In_opt_ LPCOLESTR lpsz) throw()
-	{
-		__analysis_assume(lpsz);
+	_Check_return_ HRESULT Append(_In_z_ LPCOLESTR lpsz) throw()
+	{		
 		return Append(lpsz, UINT(ocslen(lpsz)));
 	}
 
 	// a BSTR is just a LPCOLESTR so we need a special version to signify
 	// that we are appending a BSTR
-	_Check_return_ HRESULT AppendBSTR(_In_opt_ BSTR p) throw()
+	_Check_return_ HRESULT AppendBSTR(_In_opt_z_ BSTR p) throw()
 	{
         if (::SysStringLen(p) == 0)
         {
@@ -862,34 +964,52 @@ public:
 
 	_Check_return_ HRESULT Append(_In_opt_count_(nLen) LPCOLESTR lpsz, _In_ int nLen) throw()
 	{
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
 		if (lpsz == NULL || (m_str != NULL && nLen == 0))
-#pragma prefast(pop)
-#pragma warning(pop)
+		{
 			return S_OK;
-		int n1 = Length();
-		if (n1+nLen < n1)
-			return E_OUTOFMEMORY;
-		BSTR b;
-		b = ::SysAllocStringLen(NULL, n1+nLen);
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
+		}
+		else if (nLen < 0)
+		{
+			return E_INVALIDARG;
+		}
+		
+		const unsigned int n1 = Length();
+		unsigned int n1Bytes = 0;
+		unsigned int nSize = 0;
+		unsigned int nSizeBytes = 0;
+		
+		HRESULT hr = AtlAdd<unsigned int>(&nSize, n1, nLen);
+		if (FAILED(hr))
+		{
+			return hr;
+		}
+		
+		hr = AtlMultiply<unsigned int>(&nSizeBytes, nSize, sizeof(OLECHAR));
+		if (FAILED(hr))
+		{
+			return hr;
+		}
+		
+		hr = AtlMultiply<unsigned int>(&n1Bytes, n1, sizeof(OLECHAR));
+		if (FAILED(hr))
+		{
+			return hr;
+		}
+		
+		BSTR b = ::SysAllocStringLen(NULL, nSize);
 		if (b == NULL)
-#pragma prefast(pop)
-#pragma warning(pop)
+		{
 			return E_OUTOFMEMORY;
+		}
+		
 		if(::SysStringLen(m_str) > 0)
 		{
 			__analysis_assume(m_str); // ::SysStringLen(m_str) guarantees that m_str != NULL
-			Checked::memcpy_s(b, (n1+nLen)*sizeof(OLECHAR), m_str, n1*sizeof(OLECHAR));
+			Checked::memcpy_s(b, nSizeBytes, m_str, n1Bytes);
 		}
+				
 		Checked::memcpy_s(b+n1, nLen*sizeof(OLECHAR), lpsz, nLen*sizeof(OLECHAR));
-		b[n1+nLen] = NULL;
+		b[nSize] = '\0';
 		SysFreeString(m_str);
 		m_str = b;
 		return S_OK;
@@ -907,40 +1027,49 @@ public:
 		return( Append( &ch, 1 ) );
 	}
 
-	_Check_return_ HRESULT AppendBytes(_In_opt_count_(nLen) const char* lpsz, _In_ int nLen) throw()
+	_Check_return_ HRESULT AppendBytes(
+		_In_opt_count_(nLen) const char* lpsz, 
+		_In_ int nLen) throw()
 	{
 		if (lpsz == NULL || nLen == 0)
+		{
 			return S_OK;
-		int n1 = ByteLength();
-		if (n1+nLen < n1)
-			return E_OUTOFMEMORY;
-		BSTR b;
-		b = ::SysAllocStringByteLen(NULL, n1+nLen);
+		}
+		else if (nLen < 0)
+		{
+			return E_INVALIDARG;
+		}
+				
+		const unsigned int n1 = ByteLength();		
+		unsigned int nSize = 0;
+		HRESULT hr = AtlAdd<unsigned int>(&nSize, n1, nLen);
+		if (FAILED(hr))
+		{
+			return hr;
+		}
+						 
+		BSTR b = ::SysAllocStringByteLen(NULL, nSize);
 		if (b == NULL)
         {
 			return E_OUTOFMEMORY;
         }
-		Checked::memcpy_s(b, n1+nLen, m_str, n1);
-		Checked::memcpy_s(((char*)b)+n1, nLen, lpsz, nLen);
-		*((OLECHAR*)(((char*)b)+n1+nLen)) = NULL;
+		
+		Checked::memcpy_s(b, nSize, m_str, n1);
+		Checked::memcpy_s(((char*)b) + n1, nLen, lpsz, nLen);
+		
+		*((OLECHAR*)(((char*)b) + nSize)) = '\0';
 		SysFreeString(m_str);
 		m_str = b;
 		return S_OK;
 	}
 
-	_Check_return_ HRESULT AssignBSTR(const BSTR bstrSrc) throw()
+	_Check_return_ HRESULT AssignBSTR(_In_opt_z_ const BSTR bstrSrc) throw()
 	{
 		HRESULT hr = S_OK;
 		if (m_str != bstrSrc)
 		{
 			::SysFreeString(m_str);
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
 			if (bstrSrc != NULL)
-#pragma prefast(pop)
-#pragma warning(pop)
 			{
 				m_str = ::SysAllocStringByteLen((char*)bstrSrc, ::SysStringByteLen(bstrSrc));
 				if (!*this)
@@ -1066,7 +1195,9 @@ public:
 		return S_OK;
 	}
 
-	bool LoadString(_In_ HINSTANCE hInst, _In_ UINT nID) throw()
+	bool LoadString(
+		_In_ HINSTANCE hInst, 
+		_In_ UINT nID) throw()
 	{
 		::SysFreeString(m_str);
 		m_str = NULL;
@@ -1089,7 +1220,7 @@ public:
 		return *this;
 	}
 
-	CComBSTR& operator+=(_In_opt_ LPCOLESTR pszSrc)
+	CComBSTR& operator+=(_In_z_ LPCOLESTR pszSrc)
 	{
 		HRESULT hr;
 		hr = Append(pszSrc);
@@ -1098,25 +1229,25 @@ public:
 		return *this;
 	}
 
-	bool operator<(const CComBSTR& bstrSrc) const throw()
+	bool operator<(_In_ const CComBSTR& bstrSrc) const throw()
 	{
 		return VarBstrCmp(m_str, bstrSrc.m_str, LOCALE_USER_DEFAULT, 0) == static_cast<HRESULT>(VARCMP_LT);
 	}
-	bool operator<(LPCOLESTR pszSrc) const
+	bool operator<(_In_z_ LPCOLESTR pszSrc) const
 	{
 		CComBSTR bstr2(pszSrc);
 		return operator<(bstr2);
 	}
-	bool operator<(LPOLESTR pszSrc) const
+	bool operator<(_In_z_ LPOLESTR pszSrc) const
 	{
 		return operator<((LPCOLESTR)pszSrc);
 	}
 
-	bool operator>(const CComBSTR& bstrSrc) const throw()
+	bool operator>(_In_ const CComBSTR& bstrSrc) const throw()
 	{
 		return VarBstrCmp(m_str, bstrSrc.m_str, LOCALE_USER_DEFAULT, 0) == static_cast<HRESULT>(VARCMP_GT);
 	}
-	bool operator>(LPCOLESTR pszSrc) const
+	bool operator>(_In_z_ LPCOLESTR pszSrc) const
 	{
 		CComBSTR bstr2(pszSrc);
 		return operator>(bstr2);
@@ -1126,15 +1257,15 @@ public:
 		return operator>((LPCOLESTR)pszSrc);
 	}
 	
-	bool operator!=(const CComBSTR& bstrSrc) const throw()
+	bool operator!=(_In_ const CComBSTR& bstrSrc) const throw()
 	{
 		return !operator==(bstrSrc);
 	}
-	bool operator!=(LPCOLESTR pszSrc) const
+	bool operator!=(_In_z_ LPCOLESTR pszSrc) const
 	{
 		return !operator==(pszSrc);
 	}
-	bool operator!=(int nNull) const throw()
+	bool operator!=(_In_ int nNull) const throw()
 	{
 		return !operator==(nNull);
 	}
@@ -1142,8 +1273,7 @@ public:
 	{
 		return operator!=((LPCOLESTR)pszSrc);
 	}
-
-	bool operator==(const CComBSTR& bstrSrc) const throw()
+	bool operator==(_In_ const CComBSTR& bstrSrc) const throw()
 	{
 		return VarBstrCmp(m_str, bstrSrc.m_str, LOCALE_USER_DEFAULT, 0) == static_cast<HRESULT>(VARCMP_EQ);
 	}
@@ -1157,14 +1287,44 @@ public:
 		return operator==((LPCOLESTR)pszSrc);
 	}
 	
-	bool operator==(int nNull) const throw()
+	bool operator==(_In_ int nNull) const throw()
 	{
-		ATLASSERT(nNull == NULL);
+		ATLASSERT(nNull == 0);
 		(void)nNull;
 		return (!*this);
 	}
 
-	CComBSTR(_In_opt_ LPCSTR pSrc)
+#if defined(_NATIVE_NULLPTR_SUPPORTED) && !defined(_DO_NOT_USE_NULLPTR_IN_ATL)
+	#ifdef _M_CEE
+		CComBSTR(decltype(__nullptr)) 
+		{
+			m_str = NULL; 
+		}
+		bool operator==(decltype(__nullptr)) const throw() 
+		{
+			return *this == 0; 
+		}
+		bool operator!=(decltype(__nullptr)) const throw() 
+		{
+			return *this != 0; 
+		}
+	#else // _M_CEE
+		CComBSTR(decltype(nullptr)) 
+		{
+			m_str = NULL; 
+		}
+		bool operator==(decltype(nullptr)) const throw() 
+		{ 
+			return *this == 0; 
+		}
+		bool operator!=(decltype(nullptr)) const throw() 
+		{
+			return *this != 0; 
+		}
+	#endif // _M_CEE
+#endif // defined(_NATIVE_NULLPTR_SUPPORTED) && !defined(_DO_NOT_USE_NULLPTR_IN_ATL)
+
+	CComBSTR(_In_opt_z_ LPCSTR pSrc)
 	{
 		if (pSrc != NULL)
 		{
@@ -1182,13 +1342,18 @@ public:
 
 	CComBSTR(_In_ int nSize, _In_opt_count_(nSize) LPCSTR sz)
 	{
+		if (nSize < 0)
+		{
+			AtlThrow(E_INVALIDARG);
+		}
+		
 		if (nSize != 0 && sz == NULL)
 		{
 			m_str = ::SysAllocStringLen(NULL, nSize);
 			if (!*this)
-            {
+			{
 				AtlThrow(E_OUTOFMEMORY);
-            }
+			}
 			return;
 		}
 
@@ -1199,7 +1364,7 @@ public:
         }
 	}
 
-	_Check_return_ HRESULT Append(_In_opt_ LPCSTR lpsz) throw()
+	_Check_return_ HRESULT Append(_In_opt_z_ LPCSTR lpsz) throw()
 	{
 		if (lpsz == NULL)
 			return S_OK;
@@ -1213,7 +1378,7 @@ public:
 		return Append(bstrTemp);
 	}
 
-	CComBSTR& operator=(_In_opt_ LPCSTR pSrc)
+	CComBSTR& operator=(_In_opt_z_ LPCSTR pSrc)
 	{
 		::SysFreeString(m_str);
 		m_str = A2WBSTR(pSrc);
@@ -1224,21 +1389,21 @@ public:
 		return *this;
 	}
 
-	bool operator<(_In_opt_ LPCSTR pszSrc) const
+	bool operator<(_In_opt_z_ LPCSTR pszSrc) const
 	{
 		CComBSTR bstr2(pszSrc);
 		return operator<(bstr2);
 	}
-	bool operator>(_In_opt_ LPCSTR pszSrc) const
+	bool operator>(_In_opt_z_ LPCSTR pszSrc) const
 	{
 		CComBSTR bstr2(pszSrc);
 		return operator>(bstr2);
 	}
-	bool operator!=(_In_opt_ LPCSTR pszSrc) const
+	bool operator!=(_In_opt_z_ LPCSTR pszSrc) const
 	{
 		return !operator==(pszSrc);
 	}
-	bool operator==(_In_opt_ LPCSTR pszSrc) const
+	bool operator==(_In_opt_z_ LPCSTR pszSrc) const
 	{
 		CComBSTR bstr2(pszSrc);
 		return operator==(bstr2);
@@ -1248,14 +1413,26 @@ public:
 	{
 		ATLASSERT(pStream != NULL);
 		if(pStream == NULL)
+		{
 			return E_INVALIDARG;
-			
+		}
+		
 		ULONG cb;
-		ULONG cbStrLen = CComBSTR::GetStreamSize(m_str) - sizeof(ULONG);
+		ULONG cbStrLen = CComBSTR::GetStreamSize(m_str);		
+		ATLASSERT(cbStrLen >= sizeof(ULONG));
+		cbStrLen -= sizeof(ULONG);
+			
 		HRESULT hr = pStream->Write((void*) &cbStrLen, sizeof(cbStrLen), &cb);
 		if (FAILED(hr))
+		{
 			return hr;
-		return cbStrLen ? pStream->Write((void*) m_str, cbStrLen, &cb) : S_OK;
+		}
+		
+		if (cbStrLen == 0)
+		{
+			return S_OK;
+		}			
+		return pStream->Write((void*) m_str, cbStrLen, &cb);
 	}
 
 	_Check_return_ HRESULT ReadFromStream(_Inout_ IStream* pStream) throw()
@@ -1265,7 +1442,7 @@ public:
 		{
 			return E_INVALIDARG;
 		}
-			
+
 		ATLASSERT(!*this); // should be empty
 		Empty();
 		
@@ -1333,16 +1510,15 @@ public:
 
 							if (SUCCEEDED(hr))
 							{								
-								if (cbRead != sizeof(OLECHAR)) 
+#ifndef _ATL_CCOMBSTR_READFROMSTREAM_INSECURE
+								if (cbRead != sizeof(OLECHAR) || ch != L'\0')
+#else
+								if (cbRead != sizeof(OLECHAR))
+#endif
 								{
 									ATLTRACE(atlTraceCOM, 0, _T("Cannot read NULL terminator from stream."));
 									hr = E_FAIL; 									
-								}
-								else
-								{
-									//check if string is properly terminated with NULL
-									ATLASSERT(ch == L'\0');
-								}
+								}								
 							}
 						}
 					}			
@@ -1368,61 +1544,50 @@ public:
 		return hr;
 	}
 
-	static bool LoadStringResource(_In_ HINSTANCE hInstance, _In_ UINT uID, _Inout_ _Deref_post_opt_valid_ BSTR& bstrText) throw()
+	static bool LoadStringResource(
+		_In_ HINSTANCE hInstance, 
+		_In_ UINT uID, 
+		_Deref_out_opt_z_ BSTR& bstrText) throw()
 	{
-		const ATLSTRINGRESOURCEIMAGE* pImage;
-
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
+ATLPREFAST_SUPPRESS(6001) // Using uninitialized memory
 		ATLASSERT(bstrText == NULL);
-#pragma prefast(pop)
-#pragma warning(pop)
-
-		pImage = AtlGetStringResourceImage(hInstance, uID);
+ATLPREFAST_UNSUPPRESS()
+	
+		const ATLSTRINGRESOURCEIMAGE* pImage = AtlGetStringResourceImage(hInstance, uID);
 		if (pImage != NULL)
 		{
 			bstrText = ::SysAllocStringLen(pImage->achString, pImage->nLength);
 		}
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
+		else 
+		{
+			bstrText = NULL;
+		}
 		return (bstrText != NULL) ? true : false;
-#pragma prefast(pop)
-#pragma warning(pop)
 	}
 
-	static bool LoadStringResource(_In_ UINT uID, _Inout_ _Deref_post_opt_valid_ BSTR& bstrText) throw()
+	static bool LoadStringResource(
+		_In_ UINT uID, 
+		_Deref_out_opt_z_ BSTR& bstrText) throw()
 	{
-		const ATLSTRINGRESOURCEIMAGE* pImage;
-
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
+ATLPREFAST_SUPPRESS(6001) // Using uninitialized memory
 		ATLASSERT(bstrText == NULL);
-#pragma prefast(pop)
-#pragma warning(pop)
-
-		pImage = AtlGetStringResourceImage(uID);
+ATLPREFAST_UNSUPPRESS()
+	
+		const ATLSTRINGRESOURCEIMAGE* pImage = AtlGetStringResourceImage(uID);	
 		if (pImage != NULL)
 		{
 			bstrText = ::SysAllocStringLen(pImage->achString, pImage->nLength);
 		}
+		else 
+		{
+			bstrText = NULL;
+		}
 
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
 		return (bstrText != NULL) ? true : false;
-#pragma prefast(pop)
-#pragma warning(pop)
 	}
 
 	// each character in BSTR is copied to each element in SAFEARRAY
-	_Success_(SUCCEEDED(return)) HRESULT BSTRToArray(_Deref_out_ LPSAFEARRAY *ppArray) throw()
+	HRESULT BSTRToArray(_Deref_out_ LPSAFEARRAY *ppArray) throw()
 	{
 		return VectorFromBstr(m_str, ppArray);
 	}
@@ -1433,19 +1598,14 @@ public:
 		::SysFreeString(m_str);
 		return BstrFromVector((LPSAFEARRAY)pSrc, &m_str);
 	}
-	static ULONG GetStreamSize(BSTR bstr)
+	static ULONG GetStreamSize(_In_opt_z_ BSTR bstr)
 	{
-		ULONG ulSize=sizeof(ULONG);
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
+		ULONG ulSize = sizeof(ULONG);
 		if (bstr != NULL)
-#pragma prefast(pop)
-#pragma warning(pop)
 		{
-			ulSize += SysStringByteLen(bstr) + sizeof(OLECHAR);
-		}
+			ulSize += SysStringByteLen(bstr) + sizeof(OLECHAR);			
+		}		
+		
 		return ulSize;
 	}
 };
@@ -1460,27 +1620,26 @@ inline void SysFreeStringHelper(_In_ CComBSTR& bstr)
 	bstr.Empty();
 }
 
-inline void SysFreeStringHelper(BSTR bstr)
+inline void SysFreeStringHelper(_In_opt_z_ BSTR bstr)
 {
-	::SysFreeString(bstr);	
+	::SysFreeString(bstr);
 }
 
-_Check_return_ inline HRESULT SysAllocStringHelper(_Out_ CComBSTR& bstrDest,BSTR bstrSrc)
+_Check_return_ inline HRESULT SysAllocStringHelper(
+	_Out_ CComBSTR& bstrDest,
+	_In_opt_z_ BSTR bstrSrc)
 {
 	bstrDest=bstrSrc;
 	return !bstrDest ? E_OUTOFMEMORY : S_OK;
 }
 
-_Check_return_ inline HRESULT SysAllocStringHelper(_Out_ BSTR& bstrDest,BSTR bstrSrc)
+_Check_return_ inline HRESULT SysAllocStringHelper(
+	_Out_ BSTR& bstrDest,
+	_In_opt_z_ BSTR bstrSrc)
 {
 	bstrDest=::SysAllocString(bstrSrc);
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "The semantics of this function are about allocation, not content")
+
 	return bstrDest==NULL ? E_OUTOFMEMORY : S_OK;
-#pragma prefast(pop)
-#pragma warning(pop)
 }
 
 /////////////////////////////////////////////////////////////
@@ -1498,18 +1657,47 @@ public:
 	CAdapt(_In_ const T& rSrc) :
 		m_T( rSrc )
 	{
-	}
-
+	}	
 	CAdapt(_In_ const CAdapt& rSrCA) :
 		m_T( rSrCA.m_T )
+	{	
+	}	
+	CAdapt& operator=(_In_ const T& rSrc)
+	{		
+		m_T = rSrc;
+
+		return *this;
+	}	
+	CAdapt& operator=(_In_ const CAdapt<T>& rSrc)
+	{		
+		if (this != &rSrc)
+		{
+			m_T = rSrc.m_T;			
+		}		
+		return *this;
+	}	
+	CAdapt(_Inout_ T&& rSrc) :
+		m_T( static_cast<T&&>(rSrc) )
 	{
 	}
-
-	CAdapt& operator=(_In_ const T& rSrc)
-	{
-		m_T = rSrc;
+	CAdapt(_Inout_ CAdapt&& rSrCA) : 
+		m_T( static_cast<T&&>(rSrCA.m_T) )
+	{		
+	}
+	CAdapt& operator=(_Inout_ T&& rSrc)
+	{	
+		m_T = static_cast<T&&>(rSrc);	
+				
 		return *this;
 	}
+	CAdapt& operator=(_Inout_ CAdapt<T>&& rSrc)
+	{			
+		if (this != &rSrc)
+		{
+			m_T = static_cast<T&&>( rSrc.m_T );
+		}		
+		return *this;
+	}	
 	bool operator<(_In_ const T& rSrc) const
 	{
 		return m_T < rSrc;
@@ -1524,6 +1712,16 @@ public:
 	}
 
 	operator const T&() const
+	{
+		return m_T;
+	}
+
+	T& operator->()
+	{
+		return m_T;
+	}
+
+	const T& operator->() const
 	{
 		return m_T;
 	}
@@ -1549,6 +1747,9 @@ template<>
 class CVarTypeInfo< char >
 {
 public:
+#ifdef _CHAR_UNSIGNED
+	ATLSTATIC_ASSERT(false, "CVarTypeInfo< char > cannot be compiled with /J or _CHAR_UNSIGNED flag enabled");
+#endif
 	static const VARTYPE VT = VT_I1;
 	static char VARIANT::* const pmField;
 };
@@ -1569,6 +1770,9 @@ template<>
 class CVarTypeInfo< char* >
 {
 public:
+#ifdef _CHAR_UNSIGNED
+	ATLSTATIC_ASSERT(false, "CVarTypeInfo< char* > cannot be compiled with /J or _CHAR_UNSIGNED flag enabled");
+#endif
 	static const VARTYPE VT = VT_I1|VT_BYREF;
 	static char* VARIANT::* const pmField;
 };
@@ -1788,10 +1992,11 @@ public:
 __declspec( selectany ) double* VARIANT::* const CVarTypeInfo< double* >::pmField = &VARIANT::pdblVal;
 
 template<>
-class CVarTypeInfo< VARIANT >
+
+class CVarTypeInfo< VARIANT* >
 {
 public:
-	static const VARTYPE VT = VT_VARIANT;
+	static const VARTYPE VT = VT_VARIANT|VT_BYREF;
 };
 
 template<>
@@ -1874,7 +2079,14 @@ public:
 
 __declspec( selectany ) CY* VARIANT::* const CVarTypeInfo< CY* >::pmField = &VARIANT::pcyVal;
 
-class CComVariant : public tagVARIANT
+#ifdef _ATL_NO_VARIANT_THROW
+#define ATLVARIANT_THROW()		throw()
+#else
+#define ATLVARIANT_THROW()
+#endif
+
+class CComVariant : 
+	public tagVARIANT
 {
 // Constructors
 public:
@@ -1884,44 +2096,54 @@ public:
 	}
 	~CComVariant() throw()
 	{
-		Clear();
+		HRESULT hr = Clear();
+		ATLASSERT(SUCCEEDED(hr));
+		(hr);
 	}
-
-	CComVariant(_In_ const VARIANT& varSrc)
+	CComVariant(_In_ const VARIANT& varSrc) ATLVARIANT_THROW()
 	{
 		vt = VT_EMPTY;
 		InternalCopy(&varSrc);
 	}
-
-	CComVariant(_In_ const CComVariant& varSrc)
+	CComVariant(_In_ const CComVariant& varSrc) ATLVARIANT_THROW()
 	{
 		vt = VT_EMPTY;
 		InternalCopy(&varSrc);
 	}
-	CComVariant(_In_ LPCOLESTR lpszSrc)
+	CComVariant(_In_z_ LPCOLESTR lpszSrc) ATLVARIANT_THROW()
 	{
 		vt = VT_EMPTY;
 		*this = lpszSrc;
 	}
-
-	CComVariant(_In_ LPCSTR lpszSrc)
+	CComVariant(_In_z_ LPCSTR lpszSrc) ATLVARIANT_THROW()
 	{
 		vt = VT_EMPTY;
 		*this = lpszSrc;
 	}
-
-	CComVariant(_In_ bool bSrc)
+	CComVariant(_In_ bool bSrc) throw()
 	{
 		vt = VT_BOOL;
 		boolVal = bSrc ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 	}
 
-	CComVariant(_In_ int nSrc, _In_ VARTYPE vtSrc = VT_I4) throw()
+	CComVariant(_In_ int nSrc, _In_ VARTYPE vtSrc = VT_I4) ATLVARIANT_THROW()
 	{
 		ATLASSERT(vtSrc == VT_I4 || vtSrc == VT_INT);
-		vt = vtSrc;
-		intVal = nSrc;
+		if (vtSrc == VT_I4 || vtSrc == VT_INT)
+		{
+			vt = vtSrc;
+			intVal = nSrc;
+		}
+		else
+		{
+			vt = VT_ERROR;
+			scode = E_INVALIDARG;
+#ifndef _ATL_NO_VARIANT_THROW
+			AtlThrow(E_INVALIDARG);
+#endif			
+		}
 	}
+
 	CComVariant(_In_ BYTE nSrc) throw()
 	{
 		vt = VT_UI1;
@@ -1932,23 +2154,47 @@ public:
 		vt = VT_I2;
 		iVal = nSrc;
 	}
-	CComVariant(_In_ long nSrc, _In_ VARTYPE vtSrc = VT_I4) throw()
+	CComVariant(_In_ long nSrc, _In_ VARTYPE vtSrc = VT_I4) ATLVARIANT_THROW()
 	{
 		ATLASSERT(vtSrc == VT_I4 || vtSrc == VT_ERROR);
-		vt = vtSrc;
-		lVal = nSrc;
+		if (vtSrc == VT_I4 || vtSrc == VT_ERROR)
+		{
+			vt = vtSrc;
+			lVal = nSrc;
+		}
+		else
+		{
+			vt = VT_ERROR;
+			scode = E_INVALIDARG;
+#ifndef _ATL_NO_VARIANT_THROW
+			AtlThrow(E_INVALIDARG);
+#endif
+		}
 	}
+
 	CComVariant(_In_ float fltSrc) throw()
 	{
 		vt = VT_R4;
 		fltVal = fltSrc;
 	}
-	CComVariant(_In_ double dblSrc, _In_ VARTYPE vtSrc = VT_R8) throw()
+	CComVariant(_In_ double dblSrc, _In_ VARTYPE vtSrc = VT_R8) ATLVARIANT_THROW()
 	{
 		ATLASSERT(vtSrc == VT_R8 || vtSrc == VT_DATE);
-		vt = vtSrc;
-		dblVal = dblSrc;
+		if (vtSrc == VT_R8 || vtSrc == VT_DATE)
+		{
+			vt = vtSrc;
+			dblVal = dblSrc;
+		}
+		else
+		{
+			vt = VT_ERROR;
+			scode = E_INVALIDARG;
+#ifndef _ATL_NO_VARIANT_THROW
+			AtlThrow(E_INVALIDARG);
+#endif
+		}
 	}
+
 #if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
 	CComVariant(_In_ LONGLONG nSrc) throw()
 	{
@@ -1998,24 +2244,44 @@ public:
 		vt = VT_UI4;
 		ulVal = nSrc;
 	}
-	CComVariant(_In_ unsigned int nSrc, _In_ VARTYPE vtSrc = VT_UI4) throw()
+	CComVariant(_In_ unsigned int nSrc, _In_ VARTYPE vtSrc = VT_UI4) ATLVARIANT_THROW()
 	{
 		ATLASSERT(vtSrc == VT_UI4 || vtSrc == VT_UINT);
-		vt = vtSrc;
-		uintVal= nSrc;
+		if (vtSrc == VT_UI4 || vtSrc == VT_UINT)
+		{
+			vt = vtSrc;
+			uintVal= nSrc;
+		}
+		else
+		{
+			vt = VT_ERROR;
+			scode = E_INVALIDARG;
+#ifndef _ATL_NO_VARIANT_THROW
+			AtlThrow(E_INVALIDARG);
+#endif
+		}		
 	}
-	CComVariant(_In_ const CComBSTR& bstrSrc)
+	CComVariant(_In_ const CComBSTR& bstrSrc) ATLVARIANT_THROW()
 	{
 		vt = VT_EMPTY;
 		*this = bstrSrc;
 	}
-	CComVariant(_In_opt_ const SAFEARRAY *pSrc)
-	{
-		LPSAFEARRAY pCopy;
-		if (pSrc != NULL)
+	CComVariant(_In_ const SAFEARRAY *pSrc) ATLVARIANT_THROW()
+	{		
+		ATLASSERT(pSrc != NULL);
+		if (pSrc == NULL)
 		{
+			vt = VT_ERROR;
+			scode = E_INVALIDARG;
+#ifndef _ATL_NO_VARIANT_THROW
+			AtlThrow(E_INVALIDARG);
+#endif			
+		}
+		else
+		{
+			LPSAFEARRAY pCopy;
 			HRESULT hRes = ::SafeArrayCopy((LPSAFEARRAY)pSrc, &pCopy);
-			if (SUCCEEDED(hRes) && pCopy != NULL)
+			if (SUCCEEDED(hRes))
 			{
 				::ATL::AtlSafeArrayGetActualVartype((LPSAFEARRAY)pSrc, &vt);
 				vt |= VT_ARRAY;
@@ -2032,19 +2298,15 @@ public:
 				}
 				else
 				{
-					ATLENSURE_THROW(FALSE, E_INVALIDARG);
+					ATLENSURE_THROW(FALSE, hRes);
 				}
 #endif
 			}
 		}
-		else
-		{
-			vt = VT_EMPTY;
-		}
 	}
 // Assignment Operators
 public:
-	CComVariant& operator=(_In_ const CComVariant& varSrc)
+	CComVariant& operator=(_In_ const CComVariant& varSrc) ATLVARIANT_THROW()
 	{
         if(this!=&varSrc)
         {
@@ -2052,7 +2314,7 @@ public:
         }
 		return *this;
 	}
-	CComVariant& operator=(_In_ const VARIANT& varSrc)
+	CComVariant& operator=(_In_ const VARIANT& varSrc) ATLVARIANT_THROW()
 	{
         if(static_cast<VARIANT *>(this)!=&varSrc)
         {
@@ -2061,15 +2323,13 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ const CComBSTR& bstrSrc)
+	CComVariant& operator=(_In_ const CComBSTR& bstrSrc) ATLVARIANT_THROW()
 	{
-		Clear();
+		ClearThrow();
+
 		vt = VT_BSTR;
 		bstrVal = bstrSrc.Copy();
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "We are checking allocation semantics here")
+
 		if (bstrVal == NULL && bstrSrc.m_str != NULL)
 		{
 			vt = VT_ERROR;
@@ -2078,14 +2338,14 @@ public:
 			AtlThrow(E_OUTOFMEMORY);
 #endif
 		}
-#pragma prefast(pop)
-#pragma warning(pop)
+
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ LPCOLESTR lpszSrc)
+	CComVariant& operator=(_In_z_ LPCOLESTR lpszSrc) ATLVARIANT_THROW()
 	{
-		Clear();
+		ClearThrow();
+
 		vt = VT_BSTR;
 		bstrVal = ::SysAllocString(lpszSrc);
 
@@ -2101,10 +2361,11 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ LPCSTR lpszSrc)
+	CComVariant& operator=(_In_z_ LPCSTR lpszSrc) ATLVARIANT_THROW()
 	{
 		USES_CONVERSION_EX;
-		Clear();
+		ClearThrow();
+
 		vt = VT_BSTR;
 		bstrVal = ::SysAllocString(A2COLE_EX(lpszSrc, _ATL_SAFE_ALLOCA_DEF_THRESHOLD));
 
@@ -2119,22 +2380,22 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ bool bSrc)
+	CComVariant& operator=(_In_ bool bSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_BOOL)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_BOOL;
 		}
 		boolVal = bSrc ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ int nSrc) throw()
+	CComVariant& operator=(_In_ int nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_I4)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I4;
 		}
 		intVal = nSrc;
@@ -2142,66 +2403,66 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ BYTE nSrc) throw()
+	CComVariant& operator=(_In_ BYTE nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_UI1)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI1;
 		}
 		bVal = nSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ short nSrc) throw()
+	CComVariant& operator=(_In_ short nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_I2)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I2;
 		}
 		iVal = nSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ long nSrc) throw()
+	CComVariant& operator=(_In_ long nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_I4)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I4;
 		}
 		lVal = nSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ float fltSrc) throw()
+	CComVariant& operator=(_In_ float fltSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_R4)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_R4;
 		}
 		fltVal = fltSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ double dblSrc) throw()
+	CComVariant& operator=(_In_ double dblSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_R8)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_R8;
 		}
 		dblVal = dblSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ CY cySrc) throw()
+	CComVariant& operator=(_In_ CY cySrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_CY)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_CY;
 		}
 		cyVal.Hi = cySrc.Hi;
@@ -2209,9 +2470,10 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ IDispatch* pSrc) throw()
+	CComVariant& operator=(_Inout_opt_ IDispatch* pSrc) ATLVARIANT_THROW()
 	{
-		Clear();
+		ClearThrow();
+		
 		vt = VT_DISPATCH;
 		pdispVal = pSrc;
 		// Need to AddRef as VariantClear will Release
@@ -2220,9 +2482,10 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ IUnknown* pSrc) throw()
+	CComVariant& operator=(_Inout_opt_ IUnknown* pSrc) ATLVARIANT_THROW()
 	{
-		Clear();
+		ClearThrow();
+		
 		vt = VT_UNKNOWN;
 		punkVal = pSrc;
 
@@ -2232,66 +2495,66 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ char cSrc) throw()
+	CComVariant& operator=(_In_ char cSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_I1)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I1;
 		}
 		cVal = cSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ unsigned short nSrc) throw()
+	CComVariant& operator=(_In_ unsigned short nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_UI2)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI2;
 		}
 		uiVal = nSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ unsigned long nSrc) throw()
+	CComVariant& operator=(_In_ unsigned long nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_UI4)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI4;
 		}
 		ulVal = nSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ unsigned int nSrc) throw()
+	CComVariant& operator=(_In_ unsigned int nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_UI4)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI4;
 		}
 		uintVal= nSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ BYTE* pbSrc) throw()
+	CComVariant& operator=(_In_ BYTE* pbSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_UI1|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI1|VT_BYREF;
 		}
 		pbVal = pbSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ short* pnSrc) throw()
+	CComVariant& operator=(_In_ short* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_I2|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I2|VT_BYREF;
 		}
 		piVal = pnSrc;
@@ -2299,11 +2562,11 @@ public:
 	}
 
 #ifdef _NATIVE_WCHAR_T_DEFINED
-	CComVariant& operator=(_In_opt_ USHORT* pnSrc) throw()
+	CComVariant& operator=(_In_ USHORT* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_UI2|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI2|VT_BYREF;
 		}
 		puiVal = pnSrc;
@@ -2311,44 +2574,44 @@ public:
 	}
 #endif
 
-	CComVariant& operator=(_In_opt_ int* pnSrc) throw()
+	CComVariant& operator=(_In_ int* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_I4|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();			
 			vt = VT_I4|VT_BYREF;
 		}
 		pintVal = pnSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ UINT* pnSrc) throw()
+	CComVariant& operator=(_In_ UINT* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_UI4|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI4|VT_BYREF;
 		}
 		puintVal = pnSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ long* pnSrc) throw()
+	CComVariant& operator=(_In_ long* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_I4|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I4|VT_BYREF;
 		}
 		plVal = pnSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ ULONG* pnSrc) throw()
+	CComVariant& operator=(_In_ ULONG* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_UI4|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI4|VT_BYREF;
 		}
 		pulVal = pnSrc;
@@ -2356,11 +2619,11 @@ public:
 	}
 
 #if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
-	CComVariant& operator=(_In_ LONGLONG nSrc) throw()
+	CComVariant& operator=(_In_ LONGLONG nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_I8)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I8;
 		}
 		llVal = nSrc;
@@ -2368,22 +2631,22 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ LONGLONG* pnSrc) throw()
+	CComVariant& operator=(_In_ LONGLONG* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_I8|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_I8|VT_BYREF;
 		}
 		pllVal = pnSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_ ULONGLONG nSrc) throw()
+	CComVariant& operator=(_In_ ULONGLONG nSrc) ATLVARIANT_THROW()
 	{
 		if (vt != VT_UI8)
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI8;
 		}
 		ullVal = nSrc;
@@ -2391,11 +2654,11 @@ public:
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ ULONGLONG* pnSrc) throw()
+	CComVariant& operator=(_In_ ULONGLONG* pnSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_UI8|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_UI8|VT_BYREF;
 		}
 		pullVal = pnSrc;
@@ -2403,36 +2666,46 @@ public:
 	}
 #endif
 
-	CComVariant& operator=(_In_opt_ float* pfSrc) throw()
+	CComVariant& operator=(_In_ float* pfSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_R4|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_R4|VT_BYREF;
 		}
 		pfltVal = pfSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ double* pfSrc) throw()
+	CComVariant& operator=(_In_ double* pfSrc) ATLVARIANT_THROW()
 	{
 		if (vt != (VT_R8|VT_BYREF))
 		{
-			Clear();
+			ClearThrow();
 			vt = VT_R8|VT_BYREF;
 		}
 		pdblVal = pfSrc;
 		return *this;
 	}
 
-	CComVariant& operator=(_In_opt_ const SAFEARRAY *pSrc)
+	CComVariant& operator=(_In_ const SAFEARRAY *pSrc) ATLVARIANT_THROW()
 	{
-		Clear();
-		LPSAFEARRAY pCopy;
-		if (pSrc != NULL)
+		ATLASSERT(pSrc != NULL);
+		ClearThrow();
+		
+		if (pSrc == NULL)
 		{
-			HRESULT hRes = ::SafeArrayCopy((LPSAFEARRAY)pSrc, &pCopy);
-			if (SUCCEEDED(hRes) && pCopy != NULL)
+			vt = VT_ERROR;
+			scode = E_INVALIDARG;
+#ifndef _ATL_NO_VARIANT_THROW
+			AtlThrow(E_INVALIDARG);
+#endif
+		}
+		else 
+		{			
+			LPSAFEARRAY pCopy;
+			HRESULT hr = ::SafeArrayCopy((LPSAFEARRAY)pSrc, &pCopy);
+			if (SUCCEEDED(hr))
 			{
 				::ATL::AtlSafeArrayGetActualVartype((LPSAFEARRAY)pSrc, &vt);
 				vt |= VT_ARRAY;
@@ -2441,19 +2714,20 @@ public:
 			else
 			{
 				vt = VT_ERROR;
-				scode = hRes;
+				scode = hr;
 #ifndef _ATL_NO_VARIANT_THROW
-				if(hRes == E_OUTOFMEMORY)
+				if(hr == E_OUTOFMEMORY)
 				{
 					AtlThrow(E_OUTOFMEMORY);
 				}
 				else
 				{
-					ATLENSURE_THROW(FALSE, E_INVALIDARG);
+					ATLENSURE_THROW(FALSE, hr);
 				}
 #endif
 			}
 		}
+		
 		return *this;
 	}
 
@@ -2493,23 +2767,27 @@ public:
 		return VarCmp((VARIANT*)this, (VARIANT*)&varSrc, LOCALE_USER_DEFAULT, 0)== static_cast<HRESULT>(VARCMP_GT);
 	}
 
+private:
+	inline HRESULT VarCmp(
+		_In_ LPVARIANT pvarLeft, 
+		_In_ LPVARIANT pvarRight, 
+		_In_ LCID lcid, 
+		_In_ ULONG dwFlags) const throw();
+
 // Operations
 public:
-	HRESULT Clear() { return ::VariantClear(this); }
-	HRESULT ClearToZero() 
-	{
-		HRESULT hr = ::VariantClear(this); 
-		if( FAILED(hr) )
-		{
-			return hr;
-		}
-		memset(this ,0 ,sizeof(tagVARIANT));
-		vt = VT_EMPTY;
-		return hr;
+	HRESULT Clear()
+	{ 
+		return ::VariantClear(this); 
+	}	
+	HRESULT Copy(_In_ const VARIANT* pSrc)
+	{ 
+		return ::VariantCopy(this, const_cast<VARIANT*>(pSrc)); 
 	}
-	HRESULT Copy(_In_ const VARIANT* pSrc) { return ::VariantCopy(this, const_cast<VARIANT*>(pSrc)); }
+	
+ATLPREFAST_SUPPRESS(6387)
 	// copy VARIANT to BSTR
-	HRESULT CopyTo(_Out_ BSTR *pstrDest) const
+	HRESULT CopyTo(_Deref_out_z_ BSTR *pstrDest) const
 	{
 		ATLASSERT(pstrDest != NULL && vt == VT_BSTR);
 		HRESULT hRes = E_POINTER;
@@ -2523,8 +2801,11 @@ public:
 		}
 		else if (vt != VT_BSTR)
 			hRes = DISP_E_TYPEMISMATCH;
+				
 		return hRes;
 	}
+ATLPREFAST_UNSUPPRESS()
+	
 	HRESULT Attach(_In_ VARIANT* pSrc)
 	{
 		if(pSrc == NULL)
@@ -2532,7 +2813,7 @@ public:
 			
 		// Clear out the variant
 		HRESULT hr = Clear();
-		if (!FAILED(hr))
+		if (SUCCEEDED(hr))
 		{
 			// Copy the contents and give control to CComVariant
 			Checked::memcpy_s(this, sizeof(CComVariant), pSrc, sizeof(VARIANT));
@@ -2550,7 +2831,7 @@ public:
 			
 		// Clear out the variant
 		HRESULT hr = ::VariantClear(pDest);
-		if (!FAILED(hr))
+		if (SUCCEEDED(hr))
 		{
 			// Copy the contents and remove control from CComVariant
 			Checked::memcpy_s(pDest, sizeof(VARIANT), this, sizeof(VARIANT));
@@ -2571,15 +2852,17 @@ public:
 	}
 
 	template< typename T >
-	void SetByRef( _In_ T* pT ) throw()
+	void SetByRef(_In_ T* pT) ATLVARIANT_THROW()
 	{
-		Clear();
-		vt = CVarTypeInfo< T >::VT|VT_BYREF;
+		ClearThrow();
+		vt = CVarTypeInfo< T* >::VT;
 		byref = pT;
 	}
 
-	HRESULT WriteToStream(_Inout_ IStream* pStream);
-	HRESULT WriteToStream(_Inout_ IStream* pStream, VARTYPE vtWrite)
+	_Check_return_ HRESULT WriteToStream(_Inout_ IStream* pStream);
+	_Check_return_ HRESULT WriteToStream(
+		_Inout_ IStream* pStream, 
+		_In_ VARTYPE vtWrite)
 	{
 		if (vtWrite != VT_EMPTY && vtWrite != vt)
 		{
@@ -2593,19 +2876,40 @@ public:
 		}
 		return WriteToStream(pStream);
 	}
-	HRESULT ReadFromStream(_Inout_ IStream* pStream, _In_ VARTYPE vtExpected = VT_EMPTY);
 
-	HRESULT ReadFromStream(_Inout_ IStream* pStream, _In_ VARTYPE vtExpected,
-		_In_ ClassesAllowedInStream rgclsidAllowed, _In_ DWORD cclsidAllowed);
+	_Check_return_ HRESULT ReadFromStream(
+		_Inout_ IStream* pStream, 
+		_In_ VARTYPE vtExpected = VT_EMPTY);
+
+	_Check_return_ HRESULT ReadFromStream(
+		_Inout_ IStream* pStream, 
+		_In_ VARTYPE vtExpected,
+		_In_ ClassesAllowedInStream rgclsidAllowed, 
+		_In_ DWORD cclsidAllowed);
 
 	// Return the size in bytes of the current contents
 	ULONG GetSize() const;
+	HRESULT GetSizeMax(_Out_ ULARGE_INTEGER* pcbSize) const;
 
 // Implementation
-public:
-	HRESULT InternalClear()
+private:
+	void ClearThrow() ATLVARIANT_THROW()
 	{
 		HRESULT hr = Clear();
+		ATLASSERT(SUCCEEDED(hr));
+		(hr);
+#ifndef _ATL_NO_VARIANT_THROW
+		if (FAILED(hr))
+		{
+			AtlThrow(hr);
+		}
+#endif
+	}
+	
+public:
+	_Check_return_ HRESULT InternalClear() ATLVARIANT_THROW()
+	{
+		HRESULT hr = Clear();		
 		ATLASSERT(SUCCEEDED(hr));
 		if (FAILED(hr))
 		{
@@ -2618,7 +2922,7 @@ public:
 		return hr;
 	}
 
-	void InternalCopy(_In_ const VARIANT* pSrc)
+	void InternalCopy(_In_ const VARIANT* pSrc) ATLVARIANT_THROW()
 	{
 		HRESULT hr = Copy(pSrc);
 		if (FAILED(hr))
@@ -2634,7 +2938,7 @@ public:
 
 #pragma warning(push)
 #pragma warning(disable: 4702)
-inline HRESULT CComVariant::WriteToStream(_Inout_ IStream* pStream)
+_Check_return_ inline HRESULT CComVariant::WriteToStream(_Inout_ IStream* pStream)
 {
 	if(pStream == NULL)
 		return E_INVALIDARG;
@@ -2714,7 +3018,10 @@ inline HRESULT CComVariant::WriteToStream(_Inout_ IStream* pStream)
 }
 #pragma warning(pop)	// C4702
 
-inline HRESULT CComVariant::ReadFromStream(_Inout_ IStream* pStream, _In_ VARTYPE vtExpected /* = VT_EMPTY */)
+
+_Check_return_ inline HRESULT CComVariant::ReadFromStream(
+	_Inout_ IStream* pStream, 
+	_In_ VARTYPE vtExpected /* = VT_EMPTY */)
 {
 	ClassesAllowedInStream allowed;
 	allowed.rgclsidAllowed = NULL;
@@ -2722,8 +3029,11 @@ inline HRESULT CComVariant::ReadFromStream(_Inout_ IStream* pStream, _In_ VARTYP
 	return ReadFromStream(pStream, vtExpected, allowed, 0);
 }
 
-inline HRESULT CComVariant::ReadFromStream(_Inout_ IStream* pStream, _In_ VARTYPE vtExpected, 
-				_In_ ClassesAllowedInStream rgclsidAllowed, _In_ DWORD cclsidAllowed)
+_Check_return_ inline HRESULT CComVariant::ReadFromStream(
+	_Inout_ IStream* pStream, 
+	_In_ VARTYPE vtExpected, 
+	_In_ ClassesAllowedInStream rgclsidAllowed, 
+	_In_ DWORD cclsidAllowed)
 {
 	ATLASSERT(pStream != NULL);
 	if(pStream == NULL)
@@ -2752,17 +3062,9 @@ inline HRESULT CComVariant::ReadFromStream(_Inout_ IStream* pStream, _In_ VARTYP
 	case VT_DISPATCH:
 		{
 			punkVal = NULL;
-#if defined(_ATL_DLL_IMPL)
-			(rgclsidAllowed);
-			(cclsidAllowed);
-			hr = OleLoadFromStream(pStream,
-				(vtRead == VT_UNKNOWN) ? __uuidof(IUnknown) : __uuidof(IDispatch),
-				(void**)&punkVal);
-#else
 			hr = AtlInternalOleLoadFromStream(pStream,
 				(vtRead == VT_UNKNOWN) ? __uuidof(IUnknown) : __uuidof(IDispatch),
 				(void**)&punkVal, rgclsidAllowed, cclsidAllowed);
-#endif
 			// If IPictureDisp or IFontDisp property is not set, 
 			// OleLoadFromStream() will return REGDB_E_CLASSNOTREG.
 			if (hr == REGDB_E_CLASSNOTREG)
@@ -2825,46 +3127,59 @@ inline HRESULT CComVariant::ReadFromStream(_Inout_ IStream* pStream, _In_ VARTYP
 	return hr;
 }
 
-inline ULONG CComVariant::GetSize() const
+inline HRESULT CComVariant::GetSizeMax(_Out_ ULARGE_INTEGER* pcbSize) const
 {
-	ULONG nSize = sizeof(VARTYPE);
-	HRESULT hr;
-
+	ATLASSERT(pcbSize != NULL);
+	if (pcbSize == NULL)
+	{
+		return E_INVALIDARG;
+	}
+	
+	HRESULT hr = S_OK;
+	ULARGE_INTEGER nSize;
+	nSize.QuadPart = sizeof(VARTYPE);	
+	
 	switch (vt)
 	{
 	case VT_UNKNOWN:
 	case VT_DISPATCH:
-		{
-			CComPtr<IPersistStream> spStream;
+		{	
+			nSize.LowPart += sizeof(CLSID);
+			
 			if (punkVal != NULL)
 			{
+				CComPtr<IPersistStream> spStream;
+				
 				hr = punkVal->QueryInterface(__uuidof(IPersistStream), (void**)&spStream);
 				if (FAILED(hr))
 				{
 					hr = punkVal->QueryInterface(__uuidof(IPersistStreamInit), (void**)&spStream);
 					if (FAILED(hr))
+					{
 						break;
+					}
 				}
-			}
-			if (spStream != NULL)
-			{
+				
 				ULARGE_INTEGER nPersistSize;
 				nPersistSize.QuadPart = 0;
-				spStream->GetSizeMax(&nPersistSize);
-				nSize += nPersistSize.LowPart + sizeof(CLSID);
-			}
-			else
-				nSize += sizeof(CLSID);
+				
+				ATLASSERT(spStream != NULL);
+				hr = spStream->GetSizeMax(&nPersistSize);				
+				if (SUCCEEDED(hr))
+				{
+					hr = AtlAdd(&nSize.QuadPart, nSize.QuadPart, nPersistSize.QuadPart);
+				}				
+			}			
 		}
 		break;
 	case VT_UI1:
 	case VT_I1:
-		nSize += sizeof(BYTE);
+		nSize.LowPart += sizeof(BYTE);
 		break;
 	case VT_I2:
 	case VT_UI2:
 	case VT_BOOL:
-		nSize += sizeof(short);
+		nSize.LowPart += sizeof(short);
 		break;
 	case VT_I4:
 	case VT_UI4:
@@ -2872,48 +3187,71 @@ inline ULONG CComVariant::GetSize() const
 	case VT_INT:
 	case VT_UINT:
 	case VT_ERROR:
-		nSize += sizeof(long);
+		nSize.LowPart += sizeof(long);
 		break;
 	case VT_I8:
 	case VT_UI8:
-		nSize += sizeof(LONGLONG);
+		nSize.LowPart += sizeof(LONGLONG);
 		break;
 	case VT_R8:
 	case VT_CY:
 	case VT_DATE:
-		nSize += sizeof(double);
+		nSize.LowPart += sizeof(double);
 		break;
 	default:
-		break;
-	}
-	if (nSize == sizeof(VARTYPE))
-	{
-		VARTYPE vtTmp = vt;
-		BSTR        bstr = NULL;
-		CComVariant varBSTR;
-		if (vtTmp != VT_BSTR)
 		{
-			hr = VariantChangeType(&varBSTR, const_cast<VARIANT*>((const VARIANT*)this), VARIANT_NOVALUEPROP, VT_BSTR);
-			if (SUCCEEDED(hr))
+			VARTYPE vtTmp = vt;
+			BSTR bstr = NULL;
+			CComVariant varBSTR;
+			if (vtTmp != VT_BSTR)
 			{
-				bstr = varBSTR.bstrVal;
-				vtTmp = VT_BSTR;
+				hr = VariantChangeType(&varBSTR, const_cast<VARIANT*>((const VARIANT*)this), VARIANT_NOVALUEPROP, VT_BSTR);
+				if (SUCCEEDED(hr))
+				{
+					bstr = varBSTR.bstrVal;
+					vtTmp = VT_BSTR;
+				}
+			} 
+			else
+			{
+				bstr = bstrVal;
 			}
-		} else
-		{
-			bstr = bstrVal;
-		}
 
-		if (vtTmp == VT_BSTR)
-		{
-			// Add the size of the length + string (in bytes) + NULL terminator.
-			nSize += CComBSTR::GetStreamSize(bstr);			
-		}
+			if (vtTmp == VT_BSTR)
+			{
+				// Add the size of the length + string (in bytes) + NULL terminator.				
+				nSize.QuadPart += CComBSTR::GetStreamSize(bstr);
+			}
+		}		
 	}
-	return nSize;
+	
+	if (SUCCEEDED(hr))
+	{
+		pcbSize->QuadPart = nSize.QuadPart;
+	}
+	
+	return hr;
 }
 
-inline HRESULT CComPtr<IDispatch>::Invoke2(_In_ DISPID dispid, _In_ VARIANT* pvarParam1, _In_ VARIANT* pvarParam2, _Out_opt_ VARIANT* pvarRet) throw()
+inline ATL_DEPRECATED("GetSize has been replaced by GetSizeMax")
+ULONG CComVariant::GetSize() const
+{
+	ULARGE_INTEGER nSize;
+	HRESULT hr = GetSizeMax(&nSize);
+	
+	if (SUCCEEDED(hr) && nSize.QuadPart <= ULONG_MAX)
+	{
+		return nSize.LowPart;	
+	}
+	
+	return sizeof(VARTYPE);
+}
+
+_Check_return_ inline HRESULT CComPtr<IDispatch>::Invoke2(
+	_In_ DISPID dispid, 
+	_In_ VARIANT* pvarParam1, 
+	_In_ VARIANT* pvarParam2, 
+	_Out_opt_ VARIANT* pvarRet) throw()
 {
 	if(pvarParam1 == NULL || pvarParam2 == NULL)
 		return E_INVALIDARG;
@@ -2923,11 +3261,54 @@ inline HRESULT CComPtr<IDispatch>::Invoke2(_In_ DISPID dispid, _In_ VARIANT* pva
 	return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
 }
 
-#if !defined(_ATL_DLL_IMPL)
-inline HRESULT AtlInternalOleLoadFromStream(
+/*
+	Workaround for VarCmp function which does not compare VT_I1, VT_UI2, VT_UI4, VT_UI8 values
+*/
+inline HRESULT CComVariant::VarCmp(
+	_In_ LPVARIANT pvarLeft, 
+	_In_ LPVARIANT pvarRight, 
+	_In_ LCID lcid, 
+	_In_ ULONG dwFlags) const throw()
+{			
+	switch(vt) 
+	{
+		case VT_I1:
+			if (pvarLeft->cVal == pvarRight->cVal)
+			{
+				return VARCMP_EQ;
+			}
+			return pvarLeft->cVal > pvarRight->cVal ? VARCMP_GT : VARCMP_LT;			
+		case VT_UI2:
+			if (pvarLeft->uiVal == pvarRight->uiVal)
+			{
+				return VARCMP_EQ;
+			}
+			return pvarLeft->uiVal > pvarRight->uiVal ? VARCMP_GT : VARCMP_LT;
+
+		case VT_UI4:
+			if (pvarLeft->uintVal == pvarRight->uintVal) 
+			{
+				return VARCMP_EQ;
+			}
+			return pvarLeft->uintVal > pvarRight->uintVal ? VARCMP_GT : VARCMP_LT;				
+
+		case VT_UI8:
+			if (pvarLeft->ullVal == pvarRight->ullVal)
+			{
+				return VARCMP_EQ;
+			}
+			return pvarLeft->ullVal > pvarRight->ullVal ? VARCMP_GT : VARCMP_LT;
+
+		default:
+			return ::VarCmp(pvarLeft, pvarRight, lcid, dwFlags);
+	}
+}
+
+ATLPREFAST_SUPPRESS(6387)
+_Check_return_ inline HRESULT AtlInternalOleLoadFromStream(
 	_Inout_ IStream* pStm, 
 	_In_ REFIID iidInterface, 
-	_Out_ _Deref_post_opt_valid_ void** ppvObj, 
+	_Deref_out_ void** ppvObj, 
 	_In_ ClassesAllowedInStream rgclsidAllowed, 
 	_In_ DWORD cclsidAllowed)
 {
@@ -2938,7 +3319,7 @@ inline HRESULT AtlInternalOleLoadFromStream(
 	HRESULT hr = ReadClassStm(pStm, &clsid);
 
 	if (FAILED(hr))
-	{
+	{		
 		return hr;
 	}
 	
@@ -2972,7 +3353,7 @@ inline HRESULT AtlInternalOleLoadFromStream(
 	{
 		hr = CoCreateInstance(clsid, NULL, CLSCTX_SERVER | CLSCTX_NO_CODE_DOWNLOAD, iidInterface, reinterpret_cast<void**>(&punkVal));
 		if (FAILED(hr))
-		{
+		{		
 			return hr;
 		}
 	}
@@ -2989,10 +3370,10 @@ inline HRESULT AtlInternalOleLoadFromStream(
 			*ppvObj = punkVal.Detach();			
 		}
 	}
-
+	
 	return hr;
 }
-#endif
+ATLPREFAST_UNSUPPRESS()
 
 }	// namespace ATL
 #pragma pack(pop)

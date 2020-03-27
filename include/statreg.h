@@ -70,7 +70,9 @@ const LPCTSTR  szDelete          = _T("Delete");
 class CExpansionVectorEqualHelper
 {
 public:
-	static bool IsEqualKey(_In_z_ const LPTSTR k1, _In_z_ const LPTSTR k2)
+	static bool IsEqualKey(
+		_In_z_ const LPTSTR k1,
+		_In_z_ const LPTSTR k2)
 	{
 		if (lstrcmpi(k1, k2) == 0)
 			return true;
@@ -78,14 +80,17 @@ public:
 	}
 
 	// Not used
-	static bool IsEqualValue(const LPCOLESTR /*v1*/, const LPCOLESTR /*v2*/)
+	static bool IsEqualValue(
+		_In_opt_z_ const LPCOLESTR /*v1*/,
+		_In_opt_z_ const LPCOLESTR /*v2*/)
 	{
 		return false;
 	}
 };
 
 // Implementation helper
-class CExpansionVector : public CSimpleMap<LPTSTR, LPOLESTR, CExpansionVectorEqualHelper >
+class CExpansionVector : 
+	public CSimpleMap<LPTSTR, LPOLESTR, CExpansionVectorEqualHelper >
 {
 public:
 	~CExpansionVector()
@@ -93,7 +98,9 @@ public:
 		 ClearReplacements();
 	}
 
-	BOOL Add(LPCTSTR lpszKey, LPCOLESTR lpszValue)
+	BOOL Add(
+		_In_z_ LPCTSTR lpszKey,
+		_In_z_ LPCOLESTR lpszValue)
 	{
 		ATLASSERT(lpszKey != NULL && lpszValue != NULL);
 		if (lpszKey == NULL || lpszValue == NULL)
@@ -106,12 +113,14 @@ public:
 
 		ATLTRY(szKey = new TCHAR[cbKey];)
 		CAutoVectorPtr<TCHAR> spKey;
+		ATLASSUME(szKey != NULL);
 		spKey.Attach(szKey);
 
 		size_t cbValue = (ocslen(lpszValue)+1)*sizeof(OLECHAR);
 		LPOLESTR szValue = NULL;
 		ATLTRY(szValue = new OLECHAR[cbValue];)
 		CAutoVectorPtr<OLECHAR> spValue;
+		ATLASSUME(szValue != NULL);
 		spValue.Attach(szValue);
 
 		if (szKey == NULL || szValue == NULL)
@@ -147,35 +156,54 @@ class CRegObject;
 class CRegParser
 {
 public:
-	CRegParser(CRegObject* pRegObj);
+	CRegParser(_In_ CRegObject* pRegObj);
 
-	HRESULT  PreProcessBuffer(_In_z_ LPTSTR lpszReg, _Deref_out_opt_z_ LPTSTR* ppszReg);
-	HRESULT  RegisterBuffer(_In_z_ LPTSTR szReg, _In_ BOOL bRegister);
+	HRESULT PreProcessBuffer(
+		_In_z_ LPTSTR lpszReg,
+		_Deref_out_z_ LPTSTR* ppszReg);
+
+	HRESULT  RegisterBuffer(
+		_In_z_ LPTSTR szReg,
+		_In_ BOOL bRegister);
 
 protected:
 
 	static const int MAX_VALUE = 4096;
 	void    SkipWhiteSpace();
 	HRESULT NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken);
-	HRESULT AddValue(_In_ CRegKey& rkParent, _In_opt_z_ LPCTSTR szValueName, _Out_z_cap_c_(MAX_VALUE) LPTSTR szToken);
-	BOOL    CanForceRemoveKey(LPCTSTR szKey);
-	BOOL    HasSubKeys(HKEY hkey);
-	BOOL    HasValues(HKEY hkey);
-	HRESULT RegisterSubkeys(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken, _In_ HKEY hkParent, _In_ BOOL bRegister, _In_ BOOL bInRecovery = FALSE);
-	BOOL    IsSpace(TCHAR ch);
+	HRESULT AddValue(
+		_Inout_ CRegKey& rkParent,
+		_In_opt_z_ LPCTSTR szValueName,
+		_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken);
+	BOOL    CanForceRemoveKey(_In_z_ LPCTSTR szKey);
+	BOOL    HasSubKeys(_In_ HKEY hkey);
+	BOOL    HasValues(_In_ HKEY hkey);
+	HRESULT RegisterSubkeys(
+		_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken,
+		_In_ HKEY hkParent,
+		_In_ BOOL bRegister,
+		_In_ BOOL bInRecovery = FALSE);
+	BOOL    IsSpace(_In_ TCHAR ch);
 	LPTSTR  m_pchCur;
 
 	CRegObject*     m_pRegObj;
 
-	HRESULT GenerateError(UINT) {return DISP_E_EXCEPTION;}
+	HRESULT GenerateError(_In_ UINT)
+	{
+		return DISP_E_EXCEPTION;
+	}
 	//HRESULT HandleReplacements(LPTSTR& szToken);
 	HRESULT SkipAssignment(_Inout_z_cap_c_(MAX_VALUE) LPTSTR szToken);
 
-	BOOL    EndOfVar() { return chQuote == *m_pchCur && chQuote != *CharNext(m_pchCur); }
+	BOOL    EndOfVar()
+	{
+		return chQuote == *m_pchCur && chQuote != *CharNext(m_pchCur);
+	}
 	static LPTSTR StrChr(_In_z_ LPTSTR lpsz, _In_ TCHAR ch);
 	static HKEY HKeyFromString(_In_z_ LPTSTR szToken);
-	static BYTE ChToByte(const TCHAR ch);
-	static BOOL VTFromRegType(LPCTSTR szValueType, VARTYPE& vt);
+	static BYTE ChToByte(_In_ const TCHAR ch);
+	static BOOL VTFromRegType(_In_z_ LPCTSTR szValueType, _Out_ VARTYPE& vt);
+
 	static const TCHAR* const rgszNeverDelete[];
 	static const int cbNeverDelete;
 	static const int MAX_TYPE = 4096;
@@ -187,7 +215,7 @@ protected:
 		int nPos;
 		int nSize;
 		LPTSTR p;
-		CParseBuffer(int nInitial)
+		CParseBuffer(_In_ int nInitial)
 		{
 			if (nInitial < 100)
 				nInitial = 1000;
@@ -195,13 +223,15 @@ protected:
 			nSize = nInitial;
 			p = (LPTSTR) ::ATL::AtlCoTaskMemCAlloc(nSize,static_cast<ULONG>(sizeof(TCHAR)));
 			if (p != NULL)
-				*p = NULL;
+				*p = _T('\0');
 		}
 		~CParseBuffer()
 		{
 			CoTaskMemFree(p);
 		}
-		BOOL Append(const TCHAR* pch, int nChars)
+		BOOL Append(
+			_In_count_(nChars) const TCHAR* pch,
+			_In_ int nChars)
 		{
 			ATLASSERT(p != NULL);
 			int newSize = nPos + nChars + 1;
@@ -228,14 +258,14 @@ protected:
 			/* Prefast false warning is fired here despite the all above checks */
 			Checked::memcpy_s(p + nPos, (nSize-nPos) * sizeof(TCHAR), pch, int(nChars * sizeof(TCHAR)));
 			nPos += nChars;
-			*(p + nPos) = NULL;
+			*(p + nPos) = _T('\0');
 #pragma warning(pop)
-			return TRUE;			
+			return TRUE;
 		}
 
-		BOOL AddChar(const TCHAR* pch)
+		BOOL AddChar(_In_z_ const TCHAR* pch)
 		{
-#ifndef _UNICODE		
+#ifndef _UNICODE
 			int nChars = int(CharNext(pch) - pch);
 #else
 			int nChars = 1;
@@ -243,7 +273,7 @@ protected:
 			return Append(pch, nChars);
 
 		}
-		BOOL AddString(LPCOLESTR lpsz)
+		BOOL AddString(_In_z_ LPCOLESTR lpsz)
 		{
 			if (lpsz == NULL)
 			{
@@ -269,10 +299,11 @@ protected:
 };
 
 #if defined(_ATL_DLL) || defined(_ATL_DLL_IMPL)
-class ATL_NO_VTABLE CRegObject
- : public IRegistrar
+class ATL_NO_VTABLE CRegObject :
+	public IRegistrar
 #else
-class CRegObject  : public IRegistrarBase
+class CRegObject :
+	public IRegistrarBase
 #endif
 {
 public:
@@ -280,7 +311,9 @@ public:
 #if defined(_ATL_DLL) || defined(_ATL_DLL_IMPL)
 
 #else
-	STDMETHOD(QueryInterface)(const IID &,void ** )
+	STDMETHOD(QueryInterface)(
+		_In_ const IID &,
+		_In_opt_ void ** )
 	{
 		ATLASSERT(_T("statically linked in CRegObject is not a com object. Do not callthis function"));
 		return E_NOTIMPL;
@@ -297,74 +330,111 @@ public:
 		return 0;
 	}
 #endif
-	virtual ~CRegObject(){ClearReplacements();}
-	HRESULT FinalConstruct() { return m_csMap.Init(); }
+	virtual ~CRegObject()
+	{
+		ClearReplacements();
+	}
+	HRESULT FinalConstruct()
+	{
+		return m_csMap.Init();
+	}
 	void FinalRelease() {}
 
 
 	// Map based methods
-	HRESULT STDMETHODCALLTYPE AddReplacement(LPCOLESTR lpszKey, LPCOLESTR lpszItem);
+	HRESULT STDMETHODCALLTYPE AddReplacement(
+		_In_z_ LPCOLESTR lpszKey,
+		_In_z_ LPCOLESTR lpszItem);
 	HRESULT STDMETHODCALLTYPE ClearReplacements();
 	LPCOLESTR StrFromMap(_In_z_ LPTSTR lpszKey);
 
 	// Register via a given mechanism
-	HRESULT STDMETHODCALLTYPE ResourceRegister(LPCOLESTR pszFileName, UINT nID, LPCOLESTR pszType);
-	HRESULT STDMETHODCALLTYPE ResourceRegisterSz(LPCOLESTR pszFileName, LPCOLESTR pszID, LPCOLESTR pszType);
-	HRESULT STDMETHODCALLTYPE ResourceUnregister(LPCOLESTR pszFileName, UINT nID, LPCOLESTR pszType);
-	HRESULT STDMETHODCALLTYPE ResourceUnregisterSz(LPCOLESTR pszFileName, LPCOLESTR pszID, LPCOLESTR pszType);
-	HRESULT STDMETHODCALLTYPE FileRegister(LPCOLESTR bstrFileName)
+	HRESULT STDMETHODCALLTYPE ResourceRegister(
+		_In_z_ LPCOLESTR pszFileName,
+		_In_ UINT nID,
+		_In_z_ LPCOLESTR pszType);
+	HRESULT STDMETHODCALLTYPE ResourceRegisterSz(
+		_In_z_ LPCOLESTR pszFileName,
+		_In_z_ LPCOLESTR pszID,
+		_In_z_ LPCOLESTR pszType);
+	HRESULT STDMETHODCALLTYPE ResourceUnregister(
+		_In_z_ LPCOLESTR pszFileName,
+		_In_ UINT nID,
+		_In_z_ LPCOLESTR pszType);
+	HRESULT STDMETHODCALLTYPE ResourceUnregisterSz(
+		_In_z_ LPCOLESTR pszFileName,
+		_In_z_ LPCOLESTR pszID,
+		_In_z_ LPCOLESTR pszType);
+
+	HRESULT STDMETHODCALLTYPE FileRegister(_In_z_ LPCOLESTR bstrFileName)
 	{
 		return CommonFileRegister(bstrFileName, TRUE);
 	}
 
-	HRESULT STDMETHODCALLTYPE FileUnregister(LPCOLESTR bstrFileName)
+	HRESULT STDMETHODCALLTYPE FileUnregister(_In_z_ LPCOLESTR bstrFileName)
 	{
 		return CommonFileRegister(bstrFileName, FALSE);
 	}
 
-	HRESULT STDMETHODCALLTYPE StringRegister(LPCOLESTR bstrData)
+	HRESULT STDMETHODCALLTYPE StringRegister(_In_z_ LPCOLESTR bstrData)
 	{
 		return RegisterWithString(bstrData, TRUE);
 	}
 
-	HRESULT STDMETHODCALLTYPE StringUnregister(LPCOLESTR bstrData)
+	HRESULT STDMETHODCALLTYPE StringUnregister(_In_z_ LPCOLESTR bstrData)
 	{
 		return RegisterWithString(bstrData, FALSE);
 	}
 
 protected:
 
-	HRESULT CommonFileRegister(LPCOLESTR pszFileName, BOOL bRegister);
-	HRESULT RegisterFromResource(LPCOLESTR pszFileName, LPCTSTR pszID, LPCTSTR pszType, BOOL bRegister);
-	HRESULT RegisterWithString(LPCOLESTR pszData, BOOL bRegister);
+	HRESULT CommonFileRegister(
+		_In_z_ LPCOLESTR pszFileName,
+		_In_ BOOL bRegister);
+	HRESULT RegisterFromResource(
+		_In_z_ LPCOLESTR pszFileName,
+		_In_z_ LPCTSTR pszID,
+		_In_z_ LPCTSTR pszType,
+		_In_ BOOL bRegister);
+	HRESULT RegisterWithString(
+		_In_z_ LPCOLESTR pszData,
+		_In_ BOOL bRegister);
 
-	static HRESULT GenerateError(UINT) {return DISP_E_EXCEPTION;}
+	static HRESULT GenerateError(_In_ UINT)
+	{
+		return DISP_E_EXCEPTION;
+	}
 
-	CExpansionVector								m_RepMap;
-	CComObjectThreadModel::AutoDeleteCriticalSection      m_csMap;
+	CExpansionVector m_RepMap;
+	CComObjectThreadModel::AutoDeleteCriticalSection m_csMap;
 };
 
-inline HRESULT STDMETHODCALLTYPE CRegObject::AddReplacement(LPCOLESTR lpszKey, LPCOLESTR lpszItem)
+inline HRESULT STDMETHODCALLTYPE CRegObject::AddReplacement(
+	_In_z_ LPCOLESTR lpszKey,
+	_In_z_ LPCOLESTR lpszItem)
 {
 	if (lpszKey == NULL || lpszItem == NULL)
 		return E_INVALIDARG;
 	m_csMap.Lock();
 	USES_CONVERSION_EX;
-	
+
 	LPCTSTR lpszT = OLE2CT_EX(lpszKey, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
 
 #ifndef _UNICODE
 	if(lpszT == NULL)
 		return E_OUTOFMEMORY;
 #endif
-	
+
 	BOOL bRet = m_RepMap.Add(lpszT, lpszItem);
 	m_csMap.Unlock();
 	return bRet ? S_OK : E_OUTOFMEMORY;
 }
 
-inline HRESULT CRegObject::RegisterFromResource(LPCOLESTR bstrFileName, LPCTSTR szID,
-										 LPCTSTR szType, BOOL bRegister)
+inline HRESULT CRegObject::RegisterFromResource(
+	_In_z_ LPCOLESTR bstrFileName,
+	_In_z_ LPCTSTR szID,
+	_In_z_ LPCTSTR szType,
+	_In_ BOOL bRegister)
 {
 	USES_CONVERSION_EX;
 
@@ -375,7 +445,7 @@ inline HRESULT CRegObject::RegisterFromResource(LPCOLESTR bstrFileName, LPCTSTR 
 	HGLOBAL     hReg;
 	DWORD       dwSize;
 	LPSTR       szRegA;
-	CTempBuffer<TCHAR, 1024> szReg;	
+	CTempBuffer<TCHAR, 1024> szReg;
 
 	LPCTSTR lpszBSTRFileName = OLE2CT_EX(bstrFileName, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
 #ifndef _UNICODE
@@ -398,9 +468,9 @@ inline HRESULT CRegObject::RegisterFromResource(LPCOLESTR bstrFileName, LPCTSTR 
 
 	if (NULL == hrscReg)
 	{
-		ATLTRACE(atlTraceRegistrar, 0, (HIWORD(szID) == NULL) ? 
-			_T("Failed to FindResource on ID:%d TYPE:%s\n") : 
-			_T("Failed to FindResource on ID:%s TYPE:%s\n"), 
+		ATLTRACE(atlTraceRegistrar, 0, (HIWORD(szID) == 0) ?
+			_T("Failed to FindResource on ID:%d TYPE:%s\n") :
+			_T("Failed to FindResource on ID:%s TYPE:%s\n"),
 			szID, szType);
 		hr = AtlHresultFromLastError();
 		goto ReturnHR;
@@ -418,14 +488,18 @@ inline HRESULT CRegObject::RegisterFromResource(LPCOLESTR bstrFileName, LPCTSTR 
 	szRegA = (LPSTR)hReg;
 
 	// Allocate extra space for NULL.
-	if (dwSize + 1 < dwSize) 
-		return E_OUTOFMEMORY;
+	if (dwSize + 1 < dwSize)
+	{
+		hr = E_OUTOFMEMORY;
+		goto ReturnHR;
+	}
+
 	ATLTRY(szReg.Allocate(dwSize + 1));
 	if (szReg == NULL)
 	{
 		hr = E_OUTOFMEMORY;
 		goto ReturnHR;
-	}	
+	}
 
 #ifdef _UNICODE
 	DWORD uniSize = ::MultiByteToWideChar(_AtlGetConversionACP(), 0, szRegA, dwSize, szReg, dwSize);
@@ -435,14 +509,12 @@ inline HRESULT CRegObject::RegisterFromResource(LPCOLESTR bstrFileName, LPCTSTR 
 		goto ReturnHR;
 	}
 	// Append a NULL at the end.
-	szReg[uniSize] = NULL;
+	szReg[uniSize] = _T('\0');
 #else
 	Checked::memcpy_s(szReg, dwSize, szRegA, dwSize);
 	// Append a NULL at the end.
-   	szReg[dwSize] = NULL;
+   	szReg[dwSize] = _T('\0');
 #endif
-
- 
 
 	hr = parser.RegisterBuffer(szReg, bRegister);
 
@@ -453,7 +525,10 @@ ReturnHR:
 	return hr;
 }
 
-inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceRegister(LPCOLESTR szFileName, UINT nID, LPCOLESTR szType)
+inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceRegister(
+	_In_z_ LPCOLESTR szFileName,
+	_In_ UINT nID,
+	_In_z_ LPCOLESTR szType)
 {
 	USES_CONVERSION_EX;
 
@@ -468,12 +543,15 @@ inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceRegister(LPCOLESTR szFileNa
 	return RegisterFromResource(szFileName, MAKEINTRESOURCE(nID), lpszT, TRUE);
 }
 
-inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceRegisterSz(LPCOLESTR szFileName, LPCOLESTR szID, LPCOLESTR szType)
+inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceRegisterSz(
+	_In_z_ LPCOLESTR szFileName,
+	_In_z_ LPCOLESTR szID,
+	_In_z_ LPCOLESTR szType)
 {
 	USES_CONVERSION_EX;
 	if (szID == NULL || szType == NULL)
 		return E_INVALIDARG;
-	
+
 	LPCTSTR lpszID = OLE2CT_EX(szID, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
 	LPCTSTR lpszType = OLE2CT_EX(szType, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
 #ifndef _UNICODE
@@ -485,7 +563,10 @@ inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceRegisterSz(LPCOLESTR szFile
 	return RegisterFromResource(szFileName, lpszID, lpszType, TRUE);
 }
 
-inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceUnregister(LPCOLESTR szFileName, UINT nID, LPCOLESTR szType)
+inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceUnregister(
+	_In_z_ LPCOLESTR szFileName,
+	_In_ UINT nID,
+	_In_z_ LPCOLESTR szType)
 {
 	USES_CONVERSION_EX;
 
@@ -499,7 +580,10 @@ inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceUnregister(LPCOLESTR szFile
 	return RegisterFromResource(szFileName, MAKEINTRESOURCE(nID), lpszT, FALSE);
 }
 
-inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceUnregisterSz(LPCOLESTR szFileName, LPCOLESTR szID, LPCOLESTR szType)
+inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceUnregisterSz(
+	_In_z_ LPCOLESTR szFileName,
+	_In_z_ LPCOLESTR szID,
+	_In_z_ LPCOLESTR szType)
 {
 	USES_CONVERSION_EX;
 	if (szID == NULL || szType == NULL)
@@ -517,7 +601,9 @@ inline HRESULT STDMETHODCALLTYPE CRegObject::ResourceUnregisterSz(LPCOLESTR szFi
 	return RegisterFromResource(szFileName, lpszID, lpszType, FALSE);
 }
 
-inline HRESULT CRegObject::RegisterWithString(LPCOLESTR bstrData, BOOL bRegister)
+inline HRESULT CRegObject::RegisterWithString(
+	_In_z_ LPCOLESTR bstrData,
+	_In_ BOOL bRegister)
 {
 	USES_CONVERSION_EX;
 	CRegParser  parser(this);
@@ -554,7 +640,9 @@ inline LPCOLESTR CRegObject::StrFromMap(_In_z_ LPTSTR lpszKey)
 	return lpsz;
 }
 
-inline HRESULT CRegObject::CommonFileRegister(LPCOLESTR bstrFileName, BOOL bRegister)
+inline HRESULT CRegObject::CommonFileRegister(
+	_In_z_ LPCOLESTR bstrFileName,
+	_In_ BOOL bRegister)
 {
 	USES_CONVERSION_EX;
 
@@ -593,12 +681,12 @@ inline HRESULT CRegObject::CommonFileRegister(LPCOLESTR bstrFileName, BOOL bRegi
 
 	if (ReadFile(hFile, szReg, cbFile, &cbRead, NULL) == 0)
 	{
-		ATLTRACE2(atlTraceRegistrar, 0, "Read Failed on file%s\n", lpszBSTRFileName);
+		ATLTRACE2(atlTraceRegistrar, 0, "Read Failed on file %s\n", lpszBSTRFileName);
 		hRes =  AtlHresultFromLastError();
 	}
 	if (SUCCEEDED(hRes))
 	{
-		szReg[cbRead] = NULL;
+		szReg[cbRead] = '\0';
 
 #ifdef _UNICODE
 		CTempBuffer<WCHAR, 1024> szConverted;
@@ -614,13 +702,9 @@ inline HRESULT CRegObject::CommonFileRegister(LPCOLESTR bstrFileName, BOOL bRegi
 			hRes = AtlHresultFromLastError();
 			goto ReturnHR;
 		}
-
-
-
-
 #else
-		LPTSTR szConverted = szReg; 
-#endif		
+		LPTSTR szConverted = szReg;
+#endif
 		hRes = parser.RegisterBuffer(szConverted, bRegister);
 	}
 ReturnHR:
@@ -647,7 +731,9 @@ __declspec(selectany) const TCHAR* const CRegParser::rgszNeverDelete[] =
 __declspec(selectany) const int CRegParser::cbNeverDelete = sizeof(rgszNeverDelete) / sizeof(LPCTSTR*);
 
 
-inline BOOL CRegParser::VTFromRegType(LPCTSTR szValueType, VARTYPE& vt)
+inline BOOL CRegParser::VTFromRegType(
+	_In_z_ LPCTSTR szValueType,
+	_Out_ VARTYPE& vt)
 {
 	struct typemap
 	{
@@ -676,10 +762,9 @@ inline BOOL CRegParser::VTFromRegType(LPCTSTR szValueType, VARTYPE& vt)
 	}
 
 	return FALSE;
-
 }
 
-inline BYTE CRegParser::ChToByte(const TCHAR ch)
+inline BYTE CRegParser::ChToByte(_In_ const TCHAR ch)
 {
 	switch (ch)
 	{
@@ -747,13 +832,15 @@ inline HKEY CRegParser::HKeyFromString(_In_z_ LPTSTR szToken)
 	return NULL;
 }
 
-inline LPTSTR CRegParser::StrChr(_In_z_ LPTSTR lpsz, _In_ TCHAR ch)
+inline LPTSTR CRegParser::StrChr(
+	_In_z_ LPTSTR lpsz,
+	_In_ TCHAR ch)
 {
 	LPTSTR p = NULL;
 
 	if (lpsz == NULL)
 		return NULL;
-	
+
 	while (*lpsz)
 	{
 		if (*lpsz == ch)
@@ -766,13 +853,13 @@ inline LPTSTR CRegParser::StrChr(_In_z_ LPTSTR lpsz, _In_ TCHAR ch)
 	return p;
 }
 
-inline CRegParser::CRegParser(CRegObject* pRegObj)
+inline CRegParser::CRegParser(_In_ CRegObject* pRegObj)
 {
-	m_pRegObj           = pRegObj;
-	m_pchCur            = NULL;
+	m_pRegObj = pRegObj;
+	m_pchCur = NULL;
 }
 
-inline BOOL CRegParser::IsSpace(TCHAR ch)
+inline BOOL CRegParser::IsSpace(_In_ TCHAR ch)
 {
 	switch (ch)
 	{
@@ -799,7 +886,7 @@ inline HRESULT CRegParser::NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
 	SkipWhiteSpace();
 
 	// NextToken cannot be called at EOS
-	if (NULL == *m_pchCur)
+	if (_T('\0') == *m_pchCur)
 		return GenerateError(E_ATL_UNEXPECTED_EOS);
 #pragma warning(pop)
 
@@ -809,7 +896,7 @@ inline HRESULT CRegParser::NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
 	{
 		m_pchCur = CharNext(m_pchCur);
 
-		while (NULL != *m_pchCur && !EndOfVar())
+		while (_T('\0') != *m_pchCur && !EndOfVar())
 		{
 			if (chQuote == *m_pchCur) // If it is a quote that means we must skip it
 				m_pchCur = CharNext(m_pchCur);
@@ -827,20 +914,20 @@ inline HRESULT CRegParser::NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
 				*szToken = *pchPrev;
 		}
 
-		if (NULL == *m_pchCur)
+		if (_T('\0') == *m_pchCur)
 		{
 			ATLTRACE(atlTraceRegistrar, 0, _T("NextToken : Unexpected End of File\n"));
 			return GenerateError(E_ATL_UNEXPECTED_EOS);
 		}
 
-		*szToken = NULL;
+		*szToken = _T('\0');
 		m_pchCur = CharNext(m_pchCur);
 	}
 
 	else
-	{   
+	{
 		// Handle non-quoted ie parse up till first "White Space"
-		while (NULL != *m_pchCur && !IsSpace(*m_pchCur))
+		while (_T('\0') != *m_pchCur && !IsSpace(*m_pchCur))
 		{
 			LPTSTR pchPrev = m_pchCur;
 			m_pchCur = CharNext(m_pchCur);
@@ -855,14 +942,17 @@ inline HRESULT CRegParser::NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
 				*szToken = *pchPrev;
 		}
 
-		*szToken = NULL;
+		*szToken = _T('\0');
 	}
 	return S_OK;
 }
 
 #pragma warning(push)
 #pragma warning(disable:6385) // suppressing code analysis warning on the GenerateError code path
-inline HRESULT CRegParser::AddValue(_In_ CRegKey& rkParent, _In_opt_z_ LPCTSTR szValueName, _Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
+inline HRESULT CRegParser::AddValue(
+	_Inout_ CRegKey& rkParent,
+	_In_opt_z_ LPCTSTR szValueName,
+	_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
 {
 	HRESULT hr;
 
@@ -909,7 +999,7 @@ inline HRESULT CRegParser::AddValue(_In_ CRegKey& rkParent, _In_opt_z_ LPCTSTR s
 					TCHAR* r = CharNext(q);
 					if (*q == _T('\\') && *r == _T('0'))
 					{
-						*p++ = NULL;
+						*p++ = _T('\0');
 						q = CharNext(r);
 					}
 					else
@@ -930,10 +1020,10 @@ inline HRESULT CRegParser::AddValue(_In_ CRegKey& rkParent, _In_opt_z_ LPCTSTR s
 					}
 					nLen ++;
 				}
-			   //Always terminate with 2 NULLs.
-				*p = NULL;
+			   //Always terminate with 2 null characters.
+				*p = _T('\0');
 				p++;
-			    *p = NULL;
+			    *p = _T('\0');
 				lRes = rkParent.SetMultiStringValue(szValueName, pszDestValue);
 			}
 			else
@@ -949,11 +1039,11 @@ inline HRESULT CRegParser::AddValue(_In_ CRegKey& rkParent, _In_opt_z_ LPCTSTR s
 
 			LPOLESTR lpszV = T2OLE_EX(szValue, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
 	#ifndef _UNICODE
-			if(lpszV == NULL) 
+			if(lpszV == NULL)
 				return E_OUTOFMEMORY;
-	#endif	
+	#endif
 			VarUI4FromStr(lpszV, 0, 0, &ulVal);
-			
+
 			lRes = rkParent.SetDWORDValue(szValueName, ulVal);
 			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %d at %s\n"), ulVal, !szValueName ? _T("default") : szValueName);
 			break;
@@ -968,10 +1058,10 @@ inline HRESULT CRegParser::AddValue(_In_ CRegKey& rkParent, _In_opt_z_ LPCTSTR s
 			}
 			int cbValDiv2 = cbValue/2;
 			CTempBuffer<BYTE, 256> rgBinary;
-			ATLTRY(rgBinary.Allocate(cbValDiv2));			
+			ATLTRY(rgBinary.Allocate(cbValDiv2));
 			if (rgBinary == NULL)
 				return E_FAIL;
-			memset(rgBinary, 0, cbValDiv2);				
+			memset(rgBinary, 0, cbValDiv2);
 			for (int irg = 0; irg < cbValue; irg++)
 				rgBinary[(irg/2)] |= (ChToByte(szValue[irg])) << (4*(1 - (irg & 0x00000001)));
 			lRes = RegSetValueEx(rkParent, szValueName, 0, REG_BINARY, rgBinary, cbValDiv2);
@@ -991,7 +1081,7 @@ inline HRESULT CRegParser::AddValue(_In_ CRegKey& rkParent, _In_opt_z_ LPCTSTR s
 	return S_OK;
 }
 
-inline BOOL CRegParser::CanForceRemoveKey(LPCTSTR szKey)
+inline BOOL CRegParser::CanForceRemoveKey(_In_z_ LPCTSTR szKey)
 {
 	for (int iNoDel = 0; iNoDel < cbNeverDelete; iNoDel++)
 		if (!lstrcmpi(szKey, rgszNeverDelete[iNoDel]))
@@ -1000,12 +1090,12 @@ inline BOOL CRegParser::CanForceRemoveKey(LPCTSTR szKey)
 	return TRUE;
 }
 
-inline BOOL CRegParser::HasSubKeys(HKEY hkey)
+inline BOOL CRegParser::HasSubKeys(_In_ HKEY hkey)
 {
-	DWORD       cbSubKeys = 0;
+	DWORD cSubKeys = 0;
 
-	if (RegQueryInfoKey(hkey, NULL, NULL, NULL,
-							   &cbSubKeys, NULL, NULL,
+	if (RegQueryInfoKeyW(hkey, NULL, NULL, NULL,
+							   &cSubKeys, NULL, NULL,
 							   NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
 	{
 		ATLTRACE(atlTraceRegistrar, 0, _T("Should not be here!!\n"));
@@ -1013,16 +1103,17 @@ inline BOOL CRegParser::HasSubKeys(HKEY hkey)
 		return FALSE;
 	}
 
-	return cbSubKeys > 0;
+	return cSubKeys > 0;
 }
 
-inline BOOL CRegParser::HasValues(HKEY hkey)
+inline BOOL CRegParser::HasValues(_In_ HKEY hkey)
 {
-	DWORD       cbValues = 0;
+	DWORD cValues = 0;
+	DWORD cMaxValueNameLen;
 
-	LONG lResult = RegQueryInfoKey(hkey, NULL, NULL, NULL,
+	LONG lResult = RegQueryInfoKeyW(hkey, NULL, NULL, NULL,
 								  NULL, NULL, NULL,
-								  &cbValues, NULL, NULL, NULL, NULL);
+								  &cValues, &cMaxValueNameLen, NULL, NULL, NULL);
 	if (ERROR_SUCCESS != lResult)
 	{
 		ATLTRACE(atlTraceRegistrar, 0, _T("RegQueryInfoKey Failed "));
@@ -1030,18 +1121,12 @@ inline BOOL CRegParser::HasValues(HKEY hkey)
 		return FALSE;
 	}
 
-	if (1 == cbValues)
+	if ((1 == cValues) && (0 == cMaxValueNameLen))
 	{
-		DWORD cbMaxName= MAX_VALUE;
-		TCHAR szValueName[MAX_VALUE];
-		// Check to see if the Value is default or named
-		lResult = RegEnumValue(hkey, 0, szValueName, &cbMaxName, NULL, NULL, NULL, NULL);
-		if (ERROR_SUCCESS == lResult && (szValueName[0] != NULL))
-			return TRUE; // Named Value means we have a value
 		return FALSE;
 	}
 
-	return cbValues > 0; // More than 1 means we have a non-default value
+	return cValues > 0; // More than 1 means we have a non-default value
 }
 
 inline HRESULT CRegParser::SkipAssignment(_Inout_z_cap_c_(MAX_VALUE) LPTSTR szToken)
@@ -1064,14 +1149,17 @@ inline HRESULT CRegParser::SkipAssignment(_Inout_z_cap_c_(MAX_VALUE) LPTSTR szTo
 	return S_OK;
 }
 
-inline HRESULT CRegParser::PreProcessBuffer(_In_z_ LPTSTR lpszReg, _Deref_out_opt_z_ LPTSTR* ppszReg)
+ATLPREFAST_SUPPRESS(6387)
+inline HRESULT CRegParser::PreProcessBuffer(
+	_In_z_ LPTSTR lpszReg,
+	_Deref_out_z_ LPTSTR* ppszReg)
 {
 	ATLASSERT(lpszReg != NULL);
 	ATLASSERT(ppszReg != NULL);
 
 	if (lpszReg == NULL || ppszReg == NULL)
 		return E_POINTER;
-	
+
 	*ppszReg = NULL;
 	int nSize = lstrlen(lpszReg)*2;
 	CParseBuffer pb(nSize);
@@ -1093,7 +1181,7 @@ inline HRESULT CRegParser::PreProcessBuffer(_In_z_ LPTSTR lpszReg, _Deref_out_op
 	bool bRedirectionPresent = false;
 	bool bInsideQuotes = false;
 
-	while (*m_pchCur != NULL) // look for end
+	while (*m_pchCur != _T('\0')) // look for end
 	{
 		if ( true == bRedirectionEnabled )
 		{
@@ -1230,8 +1318,11 @@ inline HRESULT CRegParser::PreProcessBuffer(_In_z_ LPTSTR lpszReg, _Deref_out_op
 		*ppszReg = pb.Detach();
 	return hr;
 }
+ATLPREFAST_UNSUPPRESS()
 
-inline HRESULT CRegParser::RegisterBuffer(_In_z_ LPTSTR szBuffer, _In_ BOOL bRegister)
+inline HRESULT CRegParser::RegisterBuffer(
+	_In_z_ LPTSTR szBuffer,
+	_In_ BOOL bRegister)
 {
 	TCHAR   szToken[MAX_VALUE];
 	HRESULT hr = S_OK;
@@ -1247,7 +1338,7 @@ inline HRESULT CRegParser::RegisterBuffer(_In_z_ LPTSTR szBuffer, _In_ BOOL bReg
 
 	// Preprocess szReg
 
-	while (NULL != *m_pchCur)
+	while (_T('\0') != *m_pchCur)
 	{
 		if (FAILED(hr = NextToken(szToken)))
 			break;
@@ -1292,7 +1383,11 @@ inline HRESULT CRegParser::RegisterBuffer(_In_z_ LPTSTR szBuffer, _In_ BOOL bReg
 	return hr;
 }
 
-inline HRESULT CRegParser::RegisterSubkeys(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken, _In_ HKEY hkParent, _In_ BOOL bRegister, _In_ BOOL bRecover)
+inline HRESULT CRegParser::RegisterSubkeys(
+	_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken,
+	_In_ HKEY hkParent,
+	_In_ BOOL bRegister,
+	_In_ BOOL bRecover)
 {
 	CRegKey keyCur;
 	LONG    lRes;
@@ -1305,11 +1400,8 @@ inline HRESULT CRegParser::RegisterSubkeys(_Out_z_cap_c_(MAX_VALUE) LPTSTR szTok
 	if (FAILED(hr = NextToken(szToken)))
 		return hr;
 
-
 	while (*szToken != chRightBracket) // Continue till we see a }
 	{
-
-		
 		bDelete = TRUE;
 		BOOL bTokenDelete = !lstrcmpi(szToken, szDelete);
 
@@ -1341,7 +1433,6 @@ inline HRESULT CRegParser::RegisterSubkeys(_Out_z_cap_c_(MAX_VALUE) LPTSTR szTok
 					goto EndCheck;
 				}
 			}
-
 		}
 
 		if (!lstrcmpi(szToken, szNoRemove))
@@ -1355,13 +1446,11 @@ inline HRESULT CRegParser::RegisterSubkeys(_Out_z_cap_c_(MAX_VALUE) LPTSTR szTok
 		{
 			TCHAR  szValueName[MAX_VALUE];
 
-
-		 
 			if (FAILED(hr = NextToken(szValueName)))
 				break;
 			if (FAILED(hr = NextToken(szToken)))
 				break;
- 
+
 			if (*szToken != chEquals)
 				return GenerateError(E_ATL_EXPECTING_EQUAL);
 
@@ -1514,7 +1603,7 @@ inline HRESULT CRegParser::RegisterSubkeys(_Out_z_cap_c_(MAX_VALUE) LPTSTR szTok
 				}
 				continue;
 			}
- 			
+
 			BOOL bHasSubKeys=HasSubKeys(keyCur);
 			lRes = keyCur.Close();
 			if (lRes != ERROR_SUCCESS)
@@ -1529,15 +1618,11 @@ inline HRESULT CRegParser::RegisterSubkeys(_Out_z_cap_c_(MAX_VALUE) LPTSTR szTok
 				rkParent.Detach();
 				if (lRes != ERROR_SUCCESS)
 				{
-					 
+
 					hr = AtlHresultFromWin32(lRes);
 					break;
 				}
 			}
-		
-		
-		
-		
 		}
 
 EndCheck:

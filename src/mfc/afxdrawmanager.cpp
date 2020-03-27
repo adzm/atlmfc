@@ -34,6 +34,11 @@ HBITMAP CDrawingManager::CreateBitmap_32(const CSize& size, void** pBits)
 	ASSERT(0 < size.cx);
 	ASSERT(0 != size.cy);
 
+	if (pBits != NULL)
+	{
+		*pBits = NULL;
+	}
+
 	if (size.cx <= 0 || size.cy == 0)
 	{
 		return NULL;
@@ -45,13 +50,103 @@ HBITMAP CDrawingManager::CreateBitmap_32(const CSize& size, void** pBits)
 	bi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
 	bi.bmiHeader.biWidth       = size.cx;
 	bi.bmiHeader.biHeight      = size.cy;
-	bi.bmiHeader.biSizeImage   = size.cx * size.cy;
+	bi.bmiHeader.biSizeImage   = size.cx * abs(size.cy);
 	bi.bmiHeader.biPlanes      = 1;
 	bi.bmiHeader.biBitCount    = 32;
 	bi.bmiHeader.biCompression = BI_RGB;
 
-	*pBits = NULL;
-	HBITMAP hbmp = ::CreateDIBSection(NULL, &bi, DIB_RGB_COLORS, pBits, NULL, 0);
+	LPVOID pData = NULL;
+	HBITMAP hbmp = ::CreateDIBSection(NULL, &bi, DIB_RGB_COLORS, &pData, NULL, 0);
+
+	if (pData != NULL && hbmp != NULL && pBits != NULL)
+	{
+		*pBits = pData;
+	}
+
+	return hbmp;
+}
+
+HBITMAP CDrawingManager::CreateBitmap_32(HBITMAP bitmap, COLORREF clrTransparent/* = -1*/)
+{
+	if (bitmap == NULL)
+	{
+		ASSERT(FALSE);
+		return NULL;
+	}
+
+	BITMAP bmp;
+	if (::GetObject(bitmap, sizeof(BITMAP), &bmp) == 0)
+	{
+		ASSERT(FALSE);
+		return NULL;
+	}
+
+	if (bmp.bmBits == NULL)
+	{
+		ASSERT(FALSE);
+		return NULL;
+	}
+
+	int nHeight = bmp.bmHeight;
+	LPVOID lpBits = NULL;
+	HBITMAP hbmp = CreateBitmap_32(CSize(bmp.bmWidth, nHeight), &lpBits);
+	nHeight = abs(nHeight);
+
+	if (hbmp != NULL)
+	{
+		DWORD nSizeImage = bmp.bmWidth * nHeight;
+
+		if (bmp.bmBitsPixel == 32)
+		{
+			memcpy(lpBits, bmp.bmBits, nSizeImage * 4);
+		}
+		else
+		{
+			CDC dcSrc;
+			dcSrc.CreateCompatibleDC(NULL);
+			HBITMAP hbmpSrc = (HBITMAP)dcSrc.SelectObject(bitmap);
+
+			if (hbmpSrc != NULL)
+			{
+				CDC dcDst;
+				dcDst.CreateCompatibleDC (NULL);
+				HBITMAP hbmpDst = (HBITMAP)dcDst.SelectObject(hbmp);
+
+				dcDst.BitBlt(0, 0, bmp.bmWidth, nHeight, &dcSrc, 0, 0, SRCCOPY);
+
+				dcDst.SelectObject(hbmpDst);
+				dcSrc.SelectObject(hbmpSrc);
+
+				COLORREF* pBits = (COLORREF*)lpBits;
+				if (clrTransparent == -1)
+				{
+					for (DWORD i = 0; i < nSizeImage; i++)
+					{
+						*pBits |= 0xFF000000;
+						pBits++;
+					}
+				}
+				else
+				{
+					COLORREF clrTrans = RGB(GetBValue(clrTransparent), GetGValue(clrTransparent), GetRValue(clrTransparent));
+
+					for (DWORD i = 0; i < nSizeImage; i++)
+					{
+						if (*pBits != clrTrans)
+						{
+							*pBits |= 0xFF000000;
+						}
+						else
+						{
+							*pBits = (COLORREF)0;
+						}
+
+						pBits++;
+					}
+				}
+			}
+		}
+	}
 
 	return hbmp;
 }
@@ -855,7 +950,7 @@ BOOL CDrawingManager::DrawGradientRing(CRect rect, COLORREF colorStart, COLORREF
 }
 
 BOOL CDrawingManager::DrawShadow(CRect rect, int nDepth, int iMinBrightness, int iMaxBrightness,
-	CBitmap* pBmpSaveBottom, CBitmap* pBmpSaveRight, COLORREF clrBase, BOOL bRightShadow/* = TRUE*/)
+		 CBitmap* pBmpSaveBottom, CBitmap* pBmpSaveRight, COLORREF clrBase, BOOL bRightShadow/* = TRUE*/)
 {
 	ASSERT(nDepth >= 0);
 
@@ -2137,9 +2232,7 @@ void CDrawingManager::DrawAlpha(CDC* pDstDC, const CRect& rectDst, CDC* pSrcDC, 
 	pDstDC->AlphaBlend(rectDst.left, rectDst.top, rectDst.Width(), rectDst.Height(), pSrcDC, rectSrc.left, rectSrc.top, rectSrc.Width(), rectSrc.Height(), pixelblend);
 }
 
-HBITMAP CDrawingManager::PrepareShadowMask (int nDepth,
-											 COLORREF clrBase,
-                                             int iMinBrightness/* = 0*/, int iMaxBrightness/* = 100*/)
+HBITMAP CDrawingManager::PrepareShadowMask (int nDepth, COLORREF clrBase, int iMinBrightness/* = 0*/, int iMaxBrightness/* = 100*/)
 {
 	if (nDepth == 0)
 	{
@@ -2150,7 +2243,7 @@ HBITMAP CDrawingManager::PrepareShadowMask (int nDepth,
 	int nDestSize = nSize * 2 + 1;
 
 	LPBYTE lpBits = NULL;
-	HBITMAP hBitmap = CreateBitmap_32 (CSize (nDestSize, nDestSize), (void**)&lpBits);
+	HBITMAP hBitmap = CreateBitmap_32(CSize(nDestSize, nDestSize), (void**)&lpBits);
 
 	if (hBitmap == NULL || lpBits == NULL)
 	{
@@ -2161,7 +2254,7 @@ HBITMAP CDrawingManager::PrepareShadowMask (int nDepth,
 	int nDestLength = nDestSize * nDestSize;
 	double* mask = new double[nDestLength];
 
-	double dispersion = 0.75;
+	double dispersion = 1.0;
 	double minValue   = iMinBrightness / 100.0;
 	double maxValue   = iMaxBrightness / 100.0;
 	double delta      = maxValue - minValue;
@@ -2169,28 +2262,31 @@ HBITMAP CDrawingManager::PrepareShadowMask (int nDepth,
 	long size2      = nDestSize / 2;
 	double size2S   = nDestSize * nDestSize / 4.0;
 
+	double* pMask = mask;
+
 	for(long y = -size2; y <= size2; y++)
 	{
-		int index = (y + size2) * nDestSize;
 		double y2 = y * y;
 
 		for(long x = -size2; x <= size2; x++)
 		{
 			double d = y2 + x * x;
+			double e = 0.0;
 
 			if(d <= size2S)
 			{
-				double e = exp (-(d / size2S) / dispersion * 2.0) * delta + minValue;
-				mask [index + x + size2] = min (maxValue, max (e, minValue));
+				e = min(maxValue, max(exp(-(d / size2S) / dispersion * 2.0) * delta + minValue, minValue));
 			}
+
+			*pMask++ = e;
 		}
 	}
 
-	BYTE r = GetRValue (clrBase);
-	BYTE g = GetGValue (clrBase);
-	BYTE b = GetBValue (clrBase);
+	BYTE r = (BYTE)(GetRValue(clrBase) / 4);
+	BYTE g = (BYTE)(GetGValue(clrBase) / 4);
+	BYTE b = (BYTE)(GetBValue(clrBase) / 4);
 
-	double* pMask = mask;
+	pMask = mask;
 	LPRGBQUAD pQuad = (LPRGBQUAD)lpBits;
 	for (int i = 0; i < nDestLength; i++)
 	{
@@ -2209,4 +2305,26 @@ HBITMAP CDrawingManager::PrepareShadowMask (int nDepth,
 	}
 
 	return hBitmap;
+}
+
+void CDrawingManager::DrawRotated(CRect rect, CDC& dcSrc, BOOL bClockWise)
+{
+	const int cx = rect.Width();
+	const int cy = rect.Height();
+
+	if (cx <= 0 || cy <= 0)
+	{
+		return;
+	}
+
+	for (int y = 0; y <= cy; y++)
+	{
+		for (int x = 0; x <= cx; x++)
+		{
+			int xSrc = y;
+			int ySrc = bClockWise ? (cx - x - 1) : x;
+
+			m_dc.SetPixel(rect.left + x, rect.top + y, dcSrc.GetPixel(xSrc, ySrc));
+		}
+	}
 }

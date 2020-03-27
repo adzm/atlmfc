@@ -14,6 +14,8 @@
 #include "afxacceleratorkey.h"
 #include "afxribbonres.h"
 #include "afxglobals.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -46,6 +48,7 @@ BEGIN_MESSAGE_MAP(CVSListBoxEditCtrl, CMFCEditBrowseCtrl)
 	ON_WM_NCPAINT()
 	ON_WM_NCHITTEST()
 	ON_WM_WINDOWPOSCHANGED()
+	ON_WM_KEYDOWN()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -75,6 +78,19 @@ void CVSListBoxEditCtrl::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FA
 		CMFCEditBrowseCtrl::OnNcCalcSize(bCalcValidRects, lpncsp);
 	}
 }
+
+void CVSListBoxEditCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nChar == VK_TAB && (m_pParentList->GetCount() == 1) && (m_pParentList->IsCreatingNewItem()))
+	{
+		long lParam = nRepCnt | nFlags << 16;
+		CMFCEditBrowseCtrl::DefWindowProc(WM_KEYDOWN, VK_RETURN, lParam);
+		return;
+	}
+
+	CMFCEditBrowseCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CVSListBoxBase
 
@@ -763,6 +779,7 @@ BEGIN_MESSAGE_MAP(CVSListBox, CVSListBoxBase)
 	ON_NOTIFY(LVN_GETDISPINFO, nListId, &CVSListBox::OnGetdispinfo)
 	ON_NOTIFY(LVN_ENDLABELEDIT, nListId, &CVSListBox::OnEndLabelEdit)
 	ON_NOTIFY(LVN_ITEMCHANGED, nListId, &CVSListBox::OnItemChanged)
+	ON_MESSAGE(WM_MFC_INITCTRL, &CVSListBox::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -1166,5 +1183,64 @@ BOOL CVSListBox::PreTranslateMessage(MSG* pMsg)
 	return CVSListBoxBase::PreTranslateMessage(pMsg);
 }
 
+LRESULT CVSListBox::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
 
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
 
+	CTagManager tagManager(strDst);
+
+	BOOL bBrowseButton = TRUE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_BrowseButton, bBrowseButton))
+	{
+		EnableBrowseButton(bBrowseButton);
+	}
+
+	UINT uiBtns = 0;
+
+	BOOL bNewButton = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_NewButton, bNewButton))
+	{
+		if (bNewButton && GetButtonNum(AFX_VSLISTBOX_BTN_NEW_ID) == -1)
+		{
+			uiBtns |= AFX_VSLISTBOX_BTN_NEW;
+		}
+	}
+
+	BOOL bRemoveButton = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_RemoveButton, bRemoveButton))
+	{
+		if (bRemoveButton && GetButtonNum(AFX_VSLISTBOX_BTN_DELETE_ID) == -1)
+		{
+			uiBtns |= AFX_VSLISTBOX_BTN_DELETE;
+		}
+	}
+
+	BOOL bUpButton = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_UpButton, bUpButton))
+	{
+		if (bUpButton && GetButtonNum(AFX_VSLISTBOX_BTN_UP_ID) == -1)
+		{
+			uiBtns |= AFX_VSLISTBOX_BTN_UP;
+		}
+	}
+
+	BOOL bDownButton = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_DownButton, bDownButton))
+	{
+		if (bDownButton && GetButtonNum(AFX_VSLISTBOX_BTN_DOWN_ID) == -1)
+		{
+			uiBtns |= AFX_VSLISTBOX_BTN_DOWN;
+		}
+	}
+
+	if (uiBtns != 0)
+	{
+		SetStandardButtons(uiBtns);
+	}
+
+	return 0;
+}

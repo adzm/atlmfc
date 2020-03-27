@@ -12,6 +12,7 @@
 
 #include "afxcontrolbarutil.h"
 #include "afxvisualmanagerofficexp.h"
+#include "afxglobals.h"
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -50,6 +51,7 @@ public:
 	virtual void OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, BOOL bIsHoriz);
 	virtual void OnDrawCaptionButton(CDC* pDC, CMFCCaptionButton* pButton, BOOL bActive, BOOL bHorz, BOOL bMaximized, BOOL bDisabled, int nImageID = -1);
 	virtual COLORREF OnDrawPaneCaption(CDC* pDC, CDockablePane* pBar, BOOL bActive, CRect rectCaption, CRect rectButtons);
+	virtual void OnFillMenuImageRect(CDC* pDC, CMFCToolBarButton* pButton, CRect rect, CMFCVisualManager::AFX_BUTTON_STATE state);
 
 	virtual void OnDrawCaptionButtonIcon(CDC* pDC, CMFCCaptionButton* pButton, CMenuImages::IMAGES_IDS id, BOOL bActive, BOOL bDisabled, CPoint ptImage);
 	virtual void OnDrawMenuSystemButton(CDC* pDC, CRect rect, UINT uiSystemCommand, UINT nStyle, BOOL bHighlight);
@@ -74,7 +76,7 @@ public:
 	virtual void OnHighlightMenuItem(CDC *pDC, CMFCToolBarMenuButton* pButton, CRect rect, COLORREF& clrText);
 	virtual COLORREF GetHighlightedMenuItemTextColor(CMFCToolBarMenuButton* pButton);
 	virtual void OnHighlightRarelyUsedMenuItems(CDC* pDC, CRect rectRarelyUsed);
-	virtual BOOL IsHighlightWholeMenuItem()	{	return m_bOfficeStyleMenus;	}
+	virtual BOOL IsHighlightWholeMenuItem()	{	return m_bOfficeStyleMenus || m_hThemeMenu != NULL;	}
 
 	// Tab control:
 	virtual void OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsActive, const CMFCBaseTabCtrl* pTabWnd);
@@ -92,7 +94,7 @@ public:
 	virtual void OnDrawMiniFrameBorder(CDC* pDC, CPaneFrameWnd* pFrameWnd, CRect rectBorder, CRect rectBorderSize);
 
 	virtual void OnDrawFloatingToolbarBorder(CDC* pDC, CMFCBaseToolBar* pToolBar, CRect rectBorder, CRect rectBorderSize);
-	virtual int GetDockingPaneCaptionExtraHeight() const { return 3; }
+	virtual int GetDockingPaneCaptionExtraHeight() const { return afxGlobalData.bIsWindowsVista ? 0 : 3; }
 
 	// Outlook bar page buttons:
 	virtual void OnFillOutlookPageButton(	CDC* pDC, const CRect& rect, BOOL bIsHighlighted, BOOL bIsPressed, COLORREF& clrText);

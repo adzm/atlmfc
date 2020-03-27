@@ -140,11 +140,11 @@ BOOL CMFCOutlookBarToolBar::OnSendCommand(const CMFCToolBarButton* pButton)
 	{
 		int iTab = -1;
 
-		if (m_TabButtons.Lookup(nIndex, iTab))
+		if (m_TabButtons.Lookup(nIndex, iTab) && m_pParentBar->GetActiveTab() != iTab)
 		{
 			if (m_pParentBar->SetActiveTab(iTab) && m_pParentBar->GetParentFrame() != NULL)
 			{
-				m_pParentBar->GetParentFrame()->SendMessage(AFX_WM_CHANGE_ACTIVE_TAB, iTab, 0);
+				m_pParentBar->GetParentFrame()->SendMessage(AFX_WM_CHANGE_ACTIVE_TAB, iTab, (LPARAM)m_pParentBar);
 			}
 
 			return TRUE;
@@ -197,6 +197,8 @@ BOOL CMFCOutlookBarToolBar::OnUserToolTip(CMFCToolBarButton* pButton, CString& s
 
 void CMFCOutlookBarToolBar::AdjustLocations()
 {
+	const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+
 	CSize sizeImage = GetImageSize();
 	if (sizeImage == CSize(0, 0))
 	{
@@ -204,6 +206,10 @@ void CMFCOutlookBarToolBar::AdjustLocations()
 	}
 
 	CSize sizeButton = sizeImage + CSize(10, 6 + 2 * nToolbarMarginHeight);
+	if (dblImageScale != 1.)
+	{
+		sizeButton = CSize((int)(.5 + sizeButton.cx * dblImageScale), (int)(.5 + sizeButton.cy * dblImageScale));
+	}
 
 	CSize sizeCustomizeButton(0, 0);
 	if (m_pCustomizeBtn != NULL)
@@ -415,7 +421,15 @@ void CMFCOutlookBarTabCtrl::RecalcLayout()
 			sizeImage.cy = 16;
 		}
 
-		nToolBarHeight = sizeImage.cy + 6 + 2 * nToolbarMarginHeight - 2;
+		const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+
+		int nVertMargin = 6 + 2 * nToolbarMarginHeight - 2;
+		if (dblImageScale != 1.)
+		{
+			nVertMargin = (int)(.5 + nVertMargin * dblImageScale);
+		}
+
+		nToolBarHeight = sizeImage.cy + nVertMargin;
 	}
 
 	m_btnUp.SendMessage(WM_CANCELMODE);

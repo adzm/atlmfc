@@ -38,12 +38,6 @@
 
 #include "afxmdiframewndex.h"
 
-#pragma warning(disable : 4706)
-
-#include "multimon.h"
-
-#pragma warning(default : 4706)
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -76,6 +70,7 @@ BOOL CDockingManager::m_bSavingState = FALSE;
 
 CSmartDockingInfo CDockingManager::m_SDParams;
 BOOL CDockingManager::m_bSDParamsModified = FALSE;
+AFX_SMARTDOCK_THEME CDockingManager::m_SDTheme = AFX_SDT_DEFAULT;
 
 BOOL CDockingManager::m_bDockBarMenu = FALSE;
 BOOL CDockingManager::m_bIgnoreEnabledAlignment = FALSE;
@@ -2415,8 +2410,12 @@ void CDockingManager::Serialize(CArchive& ar)
 						pBar->SetAutoHideMode(FALSE, CBRS_ALIGN_ANY);
 					}
 
-					pBar->SetRestoredDefaultPaneDivider(pCurrentDefaultSlider->m_hWnd);
-					pBar->SetPaneAlignment(pCurrentDefaultSlider->GetCurrentAlignment());
+					if (pCurrentDefaultSlider != NULL)
+					{
+						pBar->SetRestoredDefaultPaneDivider(pCurrentDefaultSlider->m_hWnd);
+						pBar->SetPaneAlignment(pCurrentDefaultSlider->GetCurrentAlignment());
+					}
+
 					m_lstLoadedBars.AddHead(pBar);
 				}
 				else
@@ -3237,17 +3236,19 @@ void CDockingManager::ShowDelayShowMiniFrames(BOOL bShow)
 {
 	for (POSITION pos = m_lstMiniFrames.GetHeadPosition(); pos != NULL;)
 	{
-		CWnd* pWndNext = (CWnd *)m_lstMiniFrames.GetNext(pos);
-		if (pWndNext->IsKindOf(RUNTIME_CLASS(CPaneFrameWnd)))
+		CWnd* pWndNext = (CWnd*)m_lstMiniFrames.GetNext(pos);
+		if (pWndNext != NULL && pWndNext->IsKindOf(RUNTIME_CLASS(CPaneFrameWnd)))
 		{
-			CPaneFrameWnd *pFrameWnd = DYNAMIC_DOWNCAST(CPaneFrameWnd, pWndNext);
-			if (pFrameWnd->IsDelayShow())
+			CPaneFrameWnd* pFrameWnd = DYNAMIC_DOWNCAST(CPaneFrameWnd, pWndNext);
+			if (pFrameWnd != NULL && pFrameWnd->IsDelayShow())
 			{
 				HWND hWndNext = pWndNext->GetSafeHwnd();
 				if (::IsWindow(hWndNext))
 				{
-					ShowWindow(hWndNext, bShow ? SW_SHOWNOACTIVATE : SW_HIDE);
+					::ShowWindow(hWndNext, bShow ? SW_SHOWNOACTIVATE : SW_HIDE);
 				}
+
+				pFrameWnd->SetDelayShow(FALSE);
 			}
 		}
 	}
@@ -3349,7 +3350,7 @@ void CDockingManager::ResortMiniFramesForZOrder()
 	m_lstMiniFrames.AddTail(&lstNewMiniFrames);
 }
 
-void __stdcall CDockingManager::SetDockingMode(AFX_DOCK_TYPE dockMode)
+void __stdcall CDockingManager::SetDockingMode(AFX_DOCK_TYPE dockMode, AFX_SMARTDOCK_THEME theme)
 {
 	m_dockModeGlobal = dockMode;
 
@@ -3357,6 +3358,7 @@ void __stdcall CDockingManager::SetDockingMode(AFX_DOCK_TYPE dockMode)
 	{
 		// DT_SMART should only be used along with DT_IMMEDIATE
 		m_dockModeGlobal = AFX_DOCK_TYPE(DT_SMART | DT_IMMEDIATE);
+		m_SDTheme = theme;
 	}
 }
 
@@ -3820,9 +3822,11 @@ CSmartDockingInfo::CSmartDockingInfo()
 		m_uiMarkerLightBmpResID [i] = 0;
 	}
 
+	m_uiBaseBmpResID = 0;
 	m_clrBaseBackground = (COLORREF)-1;
 	m_clrBaseBorder = (COLORREF)-1;
 	m_bUseThemeColorInShading = FALSE;
+	m_bIsAlphaMarkers = FALSE;
 }
 
 void CSmartDockingInfo::CopyTo(CSmartDockingInfo& params)
@@ -3842,7 +3846,6 @@ void CSmartDockingInfo::CopyTo(CSmartDockingInfo& params)
 	params.m_clrBaseBackground = m_clrBaseBackground;
 	params.m_clrBaseBorder = m_clrBaseBorder;
 	params.m_bUseThemeColorInShading = m_bUseThemeColorInShading;
+	params.m_uiBaseBmpResID = m_uiBaseBmpResID;
+	params.m_bIsAlphaMarkers = m_bIsAlphaMarkers;
 }
-
-
-

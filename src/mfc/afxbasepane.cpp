@@ -99,6 +99,7 @@ BEGIN_MESSAGE_MAP(CBasePane, CWnd)
 	ON_MESSAGE(WM_INITDIALOG, &CBasePane::HandleInitDialog)
 	ON_MESSAGE(WM_SETICON, &CBasePane::OnSetIcon)
 	ON_MESSAGE(WM_GETOBJECT, &CBasePane::OnGetObject)
+	ON_MESSAGE(WM_PRINTCLIENT, &CBasePane::OnPrintClient)
 END_MESSAGE_MAP()
 //}}AFX_MSG_MAP
 
@@ -594,7 +595,7 @@ void CBasePane::AdjustDockingLayout(HDWP hdwp)
 
 	CWnd* pParentFrame = GetDockSiteFrameWnd();
 
-	if (afxGlobalUtils.m_bDialogApp && pParentFrame == NULL)
+	if (afxGlobalUtils.m_bDialogApp || pParentFrame == NULL)
 	{
 		return;
 	}
@@ -683,7 +684,12 @@ void CBasePane::ShowPane(BOOL bShow, BOOL bDelay, BOOL bActivate)
 		CWnd* pParent = GetParent();
 		ASSERT_VALID(pParent);
 
-		pParent->ShowWindow(nShowCmd);
+		if (!bDelay || !bShow)
+		{
+			// call ShowWindow only if no delay or if we need to hide the pane
+			pParent->ShowWindow(nShowCmd);
+		}
+		
 		pParent->PostMessage(AFX_WM_CHECKEMPTYMINIFRAME);
 	}
 	else if (m_pParentDockBar != NULL)
@@ -848,7 +854,7 @@ BOOL CBasePane::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 
 CWnd* CBasePane::GetDockSiteFrameWnd() const
 {
-	if (m_pDockSite == NULL && GetParent()->IsKindOf(RUNTIME_CLASS(CDialog)))
+	if (m_pDockSite == NULL && GetParent()->IsKindOf(RUNTIME_CLASS(CDialog)) && GetParent()->GetSafeHwnd() == AfxGetMainWnd()->GetSafeHwnd())
 	{
 		afxGlobalUtils.m_bDialogApp = TRUE;
 	}
@@ -1491,4 +1497,24 @@ HRESULT CBasePane::get_accValue(VARIANT varChild, BSTR *pszValue)
 	}
 
 	return S_OK;
+}
+
+LRESULT CBasePane::OnPrintClient(WPARAM wp, LPARAM lp)
+{
+	DWORD dwFlags = (DWORD)lp;
+
+	if (dwFlags & PRF_ERASEBKGND)
+	{
+		SendMessage(WM_ERASEBKGND, wp);
+	}
+
+	if (dwFlags & PRF_CLIENT)
+	{
+		CDC* pDC = CDC::FromHandle((HDC) wp);
+		ASSERT_VALID(pDC);
+
+		DoPaint(pDC);
+	}
+
+	return 0;
 }

@@ -571,6 +571,7 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
+	virtual void DoPaint(CDC* pDC);
 	virtual int ReposTasks(BOOL bCalcHeightOnly = FALSE);
 	void CreateFonts();
 	HFONT SetFont(CDC* pDC);

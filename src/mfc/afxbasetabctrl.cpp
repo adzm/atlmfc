@@ -1727,6 +1727,11 @@ void CMFCBaseTabCtrl::ApplyRestoredTabInfo(BOOL bUseTabIndexes)
 			{
 				pCurrTabInfo->m_pWnd->ShowWindow(SW_SHOW);
 			}
+
+			if (nVisibleTabNumber > 0)
+			{
+				SetActiveTab(nCurIdx);
+			}
 		}
 	}
 
@@ -2121,10 +2126,35 @@ COLORREF CMFCBaseTabCtrl::GetTabBkColor(int iTab) const
 
 	COLORREF color = pTab->m_clrBack;
 
+	CMFCTabInfo* pTabPrev = NULL;
+	if (iTab > 0)
+	{
+		pTabPrev = (CMFCTabInfo*) m_arTabs [iTab - 1];
+		ASSERT_VALID(pTabPrev);
+	}
+
 	if (color == (COLORREF)-1 && m_bIsAutoColor)
 	{
-		color = m_arAutoColors [iTab % m_arAutoColors.GetSize()];
+		// try to make sure that unique tab colors are used
+		static int nLastColorIndexUsed = 0, nCyclicalColor = 0;
+		int nColorIndexUsed = iTab % m_arAutoColors.GetSize();
+		if (nColorIndexUsed == nLastColorIndexUsed)
+		{
+			nColorIndexUsed = ++nCyclicalColor % m_arAutoColors.GetSize();
+		}
+
+		if (pTabPrev != NULL)
+		{
+			COLORREF colorPrev = pTabPrev->m_clrBack;
+			if (colorPrev == m_arAutoColors[nColorIndexUsed])
+			{
+				nColorIndexUsed = ++nCyclicalColor % m_arAutoColors.GetSize();
+			}
+		}
+
+		color = m_arAutoColors[nColorIndexUsed];
 		pTab->m_clrBack = color;
+		nLastColorIndexUsed = nColorIndexUsed;
 	}
 
 	return color;

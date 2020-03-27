@@ -831,7 +831,7 @@ BOOL AFXAPI _AfxCopyStgMedium(
 		{
 			ASSERT(lpSource->lpszFileName != NULL);
 			ASSERT(lpDest->lpszFileName != NULL);
-			CString strSource(lpDest->lpszFileName);
+			CString strSource(lpSource->lpszFileName);
 			CString strDest(lpDest->lpszFileName);
 			return CopyFile(lpSource->lpszFileName ? strSource.GetString() : NULL,
 				lpDest->lpszFileName ? strDest.GetString() : NULL, FALSE);
@@ -1103,7 +1103,7 @@ SCODE AFXAPI _AfxOleDoTreatAsClass(
 	SCODE sc = CoTreatAsClass(rclsid, rclsidNew);
 	if (sc != S_OK && lpszUserType != NULL)
 	{
-		AfxRegOpenKey(HKEY_CLASSES_ROOT, _T("CLSID"), &hKey);
+		AfxRegOpenKeyEx(HKEY_CLASSES_ROOT, _T("CLSID"), 0, KEY_SET_VALUE, &hKey);
 		LPOLESTR lpOleStr = NULL;
 		StringFromCLSID(rclsid, &lpOleStr);
 		lpszCLSID = TASKSTRINGOLE2T(lpOleStr);

@@ -25,6 +25,8 @@
 
 class CSplitterWndEx : public CSplitterWnd
 {
+	DECLARE_DYNAMIC(CSplitterWndEx)
+
 // Construction
 public:
 	CSplitterWndEx();

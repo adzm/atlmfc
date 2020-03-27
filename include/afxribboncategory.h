@@ -31,6 +31,8 @@ class CMFCRibbonCategory;
 
 class CMFCRibbonTab : public CMFCRibbonBaseElement
 {
+	DECLARE_DYNAMIC(CMFCRibbonTab)
+
 	friend class CMFCRibbonCategory;
 	friend class CMFCRibbonBar;
 
@@ -44,6 +46,7 @@ class CMFCRibbonTab : public CMFCRibbonBaseElement
 	virtual CRect GetKeyTipRect(CDC* pDC, BOOL bIsMenu);
 	virtual BOOL OnKey(BOOL bIsMenuKey);
 	virtual BOOL IsShowTooltipOnBottom() const { return FALSE; }
+	virtual void Redraw();
 
 	AFX_RibbonCategoryColor m_Color;
 	BOOL m_bIsTruncated;
@@ -69,8 +72,8 @@ class CRibbonCategoryScroll : public CMFCRibbonButton
 	virtual BOOL OnAutoRepeat();
 
 	virtual BOOL IsAutoRepeatMode(int& /*nDelay*/) const { return TRUE; }
-	virtual void CopyFrom (const CMFCRibbonBaseElement& src);
-	virtual void OnClick (CPoint /*point*/) { OnAutoRepeat (); }
+	virtual void CopyFrom(const CMFCRibbonBaseElement& src);
+	virtual void OnClick(CPoint /*point*/) { OnAutoRepeat(); }
 
 	BOOL	m_bIsLeft;
 
@@ -91,6 +94,7 @@ class CMFCRibbonCategory : public CObject
 	friend class CMFCRibbonPanel;
 	friend class CMFCRibbonPanelMenuBar;
 	friend class CMFCRibbonBaseElement;
+	friend class CMFCRibbonCollector;
 
 	DECLARE_DYNCREATE(CMFCRibbonCategory)
 
@@ -113,6 +117,18 @@ public:
 	CMFCRibbonBaseElement* HitTestScrollButtons(CPoint point) const;
 	int HitTestEx(CPoint point) const;
 	CMFCRibbonPanel* GetPanelFromPoint(CPoint point) const;
+
+	/// <summary>
+	/// Obtain a first visible element that belong to the ribbon category</summary>
+	/// <returns> 
+	/// Pointer to the first visible element; may be NULL if category doesn't have any visible elements</returns>
+	CMFCRibbonBaseElement* GetFirstVisibleElement() const;
+
+	/// <summary>
+	/// Obtain a last visible element that belong to the ribbon category</summary>
+	/// <returns> 
+	/// Pointer to the last visible element; may be NULL if category doesn't have any visible elements</returns>
+	CMFCRibbonBaseElement* GetLastVisibleElement() const;
 
 	CRect GetTabRect() const { return m_Tab.m_rect; }
 	CRect GetRect() const { return m_rect; }
@@ -140,6 +156,16 @@ public:
 	BOOL IsVisible() const { return m_bIsVisible; }
 
 	CMFCRibbonBaseElement* GetDroppedDown();
+
+	/// <summary>
+	/// Returns a focused element. </summary>
+	/// <returns> A pointer to a focused element or NULL if no elements are focused.</returns>
+	CMFCRibbonBaseElement* GetFocused();
+
+	/// <summary>
+	/// Returns a highlighted element. </summary>
+	/// <returns> A pointer to a highlighted element or NULL if no elements are highlighted.</returns>
+	CMFCRibbonBaseElement* GetHighlighted();
 	CMFCRibbonBaseElement* GetParentButton() const;
 
 	CMFCToolBarImages& GetSmallImages() { return m_SmallImages; }
@@ -147,9 +173,16 @@ public:
 
 	void SetKeys(LPCTSTR lpszKeys);
 
+	/// <summary>
+	/// Indicates whether the parent ribbon has Windows 7-style look (small rectangular application button)</summary>
+	/// <returns> 
+	/// TRUE if the parent ribbon has Windows 7-style look; otherwise FALSE.</returns>
+	BOOL IsWindows7Look() const;
+
 // Operations
 public:
 	CMFCRibbonPanel* AddPanel(LPCTSTR lpszPanelName, HICON hIcon = 0, CRuntimeClass* pRTI = NULL);
+	BOOL RemovePanel (int nIndex, BOOL bDelete = TRUE);
 
 	void SetCollapseOrder(const CArray<int, int>& arCollapseOrder);
 	
@@ -170,6 +203,11 @@ public:
 
 	void GetElements(CArray <CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
 	void GetElementsByID(UINT uiCmdID, CArray <CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
+
+	/// <summary>
+	/// Obtain all visible elements that belong to the ribbon category</summary>
+	/// <param name="arElements">Array of all visible elements</param>
+	void GetVisibleElements(CArray <CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
 
 	void GetItemIDsList(CList<UINT,UINT>& lstItems, BOOL bHiddenOnly = FALSE) const;
 
@@ -193,6 +231,11 @@ public:
 
 	virtual BOOL OnScrollHorz(BOOL bScrollLeft, int nScrollOffset = 0);
 	virtual void ReposPanels(CDC* pDC);
+
+	/// <summary>
+	// Called by the framework when a user presses a keyboard button.</summary>
+	/// <param name="nChar">The virtual-key code for the key that a user pressed.</param>
+	virtual BOOL OnKey(UINT nChar);
 
 // Implementation
 public:
@@ -221,22 +264,22 @@ protected:
 	int  m_nLastCategoryWidth;
 	int  m_nLastCategoryOffsetY;
 
-	DWORD_PTR				m_dwData;
-	CRect					m_rect;
-	CString					m_strName;
-	CMFCRibbonTab				m_Tab;
-	CRibbonCategoryScroll	m_ScrollLeft;
-	CRibbonCategoryScroll	m_ScrollRight;
-	int						m_nScrollOffset;
-	CMFCRibbonBar*				m_pParentRibbonBar;
+	DWORD_PTR             m_dwData;
+	CRect                 m_rect;
+	CString               m_strName;
+	CMFCRibbonTab         m_Tab;
+	CRibbonCategoryScroll m_ScrollLeft;
+	CRibbonCategoryScroll m_ScrollRight;
+	int                   m_nScrollOffset;
+	CMFCRibbonBar*        m_pParentRibbonBar;
 
-	CMFCRibbonPanelMenuBar*	m_pParentMenuBar;
+	CMFCRibbonPanelMenuBar* m_pParentMenuBar;
 
-	int						m_nMinWidth;
-	CArray<int, int>		m_arCollapseOrder;
+	int    m_nMinWidth;
+	CArray<int, int>   m_arCollapseOrder;
 	CArray<CMFCRibbonPanel*,CMFCRibbonPanel*> m_arPanels;
 
-	clock_t					m_ActiveTime;
+	clock_t  m_ActiveTime;
 
 	//----------------------
 	// Category image lists:
@@ -249,8 +292,11 @@ protected:
 	//---------------------------------
 	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> m_arElements;
 
+	UINT m_uiSmallImagesResID;
+	UINT m_uiLargeImagesResID;
+
 private:
-	void NormalizeFloatingRect (CMFCRibbonBar* pRibbonBar, CRect& rectCategory);
+	void NormalizeFloatingRect(CMFCRibbonBar* pRibbonBar, CRect& rectCategory);
 };
 
 #ifdef _AFX_MINREBUILD

@@ -741,21 +741,7 @@ BOOL __stdcall CTagManager::ParseFont(const CString& strItem, LOGFONT& value)
 		{
 			if (strFontItem.CompareNoCase(QUALITY_FONT_TYPES[i].name) == 0)
 			{
-				if (QUALITY_FONT_TYPES[i].quality <= ANTIALIASED_QUALITY)
-				{
-					value.lfQuality = QUALITY_FONT_TYPES[i].quality;
-				}
-				else
-				{
-					OSVERSIONINFO osvi;
-					osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-					::GetVersionEx(&osvi);
-
-					if (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT && osvi.dwMajorVersion >= 5)
-					{
-						value.lfQuality = QUALITY_FONT_TYPES[i].quality;
-					}
-				}
+				value.lfQuality = QUALITY_FONT_TYPES[i].quality;
 				break;
 			}
 		}
@@ -1040,6 +1026,3 @@ BOOL CTagManager::ReadToolTipInfo(const CString& strValue, CMFCToolTipInfo& valu
 
 	return FALSE;
 }
-
-
-

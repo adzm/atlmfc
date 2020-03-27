@@ -24,7 +24,9 @@ namespace ATL
 /////////////////////////////////////////////////////////////////////////////
 // Exception raise (for functions that cannot return an error code)
 
-inline void __declspec(noreturn) _AtlRaiseException( DWORD dwExceptionCode, DWORD dwExceptionFlags = EXCEPTION_NONCONTINUABLE )
+inline void __declspec(noreturn) _AtlRaiseException(
+	_In_ DWORD dwExceptionCode,
+	_In_ DWORD dwExceptionFlags = EXCEPTION_NONCONTINUABLE)
 {
 	RaiseException( dwExceptionCode, dwExceptionFlags, 0, NULL );
 }
@@ -37,7 +39,7 @@ public:
 	{
 	}
 
-	CAtlException( HRESULT hr ) throw() :
+	CAtlException(_In_ HRESULT hr) throw() :
 		m_hr( hr )
 	{
 	}
@@ -59,7 +61,7 @@ public:
 #error MFC projects must use default implementation of AtlThrow()
 #endif
 #else
-ATL_NOINLINE __declspec(noreturn) inline void WINAPI AtlThrowImpl( HRESULT hr )
+ATL_NOINLINE __declspec(noreturn) inline void WINAPI AtlThrowImpl(_In_ HRESULT hr)
 {
 	ATLTRACE(atlTraceException, 0, _T("AtlThrow: hr = 0x%x\n"), hr );
 #ifdef _AFX
@@ -89,7 +91,7 @@ ATL_NOINLINE __declspec(noreturn) inline void WINAPI AtlThrowLastWin32()
 // Throw a CAtlException with th given HRESULT
 #if !defined( _ATL_CUSTOM_THROW )  // You can define your own AtlThrow
 
-ATL_NOINLINE inline void WINAPI AtlThrowImpl( HRESULT hr )
+ATL_NOINLINE inline void WINAPI AtlThrowImpl(_In_ HRESULT hr)
 {
 	ATLTRACE(atlTraceException, 0, _T("AtlThrow: hr = 0x%x\n"), hr );
 	ATLASSERT( false );

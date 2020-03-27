@@ -359,7 +359,7 @@ _AFXWIN_INLINE DWORD CWnd::GetWindowContextHelpId() const
 _AFXWIN_INLINE void CWnd::EnableActiveAccessibility()
 	{ m_bEnableActiveAccessibility = true; }
 _AFXWIN_INLINE void CWnd::NotifyWinEvent(DWORD event, LONG idObjectType, LONG idObject)
-	{ ASSERT(::IsWindow(m_hWnd)); if (m_pfnNotifyWinEvent != NULL) (*m_pfnNotifyWinEvent)(event, m_hWnd, idObjectType, idObject); }
+	{ ASSERT(::IsWindow(m_hWnd)); ::NotifyWinEvent(event, m_hWnd, idObjectType, idObject); }
 
 // Default message map implementations
 _AFXWIN_INLINE void CWnd::OnActivateApp(BOOL, DWORD)
@@ -498,7 +498,7 @@ _AFXWIN_INLINE void CWnd::OnInputLangChange(UINT, UINT)
 	{ Default(); }
 _AFXWIN_INLINE void CWnd::OnInputLangChangeRequest(UINT, UINT)
 	{ Default(); }
-_AFXWIN_INLINE void CWnd::OnInputDeviceChange(unsigned short)
+_AFXWIN_INLINE void CWnd::OnInputDeviceChange(unsigned short, HANDLE)
 	{ Default(); }
 _AFXWIN_INLINE void CWnd::OnChar(UINT, UINT, UINT)
 	{ Default(); }
@@ -684,7 +684,6 @@ _AFXWIN_INLINE void CDialog::GotoDlgCtrl(CWnd* pWndCtrl)
 _AFXWIN_INLINE void CDialog::SetDefID(UINT nID)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, DM_SETDEFID, nID, 0); }
 _AFXWIN_INLINE DWORD CDialog::GetDefID() const
-//IA64: Assuming retval of DM_GETDEFID won't be expanded
 	{ ASSERT(::IsWindow(m_hWnd)); return DWORD(::SendMessage(m_hWnd, DM_GETDEFID, 0, 0)); }
 
 // Window control functions
@@ -851,7 +850,6 @@ _AFXWIN_INLINE int CComboBox::GetCurSel() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_GETCURSEL, 0, 0); }
 _AFXWIN_INLINE int CComboBox::SetCurSel(int nSelect)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_SETCURSEL, nSelect, 0); }
-//IA64: Assuming retval of CB_GETEDITSEL won't be expanded
 _AFXWIN_INLINE DWORD CComboBox::GetEditSel() const
 	{ ASSERT(::IsWindow(m_hWnd)); return DWORD(::SendMessage(m_hWnd, CB_GETEDITSEL, 0, 0)); }
 _AFXWIN_INLINE BOOL CComboBox::LimitText(int nMaxChars)
@@ -946,7 +944,6 @@ _AFXWIN_INLINE void CEdit::GetRect(LPRECT lpRect) const
 _AFXWIN_INLINE void CEdit::GetSel(int& nStartChar, int& nEndChar) const
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, EM_GETSEL, (WPARAM)&nStartChar,(LPARAM)&nEndChar); }
 _AFXWIN_INLINE DWORD CEdit::GetSel() const
-//IA64: Assuming retval of EM_GETSEL won't be expanded
 	{ ASSERT(::IsWindow(m_hWnd)); return DWORD(::SendMessage(m_hWnd, EM_GETSEL, 0, 0)); }
 _AFXWIN_INLINE HLOCAL CEdit::GetHandle() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (HLOCAL)::SendMessage(m_hWnd, EM_GETHANDLE, 0, 0); }
@@ -1123,22 +1120,22 @@ _AFXWIN_INLINE HCURSOR CWinApp::LoadCursor(LPCTSTR lpszResourceName) const
 	{ return ::LoadCursor(AfxFindResourceHandle(lpszResourceName,
 		ATL_RT_GROUP_CURSOR), lpszResourceName); }
 _AFXWIN_INLINE HCURSOR CWinApp::LoadCursor(UINT nIDResource) const
-	{ return ::LoadCursor(AfxFindResourceHandle(ATL_MAKEINTRESOURCE(nIDResource),
-		ATL_RT_GROUP_CURSOR), ATL_MAKEINTRESOURCE(nIDResource)); }
+	{ return ::LoadCursorW(AfxFindResourceHandle(ATL_MAKEINTRESOURCE(nIDResource),
+		ATL_RT_GROUP_CURSOR), ATL_MAKEINTRESOURCEW(nIDResource)); }
 _AFXWIN_INLINE HCURSOR CWinApp::LoadStandardCursor(LPCTSTR lpszCursorName) const
 	{ return ::LoadCursor(NULL, lpszCursorName); }
 _AFXWIN_INLINE HCURSOR CWinApp::LoadOEMCursor(UINT nIDCursor) const
-	{ return ::LoadCursor(NULL, ATL_MAKEINTRESOURCE(nIDCursor)); }
+	{ return ::LoadCursorW(NULL, ATL_MAKEINTRESOURCEW(nIDCursor)); }
 _AFXWIN_INLINE HICON CWinApp::LoadIcon(LPCTSTR lpszResourceName) const
 	{ return ::LoadIcon(AfxFindResourceHandle(lpszResourceName,
 		ATL_RT_GROUP_ICON), lpszResourceName); }
 _AFXWIN_INLINE HICON CWinApp::LoadIcon(UINT nIDResource) const
-	{ return ::LoadIcon(AfxFindResourceHandle(ATL_MAKEINTRESOURCE(nIDResource),
-		ATL_RT_GROUP_ICON), ATL_MAKEINTRESOURCE(nIDResource)); }
+	{ return ::LoadIconW(AfxFindResourceHandle(ATL_MAKEINTRESOURCE(nIDResource),
+		ATL_RT_GROUP_ICON), ATL_MAKEINTRESOURCEW(nIDResource)); }
 _AFXWIN_INLINE HICON CWinApp::LoadStandardIcon(LPCTSTR lpszIconName) const
 	{ return ::LoadIcon(NULL, lpszIconName); }
 _AFXWIN_INLINE HICON CWinApp::LoadOEMIcon(UINT nIDIcon) const
-	{ return ::LoadIcon(NULL, ATL_MAKEINTRESOURCE(nIDIcon)); }
+	{ return ::LoadIconW(NULL, ATL_MAKEINTRESOURCEW(nIDIcon)); }
 _AFXWIN_INLINE void CWinApp::EnableHtmlHelp()
 	{ SetHelpMode( afxHTMLHelp ); }
 

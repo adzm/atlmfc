@@ -15,7 +15,6 @@
 
 #include <atlbase.h>
 
-
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
@@ -43,8 +42,8 @@ struct _ATL_AutomationType
 	struct _ATL_AutomationType<BSTR>
 	{
 		typedef CComBSTR _typewrapper ;
-		enum { type = VT_BSTR};
-		static void* GetT(const BSTR& t) throw()
+		enum { type = VT_BSTR };
+		static void* GetT(_In_ const BSTR& t) throw()
 		{
 			return t;
 		}
@@ -55,7 +54,7 @@ struct _ATL_AutomationType
 	{
 		typedef CComPtr<IUnknown> _typewrapper;
 		enum { type = VT_UNKNOWN};
-		static void* GetT(const LPUNKNOWN& t) throw()
+		static void* GetT(_In_ const LPUNKNOWN& t) throw()
 		{
 			return t;
 		}
@@ -66,7 +65,7 @@ struct _ATL_AutomationType
 	{
 		typedef CComPtr<IDispatch> _typewrapper;
 		enum { type = VT_DISPATCH};
-		static void* GetT(const LPDISPATCH& t) throw()
+		static void* GetT(_In_ const LPDISPATCH& t) throw()
 		{
 			return t;
 		}
@@ -89,21 +88,24 @@ struct _ATL_AutomationType
 	DEFINE_AUTOMATION_TYPE_FUNCTION(CY			, CY			,VT_CY)
 
 // wrapper for SAFEARRAYBOUND used with CComSafeArray
-class CComSafeArrayBound : public SAFEARRAYBOUND
+class CComSafeArrayBound : 
+	public SAFEARRAYBOUND
 {
 public:
-	CComSafeArrayBound(ULONG ulCount = 0, LONG lLowerBound = 0) throw()
+	CComSafeArrayBound(
+		_In_ ULONG ulCount = 0,
+		_In_ LONG lLowerBound = 0) throw()
 	{
 		cElements = ulCount;
 		lLbound = lLowerBound;
 	}
-	CComSafeArrayBound& operator=(const CComSafeArrayBound& bound) throw()
+	CComSafeArrayBound& operator=(_In_ const CComSafeArrayBound& bound) throw()
 	{
 		cElements = bound.cElements;
 		lLbound = bound.lLbound;
 		return *this;
 	}
-	CComSafeArrayBound& operator=(ULONG ulCount) throw() 
+	CComSafeArrayBound& operator=(_In_ ULONG ulCount) throw()
 	{
 		cElements = ulCount;
 		lLbound = 0;
@@ -113,7 +115,7 @@ public:
 	{
 		return cElements;
 	}
-	ULONG SetCount(ULONG ulCount) throw()
+	ULONG SetCount(_In_ ULONG ulCount) throw()
 	{
 		cElements = ulCount;
 		return cElements;
@@ -122,7 +124,7 @@ public:
 	{
 		return lLbound;
 	}
-	LONG SetLowerBound(LONG lLowerBound) throw()
+	LONG SetLowerBound(_In_ LONG lLowerBound) throw()
 	{
 		lLbound = lLowerBound;
 		return lLbound;
@@ -135,7 +137,7 @@ public:
 
 // wrapper for SAFEARRAY.  T is type stored (e.g. BSTR, VARIANT, etc.)
 template <typename T, VARTYPE _vartype = _ATL_AutomationType<T>::type>
-class CComSafeArray 
+class CComSafeArray
 {
 public:
 // Constructors
@@ -143,21 +145,25 @@ public:
 	{
 	}
 	// create SAFEARRAY where number of elements = ulCount
-	explicit CComSafeArray(ULONG ulCount, LONG lLBound = 0) : m_psa(NULL)
+	explicit CComSafeArray(
+		_In_ ULONG ulCount,
+		_In_ LONG lLBound = 0) : m_psa(NULL)
 	{
 		CComSafeArrayBound bound(ulCount, lLBound);
 		HRESULT hRes = Create(&bound);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
-	explicit CComSafeArray(const SAFEARRAYBOUND& bound) : m_psa(NULL)
+	explicit CComSafeArray(_In_ const SAFEARRAYBOUND& bound) : m_psa(NULL)
 	{
-		HRESULT hRes = Create(&bound); 
+		HRESULT hRes = Create(&bound);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
 	// pass an array of SAFEARRAYBOUNDs for multi-dimensional
-	explicit CComSafeArray(const SAFEARRAYBOUND *pBound, UINT uDims = 1) : m_psa(NULL)
+	explicit CComSafeArray(
+		_In_ const SAFEARRAYBOUND *pBound,
+		_In_ UINT uDims = 1) : m_psa(NULL)
 	{
 		ATLASSERT(pBound != NULL);
 		ATLASSERT(uDims > 0);
@@ -165,22 +171,22 @@ public:
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
-	CComSafeArray(const SAFEARRAY *psaSrc) : m_psa(NULL)
-	{ 
+	CComSafeArray(_In_ const SAFEARRAY *psaSrc) : m_psa(NULL)
+	{
 		ATLASSERT(psaSrc != NULL);
 		HRESULT hRes = CopyFrom(psaSrc);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
-	CComSafeArray(const SAFEARRAY& saSrc) : m_psa(NULL)
-	{ 
+	CComSafeArray(_In_ const SAFEARRAY& saSrc) : m_psa(NULL)
+	{
 		HRESULT hRes = CopyFrom(&saSrc);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
-	CComSafeArray(const CComSafeArray& saSrc) : m_psa(NULL)
+	CComSafeArray(_In_ const CComSafeArray& saSrc) : m_psa(NULL)
 	{
-		ATLASSERT(saSrc.m_psa != NULL);
+		ATLASSUME(saSrc.m_psa != NULL);
 		HRESULT hRes = CopyFrom(saSrc.m_psa);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
@@ -189,11 +195,11 @@ public:
 	~CComSafeArray() throw()
 	{
 		HRESULT hRes = Destroy();
-		hRes;
+		DBG_UNREFERENCED_LOCAL_VARIABLE(hRes);
 		ATLASSERT(SUCCEEDED(hRes));
-	} 
+	}
 
-	HRESULT Attach(const SAFEARRAY *psaSrc) 
+	HRESULT Attach(_In_ const SAFEARRAY *psaSrc)
 	{
 		ATLENSURE_THROW(psaSrc != NULL, E_INVALIDARG);
 
@@ -216,15 +222,15 @@ public:
 		LPSAFEARRAY pTemp = m_psa;
 		m_psa = NULL;
 		return pTemp;
-	} 
+	}
 
 // overloaded operators
-	CComSafeArray<T>& operator=(const CComSafeArray& saSrc)
+	CComSafeArray<T>& operator=(_In_ const CComSafeArray& saSrc)
 	{
 		*this = saSrc.m_psa;
 		return *this;
 	}
-	CComSafeArray<T>& operator=(const SAFEARRAY *psaSrc)
+	CComSafeArray<T>& operator=(_In_ const SAFEARRAY *psaSrc)
 	{
 		ATLASSERT(psaSrc != NULL);
 		HRESULT hRes = CopyFrom(psaSrc);
@@ -234,35 +240,35 @@ public:
 	}
 	operator const SAFEARRAY *() const throw()
 	{
-		return m_psa; 
+		return m_psa;
 	}
 	operator LPSAFEARRAY() throw()
 	{
-		return m_psa; 
+		return m_psa;
 	}
 	LPSAFEARRAY* GetSafeArrayPtr() throw()
 	{
 		return &m_psa;
 	}
-	const typename _ATL_AutomationType<T>::_typewrapper& operator[](int nIndex) const
+	const typename _ATL_AutomationType<T>::_typewrapper& operator[](_In_ int nIndex) const
 	{
 		return GetAt(nIndex);
 	}
-	typename _ATL_AutomationType<T>::_typewrapper& operator[](int nIndex)
+	typename _ATL_AutomationType<T>::_typewrapper& operator[](_In_ int nIndex)
 	{
 		return GetAt(nIndex);
 	}
-	const typename _ATL_AutomationType<T>::_typewrapper& operator[](LONG nIndex) const
+	const typename _ATL_AutomationType<T>::_typewrapper& operator[](_In_ LONG nIndex) const
 	{
 		return GetAt(nIndex);
 	}
-	typename _ATL_AutomationType<T>::_typewrapper& operator[](LONG nIndex)
+	typename _ATL_AutomationType<T>::_typewrapper& operator[](_In_ LONG nIndex)
 	{
 		return GetAt(nIndex);
 	}
 
 // info functions
-	LONG GetLowerBound(UINT uDim = 0) const
+	LONG GetLowerBound(_In_ UINT uDim = 0) const
 	{
 		ATLASSUME(m_psa != NULL);
 		LONG lLBound = 0;
@@ -271,7 +277,7 @@ public:
 			AtlThrow(hRes);
 		return lLBound;
 	}
-	LONG GetUpperBound(UINT uDim = 0) const
+	LONG GetUpperBound(_In_ UINT uDim = 0) const
 	{
 		ATLASSUME(m_psa != NULL);
 		LONG lUBound = 0;
@@ -280,7 +286,7 @@ public:
 			AtlThrow(hRes);
 		return lUBound;
 	}
-	ULONG GetCount(UINT uDim = 0) const
+	ULONG GetCount(_In_ UINT uDim = 0) const
 	{
 		ATLASSUME(m_psa != NULL);
 		ATLASSERT(uDim < GetDimensions());
@@ -309,70 +315,75 @@ public:
 		ATLASSUME(m_psa != NULL);
 		if(m_psa == NULL)
 			AtlThrow(E_FAIL);
-			
+
 		return (m_psa->fFeatures & FADF_FIXEDSIZE) ? false : true;
 	}
 
 // miscellaneous functions
-	const typename _ATL_AutomationType<T>::_typewrapper& GetAt(LONG lIndex) const
+	const typename _ATL_AutomationType<T>::_typewrapper& GetAt(_In_ LONG lIndex) const
 	{
 		ATLASSUME(m_psa != NULL);
 		if(m_psa == NULL)
 			AtlThrow(E_FAIL);
-			
+
 		LONG lLBound = GetLowerBound();
 		ATLASSERT(lIndex >= lLBound);
 		ATLASSERT(lIndex <= GetUpperBound());
 		if ((lIndex < lLBound) || (lIndex > GetUpperBound()))
 			AtlThrow(E_INVALIDARG);
-			
+
 		return ((_ATL_AutomationType<T>::_typewrapper*)m_psa->pvData)[lIndex-lLBound];
 	}
 
-	typename _ATL_AutomationType<T>::_typewrapper& GetAt(LONG lIndex)
+	typename _ATL_AutomationType<T>::_typewrapper& GetAt(_In_ LONG lIndex)
 	{
 		ATLASSUME(m_psa != NULL);
 		if(m_psa == NULL)
 			AtlThrow(E_FAIL);
-			
+
 		LONG lLBound = GetLowerBound();
 		ATLASSERT(lIndex >= lLBound);
 		ATLASSERT(lIndex <= GetUpperBound());
 		if ((lIndex < lLBound) || (lIndex > GetUpperBound()))
 			AtlThrow(E_INVALIDARG);
-		
+
 		return ((_ATL_AutomationType<T>::_typewrapper*)m_psa->pvData)[lIndex-lLBound];
 	}
-	HRESULT SetAt(LONG lIndex, const T& t, BOOL bCopy = TRUE)
+	HRESULT SetAt(
+		_In_ LONG lIndex,
+		_In_ const T& t,
+		_In_ BOOL bCopy = TRUE)
 	{
-		bCopy;
+		UNREFERENCED_PARAMETER(bCopy);
 		ATLASSUME(m_psa != NULL);
 		if(m_psa == NULL)
 			return E_FAIL;
-			
+
 		LONG lLBound = GetLowerBound();
 		ATLASSERT(lIndex >= lLBound);
 		ATLASSERT(lIndex <= GetUpperBound());
 		if ((lIndex < lLBound) || (lIndex > GetUpperBound()))
 			return E_INVALIDARG;
-			
+
 		((T*)m_psa->pvData)[lIndex-lLBound] = t;
 		return S_OK;
 	}
 	// multi-dimensional version
-	HRESULT MultiDimGetAt(const LONG *alIndex, T& t)
+	HRESULT MultiDimGetAt(_In_ const LONG *alIndex, _Out_ T& t)
 	{
 		ATLASSUME(m_psa != NULL);
 		return SafeArrayGetElement(m_psa, const_cast<LONG*>(alIndex), &t);
 	}
 	// multi-dimensional version
-	HRESULT MultiDimSetAt(const LONG *alIndex, const T& t)
+	HRESULT MultiDimSetAt(_In_ const LONG *alIndex, _In_ const T& t)
 	{
 		ATLASSUME(m_psa != NULL);
 		return SafeArrayPutElement(m_psa, const_cast<LONG*>(alIndex), _ATL_AutomationType<T>::GetT(t));
 	}
 	// append an item
-	HRESULT Add(const T& t, BOOL bCopy = TRUE)
+	HRESULT Add(
+		_In_ const T& t,
+		_In_ BOOL bCopy = TRUE)
 	{
 		HRESULT hRes = S_OK;
 		if (NULL == m_psa)
@@ -390,13 +401,16 @@ public:
 			return hRes;
 	}
 	// appends an array of type T items
-	HRESULT Add(ULONG ulCount, const T *pT, BOOL bCopy = TRUE)
+	HRESULT Add(
+		_In_ ULONG ulCount,
+		_In_count_(ulCount) const T *pT,
+		_In_ BOOL bCopy = TRUE)
 	{
 		ATLASSERT(pT != NULL);
 		ATLASSERT(ulCount > 0);
 		if(pT == NULL)
 			return E_INVALIDARG;
-			
+
 		HRESULT hRes = S_OK;
 		if (NULL == m_psa)
 		{
@@ -421,9 +435,9 @@ public:
 		return hRes;
 	}
 	// appends items in the safearray
-	HRESULT Add(const SAFEARRAY *psaSrc)
+	HRESULT Add(_In_ const SAFEARRAY *psaSrc)
 	{
-		ATLASSERT(psaSrc != NULL);
+		ATLASSUME(psaSrc != NULL);
 		// safearrays must only have one dimension
 		ATLASSERT(SafeArrayGetDim(const_cast<LPSAFEARRAY>(psaSrc)) == 1);
 
@@ -475,17 +489,19 @@ public:
 	}
 
 	// Resize only resizes the right-most dimension
-	HRESULT Resize(ULONG ulCount, LONG lLBound = 0)
+	HRESULT Resize(
+		_In_ ULONG ulCount,
+		_In_ LONG lLBound = 0)
 	{
 		ATLASSUME(m_psa != NULL);
 		CComSafeArrayBound bound(ulCount, lLBound);
 		return Resize(&bound);
 	}
 	// Resize only resizes the right-most dimension
-	HRESULT Resize(const SAFEARRAYBOUND *pBound)
+	HRESULT Resize(_In_ const SAFEARRAYBOUND *pBound)
 	{
 		ATLASSUME(m_psa != NULL);
-		ATLASSERT(pBound != NULL);
+		ATLASSUME(pBound != NULL);
 		if (!IsSizable())
         {
 			return E_FAIL;
@@ -502,7 +518,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT CopyFrom(const SAFEARRAY *psaSrc)
+	HRESULT CopyFrom(_In_ const SAFEARRAY *psaSrc)
 	{
 		ATLENSURE_THROW(psaSrc != NULL, E_INVALIDARG);
 
@@ -523,28 +539,32 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT CopyTo(LPSAFEARRAY *ppArray)
+	HRESULT CopyTo(_Out_ LPSAFEARRAY *ppArray)
 	{
 		ATLENSURE_THROW(ppArray != NULL, E_POINTER);
 		ATLENSURE(m_psa != NULL);
 
 		return SafeArrayCopy( m_psa, ppArray );
 	}
-	HRESULT Create(ULONG ulCount = 0, LONG lLBound = 0)
+	HRESULT Create(
+		_In_ ULONG ulCount = 0,
+		_In_ LONG lLBound = 0)
 	{
 		CComSafeArrayBound bound(ulCount, lLBound);
 		return Create(&bound);
 	}
-	HRESULT Create(const SAFEARRAYBOUND *pBound, UINT uDims = 1)
+	HRESULT Create(
+		_In_ const SAFEARRAYBOUND *pBound,
+		_In_ UINT uDims = 1)
 	{
 		ATLASSUME(m_psa == NULL);
 		ATLASSERT(uDims > 0);
 		if(m_psa != NULL)
 			return E_FAIL;
-			
+
 		if(pBound == NULL || uDims == 0)
 			return E_INVALIDARG;
-			
+
 		HRESULT hRes = S_OK;
 		m_psa = SafeArrayCreate(_vartype, uDims, const_cast<LPSAFEARRAYBOUND>(pBound));
 		if (NULL == m_psa)
@@ -584,7 +604,10 @@ public:
 };
 
 template<>
-HRESULT CComSafeArray<BSTR>::SetAt(LONG lIndex, const BSTR& strData, BOOL bCopy)
+HRESULT CComSafeArray<BSTR>::SetAt(
+	_In_ LONG lIndex,
+	_In_ const BSTR& strData,
+	_In_ BOOL bCopy)
 {
 	ATLASSERT(strData != NULL);
 	if(strData == NULL)
@@ -593,7 +616,7 @@ HRESULT CComSafeArray<BSTR>::SetAt(LONG lIndex, const BSTR& strData, BOOL bCopy)
 	ATLASSUME(m_psa != NULL);
 	LONG lLBound = GetLowerBound();
 	ATLASSERT(lIndex >= lLBound);
-	ATLASSERT(lIndex <= GetUpperBound());	
+	ATLASSERT(lIndex <= GetUpperBound());
 
 	if((lIndex < lLBound) || (lIndex > GetUpperBound()))
 		return E_INVALIDARG;
@@ -615,7 +638,10 @@ HRESULT CComSafeArray<BSTR>::SetAt(LONG lIndex, const BSTR& strData, BOOL bCopy)
 	return S_OK;
 }
 template<>
-HRESULT CComSafeArray<VARIANT>::SetAt(LONG lIndex, const VARIANT& varData, BOOL bCopy)
+HRESULT CComSafeArray<VARIANT>::SetAt(
+	_In_ LONG lIndex,
+	_In_ const VARIANT& varData,
+	_In_ BOOL bCopy)
 {
 	ATLASSUME(m_psa != NULL);
 	LONG lLBound = GetLowerBound();
@@ -628,7 +654,7 @@ HRESULT CComSafeArray<VARIANT>::SetAt(LONG lIndex, const VARIANT& varData, BOOL 
 	if (bCopy)
 		return VariantCopyInd(&((VARIANT*)m_psa->pvData)[lIndex-lLBound], const_cast<LPVARIANT>(&varData));
 	else
-	{	
+	{
 		VARIANT varOrg = ((VARIANT*)m_psa->pvData)[lIndex-lLBound];
 		if (V_VT(&varOrg) != VT_EMPTY)
 			::VariantClear(&varOrg);
@@ -637,7 +663,10 @@ HRESULT CComSafeArray<VARIANT>::SetAt(LONG lIndex, const VARIANT& varData, BOOL 
 	}
 }
 template<>
-HRESULT CComSafeArray<LPUNKNOWN>::SetAt(LONG lIndex, const LPUNKNOWN& pUnk, BOOL bAddRef)
+HRESULT CComSafeArray<LPUNKNOWN>::SetAt(
+	_In_ LONG lIndex,
+	_In_ const LPUNKNOWN& pUnk,
+	_In_ BOOL bAddRef)
 {
 	ATLENSURE_RETURN(pUnk != NULL);
 	ATLASSUME(m_psa != NULL);
@@ -657,7 +686,10 @@ HRESULT CComSafeArray<LPUNKNOWN>::SetAt(LONG lIndex, const LPUNKNOWN& pUnk, BOOL
 	return S_OK;
 }
 template<>
-HRESULT CComSafeArray<LPDISPATCH>::SetAt(LONG lIndex, const LPDISPATCH& pDisp, BOOL bAddRef)
+HRESULT CComSafeArray<LPDISPATCH>::SetAt(
+	_In_ LONG lIndex,
+	_In_ const LPDISPATCH& pDisp,
+	_In_ BOOL bAddRef)
 {
 	ATLENSURE_RETURN(pDisp != NULL);
 	ATLASSUME(m_psa != NULL);

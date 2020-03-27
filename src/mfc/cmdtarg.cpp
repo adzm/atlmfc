@@ -861,7 +861,7 @@ AFX_STATIC void AFXAPI _AfxLoadDotBitmap()
 	{
 		TRACE(traceAppMsg, 0, "Warning: using system arrow bitmap instead of dot.\n");
 		#define OBM_MNARROW         32739
-		afxData.hbmMenuDot = ::LoadBitmap(NULL, MAKEINTRESOURCE(OBM_MNARROW));
+		afxData.hbmMenuDot = ::LoadBitmapW(NULL, MAKEINTRESOURCEW(OBM_MNARROW));
 	}
 }
 

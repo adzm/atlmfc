@@ -100,10 +100,8 @@ _AFX_INLINE void* PASCAL CObject::operator new(size_t, void* p)
 // _DEBUG versions in afxmem.cpp
 _AFX_INLINE void PASCAL CObject::operator delete(void* p)
 	{ ::operator delete(p); }
-#if _MSC_VER >= 1200
 _AFX_INLINE void PASCAL CObject::operator delete(void* p, void*)
 	{ ::operator delete(p); }
-#endif
 _AFX_INLINE void* PASCAL CObject::operator new(size_t nSize)
 	{ return ::operator new(nSize); }
 // _DEBUG versions in objcore.cpp

@@ -20,6 +20,17 @@ BOOL CWinApp::ProcessShellCommand(CCommandLineInfo& rCmdInfo)
 	BOOL bResult = TRUE;
 	switch (rCmdInfo.m_nShellCommand)
 	{
+	case CCommandLineInfo::RestartByRestartManager:
+		// Re-register with the restart manager using the restart identifier from the command line
+		RegisterWithRestartManager(SupportsApplicationRecovery(), rCmdInfo.m_strRestartIdentifier);
+
+		// Call RestartIntance, which should reopen any previously opened document(s) and
+		// optionally load the autosaved versions after querying the user about loading.
+		if (RestartInstance())
+			break;
+		// If RestartInstance returns FALSE, then fall through to FileNew case, so
+		// a new document is created--otherwise the main frame will not be created.
+
 	case CCommandLineInfo::FileNew:
 		if (!AfxGetApp()->OnCmdMsg(ID_FILE_NEW, 0, NULL, NULL))
 			OnFileNew();
@@ -27,16 +38,14 @@ BOOL CWinApp::ProcessShellCommand(CCommandLineInfo& rCmdInfo)
 			bResult = FALSE;
 		break;
 
-		// If we've been asked to open a file, call OpenDocumentFile()
-
+	// If we've been asked to open a file, call OpenDocumentFile()
 	case CCommandLineInfo::FileOpen:
 		if (!OpenDocumentFile(rCmdInfo.m_strFileName))
 			bResult = FALSE;
 		break;
 
-		// If the user wanted to print, hide our main window and
-		// fire a message to ourselves to start the printing
-
+	// If the user wanted to print, hide our main window and
+	// fire a message to ourselves to start the printing
 	case CCommandLineInfo::FilePrintTo:
 	case CCommandLineInfo::FilePrint:
 		m_nCmdShow = SW_HIDE;
@@ -51,11 +60,15 @@ BOOL CWinApp::ProcessShellCommand(CCommandLineInfo& rCmdInfo)
 		bResult = FALSE;
 		break;
 
-		// If we're doing DDE, hide ourselves
-
-	case CCommandLineInfo::FileDDE:
+	// If we're doing DDE print or print to, start up without a new document and hide ourselves
+	case CCommandLineInfo::FileDDENoShow:
 		m_pCmdInfo = (CCommandLineInfo*)(UINT_PTR)m_nCmdShow;
 		m_nCmdShow = SW_HIDE;
+		break;
+
+	// If we're doing DDE open, start up without a new document, but don't hide ourselves -- this causes the
+	// icon in the Windows 7 taskbar to start in the wrong position and slide into the right position.
+	case CCommandLineInfo::FileDDE:
 		break;
 
 	// If we've been asked to register, exit without showing UI.
@@ -82,9 +95,6 @@ BOOL CWinApp::ProcessShellCommand(CCommandLineInfo& rCmdInfo)
 	case CCommandLineInfo::AppUnregister:
 		{
 			BOOL bUnregistered = Unregister();
-
-			// if you specify /EMBEDDED, we won't make an success/failure box
-			// this use of /EMBEDDED is not related to OLE
 
 			if (!rCmdInfo.m_bRunEmbedded)
 			{
@@ -141,7 +151,7 @@ BOOL CWinApp::Unregister()
 	if (m_pszRegistryKey)
 	{
 		ENSURE(m_pszProfileName != NULL);
-		
+
 		CString strKey = _T("Software\\");
 		strKey += m_pszRegistryKey;
 		CString strSubKey = strKey + _T("\\") + m_pszProfileName;
@@ -151,7 +161,7 @@ BOOL CWinApp::Unregister()
 		// If registry key is empty then remove it
 
 		DWORD   dwResult;
-		if ((dwResult = ::RegOpenKey(HKEY_CURRENT_USER, strKey, &hKey)) ==
+		if ((dwResult = ::RegOpenKeyEx(HKEY_CURRENT_USER, strKey, 0, KEY_ENUMERATE_SUB_KEYS, &hKey)) ==
 			ERROR_SUCCESS)
 		{
 			if (::RegEnumKey(hKey, 0, szBuf, _MAX_PATH) == ERROR_NO_MORE_ITEMS)
@@ -168,12 +178,12 @@ BOOL CWinApp::Unregister()
 // Thus, to delete a tree,  one must recursively enumerate and
 // delete all of the sub-keys.
 
-LONG CWinApp::DelRegTree(HKEY hParentKey, const CString& strKeyName)
+LONG CWinApp::DelRegTree(HKEY hParentKey, const CString& strKeyName, CAtlTransactionManager* pTM)
 {
-	return AfxDelRegTreeHelper(hParentKey, strKeyName);
+	return AfxDelRegTreeHelper(hParentKey, strKeyName, pTM);
 }
 
-LONG AFXAPI AfxDelRegTreeHelper(HKEY hParentKey, const CString& strKeyName)
+LONG AFXAPI AfxDelRegTreeHelper(HKEY hParentKey, const CString& strKeyName, CAtlTransactionManager* pTM)
 {
 	TCHAR   szSubKeyName[MAX_PATH + 1];
 	HKEY    hCurrentKey;
@@ -186,17 +196,18 @@ LONG AFXAPI AfxDelRegTreeHelper(HKEY hParentKey, const CString& strKeyName)
 		hParentKey = HKEY_CURRENT_USER;
 	}
 
-	if ((dwResult = RegOpenKey(hParentKey, strRedirectedKeyName, &hCurrentKey)) ==
-		ERROR_SUCCESS)
+	dwResult = pTM != NULL ? 
+		pTM->RegOpenKeyEx(hParentKey, strRedirectedKeyName, 0, KEY_WRITE | KEY_READ, &hCurrentKey) : 
+		::RegOpenKeyEx(hParentKey, strRedirectedKeyName, 0, KEY_WRITE | KEY_READ, &hCurrentKey);
+	if (dwResult == ERROR_SUCCESS)
 	{
 		// Remove all subkeys of the key to delete
-		while ((dwResult = RegEnumKey(hCurrentKey, 0, szSubKeyName, MAX_PATH)) ==
-				ERROR_SUCCESS)
+		while ((dwResult = RegEnumKey(hCurrentKey, 0, szSubKeyName, MAX_PATH)) == ERROR_SUCCESS)
 		{
 			try
 			{
 				// temp CString constructed from szSubKeyName can throw in Low Memory condition.
-				if ((dwResult = AfxDelRegTreeHelper(hCurrentKey, szSubKeyName)) != ERROR_SUCCESS)
+				if ((dwResult = AfxDelRegTreeHelper(hCurrentKey, szSubKeyName, pTM)) != ERROR_SUCCESS)
 					break;
 			}
 			catch(CMemoryException* e)
@@ -210,7 +221,9 @@ LONG AFXAPI AfxDelRegTreeHelper(HKEY hParentKey, const CString& strKeyName)
 		// If all went well, we should now be able to delete the requested key
 		if ((dwResult == ERROR_NO_MORE_ITEMS) || (dwResult == ERROR_BADKEY))
 		{
-			dwResult = RegDeleteKey(hParentKey, strRedirectedKeyName);
+			dwResult = pTM != NULL ? 
+				pTM->RegDeleteKey(hParentKey, strRedirectedKeyName) :
+				::RegDeleteKey(hParentKey, strRedirectedKeyName);
 		}
 		RegCloseKey(hCurrentKey);
 	}

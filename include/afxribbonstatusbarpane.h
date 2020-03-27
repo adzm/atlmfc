@@ -112,7 +112,7 @@ public:
 protected:
 	virtual int GetTextOffset() const { return m_szMargin.cx / 2; }
 	virtual void OnCalcTextSize(CDC* pDC);
-	virtual int DrawPaneText(CDC* pDC, const CString& strText, CRect rectText, UINT uiDTFlags);
+	virtual int DrawRibbonText(CDC* pDC, const CString& strText, CRect rectText, UINT uiDTFlags, COLORREF clrText = (COLORREF)-1);
 	virtual CSize GetIntermediateSize(CDC* pDC);
 	virtual void OnDraw(CDC* pDC);
 

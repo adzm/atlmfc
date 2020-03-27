@@ -57,6 +57,7 @@ public:
 	virtual INT_PTR OnToolHitTest(CPoint point, TOOLINFO* pTI) const;
 	virtual CSize CalcFixedLayout(BOOL bStretch, BOOL bHorz);
 	virtual BOOL OnShowControlBarMenu(CPoint /*point*/) { return FALSE; }
+	virtual BOOL IsAccessibilityCompatible() { return FALSE; }
 
 #ifdef _DEBUG
 	void EnableDocking(DWORD dwDockStyle);

@@ -117,6 +117,14 @@ void CMFCRibbonLinkCtrl::OnDraw(CDC* pDC)
 
 	pDC->SelectObject(pOldFont);
 	pDC->SetTextColor(clrTextOld);
+
+	if (IsFocused())
+	{
+		CRect rectFocus = rectText;
+		rectFocus.InflateRect(1, 1);
+
+		pDC->DrawFocusRect(rectFocus);
+	}
 }
 
 void CMFCRibbonLinkCtrl::CopyFrom(const CMFCRibbonBaseElement& s)
@@ -156,12 +164,9 @@ void CMFCRibbonLinkCtrl::OnSetIcon()
 	{
 		if (afxGlobalData.m_hiconLink == NULL)
 		{
-			LPCTSTR lpszResourceName = MAKEINTRESOURCE(IDI_AFXRES_COLORS);
-			ENSURE(lpszResourceName != NULL);
-
-			afxGlobalData.m_hiconLink = (HICON) ::LoadImage(
-				AfxFindResourceHandle(lpszResourceName, RT_ICON),
-				lpszResourceName, IMAGE_ICON, 16, 16, LR_SHARED);
+			afxGlobalData.m_hiconLink = (HICON) ::LoadImageW(
+				AfxFindResourceHandle(MAKEINTRESOURCE(IDI_AFXRES_LINK), RT_GROUP_ICON),
+				MAKEINTRESOURCEW(IDI_AFXRES_LINK), IMAGE_ICON, 16, 16, LR_SHARED);
 		}
 
 		m_hIcon = afxGlobalData.m_hiconLink;
@@ -172,5 +177,3 @@ void CMFCRibbonLinkCtrl::SetLink(LPCTSTR lpszLink)
 {
 	m_strLink = lpszLink;
 }
-
-

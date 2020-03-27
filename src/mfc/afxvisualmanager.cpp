@@ -11,7 +11,6 @@
 
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "afxglobalutils.h"
 #include "afxvisualmanager.h"
 #include "afxtoolbarbutton.h"
@@ -54,6 +53,7 @@
 #include "afxtooltipctrl.h"
 #include "afxtooltipmanager.h"
 #include "afxribboncolorbutton.h"
+#include "afxdocksite.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -115,6 +115,8 @@ CMFCVisualManager::CMFCVisualManager(BOOL bIsTemporary)
 	m_bAlwaysFillTab = FALSE;
 	m_bFrameMenuCheckedItems = FALSE;
 	m_clrMenuShadowBase = (COLORREF)-1; // Used in derived classes
+
+	m_ptRibbonMainImageOffset = CPoint(0, 0);
 
 	if (!bIsTemporary)
 	{
@@ -1413,6 +1415,31 @@ void CMFCVisualManager::OnDrawTabsButtonBorder(CDC* pDC, CRect& rect, CMFCButton
 	rect.DeflateRect(2, 2);
 }
 
+void CMFCVisualManager::OnDrawTabResizeBar(CDC* pDC, CMFCBaseTabCtrl* /*pWndTab*/, BOOL bIsVert, CRect rect, CBrush* pbrFace, CPen* pPen)
+{
+	ASSERT_VALID(pDC);
+	ASSERT_VALID(pbrFace);
+	ASSERT_VALID(pPen);
+
+	pDC->FillRect(rect, pbrFace);
+
+	CPen* pOldPen = pDC->SelectObject(pPen);
+	ASSERT_VALID(pOldPen);
+
+	if (bIsVert)
+	{
+		pDC->MoveTo(rect.left, rect.top);
+		pDC->LineTo(rect.left, rect.bottom);
+	}
+	else
+	{
+		pDC->MoveTo(rect.left, rect.top);
+		pDC->LineTo(rect.right, rect.top);
+	}
+
+	pDC->SelectObject(pOldPen);
+}
+
 COLORREF CMFCVisualManager::OnFillCommandsListBackground(CDC* pDC, CRect rect, BOOL bIsSelected)
 {
 	ASSERT_VALID(this);
@@ -2225,7 +2252,10 @@ void CMFCVisualManager::OnDrawTask(CDC* pDC, CMFCTasksPaneTask* pTask, CImageLis
 	}
 	else
 	{
-		pDC->DrawText(pTask->m_strName, rectText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+		CString strText = pTask->m_strName;
+		strText.Remove (_T('\n'));
+		strText.Remove (_T('\r'));
+		pDC->DrawText(strText, rectText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 	}
 
 	pDC->SetBkMode(nBkModeOld);
@@ -2909,7 +2939,7 @@ void CMFCVisualManager::OnDrawRibbonApplicationButton(CDC* pDC, CMFCRibbonButton
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pButton);
 
-	const BOOL bIsHighlighted = pButton->IsHighlighted();
+	const BOOL bIsHighlighted = pButton->IsHighlighted() || pButton->IsFocused();
 	const BOOL bIsPressed = pButton->IsPressed() || pButton->IsDroppedDown();
 
 	CRect rect = pButton->GetRect();
@@ -3009,7 +3039,8 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 
 	bIsActive = bIsActive && ((pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS) == 0 || pTab->GetDroppedDown() != NULL);
 
-	const BOOL bIsHighlighted = pTab->IsHighlighted() && !pTab->IsDroppedDown();
+	const BOOL bIsFocused	= pTab->IsFocused() && (pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS);
+	const BOOL bIsHighlighted = (pTab->IsHighlighted() || bIsFocused) && !pTab->IsDroppedDown();
 
 	CPen pen(PS_SOLID, 1, afxGlobalData.clrBarShadow);
 	CPen* pOldPen = pDC->SelectObject(&pen);
@@ -3019,11 +3050,11 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 
 	rectTab.top += 3;
 
-	const int nTrancateRatio = pTab->GetParentCategory()->GetParentRibbonBar()->GetTabTrancateRatio();
+	const int nTruncateRatio = pTab->GetParentCategory()->GetParentRibbonBar()->GetTabTruncateRatio();
 
-	if (nTrancateRatio > 0)
+	if (nTruncateRatio > 0)
 	{
-		const int nPercent = max(10, 100 - nTrancateRatio / 2);
+		const int nPercent = max(10, 100 - nTruncateRatio / 2);
 
 		COLORREF color = CDrawingManager::PixelAlpha(afxGlobalData.clrBarFace, nPercent);
 
@@ -3087,7 +3118,14 @@ COLORREF CMFCVisualManager::OnDrawRibbonPanel(CDC* pDC, CMFCRibbonPanel* pPanel,
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pPanel);
 
-	if (pPanel->IsHighlighted())
+	COLORREF clrText = afxGlobalData.clrBarText;
+
+	if (pPanel->IsCollapsed() && pPanel->GetDefaultButton().IsFocused())
+	{
+		pDC->FillRect(rectPanel, &afxGlobalData.brHilite);
+		clrText = afxGlobalData.clrTextHilite;
+	}
+	else if (pPanel->IsHighlighted())
 	{
 		CDrawingManager dm(*pDC);
 		dm.HighlightRect(rectPanel);
@@ -3097,7 +3135,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonPanel(CDC* pDC, CMFCRibbonPanel* pPanel,
 	rectPanel.OffsetRect(-1, -1);
 	pDC->Draw3dRect(rectPanel, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
 
-	return afxGlobalData.clrBarText;
+	return clrText;
 }
 
 void CMFCVisualManager::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectCaption)
@@ -3115,16 +3153,19 @@ void CMFCVisualManager::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPan
 
 	CString str = pPanel->GetName();
 
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	if (pPanel->GetLaunchButton().GetID() > 0)
 	{
 		rectCaption.right = pPanel->GetLaunchButton().GetRect().left;
 	}
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	pDC->DrawText( str, rectCaption, DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
 
 	pDC->SetTextColor(clrTextOld);
 }
 
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 void CMFCVisualManager::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel)
 {
 	ASSERT_VALID(pDC);
@@ -3157,6 +3198,7 @@ void CMFCVisualManager::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButto
 
 	OnDrawRibbonButtonBorder(pDC, pButton);
 }
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 void CMFCVisualManager::OnDrawRibbonDefaultPaneButton(CDC* pDC, CMFCRibbonButton* pButton)
 {
@@ -3338,7 +3380,7 @@ void CMFCVisualManager::OnDrawRibbonButtonBorder(CDC* pDC, CMFCRibbonButton* pBu
 		return;
 	}
 
-	if (pButton->IsHighlighted() || pButton->IsChecked() || pButton->IsDroppedDown())
+	if (pButton->IsHighlighted() || pButton->IsChecked() || pButton->IsDroppedDown() || pButton->IsFocused())
 	{
 		if (CMFCToolBarImages::m_bIsDrawOnGlass)
 		{
@@ -3749,6 +3791,11 @@ COLORREF CMFCVisualManager::GetRibbonStatusBarTextColor(CMFCRibbonStatusBar* /*p
 	return afxGlobalData.clrBarText;
 }
 
+COLORREF CMFCVisualManager::GetRibbonEditBackgroundColor(CMFCRibbonRichEditCtrl* /*pEdit*/, BOOL bIsHighlighted, BOOL /*bIsPaneHighlighted*/, BOOL bIsDisabled)
+{
+	return (bIsHighlighted && !bIsDisabled) ? afxGlobalData.clrWindow : afxGlobalData.clrBarFace;
+}
+
 void CMFCVisualManager::OnDrawRibbonColorPaletteBox(CDC* pDC, CMFCRibbonColorButton* /*pColorButton*/, CMFCRibbonGalleryIcon* /*pIcon*/,
 	COLORREF color, CRect rect, BOOL bDrawTopEdge, BOOL bDrawBottomEdge, BOOL bIsHighlighted, BOOL bIsChecked, BOOL /*bIsDisabled*/)
 {
@@ -3934,8 +3981,6 @@ COLORREF CMFCVisualManager::OnDrawPropertySheetListItem(CDC* pDC, CMFCPropertySh
 /////////////////////////////////////////////////////////////////////////////////////
 // CMFCBaseVisualManager
 
-extern HMODULE AfxLoadSystemLibraryUsingFullPath(const WCHAR *pszLibrary);
-
 CMFCBaseVisualManager::CMFCBaseVisualManager()
 {
 	m_hThemeWindow = NULL;
@@ -3955,8 +4000,9 @@ CMFCBaseVisualManager::CMFCBaseVisualManager()
 	m_hThemeSpin = NULL;
 	m_hThemeTab = NULL;
 	m_hThemeTrack = NULL;
+	m_hThemeMenu = NULL;
 
-	m_hinstUXDLL = AfxLoadSystemLibraryUsingFullPath(L"UxTheme.dll");
+	m_hinstUXDLL = ::AfxCtxLoadLibraryW(L"UxTheme.dll");
 
 	if (m_hinstUXDLL != NULL)
 	{
@@ -4022,6 +4068,7 @@ void CMFCBaseVisualManager::UpdateSystemColors()
 			m_hThemeSpin = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"SPIN");
 			m_hThemeTab = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TAB");
 			m_hThemeTrack = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TRACKBAR");
+			m_hThemeMenu = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd (), L"MENU");
 		}
 	}
 }
@@ -4116,6 +4163,11 @@ void CMFCBaseVisualManager::CleanUpThemes()
 	if (m_hThemeTrack != NULL)
 	{
 		(*m_pfCloseThemeData)(m_hThemeTrack);
+	}
+
+	if (m_hThemeMenu != NULL)
+	{
+		(*m_pfCloseThemeData)(m_hThemeMenu);
 	}
 }
 
@@ -4262,6 +4314,19 @@ void CMFCBaseVisualManager::FillReBarPane(CDC* pDC, CBasePane* pBar, CRect rectC
 	{
 		rectClient.left = rectParent.left;
 		rectClient.top = rectParent.top;
+
+		if (!pBar->IsKindOf(RUNTIME_CLASS(CDockSite)))
+		{
+			CFrameWnd* pMainFrame = AFXGetTopLevelFrame(pWndParent);
+			if (pMainFrame->GetSafeHwnd() != NULL)
+			{
+				CRect rectMain;
+				pMainFrame->GetClientRect(rectMain);
+				pMainFrame->MapWindowPoints(pBar, &rectMain);
+
+				rectClient.top = rectMain.top;
+			}
+		}
 	}
 
 	if (m_pfDrawThemeBackground != NULL)
@@ -4408,6 +4473,3 @@ CMFCBaseVisualManager::WinXpTheme CMFCBaseVisualManager::GetStandardWindowsTheme
 
 	return WinXpTheme_NonStandard;
 }
-
-
-

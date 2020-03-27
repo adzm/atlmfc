@@ -202,7 +202,9 @@ public:
 	virtual void OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScroll* pScroll);
 
 	virtual void OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectCaption);
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	virtual void OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel);
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	virtual COLORREF OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButton);
 
@@ -252,7 +254,7 @@ public:
 	virtual COLORREF GetRibbonHyperlinkTextColor(CMFCRibbonLinkCtrl* pHyperLink);
 	virtual COLORREF GetRibbonStatusBarTextColor(CMFCRibbonStatusBar* pStatusBar);
 
-	COLORREF GetRibbonEditBackgroundColor(BOOL bIsHighlighted, BOOL bIsDisabled);
+	virtual COLORREF GetRibbonEditBackgroundColor(CMFCRibbonRichEditCtrl* pEdit, BOOL bIsHighlighted, BOOL bIsPaneHighlighted, BOOL bIsDisabled);
 
 	virtual void OnFillPopupWindowBackground(CDC* pDC, CRect rect);
 	virtual COLORREF OnDrawPopupWindowCaption(CDC* pDC, CRect rectCaption, CMFCDesktopAlertWnd* pPopupWnd);
@@ -261,10 +263,12 @@ public:
 	// ToolTip
 	virtual BOOL GetToolTipInfo(CMFCToolTipInfo& params, UINT nType = (UINT)(-1));
 
+	virtual AFX_SMARTDOCK_THEME GetSmartDockingTheme();
+
 protected:
 	BOOL CanDrawImage() const
 	{
-		return afxGlobalData.m_nBitsPerPixel > 8 && afxGlobalData.bGDIPlusSupport && !afxGlobalData.IsHighContrastMode() && m_bLoaded;
+		return afxGlobalData.m_nBitsPerPixel > 8 && !afxGlobalData.IsHighContrastMode() && m_bLoaded;
 	}
 
 	static CString __stdcall MakeResourceID(LPCTSTR lpszID);

@@ -30,6 +30,9 @@
 #include "afxribbonedit.h"
 #include "afxkeyboardmanager.h"
 #include "afxribbonkeytip.h"
+#include "afxribboninfoloader.h"
+#include "afxribboncollector.h"
+#include "afxribbonconstructor.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -269,8 +272,18 @@ void CMFCRibbonApplicationButton::SetImage(UINT uiBmpResID)
 {
 	ASSERT_VALID(this);
 
-	m_Image.Load(uiBmpResID);
+	if (m_Image.IsValid())
+	{
+		m_Image.Clear();
+	}
+
+	m_Image.Load(uiBmpResID, NULL, TRUE);
 	m_Image.SetSingleImage();
+
+	if (m_Image.IsValid() && m_Image.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	{
+		m_Image.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+	}
 }
 
 void CMFCRibbonApplicationButton::SetImage(HBITMAP hBmp)
@@ -282,8 +295,59 @@ void CMFCRibbonApplicationButton::SetImage(HBITMAP hBmp)
 		m_Image.Clear();
 	}
 
+	if (hBmp == NULL)
+	{
+		return;
+	}
+
 	m_Image.AddImage(hBmp, TRUE);
 	m_Image.SetSingleImage();
+
+	if (m_Image.IsValid() && m_Image.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	{
+		m_Image.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+	}
+}
+
+void CMFCRibbonApplicationButton::SetWindows7Image(UINT uiBmpResID)
+{
+	ASSERT_VALID(this);
+
+	if (m_ImageWindows7.IsValid())
+	{
+		m_ImageWindows7.Clear();
+	}
+
+	m_ImageWindows7.Load(uiBmpResID, NULL, TRUE);
+	m_ImageWindows7.SetSingleImage();
+
+	if (m_ImageWindows7.IsValid() && m_ImageWindows7.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	{
+		m_ImageWindows7.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+	}
+}
+
+void CMFCRibbonApplicationButton::SetWindows7Image(HBITMAP hBmp)
+{
+	ASSERT_VALID(this);
+
+	if (m_ImageWindows7.IsValid())
+	{
+		m_ImageWindows7.Clear();
+	}
+
+	if (hBmp == NULL)
+	{
+		return;
+	}
+
+	m_ImageWindows7.AddImage(hBmp, TRUE);
+	m_ImageWindows7.SetSingleImage();
+
+	if (m_ImageWindows7.IsValid() && m_ImageWindows7.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	{
+		m_ImageWindows7.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+	}
 }
 
 void CMFCRibbonApplicationButton::OnLButtonDblClk(CPoint /*point*/)
@@ -315,6 +379,87 @@ void CMFCRibbonApplicationButton::OnLButtonDown(CPoint point)
 	}
 }
 
+void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, CRect rectImage)
+{
+	ASSERT_VALID(this);
+	ASSERT_VALID(pDC);
+
+	CMFCToolBarImages* pImage = &m_Image;
+	CMFCToolBarImages::ImageAlignHorz horz = CMFCToolBarImages::ImageAlignHorzLeft;
+	CMFCToolBarImages::ImageAlignVert vert = CMFCToolBarImages::ImageAlignVertTop;
+
+	if (m_pRibbonBar->IsWindows7Look())
+	{
+		if (m_ImageWindows7.IsValid())
+		{
+			pImage = &m_ImageWindows7;
+		}
+
+		horz = CMFCToolBarImages::ImageAlignHorzCenter;
+		vert = CMFCToolBarImages::ImageAlignVertCenter;
+
+		CSize sizeImage(pImage->GetImageSize());
+		if (sizeImage.cx > 16)
+		{
+			sizeImage.cx = 16;
+			horz = CMFCToolBarImages::ImageAlignHorzStretch;
+		}
+		if (sizeImage.cy > 16)
+		{
+			sizeImage.cy = 16;
+			vert = CMFCToolBarImages::ImageAlignVertStretch;
+		}
+
+		rectImage.left += (rectImage.Width() - sizeImage.cx) / 2;
+		rectImage.right = rectImage.left + sizeImage.cx;
+		rectImage.top += (rectImage.Height() - sizeImage.cy) / 2;
+		rectImage.bottom = rectImage.top + sizeImage.cy;
+
+		CSize sizeArrow (CMenuImages::Size());
+		double scale = afxGlobalData.GetRibbonImageScale();
+		if (scale > 1.)
+		{
+			sizeArrow.cx = (int)(.5 + scale * sizeArrow.cx);
+			sizeArrow.cy = (int)(.5 + scale * sizeArrow.cy);
+		}
+
+		CRect rectArrow(CPoint(rectImage.right - sizeArrow.cx / 2 + nXMargin,
+			rectImage.top + (sizeImage.cy - sizeArrow.cy) / 2), sizeArrow);
+
+		CRect rectWhite = rectArrow;
+		rectWhite.OffsetRect(0, 1);
+
+		CMenuImages::IMAGES_IDS id = 
+			scale > 1. ? 
+			CMenuImages::IdArrowDownLarge : CMenuImages::IdArrowDown;
+
+		CMenuImages::Draw(pDC, id, rectWhite, CMenuImages::ImageWhite);
+		CMenuImages::Draw(pDC, id, rectArrow, m_bIsDisabled ? CMenuImages::ImageGray : CMenuImages::ImageBlack);
+
+
+		rectImage.OffsetRect(-sizeArrow.cx / 2, 0);
+	}
+	else if (afxGlobalData.GetRibbonImageScale() != 1.)
+	{
+		const CSize sizeImage = m_Image.GetImageSize();
+
+		if (sizeImage.cx >= 32 && sizeImage.cy >= 32)
+		{
+			// The image is already scaled
+			horz = CMFCToolBarImages::ImageAlignHorzCenter;
+			vert = CMFCToolBarImages::ImageAlignVertCenter;
+		}
+		else
+		{
+			horz = CMFCToolBarImages::ImageAlignHorzStretch;
+			vert = CMFCToolBarImages::ImageAlignVertStretch;
+		}
+	}
+
+	pImage->SetTransparentColor(afxGlobalData.clrBtnFace);
+	pImage->DrawEx(pDC, rectImage, 0, horz, vert);
+}
+
 BOOL CMFCRibbonApplicationButton::ShowMainMenu()
 {
 	ASSERT_VALID(this);
@@ -335,7 +480,14 @@ BOOL CMFCRibbonApplicationButton::ShowMainMenu()
 	CMFCRibbonMainPanel* pPanel = DYNAMIC_DOWNCAST(CMFCRibbonMainPanel, m_pRibbonBar->GetMainCategory()->GetPanel(0));
 	ASSERT_VALID(pPanel);
 
-	pPanel->m_nTopMargin = rectBtn.Height() / 2 - 2;
+	if (!m_pRibbonBar->IsWindows7Look())
+	{
+		pPanel->m_nTopMargin = rectBtn.Height() / 2 - 2;
+	}
+	else
+	{
+		pPanel->m_nTopMargin = 2;
+	}
 	pPanel->m_pMainButton = this;
 
 	CClientDC dc(m_pRibbonBar);
@@ -350,7 +502,12 @@ BOOL CMFCRibbonApplicationButton::ShowMainMenu()
 	CMFCRibbonPanelMenu* pMenu = new CMFCRibbonPanelMenu(pPanel);
 	pMenu->SetParentRibbonElement(this);
 
-	pMenu->Create(m_pRibbonBar, bIsRTL ? rectBtn.right : rectBtn.left, rectBtn.CenterPoint().y, (HMENU) NULL);
+	int y = rectBtn.bottom;
+	if (!m_pRibbonBar->IsWindows7Look())
+	{
+		y = rectBtn.CenterPoint().y;
+	}
+	pMenu->Create(m_pRibbonBar, bIsRTL ? rectBtn.right : rectBtn.left, y, (HMENU) NULL);
 
 	SetDroppedDown(pMenu);
 
@@ -374,6 +531,13 @@ BOOL CMFCRibbonApplicationButton::OnKey(BOOL bIsMenuKey)
 	}
 
 	ShowMainMenu();
+
+	if (m_pPopupMenu != NULL)
+	{
+		ASSERT_VALID(m_pPopupMenu);
+		m_pPopupMenu->SendMessage(WM_KEYDOWN, VK_HOME);
+	}
+
 	return FALSE;
 }
 
@@ -395,6 +559,7 @@ CMFCRibbonBar::CMFCRibbonBar(BOOL bReplaceFrameCaption) : m_bReplaceFrameCaption
 	m_pActiveCategorySaved = NULL;
 	m_nHighlightedTab = -1;
 	m_pMainButton = NULL;
+	m_bAutoDestroyMainButton = FALSE;
 	m_pMainCategory = NULL;
 	m_pPrintPreviewCategory = NULL;
 	m_bIsPrintPreview = TRUE;
@@ -402,7 +567,7 @@ CMFCRibbonBar::CMFCRibbonBar(BOOL bReplaceFrameCaption) : m_bReplaceFrameCaption
 	m_pHighlighted = NULL;
 	m_pPressed = NULL;
 	m_bTracked = FALSE;
-	m_nTabTrancateRatio = 0;
+	m_nTabTruncateRatio = 0;
 	m_pToolTip = NULL;
 	m_bForceRedraw = FALSE;
 	m_nSystemButtonsNum = 0;
@@ -421,12 +586,15 @@ CMFCRibbonBar::CMFCRibbonBar(BOOL bReplaceFrameCaption) : m_bReplaceFrameCaption
 	m_pKeyboardNavLevelParent = NULL;
 	m_pKeyboardNavLevelCurrent = NULL;
 	m_nCurrKeyChar = 0;
+	m_bDontSetKeyTips = FALSE;
 
 	m_rectCaption.SetRectEmpty();
 	m_rectCaptionText.SetRectEmpty();
 	m_rectSysButtons.SetRectEmpty();
 
 	m_nCaptionHeight = 0;
+
+	m_bWindows7Look = FALSE;
 
 	m_bQuickAccessToolbarOnTop = TRUE;
 	EnableActiveAccessibility();
@@ -452,6 +620,12 @@ CMFCRibbonBar::~CMFCRibbonBar()
 	{
 		ASSERT_VALID(m_pMainCategory);
 		delete m_pMainCategory;
+	}
+
+	if (m_bAutoDestroyMainButton && m_pMainButton != NULL)
+	{
+		ASSERT_VALID(m_pMainButton);
+		delete m_pMainButton;
 	}
 }
 
@@ -550,6 +724,64 @@ BOOL CMFCRibbonBar::CreateEx(CWnd* pParentWnd, DWORD /*dwCtrlStyle*/, DWORD dwSt
 	return TRUE;
 }
 
+BOOL CMFCRibbonBar::LoadFromResource(UINT uiXMLResID, LPCTSTR lpszResType, HINSTANCE hInstance)
+{
+	ASSERT_VALID(this);
+	return LoadFromResource(MAKEINTRESOURCE(uiXMLResID), lpszResType, hInstance);
+}
+
+BOOL CMFCRibbonBar::LoadFromResource(LPCTSTR lpszXMLResID, LPCTSTR lpszResType, HINSTANCE hInstance)
+{
+	ASSERT_VALID (this);
+
+	CMFCRibbonInfo info;
+	CMFCRibbonInfoLoader loader(info);
+
+	if (!loader.Load(lpszXMLResID, lpszResType, hInstance))
+	{
+		TRACE0("Cannot load ribbon from resource\n");
+		return FALSE;
+	}
+
+	CMFCRibbonConstructor constr(info);
+	constr.ConstructRibbonBar(*this);
+
+	return TRUE;
+}
+
+BOOL CMFCRibbonBar::LoadFromBuffer(LPCTSTR lpszXMLBuffer)
+{
+	ASSERT_VALID(this);
+	ASSERT(lpszXMLBuffer != NULL);
+
+	CMFCRibbonInfo info;
+	CMFCRibbonInfoLoader loader(info);
+
+	if (!loader.LoadFromBuffer(lpszXMLBuffer))
+	{
+		TRACE0("Cannot load ribbon from buffer\n");
+		return FALSE;
+	}
+
+	CMFCRibbonConstructor constr(info);
+	constr.ConstructRibbonBar(*this);
+
+	return TRUE;
+}
+
+void CMFCRibbonBar::SetWindows7Look(BOOL bWindows7Look, BOOL bRecalc/* = TRUE*/)
+{
+	if (bWindows7Look != m_bWindows7Look)
+	{
+		m_bWindows7Look = bWindows7Look;
+
+		if (GetSafeHwnd() != NULL && bRecalc)
+		{
+			ForceRecalcLayout();
+		}
+	}
+}
+
 CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 {
 	ASSERT_VALID(this);
@@ -575,6 +807,14 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 	}
 
 	int cy = 0;
+
+	CSize sizeMainButton = m_sizeMainButton;
+	double scale = afxGlobalData.GetRibbonImageScale();
+	if (scale > 1.)
+	{
+		sizeMainButton.cx = (int)(.5 + scale * sizeMainButton.cx);
+		sizeMainButton.cy = (int)(.5 + scale * sizeMainButton.cy);
+	}
 
 	if (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL)
 	{
@@ -605,7 +845,7 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 
 		if (IsQuickAccessToolbarOnTop())
 		{
-			m_nCaptionHeight = max(m_nCaptionHeight, sizeAQToolbar.cy + 2 * nYMargin);
+			m_nCaptionHeight = max(m_nCaptionHeight, sizeAQToolbar.cy + (IsWindows7Look() ? 0 : (2 * nYMargin)));
 		}
 
 		const int nQuickAceesToolbarHeight = IsQuickAccessToolbarOnTop() ? 0 : sizeAQToolbar.cy;
@@ -618,7 +858,7 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 	{
 		if (GetParent()->IsZoomed() && m_bReplaceFrameCaption)
 		{
-			cy += GetSystemMetrics(SM_CYSIZEFRAME) / 2;
+			cy += ::GetSystemMetrics(SM_CYSIZEFRAME) - 2;
 		}
 	}
 
@@ -744,7 +984,7 @@ void CMFCRibbonBar::SetApplicationButton(CMFCRibbonApplicationButton* pButton, C
 	}
 }
 
-CMFCRibbonMainPanel* CMFCRibbonBar::AddMainCategory(LPCTSTR lpszName, UINT uiSmallImagesResID, UINT uiLargeImagesResID, CSize sizeSmallImage, CSize sizeLargeImage)
+CMFCRibbonMainPanel* CMFCRibbonBar::AddMainCategory(LPCTSTR lpszName, UINT uiSmallImagesResID, UINT uiLargeImagesResID, CSize sizeSmallImage, CSize sizeLargeImage, CRuntimeClass* pRTI)
 {
 	ASSERT_VALID(this);
 	ENSURE(lpszName != NULL);
@@ -755,7 +995,22 @@ CMFCRibbonMainPanel* CMFCRibbonBar::AddMainCategory(LPCTSTR lpszName, UINT uiSma
 		delete m_pMainCategory;
 	}
 
-	m_pMainCategory = new CMFCRibbonCategory(this, lpszName, uiSmallImagesResID, uiLargeImagesResID, sizeSmallImage, sizeLargeImage);
+	if (pRTI != NULL)
+	{
+		m_pMainCategory = DYNAMIC_DOWNCAST(CMFCRibbonCategory, pRTI->CreateObject ());
+
+		if (m_pMainCategory == NULL)
+		{
+			ASSERT(FALSE);
+			return NULL;
+		}
+
+		m_pMainCategory->CommonInit(this, lpszName, uiSmallImagesResID, uiLargeImagesResID, sizeSmallImage, sizeLargeImage);
+	}
+	else
+	{
+		m_pMainCategory = new CMFCRibbonCategory(this, lpszName, uiSmallImagesResID, uiLargeImagesResID, sizeSmallImage, sizeLargeImage);
+	}
 
 	return(CMFCRibbonMainPanel*) m_pMainCategory->AddPanel(lpszName, 0, RUNTIME_CLASS(CMFCRibbonMainPanel));
 }
@@ -1470,7 +1725,7 @@ void CMFCRibbonBar::OnLButtonDown(UINT nFlags, CPoint point)
 		pDroppedDown->ClosePopupMenu();
 	}
 
-	if (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL)
+	if ((m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL) == AFX_RIBBONBAR_HIDE_ALL || IsWindows7Look())
 	{
 		CRect rectIcon = m_rectCaption;
 		rectIcon.right = rectIcon.left + rectIcon.Height();
@@ -1622,7 +1877,17 @@ void CMFCRibbonBar::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 	if (m_rectCaption.PtInRect(point) && !m_rectSysButtons.PtInRect(point))
 	{
-		GetParent()->SendMessage(WM_NCLBUTTONDBLCLK, (WPARAM) HTCAPTION, MAKELPARAM(point.x, point.y));
+		BOOL bSysMenu = FALSE;
+
+		if ((m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL) == AFX_RIBBONBAR_HIDE_ALL || IsWindows7Look())
+		{
+			CRect rectIcon = m_rectCaption;
+			rectIcon.right = rectIcon.left + rectIcon.Height();
+
+			bSysMenu = rectIcon.PtInRect(point);
+		}
+
+		GetParent()->SendMessage(WM_NCLBUTTONDBLCLK, (WPARAM) (bSysMenu ? HTSYSMENU : HTCAPTION), MAKELPARAM(point.x, point.y));
 		return;
 	}
 }
@@ -1674,11 +1939,14 @@ void CMFCRibbonBar::OnMouseMove(UINT nFlags, CPoint point)
 		{
 			ASSERT_VALID(pHit);
 
-			m_pHighlighted = pHit;
-			m_pHighlighted->OnHighlight(TRUE);
-			m_pHighlighted->m_bIsHighlighted = TRUE;
-			InvalidateRect(m_pHighlighted->GetRect());
-			m_pHighlighted->OnMouseMove(point);
+			if ((nFlags & MK_LBUTTON) == 0 || pHit->IsPressed())
+			{
+				m_pHighlighted = pHit;
+				m_pHighlighted->OnHighlight(TRUE);
+				m_pHighlighted->m_bIsHighlighted = TRUE;
+				InvalidateRect(m_pHighlighted->GetRect());
+				m_pHighlighted->OnMouseMove(point);
+			}
 		}
 
 		UpdateWindow();
@@ -1908,7 +2176,7 @@ void CMFCRibbonBar::RecalcLayout()
 		ASSERT_VALID(m_pPrintPreviewCategory);
 	}
 
-	m_nTabTrancateRatio = 0;
+	m_nTabTruncateRatio = 0;
 
 	CPane::RecalcLayout();
 
@@ -1975,6 +2243,7 @@ void CMFCRibbonBar::RecalcLayout()
 
 			// Get system buttons size:
 			NONCLIENTMETRICS ncm;
+			ncm.cbSize = sizeof(ncm);
 			afxGlobalData.GetNonClientMetrics (ncm);
 
 			int nSysButtonsWidth = 3 * ncm.iCaptionWidth;
@@ -1987,7 +2256,11 @@ void CMFCRibbonBar::RecalcLayout()
 		}
 		else
 		{
-			int nSysBtnEdge = m_rectCaption.Height() - nYMargin;
+			NONCLIENTMETRICS ncm;
+			ncm.cbSize = sizeof(ncm);
+			afxGlobalData.GetNonClientMetrics(ncm);
+
+			int nSysBtnEdge = min(ncm.iCaptionHeight, m_rectCaption.Height() - nYMargin);
 
 			const CSize sizeCaptionButton(nSysBtnEdge, nSysBtnEdge);
 			const int yOffsetCaptionButton = max(0,
@@ -2034,6 +2307,14 @@ void CMFCRibbonBar::RecalcLayout()
 	}
 
 	// Reposition main button:
+	CSize sizeMainButton = m_sizeMainButton;
+	double scale = afxGlobalData.GetRibbonImageScale();
+	if (scale > 1.)
+	{
+		sizeMainButton.cx = (int)(.5 + scale * sizeMainButton.cx);
+		sizeMainButton.cy = (int)(.5 + scale * sizeMainButton.cy);
+	}
+	
 	if (m_pMainButton != NULL)
 	{
 		ASSERT_VALID(m_pMainButton);
@@ -2051,9 +2332,26 @@ void CMFCRibbonBar::RecalcLayout()
 				yOffset += GetSystemMetrics(SM_CYSIZEFRAME) / 2;
 			}
 
-			m_pMainButton->SetRect(CRect(CPoint(rect.left, rect.top + yOffset), m_sizeMainButton));
+			m_pMainButton->SetRect(CRect(CPoint(rect.left, rect.top + yOffset), sizeMainButton));
 
-			m_rectCaptionText.left = m_pMainButton->GetRect().right + nXMargin;
+			if (!IsWindows7Look())
+			{
+				m_rectCaptionText.left = m_pMainButton->GetRect().right + nXMargin;
+			}
+			else
+			{
+				CRect rectMainBtn = rect;
+				rectMainBtn.top = m_rectCaption.IsRectEmpty() ? rect.top : m_rectCaption.bottom;
+				rectMainBtn.bottom = rectMainBtn.top + m_nTabsHeight;
+				rectMainBtn.right = rectMainBtn.left + m_sizeMainButton.cx;
+
+				m_pMainButton->SetRect(rectMainBtn);
+
+				if (IsQuickAccessToolbarOnTop())
+				{
+					m_rectCaptionText.left = m_rectCaption.left + ::GetSystemMetrics(SM_CXSMICON) + 4 * nXMargin;
+				}
+			}
 		}
 	}
 
@@ -2097,7 +2395,15 @@ void CMFCRibbonBar::RecalcLayout()
 				m_QAToolbar.m_rect.right = nQARight;
 			}
 
-			m_rectCaptionText.left = m_QAToolbar.m_rect.right + CMFCVisualManager::GetInstance()->GetRibbonQuickAccessToolBarRightMargin();
+			m_rectCaptionText.left = m_QAToolbar.m_rect.right;
+			if (!IsWindows7Look())
+			{
+				m_rectCaptionText.left += CMFCVisualManager::GetInstance()->GetRibbonQuickAccessToolBarRightMargin();
+			}
+			else
+			{
+				m_rectCaptionText.left += 3 * nXMargin;
+			}
 		}
 		else
 		{
@@ -2130,7 +2436,7 @@ void CMFCRibbonBar::RecalcLayout()
 
 		if (nTabs > 0)
 		{
-			const int nTabLeftOffset = m_sizeMainButton.cx + 1;
+			const int nTabLeftOffset = sizeMainButton.cx + 1;
 			const int cxTabsArea = rect.Width() - nTabLeftOffset - sizeTabElemens.cx - nXMargin;
 			const int nMaxTabWidth = cxTabsArea / nTabs;
 
@@ -2222,7 +2528,7 @@ void CMFCRibbonBar::RecalcLayout()
 
 					if (nTabWidth > 0)
 					{
-						m_nTabTrancateRatio = max(m_nTabTrancateRatio, (int)(100 - 100. * nMaxTabWidth / nTabWidth));
+						m_nTabTruncateRatio = max(m_nTabTruncateRatio, (int)(100 - 100. * nMaxTabWidth / nTabWidth));
 					}
 
 					nTabWidth = nMaxTabWidth;
@@ -2417,7 +2723,11 @@ CMFCRibbonBaseElement* CMFCRibbonBar::HitTest(CPoint point, BOOL bCheckActiveCat
 		ASSERT_VALID(m_pMainButton);
 
 		CRect rectMainButton = m_pMainButton->GetRect();
-		rectMainButton.left = rectMainButton.top = 0;
+
+		if (!IsWindows7Look())
+		{
+			rectMainButton.left = rectMainButton.top = 0;
+		}
 
 		if (rectMainButton.PtInRect(point))
 		{
@@ -2892,9 +3202,38 @@ BOOL CMFCRibbonBar::PreTranslateMessage(MSG* pMsg)
 		break;
 	}
 
+	if (pMsg->message == WM_LBUTTONDOWN)
+	{
+		CMFCRibbonRichEditCtrl* pEdit = DYNAMIC_DOWNCAST(CMFCRibbonRichEditCtrl, GetFocus());
+		if (pEdit != NULL)
+		{
+			ASSERT_VALID(pEdit);
+
+			CPoint point;
+			
+			::GetCursorPos(&point);
+			ScreenToClient(&point);
+
+			pEdit->GetOwnerRibbonEdit ().PreLMouseDown(point);
+		}
+	}
+
 	if (pMsg->message == WM_KEYDOWN)
 	{
-		int nChar = (int) pMsg->wParam;
+		int nChar = (int)pMsg->wParam;
+
+		if (::GetFocus() == GetSafeHwnd())
+		{
+			CMFCRibbonBaseElement* pFocused = GetFocused();
+			if (pFocused != NULL)
+			{
+				ASSERT_VALID(pFocused);
+				if (pFocused->OnProcessKey(nChar))
+				{
+					return TRUE;
+				}
+			}
+		}
 
 		switch (nChar)
 		{
@@ -2902,15 +3241,59 @@ BOOL CMFCRibbonBar::PreTranslateMessage(MSG* pMsg)
 			if (m_nKeyboardNavLevel > 0)
 			{
 				SetKeyboardNavigationLevel(m_pKeyboardNavLevelParent);
-				return TRUE;
 			}
 			else if (CMFCPopupMenu::GetActiveMenu() == NULL)
 			{
 				DeactivateKeyboardFocus();
-				return TRUE;
+
+				CFrameWnd* pParentFrame = GetParentFrame();
+				if (pParentFrame != NULL)
+				{
+					ASSERT_VALID(pParentFrame);
+					pParentFrame->SetFocus();
+				}
 			}
 
 			break;
+
+		case VK_SPACE:
+			if (m_nKeyboardNavLevel >= 0 && CMFCPopupMenu::GetActiveMenu() == NULL && ::GetFocus() == GetSafeHwnd())
+			{
+				DeactivateKeyboardFocus();
+
+				CFrameWnd* pParentFrame = GetParentFrame();
+				if (pParentFrame != NULL)
+				{
+					ASSERT_VALID(pParentFrame);
+					pParentFrame->SetFocus();
+				}
+			}
+
+		case VK_LEFT:
+		case VK_RIGHT:
+		case VK_UP:
+		case VK_DOWN:
+		case VK_RETURN:
+		case VK_TAB:
+			if (::GetFocus() != GetSafeHwnd())
+			{
+				if (nChar != VK_TAB)
+				{
+					break;
+				}
+				else
+				{
+					if (!IsChild(GetFocus()))
+					{
+						break;
+					}
+				}
+			}
+
+			if (NavigateRibbon(nChar))
+			{
+				return TRUE;
+			}
 
 		default:
 			if (ProcessKey(nChar))
@@ -3083,6 +3466,26 @@ void CMFCRibbonBar::ShowSysMenu(const CPoint& point)
 
 void CMFCRibbonBar::OnPaneContextMenu(CWnd* /*pParentFrame*/, CPoint point)
 {
+	if (point == CPoint(-1, -1))
+	{
+		CMFCRibbonBaseElement* pFocused = GetFocused();
+		if (pFocused != NULL)
+		{
+			ASSERT_VALID(pFocused);
+
+			CRect rectFocus = pFocused->GetRect();
+			ClientToScreen(&rectFocus);
+
+			OnShowRibbonContextMenu(this, rectFocus.left, rectFocus.top, pFocused);
+
+			CFrameWnd* pParentFrame = GetParentFrame();
+			ASSERT_VALID(pParentFrame);
+
+			pParentFrame->SetFocus();
+			return;
+		}
+	}
+
 	DeactivateKeyboardFocus();
 
 	CPoint ptClient = point;
@@ -4284,10 +4687,12 @@ void CMFCRibbonBar::OnSetFocus(CWnd* pOldWnd)
 {
 	CPane::OnSetFocus(pOldWnd);
 
-	if (m_nKeyboardNavLevel < 0)
+	if (m_nKeyboardNavLevel < 0 && !m_bDontSetKeyTips)
 	{
 		SetKeyboardNavigationLevel(NULL, FALSE);
 	}
+
+	m_bDontSetKeyTips = FALSE;
 }
 
 void CMFCRibbonBar::OnKillFocus(CWnd* pNewWnd)
@@ -4303,6 +4708,17 @@ void CMFCRibbonBar::OnKillFocus(CWnd* pNewWnd)
 
 		RemoveAllKeys();
 		RedrawWindow();
+	}
+
+	if (!IsChild(pNewWnd))
+	{
+		CMFCRibbonBaseElement* pFocused = GetFocused();
+		if (pFocused != NULL && !pFocused->IsDroppedDown())
+		{
+			pFocused->m_bIsFocused = FALSE;
+			pFocused->OnSetFocus(FALSE);
+			pFocused->Redraw();
+		}
 	}
 }
 
@@ -4336,6 +4752,14 @@ void CMFCRibbonBar::DeactivateKeyboardFocus(BOOL bSetFocus)
 {
 	RemoveAllKeys();
 	m_nCurrKeyChar = 0;
+
+	CMFCRibbonBaseElement* pFocused = GetFocused();
+	if (pFocused != NULL)
+	{
+		pFocused->m_bIsFocused = FALSE;
+		pFocused->OnSetFocus(FALSE);
+		pFocused->Redraw();
+	}
 
 	if (m_nKeyboardNavLevel < 0)
 	{
@@ -4417,6 +4841,15 @@ void CMFCRibbonBar::SetKeyboardNavigationLevel(CObject* pLevel, BOOL bSetFocus)
 
 		m_QAToolbar.AddToKeyList(m_arKeyElements);
 		m_TabElements.AddToKeyList(m_arKeyElements);
+
+		if (m_pActiveCategory != NULL && (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL) == 0)
+		{
+			m_pActiveCategory->m_Tab.m_bIsFocused = TRUE;
+		}
+		else if (m_pMainButton != NULL)
+		{
+			m_pMainButton->m_bIsFocused = TRUE;
+		}
 	}
 	else
 	{
@@ -4584,7 +5017,9 @@ BOOL CMFCRibbonBar::ProcessKey(int nChar)
 	}
 
 	CMFCDisableMenuAnimation disableMenuAnimation;
-	if (pKeyElem->OnKey(bIsMenuKey))
+	HWND hwndThis = GetSafeHwnd();
+
+	if (pKeyElem->OnKey(bIsMenuKey) && ::IsWindow(hwndThis))
 	{
 		DeactivateKeyboardFocus();
 	}
@@ -4610,7 +5045,7 @@ void CMFCRibbonBar::RemoveAllKeys()
 	m_arKeyElements.RemoveAll();
 }
 
-void CMFCRibbonBar::ShowKeyTips()
+void CMFCRibbonBar::ShowKeyTips(BOOL bRepos)
 {
 	for (int i = 0; i < m_arKeyElements.GetSize(); i++)
 	{
@@ -4632,7 +5067,7 @@ void CMFCRibbonBar::ShowKeyTips()
 			}
 		}
 
-		pKeyTip->Show();
+		pKeyTip->Show(bRepos);
 	}
 
 	if (m_pToolTip->GetSafeHwnd() != NULL && m_pToolTip->IsWindowVisible())
@@ -4776,6 +5211,622 @@ void CMFCRibbonBar::OnShowWindow(BOOL bShow, UINT nStatus)
 	}
 }
 
+BOOL CMFCRibbonBar::NavigateRibbon(int nChar)
+{
+	ASSERT_VALID(this);
 
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arElems;
 
+	const BOOL bIsRibbonMinimized = (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS) != 0;
 
+	if (GetDroppedDown() != NULL || nChar == VK_ESCAPE)
+	{
+		return FALSE;
+	}
+
+	// Get focused element
+	CMFCRibbonBaseElement* pFocused = GetFocused();
+	if (pFocused == NULL)
+	{
+		return FALSE;
+	}
+
+	ASSERT_VALID(pFocused);
+
+	HideKeyTips();
+
+	RemoveAllKeys();
+	m_nCurrKeyChar = 0;
+
+	m_nKeyboardNavLevel = -1;
+	m_pKeyboardNavLevelParent = NULL;
+	m_pKeyboardNavLevelCurrent = NULL;
+
+	if (pFocused == m_pMainButton)
+	{
+		switch (nChar)
+		{
+		case VK_DOWN:
+		case VK_RETURN:
+		case VK_SPACE:
+			pFocused->OnKey(FALSE);
+			return TRUE;
+
+		case VK_UP:
+			return TRUE;
+
+		case VK_RIGHT:
+			if (m_pActiveCategory != NULL)
+			{
+				ASSERT_VALID(m_pActiveCategory);
+
+				pFocused->m_bIsFocused = pFocused->m_bIsHighlighted = FALSE;
+				pFocused->OnSetFocus(FALSE);
+				pFocused->Redraw();
+
+				m_pActiveCategory->m_Tab.m_bIsFocused = TRUE;
+				m_pActiveCategory->m_Tab.OnSetFocus(TRUE);
+				m_pActiveCategory->m_Tab.Redraw();
+				return TRUE;
+			}
+		}
+	}
+
+	if (nChar == VK_RETURN || nChar == VK_SPACE)
+	{
+		pFocused->OnKey(FALSE);
+		return TRUE;
+	}
+
+	if (nChar == VK_DOWN && pFocused->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab)) && m_pActiveCategory != NULL && !bIsRibbonMinimized)
+	{
+		ASSERT_VALID(m_pActiveCategory);
+
+		CMFCRibbonBaseElement* pFocusedNew = m_pActiveCategory->GetFirstVisibleElement();
+		if (pFocusedNew != NULL)
+		{
+			ASSERT_VALID(pFocusedNew);
+
+			pFocused->m_bIsFocused = pFocused->m_bIsHighlighted = FALSE;
+			pFocused->OnSetFocus(FALSE);
+			pFocused->Redraw();
+
+			pFocusedNew->m_bIsFocused = TRUE;
+			pFocusedNew->OnSetFocus(TRUE);
+			pFocusedNew->Redraw();
+			return TRUE;
+		}
+	}
+
+	switch (nChar)
+	{
+	case VK_DOWN:
+	case VK_UP:
+	case VK_LEFT:
+	case VK_RIGHT:
+	case VK_TAB:
+		{
+			GetVisibleElements(arElems);
+
+			CRect rectClient;
+			GetClientRect(rectClient);
+
+			int nScroll = 0;
+			BOOL bIsScrollLeftAvailable = FALSE;
+			BOOL bIsScrollRightAvailable = FALSE;
+
+			if (m_pActiveCategory != NULL)
+			{
+				ASSERT_VALID(m_pActiveCategory);
+
+				bIsScrollLeftAvailable = !m_pActiveCategory->m_ScrollLeft.GetRect().IsRectEmpty();
+				bIsScrollRightAvailable = !m_pActiveCategory->m_ScrollRight.GetRect().IsRectEmpty();
+			}
+
+			CMFCRibbonBaseElement* pFocusedNew = FindNextFocusedElement(
+				nChar, arElems, rectClient, pFocused,  bIsScrollLeftAvailable, bIsScrollRightAvailable, nScroll);
+
+			if (nScroll != 0 && m_pActiveCategory != NULL)
+			{
+				switch (nScroll)
+				{
+				case -2:
+					pFocusedNew = m_pActiveCategory->GetFirstVisibleElement();
+					break;
+
+				case 2:
+					pFocusedNew = m_pActiveCategory->GetLastVisibleElement();
+					break;
+
+				case -1:
+				case 1:
+					m_pActiveCategory->OnScrollHorz(nScroll < 0);
+				}
+			}
+
+			if (pFocusedNew == pFocused)
+			{
+				return TRUE;
+			}
+
+			if (pFocusedNew == NULL)
+			{
+				return TRUE;
+			}
+
+			if (nChar == VK_UP)
+			{
+				//-----------------------------------------------------
+				// Up ouside the current panel should activate the tab!
+				//-----------------------------------------------------
+				if (pFocusedNew->GetParentPanel() != pFocused->GetParentPanel() && !pFocusedNew->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab)) && m_pActiveCategory != NULL)
+				{
+					pFocusedNew = &m_pActiveCategory->m_Tab;
+				}
+			}
+
+			pFocused->m_bIsHighlighted = pFocused->m_bIsFocused = FALSE;
+			pFocused->OnSetFocus(FALSE);
+			pFocused->Redraw();
+
+			ASSERT_VALID(pFocusedNew);
+
+			if (pFocusedNew->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab)) && !bIsRibbonMinimized)
+			{
+				if (pFocused->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab)) && (nChar == VK_LEFT || nChar == VK_RIGHT))
+				{
+					SetActiveCategory(pFocusedNew->GetParentCategory());
+					pFocusedNew->m_bIsFocused = TRUE;
+				}
+				else if (m_pActiveCategory != NULL)
+				{
+					ASSERT_VALID(m_pActiveCategory);
+					
+					pFocusedNew = &m_pActiveCategory->m_Tab;
+					pFocusedNew->m_bIsFocused = TRUE;
+					pFocusedNew->OnSetFocus(TRUE);
+				}
+			}
+			else
+			{
+				pFocusedNew->m_bIsFocused = TRUE;
+				pFocusedNew->OnSetFocus(TRUE);
+			}
+
+			pFocusedNew->Redraw();
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+CMFCRibbonBaseElement* CMFCRibbonBar::FindNearest(CPoint pt, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons)
+{
+	for (int i = 0; i < arButtons.GetSize(); i++)
+	{
+		CMFCRibbonBaseElement* pElem = arButtons [i];
+		ASSERT_VALID(pElem);
+
+		if (pElem->m_rect.PtInRect(pt))
+		{
+			return pElem;
+		}
+	}
+
+	return NULL;
+}
+
+CMFCRibbonBaseElement* CMFCRibbonBar::FindNextFocusedElement(
+	int nChar, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElems,
+	CRect rectElems, CMFCRibbonBaseElement* pFocused,
+	BOOL bIsScrollLeftAvailable, BOOL bIsScrollRightAvailable, int& nScroll)
+{
+	ASSERT_VALID(pFocused);
+
+	nScroll = 0;
+	int nIndexFocused = -1;
+
+	for (int i = 0; i < arElems.GetSize(); i++)
+	{
+		if (arElems [i] == pFocused)
+		{
+			nIndexFocused = i;
+			break;
+		}
+	}
+
+	if (nIndexFocused < 0)
+	{
+		return FALSE;
+	}
+
+	const BOOL bIsTabFocused = pFocused->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab));
+
+	CMFCRibbonBaseElement* pFocusedNew = NULL;
+
+	if (nChar == VK_TAB)
+	{
+		const BOOL bShift = ::GetAsyncKeyState(VK_SHIFT) & 0x8000;
+
+		int nNewIndex = -1;
+
+		if (bShift)
+		{
+			for (int i = nIndexFocused - 1; nNewIndex < 0; i--)
+			{
+				if (i < 0)
+				{
+					if (bIsScrollLeftAvailable)
+					{
+						nScroll = -1;
+						return NULL;
+					}
+					else if (bIsScrollRightAvailable)
+					{
+						nScroll = 2;
+						return NULL;
+					}
+
+					i = (int)arElems.GetSize() - 1;
+				}
+
+				if (i == nIndexFocused)
+				{
+					return FALSE;
+				}
+
+				ASSERT_VALID(arElems [i]);
+				
+				if (bIsTabFocused && arElems [i]->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab)))
+				{
+					continue;
+				}
+				
+				if (arElems [i]->IsTabStop() && !arElems [i]->GetRect().IsRectEmpty())
+				{
+					nNewIndex = i;
+				}
+			}
+		}
+		else
+		{
+			for (int i = nIndexFocused + 1; nNewIndex < 0; i++)
+			{
+				if (i >= arElems.GetSize())
+				{
+					if (bIsScrollRightAvailable)
+					{
+						nScroll = 1;
+						return NULL;
+					}
+					else if (bIsScrollLeftAvailable)
+					{
+						nScroll = -2;
+						return NULL;
+					}
+
+					i = 0;
+				}
+
+				if (i == nIndexFocused)
+				{
+					return FALSE;
+				}
+
+				ASSERT_VALID(arElems [i]);
+
+				if (bIsTabFocused && arElems [i]->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab)))
+				{
+					continue;
+				}
+				
+				if (arElems [i]->IsTabStop() && !arElems [i]->GetRect().IsRectEmpty())
+				{
+					nNewIndex = i;
+				}
+			}
+		}
+
+		pFocusedNew = arElems [nNewIndex];
+	}
+	else
+	{
+		if (pFocused->HasFocus())
+		{
+			return NULL;
+		}
+
+		CRect rectCurr = pFocused->GetRect();
+
+		const int nStep = 5;
+
+		switch (nChar)
+		{
+		case VK_LEFT:
+		case VK_RIGHT:
+			{
+				int xStart = nChar == VK_RIGHT ? 
+					rectCurr.right + 1 :
+					rectCurr.left - nStep - 1;
+				int xStep = nChar == VK_RIGHT ? nStep : -nStep;
+
+				for (int x = xStart; pFocusedNew == NULL; x += xStep)
+				{
+					if (nChar == VK_RIGHT)
+					{
+						if (x > rectElems.right)
+						{
+							if (bIsScrollRightAvailable)
+							{
+								nScroll = 1;
+								return NULL;
+							}
+							else if (bIsScrollLeftAvailable)
+							{
+								nScroll = -2;
+								return NULL;
+							}
+
+							x = rectElems.left;
+						}
+					}
+					else
+					{
+						if (x < rectElems.left)
+						{
+							if (bIsScrollLeftAvailable)
+							{
+								nScroll = -1;
+								return NULL;
+							}
+							else if (bIsScrollRightAvailable)
+							{
+								nScroll = 2;
+								return NULL;
+							}
+
+							x = rectElems.right;
+						}
+					}
+
+					if (x >= rectCurr.left && x <= rectCurr.right)
+					{
+						break;
+					}
+
+					CRect rectArea(x, rectCurr.top, x + nStep, rectCurr.bottom);
+					if (pFocused->IsLargeMode() || pFocused->IsWholeRowHeight())
+					{
+						rectArea.DeflateRect(0, rectArea.Height() / 3);
+					}
+
+					CRect rectInter;
+
+					for (int i = 0; i < arElems.GetSize(); i++)
+					{
+						CMFCRibbonBaseElement* pElem = arElems [i];
+						ASSERT_VALID(pElem);
+
+						if (pElem->IsTabStop() && rectInter.IntersectRect(pElem->m_rect, rectArea))
+						{
+							pFocusedNew = pElem;
+							break;
+						}
+					}
+				}
+			}
+			break;
+
+		case VK_UP:
+		case VK_DOWN:
+			{
+				int x = rectCurr.CenterPoint().x;
+
+				int yStart = nChar == VK_DOWN ? 
+					rectCurr.bottom + 1 :
+					rectCurr.top - 1;
+
+				int yStep = nChar == VK_DOWN ? nStep : -nStep;
+
+				for (int i = 0; pFocusedNew == NULL; i++)
+				{
+					int y = yStart;
+
+					int x1 = x - i * nStep;
+					int x2 = x + i * nStep;
+
+					if (x1 < rectElems.left && x2 > rectElems.right)
+					{
+						break;
+					}
+
+					while (pFocusedNew == NULL)
+					{
+						if ((pFocusedNew = FindNearest(CPoint(x1, y), arElems)) == NULL)
+						{
+							pFocusedNew = FindNearest(CPoint(x2, y), arElems);
+						}
+
+						if (pFocusedNew != NULL)
+						{
+							ASSERT_VALID(pFocusedNew);
+							
+							if (!pFocusedNew->IsTabStop())
+							{
+								pFocusedNew = NULL;
+							}
+						}
+
+						y += yStep;
+
+						if (nChar == VK_DOWN)
+						{
+							if (y > rectElems.bottom)
+							{
+								break;
+							}
+						}
+						else
+						{
+							if (y < rectElems.top)
+							{
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return pFocusedNew;
+}
+
+CMFCRibbonBaseElement* CMFCRibbonBar::GetFocused()
+{
+	const BOOL bIsRibbonMinimized = (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS) != 0;
+
+	//---------------------------
+	// Check for the main button:
+	//---------------------------
+	if (m_pMainButton != NULL)
+	{
+		ASSERT_VALID(m_pMainButton);
+
+		if (m_pMainButton->IsFocused())
+		{
+			return m_pMainButton;
+		}
+	}
+
+	//--------------------------------
+	// Check for quick access toolbar:
+	//--------------------------------
+	CMFCRibbonBaseElement* pQAElem = m_QAToolbar.GetFocused();
+	if (pQAElem != NULL)
+	{
+		ASSERT_VALID(pQAElem);
+		return pQAElem;
+	}
+
+	//------------------------
+	// Check for tab elements:
+	//------------------------
+	CMFCRibbonBaseElement* pTabElem = m_TabElements.GetFocused();
+	if (pTabElem != NULL)
+	{
+		ASSERT_VALID(pTabElem);
+		return pTabElem;
+	}
+
+	if (m_pActiveCategory != NULL)
+	{
+		ASSERT_VALID(m_pActiveCategory);
+
+		if (m_pActiveCategory->m_Tab.IsFocused())
+		{
+			return &m_pActiveCategory->m_Tab;
+		}
+
+		if (!bIsRibbonMinimized)
+		{
+			return m_pActiveCategory->GetFocused();
+		}
+	}
+
+	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	{
+		if (m_arCategories [i]->m_Tab.IsFocused())
+		{
+			return &m_arCategories [i]->m_Tab;
+		}
+	}
+
+	return NULL;
+}
+
+void CMFCRibbonBar::GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons)
+{
+	ASSERT_VALID(this);
+
+	arButtons.RemoveAll();
+
+	if (m_pMainButton != NULL)
+	{
+		ASSERT_VALID(m_pMainButton);
+		m_pMainButton->GetVisibleElements(arButtons);
+	}
+
+	m_QAToolbar.GetVisibleElements(arButtons);
+
+	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	{
+		CMFCRibbonCategory* pCategory = m_arCategories [i];
+		ASSERT_VALID(pCategory);
+
+		if (!pCategory->m_Tab.m_rect.IsRectEmpty())
+		{
+			pCategory->m_Tab.GetVisibleElements(arButtons);
+		}
+	}
+
+	m_TabElements.GetVisibleElements(arButtons);
+
+	if (m_pActiveCategory != NULL && (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS) == 0)
+	{
+		ASSERT_VALID(m_pActiveCategory);
+		m_pActiveCategory->GetVisibleElements(arButtons);
+	}
+}
+
+BOOL CMFCRibbonBar::SaveToXMLFile(LPCTSTR lpszFilePath) const
+{
+	ASSERT_VALID(this);
+	ASSERT(lpszFilePath != NULL);
+
+	LPBYTE lpBuffer = NULL;
+	UINT nSize = SaveToXMLBuffer(&lpBuffer);
+
+	if (nSize == 0 || lpBuffer == NULL)
+	{
+		return FALSE;
+	}
+
+	BOOL bRes = TRUE;
+
+	try
+	{
+		CFile file(lpszFilePath, CFile::modeCreate | CFile::modeWrite);
+		file.Write(lpBuffer, nSize);
+	}
+	catch(CFileException* pEx)
+	{
+		bRes = FALSE;
+		TRACE(_T("CMFCRibbonBar::SaveToXMLFile (%s): Reporting file I/O exception with lOsError = %lX.\n"), lpszFilePath, pEx->m_lOsError);
+		pEx->Delete();
+	}
+
+	delete [] lpBuffer;
+	return bRes;
+}
+
+UINT CMFCRibbonBar::SaveToXMLBuffer(LPBYTE* ppBuffer) const
+{
+	ASSERT_VALID(this);
+	ASSERT(ppBuffer != NULL);
+
+	CMFCRibbonInfo info;
+	CMFCRibbonCollector collector(info, CMFCRibbonCollector::e_CollectImagesID);
+	collector.CollectRibbonBar(*this);
+
+	UINT nSize = 0;
+	*ppBuffer = NULL;
+
+	if (!info.Write(ppBuffer, nSize) || ppBuffer == NULL)
+	{
+		return 0;
+	}
+
+	return nSize;
+}

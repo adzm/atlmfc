@@ -63,6 +63,7 @@ public:
 	BOOL EnableButton(int iButtonNum, BOOL bEnable = TRUE);
 
 	int GetButtonsCount() const { return(int) m_lstButtons.GetCount(); }
+	BOOL IsCreatingNewItem() const { return m_bNewItem; }
 
 	UINT GetButtonID(int iButtonNum) const;
 	int GetButtonNum(UINT uiID) const;
@@ -166,6 +167,7 @@ protected:
 	//{{AFX_MSG(CVSListBoxEditCtrl)
 	afx_msg void OnWindowPosChanging(WINDOWPOS FAR* lpwndpos);
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
@@ -238,7 +240,9 @@ protected:
 	afx_msg void OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

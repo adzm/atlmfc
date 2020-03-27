@@ -10,6 +10,7 @@
 
 #include "stdafx.h"
 #include "sal.h"
+#include "afxglobals.h"
 
 
 
@@ -18,6 +19,8 @@ AFX_STATIC_DATA const TCHAR _afxShellPrintFmt[] = _T("%s\\shell\\print\\%s");
 AFX_STATIC_DATA const TCHAR _afxShellPrintToFmt[] = _T("%s\\shell\\printto\\%s");
 AFX_STATIC_DATA const TCHAR _afxDefaultIconFmt[] = _T("%s\\DefaultIcon");
 AFX_STATIC_DATA const TCHAR _afxShellNewFmt[] = _T("%s\\ShellNew");
+AFX_STATIC_DATA const TCHAR _afxShellExFmt[] = _T("%s\\ShellEx");
+AFX_STATIC_DATA const TCHAR _afxPreviewHostCLSIDKey [] = _T("\\{8895b1c6-b41f-4c1c-a562-0d564250836f}");
 
 #define DEFAULT_ICON_INDEX 0
 
@@ -27,6 +30,7 @@ AFX_STATIC_DATA const TCHAR _afxOpenArg[] = _T(" \"%1\"");
 AFX_STATIC_DATA const TCHAR _afxPrintArg[] = _T(" /p \"%1\"");
 AFX_STATIC_DATA const TCHAR _afxPrintToArg[] = _T(" /pt \"%1\" \"%2\" \"%3\" \"%4\"");
 AFX_STATIC_DATA const TCHAR _afxDDEArg[] = _T(" /dde");
+AFX_STATIC_DATA const TCHAR _afxDDEArg2[] = _T(" /ddenoshow");
 
 AFX_STATIC_DATA const TCHAR _afxDDEExec[] = _T("ddeexec");
 AFX_STATIC_DATA const TCHAR _afxDDEOpen[] = _T("[open(\"%1\")]");
@@ -35,6 +39,8 @@ AFX_STATIC_DATA const TCHAR _afxDDEPrintTo[] = _T("[printto(\"%1\",\"%2\",\"%3\"
 
 AFX_STATIC_DATA const TCHAR _afxShellNewValueName[] = _T("NullFile");
 AFX_STATIC_DATA const TCHAR _afxShellNewValue[] = _T("");
+
+AFX_STATIC_DATA const TCHAR _afxAppUserModelIDValueName[] = _T("AppUserModelID");
 
 // recursively remove a registry key if and only if it has no subkeys
 
@@ -56,7 +62,7 @@ BOOL AFXAPI _AfxDeleteRegKey(LPCTSTR lpszKey)
 
 		// try to open that key
 		HKEY hKey;
-		if (AfxRegOpenKey(HKEY_CLASSES_ROOT, lpszKeyCopy, &hKey) != ERROR_SUCCESS)
+		if (AfxRegOpenKeyEx(HKEY_CLASSES_ROOT, lpszKeyCopy, 0, KEY_ENUMERATE_SUB_KEYS, &hKey) != ERROR_SUCCESS)
 			break;
 
 		// enumerate the keys underneath
@@ -195,14 +201,49 @@ void CDocManager::UnregisterShellFileTypes()
 					strTemp.Format(_afxShellNewFmt, (LPCTSTR)strFilterExt);
 					_AfxDeleteRegKey(strTemp);
 
+					if (!pTemplate->m_strCLSID.IsEmpty())
+					{
+						strTemp.Format(_afxShellExFmt, (LPCTSTR)strFilterExt);
+						strTemp.Append(_afxPreviewHostCLSIDKey);
+						_AfxDeleteRegKey(strTemp);
+					}
+					
+					strTemp.Format(_afxShellExFmt, (LPCTSTR)strFilterExt);
+					_AfxDeleteRegKey(strTemp);
+
 					// no association for that suffix
 					_AfxDeleteRegKey(strFilterExt);
+				}
+
+				if (!pTemplate->m_strCLSID.IsEmpty())
+				{
+					AfxUnRegisterPreviewHandler(pTemplate->m_strCLSID);
+
+					CString strServerName;
+					CString strLocalServerName;
+					CString strLocalShortName;
+
+					if (!pTemplate->GetDocString(strServerName,
+						CDocTemplate::regFileTypeId) || strServerName.IsEmpty())
+					{
+						TRACE(traceOle, 0, "Error: not enough information in DocTemplate to unregister Preview Handler.\n");
+						return;
+					}
+					if (!pTemplate->GetDocString(strLocalServerName,
+						CDocTemplate::regFileTypeName))
+						strLocalServerName = strServerName;     // use non-localized name
+					if (!pTemplate->GetDocString(strLocalShortName,
+						CDocTemplate::fileNewName))
+						strLocalShortName = strLocalServerName; // use long name
+
+					AfxOleUnregisterServerClass(pTemplate->m_clsid, strServerName,
+						strLocalShortName, strLocalServerName, OAT_DISPATCH_OBJECT,
+						NULL, NULL);
 				}
 			}
 		}
 	}
 }
-
 
 void CDocManager::RegisterShellFileTypes(BOOL bCompat)
 {
@@ -253,6 +294,15 @@ void CDocManager::RegisterShellFileTypes(BOOL bCompat)
 			if (!_AfxSetRegKey(strFileTypeId, strFileTypeName))
 				continue;       // just skip it
 
+			if (afxGlobalData.bIsWindows7)
+			{
+				CWinApp* pApp = AfxGetApp();
+				if (pApp != NULL && _tcslen(pApp->m_pszAppID) > 0)
+				{
+					_AfxSetRegKey(strFileTypeId, pApp->m_pszAppID, _afxAppUserModelIDValueName);
+				}
+			}
+
 			if (bCompat)
 			{
 				// path\DefaultIcon = path,1
@@ -286,11 +336,11 @@ void CDocManager::RegisterShellFileTypes(BOOL bCompat)
 						continue;       // just skip it
 
 					// path\shell\open\command = path /dde
-					// path\shell\print\command = path /dde
-					// path\shell\printto\command = path /dde
+					// path\shell\print\command = path /ddenoshow
+					// path\shell\printto\command = path /ddenoshow
 					strOpenCommandLine += _afxDDEArg;
-					strPrintCommandLine += _afxDDEArg;
-					strPrintToCommandLine += _afxDDEArg;
+					strPrintCommandLine += _afxDDEArg2;
+					strPrintToCommandLine += _afxDDEArg2;
 				}
 				else
 				{
@@ -353,6 +403,34 @@ void CDocManager::RegisterShellFileTypes(BOOL bCompat)
 						strTemp.Format(_afxShellNewFmt, (LPCTSTR)strFilterExt);
 						(void)_AfxSetRegKey(strTemp, _afxShellNewValue, _afxShellNewValueName);
 					}
+				}
+
+				if (!pTemplate->m_strCLSID.IsEmpty())
+				{
+					CString strShortTypeName;
+					pTemplate->GetDocString(strShortTypeName, CDocTemplate::fileNewName);
+					AfxRegisterPreviewHandler (pTemplate->m_strCLSID, strShortTypeName, strFilterExt);
+
+					CString strServerName;
+					CString strLocalServerName;
+					CString strLocalShortName;
+
+					if (!pTemplate->GetDocString(strServerName,
+						CDocTemplate::regFileTypeId) || strServerName.IsEmpty())
+					{
+						TRACE(traceOle, 0, "Error: not enough information in DocTemplate to register OLE server.\n");
+						return;
+					}
+					if (!pTemplate->GetDocString(strLocalServerName,
+						CDocTemplate::regFileTypeName))
+						strLocalServerName = strServerName;     // use non-localized name
+					if (!pTemplate->GetDocString(strLocalShortName,
+						CDocTemplate::fileNewName))
+						strLocalShortName = strLocalServerName; // use long name
+					
+					AfxOleRegisterServerClass(pTemplate->m_clsid, strServerName,
+						strLocalShortName, strLocalServerName, OAT_DISPATCH_OBJECT,
+						NULL, NULL, DEFAULT_ICON_INDEX, NULL, NULL);
 				}
 			}
 		}
@@ -800,7 +878,7 @@ BOOL CDocManager::OnDDECommand(_In_z_ LPTSTR lpszCommand)
 	int nOldCount; nOldCount = GetDocumentCount();
 
 	// open the document, then print it.
-	pDoc = AfxGetApp()->OpenDocumentFile(cmdInfo.m_strFileName);
+	pDoc = AfxGetApp()->OpenDocumentFile(cmdInfo.m_strFileName, FALSE);
 	AfxGetApp()->m_pCmdInfo = &cmdInfo;
 	AfxGetApp()->m_pMainWnd->SendMessage(WM_COMMAND, ID_FILE_PRINT_DIRECT);
 	AfxGetApp()->m_pCmdInfo = NULL;
@@ -893,8 +971,12 @@ void CDocManager::Dump(CDumpContext& dc) const
 }
 #endif
 
-
 CDocument* CDocManager::OpenDocumentFile(LPCTSTR lpszFileName)
+{
+	return OpenDocumentFile(lpszFileName, TRUE);
+}
+
+CDocument* CDocManager::OpenDocumentFile(LPCTSTR lpszFileName, BOOL bAddToMRU)
 {
 	if (lpszFileName == NULL)
 	{
@@ -982,7 +1064,7 @@ CDocument* CDocManager::OpenDocumentFile(LPCTSTR lpszFileName)
 		return NULL;
 	}
 
-	return pBestTemplate->OpenDocumentFile(szPath);
+	return pBestTemplate->OpenDocumentFile(szPath, bAddToMRU, TRUE);
 }
 
 int CDocManager::GetOpenDocumentCount()
@@ -1002,6 +1084,35 @@ int CDocManager::GetOpenDocumentCount()
 	return nOpen;
 }
 
+CDocTemplate* CDocManager::GetBestTemplate(LPCTSTR lpszFileName)
+{
+	if (lpszFileName == NULL)
+	{
+		AfxThrowInvalidArgException();
+	}
+
+	// find the highest confidence
+	POSITION pos = m_templateList.GetHeadPosition();
+	CDocTemplate::Confidence bestMatch = CDocTemplate::noAttempt;
+	CDocTemplate* pBestTemplate = NULL;
+	CDocument* pOpenDocument = NULL;
+
+	while (pos != NULL)
+	{
+		CDocTemplate* pTemplate = (CDocTemplate*)m_templateList.GetNext(pos);
+		ASSERT_KINDOF(CDocTemplate, pTemplate);
+
+		CDocTemplate::Confidence match;
+		match = pTemplate->MatchDocType(lpszFileName, pOpenDocument);
+		if (match > bestMatch)
+		{
+			bestMatch = match;
+			pBestTemplate = pTemplate;
+		}
+	}
+
+	return pBestTemplate;
+}
 
 CDocManager::~CDocManager()
 {

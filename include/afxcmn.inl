@@ -409,7 +409,6 @@ _AFXCMN_INLINE CHotKeyCtrl::CHotKeyCtrl()
 _AFXCMN_INLINE void CHotKeyCtrl::SetHotKey(WORD wVirtualKeyCode, WORD wModifiers)
 	{ ASSERT(::IsWindow(m_hWnd));  ::SendMessage(m_hWnd, HKM_SETHOTKEY, MAKEWORD(wVirtualKeyCode, wModifiers), 0L); }
 _AFXCMN_INLINE DWORD CHotKeyCtrl::GetHotKey() const
-//IA64: Assume retval of HKM_GETHOTKEY is still 32-bit
 	{ ASSERT(::IsWindow(m_hWnd)); return DWORD(::SendMessage(m_hWnd, HKM_GETHOTKEY, 0, 0L)); }
 _AFXCMN_INLINE void CHotKeyCtrl::SetRules(WORD wInvalidComb, WORD wModifiers)
 	{ ASSERT(::IsWindow(m_hWnd));  ::SendMessage(m_hWnd, HKM_SETRULES, wInvalidComb, MAKELPARAM(wModifiers, 0)); }
@@ -586,7 +585,6 @@ _AFXCMN_INLINE int CTabCtrl::HitTest(TCHITTESTINFO* pHitTestInfo) const
 _AFXCMN_INLINE void CTabCtrl::AdjustRect(BOOL bLarger, LPRECT lpRect)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, TCM_ADJUSTRECT, bLarger, (LPARAM)lpRect); }
 _AFXCMN_INLINE CSize CTabCtrl::SetItemSize(CSize size)
-//IA64: Assume size is still packed into a DWORD
 	{ ASSERT(::IsWindow(m_hWnd)); return (CSize)DWORD(::SendMessage(m_hWnd, TCM_SETITEMSIZE, 0, MAKELPARAM(size.cx,size.cy))); }
 _AFXCMN_INLINE void CTabCtrl::RemoveImage(int nImage)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, TCM_REMOVEIMAGE, nImage, 0L); }

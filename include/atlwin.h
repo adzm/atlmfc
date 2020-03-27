@@ -7,7 +7,7 @@
 // electronic documentation provided with the library.
 // See these sources for detailed information regarding the
 // Active Template Library product.
- 
+
 #ifndef _ATL_NO_PRAGMA_WARNINGS
 #pragma warning (push)
 #pragma warning(disable : 4668)	// is not defined as a preprocessor macro, replacing with '0' for '#if/#elif
@@ -39,7 +39,10 @@
 
 #ifdef SetWindowLongPtrA
 #undef SetWindowLongPtrA
-inline LONG_PTR SetWindowLongPtrA( HWND hWnd, int nIndex, LONG_PTR dwNewLong )
+inline LONG_PTR SetWindowLongPtrA(
+	_In_ HWND hWnd,
+	_In_ int nIndex,
+	_In_ LONG_PTR dwNewLong)
 {
 	return( ::SetWindowLongA( hWnd, nIndex, LONG( dwNewLong ) ) );
 }
@@ -47,7 +50,10 @@ inline LONG_PTR SetWindowLongPtrA( HWND hWnd, int nIndex, LONG_PTR dwNewLong )
 
 #ifdef SetWindowLongPtrW
 #undef SetWindowLongPtrW
-inline LONG_PTR SetWindowLongPtrW( HWND hWnd, int nIndex, LONG_PTR dwNewLong )
+inline LONG_PTR SetWindowLongPtrW(
+	_In_ HWND hWnd,
+	_In_ int nIndex,
+	_In_ LONG_PTR dwNewLong)
 {
 	return( ::SetWindowLongW( hWnd, nIndex, LONG( dwNewLong ) ) );
 }
@@ -55,7 +61,9 @@ inline LONG_PTR SetWindowLongPtrW( HWND hWnd, int nIndex, LONG_PTR dwNewLong )
 
 #ifdef GetWindowLongPtrA
 #undef GetWindowLongPtrA
-inline LONG_PTR GetWindowLongPtrA( HWND hWnd, int nIndex )
+inline LONG_PTR GetWindowLongPtrA(
+	_In_ HWND hWnd,
+	_In_ int nIndex)
 {
 	return( ::GetWindowLongA( hWnd, nIndex ) );
 }
@@ -63,7 +71,9 @@ inline LONG_PTR GetWindowLongPtrA( HWND hWnd, int nIndex )
 
 #ifdef GetWindowLongPtrW
 #undef GetWindowLongPtrW
-inline LONG_PTR GetWindowLongPtrW( HWND hWnd, int nIndex )
+inline LONG_PTR GetWindowLongPtrW(
+	_In_ HWND hWnd,
+	_In_ int nIndex)
 {
 	return( ::GetWindowLongW( hWnd, nIndex ) );
 }
@@ -84,56 +94,88 @@ namespace ATL
 class _U_RECT
 {
 public:
-	_U_RECT(LPRECT lpRect) : m_lpRect(lpRect)
-	{ }
-	_U_RECT(RECT& rc) : m_lpRect(&rc)
-	{ }
+	_U_RECT(_In_opt_ LPRECT lpRect) : m_lpRect(lpRect)
+	{
+	}
+	_U_RECT(_In_ RECT& rc) : m_lpRect(&rc)
+	{
+	}
 	LPRECT m_lpRect;
 };
 
 class _U_MENUorID
 {
 public:
-	_U_MENUorID(HMENU hMenu) : m_hMenu(hMenu)
-	{ }
-	_U_MENUorID(UINT nID) : m_hMenu((HMENU)(UINT_PTR)nID)
-	{ }	
+	_U_MENUorID(_In_ HMENU hMenu) : m_hMenu(hMenu)
+	{
+	}
+	_U_MENUorID(_In_ UINT nID) : m_hMenu((HMENU)(UINT_PTR)nID)
+	{
+	}
 	HMENU m_hMenu;
 };
 
 class _U_STRINGorID
 {
 public:
-	_U_STRINGorID(LPCTSTR lpString) : m_lpstr(lpString)
-	{ }
-	_U_STRINGorID(UINT nID) : m_lpstr(MAKEINTRESOURCE(nID))
-	{ }
+	_U_STRINGorID(_In_z_ LPCTSTR lpString) : m_lpstr(lpString)
+	{
+	}
+	_U_STRINGorID(_In_ UINT nID) : m_lpstr(MAKEINTRESOURCE(nID))
+	{
+	}
 	LPCTSTR m_lpstr;
 };
 
 struct _ATL_WNDCLASSINFOA;
 struct _ATL_WNDCLASSINFOW;
 
-ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoA(_ATL_WIN_MODULE* pWinModule, _ATL_BASE_MODULE* pBaseModule, _ATL_WNDCLASSINFOA* p, WNDPROC* pProc);
-inline ATOM AtlModuleRegisterWndClassInfoA(_ATL_MODULE* /*pM*/, _ATL_WNDCLASSINFOA* p, WNDPROC* pProc)
+ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoA(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ _ATL_BASE_MODULE* pBaseModule,
+	_Inout_ _ATL_WNDCLASSINFOA* p,
+	_In_ WNDPROC* pProc);
+
+inline ATOM AtlModuleRegisterWndClassInfoA(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_Inout_ _ATL_WNDCLASSINFOA* p,
+	_In_ WNDPROC* pProc)
 {
 	return AtlWinModuleRegisterWndClassInfoA(&_AtlWinModule, &_AtlBaseModule, p, pProc);
 }
 
-ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoW(_ATL_WIN_MODULE* pWinModule, _ATL_BASE_MODULE* pBaseModule, _ATL_WNDCLASSINFOW* p, WNDPROC* pProc);
-inline ATOM AtlModuleRegisterWndClassInfoW(_ATL_MODULE* /*pM*/, _ATL_WNDCLASSINFOW* p, WNDPROC* pProc)
+ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoW(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ _ATL_BASE_MODULE* pBaseModule,
+	_Inout_ _ATL_WNDCLASSINFOW* p,
+	_In_ WNDPROC* pProc);
+
+inline ATOM AtlModuleRegisterWndClassInfoW(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_Inout_ _ATL_WNDCLASSINFOW* p,
+	_In_ WNDPROC* pProc)
 {
 	return AtlWinModuleRegisterWndClassInfoW(&_AtlWinModule, &_AtlBaseModule, p, pProc);
 }
 
-ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExA(_ATL_WIN_MODULE* pWinModule, const WNDCLASSEXA *lpwc);
-inline ATOM AtlModuleRegisterClassExA(_ATL_MODULE* /*pM*/, const WNDCLASSEXA *lpwc)
+ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExA(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ const WNDCLASSEXA *lpwc);
+
+inline ATOM AtlModuleRegisterClassExA(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_ const WNDCLASSEXA *lpwc)
 {
 	return AtlWinModuleRegisterClassExA(&_AtlWinModule, lpwc);
 }
 
-ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExW(_ATL_WIN_MODULE* pWinModule, const WNDCLASSEXW *lpwc);
-inline ATOM AtlModuleRegisterClassExW(_ATL_MODULE* /*pM*/, const WNDCLASSEXW *lpwc)
+ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExW(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ const WNDCLASSEXW *lpwc);
+
+inline ATOM AtlModuleRegisterClassExW(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_ const WNDCLASSEXW *lpwc)
 {
 	return AtlWinModuleRegisterClassExW(&_AtlWinModule, lpwc);
 }
@@ -156,9 +198,17 @@ inline ATOM AtlModuleRegisterClassExW(_ATL_MODULE* /*pM*/, const WNDCLASSEXW *lp
 #define MAP_PIX_TO_LOGHIM(x,ppli)   MulDiv(HIMETRIC_PER_INCH, (x), (ppli))
 #define MAP_LOGHIM_TO_PIX(x,ppli)   MulDiv((ppli), (x), HIMETRIC_PER_INCH)
 
-ATLAPI_(HDC) AtlCreateTargetDC(HDC hdc, DVTARGETDEVICE* ptd);
-ATLAPI_(void) AtlHiMetricToPixel(const SIZEL * lpSizeInHiMetric, LPSIZEL lpSizeInPix);
-ATLAPI_(void) AtlPixelToHiMetric(const SIZEL * lpSizeInPix, LPSIZEL lpSizeInHiMetric);
+ATLAPI_(HDC) AtlCreateTargetDC(
+	_In_ HDC hdc,
+	_In_ DVTARGETDEVICE* ptd);
+
+ATLAPI_(void) AtlHiMetricToPixel(
+	_In_ const SIZEL *lpSizeInHiMetric,
+	_Out_ LPSIZEL lpSizeInPix);
+
+ATLAPI_(void) AtlPixelToHiMetric(
+	_In_ const SIZEL *lpSizeInPix,
+	_Out_ LPSIZEL lpSizeInHiMetric);
 
 #ifndef GET_X_LPARAM
 #define GET_X_LPARAM(lParam)	((int)(short)LOWORD(lParam))
@@ -172,14 +222,14 @@ ATLAPI_(void) AtlPixelToHiMetric(const SIZEL * lpSizeInPix, LPSIZEL lpSizeInHiMe
 //#endif
 
 
- 
 namespace ATL
 {
 
 /////////////////////////////////////////////////////////////////////////////
 // _ATL_MSG - extended MSG structure
 
-struct _ATL_MSG : public MSG
+struct _ATL_MSG :
+	public MSG
 {
 public:
 // Additional data members
@@ -196,7 +246,15 @@ public:
 		time = 0;
 		pt.x = pt.y = 0;
 	}
-	_ATL_MSG(HWND hWnd, UINT uMsg, WPARAM wParamIn, LPARAM lParamIn, DWORD dwTime, POINT ptIn, BOOL bHandledIn) : cbSize(sizeof(_ATL_MSG)), bHandled(bHandledIn)
+	_ATL_MSG(
+			_In_opt_ HWND hWnd,
+			_In_ UINT uMsg,
+			_In_ WPARAM wParamIn,
+			_In_ LPARAM lParamIn,
+			_In_ DWORD dwTime,
+			_In_ POINT ptIn,
+			_In_ BOOL bHandledIn) :
+		cbSize(sizeof(_ATL_MSG)), bHandled(bHandledIn)
 	{
 		hwnd = hWnd;
 		message = uMsg;
@@ -205,7 +263,13 @@ public:
 		time = dwTime;
 		pt = ptIn;
 	}
-	_ATL_MSG(HWND hWnd, UINT uMsg, WPARAM wParamIn, LPARAM lParamIn, BOOL bHandledIn = TRUE) : cbSize(sizeof(_ATL_MSG)), bHandled(bHandledIn)
+	_ATL_MSG(
+			_In_opt_ HWND hWnd,
+			_In_ UINT uMsg,
+			_In_ WPARAM wParamIn,
+			_In_ LPARAM lParamIn,
+			_In_ BOOL bHandledIn = TRUE) :
+		cbSize(sizeof(_ATL_MSG)), bHandled(bHandledIn)
 	{
 		hwnd = hWnd;
 		message = uMsg;
@@ -214,7 +278,10 @@ public:
 		time = 0;
 		pt.x = pt.y = 0;
 	}
-	_ATL_MSG(MSG& msg, BOOL bHandledIn = TRUE) : cbSize(sizeof(_ATL_MSG)), bHandled(bHandledIn)
+	_ATL_MSG(
+			_In_ MSG& msg,
+			_In_ BOOL bHandledIn = TRUE) :
+		cbSize(sizeof(_ATL_MSG)), bHandled(bHandledIn)
 	{
 		hwnd = msg.hwnd;
 		message = msg.message;
@@ -234,7 +301,8 @@ struct _ATL_WNDCLASSINFOA
 	BOOL m_bSystemCursor;
 	ATOM m_atom;
 	CHAR m_szAutoName[5+sizeof(void*)*CHAR_BIT];
-	ATOM Register(WNDPROC* p)
+
+	ATOM Register(_In_ WNDPROC* p)
 	{
 		return AtlWinModuleRegisterWndClassInfoA(&_AtlWinModule, &_AtlBaseModule, this, p);
 	}
@@ -249,16 +317,16 @@ struct _ATL_WNDCLASSINFOW
 	BOOL m_bSystemCursor;
 	ATOM m_atom;
 	WCHAR m_szAutoName[5+sizeof(void*)*CHAR_BIT];
-	ATOM Register(WNDPROC* p)
+
+	ATOM Register(_In_ WNDPROC* p)
 	{
 		return AtlWinModuleRegisterWndClassInfoW(&_AtlWinModule, &_AtlBaseModule, this, p);
 	}
 };
 
 };  // namespace ATL
- 
 
- 
+
 namespace ATL
 {
 
@@ -360,12 +428,12 @@ public:
 	};
 #pragma pack(pop)
 
-	static BOOL IsDialogEx(const DLGTEMPLATE* pTemplate)
+	static BOOL IsDialogEx(_In_ const DLGTEMPLATE* pTemplate)
 	{
 		return ((DLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF;
 	}
 
-	inline static WORD& DlgTemplateItemCount(DLGTEMPLATE* pTemplate)
+	inline static WORD& DlgTemplateItemCount(_In_ DLGTEMPLATE* pTemplate)
 	{
 		if (IsDialogEx(pTemplate))
 			return reinterpret_cast<DLGTEMPLATEEX*>(pTemplate)->cDlgItems;
@@ -373,7 +441,7 @@ public:
 			return pTemplate->cdit;
 	}
 
-	inline static const WORD& DlgTemplateItemCount(const DLGTEMPLATE* pTemplate)
+	inline static const WORD& DlgTemplateItemCount(_In_ const DLGTEMPLATE* pTemplate)
 	{
 		if (IsDialogEx(pTemplate))
 			return reinterpret_cast<const DLGTEMPLATEEX*>(pTemplate)->cDlgItems;
@@ -381,7 +449,7 @@ public:
 			return pTemplate->cdit;
 	}
 
-	static DLGITEMTEMPLATE* FindFirstDlgItem(const DLGTEMPLATE* pTemplate)
+	static DLGITEMTEMPLATE* FindFirstDlgItem(_In_ const DLGTEMPLATE* pTemplate)
 	{
 		BOOL bDialogEx = IsDialogEx(pTemplate);
 
@@ -440,7 +508,9 @@ public:
 
 	// Given the current dialog item and whether this is an extended dialog
 	// return a pointer to the next DLGITEMTEMPLATE*
-	static DLGITEMTEMPLATE* FindNextDlgItem(DLGITEMTEMPLATE* pItem, BOOL bDialogEx)
+	static DLGITEMTEMPLATE* FindNextDlgItem(
+		_In_ DLGITEMTEMPLATE* pItem,
+		_In_ BOOL bDialogEx)
 	{
 		WORD* pw;
 
@@ -473,8 +543,13 @@ public:
 
 	// Find the initialization data (Stream) for the control specified by the ID
 	// If found, return the pointer into the data and the length of the data
-	static DWORD FindCreateData(DWORD dwID, BYTE* pInitData, BYTE** pData)
+	static DWORD FindCreateData(
+		_In_ DWORD dwID,
+		_In_ BYTE* pInitData,
+		_Inout_ _Deref_post_opt_valid_ BYTE** pData)
 	{
+		ATLASSUME(pData != NULL);
+		
 		while (pInitData)
 		{
 			// Read the DLGINIT header
@@ -504,7 +579,9 @@ public:
 		return 0;
 	}
 
-	static bool IsActiveXControl(DLGITEMTEMPLATE* pItem, BOOL bDialogEx)
+	static bool IsActiveXControl(
+		_In_ DLGITEMTEMPLATE* pItem,
+		_In_ BOOL bDialogEx)
 	{
 		LPWSTR pszClassName;
 		pszClassName = bDialogEx ?
@@ -516,7 +593,9 @@ public:
 	}
 
 	// Convert MSDEV (MFC) style DLGTEMPLATE with controls to regular DLGTEMPLATE
-	static DLGTEMPLATE* SplitDialogTemplate(DLGTEMPLATE* pTemplate, BYTE* /*pInitData*/)
+	static DLGTEMPLATE* SplitDialogTemplate(
+		_In_ DLGTEMPLATE* pTemplate,
+		_In_opt_ BYTE* /*pInitData*/)
 	{
 		// Calculate the size of the DLGTEMPLATE for allocating the new one
 		DLGITEMTEMPLATE* pFirstItem = FindFirstDlgItem(pTemplate);
@@ -572,7 +651,7 @@ public:
 		DLGTEMPLATE* pNewTemplate = (DLGTEMPLATE*)pNew;
 		Checked::memcpy_s(pNew, cbNewTemplate, pTemplate, cbHeader);
 		pNew += cbHeader;
-		
+
 		ULONG_PTR cbNewTemplateLast = cbNewTemplate;
 		cbNewTemplate -= cbHeader;
 		ATLENSURE(cbNewTemplate <= cbNewTemplateLast);
@@ -615,7 +694,9 @@ public:
 		return pNewTemplate;
 	}
 
-	static HRESULT ParseInitData(IStream* pStream, BSTR* pLicKey)
+	static HRESULT ParseInitData(
+		_Inout_opt_ IStream* pStream,
+		_Deref_out_opt_z_ BSTR* pLicKey)
 	{
 		*pLicKey = NULL;
 		if(pStream == NULL)
@@ -688,12 +769,12 @@ public:
 	static RECT rcDefault;
 	HWND m_hWnd;
 
-	CWindow(HWND hWnd = NULL) throw() :
+	CWindow(_In_opt_ HWND hWnd = NULL) throw() :
 		m_hWnd(hWnd)
 	{
 	}
 
-	CWindow& operator=(HWND hWnd) throw()
+	CWindow& operator=(_In_opt_ HWND hWnd) throw()
 	{
 		m_hWnd = hWnd;
 		return *this;
@@ -704,7 +785,7 @@ public:
 		return NULL;
 	}
 
-	void Attach(HWND hWndNew) throw()
+	void Attach(_In_opt_ HWND hWndNew) throw()
 	{
 		ATLASSUME(m_hWnd == NULL);
 		ATLASSERT((hWndNew == NULL) || ::IsWindow(hWndNew));
@@ -718,9 +799,15 @@ public:
 		return hWnd;
 	}
 
-	HWND Create(LPCTSTR lpstrWndClass, HWND hWndParent, _U_RECT rect = NULL, LPCTSTR szWindowName = NULL,
-			DWORD dwStyle = 0, DWORD dwExStyle = 0,
-			_U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL) throw()
+	HWND Create(
+		_In_opt_z_ LPCTSTR lpstrWndClass,
+		_In_opt_ HWND hWndParent,
+		_In_ _U_RECT rect = NULL,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL) throw()
 	{
 		ATLASSUME(m_hWnd == NULL);
 		if(rect.m_lpRect == NULL)
@@ -746,8 +833,8 @@ public:
 // Attributes
 
 	operator HWND() const throw()
-	{ 
-		return m_hWnd; 
+	{
+		return m_hWnd;
 	}
 
 	DWORD GetStyle() const throw()
@@ -762,37 +849,43 @@ public:
 		return (DWORD)::GetWindowLong(m_hWnd, GWL_EXSTYLE);
 	}
 
-	LONG GetWindowLong(int nIndex) const throw()
+	LONG GetWindowLong(_In_ int nIndex) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowLong(m_hWnd, nIndex);
 	}
 
-	LONG_PTR GetWindowLongPtr(int nIndex) const throw()
+	LONG_PTR GetWindowLongPtr(_In_ int nIndex) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowLongPtr(m_hWnd, nIndex);
 	}
 
-	LONG SetWindowLong(int nIndex, LONG dwNewLong) throw()
+	LONG SetWindowLong(
+		_In_ int nIndex,
+		_In_ LONG dwNewLong) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowLong(m_hWnd, nIndex, dwNewLong);
 	}
 
-	LONG_PTR SetWindowLongPtr(int nIndex, LONG_PTR dwNewLong) throw()
+	LONG_PTR SetWindowLongPtr(
+		_In_ int nIndex,
+		_In_ LONG_PTR dwNewLong) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowLongPtr(m_hWnd, nIndex, dwNewLong);
 	}
 
-	WORD GetWindowWord(int nIndex) const throw()
+	WORD GetWindowWord(_In_ int nIndex) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowWord(m_hWnd, nIndex);
 	}
 
-	WORD SetWindowWord(int nIndex, WORD wNewWord) throw()
+	WORD SetWindowWord(
+		_In_ int nIndex,
+		_In_ WORD wNewWord) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowWord(m_hWnd, nIndex, wNewWord);
@@ -800,26 +893,39 @@ public:
 
 // Message Functions
 
-	LRESULT SendMessage(UINT message, WPARAM wParam = 0, LPARAM lParam = 0) throw()
+	LRESULT SendMessage(
+		_In_ UINT message,
+		_In_ WPARAM wParam = 0,
+		_In_ LPARAM lParam = 0) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SendMessage(m_hWnd,message,wParam,lParam);
 	}
 
-	BOOL PostMessage(UINT message, WPARAM wParam = 0, LPARAM lParam = 0) throw()
+	BOOL PostMessage(
+		_In_ UINT message,
+		_In_ WPARAM wParam = 0,
+		_In_ LPARAM lParam = 0) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::PostMessage(m_hWnd,message,wParam,lParam);
 	}
 
-	BOOL SendNotifyMessage(UINT message, WPARAM wParam = 0, LPARAM lParam = 0) throw()
+	BOOL SendNotifyMessage(
+		_In_ UINT message,
+		_In_ WPARAM wParam = 0,
+		_In_ LPARAM lParam = 0) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SendNotifyMessage(m_hWnd, message, wParam, lParam);
 	}
 
 	// support for C style macros
-	static LRESULT SendMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) throw()
+	static LRESULT SendMessage(
+		_In_ HWND hWnd,
+		_In_ UINT message,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam) throw()
 	{
 		ATLASSERT(::IsWindow(hWnd));
 		return ::SendMessage(hWnd, message, wParam, lParam);
@@ -827,18 +933,20 @@ public:
 
 // Window Text Functions
 
-	BOOL SetWindowText(LPCTSTR lpszString) throw()
+	BOOL SetWindowText(_In_z_ LPCTSTR lpszString) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowText(m_hWnd, lpszString);
 	}
 
-	int GetWindowText(_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpszStringBuf, _In_ int nMaxCount) const throw()
+	int GetWindowText(
+		_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpszStringBuf,
+		_In_ int nMaxCount) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowText(m_hWnd, lpszStringBuf, nMaxCount);
 	}
-	int GetWindowText(CSimpleString& strText) const
+	int GetWindowText(_Inout_ CSimpleString& strText) const
 	{
 		int nLength;
 		LPTSTR pszText;
@@ -858,7 +966,9 @@ public:
 
 // Font Functions
 
-	void SetFont(HFONT hFont, BOOL bRedraw = TRUE) throw()
+	void SetFont(
+		_In_ HFONT hFont,
+		_In_ BOOL bRedraw = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::SendMessage(m_hWnd, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(bRedraw, 0));
@@ -878,7 +988,7 @@ public:
 		return (HMENU)::GetMenu(m_hWnd);
 	}
 
-	BOOL SetMenu(HMENU hMenu) throw()
+	BOOL SetMenu(_In_ HMENU hMenu) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetMenu(m_hWnd, hMenu);
@@ -890,13 +1000,16 @@ public:
 		return ::DrawMenuBar(m_hWnd);
 	}
 
-	HMENU GetSystemMenu(BOOL bRevert) const throw()
+	HMENU GetSystemMenu(_In_ BOOL bRevert) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return (HMENU)::GetSystemMenu(m_hWnd, bRevert);
 	}
 
-	BOOL HiliteMenuItem(HMENU hMenu, UINT uItemHilite, UINT uHilite) throw()
+	BOOL HiliteMenuItem(
+		_In_ HMENU hMenu,
+		_In_ UINT uItemHilite,
+		_In_ UINT uHilite) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::HiliteMenuItem(m_hWnd, hMenu, uItemHilite, uHilite);
@@ -916,25 +1029,41 @@ public:
 		return ::IsZoomed(m_hWnd);
 	}
 
-	BOOL MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE) throw()
+	BOOL MoveWindow(
+		_In_ int x,
+		_In_ int y,
+		_In_ int nWidth,
+		_In_ int nHeight,
+		_In_ BOOL bRepaint = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::MoveWindow(m_hWnd, x, y, nWidth, nHeight, bRepaint);
 	}
 
-	BOOL MoveWindow(LPCRECT lpRect, BOOL bRepaint = TRUE) throw()
+	BOOL MoveWindow(
+		_In_ LPCRECT lpRect,
+		_In_ BOOL bRepaint = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::MoveWindow(m_hWnd, lpRect->left, lpRect->top, lpRect->right - lpRect->left, lpRect->bottom - lpRect->top, bRepaint);
 	}
 
-	BOOL SetWindowPos(HWND hWndInsertAfter, int x, int y, int cx, int cy, UINT nFlags) throw()
+	BOOL SetWindowPos(
+		_In_opt_ HWND hWndInsertAfter,
+		_In_ int x,
+		_In_ int y,
+		_In_ int cx,
+		_In_ int cy,
+		_In_ UINT nFlags) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowPos(m_hWnd, hWndInsertAfter, x, y, cx, cy, nFlags);
 	}
 
-	BOOL SetWindowPos(HWND hWndInsertAfter, LPCRECT lpRect, UINT nFlags) throw()
+	BOOL SetWindowPos(
+		_In_opt_ HWND hWndInsertAfter,
+		_In_ LPCRECT lpRect,
+		_In_ UINT nFlags) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowPos(m_hWnd, hWndInsertAfter, lpRect->left, lpRect->top, lpRect->right - lpRect->left, lpRect->bottom - lpRect->top, nFlags);
@@ -952,25 +1081,25 @@ public:
 		return ::BringWindowToTop(m_hWnd);
 	}
 
-	BOOL GetWindowRect(LPRECT lpRect) const throw()
+	BOOL GetWindowRect(_Out_ LPRECT lpRect) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowRect(m_hWnd, lpRect);
 	}
 
-	BOOL GetClientRect(LPRECT lpRect) const throw()
+	BOOL GetClientRect(_Out_ LPRECT lpRect) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetClientRect(m_hWnd, lpRect);
 	}
 
-	BOOL GetWindowPlacement(WINDOWPLACEMENT FAR* lpwndpl) const throw()
+	BOOL GetWindowPlacement(_Out_ WINDOWPLACEMENT FAR* lpwndpl) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowPlacement(m_hWnd, lpwndpl);
 	}
 
-	BOOL SetWindowPlacement(const WINDOWPLACEMENT FAR* lpwndpl) throw()
+	BOOL SetWindowPlacement(_In_ const WINDOWPLACEMENT FAR* lpwndpl) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowPlacement(m_hWnd, lpwndpl);
@@ -978,13 +1107,13 @@ public:
 
 // Coordinate Mapping Functions
 
-	BOOL ClientToScreen(LPPOINT lpPoint) const throw()
+	BOOL ClientToScreen(_Inout_ LPPOINT lpPoint) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ClientToScreen(m_hWnd, lpPoint);
 	}
 
-	BOOL ClientToScreen(LPRECT lpRect) const throw()
+	BOOL ClientToScreen(_Inout_ LPRECT lpRect) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		if(!::ClientToScreen(m_hWnd, (LPPOINT)lpRect))
@@ -992,13 +1121,13 @@ public:
 		return ::ClientToScreen(m_hWnd, ((LPPOINT)lpRect)+1);
 	}
 
-	BOOL ScreenToClient(LPPOINT lpPoint) const throw()
+	BOOL ScreenToClient(_Inout_ LPPOINT lpPoint) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ScreenToClient(m_hWnd, lpPoint);
 	}
 
-	BOOL ScreenToClient(LPRECT lpRect) const throw()
+	BOOL ScreenToClient(_Inout_ LPRECT lpRect) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		if(!::ScreenToClient(m_hWnd, (LPPOINT)lpRect))
@@ -1006,13 +1135,18 @@ public:
 		return ::ScreenToClient(m_hWnd, ((LPPOINT)lpRect)+1);
 	}
 
-	int MapWindowPoints(HWND hWndTo, LPPOINT lpPoint, UINT nCount) const throw()
+	int MapWindowPoints(
+		_In_ HWND hWndTo,
+		_Inout_cap_(nCount) LPPOINT lpPoint,
+		_In_ UINT nCount) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::MapWindowPoints(m_hWnd, hWndTo, lpPoint, nCount);
 	}
 
-	int MapWindowPoints(HWND hWndTo, LPRECT lpRect) const throw()
+	int MapWindowPoints(
+		_In_ HWND hWndTo,
+		_Inout_ LPRECT lpRect) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::MapWindowPoints(m_hWnd, hWndTo, (LPPOINT)lpRect, 2);
@@ -1020,13 +1154,13 @@ public:
 
 // Update and Painting Functions
 
-	HDC BeginPaint(LPPAINTSTRUCT lpPaint) throw()
+	HDC BeginPaint(_Out_ LPPAINTSTRUCT lpPaint) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::BeginPaint(m_hWnd, lpPaint);
 	}
 
-	void EndPaint(LPPAINTSTRUCT lpPaint) throw()
+	void EndPaint(_In_ LPPAINTSTRUCT lpPaint) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::EndPaint(m_hWnd, lpPaint);
@@ -1044,19 +1178,23 @@ public:
 		return ::GetWindowDC(m_hWnd);
 	}
 
-	int ReleaseDC(HDC hDC) throw()
+	int ReleaseDC(_In_ HDC hDC) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ReleaseDC(m_hWnd, hDC);
 	}
 
-	void Print(HDC hDC, DWORD dwFlags) const throw()
+	void Print(
+		_In_ HDC hDC,
+		_In_ DWORD dwFlags) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::SendMessage(m_hWnd, WM_PRINT, (WPARAM)hDC, dwFlags);
 	}
 
-	void PrintClient(HDC hDC, DWORD dwFlags) const throw()
+	void PrintClient(
+		_In_ HDC hDC,
+		_In_ DWORD dwFlags) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::SendMessage(m_hWnd, WM_PRINTCLIENT, (WPARAM)hDC, dwFlags);
@@ -1068,55 +1206,63 @@ public:
 		return ::UpdateWindow(m_hWnd);
 	}
 
-	void SetRedraw(BOOL bRedraw = TRUE) throw()
+	void SetRedraw(_In_ BOOL bRedraw = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::SendMessage(m_hWnd, WM_SETREDRAW, (WPARAM)bRedraw, 0);
 	}
 
-	BOOL GetUpdateRect(LPRECT lpRect, BOOL bErase = FALSE) throw()
+	BOOL GetUpdateRect(
+		_In_opt_ LPRECT lpRect,
+		_In_ BOOL bErase = FALSE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetUpdateRect(m_hWnd, lpRect, bErase);
 	}
 
-	int GetUpdateRgn(HRGN hRgn, BOOL bErase = FALSE) throw()
+	int GetUpdateRgn(
+		_In_ HRGN hRgn,
+		_In_ BOOL bErase = FALSE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetUpdateRgn(m_hWnd, hRgn, bErase);
 	}
 
-	BOOL Invalidate(BOOL bErase = TRUE) throw()
+	BOOL Invalidate(_In_ BOOL bErase = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::InvalidateRect(m_hWnd, NULL, bErase);
 	}
 
-	BOOL InvalidateRect(LPCRECT lpRect, BOOL bErase = TRUE) throw()
+	BOOL InvalidateRect(
+		_In_opt_ LPCRECT lpRect,
+		_In_ BOOL bErase = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::InvalidateRect(m_hWnd, lpRect, bErase);
 	}
 
-	BOOL ValidateRect(LPCRECT lpRect) throw()
+	BOOL ValidateRect(_In_opt_ LPCRECT lpRect) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ValidateRect(m_hWnd, lpRect);
 	}
 
-	void InvalidateRgn(HRGN hRgn, BOOL bErase = TRUE) throw()
+	void InvalidateRgn(
+		_In_ HRGN hRgn,
+		_In_ BOOL bErase = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::InvalidateRgn(m_hWnd, hRgn, bErase);
 	}
 
-	BOOL ValidateRgn(HRGN hRgn) throw()
+	BOOL ValidateRgn(_In_opt_ HRGN hRgn) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ValidateRgn(m_hWnd, hRgn);
 	}
 
-	BOOL ShowWindow(int nCmdShow) throw()
+	BOOL ShowWindow(_In_ int nCmdShow) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ShowWindow(m_hWnd, nCmdShow);
@@ -1128,25 +1274,30 @@ public:
 		return ::IsWindowVisible(m_hWnd);
 	}
 
-	BOOL ShowOwnedPopups(BOOL bShow = TRUE) throw()
+	BOOL ShowOwnedPopups(_In_ BOOL bShow = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ShowOwnedPopups(m_hWnd, bShow);
 	}
 
-	HDC GetDCEx(HRGN hRgnClip, DWORD flags) throw()
+	HDC GetDCEx(
+		_In_ HRGN hRgnClip,
+		_In_ DWORD flags) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetDCEx(m_hWnd, hRgnClip, flags);
 	}
 
-	BOOL LockWindowUpdate(BOOL bLock = TRUE) throw()
+	BOOL LockWindowUpdate(_In_ BOOL bLock = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::LockWindowUpdate(bLock ? m_hWnd : NULL);
 	}
 
-	BOOL RedrawWindow(LPCRECT lpRectUpdate = NULL, HRGN hRgnUpdate = NULL, UINT flags = RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE) throw()
+	BOOL RedrawWindow(
+		_In_opt_ LPCRECT lpRectUpdate = NULL,
+		_In_opt_ HRGN hRgnUpdate = NULL,
+		_In_ UINT flags = RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::RedrawWindow(m_hWnd, lpRectUpdate, hRgnUpdate, flags);
@@ -1154,13 +1305,16 @@ public:
 
 // Timer Functions
 
-	UINT_PTR SetTimer(UINT_PTR nIDEvent, UINT nElapse, void (CALLBACK* lpfnTimer)(HWND, UINT, UINT_PTR, DWORD) = NULL) throw()
+	UINT_PTR SetTimer(
+		_In_ UINT_PTR nIDEvent,
+		_In_ UINT nElapse,
+		_In_opt_ void (CALLBACK* lpfnTimer)(HWND, UINT, UINT_PTR, DWORD) = NULL) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetTimer(m_hWnd, nIDEvent, nElapse, (TIMERPROC)lpfnTimer);
 	}
 
-	BOOL KillTimer(UINT_PTR nIDEvent) throw()
+	BOOL KillTimer(_In_ UINT_PTR nIDEvent) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::KillTimer(m_hWnd, nIDEvent);
@@ -1174,7 +1328,7 @@ public:
 		return ::IsWindowEnabled(m_hWnd);
 	}
 
-	BOOL EnableWindow(BOOL bEnable = TRUE) throw()
+	BOOL EnableWindow(_In_ BOOL bEnable = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::EnableWindow(m_hWnd, bEnable);
@@ -1200,60 +1354,86 @@ public:
 
 // Dialog-Box Item Functions
 
-	BOOL CheckDlgButton(int nIDButton, UINT nCheck) throw()
+	BOOL CheckDlgButton(
+		_In_ int nIDButton,
+		_In_ UINT nCheck) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::CheckDlgButton(m_hWnd, nIDButton, nCheck);
 	}
 
-	BOOL CheckRadioButton(int nIDFirstButton, int nIDLastButton, int nIDCheckButton) throw()
+	BOOL CheckRadioButton(
+		_In_ int nIDFirstButton,
+		_In_ int nIDLastButton,
+		_In_ int nIDCheckButton) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::CheckRadioButton(m_hWnd, nIDFirstButton, nIDLastButton, nIDCheckButton);
 	}
 
-	int DlgDirList(_Inout_z_ LPTSTR lpPathSpec, _In_ int nIDListBox, _In_ int nIDStaticPath, _In_ UINT nFileType) throw()
+	int DlgDirList(
+		_Inout_z_ LPTSTR lpPathSpec,
+		_In_ int nIDListBox,
+		_In_ int nIDStaticPath,
+		_In_ UINT nFileType) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::DlgDirList(m_hWnd, lpPathSpec, nIDListBox, nIDStaticPath, nFileType);
 	}
 
-	int DlgDirListComboBox(_Inout_z_ LPTSTR lpPathSpec, _In_ int nIDComboBox, _In_ int nIDStaticPath, _In_ UINT nFileType) throw()
+	int DlgDirListComboBox(
+		_Inout_z_ LPTSTR lpPathSpec,
+		_In_ int nIDComboBox,
+		_In_ int nIDStaticPath,
+		_In_ UINT nFileType) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::DlgDirListComboBox(m_hWnd, lpPathSpec, nIDComboBox, nIDStaticPath, nFileType);
 	}
 
-	BOOL DlgDirSelect(_Out_z_cap_(nCount) LPTSTR lpString, _In_ int nCount, _In_ int nIDListBox) throw()
+	BOOL DlgDirSelect(
+		_Out_z_cap_(nCount) LPTSTR lpString,
+		_In_ int nCount,
+		_In_ int nIDListBox) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::DlgDirSelectEx(m_hWnd, lpString, nCount, nIDListBox);
 	}
 
-	BOOL DlgDirSelectComboBox(_Out_z_cap_(nCount) LPTSTR lpString, _In_ int nCount, _In_ int nIDComboBox) throw()
+	BOOL DlgDirSelectComboBox(
+		_Out_z_cap_(nCount) LPTSTR lpString,
+		_In_ int nCount,
+		_In_ int nIDComboBox) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::DlgDirSelectComboBoxEx(m_hWnd, lpString, nCount, nIDComboBox);
 	}
 
-	UINT GetDlgItemInt(int nID, BOOL* lpTrans = NULL, BOOL bSigned = TRUE) const throw()
+	UINT GetDlgItemInt(
+		_In_ int nID,
+		_Out_opt_ BOOL* lpTrans = NULL,
+		_In_ BOOL bSigned = TRUE) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetDlgItemInt(m_hWnd, nID, lpTrans, bSigned);
 	}
 
-	UINT GetDlgItemText(_In_ int nID, _Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpStr, _In_ int nMaxCount) const throw()
+	UINT GetDlgItemText(
+		_In_ int nID,
+		_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpStr,
+		_In_ int nMaxCount) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetDlgItemText(m_hWnd, nID, lpStr, nMaxCount);
 	}
 
-	UINT GetDlgItemText(int nID, CSimpleString& strText) const
+	UINT GetDlgItemText(
+		_In_ int nID,
+		_Inout_ CSimpleString& strText) const
 	{
-		HWND hItem;
-
 		ATLASSERT(::IsWindow(m_hWnd));
-		hItem = GetDlgItem(nID);
+
+		HWND hItem = GetDlgItem(nID);
 		if (hItem != NULL)
 		{
 			int nLength;
@@ -1274,7 +1454,9 @@ public:
 		}
 	}
 #ifdef _OLEAUTO_H_
-	BOOL GetDlgItemText(int nID, BSTR& bstrText) const throw()
+	BOOL GetDlgItemText(
+		_In_ int nID,
+		_Inout_ _Deref_post_opt_z_ BSTR& bstrText) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -1285,44 +1467,61 @@ public:
 		return CWindow(hWndCtl).GetWindowText(bstrText);
 	}
 #endif // _OLEAUTO_H_
-	CWindow GetNextDlgGroupItem(HWND hWndCtl, BOOL bPrevious = FALSE) const throw()
+	CWindow GetNextDlgGroupItem(
+		_In_ HWND hWndCtl,
+		_In_ BOOL bPrevious = FALSE) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CWindow(::GetNextDlgGroupItem(m_hWnd, hWndCtl, bPrevious));
 	}
 
-	CWindow GetNextDlgTabItem(HWND hWndCtl, BOOL bPrevious = FALSE) const throw()
+	CWindow GetNextDlgTabItem(
+		_In_ HWND hWndCtl,
+		_In_ BOOL bPrevious = FALSE) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CWindow(::GetNextDlgTabItem(m_hWnd, hWndCtl, bPrevious));
 	}
 
-	UINT IsDlgButtonChecked(int nIDButton) const throw()
+	UINT IsDlgButtonChecked(_In_ int nIDButton) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::IsDlgButtonChecked(m_hWnd, nIDButton);
 	}
 
-	LRESULT SendDlgItemMessage(int nID, UINT message, WPARAM wParam = 0, LPARAM lParam = 0) throw()
+	LRESULT SendDlgItemMessage(
+		_In_ int nID,
+		_In_ UINT message,
+		_In_ WPARAM wParam = 0,
+		_In_ LPARAM lParam = 0) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SendDlgItemMessage(m_hWnd, nID, message, wParam, lParam);
 	}
 
-	BOOL SetDlgItemInt(int nID, UINT nValue, BOOL bSigned = TRUE) throw()
+	BOOL SetDlgItemInt(
+		_In_ int nID,
+		_In_ UINT nValue,
+		_In_ BOOL bSigned = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetDlgItemInt(m_hWnd, nID, nValue, bSigned);
 	}
 
-	BOOL SetDlgItemText(int nID, LPCTSTR lpszString) throw()
+	BOOL SetDlgItemText(
+		_In_ int nID,
+		_In_z_ LPCTSTR lpszString) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetDlgItemText(m_hWnd, nID, lpszString);
 	}
 
 #ifndef _ATL_NO_HOSTING
-	HRESULT GetDlgControl(int nID, REFIID iid, void** ppCtrl) throw()
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetDlgControl(
+		_In_ int nID,
+		_In_ REFIID iid,
+		_Deref_out_ void** ppCtrl) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(ppCtrl != NULL);
@@ -1341,7 +1540,13 @@ public:
 		}
 		return hr;
 	}
-	HRESULT GetDlgHost(int nID, REFIID iid, void** ppHost) throw()
+ATLPREFAST_UNSUPPRESS()
+
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetDlgHost(
+		_In_ int nID,
+		_In_ REFIID iid,
+		_Deref_out_ void** ppHost) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(ppHost != NULL);
@@ -1359,59 +1564,93 @@ public:
 		}
 		return hr;
 	}
+ATLPREFAST_UNSUPPRESS()
+	
 #endif //!_ATL_NO_HOSTING
 
 // Scrolling Functions
 
-	int GetScrollPos(int nBar) const throw()
+	int GetScrollPos(_In_ int nBar) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetScrollPos(m_hWnd, nBar);
 	}
 
-	BOOL GetScrollRange(int nBar, LPINT lpMinPos, LPINT lpMaxPos) const throw()
+	BOOL GetScrollRange(
+		_In_ int nBar,
+		_Out_ LPINT lpMinPos,
+		_Out_ LPINT lpMaxPos) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetScrollRange(m_hWnd, nBar, lpMinPos, lpMaxPos);
 	}
 
-	BOOL ScrollWindow(int xAmount, int yAmount, LPCRECT lpRect = NULL, LPCRECT lpClipRect = NULL) throw()
+	BOOL ScrollWindow(
+		_In_ int xAmount,
+		_In_ int yAmount,
+		_In_opt_ LPCRECT lpRect = NULL,
+		_In_opt_ LPCRECT lpClipRect = NULL) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ScrollWindow(m_hWnd, xAmount, yAmount, lpRect, lpClipRect);
 	}
 
-	int ScrollWindowEx(int dx, int dy, LPCRECT lpRectScroll, LPCRECT lpRectClip, HRGN hRgnUpdate, LPRECT lpRectUpdate, UINT uFlags) throw()
+	int ScrollWindowEx(
+		_In_ int dx,
+		_In_ int dy,
+		_In_opt_ LPCRECT lpRectScroll,
+		_In_opt_ LPCRECT lpRectClip,
+		_In_opt_ HRGN hRgnUpdate,
+		_In_opt_ LPRECT lpRectUpdate,
+		_In_ UINT uFlags) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ScrollWindowEx(m_hWnd, dx, dy, lpRectScroll, lpRectClip, hRgnUpdate, lpRectUpdate, uFlags);
 	}
 
-	int ScrollWindowEx(int dx, int dy, UINT uFlags, LPCRECT lpRectScroll = NULL, LPCRECT lpRectClip = NULL, HRGN hRgnUpdate = NULL, LPRECT lpRectUpdate = NULL) throw()
+	int ScrollWindowEx(
+		_In_ int dx,
+		_In_ int dy,
+		_In_ UINT uFlags,
+		_In_opt_ LPCRECT lpRectScroll = NULL,
+		_In_opt_ LPCRECT lpRectClip = NULL,
+		_In_opt_ HRGN hRgnUpdate = NULL,
+		_In_opt_ LPRECT lpRectUpdate = NULL) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ScrollWindowEx(m_hWnd, dx, dy, lpRectScroll, lpRectClip, hRgnUpdate, lpRectUpdate, uFlags);
 	}
 
-	int SetScrollPos(int nBar, int nPos, BOOL bRedraw = TRUE) throw()
+	int SetScrollPos(
+		_In_ int nBar,
+		_In_ int nPos,
+		_In_ BOOL bRedraw = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetScrollPos(m_hWnd, nBar, nPos, bRedraw);
 	}
 
-	BOOL SetScrollRange(int nBar, int nMinPos, int nMaxPos, BOOL bRedraw = TRUE) throw()
+	BOOL SetScrollRange(
+		_In_ int nBar,
+		_In_ int nMinPos,
+		_In_ int nMaxPos,
+		_In_ BOOL bRedraw = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetScrollRange(m_hWnd, nBar, nMinPos, nMaxPos, bRedraw);
 	}
 
-	BOOL ShowScrollBar(UINT nBar, BOOL bShow = TRUE) throw()
+	BOOL ShowScrollBar(
+		_In_ UINT nBar,
+		_In_ BOOL bShow = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ShowScrollBar(m_hWnd, nBar, bShow);
 	}
 
-	BOOL EnableScrollBar(UINT uSBFlags, UINT uArrowFlags = ESB_ENABLE_BOTH) throw()
+	BOOL EnableScrollBar(
+		_In_ UINT uSBFlags,
+		_In_ UINT uArrowFlags = ESB_ENABLE_BOTH) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::EnableScrollBar(m_hWnd, uSBFlags, uArrowFlags);
@@ -1419,13 +1658,15 @@ public:
 
 // Window Access Functions
 
-	CWindow ChildWindowFromPoint(POINT point) const throw()
+	CWindow ChildWindowFromPoint(_In_ POINT point) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CWindow(::ChildWindowFromPoint(m_hWnd, point));
 	}
 
-	CWindow ChildWindowFromPointEx(POINT point, UINT uFlags) const throw()
+	CWindow ChildWindowFromPointEx(
+		_In_ POINT point,
+		_In_ UINT uFlags) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CWindow(::ChildWindowFromPointEx(m_hWnd, point, uFlags));
@@ -1437,7 +1678,7 @@ public:
 		return CWindow(::GetTopWindow(m_hWnd));
 	}
 
-	CWindow GetWindow(UINT nCmd) const throw()
+	CWindow GetWindow(_In_ UINT nCmd) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CWindow(::GetWindow(m_hWnd, nCmd));
@@ -1449,7 +1690,7 @@ public:
 		return CWindow(::GetLastActivePopup(m_hWnd));
 	}
 
-	BOOL IsChild(HWND hWnd) const throw()
+	BOOL IsChild(_In_ HWND hWnd) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::IsChild(m_hWnd, hWnd);
@@ -1461,7 +1702,7 @@ public:
 		return CWindow(::GetParent(m_hWnd));
 	}
 
-	CWindow SetParent(HWND hWndNewParent) throw()
+	CWindow SetParent(_In_ HWND hWndNewParent) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CWindow(::SetParent(m_hWnd, hWndNewParent));
@@ -1475,13 +1716,13 @@ public:
 		return ::GetDlgCtrlID(m_hWnd);
 	}
 
-	int SetDlgCtrlID(int nID) throw()
+	int SetDlgCtrlID(_In_ int nID) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return (int)::SetWindowLong(m_hWnd, GWL_ID, nID);
 	}
 
-	CWindow GetDlgItem(int nID) const throw()
+	CWindow GetDlgItem(_In_ int nID) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CWindow(::GetDlgItem(m_hWnd, nID));
@@ -1489,13 +1730,16 @@ public:
 
 // Alert Functions
 
-	BOOL FlashWindow(BOOL bInvert) throw()
+	BOOL FlashWindow(_In_ BOOL bInvert) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::FlashWindow(m_hWnd, bInvert);
 	}
 
-	int MessageBox(LPCTSTR lpszText, LPCTSTR lpszCaption = _T(""), UINT nType = MB_OK) throw()
+	int MessageBox(
+		_In_z_ LPCTSTR lpszText,
+		_In_opt_z_ LPCTSTR lpszCaption = _T(""),
+		_In_ UINT nType = MB_OK) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::MessageBox(m_hWnd, lpszText, lpszCaption, nType);
@@ -1503,7 +1747,7 @@ public:
 
 // Clipboard Functions
 
-	BOOL ChangeClipboardChain(HWND hWndNewNext) throw()
+	BOOL ChangeClipboardChain(_In_ HWND hWndNewNext) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ChangeClipboardChain(m_hWnd, hWndNewNext);
@@ -1523,19 +1767,19 @@ public:
 
 // Caret Functions
 
-	BOOL CreateCaret(HBITMAP hBitmap) throw()
+	BOOL CreateCaret(_In_ HBITMAP hBitmap) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::CreateCaret(m_hWnd, hBitmap, 0, 0);
 	}
 
-	BOOL CreateSolidCaret(int nWidth, int nHeight) throw()
+	BOOL CreateSolidCaret(_In_ int nWidth, _In_ int nHeight) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::CreateCaret(m_hWnd, (HBITMAP)0, nWidth, nHeight);
 	}
 
-	BOOL CreateGrayCaret(int nWidth, int nHeight) throw()
+	BOOL CreateGrayCaret(_In_ int nWidth, _In_ int nHeight) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::CreateCaret(m_hWnd, (HBITMAP)1, nWidth, nHeight);
@@ -1555,7 +1799,7 @@ public:
 
 #ifdef _INC_SHELLAPI
 // Drag-Drop Functions
-	void DragAcceptFiles(BOOL bAccept = TRUE) throw()
+	void DragAcceptFiles(_In_ BOOL bAccept = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd)); ::DragAcceptFiles(m_hWnd, bAccept);
 	}
@@ -1563,13 +1807,15 @@ public:
 
 // Icon Functions
 
-	HICON SetIcon(HICON hIcon, BOOL bBigIcon = TRUE) throw()
+	HICON SetIcon(
+		_In_ HICON hIcon,
+		_In_ BOOL bBigIcon = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return (HICON)::SendMessage(m_hWnd, WM_SETICON, bBigIcon, (LPARAM)hIcon);
 	}
 
-	HICON GetIcon(BOOL bBigIcon = TRUE) const throw()
+	HICON GetIcon(_In_ BOOL bBigIcon = TRUE) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return (HICON)::SendMessage(m_hWnd, WM_GETICON, bBigIcon, 0);
@@ -1577,13 +1823,16 @@ public:
 
 // Help Functions
 
-	BOOL WinHelp(LPCTSTR lpszHelp, UINT nCmd = HELP_CONTEXT, DWORD dwData = 0) throw()
+	BOOL WinHelp(
+		_In_z_ LPCTSTR lpszHelp,
+		_In_ UINT nCmd = HELP_CONTEXT,
+		_In_ DWORD dwData = 0) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::WinHelp(m_hWnd, lpszHelp, nCmd, dwData);
 	}
 
-	BOOL SetWindowContextHelpId(DWORD dwContextHelpId) throw()
+	BOOL SetWindowContextHelpId(_In_ DWORD dwContextHelpId) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowContextHelpId(m_hWnd, dwContextHelpId);
@@ -1597,7 +1846,9 @@ public:
 
 // Hot Key Functions
 
-	int SetHotKey(WORD wVirtualKeyCode, WORD wModifiers) throw()
+	int SetHotKey(
+		_In_ WORD wVirtualKeyCode,
+		_In_ WORD wModifiers) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return (int)::SendMessage(m_hWnd, WM_SETHOTKEY, MAKEWORD(wVirtualKeyCode, wModifiers), 0);
@@ -1612,39 +1863,47 @@ public:
 // Misc. Operations
 
 //N new
-	BOOL GetScrollInfo(int nBar, LPSCROLLINFO lpScrollInfo) throw()
+	BOOL GetScrollInfo(
+		_In_ int nBar,
+		_Out_ LPSCROLLINFO lpScrollInfo) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetScrollInfo(m_hWnd, nBar, lpScrollInfo);
 	}
-	int SetScrollInfo(int nBar, LPSCROLLINFO lpScrollInfo, BOOL bRedraw = TRUE) throw()
+	int SetScrollInfo(
+		_In_ int nBar,
+		_In_ LPSCROLLINFO lpScrollInfo,
+		_In_ BOOL bRedraw = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetScrollInfo(m_hWnd, nBar, lpScrollInfo, bRedraw);
 	}
-	BOOL IsDialogMessage(LPMSG lpMsg) throw()
+	BOOL IsDialogMessage(_In_ LPMSG lpMsg) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::IsDialogMessage(m_hWnd, lpMsg);
 	}
 
 	void NextDlgCtrl() const throw()
-		{
+	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::SendMessage(m_hWnd, WM_NEXTDLGCTL, 0, 0L);
 	}
 	void PrevDlgCtrl() const throw()
-		{
+	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::SendMessage(m_hWnd, WM_NEXTDLGCTL, 1, 0L);
 	}
-	void GotoDlgCtrl(HWND hWndCtrl) const throw()
-		{
+	void GotoDlgCtrl(_In_ HWND hWndCtrl) const throw()
+	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		::SendMessage(m_hWnd, WM_NEXTDLGCTL, (WPARAM)hWndCtrl, 1L);
 	}
 
-	BOOL ResizeClient(int nWidth, int nHeight, BOOL bRedraw = TRUE) throw()
+	BOOL ResizeClient(
+		_In_ int nWidth,
+		_In_ int nHeight,
+		_In_ BOOL bRedraw = TRUE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -1667,17 +1926,26 @@ public:
 		return SetWindowPos(NULL, 0, 0, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, uFlags);
 	}
 
-	int GetWindowRgn(HRGN hRgn) throw()
+	int GetWindowRgn(_Out_ HRGN hRgn) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowRgn(m_hWnd, hRgn);
 	}
-	int SetWindowRgn(HRGN hRgn, BOOL bRedraw = FALSE) throw()
+	int SetWindowRgn(
+		_In_opt_ HRGN hRgn,
+		_In_ BOOL bRedraw = FALSE) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::SetWindowRgn(m_hWnd, hRgn, bRedraw);
 	}
-	HDWP DeferWindowPos(HDWP hWinPosInfo, HWND hWndInsertAfter, int x, int y, int cx, int cy, UINT uFlags) throw()
+	HDWP DeferWindowPos(
+		_In_ HDWP hWinPosInfo,
+		_In_ HWND hWndInsertAfter,
+		_In_ int x,
+		_In_ int y,
+		_In_ int cx,
+		_In_ int cy,
+		_In_ UINT uFlags) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::DeferWindowPos(hWinPosInfo, m_hWnd, hWndInsertAfter, x, y, cx, cy, uFlags);
@@ -1711,13 +1979,13 @@ public:
 			return FALSE;
 		return lstrcmp(szBuf, _T("#32770")) == 0;
 	}
-	BOOL ShowWindowAsync(int nCmdShow) throw()
+	BOOL ShowWindowAsync(_In_ int nCmdShow) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::ShowWindowAsync(m_hWnd, nCmdShow);
 	}
 
-	CWindow GetDescendantWindow(int nID) const throw()
+	CWindow GetDescendantWindow(_In_ int nID) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -1752,7 +2020,11 @@ public:
 		return CWindow(NULL);    // not found
 	}
 
-	void SendMessageToDescendants(UINT message, WPARAM wParam = 0, LPARAM lParam = 0, BOOL bDeep = TRUE) throw()
+	void SendMessageToDescendants(
+		_In_ UINT message,
+		_In_ WPARAM wParam = 0,
+		_In_ LPARAM lParam = 0,
+		_In_ BOOL bDeep = TRUE) throw()
 	{
 		for(HWND hWndChild = ::GetTopWindow(m_hWnd); hWndChild != NULL;
 			hWndChild = ::GetNextWindow(hWndChild, GW_HWNDNEXT))
@@ -1768,7 +2040,7 @@ public:
 		}
 	}
 
-	BOOL CenterWindow(HWND hWndCenter = NULL) throw()
+	BOOL CenterWindow(_In_ HWND hWndCenter = NULL) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -1812,12 +2084,12 @@ public:
 				hMonitor = ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
 			}
 			ATLENSURE_RETURN_VAL(hMonitor != NULL, FALSE);
-			
+
 			MONITORINFO minfo;
 			minfo.cbSize = sizeof(MONITORINFO);
 			BOOL bResult = ::GetMonitorInfo(hMonitor, &minfo);
 			ATLENSURE_RETURN_VAL(bResult, FALSE);
-			
+
 			rcArea = minfo.rcWork;
 #endif
 			if(hWndCenter == NULL)
@@ -1860,7 +2132,10 @@ public:
 			SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 	}
 
-	BOOL ModifyStyle(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0) throw()
+	BOOL ModifyStyle(
+		_In_ DWORD dwRemove,
+		_In_ DWORD dwAdd,
+		_In_ UINT nFlags = 0) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -1879,7 +2154,10 @@ public:
 		return TRUE;
 	}
 
-	BOOL ModifyStyleEx(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0) throw()
+	BOOL ModifyStyleEx(
+		_In_ DWORD dwRemove,
+		_In_ DWORD dwAdd,
+		_In_ UINT nFlags = 0) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -1899,11 +2177,11 @@ public:
 	}
 
 #ifdef _OLEAUTO_H_
-	BOOL GetWindowText(BSTR* pbstrText) throw()
+	BOOL GetWindowText(_Inout_ _Deref_post_opt_z_ BSTR* pbstrText) throw()
 	{
 		return GetWindowText(*pbstrText);
 	}
-	BOOL GetWindowText(BSTR& bstrText) throw()
+	BOOL GetWindowText(_Deref_out_opt_z_ BSTR& bstrText) throw()
 	{
 		USES_CONVERSION_EX;
 		ATLASSERT(::IsWindow(m_hWnd));
@@ -1928,13 +2206,8 @@ public:
 		}
 
 		bstrText = ::SysAllocString(T2OLE_EX_DEF(lpszText));
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "We are deliberately checking if this has already been allocated")
-		return nLen==0 ? TRUE : ((bstrText != NULL) ? TRUE : FALSE);
-#pragma prefast(pop)
-#pragma warning(pop)
+
+		return nLen==0 ? FALSE : ((bstrText != NULL) ? TRUE : FALSE);
 	}
 #endif // _OLEAUTO_H_
 	CWindow GetTopLevelParent() const throw()
@@ -1974,17 +2247,19 @@ _declspec(selectany) RECT CWindow::rcDefault = { CW_USEDEFAULT, CW_USEDEFAULT, 0
 
 #ifndef _ATL_NO_HOSTING
 
+ATLPREFAST_SUPPRESS(6387)
 template <class TBase /* = CWindow */>
-class CAxWindowT : public TBase
+class CAxWindowT : 
+	public TBase
 {
 public:
 // Constructors
-	CAxWindowT(HWND hWnd = NULL) : TBase(hWnd)
+	CAxWindowT(_In_opt_ HWND hWnd = NULL) : TBase(hWnd)
 	{
 		AtlAxWinInit();
 	}
 
-	CAxWindowT< TBase >& operator=(HWND hWnd)
+	CAxWindowT< TBase >& operator=(_In_ HWND hWnd)
 	{
 		m_hWnd = hWnd;
 		return *this;
@@ -1997,26 +2272,41 @@ public:
 	}
 
 // Operations
-	HWND Create(HWND hWndParent, _U_RECT rect = NULL, LPCTSTR szWindowName = NULL,
-			DWORD dwStyle = 0, DWORD dwExStyle = 0,
-			_U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL)
+	HWND Create(
+		_In_opt_ HWND hWndParent,
+		_In_ _U_RECT rect = NULL,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL)
 	{
 		return CWindow::Create(GetWndClassName(), hWndParent, rect, szWindowName, dwStyle, dwExStyle, MenuOrID, lpCreateParam);
 	}
 
-	HRESULT CreateControl(LPCOLESTR lpszName, IStream* pStream = NULL, IUnknown** ppUnkContainer = NULL)
+	HRESULT CreateControl(
+		_In_z_ LPCOLESTR lpszName,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL)
 	{
 		return CreateControlEx(lpszName, pStream, ppUnkContainer);
 	}
 
-	HRESULT CreateControl(DWORD dwResID, IStream* pStream = NULL, IUnknown** ppUnkContainer = NULL)
+	HRESULT CreateControl(
+		_In_ DWORD dwResID,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL)
 	{
 		return CreateControlEx(dwResID, pStream, ppUnkContainer);
 	}
 
-	HRESULT CreateControlEx(LPCOLESTR lpszName, IStream* pStream = NULL, 
-			IUnknown** ppUnkContainer = NULL, IUnknown** ppUnkControl = NULL,
-			REFIID iidSink = IID_NULL, IUnknown* punkSink = NULL)
+	HRESULT CreateControlEx(
+		_In_z_ LPCOLESTR lpszName,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_In_ REFIID iidSink = IID_NULL,
+		_Inout_opt_ IUnknown* punkSink = NULL)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		// We must have a valid window!
@@ -2051,9 +2341,13 @@ public:
 		return hr;
 	}
 
-	HRESULT CreateControlEx(DWORD dwResID,  IStream* pStream = NULL, 
-			IUnknown** ppUnkContainer = NULL, IUnknown** ppUnkControl = NULL,
-			REFIID iidSink = IID_NULL, IUnknown* punkSink = NULL)
+	HRESULT CreateControlEx(
+		_In_ DWORD dwResID,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_In_ REFIID iidSink = IID_NULL,
+		_Inout_opt_ IUnknown* punkSink = NULL)
 	{
 		TCHAR szModule[MAX_PATH];
 		DWORD dwFLen = GetModuleFileName(_AtlBaseModule.GetModuleInstance(), szModule, MAX_PATH);
@@ -2088,7 +2382,9 @@ public:
 		return CreateControlEx(bstrURL, pStream, ppUnkContainer, ppUnkControl, iidSink, punkSink);
 	}
 
-	HRESULT AttachControl(IUnknown* pControl, IUnknown** ppUnkContainer)
+	HRESULT AttachControl(
+		_Inout_ IUnknown* pControl,
+		_Deref_out_ IUnknown** ppUnkContainer)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		// We must have a valid window!
@@ -2116,7 +2412,9 @@ public:
 		return hr;
 	}
 
-	HRESULT QueryHost(REFIID iid, void** ppUnk)
+	HRESULT QueryHost(
+		_In_ REFIID iid,
+		_Deref_out_ void** ppUnk)
 	{
 		ATLASSERT(ppUnk != NULL);
 		if (ppUnk == NULL)
@@ -2129,12 +2427,16 @@ public:
 			hr = spUnk->QueryInterface(iid, ppUnk);
 		return hr;
 	}
+	
 	template <class Q>
-	HRESULT QueryHost(Q** ppUnk)
+	HRESULT QueryHost(_Deref_out_ Q** ppUnk)
 	{
 		return QueryHost(__uuidof(Q), (void**)ppUnk);
 	}
-	HRESULT QueryControl(REFIID iid, void** ppUnk)
+
+	HRESULT QueryControl(
+		_In_ REFIID iid,
+		_Deref_out_ void** ppUnk)
 	{
 		ATLASSERT(ppUnk != NULL);
 		if (ppUnk == NULL)
@@ -2147,12 +2449,13 @@ public:
 			hr = spUnk->QueryInterface(iid, ppUnk);
 		return hr;
 	}
+	
 	template <class Q>
-	HRESULT QueryControl(Q** ppUnk)
+	HRESULT QueryControl(_Deref_out_ Q** ppUnk)
 	{
 		return QueryControl(__uuidof(Q), (void**)ppUnk);
 	}
-	HRESULT SetExternalDispatch(IDispatch* pDisp)
+	HRESULT SetExternalDispatch(_Inout_ IDispatch* pDisp)
 	{
 		HRESULT hr;
 		CComPtr<IAxWinHostWindow> spHost;
@@ -2161,7 +2464,7 @@ public:
 			hr = spHost->SetExternalDispatch(pDisp);
 		return hr;
 	}
-	HRESULT SetExternalUIHandler(IDocHostUIHandlerDispatch* pUIHandler)
+	HRESULT SetExternalUIHandler(_Inout_ IDocHostUIHandlerDispatch* pUIHandler)
 	{
 		HRESULT hr;
 		CComPtr<IAxWinHostWindow> spHost;
@@ -2171,19 +2474,22 @@ public:
 		return hr;
 	}
 };
-
+ATLPREFAST_UNSUPPRESS()
+	
 typedef CAxWindowT<CWindow> CAxWindow;
 
 template <class TBase /* = CWindow */>
-class CAxWindow2T : public CAxWindowT<TBase>
+class CAxWindow2T : 
+	public CAxWindowT<TBase>
 {
 public:
 // Constructors
-	CAxWindow2T(HWND hWnd = NULL) : CAxWindowT<TBase>(hWnd)
+	CAxWindow2T(_In_opt_ HWND hWnd = NULL) : 
+		CAxWindowT<TBase>(hWnd)
 	{
 	}
 
-	CAxWindow2T< TBase >& operator=(HWND hWnd)
+	CAxWindow2T< TBase >& operator=(_In_ HWND hWnd)
 	{
 		m_hWnd = hWnd;
 		return *this;
@@ -2196,26 +2502,44 @@ public:
 	}
 
 // Operations
-	HWND Create(HWND hWndParent, _U_RECT rect = NULL, LPCTSTR szWindowName = NULL,
-			DWORD dwStyle = 0, DWORD dwExStyle = 0,
-			_U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL)
+	HWND Create(
+		_In_opt_ HWND hWndParent,
+		_In_ _U_RECT rect = NULL,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL)
 	{
 		return CWindow::Create(GetWndClassName(), hWndParent, rect, szWindowName, dwStyle, dwExStyle, MenuOrID, lpCreateParam);
 	}
 
-	HRESULT CreateControlLic(LPCOLESTR lpszName, IStream* pStream = NULL, IUnknown** ppUnkContainer = NULL, BSTR bstrLicKey = NULL)
+	HRESULT CreateControlLic(
+		_In_z_ LPCOLESTR lpszName,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_In_opt_z_ BSTR bstrLicKey = NULL)
 	{
 		return CreateControlLicEx(lpszName, pStream, ppUnkContainer, NULL, IID_NULL, NULL, bstrLicKey);
 	}
 
-	HRESULT CreateControlLic(DWORD dwResID, IStream* pStream = NULL, IUnknown** ppUnkContainer = NULL, BSTR bstrLicKey = NULL)
+	HRESULT CreateControlLic(
+		_In_ DWORD dwResID,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_In_opt_z_ BSTR bstrLicKey = NULL)
 	{
 		return CreateControlLicEx(dwResID, pStream, ppUnkContainer, NULL, IID_NULL, NULL, bstrLicKey);
 	}
 
-	HRESULT CreateControlLicEx(LPCOLESTR lpszName, IStream* pStream = NULL, 
-			IUnknown** ppUnkContainer = NULL, IUnknown** ppUnkControl = NULL,
-			REFIID iidSink = IID_NULL, IUnknown* punkSink = NULL, BSTR bstrLicKey = NULL)
+	HRESULT CreateControlLicEx(
+		_In_z_ LPCOLESTR lpszName,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_In_ REFIID iidSink = IID_NULL,
+		_Inout_opt_ IUnknown* punkSink = NULL,
+		_In_opt_z_ BSTR bstrLicKey = NULL)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		// We must have a valid window!
@@ -2250,9 +2574,14 @@ public:
 		return hr;
 	}
 
-	HRESULT CreateControlLicEx(DWORD dwResID,  IStream* pStream = NULL, 
-			IUnknown** ppUnkContainer = NULL, IUnknown** ppUnkControl = NULL,
-			REFIID iidSink = IID_NULL, IUnknown* punkSink = NULL, BSTR bstrLickey = NULL)
+	HRESULT CreateControlLicEx(
+		_In_ DWORD dwResID,
+		_Inout_opt_ IStream* pStream = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_In_ REFIID iidSink = IID_NULL,
+		_Inout_opt_ IUnknown* punkSink = NULL,
+		_In_opt_z_ BSTR bstrLickey = NULL)
 	{
 		TCHAR szModule[MAX_PATH];
 		DWORD dwFLen = GetModuleFileName(_AtlBaseModule.GetModuleInstance(), szModule, MAX_PATH);
@@ -2262,14 +2591,21 @@ public:
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
 		CComBSTR bstrURL(OLESTR("res://"));
-		bstrURL.Append(szModule);
-		bstrURL.Append(OLESTR("/"));
+		HRESULT hr = bstrURL.Append(szModule);
+		if (FAILED(hr))
+			return hr;
+		hr = bstrURL.Append(OLESTR("/"));
+		if (FAILED(hr))
+			return hr;
+
 		TCHAR szResID[11];
 		if (_stprintf_s(szResID, _countof(szResID), _T("%0d"), dwResID) == -1)
 		{
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 		}
-		bstrURL.Append(szResID);
+		hr = bstrURL.Append(szResID);
+		if (FAILED(hr))
+			return hr;
 
 		ATLASSERT(::IsWindow(m_hWnd));
 		return CreateControlLicEx(bstrURL, pStream, ppUnkContainer, ppUnkControl, iidSink, punkSink, bstrLickey);
@@ -2290,7 +2626,9 @@ public:
 	_AtlCreateWndData cd;
 	CStdCallThunk thunk;
 
-	BOOL Init(WNDPROC proc, void* pThis)
+	BOOL Init(
+		_In_opt_ WNDPROC proc,
+		_In_opt_ void* pThis)
 	{
 		return thunk.Init((DWORD_PTR)proc, pThis);
 	}
@@ -2304,10 +2642,15 @@ public:
 // CMessageMap - abstract class that provides an interface for message maps
 
 class ATL_NO_VTABLE CMessageMap
-{ 
+{
 public:
-	virtual BOOL ProcessWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
-		LRESULT& lResult, DWORD dwMsgMapID) = 0;
+	virtual BOOL ProcessWindowMessage(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ LRESULT& lResult,
+		_In_ DWORD dwMsgMapID) = 0;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2315,7 +2658,8 @@ public:
 
 #define BEGIN_MSG_MAP(theClass) \
 public: \
-	BOOL ProcessWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult, DWORD dwMsgMapID = 0) \
+	BOOL ProcessWindowMessage(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam,\
+		_In_ LPARAM lParam, _Inout_ LRESULT& lResult, _In_ DWORD dwMsgMapID = 0) \
 	{ \
 		BOOL bHandled = TRUE; \
 		(hWnd); \
@@ -2491,7 +2835,7 @@ public: \
 
 #define DECLARE_EMPTY_MSG_MAP() \
 public: \
-	BOOL ProcessWindowMessage(HWND, UINT, WPARAM, LPARAM, LRESULT&, DWORD = 0) \
+	BOOL ProcessWindowMessage(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM, _Inout_ LRESULT&, _In_ DWORD = 0) \
 	{ \
 		return FALSE; \
 	}
@@ -2624,7 +2968,8 @@ public:
 	CSimpleArray<ATL_CHAIN_ENTRY*> m_aChainEntry;
 
 	CDynamicChain()
-	{ }
+	{
+	}
 
 	~CDynamicChain()
 	{
@@ -2635,7 +2980,10 @@ public:
 		}
 	}
 
-	BOOL SetChainEntry(DWORD dwChainID, CMessageMap* pObject, DWORD dwMsgMapID = 0)
+	BOOL SetChainEntry(
+		_In_ DWORD dwChainID,
+		_In_ CMessageMap* pObject,
+		_In_ DWORD dwMsgMapID = 0)
 	{
 	// first search for an existing entry
 
@@ -2686,7 +3034,7 @@ public:
 		return TRUE;
 	}
 
-	BOOL RemoveChainEntry(DWORD dwChainID)
+	BOOL RemoveChainEntry(_In_ DWORD dwChainID)
 	{
 		for(int i = 0; i < m_aChainEntry.GetSize(); i++)
 		{
@@ -2701,7 +3049,13 @@ public:
 		return FALSE;
 	}
 
-	BOOL CallChain(DWORD dwChainID, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
+	BOOL CallChain(
+		_In_ DWORD dwChainID,
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ LRESULT& lResult)
 	{
 		for(int i = 0; i < m_aChainEntry.GetSize(); i++)
 		{
@@ -2759,11 +3113,11 @@ template <DWORD t_dwStyle = 0, DWORD t_dwExStyle = 0>
 class CWinTraits
 {
 public:
-	static DWORD GetWndStyle(DWORD dwStyle)
+	static DWORD GetWndStyle(_In_ DWORD dwStyle)
 	{
 		return dwStyle == 0 ? t_dwStyle : dwStyle;
 	}
-	static DWORD GetWndExStyle(DWORD dwExStyle)
+	static DWORD GetWndExStyle(_In_ DWORD dwExStyle)
 	{
 		return dwExStyle == 0 ? t_dwExStyle : dwExStyle;
 	}
@@ -2779,11 +3133,11 @@ template <DWORD t_dwStyle = 0, DWORD t_dwExStyle = 0, class TWinTraits = CContro
 class CWinTraitsOR
 {
 public:
-	static DWORD GetWndStyle(DWORD dwStyle)
+	static DWORD GetWndStyle(_In_ DWORD dwStyle)
 	{
 		return dwStyle | t_dwStyle | TWinTraits::GetWndStyle(dwStyle);
 	}
-	static DWORD GetWndExStyle(DWORD dwExStyle)
+	static DWORD GetWndExStyle(_In_ DWORD dwExStyle)
 	{
 		return dwExStyle | t_dwExStyle | TWinTraits::GetWndExStyle(dwExStyle);
 	}
@@ -2793,7 +3147,9 @@ public:
 // CWindowImpl - Implements a window
 
 template <class TBase /* = CWindow */>
-class ATL_NO_VTABLE CWindowImplRoot : public TBase, public CMessageMap
+class ATL_NO_VTABLE CWindowImplRoot : 
+	public TBase, 
+	public CMessageMap
 {
 public:
 	CWndProcThunk m_thunk;
@@ -2804,7 +3160,8 @@ public:
 
 // Constructor/destructor
 	CWindowImplRoot() : m_pCurrentMsg(NULL), m_dwState(0)
-	{ }
+	{
+	}
 
 	virtual ~CWindowImplRoot()
 	{
@@ -2827,26 +3184,43 @@ public:
 	BOOL IsMsgHandled() const
 	{
 		const _ATL_MSG* pMsg = GetCurrentMessage();
-		ATLASSERT(pMsg != NULL);
+		ATLASSUME(pMsg != NULL);
 		ATLASSERT(pMsg->cbSize >= sizeof(_ATL_MSG));
 		return pMsg->bHandled;
 	}
-	void SetMsgHandled(BOOL bHandled)
+	void SetMsgHandled(_In_ BOOL bHandled)
 	{
 		_ATL_MSG* pMsg = (_ATL_MSG*)GetCurrentMessage();	// override const
-		ATLASSERT(pMsg != NULL);
+		ATLASSUME(pMsg != NULL);
 		ATLASSERT(pMsg->cbSize >= sizeof(_ATL_MSG));
 		pMsg->bHandled = bHandled;
 	}
 
 // Message forwarding and reflection support
-	LRESULT ForwardNotifications(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT ReflectNotifications(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	static BOOL DefaultReflectionHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult);
+	LRESULT ForwardNotifications(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Out_ BOOL& bHandled);
+	LRESULT ReflectNotifications(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Out_ BOOL& bHandled);
+	static BOOL DefaultReflectionHandler(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Out_ LRESULT& lResult);
 };
 
 template <class TBase>
-LRESULT CWindowImplRoot< TBase >::ForwardNotifications(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CWindowImplRoot< TBase >::ForwardNotifications(
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam,
+	_Out_ BOOL& bHandled)
 {
 	LRESULT lResult = 0;
 	switch(uMsg)
@@ -2879,7 +3253,11 @@ LRESULT CWindowImplRoot< TBase >::ForwardNotifications(UINT uMsg, WPARAM wParam,
 }
 
 template <class TBase>
-LRESULT CWindowImplRoot< TBase >::ReflectNotifications(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CWindowImplRoot< TBase >::ReflectNotifications(
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam,
+	_Out_ BOOL& bHandled)
 {
 	HWND hWndChild = NULL;
 
@@ -2917,9 +3295,9 @@ LRESULT CWindowImplRoot< TBase >::ReflectNotifications(UINT uMsg, WPARAM wParam,
 			hWndChild =  ((LPCOMPAREITEMSTRUCT)lParam)->hwndItem;
 		break;
 	case WM_DELETEITEM:
-		if(wParam)	// not from a menu  
+		if(wParam)	// not from a menu
 			hWndChild =  ((LPDELETEITEMSTRUCT)lParam)->hwndItem;
-		 
+
 		break;
 	case WM_VKEYTOITEM:
 	case WM_CHARTOITEM:
@@ -2951,7 +3329,12 @@ LRESULT CWindowImplRoot< TBase >::ReflectNotifications(UINT uMsg, WPARAM wParam,
 }
 
 template <class TBase>
-BOOL CWindowImplRoot< TBase >::DefaultReflectionHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
+BOOL CWindowImplRoot< TBase >::DefaultReflectionHandler(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam,
+	_Out_ LRESULT& lResult)
 {
 	switch(uMsg)
 	{
@@ -2982,19 +3365,21 @@ BOOL CWindowImplRoot< TBase >::DefaultReflectionHandler(HWND hWnd, UINT uMsg, WP
 }
 
 template <class TBase = CWindow, class TWinTraits = CControlWinTraits>
-class ATL_NO_VTABLE CWindowImplBaseT : public CWindowImplRoot< TBase >
+class ATL_NO_VTABLE CWindowImplBaseT : 
+	public CWindowImplRoot< TBase >
 {
 public:
 	WNDPROC m_pfnSuperWindowProc;
 
 	CWindowImplBaseT() : m_pfnSuperWindowProc(::DefWindowProc)
-	{}
+	{
+	}
 
-	static DWORD GetWndStyle(DWORD dwStyle)
+	static DWORD GetWndStyle(_In_ DWORD dwStyle)
 	{
 		return TWinTraits::GetWndStyle(dwStyle);
 	}
-	static DWORD GetWndExStyle(DWORD dwExStyle)
+	static DWORD GetWndExStyle(_In_ DWORD dwExStyle)
 	{
 		return TWinTraits::GetWndExStyle(dwExStyle);
 	}
@@ -3003,17 +3388,43 @@ public:
 	{
 		return WindowProc;
 	}
-	static LRESULT CALLBACK StartWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	HWND Create(HWND hWndParent, _U_RECT rect, LPCTSTR szWindowName,
-			DWORD dwStyle, DWORD dwExStyle, _U_MENUorID MenuOrID, ATOM atom, LPVOID lpCreateParam = NULL);
+	static LRESULT CALLBACK StartWindowProc(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam);
+
+	static LRESULT CALLBACK WindowProc(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam);
+
+	HWND Create(
+		_In_opt_ HWND hWndParent,
+		_In_ _U_RECT rect,
+		_In_z_ LPCTSTR szWindowName,
+		_In_ DWORD dwStyle,
+		_In_ DWORD dwExStyle,
+		_In_ _U_MENUorID MenuOrID,
+		_In_ ATOM atom,
+		_In_opt_ LPVOID lpCreateParam = NULL);
+
 	BOOL DestroyWindow()
 	{
+#ifndef ATL_NO_ASSERT_ON_DESTROY_NONEXISTENT_WINDOW
 		ATLASSERT(::IsWindow(m_hWnd));
-		return ::DestroyWindow(m_hWnd);
+#endif
+
+		if (!::DestroyWindow(m_hWnd))
+		{
+			return FALSE;
+		}
+
+		return TRUE;
 	}
-	BOOL SubclassWindow(HWND hWnd);
-	HWND UnsubclassWindow(BOOL bForce = FALSE);
+	BOOL SubclassWindow(_In_ HWND hWnd);
+	HWND UnsubclassWindow(_In_ BOOL bForce = FALSE);
 
 	LRESULT DefWindowProc()
 	{
@@ -3024,7 +3435,10 @@ public:
 		return lRes;
 	}
 
-	LRESULT DefWindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT DefWindowProc(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam)
 	{
 #ifdef STRICT
 		return ::CallWindowProc(m_pfnSuperWindowProc, m_hWnd, uMsg, wParam, lParam);
@@ -3033,7 +3447,7 @@ public:
 #endif
 	}
 
-	virtual void OnFinalMessage(HWND /*hWnd*/)
+	virtual void OnFinalMessage(_In_ HWND /*hWnd*/)
 	{
 		// override to do something, if needed
 	}
@@ -3042,7 +3456,11 @@ public:
 typedef CWindowImplBaseT<CWindow>	CWindowImplBase;
 
 template <class TBase, class TWinTraits>
-LRESULT CALLBACK CWindowImplBaseT< TBase, TWinTraits >::StartWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CWindowImplBaseT< TBase, TWinTraits >::StartWindowProc(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam)
 {
 	CWindowImplBaseT< TBase, TWinTraits >* pThis = (CWindowImplBaseT< TBase, TWinTraits >*)_AtlWinModule.ExtractCreateWndData();
 	ATLASSERT(pThis != NULL);
@@ -3069,7 +3487,11 @@ LRESULT CALLBACK CWindowImplBaseT< TBase, TWinTraits >::StartWindowProc(HWND hWn
 }
 
 template <class TBase, class TWinTraits>
-LRESULT CALLBACK CWindowImplBaseT< TBase, TWinTraits >::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CWindowImplBaseT< TBase, TWinTraits >::WindowProc(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam)
 {
 	CWindowImplBaseT< TBase, TWinTraits >* pThis = (CWindowImplBaseT< TBase, TWinTraits >*)hWnd;
 	// set a ptr to this message and save the old value
@@ -3077,7 +3499,7 @@ LRESULT CALLBACK CWindowImplBaseT< TBase, TWinTraits >::WindowProc(HWND hWnd, UI
 	const _ATL_MSG* pOldMsg = pThis->m_pCurrentMsg;
 	pThis->m_pCurrentMsg = &msg;
 	// pass to the message map to process
-	LRESULT lRes;
+	LRESULT lRes = 0;
 	BOOL bRet = pThis->ProcessWindowMessage(pThis->m_hWnd, uMsg, wParam, lParam, lRes, 0);
 	// restore saved value for the current message
 	ATLASSERT(pThis->m_pCurrentMsg == &msg);
@@ -3114,14 +3536,20 @@ LRESULT CALLBACK CWindowImplBaseT< TBase, TWinTraits >::WindowProc(HWND hWnd, UI
 }
 
 template <class TBase, class TWinTraits>
-HWND CWindowImplBaseT< TBase, TWinTraits >::Create(HWND hWndParent, _U_RECT rect, LPCTSTR szWindowName,
-												   DWORD dwStyle, DWORD dwExStyle, _U_MENUorID MenuOrID, ATOM atom, LPVOID lpCreateParam)
+HWND CWindowImplBaseT< TBase, TWinTraits >::Create(
+	_In_opt_ HWND hWndParent,
+	_In_ _U_RECT rect,
+	_In_z_ LPCTSTR szWindowName,
+	_In_ DWORD dwStyle,
+	_In_ DWORD dwExStyle,
+	_In_ _U_MENUorID MenuOrID,
+	_In_ ATOM atom,
+	_In_opt_ LPVOID lpCreateParam)
 {
-	BOOL result;
 	ATLASSUME(m_hWnd == NULL);
 
 	// Allocate the thunk structure here, where we can fail gracefully.
-	result = m_thunk.Init(NULL,NULL);
+	BOOL result = m_thunk.Init(NULL,NULL);
 	if (result == FALSE) {
 		SetLastError(ERROR_OUTOFMEMORY);
 		return NULL;
@@ -3148,16 +3576,15 @@ HWND CWindowImplBaseT< TBase, TWinTraits >::Create(HWND hWndParent, _U_RECT rect
 }
 
 template <class TBase, class TWinTraits>
-BOOL CWindowImplBaseT< TBase, TWinTraits >::SubclassWindow(HWND hWnd)
+BOOL CWindowImplBaseT< TBase, TWinTraits >::SubclassWindow(_In_ HWND hWnd)
 {
-	BOOL result;
 	ATLASSUME(m_hWnd == NULL);
 	ATLASSERT(::IsWindow(hWnd));
 
 	// Allocate the thunk structure here, where we can fail gracefully.
 
-	result = m_thunk.Init(GetWindowProc(), this);
-	if (result == FALSE) 
+	BOOL result = m_thunk.Init(GetWindowProc(), this);
+	if (result == FALSE)
 	{
 		return FALSE;
 	}
@@ -3173,7 +3600,7 @@ BOOL CWindowImplBaseT< TBase, TWinTraits >::SubclassWindow(HWND hWnd)
 // Use only if you want to subclass before window is destroyed,
 // WindowProc will automatically subclass when  window goes away
 template <class TBase, class TWinTraits>
-HWND CWindowImplBaseT< TBase, TWinTraits >::UnsubclassWindow(BOOL bForce /*= FALSE*/)
+HWND CWindowImplBaseT< TBase, TWinTraits >::UnsubclassWindow(_In_ BOOL bForce /*= FALSE*/)
 {
 	ATLASSUME(m_hWnd != NULL);
 
@@ -3194,7 +3621,8 @@ HWND CWindowImplBaseT< TBase, TWinTraits >::UnsubclassWindow(BOOL bForce /*= FAL
 }
 
 template <class T, class TBase /* = CWindow */, class TWinTraits /* = CControlWinTraits */>
-class ATL_NO_VTABLE CWindowImpl : public CWindowImplBaseT< TBase, TWinTraits >
+class ATL_NO_VTABLE CWindowImpl :
+	public CWindowImplBaseT< TBase, TWinTraits >
 {
 public:
 	DECLARE_WND_CLASS(NULL)
@@ -3204,9 +3632,14 @@ public:
 		return NULL;
 	}
 
-	HWND Create(HWND hWndParent, _U_RECT rect = NULL, LPCTSTR szWindowName = NULL,
-			DWORD dwStyle = 0, DWORD dwExStyle = 0,
-			_U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL)
+	HWND Create(
+		_In_opt_ HWND hWndParent,
+		_In_ _U_RECT rect = NULL,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL)
 	{
 		if (T::GetWndClassInfo().m_lpszOrigName == NULL)
 			T::GetWndClassInfo().m_lpszOrigName = GetWndClassName();
@@ -3225,12 +3658,18 @@ public:
 };
 
 template <class T, class TBase /* = CWindow */, class TWinTraits /* = CControlWinTraits */>
-class ATL_NO_VTABLE CWindowWithReflectorImpl : public CWindowImpl< T, TBase, TWinTraits >
+class ATL_NO_VTABLE CWindowWithReflectorImpl :
+	public CWindowImpl< T, TBase, TWinTraits >
 {
 public:
-	HWND Create(HWND hWndParent, _U_RECT rect = NULL, LPCTSTR szWindowName = NULL,
-			DWORD dwStyle = 0, DWORD dwExStyle = 0,
-			_U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL)
+	HWND Create(
+		_In_opt_ HWND hWndParent,
+		_In_ _U_RECT rect = NULL,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL)
 	{
 		m_wndReflector.Create(hWndParent, rect, NULL, WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, Reflector::REFLECTOR_MAP_ID);
 		RECT rcPos = { 0, 0, rect.m_lpRect->right, rect.m_lpRect->bottom };
@@ -3244,13 +3683,21 @@ public:
 		MESSAGE_HANDLER(WM_WINDOWPOSCHANGING, OnWindowPosChanging)
 	END_MSG_MAP()
 
-	LRESULT OnNcDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnNcDestroy(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Out_ BOOL& bHandled)
 	{
 		m_wndReflector.DestroyWindow();
 		bHandled = FALSE;
 		return 1;
 	}
-	LRESULT OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+	LRESULT OnWindowPosChanging(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& /*bHandled*/)
 	{
 		WINDOWPOS* pWP = (WINDOWPOS*)lParam;
 		m_wndReflector.SetWindowPos(m_wndReflector.GetParent(), pWP->x, pWP->y, pWP->cx, pWP->cy, pWP->flags);
@@ -3261,7 +3708,8 @@ public:
 	}
 
 	// reflector window stuff
-	class Reflector : public CWindowImpl<Reflector>
+	class Reflector :
+		public CWindowImpl<Reflector>
 	{
 	public:
 		enum { REFLECTOR_MAP_ID = 69 };
@@ -3278,7 +3726,8 @@ public:
 #define _ATL_RT_DLGINIT  MAKEINTRESOURCE(240)
 
 template <class TBase /* = CWindow */>
-class ATL_NO_VTABLE CDialogImplBaseT : public CWindowImplRoot< TBase >
+class ATL_NO_VTABLE CDialogImplBaseT :
+	public CWindowImplRoot< TBase >
 {
 public:
 	virtual ~CDialogImplBaseT()
@@ -3288,15 +3737,23 @@ public:
 	{
 		return DialogProc;
 	}
-	static INT_PTR CALLBACK StartDialogProc(HWND hWnd, UINT uMsg,
-		WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK DialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	BOOL MapDialogRect(LPRECT lpRect)
+	static INT_PTR CALLBACK StartDialogProc(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam);
+	static INT_PTR CALLBACK DialogProc(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam);
+
+	BOOL MapDialogRect(_Inout_ LPRECT lpRect)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::MapDialogRect(m_hWnd, lpRect);
 	}
-	virtual void OnFinalMessage(HWND /*hWnd*/)
+	virtual void OnFinalMessage(_In_ HWND /*hWnd*/)
 	{
 		// override to do something, if needed
 	}
@@ -3306,11 +3763,11 @@ public:
 		return 0;
 	}
 	// initialize combobox and comboboxex from RT_DLGINIT resource if any
-	BOOL ExecuteDlgInit(int iDlgID)
+	BOOL ExecuteDlgInit(_In_ int iDlgID)
 	{
 		BOOL bSuccess = TRUE;
 		HINSTANCE hInst = _AtlBaseModule.GetResourceInstance();
-		HRSRC hrsrc = ::FindResource(hInst, MAKEINTRESOURCE(iDlgID), _ATL_RT_DLGINIT);
+		HRSRC hrsrc = ::FindResourceW(hInst, MAKEINTRESOURCEW(iDlgID), (LPWSTR)_ATL_RT_DLGINIT);
 		if (hrsrc)
 		{
 			HGLOBAL hResData = ::LoadResource(hInst, hrsrc);
@@ -3356,7 +3813,11 @@ public:
 };
 
 template <class TBase>
-INT_PTR CALLBACK CDialogImplBaseT< TBase >::StartDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CDialogImplBaseT< TBase >::StartDialogProc(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam)
 {
 	CDialogImplBaseT< TBase >* pThis = (CDialogImplBaseT< TBase >*)_AtlWinModule.ExtractCreateWndData();
 	ATLASSERT(pThis != NULL);
@@ -3376,13 +3837,17 @@ INT_PTR CALLBACK CDialogImplBaseT< TBase >::StartDialogProc(HWND hWnd, UINT uMsg
 	if(pOldProc != StartDialogProc)
 		ATLTRACE(atlTraceWindowing, 0, _T("Subclassing through a hook discarded.\n"));
 #else
-	pOldProc;	// avoid unused warning
+	DBG_UNREFERENCED_LOCAL_VARIABLE(pOldProc);	// avoid unused warning
 #endif
 	return pProc(hWnd, uMsg, wParam, lParam);
 }
 
 template <class TBase>
-INT_PTR CALLBACK CDialogImplBaseT< TBase >::DialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CDialogImplBaseT< TBase >::DialogProc(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam)
 {
 	CDialogImplBaseT< TBase >* pThis = (CDialogImplBaseT< TBase >*)hWnd;
 	// set a ptr to this message and save the old value
@@ -3390,7 +3855,7 @@ INT_PTR CALLBACK CDialogImplBaseT< TBase >::DialogProc(HWND hWnd, UINT uMsg, WPA
 	const _ATL_MSG* pOldMsg = pThis->m_pCurrentMsg;
 	pThis->m_pCurrentMsg = &msg;
 	// pass to the message map to process
-	LRESULT lRes;
+	LRESULT lRes = 0;
 	BOOL bRet = pThis->ProcessWindowMessage(pThis->m_hWnd, uMsg, wParam, lParam, lRes, 0);
 	// restore saved value for the current message
 	ATLASSERT(pThis->m_pCurrentMsg == &msg);
@@ -3446,15 +3911,20 @@ INT_PTR CALLBACK CDialogImplBaseT< TBase >::DialogProc(HWND hWnd, UINT uMsg, WPA
 typedef CDialogImplBaseT<CWindow>	CDialogImplBase;
 
 template <class T, class TBase /* = CWindow */>
-class ATL_NO_VTABLE CDialogImpl : public CDialogImplBaseT< TBase >
+class ATL_NO_VTABLE CDialogImpl :
+	public CDialogImplBaseT< TBase >
 {
 public:
 #ifdef _DEBUG
 	bool m_bModal;
-	CDialogImpl() : m_bModal(false) { }
+	CDialogImpl() : m_bModal(false)
+	{
+	}
 #endif //_DEBUG
 	// modal dialogs
-	INT_PTR DoModal(HWND hWndParent = ::GetActiveWindow(), LPARAM dwInitParam = NULL)
+	INT_PTR DoModal(
+		_In_ HWND hWndParent = ::GetActiveWindow(),
+		_In_ LPARAM dwInitParam = NULL)
 	{
 		BOOL result;
 
@@ -3464,7 +3934,7 @@ public:
 		// gracefully.
 
 		result = m_thunk.Init(NULL,NULL);
-		if (result == FALSE) 
+		if (result == FALSE)
 		{
 			SetLastError(ERROR_OUTOFMEMORY);
 			return -1;
@@ -3477,7 +3947,7 @@ public:
 		return ::DialogBoxParam(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(static_cast<T*>(this)->IDD),
 					hWndParent, T::StartDialogProc, dwInitParam);
 	}
-	BOOL EndDialog(int nRetCode)
+	BOOL EndDialog(_In_ int nRetCode)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 #ifdef _DEBUG
@@ -3486,7 +3956,9 @@ public:
 		return ::EndDialog(m_hWnd, nRetCode);
 	}
 	// modeless dialogs
-	HWND Create(HWND hWndParent, LPARAM dwInitParam = NULL)
+	HWND Create(
+		_In_ HWND hWndParent,
+		_In_ LPARAM dwInitParam = NULL)
 	{
 		BOOL result;
 
@@ -3496,7 +3968,7 @@ public:
 		// gracefully.
 
 		result = m_thunk.Init(NULL,NULL);
-		if (result == FALSE) 
+		if (result == FALSE)
 		{
 			SetLastError(ERROR_OUTOFMEMORY);
 			return NULL;
@@ -3512,7 +3984,10 @@ public:
 		return hWnd;
 	}
 	// for CComControl
-	HWND Create(HWND hWndParent, RECT&, LPARAM dwInitParam = NULL)
+	HWND Create(
+		_In_ HWND hWndParent,
+		_In_ RECT&,
+		_In_ LPARAM dwInitParam = NULL)
 	{
 		return Create(hWndParent, dwInitParam);
 	}
@@ -3522,7 +3997,13 @@ public:
 #ifdef _DEBUG
 		ATLASSERT(!m_bModal);	// must not be a modal dialog
 #endif //_DEBUG
-		return ::DestroyWindow(m_hWnd);
+
+		if (!::DestroyWindow(m_hWnd))
+		{
+			return FALSE;
+		}
+
+		return TRUE;
 	}
 };
 
@@ -3533,13 +4014,17 @@ public:
 
 
 template <class T, class TBase /* = CWindow */>
-class ATL_NO_VTABLE CAxDialogImpl : public CDialogImplBaseT< TBase >
+class ATL_NO_VTABLE CAxDialogImpl :
+	public CDialogImplBaseT< TBase >
 {
-public:
-#ifdef _DEBUG
+protected:
 	bool m_bModal;
-	CAxDialogImpl() : m_bModal(false) { }
-#endif //_DEBUG
+	HRESULT m_hrError;
+public:
+	CAxDialogImpl() : m_bModal(false), m_hrError(S_OK)
+	{
+	}
+
 	int GetIDD()
 	{
 		return( static_cast<T*>(this)->IDD );
@@ -3548,55 +4033,85 @@ public:
 	{
 		return DialogProc;
 	}
-	static INT_PTR CALLBACK DialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK DialogProc(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam);
 	// modal dialogs
-	INT_PTR DoModal(HWND hWndParent = ::GetActiveWindow(), LPARAM dwInitParam = NULL)
+	INT_PTR DoModal(
+		_In_ HWND hWndParent = ::GetActiveWindow(),
+		_In_ LPARAM dwInitParam = NULL)
 	{
 		ATLASSUME(m_hWnd == NULL);
-		_AtlWinModule.AddCreateWndData(&m_thunk.cd, (CDialogImplBaseT< TBase >*)this);
-#ifdef _DEBUG
+		_AtlWinModule.AddCreateWndData(&m_thunk.cd, static_cast< CDialogImplBaseT< TBase >* >(this));
+
 		m_bModal = true;
-#endif //_DEBUG
-		return AtlAxDialogBox(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(static_cast<T*>(this)->IDD),
-					hWndParent, T::StartDialogProc, dwInitParam);
+		m_hrError = S_OK;
+
+		INT_PTR iRes = AtlAxDialogBox(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(static_cast<T*>(this)->IDD),
+							hWndParent, T::StartDialogProc, dwInitParam);
+
+		if (FAILED(m_hrError) && -1 == iRes)
+		{
+			::SetLastError(m_hrError);
+		}
+
+		return iRes;
 	}
-	BOOL EndDialog(int nRetCode)
+	BOOL EndDialog(_In_ int nRetCode)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
-#ifdef _DEBUG
 		ATLASSUME(m_bModal);	// must be a modal dialog
-#endif //_DEBUG
+
 		return ::EndDialog(m_hWnd, nRetCode);
 	}
 	// modeless dialogs
-	HWND Create(HWND hWndParent, LPARAM dwInitParam = NULL)
+	HWND Create(
+		_In_ HWND hWndParent,
+		_In_ LPARAM dwInitParam = NULL)
 	{
 		ATLASSUME(m_hWnd == NULL);
-		_AtlWinModule.AddCreateWndData(&m_thunk.cd, (CDialogImplBaseT< TBase >*)this);
-#ifdef _DEBUG
+		_AtlWinModule.AddCreateWndData(&m_thunk.cd, static_cast< CDialogImplBaseT< TBase >* >(this));
+
 		m_bModal = false;
-#endif //_DEBUG
+		m_hrError = S_OK;
+
 		HWND hWnd = AtlAxCreateDialog(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(static_cast<T*>(this)->IDD),
 					hWndParent, T::StartDialogProc, dwInitParam);
+
+		if (FAILED(m_hrError) && hWnd != NULL)
+		{
+			DestroyWindow();
+			::SetLastError(m_hrError);
+			hWnd = NULL;
+		}
+
 		ATLASSUME(m_hWnd == hWnd);
 		return hWnd;
 	}
 	// for CComControl
-	HWND Create(HWND hWndParent, RECT&, LPARAM dwInitParam = NULL)
+	HWND Create(
+		_In_ HWND hWndParent,
+		_In_ RECT&,
+		_In_ LPARAM dwInitParam = NULL)
 	{
 		return Create(hWndParent, dwInitParam);
 	}
 	BOOL DestroyWindow()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
-#ifdef _DEBUG
 		ATLASSERT(!m_bModal);	// must not be a modal dialog
-#endif //_DEBUG
-		return ::DestroyWindow(m_hWnd);
+
+		if (!::DestroyWindow(m_hWnd))
+		{
+			return FALSE;
+		}
+		return TRUE;
 	}
 
 // Event handling support and Message map
-	HRESULT AdviseSinkMap(bool bAdvise)
+	HRESULT AdviseSinkMap(_In_ bool bAdvise)
 	{
 		if(!bAdvise && m_hWnd == NULL)
 		{
@@ -3619,10 +4134,10 @@ public:
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 	END_MSG_MAP()
 
-	virtual HRESULT CreateActiveXControls(UINT nID)
+	virtual HRESULT CreateActiveXControls(_In_ UINT nID)
 	{
 		// Load dialog template and InitData
-		HRSRC hDlgInit = ::FindResource(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(nID), (LPTSTR)_ATL_RT_DLGINIT);
+		HRSRC hDlgInit = ::FindResourceW(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCEW(nID), (LPWSTR)_ATL_RT_DLGINIT);
 		BYTE* pInitData = NULL;
 		HGLOBAL hData = NULL;
 		HRESULT hr = S_OK;
@@ -3633,7 +4148,7 @@ public:
 				pInitData = (BYTE*) ::LockResource(hData);
 		}
 
-		HRSRC hDlg = ::FindResource(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(nID), (LPTSTR)RT_DIALOG);
+		HRSRC hDlg = ::FindResourceW(_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCEW(nID), (LPWSTR)RT_DIALOG);
 		if (hDlg != NULL)
 		{
 			HGLOBAL hResource = ::LoadResource(_AtlBaseModule.GetResourceInstance(), hDlg);
@@ -3665,8 +4180,14 @@ public:
 								HGLOBAL h = GlobalAlloc(GHND, dwLen);
 								if (h != NULL)
 								{
-									BYTE* pBytes = (BYTE*) GlobalLock(h);
-									BYTE* pSource = pData; 
+									BYTE* pBytes = SAL_Assume_bytecap_for_opt_((BYTE*) GlobalLock(h), dwLen);
+									if (pBytes == NULL)
+									{
+										hr = AtlHresultFromLastError();
+										break;
+									}									
+									BYTE* pSource = SAL_Assume_bytecap_for_opt_(pData, dwLen);									
+									ATLASSUME(pSource != NULL);
 									Checked::memcpy_s(pBytes, dwLen, pSource, dwLen);
 									GlobalUnlock(h);
 									CreateStreamOnHGlobal(h, TRUE, &spStream);
@@ -3684,44 +4205,44 @@ public:
 							{
 								CAxWindow2 wnd;
 								// Get control caption.
-								LPWSTR pszClassName = 
-									bDialogEx ? 
+								LPWSTR pszClassName =
+									bDialogEx ?
 										(LPWSTR)(((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem) + 1) :
 										(LPWSTR)(pItem + 1);
 								// Get control rect.
 								RECT rect;
-								rect.left = 
-									bDialogEx ? 
-										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->x : 
+								rect.left =
+									bDialogEx ?
+										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->x :
 										pItem->x;
-								rect.top = 
-									bDialogEx ? 
-										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->y : 
+								rect.top =
+									bDialogEx ?
+										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->y :
 										pItem->y;
-								rect.right = rect.left + 
-									(bDialogEx ? 
-										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->cx : 
+								rect.right = rect.left +
+									(bDialogEx ?
+										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->cx :
 										pItem->cx);
-								rect.bottom = rect.top + 
-									(bDialogEx ? 
-										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->cy : 
+								rect.bottom = rect.top +
+									(bDialogEx ?
+										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->cy :
 										pItem->cy);
 
 								// Convert from dialog units to screen units
 								MapDialogRect(&rect);
 
 								// Create AxWindow with a NULL caption.
-								wnd.Create(m_hWnd, 
-									&rect, 
-									NULL, 
-									(bDialogEx ? 
-										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->style : 
-										pItem->style) | WS_TABSTOP, 
-									bDialogEx ? 
-										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->exStyle : 
+								wnd.Create(m_hWnd,
+									&rect,
+									NULL,
+									(bDialogEx ?
+										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->style :
+										pItem->style) | WS_TABSTOP,
+									bDialogEx ?
+										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->exStyle :
 										0,
-									bDialogEx ? 
-										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->id : 
+									bDialogEx ?
+										((_DialogSplitHelper::DLGITEMTEMPLATEEX*)pItem)->id :
 										pItem->id,
 									NULL);
 
@@ -3763,7 +4284,11 @@ public:
 		return hr;
 	}
 
-	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnInitDialog(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Out_ BOOL& bHandled)
 	{
 		// initialize controls in dialog with DLGINIT resource section
 		ExecuteDlgInit(static_cast<T*>(this)->IDD);
@@ -3772,7 +4297,11 @@ public:
 		return 1;
 	}
 
-	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnDestroy(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Out_ BOOL& bHandled)
 	{
 		AdviseSinkMap(false);
 		bHandled = FALSE;
@@ -3780,7 +4309,7 @@ public:
 	}
 
 // Accelerators handling - needs to be called from a message loop
-	BOOL IsDialogMessage(LPMSG pMsg)
+	BOOL IsDialogMessage(_In_ LPMSG pMsg)
 	{
 		if((pMsg->message < WM_KEYFIRST || pMsg->message > WM_KEYLAST) &&
 		   (pMsg->message < WM_MOUSEFIRST || pMsg->message > WM_MOUSELAST))
@@ -3806,16 +4335,25 @@ public:
 };
 
 template <class T, class TBase>
-INT_PTR CALLBACK CAxDialogImpl< T, TBase >::DialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CAxDialogImpl< T, TBase >::DialogProc(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam)
 {
-	CAxDialogImpl< T, TBase >* pThis = (CAxDialogImpl< T, TBase >*)hWnd;
+	CAxDialogImpl< T, TBase >* pThis = reinterpret_cast< CAxDialogImpl< T, TBase >* >(hWnd);
 	if (uMsg == WM_INITDIALOG)
 	{
 		HRESULT hr;
 		if (FAILED(hr = pThis->CreateActiveXControls(pThis->GetIDD())))
 		{
-			pThis->DestroyWindow();
-			SetLastError(hr & 0x0000FFFF);
+			pThis->m_hrError = hr;
+
+			if (pThis->m_bModal)
+			{
+				pThis->EndDialog(-1);
+			}
+
 			return FALSE;
 		}
 	}
@@ -3827,10 +4365,11 @@ INT_PTR CALLBACK CAxDialogImpl< T, TBase >::DialogProc(HWND hWnd, UINT uMsg, WPA
 // CSimpleDialog - Prebuilt modal dialog that uses standard buttons
 
 template <WORD t_wDlgTemplateID, BOOL t_bCenter /* = TRUE */>
-class CSimpleDialog : public CDialogImplBase
+class CSimpleDialog :
+	public CDialogImplBase
 {
 public:
-	INT_PTR DoModal(HWND hWndParent = ::GetActiveWindow())
+	INT_PTR DoModal(_In_ HWND hWndParent = ::GetActiveWindow())
 	{
 		ATLASSUME(m_hWnd == NULL);
 		_AtlWinModule.AddCreateWndData(&m_thunk.cd, (CDialogImplBase*)this);
@@ -3846,7 +4385,11 @@ public:
 		COMMAND_RANGE_HANDLER(IDOK, IDNO, OnCloseCmd)
 	END_MSG_MAP()
 
-	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+	LRESULT OnInitDialog(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_In_ BOOL& /*bHandled*/)
 	{
 		// initialize controls in dialog with DLGINIT resource section
 		ExecuteDlgInit(t_wDlgTemplateID);
@@ -3855,7 +4398,11 @@ public:
 		return TRUE;
 	}
 
-	LRESULT OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	LRESULT OnCloseCmd(
+		_In_ WORD /*wNotifyCode*/,
+		_In_ WORD wID,
+		_In_ HWND /*hWndCtl*/,
+		_In_ BOOL& /*bHandled*/)
 	{
 		::EndDialog(m_hWnd, wID);
 		return 0;
@@ -3866,7 +4413,8 @@ public:
 // CContainedWindow - Implements a contained window
 
 template <class TBase /* = CWindow */, class TWinTraits /* = CControlWinTraits */>
-class CContainedWindowT : public TBase
+class CContainedWindowT :
+	public TBase
 {
 public:
 	CWndProcThunk m_thunk;
@@ -3880,23 +4428,31 @@ public:
 	// the Window Class Name, Object* and Message Map ID
 	// Later to the Create call
 	CContainedWindowT() : m_pCurrentMsg(NULL)
-	{ }
+	{
+	}
 
-	CContainedWindowT(LPTSTR lpszClassName, CMessageMap* pObject, DWORD dwMsgMapID = 0)
+	CContainedWindowT(
+			_In_z_ LPTSTR lpszClassName,
+			_In_ CMessageMap* pObject,
+			_In_ DWORD dwMsgMapID = 0)
 		: m_lpszClassName(lpszClassName),
 		m_pfnSuperWindowProc(::DefWindowProc),
 		m_pObject(pObject), m_dwMsgMapID(dwMsgMapID),
 		m_pCurrentMsg(NULL)
-	{ }
+	{
+	}
 
-	CContainedWindowT(CMessageMap* pObject, DWORD dwMsgMapID = 0)
+	CContainedWindowT(
+			_In_ CMessageMap* pObject,
+			_In_ DWORD dwMsgMapID = 0)
 		: m_lpszClassName(TBase::GetWndClassName()),
 		m_pfnSuperWindowProc(::DefWindowProc),
 		m_pObject(pObject), m_dwMsgMapID(dwMsgMapID),
 		m_pCurrentMsg(NULL)
-	{ }
+	{
+	}
 
-	void SwitchMessageMap(DWORD dwMsgMapID)
+	void SwitchMessageMap(_In_ DWORD dwMsgMapID)
 	{
 		m_dwMsgMapID = dwMsgMapID;
 	}
@@ -3915,7 +4471,10 @@ public:
 		return lRes;
 	}
 
-	LRESULT DefWindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT DefWindowProc(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam)
 	{
 #ifdef STRICT
 		return ::CallWindowProc(m_pfnSuperWindowProc, m_hWnd, uMsg, wParam, lParam);
@@ -3923,8 +4482,11 @@ public:
 		return ::CallWindowProc((FARPROC)m_pfnSuperWindowProc, m_hWnd, uMsg, wParam, lParam);
 #endif
 	}
-	static LRESULT CALLBACK StartWindowProc(HWND hWnd, UINT uMsg,
-		WPARAM wParam, LPARAM lParam)
+	static LRESULT CALLBACK StartWindowProc(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam)
 	{
 		CContainedWindowT< TBase >* pThis = (CContainedWindowT< TBase >*)_AtlWinModule.ExtractCreateWndData();
 		ATLASSERT(pThis != NULL);
@@ -3945,12 +4507,16 @@ public:
 		if(pOldProc != StartWindowProc)
 			ATLTRACE(atlTraceWindowing, 0, _T("Subclassing through a hook discarded.\n"));
 #else
-		pOldProc;	// avoid unused warning
+		DBG_UNREFERENCED_LOCAL_VARIABLE(pOldProc);	// avoid unused warning
 #endif
 		return pProc(hWnd, uMsg, wParam, lParam);
 	}
 
-	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	static LRESULT CALLBACK WindowProc(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam)
 	{
 		CContainedWindowT< TBase >* pThis = (CContainedWindowT< TBase >*)hWnd;
 		ATLASSERT(pThis);
@@ -3969,7 +4535,7 @@ public:
 		const _ATL_MSG* pOldMsg = pThis->m_pCurrentMsg;
 		pThis->m_pCurrentMsg = &msg;
 		// pass to the message map to process
-		LRESULT lRes;
+		LRESULT lRes = 0;
 		BOOL bRet = pThis->m_pObject->ProcessWindowMessage(pThis->m_hWnd, uMsg, wParam, lParam, lRes, pThis->m_dwMsgMapID);
 		// restore saved value for the current message
 		ATLASSERT(pThis->m_pCurrentMsg == &msg);
@@ -3999,6 +4565,10 @@ public:
 		ATOM atom = 0;
 		size_t cchBuff = _tcslen(m_lpszClassName) + 14;
 		LPTSTR szBuff = (LPTSTR)_ATL_SAFE_ALLOCA( (cchBuff * sizeof(TCHAR)), _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
+		if (NULL == szBuff)
+		{
+			return atom;
+		}
 
 		WNDCLASSEX wc;
 		wc.cbSize = sizeof(WNDCLASSEX);
@@ -4017,9 +4587,11 @@ public:
 
 		WNDCLASSEX wc1;
 		wc1.cbSize = sizeof(WNDCLASSEX);
+
+		SetLastError(0);
 		atom = (ATOM)::GetClassInfoEx(_AtlBaseModule.GetModuleInstance(), szBuff, &wc1);
 
-		if(atom == 0)   // register class
+		if(atom == 0 && GetLastError() == ERROR_CLASS_DOES_NOT_EXIST)   // register class
 		{
 			wc.lpszClassName = szBuff;
 			wc.lpfnWndProc = StartWindowProc;
@@ -4031,9 +4603,14 @@ public:
 		return atom;
 	}
 
-	HWND Create(HWND hWndParent, _U_RECT rect, LPCTSTR szWindowName = NULL,
-		DWORD dwStyle = 0, DWORD dwExStyle = 0,
-		_U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL)
+	HWND Create(
+		_In_ HWND hWndParent,
+		_In_ _U_RECT rect,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL)
 	{
 		BOOL result;
 		ATLASSUME(m_hWnd == NULL);
@@ -4045,7 +4622,7 @@ public:
 		// Allocate the thunk structure here, where we can fail gracefully.
 
 		result = m_thunk.Init(NULL,NULL);
-		if (result == FALSE) 
+		if (result == FALSE)
 		{
 			SetLastError(ERROR_OUTOFMEMORY);
 			return NULL;
@@ -4072,9 +4649,16 @@ public:
 		return hWnd;
 	}
 
-	HWND Create(CMessageMap* pObject, DWORD dwMsgMapID, HWND hWndParent, _U_RECT rect,
-		LPCTSTR szWindowName = NULL, DWORD dwStyle = 0, DWORD dwExStyle = 0,
-		_U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL)
+	HWND Create(
+		_In_ CMessageMap* pObject,
+		_In_ DWORD dwMsgMapID,
+		_In_ HWND hWndParent,
+		_In_ _U_RECT rect,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL)
 	{
 		m_lpszClassName = TBase::GetWndClassName();
 		m_pfnSuperWindowProc = ::DefWindowProc;
@@ -4083,8 +4667,17 @@ public:
 		return Create(hWndParent, rect, szWindowName, dwStyle, dwExStyle, MenuOrID, lpCreateParam);
 	}
 
-	HWND Create(LPCTSTR lpszClassName, CMessageMap* pObject, DWORD dwMsgMapID, HWND hWndParent, _U_RECT rect, LPCTSTR szWindowName = NULL,
-		DWORD dwStyle = 0, DWORD dwExStyle = 0, _U_MENUorID MenuOrID = 0U, LPVOID lpCreateParam = NULL)
+	HWND Create(
+		_In_z_ LPCTSTR lpszClassName,
+		_In_ CMessageMap* pObject,
+		_In_ DWORD dwMsgMapID,
+		_In_ HWND hWndParent,
+		_In_ _U_RECT rect,
+		_In_opt_z_ LPCTSTR szWindowName = NULL,
+		_In_ DWORD dwStyle = 0,
+		_In_ DWORD dwExStyle = 0,
+		_In_ _U_MENUorID MenuOrID = 0U,
+		_In_opt_ LPVOID lpCreateParam = NULL)
 	{
 		m_lpszClassName = lpszClassName;
 		m_pfnSuperWindowProc = ::DefWindowProc;
@@ -4093,14 +4686,14 @@ public:
 		return Create(hWndParent, rect, szWindowName, dwStyle, dwExStyle, MenuOrID, lpCreateParam);
 	}
 
-	BOOL SubclassWindow(HWND hWnd)
+	BOOL SubclassWindow(_In_ HWND hWnd)
 	{
 		BOOL result;
 		ATLASSUME(m_hWnd == NULL);
 		ATLASSERT(::IsWindow(hWnd));
 
 		result = m_thunk.Init(WindowProc, this);
-		if (result == FALSE) 
+		if (result == FALSE)
 		{
 			return result;
 		}
@@ -4116,7 +4709,7 @@ public:
 
 	// Use only if you want to subclass before window is destroyed,
 	// WindowProc will automatically subclass when  window goes away
-	HWND UnsubclassWindow(BOOL bForce = FALSE)
+	HWND UnsubclassWindow(_In_ BOOL bForce = FALSE)
 	{
 		ATLASSUME(m_hWnd != NULL);
 
@@ -4135,7 +4728,11 @@ public:
 		}
 		return hWnd;
 	}
-	LRESULT ReflectNotifications(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT ReflectNotifications(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& bHandled)
 	{
 		HWND hWndChild = NULL;
 
@@ -4173,9 +4770,9 @@ public:
 				hWndChild = ((LPCOMPAREITEMSTRUCT)lParam)->hwndItem;
 			break;
 		case WM_DELETEITEM:
-			if(wParam)	// not from a menu   
+			if(wParam)	// not from a menu
 				hWndChild = ((LPDELETEITEMSTRUCT)lParam)->hwndItem;
-			
+
 			break;
 		case WM_VKEYTOITEM:
 		case WM_CHARTOITEM:
@@ -4232,7 +4829,10 @@ public:
 	};
 #pragma pack(pop)
 
-	static void GetDialogSize(const DLGTEMPLATE* pTemplate, SIZE* pSize, bool bPropertyPage = false)
+	static void GetDialogSize(
+		_In_ const DLGTEMPLATE* pTemplate,
+		_Out_ SIZE* pSize,
+		_In_ bool bPropertyPage = false)
 	{
 		// If the dialog has a font we use it otherwise we default
 		// to the system font.
@@ -4250,7 +4850,11 @@ public:
 		}
 	}
 
-	static void GetFontDimensions(LPCTSTR pszFontFace, WORD wFontSize, SIZE* pSizeChar, LONG *ptmHeight)
+	static void GetFontDimensions(
+		_In_opt_z_ LPCTSTR pszFontFace,
+		_In_ WORD wFontSize,
+		_Out_ SIZE* pSizeChar,
+		_Out_ LONG *ptmHeight)
 	{
 		if (pszFontFace != NULL)
 		{
@@ -4295,7 +4899,11 @@ public:
 // ID of the dialog template used for property sheet in comctl32.dll
 #define IDD_PROPSHEET_ID   1006
 
-	static void ConvertDialogUnitsToPixels(LPCTSTR pszFontFace, WORD wFontSize, SIZE* pSizePixel, bool bPropertyPage = false)
+	static void ConvertDialogUnitsToPixels(
+		_In_opt_z_ LPCTSTR pszFontFace,
+		_In_ WORD wFontSize,
+		_Inout_ SIZE* pSizePixel,
+		_In_ bool bPropertyPage = false)
 	{
 		LONG tmHeight;
 		SIZE sizeFontChar;
@@ -4306,9 +4914,9 @@ public:
 			HINSTANCE hInst = LoadLibrary(_T("COMCTL32.DLL"));
 			if (hInst != NULL)
 			{
-				HRSRC hResource = ::FindResource(hInst,
-					MAKEINTRESOURCE(IDD_PROPSHEET_ID),
-					RT_DIALOG);
+				HRSRC hResource = ::FindResourceW(hInst,
+					MAKEINTRESOURCEW(IDD_PROPSHEET_ID),
+					(LPWSTR) RT_DIALOG);
 				if (hResource != NULL)
 				{
 					HGLOBAL hTemplate = LoadResource(hInst, hResource);
@@ -4344,19 +4952,19 @@ public:
 		pSizePixel->cy = MulDiv(pSizePixel->cy, sizeFontChar.cy, 8);
 	}
 
-	static BOOL IsDialogEx(const DLGTEMPLATE* pTemplate)
+	static BOOL IsDialogEx(_In_ const DLGTEMPLATE* pTemplate)
 	{
 		return ((_ATL_DLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF;
 	}
 
-	static BOOL HasFont(const DLGTEMPLATE* pTemplate)
+	static BOOL HasFont(_In_ const DLGTEMPLATE* pTemplate)
 	{
 		return (DS_SETFONT &
 			(IsDialogEx(pTemplate) ?
 				((_ATL_DLGTEMPLATEEX*)pTemplate)->style : pTemplate->style));
 	}
 
-	static BYTE* GetFontSizeField(const DLGTEMPLATE* pTemplate)
+	static BYTE* GetFontSizeField(_In_ const DLGTEMPLATE* pTemplate)
 	{
 		BOOL bDialogEx = IsDialogEx(pTemplate);
 		WORD* pw;
@@ -4381,7 +4989,10 @@ public:
 		return (BYTE*)pw;
 	}
 
-	static BOOL GetFont(_In_ const DLGTEMPLATE* pTemplate, _Out_z_cap_c_(LF_FACESIZE) TCHAR* pszFace, _Out_ WORD* pFontSize)
+	static BOOL GetFont(
+		_In_ const DLGTEMPLATE* pTemplate,
+		_Out_z_cap_c_(LF_FACESIZE) TCHAR* pszFace,
+		_Out_ WORD* pFontSize)
 	{
 		ATLENSURE(pTemplate!=NULL);
 		if (!HasFont(pTemplate))
@@ -4395,14 +5006,16 @@ public:
 		pb += sizeof(WORD) * (IsDialogEx(pTemplate) ? 3 : 1);
 		CW2T pszFaceTemp(reinterpret_cast<WCHAR*>(pb));
 		Checked::tcsncpy_s(pszFace, LF_FACESIZE, pszFaceTemp, _TRUNCATE);
-		if (_tcslen(pszFace) >= LF_FACESIZE) 
+		if (_tcslen(pszFace) >= LF_FACESIZE)
 		{	// NUL not appended
 			pszFace[LF_FACESIZE-1] = _T('\0');
 		}
 		return TRUE;
 	}
 
-	static void GetSizeInDialogUnits(const DLGTEMPLATE* pTemplate, SIZE* pSize)
+	static void GetSizeInDialogUnits(
+		_In_ const DLGTEMPLATE* pTemplate,
+		_Out_ SIZE* pSize)
 	{
 		if (IsDialogEx(pTemplate))
 		{
@@ -4417,7 +5030,10 @@ public:
 	}
 };
 
-inline void AtlGetDialogSize(const DLGTEMPLATE* pTemplate, SIZE* pSize, bool bPropertyPage = false)
+inline void AtlGetDialogSize(
+	_In_ const DLGTEMPLATE* pTemplate,
+	_Out_ SIZE* pSize,
+	_In_ bool bPropertyPage = false)
 {
 	ATLASSERT(pTemplate != NULL);
 	ATLASSERT(pSize != NULL);
@@ -4425,7 +5041,7 @@ inline void AtlGetDialogSize(const DLGTEMPLATE* pTemplate, SIZE* pSize, bool bPr
 }
 
 }; //namespace ATL
- 
+
 #ifndef _ATL_NO_HOSTING
 
 #include <atlhost.h>
@@ -4435,7 +5051,6 @@ inline void AtlGetDialogSize(const DLGTEMPLATE* pTemplate, SIZE* pSize, bool bPr
 #endif // __ATLWIN_H__
 
 
- 
 namespace ATL
 {
 
@@ -4447,13 +5062,18 @@ public:
 	typedef _ATL_WNDCLASSINFOA	_ATL_WNDCLASSINFO;
 	typedef WNDCLASSEXA			WNDCLASSEX;
 
-	static BOOL GetClassInfoEx(HINSTANCE hinst, PCXSTR lpszClass, WNDCLASSEX* lpwcx)
+	static BOOL GetClassInfoEx(
+		_In_opt_ HINSTANCE hinst,
+		_In_z_ PCXSTR lpszClass,
+		_Out_ WNDCLASSEX* lpwcx)
 	{
 		return ::GetClassInfoExA(hinst, lpszClass, lpwcx);
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output buffer size to AtlModuleRegisterWndClassInfoParamA::FormatWindowClassName")
-	static void FormatWindowClassName(_Pre_notnull_ _Post_z_ PXSTR szBuffer, _In_ void* unique)
+	static void FormatWindowClassName(
+		_In_z_ PXSTR szBuffer,
+		_In_ void* unique)
 	{
 #pragma warning(push)
 #pragma warning(disable:4996)
@@ -4465,17 +5085,24 @@ public:
 #pragma warning(pop)
 	}
 
-	static void FormatWindowClassName(_Out_z_cap_(dwBuffSize) PXSTR szBuffer, _In_ DWORD dwBuffSize, _In_ void* unique)
+	static void FormatWindowClassName(
+		_Out_z_cap_(dwBuffSize) PXSTR szBuffer,
+		_In_ DWORD dwBuffSize,
+		_In_ void* unique)
 	{
 		sprintf_s(szBuffer, dwBuffSize, "ATL:%p", unique);
 	}
 
-	static HCURSOR LoadCursor(HINSTANCE hInstance, PCXSTR lpCursorName)
+	static HCURSOR LoadCursor(
+		_In_opt_ HINSTANCE hInstance,
+		_In_z_ PCXSTR lpCursorName)
 	{
 		return ::LoadCursorA(hInstance, lpCursorName);
 	}
 
-	static ATOM RegisterClassEx(_ATL_WIN_MODULE* pWinModule, const WNDCLASSEX* lpwcx)
+	static ATOM RegisterClassEx(
+		_In_ _ATL_WIN_MODULE* pWinModule,
+		_In_ const WNDCLASSEX* lpwcx)
 	{
 		return AtlWinModuleRegisterClassExA(pWinModule, lpwcx);
 	}
@@ -4489,13 +5116,18 @@ public:
 	typedef _ATL_WNDCLASSINFOW	_ATL_WNDCLASSINFO;
 	typedef WNDCLASSEXW			WNDCLASSEX;
 
-	static BOOL GetClassInfoEx(HINSTANCE hinst, PCXSTR lpszClass, WNDCLASSEX* lpwcx)
+	static BOOL GetClassInfoEx(
+		_In_opt_ HINSTANCE hinst,
+		_In_z_ PCXSTR lpszClass,
+		_Out_ WNDCLASSEX* lpwcx)
 	{
 		return ::GetClassInfoExW(hinst, lpszClass, lpwcx);
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output buffer size to AtlModuleRegisterWndClassInfoParamW::FormatWindowClassName")
-	static void FormatWindowClassName(_Pre_notnull_ _Post_z_ PXSTR szBuffer, _In_ void* unique)
+	static void FormatWindowClassName(
+		_In_z_ PXSTR szBuffer,
+		_In_ void* unique)
 	{
 #pragma warning(push)
 #pragma warning(disable:4996)
@@ -4507,47 +5139,71 @@ public:
 #pragma warning(pop)
 	}
 
-	static void FormatWindowClassName(_Out_z_cap_(dwBuffSize) PXSTR szBuffer, _In_ DWORD dwBuffSize, _In_ void* unique)
+	static void FormatWindowClassName(
+		_Out_z_cap_(dwBuffSize) PXSTR szBuffer,
+		_In_ DWORD dwBuffSize,
+		_In_ void* unique)
 	{
 		swprintf_s(szBuffer, dwBuffSize, L"ATL:%p", unique);
 	}
 
-	static HCURSOR LoadCursor(HINSTANCE hInstance, PCXSTR lpCursorName)
+	static HCURSOR LoadCursor(
+		_In_opt_ HINSTANCE hInstance,
+		_In_z_ PCXSTR lpCursorName)
 	{
 		return ::LoadCursorW(hInstance, lpCursorName);
 	}
 
-	static ATOM RegisterClassEx(_ATL_WIN_MODULE* pWinModule, const WNDCLASSEX* lpwcx)
+	static ATOM RegisterClassEx(
+		_In_ _ATL_WIN_MODULE* pWinModule,
+		_In_ const WNDCLASSEX* lpwcx)
 	{
 		return AtlWinModuleRegisterClassExW(pWinModule, lpwcx);
 	}
 };
 
-ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExA(_ATL_WIN_MODULE* pWinModule, const WNDCLASSEXA *lpwc)
+ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExA(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ const WNDCLASSEXA *lpwc)
 {
 	if (pWinModule == NULL || lpwc == NULL)
 		return 0;
+
 	ATOM atom = ::RegisterClassExA(lpwc);
-	BOOL bRet = pWinModule->m_rgWindowClassAtoms.Add(atom);
-	ATLASSERT(bRet);
-	(bRet);
+	if (atom != 0)
+	{
+		BOOL bRet = pWinModule->m_rgWindowClassAtoms.Add(atom);
+		ATLASSERT(bRet);
+		(bRet);
+	}
 	return atom;
 }
 
-ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExW(_ATL_WIN_MODULE* pWinModule, const WNDCLASSEXW *lpwc)
+ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterClassExW(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ const WNDCLASSEXW *lpwc)
 {
 	if (pWinModule == NULL || lpwc == NULL)
 		return 0;
+
 	ATOM atom = ::RegisterClassExW(lpwc);
-	BOOL bRet = pWinModule->m_rgWindowClassAtoms.Add(atom);
-	ATLASSERT(bRet);
-	(bRet);
+	if (atom != 0)
+	{
+		BOOL bRet = pWinModule->m_rgWindowClassAtoms.Add(atom);
+		ATLASSERT(bRet);
+		(bRet);
+	}
 	return atom;
 }
 
 
 template <class T>
-ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(_ATL_BASE_MODULE* pBaseModule, _ATL_WIN_MODULE* pWinModule, typename T::_ATL_WNDCLASSINFO* p, WNDPROC* pProc, T)
+ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(
+	_In_ _ATL_BASE_MODULE* pBaseModule,
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_Inout_ _Prepost_bytecount_x_(sizeof(T::_ATL_WNDCLASSINFO)) typename T::_ATL_WNDCLASSINFO* p,
+	_In_ WNDPROC* pProc, 
+	_In_ T)
 {
 	if (pBaseModule == NULL || pWinModule == NULL || p == NULL || pProc == NULL)
 	{
@@ -4555,7 +5211,7 @@ ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(_ATL_BASE_MODULE* pBaseModule, _AT
 		ATLASSERT(0);
 		return 0;
 	}
-		
+
 	if (p->m_atom == 0)
 	{
 		ATL::CComCritSecLock<ATL::CComCriticalSection> lock(pWinModule->m_csWindowCreate, false);
@@ -4622,22 +5278,34 @@ ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(_ATL_BASE_MODULE* pBaseModule, _AT
 	return p->m_atom;
 }
 
-ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoA(_ATL_WIN_MODULE* pWinModule, _ATL_BASE_MODULE* pBaseModule, _ATL_WNDCLASSINFOA* p, WNDPROC* pProc)
+ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoA(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ _ATL_BASE_MODULE* pBaseModule,
+	_Inout_ _ATL_WNDCLASSINFOA* p,
+	_In_ WNDPROC* pProc)
 {
 	AtlModuleRegisterWndClassInfoParamA templateParameter;
-	return AtlModuleRegisterWndClassInfoT<AtlModuleRegisterWndClassInfoParamA>(pBaseModule, pWinModule, p, pProc, templateParameter);
+	return AtlModuleRegisterWndClassInfoT<AtlModuleRegisterWndClassInfoParamA>(
+		pBaseModule, pWinModule, p, pProc, templateParameter);
 }
 
-ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoW(_ATL_WIN_MODULE* pWinModule, _ATL_BASE_MODULE* pBaseModule, _ATL_WNDCLASSINFOW* p, WNDPROC* pProc)
+ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoW(
+	_In_ _ATL_WIN_MODULE* pWinModule,
+	_In_ _ATL_BASE_MODULE* pBaseModule,
+	_Inout_ _ATL_WNDCLASSINFOW* p,
+	_In_ WNDPROC* pProc)
 {
 	AtlModuleRegisterWndClassInfoParamW templateParameter;
-	return AtlModuleRegisterWndClassInfoT<AtlModuleRegisterWndClassInfoParamW>(pBaseModule, pWinModule, p, pProc, templateParameter);
+	return AtlModuleRegisterWndClassInfoT<AtlModuleRegisterWndClassInfoParamW>(
+		pBaseModule, pWinModule, p, pProc, templateParameter);
 }
 
 //All exports go here
 #ifndef _ATL_DLL
 
-ATLINLINE ATLAPI_(HDC) AtlCreateTargetDC(HDC hdc, DVTARGETDEVICE* ptd)
+ATLINLINE ATLAPI_(HDC) AtlCreateTargetDC(
+	_In_ HDC hdc,
+	_In_ DVTARGETDEVICE* ptd)
 {
 	USES_CONVERSION_EX;
 
@@ -4677,10 +5345,12 @@ ATLINLINE ATLAPI_(HDC) AtlCreateTargetDC(HDC hdc, DVTARGETDEVICE* ptd)
 /////////////////////////////////////////////////////////////////////////////
 // Windowing : Conversion helpers
 
-ATLINLINE ATLAPI_(void) AtlHiMetricToPixel(const SIZEL * lpSizeInHiMetric, LPSIZEL lpSizeInPix)
+ATLINLINE ATLAPI_(void) AtlHiMetricToPixel(
+	_In_ const SIZEL *lpSizeInHiMetric,
+	_Out_ LPSIZEL lpSizeInPix)
 {
 	ATLENSURE_THROW(lpSizeInHiMetric!=NULL, E_POINTER);
-	ATLENSURE_THROW(lpSizeInPix!=NULL, E_POINTER);	
+	ATLENSURE_THROW(lpSizeInPix!=NULL, E_POINTER);
 	int nPixelsPerInchX;    // Pixels per logical inch along width
 	int nPixelsPerInchY;    // Pixels per logical inch along height
 
@@ -4694,10 +5364,12 @@ ATLINLINE ATLAPI_(void) AtlHiMetricToPixel(const SIZEL * lpSizeInHiMetric, LPSIZ
 	lpSizeInPix->cy = MAP_LOGHIM_TO_PIX(lpSizeInHiMetric->cy, nPixelsPerInchY);
 }
 
-ATLINLINE ATLAPI_(void) AtlPixelToHiMetric(const SIZEL * lpSizeInPix, LPSIZEL lpSizeInHiMetric)
+ATLINLINE ATLAPI_(void) AtlPixelToHiMetric(
+	_In_ const SIZEL * lpSizeInPix,
+	_Out_ LPSIZEL lpSizeInHiMetric)
 {
 	ATLENSURE_THROW(lpSizeInPix!=NULL, E_POINTER);
-	ATLENSURE_THROW(lpSizeInHiMetric!=NULL, E_POINTER);	
+	ATLENSURE_THROW(lpSizeInHiMetric!=NULL, E_POINTER);
 	int nPixelsPerInchX;    // Pixels per logical inch along width
 	int nPixelsPerInchY;    // Pixels per logical inch along height
 

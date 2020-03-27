@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #include "stdafx.h"
@@ -19,7 +19,10 @@ void WINAPI NotifyTool();
 #define TRACE_SETTINGS_EXT ".trc"
 #define TRACE_SETTINGS_EXTW L".trc"
 
-static bool WINAPI SetSettings(CAtlTraceSettings *pTraceSettings, UINT nLevel, UINT nStatus)
+static bool WINAPI SetSettings(
+	_Inout_ CAtlTraceSettings *pTraceSettings,
+	_In_ UINT nLevel,
+	_In_ UINT nStatus)
 {
 	ATLASSERT(pTraceSettings);
 	if(!pTraceSettings)
@@ -42,7 +45,9 @@ static bool WINAPI SetSettings(CAtlTraceSettings *pTraceSettings, UINT nLevel, U
 	return true;
 }
 
-static bool WINAPI GetSettings(const CAtlTraceSettings &rTraceSettings, UINT *pnStatus)
+static bool WINAPI GetSettings(
+	_In_ const CAtlTraceSettings &rTraceSettings,
+	_Out_ UINT *pnStatus)
 {
 	ATLASSERT(pnStatus);
 	if(!pnStatus)
@@ -64,7 +69,9 @@ static bool WINAPI GetSettings(const CAtlTraceSettings &rTraceSettings, UINT *pn
 	return true;
 }
 
-BOOL __stdcall AtlTraceLoadSettingsA(const CHAR *pszFileName, DWORD_PTR dwProcess /* = 0 */)
+BOOL __stdcall AtlTraceLoadSettingsA(
+	_In_opt_z_ const CHAR *pszFileName,
+	_In_ DWORD_PTR dwProcess /* = 0 */)
 {
 	CHAR szFileName[_MAX_PATH];
 	if(!pszFileName)
@@ -111,7 +118,7 @@ BOOL __stdcall AtlTraceLoadSettingsA(const CHAR *pszFileName, DWORD_PTR dwProces
 
 			::GetPrivateProfileStringA(pszProcess, "Info", "", szValue, MAX_PATH, pszFileName);
 			szValue[MAX_PATH - 1] = 0;
-			
+
 			if(5 != sscanf_s(szValue, "ModuleCount:%u, Level:%u, Enabled:%c, "
 				"FuncAndCategoryNames:%c, FileNameAndLineNo:%c", &nModules, &pProcess->m_nLevel, &cEnabled, sizeof(cEnabled),
 				&cFuncAndCategoryNames, sizeof(cFuncAndCategoryNames), &cFileNameAndLineInfo, sizeof(cFileNameAndLineInfo)))
@@ -174,7 +181,9 @@ BOOL __stdcall AtlTraceLoadSettingsA(const CHAR *pszFileName, DWORD_PTR dwProces
 	return TRUE;
 }
 
-BOOL __stdcall AtlTraceSaveSettingsA(const CHAR *pszFileName, DWORD_PTR dwProcess /* = 0 */)
+BOOL __stdcall AtlTraceSaveSettingsA(
+	_In_opt_z_ const CHAR *pszFileName,
+	_In_ DWORD_PTR dwProcess /* = 0 */)
 {
 	ATLASSERT(pszFileName);
 	if(!pszFileName)
@@ -262,7 +271,9 @@ BOOL __stdcall AtlTraceSaveSettingsA(const CHAR *pszFileName, DWORD_PTR dwProces
 	return bRetVal;
 }
 
-BOOL __stdcall AtlTraceLoadSettingsU(const WCHAR *pszFileName, DWORD_PTR dwProcess /* = 0 */)
+BOOL __stdcall AtlTraceLoadSettingsU(
+	_In_opt_z_ const WCHAR *pszFileName,
+	_In_ DWORD_PTR dwProcess /* = 0 */)
 {
 	WCHAR szFileName[MAX_PATH];
 	if(!pszFileName)
@@ -371,7 +382,9 @@ BOOL __stdcall AtlTraceLoadSettingsU(const WCHAR *pszFileName, DWORD_PTR dwProce
 	return TRUE;
 }
 
-BOOL __stdcall AtlTraceSaveSettingsU(const WCHAR *pszFileName, DWORD_PTR dwProcess /* = 0 */)
+BOOL __stdcall AtlTraceSaveSettingsU(
+	_In_opt_z_ const WCHAR *pszFileName,
+	_In_ DWORD_PTR dwProcess /* = 0 */)
 {
 	ATLASSERT(pszFileName);
 	if(!pszFileName)
@@ -404,7 +417,7 @@ BOOL __stdcall AtlTraceSaveSettingsU(const WCHAR *pszFileName, DWORD_PTR dwProce
 		pProcess->m_bEnabled ? L't' : L'f', pProcess->m_bFuncAndCategoryNames ? L't' : L'f',
 		pProcess->m_bFileNameAndLineNo ? L't' : L'f') < 0)
 		return FALSE;
-		  
+
 	if(::WritePrivateProfileStringW(pszProcess, L"Info", szValue, pszFileName) == 0)
 		return FALSE;
 
@@ -417,7 +430,7 @@ BOOL __stdcall AtlTraceSaveSettingsU(const WCHAR *pszFileName, DWORD_PTR dwProce
 
 		if(swprintf(szKey, MAX_PATH,  L"Module%d", i+1) < 0)
 			return FALSE;
-		  
+
 		if(::WritePrivateProfileStringW(pszProcess, szKey, pModule->Name(), pszFileName) == 0)
 			return FALSE;
 		GetSettings(*pModule, &nStatus);
@@ -426,10 +439,10 @@ BOOL __stdcall AtlTraceSaveSettingsU(const WCHAR *pszFileName, DWORD_PTR dwProce
 
 		if(::WritePrivateProfileStringW(pModule->Name(), L"Name", pModule->Path(), pszFileName) == 0)
 			return FALSE;
-			
+
 		if(swprintf(szValue, MAX_PATH, L"CategoryCount:%u, Level:%u, Status:%u", nCategories, pModule->m_nLevel, nStatus) < 0)
 			return FALSE;
-		  
+
 		if(::WritePrivateProfileStringW(pModule->Name(), L"Settings", szValue, pszFileName) == 0)
 			return FALSE;
 
@@ -447,7 +460,7 @@ BOOL __stdcall AtlTraceSaveSettingsU(const WCHAR *pszFileName, DWORD_PTR dwProce
 			if(swprintf(szValue, MAX_PATH,  L"Level:%u, Status:%u, Name:%s",
 				pCategory->m_nLevel, nStatus, pCategory->Name()) < 0)
 				return FALSE;
-				
+
 			if(::WritePrivateProfileStringW(pModule->Name(), szKey, szValue, pszFileName) == 0)
 				return FALSE;
 

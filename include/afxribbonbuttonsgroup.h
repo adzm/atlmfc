@@ -26,6 +26,8 @@
 class CMFCRibbonButtonsGroup : public CMFCRibbonBaseElement
 {
 	friend class CMFCRibbonBar;
+	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonConstructor;
 
 	DECLARE_DYNCREATE(CMFCRibbonButtonsGroup)
 
@@ -83,6 +85,10 @@ protected:
 	virtual CMFCRibbonBaseElement* GetPressed();
 	virtual CMFCRibbonBaseElement* GetDroppedDown();
 	virtual CMFCRibbonBaseElement* GetHighlighted();
+	/// <summary>
+	/// Returns a focused element. </summary>
+	/// <returns> A pointer to a focused element or NULL.</returns>
+	virtual CMFCRibbonBaseElement* GetFocused();
 
 	virtual BOOL ReplaceByID(UINT uiCmdID, CMFCRibbonBaseElement* pElem);
 	virtual void CopyFrom(const CMFCRibbonBaseElement& src);
@@ -99,6 +105,11 @@ protected:
 	virtual void CleanUpSizes();
 
 	virtual void SetParentRibbonBar(CMFCRibbonBar* pRibbonBar);
+
+	virtual CMFCRibbonBaseElement* GetFirstTabStop();
+	virtual CMFCRibbonBaseElement* GetLastTabStop();
+
+	virtual void GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
 
 // Attributes
 protected:

@@ -34,15 +34,19 @@ namespace ATL
 {
 
 template <class T, bool bAutoDelete = true>
-class ATL_NO_VTABLE CSnapInPropertyPageImpl : public CDialogImplBase
+class ATL_NO_VTABLE CSnapInPropertyPageImpl :
+	public CDialogImplBase
 {
 public:
 	PROPSHEETPAGE m_psp;
 
-	operator PROPSHEETPAGE*() { return &m_psp; }
+	operator PROPSHEETPAGE*()
+	{
+		return &m_psp;
+	}
 
 // Construction
-	CSnapInPropertyPageImpl(LPCTSTR lpszTitle = NULL)
+	CSnapInPropertyPageImpl(_In_opt_z_ LPCTSTR lpszTitle = NULL)
 	{
 		// initialize PROPSHEETPAGE struct
 		memset(&m_psp, 0, sizeof(PROPSHEETPAGE));
@@ -61,8 +65,12 @@ public:
 		}
 	}
 
-	static UINT CALLBACK PropPageCallback(HWND hWnd, UINT uMsg, LPPROPSHEETPAGE ppsp)
+	static UINT CALLBACK PropPageCallback(
+		_In_ HWND hWnd,
+		_In_ UINT uMsg,
+		_In_ LPPROPSHEETPAGE ppsp)
 	{
+		UNREFERENCED_PARAMETER(hWnd);
 		ATLASSERT(hWnd == NULL);
 		if(uMsg == PSPCB_CREATE)
 		{
@@ -99,7 +107,7 @@ public:
 
 		::SendMessage(GetParent(), PSM_CANCELTOCLOSE, 0, 0L);
 	}
-	void SetModified(BOOL bChanged = TRUE)
+	void SetModified(_In_ BOOL bChanged = TRUE)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(GetParent() != NULL);
@@ -109,7 +117,9 @@ public:
 		else
 			::SendMessage(GetParent(), PSM_UNCHANGED, (WPARAM)m_hWnd, 0L);
 	}
-	LRESULT QuerySiblings(WPARAM wParam, LPARAM lParam)
+	LRESULT QuerySiblings(
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(GetParent() != NULL);
@@ -123,7 +133,11 @@ public:
 	END_MSG_MAP()
 
 // Message handler
-	LRESULT OnNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT OnNotify(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& bHandled)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		NMHDR* pNMHDR = (NMHDR*)lParam;
@@ -222,67 +236,80 @@ public:
 	DATA_OBJECT_TYPES m_type;
 };
 
-class ATL_NO_VTABLE CSnapInItem 
+class ATL_NO_VTABLE CSnapInItem
 {
 public:
 	virtual ~CSnapInItem()
 	{
 	}
-	STDMETHOD(Notify)(MMC_NOTIFY_TYPE event,
-		LONG_PTR arg,
-		LONG_PTR param,
-		IComponentData* pComponentData,
-		IComponent* pComponent,
-		DATA_OBJECT_TYPES type) = 0;
+	STDMETHOD(Notify)(
+		_In_ MMC_NOTIFY_TYPE event,
+		_In_ LONG_PTR arg,
+		_In_ LONG_PTR param,
+		_Inout_opt_ IComponentData* pComponentData,
+		_Inout_opt_ IComponent* pComponent,
+		_In_ DATA_OBJECT_TYPES type) = 0;
 
-	STDMETHOD(GetScopePaneInfo)(SCOPEDATAITEM  *pScopeDataItem) = 0;
+	STDMETHOD(GetScopePaneInfo)(_Out_ SCOPEDATAITEM *pScopeDataItem) = 0;
 
-	STDMETHOD(GetResultViewType)(LPOLESTR  *ppViewType,
-		long  *pViewOptions) = 0;
+	STDMETHOD(GetResultViewType)(
+		_Deref_out_z_ LPOLESTR *ppViewType,
+		_Out_ long *pViewOptions) = 0;
 
-	STDMETHOD(GetResultPaneInfo)(RESULTDATAITEM  *pResultDataItem) = 0;
+	STDMETHOD(GetResultPaneInfo)(_Out_ RESULTDATAITEM *pResultDataItem) = 0;
 
-	STDMETHOD(AddMenuItems)(LPCONTEXTMENUCALLBACK piCallback,
-		long  *pInsertionAllowed,
-		DATA_OBJECT_TYPES type) = 0;
+	STDMETHOD(AddMenuItems)(
+		_In_ LPCONTEXTMENUCALLBACK piCallback,
+		_Inout_ long  *pInsertionAllowed,
+		_In_ DATA_OBJECT_TYPES type) = 0;
 
-	STDMETHOD(Command)(long lCommandID,	
-		CSnapInObjectRootBase* pObj,		
-		DATA_OBJECT_TYPES type) = 0;
+	STDMETHOD(Command)(
+		_In_ long lCommandID,
+		_Inout_ CSnapInObjectRootBase* pObj,
+		_In_ DATA_OBJECT_TYPES type) = 0;
 
-	STDMETHOD(CreatePropertyPages)(LPPROPERTYSHEETCALLBACK lpProvider,
-		LONG_PTR handle,
-		IUnknown* pUnk,
-		DATA_OBJECT_TYPES type) = 0;
+	STDMETHOD(CreatePropertyPages)(
+		_In_ LPPROPERTYSHEETCALLBACK lpProvider,
+		_In_ LONG_PTR handle,
+		_Inout_ IUnknown* pUnk,
+		_In_ DATA_OBJECT_TYPES type) = 0;
 
-	STDMETHOD(QueryPagesFor)(DATA_OBJECT_TYPES type) = 0;
+	STDMETHOD(QueryPagesFor)(_In_ DATA_OBJECT_TYPES type) = 0;
 
-	STDMETHOD(SetControlbar)(IControlbar  *pControlbar,
-		IExtendControlbar  *pExtendControlbar,
-		CSimpleMap<UINT, IUnknown*>* pToolbarMap) = 0;
+	STDMETHOD(SetControlbar)(
+		_Inout_ IControlbar  *pControlbar,
+		_Inout_opt_ IExtendControlbar  *pExtendControlbar,
+		_Inout_ CSimpleMap<UINT, IUnknown*>* pToolbarMap) = 0;
 
-	STDMETHOD(ControlbarNotify)(IControlbar  *pControlbar,
-		IExtendControlbar  *pExtendControlbar,
-		CSimpleMap<UINT, IUnknown*>* pToolbarMap,
-		MMC_NOTIFY_TYPE event,
-		LONG_PTR arg,
-		LONG_PTR param,
-		CSnapInObjectRootBase* pObj,
-		DATA_OBJECT_TYPES type) = 0;
+	STDMETHOD(ControlbarNotify)(
+		_Inout_ IControlbar *pControlbar,
+		_Inout_opt_ IExtendControlbar *pExtendControlbar,
+		_Inout_ CSimpleMap<UINT, IUnknown*>* pToolbarMap,
+		_In_ MMC_NOTIFY_TYPE event,
+		_In_ LONG_PTR arg,
+		_In_ LONG_PTR param,
+		_Inout_ CSnapInObjectRootBase* pObj,
+		_In_ DATA_OBJECT_TYPES type) = 0;
 
-	STDMETHOD(GetScopeData)(SCOPEDATAITEM  * *pScopeDataItem) = 0;
+	STDMETHOD(GetScopeData)(_Deref_out_ SCOPEDATAITEM  **pScopeDataItem) = 0;
 
-	STDMETHOD(GetResultData)(RESULTDATAITEM  * *pResultDataItem) = 0;
+	STDMETHOD(GetResultData)(_Deref_out_ RESULTDATAITEM  **pResultDataItem) = 0;
 
-	STDMETHOD(FillData)(CLIPFORMAT cf, 
-		LPSTREAM pStream) = 0;
+	STDMETHOD(FillData)(
+		_In_ CLIPFORMAT cf,
+		_Inout_ LPSTREAM pStream) = 0;
 
-	virtual void InitDataClass(IDataObject* /*pDataObject*/, CSnapInItem* /*pDefault*/)
+	virtual void InitDataClass(
+		_Inout_opt_ IDataObject* /*pDataObject*/,
+		_Inout_opt_ CSnapInItem* /*pDefault*/)
 	{
 		ATLASSERT(0 && "Override this function in derived class");
 	}
 
-	static HRESULT GetDataClass(IDataObject* pDataObj, CSnapInItem** ppItem, DATA_OBJECT_TYPES* pType)
+	static HRESULT GetDataClass(
+		_Inout_ IDataObject* pDataObj,
+		_Deref_out_opt_ _Deref_post_opt_bytecount_x_(sizeof(CSnapInItem)) CSnapInItem** ppItem,
+		_Out_ DATA_OBJECT_TYPES* pType)
 	{
 		if (ppItem == NULL)
 			return E_POINTER;
@@ -298,11 +325,11 @@ public:
 		*pType = CCT_UNINITIALIZED;
 
 		STGMEDIUM stgmedium = { TYMED_HGLOBAL, NULL };
-		FORMATETC formatetc = { m_CCF_SNAPIN_GETOBJECTDATA, 
-			NULL, 
-			DVASPECT_CONTENT, 
-			-1, 
-			TYMED_HGLOBAL 
+		FORMATETC formatetc = { m_CCF_SNAPIN_GETOBJECTDATA,
+			NULL,
+			DVASPECT_CONTENT,
+			-1,
+			TYMED_HGLOBAL
 		};
 
 		stgmedium.hGlobal = GlobalAlloc(0, sizeof(CObjectData));
@@ -318,18 +345,19 @@ public:
 		}
 
 		GlobalFree(stgmedium.hGlobal);
-
+				
 		return hr;
 	}
 
-
-	virtual HRESULT STDMETHODCALLTYPE GetDataObject(IDataObject** pDataObj, DATA_OBJECT_TYPES type) = 0;
+	virtual HRESULT STDMETHODCALLTYPE GetDataObject(
+		_Deref_out_ IDataObject** pDataObj,
+		_In_ DATA_OBJECT_TYPES type) = 0;
 
 	static void Init()
 	{
 		m_CCF_NODETYPE			= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_NODETYPE"));
-		m_CCF_SZNODETYPE		= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_SZNODETYPE"));  
-		m_CCF_DISPLAY_NAME		= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_DISPLAY_NAME")); 
+		m_CCF_SZNODETYPE		= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_SZNODETYPE"));
+		m_CCF_DISPLAY_NAME		= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_DISPLAY_NAME"));
 		m_CCF_SNAPIN_CLASSID	= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_SNAPIN_CLASSID"));
 		m_CCF_SNAPIN_GETOBJECTDATA	= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_GETOBJECTDATA"));
 		m_CCF_MMC_MULTISELECT_DATAOBJECT	= (CLIPFORMAT) RegisterClipboardFormat(_T("CCF_MMC_MULTISELECT_DATAOBJECT"));
@@ -350,17 +378,24 @@ public:
 	CSimpleMap <UINT, IUnknown*> m_toolbarMap;
 	const int m_nType;
 
-	CSnapInObjectRootBase(int n = 0) : m_nType(n)
+	CSnapInObjectRootBase(_In_ int n = 0) : m_nType(n)
 	{
 	}
-	HRESULT GetDataClass(IDataObject* pDataObject, CSnapInItem** ppItem, DATA_OBJECT_TYPES* pType)
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetDataClass(
+		_In_ IDataObject* pDataObject,
+		_Deref_out_ CSnapInItem** ppItem,
+		_Out_ DATA_OBJECT_TYPES* pType)
 	{
 		return CSnapInItem::GetDataClass(pDataObject, ppItem, pType);
 	}
+ATLPREFAST_UNSUPPRESS()
 };
 
+
 template <int n, class ComponentData>
-class CSnapInObjectRoot : public CSnapInObjectRootBase
+class CSnapInObjectRoot :
+	public CSnapInObjectRootBase
 {
 public :
 	CSnapInObjectRoot() : CSnapInObjectRootBase(n)
@@ -373,7 +408,10 @@ public :
 #define EXTENSION_SNAPIN_DATACLASS(dataClass) dataClass m_##dataClass;
 
 #define BEGIN_EXTENSION_SNAPIN_NODEINFO_MAP(classname) \
-	HRESULT GetDataClass(IDataObject* pDataObject, ATL::CSnapInItem** ppItem, DATA_OBJECT_TYPES* pType) \
+	HRESULT GetDataClass( \
+		_In_ IDataObject* pDataObject, \
+		_Deref_out_ ATL::CSnapInItem** ppItem, \
+		_Out_ DATA_OBJECT_TYPES* pType) \
 	{ \
 		if (ppItem == NULL) \
 			return E_POINTER; \
@@ -422,7 +460,8 @@ public :
 			return ATL::CSnapInItem::GetDataClass(pDataObject, ppItem, pType); \
 	};
 
-class ATL_NO_VTABLE CSnapInDataObjectImpl : public IDataObject,
+class ATL_NO_VTABLE CSnapInDataObjectImpl :
+	public IDataObject,
 	public CComObjectRoot
 {
 public:
@@ -432,12 +471,16 @@ public:
 	BEGIN_COM_MAP(CSnapInDataObjectImpl)
 		COM_INTERFACE_ENTRY(IDataObject)
 	END_COM_MAP()
-	STDMETHOD(GetData)(FORMATETC * /*pformatetcIn*/, STGMEDIUM * /*pmedium*/)
+	STDMETHOD(GetData)(
+		_In_opt_ FORMATETC * /*pformatetcIn*/,
+		_In_opt_ STGMEDIUM * /*pmedium*/)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::GetData\n"));
 	}
 
-	STDMETHOD(GetDataHere)(FORMATETC* pformatetc, STGMEDIUM* pmedium)
+	STDMETHOD(GetDataHere)(
+		_In_ FORMATETC* pformatetc,
+		_In_ STGMEDIUM* pmedium)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("SnapInDataObjectImpl::GetDataHere\n"));
 		if (pmedium == NULL)
@@ -463,32 +506,42 @@ public:
 		return hr;
 	}
 
-	STDMETHOD(QueryGetData)(FORMATETC* /* pformatetc */)
+	STDMETHOD(QueryGetData)(_In_opt_ FORMATETC* /* pformatetc */)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::QueryGetData\n"));
 	}
-	STDMETHOD(GetCanonicalFormatEtc)(FORMATETC* /* pformatectIn */,FORMATETC* /* pformatetcOut */)
+	STDMETHOD(GetCanonicalFormatEtc)(
+		_In_opt_ FORMATETC* /* pformatectIn */,
+		_In_opt_ FORMATETC* /* pformatetcOut */)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::GetCanonicalFormatEtc\n"));
 	}
-	STDMETHOD(SetData)(FORMATETC* /* pformatetc */, STGMEDIUM* /* pmedium */, BOOL /* fRelease */)
+	STDMETHOD(SetData)(
+		_In_opt_ FORMATETC* /* pformatetc */,
+		_In_opt_ STGMEDIUM* /* pmedium */,
+		_In_ BOOL /* fRelease */)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::SetData\n"));
 	}
-	STDMETHOD(EnumFormatEtc)(DWORD /* dwDirection */, IEnumFORMATETC** /* ppenumFormatEtc */)
+	STDMETHOD(EnumFormatEtc)(
+		_In_ DWORD /* dwDirection */,
+		_In_ IEnumFORMATETC** /* ppenumFormatEtc */)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::EnumFormatEtc\n"));
 	}
-	STDMETHOD(DAdvise)(FORMATETC * /*pformatetc*/, DWORD /*advf*/, IAdviseSink * /*pAdvSink*/,
-		DWORD * /*pdwConnection*/)
+	STDMETHOD(DAdvise)(
+		_In_opt_ FORMATETC * /*pformatetc*/,
+		_In_ DWORD /*advf*/,
+		_Inout_opt_ IAdviseSink * /*pAdvSink*/,
+		_Out_opt_ DWORD* /*pdwConnection*/)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::SetData\n"));
 	}
-	STDMETHOD(DUnadvise)(DWORD /*dwConnection*/)
+	STDMETHOD(DUnadvise)(_In_ DWORD /*dwConnection*/)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::SetDatan\n"));
 	}
-	STDMETHOD(EnumDAdvise)(IEnumSTATDATA ** /*ppenumAdvise*/)
+	STDMETHOD(EnumDAdvise)(_In_ IEnumSTATDATA ** /*ppenumAdvise*/)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::SetData\n"));
 	}
@@ -498,7 +551,8 @@ public:
 
 
 template <class T, class Component>
-class ATL_NO_VTABLE IComponentDataImpl : public IComponentData 
+class ATL_NO_VTABLE IComponentDataImpl :
+	public IComponentData
 {
 public :
 	IComponentDataImpl()
@@ -506,7 +560,7 @@ public :
 		m_pNode = NULL;
 	}
 
-	STDMETHOD(Initialize)(LPUNKNOWN pUnknown)
+	STDMETHOD(Initialize)(_Inout_ LPUNKNOWN pUnknown)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentDataImpl::Initialize\n"));
 
@@ -525,7 +579,7 @@ public :
 		return hr;
 	}
 
-	STDMETHOD(CreateComponent)(LPCOMPONENT *ppComponent)
+	STDMETHOD(CreateComponent)(_Deref_out_ LPCOMPONENT *ppComponent)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentDataImpl::CreateComponent\n"));
 
@@ -540,7 +594,7 @@ public :
 
 			CComObject< Component >* pComponent;
 			hr = CComObject< Component >::CreateInstance(&pComponent);
-			ATLASSERT(SUCCEEDED(hr));
+			ATLASSUME(SUCCEEDED(hr));
 			if (FAILED(hr))
 				ATLTRACE(atlTraceSnapin, 0, _T("IComponentData::CreateComponent : Could not create IComponent object\n"));
 			else
@@ -552,12 +606,11 @@ public :
 		return hr;
 	}
 
-
-	STDMETHOD(Notify)( 
-		LPDATAOBJECT lpDataObject,
-		MMC_NOTIFY_TYPE event,
-		LONG_PTR arg,
-		LONG_PTR param)
+	STDMETHOD(Notify)(
+		_Inout_ LPDATAOBJECT lpDataObject,
+		_In_ MMC_NOTIFY_TYPE event,
+		_In_ LONG_PTR arg,
+		_In_ LONG_PTR param)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentDataImpl::Notify\n"));
 		ATLASSERT(lpDataObject != NULL && _T("Override Notify in derived class handle notifications for which lpDataObject == NULL"));
@@ -574,7 +627,9 @@ public :
 			hr = pT->m_pComponentData->GetDataClass(lpDataObject, &pItem, &type);
 			ATLASSERT(SUCCEEDED(hr));
 			if (SUCCEEDED(hr))
+			{
 				hr = pItem->Notify(event, arg, param, pT, NULL, type);
+			}
 		}
 		return hr;
 	}
@@ -603,9 +658,10 @@ public :
 		return S_OK;
 	}
 
-	STDMETHOD(QueryDataObject)(LONG_PTR cookie,
-		DATA_OBJECT_TYPES type,
-		LPDATAOBJECT  *ppDataObject)
+	STDMETHOD(QueryDataObject)(
+		_In_ LONG_PTR cookie,
+		_In_ DATA_OBJECT_TYPES type,
+		_Deref_out_ LPDATAOBJECT *ppDataObject)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentDataImpl::QueryDataObject\n"));
 		HRESULT hr = E_POINTER;
@@ -626,10 +682,9 @@ public :
 		return hr;
 	}
 
-	STDMETHOD(GetDisplayInfo)(SCOPEDATAITEM *pScopeDataItem)
+	STDMETHOD(GetDisplayInfo)(_Inout_ SCOPEDATAITEM *pScopeDataItem)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentDataImpl::GetDisplayInfo\n"));
-
 
 		HRESULT hr = E_POINTER;
 
@@ -649,8 +704,9 @@ public :
 		return hr;
 	}
 
-	STDMETHOD(CompareObjects)(LPDATAOBJECT /*lpDataObjectA*/,
-		LPDATAOBJECT /*lpDataObjectB*/)
+	STDMETHOD(CompareObjects)(
+		_In_opt_ LPDATAOBJECT /*lpDataObjectA*/,
+		_In_opt_ LPDATAOBJECT /*lpDataObjectB*/)
 	{
 		ATLTRACENOTIMPL(_T("IComponentDataImpl::CompareObjects\n"));
 	}
@@ -661,10 +717,11 @@ public :
 
 
 template <class T>
-class ATL_NO_VTABLE IComponentImpl : public IComponent
+class ATL_NO_VTABLE IComponentImpl :
+	public IComponent
 {
 public:
-	STDMETHOD(Initialize)(LPCONSOLE lpConsole)
+	STDMETHOD(Initialize)(_Inout_ LPCONSOLE lpConsole)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::Initialize\n"));
 
@@ -691,13 +748,14 @@ public:
 		return hr;
 	}
 
-	STDMETHOD(Notify)(LPDATAOBJECT lpDataObject,
-		MMC_NOTIFY_TYPE event,
-		LONG_PTR arg,
-		LONG_PTR param)
+	STDMETHOD(Notify)(
+		_Inout_ LPDATAOBJECT lpDataObject,
+		_In_ MMC_NOTIFY_TYPE event,
+		_In_ LONG_PTR arg,
+		_In_ LONG_PTR param)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::Notify\n"));
-		ATLASSERT(lpDataObject != NULL && _T("Override Notify in derived class handle notifications for which lpDataObject == NULL"));		
+		ATLASSERT(lpDataObject != NULL && _T("Override Notify in derived class handle notifications for which lpDataObject == NULL"));
 		HRESULT hr = E_POINTER;
 
 		if (lpDataObject == NULL)
@@ -710,12 +768,14 @@ public:
 			// Make sure that the object is derived from CSnapInObjectRoot
 			hr = pT->m_pComponentData->GetDataClass(lpDataObject, &pItem, &type);
 			if (SUCCEEDED(hr))
+			{
 				hr = pItem->Notify(event, arg, param, NULL, pT, type);
+			}
 		}
 		return hr;
 	}
 
-	STDMETHOD(Destroy)(LONG_PTR /*cookie*/)
+	STDMETHOD(Destroy)(_In_ LONG_PTR /*cookie*/)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::Destroy\n"));
 
@@ -741,9 +801,10 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(QueryDataObject)(LONG_PTR cookie,
-		DATA_OBJECT_TYPES type,
-		LPDATAOBJECT  *ppDataObject)
+	STDMETHOD(QueryDataObject)(
+		_In_ LONG_PTR cookie,
+		_In_ DATA_OBJECT_TYPES type,
+		_Deref_out_ LPDATAOBJECT *ppDataObject)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::QueryDataObject\n"));
 
@@ -771,9 +832,10 @@ public:
 		return pItem->GetDataObject(ppDataObject, type);
 	}
 
-	STDMETHOD(GetResultViewType)(LONG_PTR cookie,
-		LPOLESTR  *ppViewType,
-		long  *pViewOptions)
+	STDMETHOD(GetResultViewType)(
+		_In_ LONG_PTR cookie,
+		_Deref_out_z_ LPOLESTR *ppViewType,
+		_Out_ long *pViewOptions)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::GetResultViewType\n"));
 
@@ -793,7 +855,7 @@ public:
 		return hr;
 	}
 
-	STDMETHOD(GetDisplayInfo)(RESULTDATAITEM *pResultDataItem)
+	STDMETHOD(GetDisplayInfo)(_Inout_ RESULTDATAITEM *pResultDataItem)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::GetDisplayInfo\n"));
 
@@ -814,8 +876,9 @@ public:
 		return pItem->GetResultPaneInfo(pResultDataItem);
 	}
 
-	STDMETHOD(CompareObjects)( LPDATAOBJECT /*lpDataObjectA*/,
-		LPDATAOBJECT /*lpDataObjectB*/)
+	STDMETHOD(CompareObjects)(
+		_In_opt_ LPDATAOBJECT /*lpDataObjectA*/,
+		_In_opt_ LPDATAOBJECT /*lpDataObjectB*/)
 	{
 		ATLTRACENOTIMPL(_T("IComponentImpl::CompareObjects\n"));
 	}
@@ -823,14 +886,15 @@ public:
 	CComPtr<IConsole> m_spConsole;
 };
 
-template <class T, class D>        
-class ATL_NO_VTABLE IResultDataCompareImpl : public IResultDataCompare
+template <class T, class D>
+class ATL_NO_VTABLE IResultDataCompareImpl :
+	public IResultDataCompare
 {
 public:
-	STDMETHOD(Compare)(long lUserParam,
-		long cookieA,
-		long cookieB,
-		int *pnResult)
+	STDMETHOD(Compare)(long /*lUserParam*/,
+		_In_ long /*cookieA*/,
+		_In_ long /*cookieB*/,
+		_In_opt_ int* /*pnResult*/)
 	{
 		ATLTRACENOTIMPL(_T("IResultDataCompareImpl::Compare"));
 	}
@@ -838,12 +902,14 @@ public:
 
 
 template <class T>
-class ATL_NO_VTABLE IExtendContextMenuImpl : public IExtendContextMenu
+class ATL_NO_VTABLE IExtendContextMenuImpl :
+	public IExtendContextMenu
 {
 public:
-	STDMETHOD(AddMenuItems)(LPDATAOBJECT pDataObject,
-		LPCONTEXTMENUCALLBACK piCallback,
-		long *pInsertionAllowed)
+	STDMETHOD(AddMenuItems)(
+		_Inout_ LPDATAOBJECT pDataObject,
+		_In_ LPCONTEXTMENUCALLBACK piCallback,
+		_Inout_ long *pInsertionAllowed)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IExtendContextMenuImpl::AddMenuItems\n"));
 
@@ -860,13 +926,16 @@ public:
 			hr = pT->m_pComponentData->GetDataClass(pDataObject, &pItem, &type);
 
 			if (SUCCEEDED(hr))
+			{
 				hr = pItem->AddMenuItems(piCallback, pInsertionAllowed, type);
+			}
 		}
 		return hr;
 	}
 
-	STDMETHOD(Command)(long lCommandID,
-		LPDATAOBJECT pDataObject)
+	STDMETHOD(Command)(
+		_In_ long lCommandID,
+		_Inout_ LPDATAOBJECT pDataObject)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IExtendContextMenuImpl::Command\n"));
 
@@ -883,19 +952,23 @@ public:
 			hr = pT->m_pComponentData->GetDataClass(pDataObject, &pItem, &type);
 
 			if (SUCCEEDED(hr))
+			{
 				hr = pItem->Command(lCommandID, (CSnapInObjectRootBase*)pT, type);
+			}
 		}
 		return hr;
 	}
 };
 
 template<class T>
-class ATL_NO_VTABLE IExtendPropertySheetImpl : public IExtendPropertySheet
+class ATL_NO_VTABLE IExtendPropertySheetImpl :
+	public IExtendPropertySheet
 {
 public:
-	STDMETHOD(CreatePropertyPages)(LPPROPERTYSHEETCALLBACK lpProvider,
-		LONG_PTR handle,
-		LPDATAOBJECT pDataObject)
+	STDMETHOD(CreatePropertyPages)(
+		_In_ LPPROPERTYSHEETCALLBACK lpProvider,
+		_In_ LONG_PTR handle,
+		_Inout_ LPDATAOBJECT pDataObject)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IExtendPropertySheetImpl::CreatePropertyPages\n"));
 
@@ -912,16 +985,17 @@ public:
 			hr = pT->m_pComponentData->GetDataClass(pDataObject, &pItem, &type);
 
 			if (SUCCEEDED(hr))
+			{
 				hr = pItem->CreatePropertyPages(lpProvider, handle, this, type);
+			}
 		}
 
 		return hr;
 	}
 
-	STDMETHOD(QueryPagesFor)(LPDATAOBJECT pDataObject)
+	STDMETHOD(QueryPagesFor)(_Inout_ LPDATAOBJECT pDataObject)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IExtendPropertySheetImpl::QueryPagesFor\n"));
-
 
 		HRESULT hr = E_POINTER;
 
@@ -936,17 +1010,20 @@ public:
 			hr = pT->m_pComponentData->GetDataClass(pDataObject, &pItem, &type);
 
 			if (SUCCEEDED(hr))
+			{
 				hr = pItem->QueryPagesFor(type);
+			}
 		}
 		return hr;
 	}
 };
 
 template <class T>
-class ATL_NO_VTABLE IExtendControlbarImpl : public IExtendControlbar
+class ATL_NO_VTABLE IExtendControlbarImpl :
+	public IExtendControlbar
 {
 public:
-	STDMETHOD(SetControlbar)(LPCONTROLBAR pControlbar)
+	STDMETHOD(SetControlbar)(_In_opt_ LPCONTROLBAR pControlbar)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IExtendControlbarImpl::SetControlbar\n"));
 		T* pT = static_cast<T*>(this);
@@ -970,14 +1047,15 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(ControlbarNotify)(MMC_NOTIFY_TYPE event,
-		LONG_PTR arg,
-		LONG_PTR param)
+	STDMETHOD(ControlbarNotify)(
+		_In_ MMC_NOTIFY_TYPE event,
+		_In_ LONG_PTR arg,
+		_In_ LONG_PTR param)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IExtendControlbarImpl::ControlbarNotify\n"));
 
 		CSnapInItem* pItem = NULL;
-		DATA_OBJECT_TYPES type;
+		DATA_OBJECT_TYPES type = CCT_UNINITIALIZED;
 		HRESULT hr = S_FALSE;
 		T* pT = static_cast<T*>(this);
 
@@ -986,8 +1064,7 @@ public:
 		else if (event == MMCN_SELECT)
 		{
 			hr = pT->m_pComponentData->GetDataClass((IDataObject*) param, &pItem, &type);
-			BOOL bSelect = (BOOL) HIWORD (arg);
-			BOOL bScope = (BOOL) LOWORD(arg); 
+			const BOOL bSelect = (BOOL) HIWORD (arg);
 			if (bSelect)
 			{
 				int n = pT->m_toolbarMap.GetSize();
@@ -1025,9 +1102,9 @@ public: \
 
 #define BEGIN_SNAPINCOMMAND_MAP(theClass, bIsExtension) \
 	HRESULT ProcessCommand(UINT nID, \
-		bool& bHandled, \
-		ATL::CSnapInObjectRootBase* pObj, \
-		DATA_OBJECT_TYPES type) \
+		_Out_ bool& bHandled, \
+		_In_opt_ ATL::CSnapInObjectRootBase* pObj, \
+		_In_ DATA_OBJECT_TYPES type) \
 	{ \
 			bHandled = true; \
 			HRESULT hr = S_OK;
@@ -1068,7 +1145,9 @@ struct CSnapInToolBarData
 	//WORD aItems[wItemCount]
 
 	WORD* items()
-		{ return (WORD*)(this+1); }
+	{
+		return (WORD*)(this+1);
+	}
 };
 
 #define RT_TOOLBAR  MAKEINTRESOURCE(241)
@@ -1076,7 +1155,7 @@ struct CSnapInToolBarData
 class CSnapInToolbarInfo
 {
 public:
-	void __stdcall CleanUp(DWORD_PTR /*dw*/)
+	void __stdcall CleanUp(_In_ DWORD_PTR /*dw*/)
 	{
 		if (m_pStrToolTip)
 		{
@@ -1133,7 +1212,8 @@ public: \
 	}
 
 template <class T, BOOL bIsExtension = FALSE>
-class ATL_NO_VTABLE CSnapInItemImpl : public CSnapInItem
+class ATL_NO_VTABLE CSnapInItemImpl :
+	public CSnapInItem
 {
 public:
 	CSnapInItemImpl()
@@ -1142,28 +1222,30 @@ public:
 
 	virtual ~CSnapInItemImpl()
 	{
-	}    
+	}
 
 public:
 
-	STDMETHOD(Notify)( MMC_NOTIFY_TYPE /*event*/,
-		LONG_PTR /*arg*/,
-		LONG_PTR /*param*/,
-		IComponentData* /*pComponentData*/,
-		IComponent* /*pComponent*/,
-		DATA_OBJECT_TYPES /*type*/)
+	STDMETHOD(Notify)(
+		_In_ MMC_NOTIFY_TYPE /*event*/,
+		_In_ LONG_PTR /*arg*/,
+		_In_ LONG_PTR /*param*/,
+		_Inout_opt_ IComponentData* /*pComponentData*/,
+		_Inout_opt_ IComponent* /*pComponent*/,
+		_In_ DATA_OBJECT_TYPES /*type*/)
 	{
 		ATLASSERT("Override Function in Derived Class");
 		ATLTRACENOTIMPL(_T("CSnapInItemImpl::Notify"));
 	}
 
-	STDMETHOD(GetScopePaneInfo)(SCOPEDATAITEM * /*pScopeDataItem*/)
+	STDMETHOD(GetScopePaneInfo)(_In_ SCOPEDATAITEM * /*pScopeDataItem*/)
 	{
 		ATLTRACENOTIMPL(_T("CSnapInItemImpl::GetScopePaneInfo"));
 	}
 
-	STDMETHOD(GetResultViewType)(LPOLESTR *ppViewType,
-		long *pViewOptions)
+	STDMETHOD(GetResultViewType)(
+		_Deref_out_opt_z_ LPOLESTR *ppViewType,
+		_Out_ long *pViewOptions)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("CSnapInItemImpl::GetResultViewType\n"));
 		*ppViewType = NULL;
@@ -1171,14 +1253,15 @@ public:
 		return S_FALSE;
 	}
 
-	STDMETHOD(GetResultPaneInfo)(RESULTDATAITEM * /*pResultDataItem*/)
+	STDMETHOD(GetResultPaneInfo)(_In_opt_ RESULTDATAITEM * /*pResultDataItem*/)
 	{
 		ATLTRACENOTIMPL(_T("CSnapInItemImpl::GetResultPaneInfo"));
 	}
 
-	STDMETHOD(AddMenuItems)(LPCONTEXTMENUCALLBACK piCallback,
-		long *pInsertionAllowed,
-		DATA_OBJECT_TYPES /*type*/)
+	STDMETHOD(AddMenuItems)(
+		_In_ LPCONTEXTMENUCALLBACK piCallback,
+		_Inout_ long *pInsertionAllowed,
+		_In_ DATA_OBJECT_TYPES /*type*/)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("CSnapInItemImpl::AddMenuItems\n"));
 		T* pT = static_cast<T*>(this);
@@ -1284,7 +1367,7 @@ public:
 					contextMenuItem.fSpecialFlags = 0;
 
 					HRESULT hr = piCallback->AddItem(&contextMenuItem);
-					hr;
+					DBG_UNREFERENCED_LOCAL_VARIABLE(hr);
 					ATLASSERT(SUCCEEDED(hr));
 				}
 			}
@@ -1297,34 +1380,37 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(Command)(long lCommandID,
-		CSnapInObjectRootBase* pObj,
-		DATA_OBJECT_TYPES type)
+	STDMETHOD(Command)(
+		_In_ long lCommandID,
+		_Inout_opt_ CSnapInObjectRootBase* pObj,
+		_In_ DATA_OBJECT_TYPES type)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("CSnapInItemImpl::Command\n"));
-		bool bHandled;
+		bool bHandled = false;
 		T* pT = static_cast<T*>(this);
 		return pT->ProcessCommand(lCommandID, bHandled, pObj, type);
 	}
 
-	STDMETHOD(CreatePropertyPages)(LPPROPERTYSHEETCALLBACK /*lpProvider*/,
-		LONG_PTR /*handle*/, 
-		IUnknown* /*pUnk*/,
-		DATA_OBJECT_TYPES /*type*/)
+	STDMETHOD(CreatePropertyPages)(
+		_In_ LPPROPERTYSHEETCALLBACK /*lpProvider*/,
+		_In_ LONG_PTR /*handle*/,
+		_Inout_opt_ IUnknown* /*pUnk*/,
+		_In_ DATA_OBJECT_TYPES /*type*/)
 	{
 		ATLASSERT("Override Function in Derived Class");
 		ATLTRACENOTIMPL(_T("CSnapInItemImpl::CreatePropertyPages"));
 	}
 
-	STDMETHOD(QueryPagesFor)(DATA_OBJECT_TYPES /*type*/)
+	STDMETHOD(QueryPagesFor)(_In_ DATA_OBJECT_TYPES /*type*/)
 	{
 		ATLASSERT("Override Function in Derived Class");
 		ATLTRACENOTIMPL(_T("CSnapInItemImpl::QueryPagesFor"));
 	}
 
-	STDMETHOD(SetControlbar)(IControlbar *pControlbar, 
-		IExtendControlbar* pExtendControlBar,
-		CSimpleMap<UINT, IUnknown*>* pToolbarMap)
+	STDMETHOD(SetControlbar)(
+		_Inout_ IControlbar *pControlbar,
+		_Inout_opt_ IExtendControlbar* pExtendControlBar,
+		_Inout_ CSimpleMap<UINT, IUnknown*>* pToolbarMap)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("CSnapInItemImpl::SetControlbar\n"));
 		static bool m_bAddTermFunc = false;
@@ -1374,9 +1460,8 @@ public:
 			if (pInfo->m_pnButtonID == NULL)
 				continue;
 
-			MMCBUTTON *pButtons = NULL;
-			ATLTRY(pButtons = new MMCBUTTON[pData->wItemCount]);
-			if (pButtons == NULL)
+			CAutoVectorPtr<MMCBUTTON> pButtons;
+			if (!pButtons.Allocate(pData->wItemCount))
 			{
 				delete []pInfo->m_pnButtonID;
 				pInfo->m_pnButtonID=NULL;
@@ -1394,8 +1479,6 @@ public:
 			{
 				delete []pInfo->m_pnButtonID;
 				pInfo->m_pnButtonID=NULL;
-				delete []pButtons;
-				pButtons=NULL;
 				continue;
 			}
 
@@ -1434,37 +1517,33 @@ public:
 				}
 			}
 
-			IToolbar* pToolbar;
+			CComPtr<IToolbar> pToolbar;
 			HRESULT hr = pControlbar->Create(TOOLBAR, pExtendControlBar, reinterpret_cast<LPUNKNOWN*>(&pToolbar));
 			if (SUCCEEDED(hr))
 			{
-
 				hr = pToolbar->AddBitmap(pData->wItemCount, hBitmap, pData->wWidth, pData->wHeight, RGB(192, 192, 192));
 				if (SUCCEEDED(hr))
 				{
 					hr = pToolbar->AddButtons(pData->wItemCount, pButtons);
 					if (SUCCEEDED(hr))
 					{
-						pToolbar->AddRef();
-						pToolbarMap->Add(pInfo->m_idToolbar, (IUnknown*)pToolbar);
+						pToolbarMap->Add(pInfo->m_idToolbar, pToolbar);
 					}
 				}
 			}
-			pToolbar->Release();
-			delete [] pButtons;
-			pButtons=NULL;
 		}
 		return S_OK;
 	}
 
-	STDMETHOD(ControlbarNotify)(IControlbar *pControlbar,
-		IExtendControlbar *pExtendControlbar,
-		CSimpleMap<UINT, IUnknown*>* pToolbarMap,
-		MMC_NOTIFY_TYPE event,
-		LONG_PTR arg, 
-		LONG_PTR param,
-		CSnapInObjectRootBase* pObj,
-		DATA_OBJECT_TYPES type)
+	STDMETHOD(ControlbarNotify)(
+		_Inout_ IControlbar *pControlbar,
+		_Inout_opt_ IExtendControlbar *pExtendControlbar,
+		_Inout_ CSimpleMap<UINT, IUnknown*>* pToolbarMap,
+		_In_ MMC_NOTIFY_TYPE event,
+		_In_ LONG_PTR arg,
+		_In_ LONG_PTR param,
+		_Inout_opt_ CSnapInObjectRootBase* pObj,
+		_In_ DATA_OBJECT_TYPES type)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("CSnapInItemImpl::ControlbarNotify\n"));
 		T* pT = static_cast<T*>(this);
@@ -1495,29 +1574,29 @@ public:
 					{
 						BOOL bEnable;
 						if (bSelect)
-							bEnable = pT->UpdateToolbarButton(pInfo->m_pnButtonID[i], 
+							bEnable = pT->UpdateToolbarButton(pInfo->m_pnButtonID[i],
 								ENABLED);
 						else
 							bEnable = FALSE;
 
-						pToolbar->SetButtonState(pInfo->m_pnButtonID[i], 
+						pToolbar->SetButtonState(pInfo->m_pnButtonID[i],
 							ENABLED, bEnable
 							);
-						pToolbar->SetButtonState(pInfo->m_pnButtonID[i], 
+						pToolbar->SetButtonState(pInfo->m_pnButtonID[i],
 							CHECKED,
-							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i], 
+							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i],
 								CHECKED));
-						pToolbar->SetButtonState(pInfo->m_pnButtonID[i], 
+						pToolbar->SetButtonState(pInfo->m_pnButtonID[i],
 							HIDDEN,
-							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i], 
+							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i],
 								HIDDEN));
-						pToolbar->SetButtonState(pInfo->m_pnButtonID[i], 
+						pToolbar->SetButtonState(pInfo->m_pnButtonID[i],
 							INDETERMINATE,
-							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i], 
+							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i],
 								INDETERMINATE));
-						pToolbar->SetButtonState(pInfo->m_pnButtonID[i], 
+						pToolbar->SetButtonState(pInfo->m_pnButtonID[i],
 							BUTTONPRESSED,
-							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i], 
+							pT->UpdateToolbarButton(pInfo->m_pnButtonID[i],
 								BUTTONPRESSED));
 					}
 				}
@@ -1533,7 +1612,7 @@ public:
 		return E_UNEXPECTED;
 	}
 
-	STDMETHOD(GetScopeData)(SCOPEDATAITEM **pScopeDataItem)
+	STDMETHOD(GetScopeData)(_Deref_out_ SCOPEDATAITEM **pScopeDataItem)
 	{
 		if (pScopeDataItem == NULL)
 			return E_FAIL;
@@ -1542,7 +1621,7 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(GetResultData)(RESULTDATAITEM **pResultDataItem)
+	STDMETHOD(GetResultData)(_Deref_out_ RESULTDATAITEM **pResultDataItem)
 	{
 		if (pResultDataItem == NULL)
 			return E_FAIL;
@@ -1550,8 +1629,11 @@ public:
 		*pResultDataItem = &m_resultDataItem;
 		return S_OK;
 	}
-
-	STDMETHOD(GetDataObject)(IDataObject** pDataObj, DATA_OBJECT_TYPES type)
+	
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(GetDataObject)(
+		_Deref_out_ IDataObject** pDataObj,
+		_In_ DATA_OBJECT_TYPES type)
 	{
 		ATLASSERT(pDataObj != NULL);
 		if (pDataObj == NULL)
@@ -1570,35 +1652,48 @@ public:
 		hr = pData->QueryInterface(__uuidof(IDataObject), (void**)(pDataObj));
 		return hr;
 	}
-
-	void UpdateMenuState(_In_ UINT /*id*/, _In_opt_z_ LPTSTR /*pBuf*/, UINT * /*flags*/)
+ATLPREFAST_UNSUPPRESS()
+	
+	void UpdateMenuState(
+		_In_ UINT /*id*/,
+		_In_opt_z_ LPTSTR /*pBuf*/,
+		_In_opt_ UINT * /*flags*/)
 	{
 		return;
 	}
 
-	void SetToolbarButtonInfo(UINT /*id*/, BYTE *pfsState, BYTE *pfsType)
+	void SetToolbarButtonInfo(
+		_In_ UINT /*id*/,
+		_Out_ BYTE *pfsState,
+		_Out_ BYTE *pfsType)
 	{
 		*pfsState = TBSTATE_ENABLED;
 		*pfsType = TBSTYLE_BUTTON;
 	}
 
-	BOOL UpdateToolbarButton(UINT /*id*/, BYTE fsState)
+	BOOL UpdateToolbarButton(
+		_In_ UINT /*id*/,
+		_In_ BYTE fsState)
 	{
 		if (fsState == ENABLED)
 			return TRUE;
 		return FALSE;
 	}
 
-	HRESULT ProcessCommand(UINT nID, 
-		bool& /*bHandled*/,
-		CSnapInObjectRootBase* /*pObj*/,
-		DATA_OBJECT_TYPES /*type*/)
+	HRESULT ProcessCommand(
+		_In_ UINT nID,
+		_In_ bool& /*bHandled*/,
+		_In_opt_ CSnapInObjectRootBase* /*pObj*/,
+		_In_ DATA_OBJECT_TYPES /*type*/)
 	{
+		UNREFERENCED_PARAMETER(nID);
 		ATLTRACE(atlTraceSnapin, 2, _T("No handler for item with ID %d\n"), nID);
 		return S_OK;
 	}
 
-	STDMETHOD (FillData)(CLIPFORMAT cf, LPSTREAM pStream)
+	STDMETHOD (FillData)(
+		_In_ CLIPFORMAT cf,
+		_Inout_ LPSTREAM pStream)
 	{
 		HRESULT hr = DV_E_CLIPFORMAT;
 		ULONG uWritten;
@@ -1636,7 +1731,8 @@ public:
 	{
 		return NULL;
 	}
-	static void _stdcall CleanUpToolbarInfo(DWORD_PTR dw)
+
+	static void _stdcall CleanUpToolbarInfo(_In_ DWORD_PTR dw)
 	{
 		for (CSnapInToolbarInfo* pInfo = T::GetToolbarInfo(); pInfo->m_idToolbar != 0; pInfo++)
 		{
@@ -1644,13 +1740,14 @@ public:
 		}
 	}
 
-
-	static const UINT GetMenuID() 
+	static const UINT GetMenuID()
 	{
 		return 0;
 	}
 
-	void SetMenuInsertionFlags(bool /*bBeforeInsertion*/, long* /*pInsertionAllowed*/)
+	void SetMenuInsertionFlags(
+		_In_ bool /*bBeforeInsertion*/,
+		_In_opt_ long* /*pInsertionAllowed*/)
 	{
 	}
 
@@ -1677,7 +1774,6 @@ public:
 	SCOPEDATAITEM m_scopeDataItem;
 	RESULTDATAITEM m_resultDataItem;
 };
-
 
 _declspec( selectany ) CLIPFORMAT CSnapInItem::m_CCF_NODETYPE = 0;
 _declspec( selectany ) CLIPFORMAT CSnapInItem::m_CCF_SZNODETYPE = 0;

@@ -2909,7 +2909,14 @@ void CMFCTasksPane::AdjustScroll()
 void CMFCTasksPane::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
-	CMemDC memDC(dc, this);
+	DoPaint(&dc);
+}
+
+void CMFCTasksPane::DoPaint(CDC* pDCPaint)
+{
+	ASSERT_VALID(pDCPaint);
+
+	CMemDC memDC(*pDCPaint, this);
 	CDC* pDC = &memDC.GetDC();
 
 	CRect rect;
@@ -3979,6 +3986,8 @@ BOOL CMFCTasksPane::CreateNavigationToolbar()
 
 	CSize sizeNavButton = sizeNavImage + CSize(nImageMargin, nImageMargin);
 
+	const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+
 	// -----------------------
 	// Load navigation images:
 	// -----------------------
@@ -3987,6 +3996,11 @@ BOOL CMFCTasksPane::CreateNavigationToolbar()
 		//----------------------
 		// Use default resource:
 		//----------------------
+		if (dblImageScale != 1.)
+		{
+			sizeNavButton = CSize((int)(.5 + dblImageScale * sizeNavButton.cx), (int)(.5 + dblImageScale * sizeNavButton.cy));
+		}
+
 		m_wndToolBar.SetLockedSizes(sizeNavButton, sizeNavImage);
 
 		BOOL bIsLoaded = m_wndToolBar.LoadBitmap(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_TASKPANE32 : IDB_AFXBARRES_TASKPANE, 0, 0, TRUE);
@@ -4006,6 +4020,11 @@ BOOL CMFCTasksPane::CreateNavigationToolbar()
 			{
 				sizeNavButton = sizeNavImage + CSize(nImageMargin, nImageMargin);
 			}
+		}
+
+		if (dblImageScale != 1.)
+		{
+			sizeNavButton = CSize((int)(.5 + dblImageScale * sizeNavButton.cx), (int)(.5 + dblImageScale * sizeNavButton.cy));
 		}
 
 		m_wndToolBar.SetLockedSizes(sizeNavButton, sizeNavImage);
@@ -4217,6 +4236,8 @@ void CMFCTasksPane::EnableNavigationToolbar(BOOL bEnable, UINT uiToolbarBmpRes, 
 
 	if (bReloadImages)
 	{
+		const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+
 		CSize sizeNavImage = afxGlobalData.Is32BitIcons() ? CSize(16, 16) : CSize(12, 12);
 		const int nImageMargin = 4;
 
@@ -4229,6 +4250,11 @@ void CMFCTasksPane::EnableNavigationToolbar(BOOL bEnable, UINT uiToolbarBmpRes, 
 			//----------------------
 			// Use default resource:
 			//----------------------
+			if (dblImageScale != 1.)
+			{
+				sizeNavButton = CSize((int)(.5 + dblImageScale * sizeNavButton.cx), (int)(.5 + dblImageScale * sizeNavButton.cy));
+			}
+
 			m_wndToolBar.SetLockedSizes(sizeNavButton, sizeNavImage);
 
 			BOOL bIsLoaded = m_wndToolBar.LoadBitmap(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_TASKPANE32 : IDB_AFXBARRES_TASKPANE, 0, 0, TRUE);
@@ -4248,6 +4274,11 @@ void CMFCTasksPane::EnableNavigationToolbar(BOOL bEnable, UINT uiToolbarBmpRes, 
 				{
 					sizeNavButton = sizeNavImage + CSize(nImageMargin, nImageMargin);
 				}
+			}
+
+			if (dblImageScale != 1.)
+			{
+				sizeNavButton = CSize((int)(.5 + dblImageScale * sizeNavButton.cx), (int)(.5 + dblImageScale * sizeNavButton.cy));
 			}
 
 			m_wndToolBar.SetLockedSizes(sizeNavButton, sizeNavImage);

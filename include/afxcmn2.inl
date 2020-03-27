@@ -75,8 +75,8 @@ _AFXCMN_INLINE BOOL CToolBarCtrl::SetMaxTextRows(int iMaxRows)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, TB_SETMAXTEXTROWS, iMaxRows, 0L); }
 _AFXCMN_INLINE void CToolBarCtrl::SetStyle(DWORD dwStyle)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, TB_SETSTYLE, 0, dwStyle); }
-_AFXCMN_INLINE BOOL CToolBarCtrl::GetButtonInfo(int nID, TBBUTTONINFO* ptbbi) const
-	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, TB_GETBUTTONINFO, nID, (LPARAM)ptbbi); }
+_AFXCMN_INLINE int CToolBarCtrl::GetButtonInfo(int nID, TBBUTTONINFO* ptbbi) const
+	{ ASSERT(::IsWindow(m_hWnd)); return (int) ::SendMessage(m_hWnd, TB_GETBUTTONINFO, nID, (LPARAM)ptbbi); }
 _AFXCMN_INLINE BOOL CToolBarCtrl::SetButtonInfo(int nID, TBBUTTONINFO* ptbbi)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, TB_SETBUTTONINFO, nID, (LPARAM)ptbbi); }
 _AFXCMN_INLINE DWORD CToolBarCtrl::SetDrawTextFlags(DWORD dwMask, DWORD dwDTFlags)

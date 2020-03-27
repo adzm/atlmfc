@@ -868,21 +868,16 @@ void CMultiPaneFrameWnd::SetDockState(CDockingManager* pDockManager)
 			CDockablePane* pNextBar = DYNAMIC_DOWNCAST(CDockablePane, lstModifiedControlBars.GetNext(pos));
 			ASSERT_VALID(pNextBar);
 
-			BOOL bShow = TRUE;
-			if (pNextBar->IsKindOf(RUNTIME_CLASS(CPane)))
-			{
-				bShow = !(((CPane *)pNextBar)->m_bRecentFloatingState);
-			}
+			BOOL bShow = pNextBar->GetRecentVisibleState();
 
 			if (bShow)
 			{
-				pNextBar->ShowPane(pNextBar->GetRecentVisibleState(), FALSE, FALSE);
-			}
-			else
-			{
 				SetDelayShow(TRUE);
 			}
-
+			
+			// show with delay
+			pNextBar->ShowPane(bShow, TRUE, FALSE);
+			
 			AddRemovePaneFromGlobalList(pNextBar, TRUE);
 		}
 
@@ -933,7 +928,11 @@ void CMultiPaneFrameWnd::OnShowPane(CDockablePane* pBar, BOOL bShow)
 
 	if (bShow)
 	{
-		ShowWindow(SW_SHOWNOACTIVATE);
+		if (!m_bDelayShow)
+		{
+			ShowWindow(SW_SHOWNOACTIVATE);
+		}
+
 		OnSetRollUpTimer();
 	}
 	else if (!m_barContainerManager.IsRootPaneContainerVisible())

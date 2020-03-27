@@ -1573,7 +1573,7 @@ void CMFCToolBarComboBoxEdit::OnContextMenu(CWnd* pWnd, CPoint point)
 
 		}
 
-		HMENU hMenu = ::LoadMenu(hInst, MAKEINTRESOURCE(m_combo.m_uiMenuResID));
+		HMENU hMenu = ::LoadMenuW(hInst, MAKEINTRESOURCEW(m_combo.m_uiMenuResID));
 		if (hMenu == NULL)
 		{
 			CEdit::OnContextMenu(pWnd, point) ;
@@ -1700,6 +1700,11 @@ BOOL CMFCToolBarComboBoxButton::OnUpdateToolTip(CWnd* pWndParent, int iButtonInd
 		return FALSE;
 	}
 
+	if (!CMFCToolBar::GetShowTooltips ())
+	{
+		return FALSE;
+	}
+
 	CString strTips;
 
 	if (OnGetCustomToolTipText(strTips))
@@ -1795,5 +1800,3 @@ void CMFCToolBarComboBoxEdit::OnPaint()
 
 	dc.SelectObject(pOldFont);
 }
-
-

@@ -1,4 +1,3 @@
-
 // This is a part of the Active Template Library.
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -109,6 +108,14 @@ namespace Define_the_symbol__ATL_MIXED
 #endif
 #endif
 
+
+//PREFAST support static_assert from version 16.00
+#if defined(_PREFAST_) && (_MSC_VER < 1600)
+#define ATLSTATIC_ASSERT(expr, comment)
+#else 
+#define ATLSTATIC_ASSERT(expr, comment)		static_assert(expr, comment)
+#endif
+
 #ifdef _WIN64
 #define _ATL_SUPPORT_VT_I8  // Always support VT_I8 on Win64.
 #endif
@@ -217,7 +224,7 @@ So we've done a broad replace of all the member-related ATLASSERT to ATLASSUME.
 #define ATLENSURE_THROW(expr, hr)          \
 do {                                       \
 	int __atl_condVal=!!(expr);            \
-	ATLASSERT(__atl_condVal);              \
+	ATLASSUME(__atl_condVal);              \
 	if(!(__atl_condVal)) AtlThrow(hr);     \
 } while (0)
 #endif // ATLENSURE_THROW
@@ -501,18 +508,18 @@ this end
 // Master version numbers
 
 #define _ATL     1      // Active Template Library
-#define _ATL_VER 0x0900 // Active Template Library version 9.00
+#define _ATL_VER 0x0A00 // Active Template Library version 10.00
 
 #ifndef _ATL_FILENAME_VER
-#define _ATL_FILENAME_VER "90"
+#define _ATL_FILENAME_VER "100"
 #endif
 
 #ifndef _ATL_FILENAME_VER_NUM
-#define _ATL_FILENAME_VER_NUM 90
+#define _ATL_FILENAME_VER_NUM 100
 #endif
 
 #ifndef _ATL_VER_RBLD
-#define _ATL_VER_RBLD "9.00"
+#define _ATL_VER_RBLD "10.00"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -573,8 +580,8 @@ this end
 // #define ATLAXWIN_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWin, _ATL_FILENAME_VER_NUM))
 // #define ATLAXWINLIC_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWinLic, _ATL_FILENAME_VER_NUM))
 
-#define ATLAXWIN_CLASS "AtlAxWin90"
-#define ATLAXWINLIC_CLASS "AtlAxWinLic90"
+#define ATLAXWIN_CLASS "AtlAxWin100"
+#define ATLAXWINLIC_CLASS "AtlAxWinLic100"
 
 #if defined(_ATL_SECURE_NO_DEPRECATE) && !defined(_ATL_SECURE_NO_WARNINGS)
 #define _ATL_SECURE_NO_WARNINGS
@@ -594,7 +601,7 @@ This is called when something really bad happens -- so bad
 that we consider it dangerous to even throw an exception
 */
 #ifndef _ATL_FATAL_SHUTDOWN
-#define _ATL_FATAL_SHUTDOWN do { ::TerminateProcess(::GetCurrentProcess(), 0); } while(0);
+#define _ATL_FATAL_SHUTDOWN do { ::TerminateProcess(::GetCurrentProcess(), 0); } while(0)
 #endif
 
 //ATL/MFC code should use standard pointer to member standard syntax &MyClass::MyMethod, instead
@@ -643,28 +650,11 @@ that we consider it dangerous to even throw an exception
 #define ATL_RT_GROUP_ICON   ATL_MAKEINTRESOURCE((ULONG_PTR)ATL_RT_ICON + ATL_DIFFERENCE)
 #define ATL_RT_VERSION      ATL_MAKEINTRESOURCE(16)
 #define ATL_RT_DLGINCLUDE   ATL_MAKEINTRESOURCE(17)
-#if(WINVER >= 0x0400)
 #define ATL_RT_PLUGPLAY     ATL_MAKEINTRESOURCE(19)
 #define ATL_RT_VXD          ATL_MAKEINTRESOURCE(20)
 #define ATL_RT_ANICURSOR    ATL_MAKEINTRESOURCE(21)
 #define ATL_RT_ANIICON      ATL_MAKEINTRESOURCE(22)
-#endif /* WINVER >= 0x0400 */
 #define ATL_RT_HTML         ATL_MAKEINTRESOURCE(23)
-#ifdef RC_INVOKED
-#define ATL_RT_MANIFEST                        24
-#define ATL_CREATEPROCESS_MANIFEST_RESOURCE_ID  1
-#define ATL_ISOLATIONAWARE_MANIFEST_RESOURCE_ID 2
-#define ATL_ISOLATIONAWARE_NOSTATICIMPORT_MANIFEST_RESOURCE_ID 3
-#define ATL_MINIMUM_RESERVED_MANIFEST_RESOURCE_ID 1   /* inclusive */
-#define ATL_MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID 16  /* inclusive */
-#else  /* RC_INVOKED */
-#define ATL_RT_MANIFEST                        ATL_MAKEINTRESOURCE(24)
-#define ATL_CREATEPROCESS_MANIFEST_RESOURCE_ID ATL_MAKEINTRESOURCE( 1)
-#define ATL_ISOLATIONAWARE_MANIFEST_RESOURCE_ID ATL_MAKEINTRESOURCE(2)
-#define ATL_ISOLATIONAWARE_NOSTATICIMPORT_MANIFEST_RESOURCE_ID ATL_MAKEINTRESOURCE(3)
-#define ATL_MINIMUM_RESERVED_MANIFEST_RESOURCE_ID ATL_MAKEINTRESOURCE( 1 /*inclusive*/)
-#define ATL_MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID ATL_MAKEINTRESOURCE(16 /*inclusive*/)
-#endif /* RC_INVOKED */
 
 /* sal.h stuff that is not in the current LKG */
 #ifndef __out_ecount_part_z
@@ -682,6 +672,36 @@ that we consider it dangerous to even throw an exception
 #ifndef __out_bcount_part_z
 #define __out_bcount_part_z(size,length)                        __out_bcount_part(size,length) __post __nullterminated
 #endif
+
+#define ATLPREFAST_SUPPRESS(x) __pragma(warning(push)) __pragma(warning(disable: x))
+#define ATLPREFAST_UNSUPPRESS() __pragma(warning(pop))
+	
+#ifndef _FormatMessage_format_string_
+#define _FormatMessage_format_string_
+#endif
+	
+/* 
+	Helper functions for SAL annotation
+*/
+namespace ATL {
+
+template < typename T >
+_Ret_opt_bytecap_(dwLen) inline __declspec(noalias) T* SAL_Assume_bytecap_for_opt_(
+	_Out_opt_cap_c_(0) T* buf, 
+	_In_ size_t dwLen)
+{
+	(void)(dwLen);
+	return buf;
+}
+
+template < typename T >
+_Ret_z_ inline __declspec(noalias) T* SAL_Assume_notnull_for_opt_z_(_In_opt_z_ T* buf)
+{
+	ATLASSUME(buf!=0);
+	return buf;
+}		
+
+} // namespace ATL
 
 #endif // __ATLDEF_H__
 

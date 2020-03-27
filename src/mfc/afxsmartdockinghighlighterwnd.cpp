@@ -43,13 +43,13 @@ void CSmartDockingHighlighterWnd::Create(CWnd* pwndOwner)
 	CRect rect;
 	rect.SetRectEmpty();
 
-	DWORD dwExStyle = (afxGlobalData.IsWindowsLayerSupportAvailable() && afxGlobalData.m_nBitsPerPixel > 8) ? WS_EX_LAYERED : 0;
+	DWORD dwExStyle = (afxGlobalData.m_nBitsPerPixel > 8) ? WS_EX_LAYERED : 0;
 
 	CreateEx(dwExStyle, GetSmartDockingWndClassName<0>(), _T(""), WS_POPUP, rect, pwndOwner, NULL);
 
 	if (dwExStyle == WS_EX_LAYERED)
 	{
-		afxGlobalData.SetLayeredAttrib(GetSafeHwnd(), 0, 100, LWA_ALPHA);
+		SetLayeredWindowAttributes(0, 100, LWA_ALPHA);
 	}
 
 	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
@@ -165,7 +165,7 @@ void CSmartDockingHighlighterWnd::OnPaint()
 
 	COLORREF colorFill = m_bUseThemeColorInShading ? afxGlobalData.clrActiveCaption : RGB(47, 103, 190);
 
-	if (afxGlobalData.IsWindowsLayerSupportAvailable() && afxGlobalData.m_nBitsPerPixel > 8)
+	if (afxGlobalData.m_nBitsPerPixel > 8)
 	{
 		CBrush brFill(CDrawingManager::PixelAlpha(colorFill, 105));
 		dc.FillRect(rect, &brFill);
@@ -189,6 +189,3 @@ BOOL CSmartDockingHighlighterWnd::OnEraseBkgnd(CDC* /*pDC*/)
 {
 	return TRUE;
 }
-
-
-

@@ -48,26 +48,36 @@ AFX_MODULE_STATE* AFXAPI AfxSetModuleState(AFX_MODULE_STATE* pNewState) throw()
 	}
 }
 
+// AFX_MAINTAIN_STATE functions
+
+AFX_MAINTAIN_STATE::AFX_MAINTAIN_STATE(AFX_MODULE_STATE* pNewState)
+{
+	m_pPrevModuleState = AfxSetModuleState(pNewState);
+}
+
 AFX_MAINTAIN_STATE::~AFX_MAINTAIN_STATE()
 {
 	AFX_BEGIN_DESTRUCTOR
 
-		_AFX_THREAD_STATE* pState = _afxThreadState;
-		ASSERT(pState);
-		if(pState)
-		{
-			pState->m_pModuleState = m_pPrevModuleState;
-		}
+	_AFX_THREAD_STATE* pState = _afxThreadState;
+	ASSERT(pState);
+	if(pState)
+	{
+		pState->m_pModuleState = m_pPrevModuleState;
+	}
 
 	AFX_END_DESTRUCTOR
 }
 #endif //_AFXDLL
+
+// AFX_MAINTAIN_STATE2 functions
 
 AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2(AFX_MODULE_STATE* pNewState) throw()
 {
 #ifdef _AFXDLL
 	m_pThreadState = _afxThreadState.GetData();
 	ASSERT(m_pThreadState);
+
 	if(m_pThreadState)
 	{
 		m_pPrevModuleState = m_pThreadState->m_pModuleState;
@@ -85,11 +95,29 @@ AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2(AFX_MODULE_STATE* pNewState) throw()
 	if (AfxGetAmbientActCtx() && 
 		pNewState->m_hActCtx != INVALID_HANDLE_VALUE)
 	{
-		m_bValidActCtxCookie = AfxActivateActCtx(pNewState->m_hActCtx, &m_ulActCtxCookie);
+		m_bValidActCtxCookie = ActivateActCtx(pNewState->m_hActCtx, &m_ulActCtxCookie);
 	}
 	else
 	{
 		m_bValidActCtxCookie = FALSE;
+	}
+}
+
+AFX_MAINTAIN_STATE2::~AFX_MAINTAIN_STATE2()
+{
+#ifdef _AFXDLL
+	// Not a good place to report errors here, so just be safe
+	if(m_pThreadState)
+	{
+		m_pThreadState->m_pModuleState = m_pPrevModuleState;
+	}
+#endif
+
+	if (m_bValidActCtxCookie)
+	{
+		BOOL bRet;
+		bRet = DeactivateActCtx(0, m_ulActCtxCookie);
+		ASSERT(bRet == TRUE);
 	}
 }
 
@@ -195,90 +223,40 @@ AFX_MODULE_STATE::AFX_MODULE_STATE(BOOL bDLL)
 	m_bInitNetworkAddressControlCalled = FALSE;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// Activation Context API wrappers
-
-#define AFX_ACTCTX_API_INIT_PROCPTR(hKernel,name) \
-	pfn##name = (PFN_##name) GetProcAddress(hKernel, #name)\
-	
-
-/////////////////////////////////////////////////////////////////////////////
-// Global function pointers for Context (WinSxS/Manifest) API, to be init during MFC global init.
-#define AFX_ACTCTX_API_PTR_DEFINE(name, type, params) \
-	typedef type (WINAPI* PFN_##name)params; \
-	PFN_##name pfn##name = NULL;
-
-AFX_ACTCTX_API_PTR_DEFINE(CreateActCtxW, HANDLE, (PCACTCTXW));
-AFX_ACTCTX_API_PTR_DEFINE(ReleaseActCtx, void, (HANDLE));
-AFX_ACTCTX_API_PTR_DEFINE(ActivateActCtx, BOOL, (HANDLE, ULONG_PTR*));
-AFX_ACTCTX_API_PTR_DEFINE(DeactivateActCtx, BOOL, (DWORD, ULONG_PTR));
-
-AFX_STATIC void AFXAPI _AfxInitContextAPI()
-{
-	static HMODULE hKernel = NULL;
-	if (hKernel == NULL)
-	{
-		hKernel = GetModuleHandle(_T("KERNEL32"));
-		ENSURE(hKernel != NULL);
-		AFX_ACTCTX_API_INIT_PROCPTR(hKernel,CreateActCtxW);
-		AFX_ACTCTX_API_INIT_PROCPTR(hKernel,ReleaseActCtx);
-		AFX_ACTCTX_API_INIT_PROCPTR(hKernel,ActivateActCtx);
-		AFX_ACTCTX_API_INIT_PROCPTR(hKernel,DeactivateActCtx);	
-	}
-}
-
-#if (_WIN32_WINNT >= 0x0500) || (_WIN32_FUSION >= 0x0100)
 HANDLE AFXAPI AfxCreateActCtxW(PCACTCTXW pActCtx)
-{	
-	HANDLE hCtx = pfnCreateActCtxW != 0 ? pfnCreateActCtxW(pActCtx) : INVALID_HANDLE_VALUE;
+{
+	HANDLE hCtx = CreateActCtxW(pActCtx);
 	return hCtx;
 }
-#else
-HANDLE AFXAPI AfxCreateActCtxW(void *pActCtx)
-{	
-	HANDLE hCtx = pfnCreateActCtxW != 0 ? pfnCreateActCtxW(pActCtx) : INVALID_HANDLE_VALUE;
-	return hCtx;
-}
-#endif
 
 void AFXAPI AfxReleaseActCtx(HANDLE hActCtx)
-{	
-	if (pfnReleaseActCtx != 0)
-	{
-		pfnReleaseActCtx(hActCtx);
-	}
+{
+	ReleaseActCtx(hActCtx);
 }
 
-BOOL AFXAPI AfxActivateActCtx(HANDLE hActCtx, ULONG_PTR *lpCookie) 
-{	
-	BOOL rc = pfnActivateActCtx != 0 ? pfnActivateActCtx(hActCtx, lpCookie) : FALSE;	
+BOOL AFXAPI AfxActivateActCtx(HANDLE hActCtx, ULONG_PTR *lpCookie)
+{
+	BOOL rc = ActivateActCtx(hActCtx, lpCookie);
 	return rc;
 }
 
 BOOL AFXAPI AfxDeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie)
-{	
-	BOOL rc = pfnDeactivateActCtx != 0 ? pfnDeactivateActCtx(dwFlags, ulCookie) : FALSE;
+{
+	BOOL rc = DeactivateActCtx(dwFlags, ulCookie);
 	return rc;
 }
 
 eActCtxResult AFXAPI AfxActivateActCtxWrapper(HANDLE hActCtx, ULONG_PTR *lpCookie)
 {
 	ENSURE_ARG(lpCookie!=NULL);
-	eActCtxResult eResult=ActCtxFailed;
-	if (pfnActivateActCtx != 0)
-	{ 
-		eResult=AfxActivateActCtx(hActCtx, lpCookie) ? ActCtxSucceeded : ActCtxFailed;
-	} else
-	{		
-		eResult=ActCtxNoFusion;
-	}
-		
-	return eResult;	
+
+	eActCtxResult eResult = ActivateActCtx(hActCtx, lpCookie) ? ActCtxSucceeded : ActCtxFailed;
+
+	return eResult;
 }
 
 void AFX_MODULE_STATE::CreateActivationContext()
 {
-	_AfxInitContextAPI();
 	HMODULE hModule = m_hCurrentInstanceHandle;
 
 	WCHAR rgchFullModulePath[MAX_PATH + 2];
@@ -302,16 +280,16 @@ void AFX_MODULE_STATE::CreateActivationContext()
 	actCtx.lpSource = rgchFullModulePath;
 	actCtx.lpResourceName =  MAKEINTRESOURCEW(ISOLATIONAWARE_MANIFEST_RESOURCE_ID);
 	actCtx.hModule = hModule;
-	m_hActCtx = AfxCreateActCtxW(&actCtx);
+	m_hActCtx = CreateActCtxW(&actCtx);
 	if (m_hActCtx == INVALID_HANDLE_VALUE)
 	{		
 		actCtx.lpResourceName =  MAKEINTRESOURCEW(ISOLATIONAWARE_NOSTATICIMPORT_MANIFEST_RESOURCE_ID);
-		m_hActCtx = AfxCreateActCtxW(&actCtx);
+		m_hActCtx = CreateActCtxW(&actCtx);
 	}
 	if (m_hActCtx == INVALID_HANDLE_VALUE)
 	{		
 		actCtx.lpResourceName =  MAKEINTRESOURCEW(CREATEPROCESS_MANIFEST_RESOURCE_ID);
-		m_hActCtx = AfxCreateActCtxW(&actCtx);
+		m_hActCtx = CreateActCtxW(&actCtx);
 	}
 	if (m_hActCtx == INVALID_HANDLE_VALUE)
 	{
@@ -336,10 +314,11 @@ AFX_MODULE_STATE::~AFX_MODULE_STATE()
 	delete m_pDllIsolationWrappers[_AFX_COMCTL32_ISOLATION_WRAPPER_INDEX];
 #endif
 	delete m_pDllIsolationWrappers[_AFX_COMMDLG_ISOLATION_WRAPPER_INDEX];
+	delete m_pDllIsolationWrappers[_AFX_SHELL_ISOLATION_WRAPPER_INDEX];
 	delete [] m_pDllIsolationWrappers;
 	if (m_hActCtx != NULL && m_hActCtx != INVALID_HANDLE_VALUE)
 	{
-		AfxReleaseActCtx(m_hActCtx);
+		ReleaseActCtx(m_hActCtx);
 		m_hActCtx = INVALID_HANDLE_VALUE;
 	}
 }

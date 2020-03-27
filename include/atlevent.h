@@ -19,52 +19,63 @@
 		#error ATL requires C++ compilation (use a .cpp suffix)
 #endif
 
-struct __EventingCriticalSectionStub {
-   void Lock() {}
-   void Unlock() {}
+#if _WIN32_WINNT < 0x0403
+#error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
+#endif
+
+struct __EventingCriticalSectionStub 
+{
+   void Lock()
+   {
+   }
+   void Unlock()
+   {
+   }
 };
 
-struct __EventingCriticalSectionAuto {
-	void EmitError(_In_z_ TCHAR* csError) {
+struct __EventingCriticalSectionAuto 
+{
+private:
+	void EmitError(_In_ DWORD dwLastError)
+	{
 		static const int nMax = 256;
-		static const TCHAR szMessage[] = _T("cannot initialize critical section(Error ");
-		static const int nMessageLen = sizeof(szMessage)/sizeof(szMessage[0]) - 1;
-		TCHAR buf[nMax];
-		::ATL::Checked::tcscpy_s( buf, _countof(buf), szMessage ); // the buffer is large enough, no need to check the return value
-		::ATL::Checked::tcsncpy_s( buf + nMessageLen, _countof(buf) - nMessageLen, csError, _TRUNCATE);
-		MessageBox(0, buf, 0, MB_OK | MB_ICONHAND);
-	}
-	void Lock() {
-#if (_WIN32_WINNT < 0x0501)
-		__try {
-#endif
-			EnterCriticalSection(&m_sec);
-#if (_WIN32_WINNT < 0x0501)
-		} __except(STATUS_NO_MEMORY == GetExceptionCode()) {
-			TCHAR* csError = _T("E_OUTOFMEMORY");
-			EmitError(csError);
+		TCHAR pszMessage[nMax];
+
+		if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwLastError,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),(LPTSTR)&pszMessage, nMax, NULL)) {
+
+			static const TCHAR szDefaultMessage[] = _T("cannot initialize critical section");
+
+			::ATL::Checked::tcscpy_s(pszMessage, _countof(pszMessage), szDefaultMessage);
 		}
-#endif
+
+		MessageBox(0, pszMessage, 0, MB_OK | MB_ICONHAND);
 	}
-	void Unlock() {
+public:
+	void Lock()
+	{
+		EnterCriticalSection(&m_sec);
+	}
+	void Unlock()
+	{
 		LeaveCriticalSection(&m_sec);
 	}
-	__EventingCriticalSectionAuto() {
-		__try {
-			InitializeCriticalSection(&m_sec);
-		} __except(STATUS_NO_MEMORY == GetExceptionCode()) {
-			TCHAR* csError = _T("E_OUTOFMEMORY");
-			EmitError(csError);
+	__EventingCriticalSectionAuto()
+	{
+		if (!InitializeCriticalSectionAndSpinCount(&m_sec, 0)) {
+			EmitError(GetLastError());
 		}
 	}
-	~__EventingCriticalSectionAuto() { 
-		DeleteCriticalSection(&m_sec); 
+	~__EventingCriticalSectionAuto()
+	{
+		DeleteCriticalSection(&m_sec);
 	}
 	CRITICAL_SECTION m_sec;
 };
 
 template <class T>
-struct __eventingGetAddr {
+struct __eventingGetAddr 
+{
 	typedef void (T::*pmfn_type) ();
 	typedef void (*pgfn_type) ();
 	union U {
@@ -72,35 +83,43 @@ struct __eventingGetAddr {
 		void (T::*pmfn)();
 		void (*pgfn)();
 	};
-	static pmfn_type __getMAddr(void *addr) {
+	static pmfn_type __getMAddr(_In_ void *addr)
+	{
 		U u;
 		u.addr = addr;
 		return u.pmfn;
 	}
-	static void* __getVAddr(pmfn_type pmfn) {
+	static void* __getVAddr(_In_ pmfn_type pmfn)
+	{
 		U u;
 		u.pmfn = pmfn;
 		return u.addr;
 	}
-	static pgfn_type __getSMAddr(void *addr) {
+	static pgfn_type __getSMAddr(_In_ void *addr)
+	{
 		U u;
 		u.addr = addr;
 		return u.pgfn;
 	}
-	static void* __getSVAddr(pgfn_type pgfn) {
+	static void* __getSVAddr(_In_ pgfn_type pgfn)
+	{
 		U u;
 		u.pgfn = pgfn;
 		return u.addr;
 	}
 };
 
-struct __eventNode {
-	virtual int __isEqual(void*, void*) = 0;
-	virtual int __isEqual(void*) = 0;
+struct __eventNode 
+{
+	virtual int __isEqual(
+		_In_ void*,
+		_In_ void*) = 0;
+	virtual int __isEqual(_In_ void*) = 0;
 	__eventNode* next;
 };
 
-struct __eventMainNode {
+struct __eventMainNode 
+{
 	int key;
 	__eventNode* root_node;
 	__eventMainNode* next_event;
@@ -110,7 +129,11 @@ struct __eventMainNode {
 //
 // pvargSrc should only contain the memory for a VARIANT
 //
-inline HRESULT WINAPI __VariantChangeType(/*[in,out]*/VARIANTARG*& pvargDest, /*[in]*/VARIANTARG* pvargSrc, VARTYPE vt) {
+inline HRESULT WINAPI __VariantChangeType(
+	_Inout_ VARIANTARG*& pvargDest,
+	_In_ VARIANTARG* pvargSrc,
+	_In_ VARTYPE vt)
+{
 	ATLASSERT(pvargDest != 0 && pvargSrc != 0);
 	if( pvargDest == 0 || pvargSrc == 0 )
 		return E_INVALIDARG;
@@ -129,12 +152,16 @@ inline HRESULT WINAPI __VariantChangeType(/*[in,out]*/VARIANTARG*& pvargDest, /*
 	return hr;
 }
 
-HRESULT WINAPI _com_handle_excepinfo(EXCEPINFO& excepInfo, IErrorInfo** pperrinfo);
+HRESULT WINAPI _com_handle_excepinfo(
+	_In_ EXCEPINFO& excepInfo,
+	_Deref_out_ IErrorInfo** pperrinfo);
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL {
 
-    inline HRESULT AtlExcepInfoFromErrorInfo(HRESULT hrInvoke, EXCEPINFO *pExcepInfo)
+    inline HRESULT AtlExcepInfoFromErrorInfo(
+		_In_ HRESULT hrInvoke,
+		_Inout_ EXCEPINFO *pExcepInfo)
     {
         if (pExcepInfo == NULL)
         {
@@ -157,8 +184,13 @@ namespace ATL {
         return hr;
     }
 
-	inline HRESULT
-	__ComInvokeEventHandler(IDispatch* pDispatch, DISPID id, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult) {
+	inline HRESULT __ComInvokeEventHandler(
+		_Inout_ IDispatch* pDispatch,
+		_In_ DISPID id,
+		_In_ WORD wFlags,
+		_In_ DISPPARAMS *pDispParams,
+		_Out_opt_ VARIANT *pVarResult)
+	{
 		if (pVarResult != 0) {
 			::VariantInit(pVarResult);
 		}
@@ -177,18 +209,27 @@ namespace ATL {
 		return hr;
 	}
 
-	struct __EventHandlerProxy {
-		virtual HRESULT CDECL __eventHandlerProxy(int idx, ...) = 0;
+	struct __EventHandlerProxy 
+	{
+		virtual HRESULT CDECL __eventHandlerProxy(_In_ int idx, ...) = 0;
 	};
-	struct __EventHandlerNodeProxy {
-		virtual int __Index(int i) = 0;
+	struct __EventHandlerNodeProxy 
+	{
+		virtual int __Index(_In_ int i) = 0;
 	};
 	template <typename T /*super*/>
-	class __ComEventingImpl : public __EventHandlerProxy {
+	class __ComEventingImpl : 
+		public __EventHandlerProxy 
+	{
 		enum { __InvalidIndex = -1 };
 		struct __ComEventingNode : __EventHandlerNodeProxy {
-			__ComEventingNode(T* pThis = 0, IUnknown* pSource = 0, IUnknown* pSink = 0,
-				const _GUID* pGuid = 0, int nSize = 0) {
+			__ComEventingNode(
+				_In_opt_ T* pThis = 0,
+				_In_opt_ IUnknown* pSource = 0,
+				_In_opt_ IUnknown* pSink = 0,
+				_In_opt_ const _GUID* pGuid = 0,
+				_In_ int nSize = 0)
+			{
 				__pThis = pThis;
 				__nHooks = 0;
 				__dwAdvise = 0;
@@ -201,7 +242,7 @@ namespace ATL {
 				__proxyIndex = new int[__nArraySize];
 				memset(__proxyIndex, 0xff, __nArraySize*sizeof(int));
 			}
-			int __Index(int i) {
+			int __Index(_In_ int i) {
 				return __proxyIndex[i];
 			}
 			T* __pThis;
@@ -234,7 +275,13 @@ namespace ATL {
 			}
 		}
 		template <typename U /*interface*/>
-		HRESULT __WhichThis(IUnknown* pS, T* pThis, int nSize, bool bNext, int idx) {
+		HRESULT __WhichThis(
+			_In_ IUnknown* pS,
+			_In_ T* pThis,
+			_In_ int nSize,
+			_In_ bool bNext,
+			_In_ int idx)
+		{
 			if (bNext) {
 				 if (__pCurrent != 0) {
 					 __pCurrent = __pCurrent->__pNext;
@@ -287,7 +334,13 @@ namespace ATL {
 			return S_OK;
 		}
 		template <typename U /*interface*/>
-		HRESULT __AddHandler(T* pThis, int idxSink, IUnknown* pS, int idx, int nSize) {
+		HRESULT __AddHandler(
+			_In_ T* pThis,
+			_In_ int idxSink,
+			_Inout_ IUnknown* pS,
+			_In_ int idx,
+			_In_ int nSize)
+		{
 			if (pS == 0 || pThis == 0) {
 				return E_FAIL;
 			}
@@ -313,7 +366,11 @@ namespace ATL {
 			return S_OK;
 		}
 		template <typename U /*interface*/>
-		HRESULT __RemoveHandler(T* pThis, IUnknown* pS, int idx) {
+		HRESULT __RemoveHandler(
+			_In_ T* pThis,
+			_In_ IUnknown* pS,
+			_In_ int idx)
+		{
 			bool bNext = false;
 			bool bDone = false;
 			while (!bDone) {
@@ -338,7 +395,10 @@ namespace ATL {
 			}
 			return S_OK;
 		}
-		HRESULT __RemoveAllHandlers(IUnknown* pS, const _GUID* pIID) {
+		HRESULT __RemoveAllHandlers(
+			_In_opt_ IUnknown* pS,
+			_In_opt_ const _GUID* pIID)
+		{
 			HRESULT hr = E_FAIL;
 			__pCurrent = __pFirst;
 			while (1) {
@@ -362,7 +422,10 @@ namespace ATL {
 
 	class __ComEventingImpl_LD {
 		struct __EventCookieNode {
-			__EventCookieNode(IUnknown* pS = 0, const _GUID* pG = 0) {
+			__EventCookieNode(
+				_In_opt_ IUnknown* pS = 0,
+				_In_opt_ const _GUID* pG = 0)
+			{
 				__nextCookie = 0;
 				__dwAdvise = 0;
 				__pSource = pS;
@@ -374,7 +437,11 @@ namespace ATL {
 			_GUID* __pGuid;
 		} *__EventCookies;
 	public:
-		HRESULT __Advise(IUnknown* pSrc, IUnknown* pSink, const IID& iid) {
+		HRESULT __Advise(
+			_Inout_ IUnknown* pSrc,
+			_Inout_opt_ IUnknown* pSink,
+			_In_ const IID& iid)
+		{
 			__EventCookieNode* pRoot = __EventCookies;
 			while (pRoot != 0) {
 				if (pRoot->__pSource.IsEqualObject(pSrc)
@@ -393,7 +460,10 @@ namespace ATL {
 			}
 			return AtlAdvise(pSrc, pSink, iid, &pRoot->__dwAdvise);
 		}
-		HRESULT __Unadvise(IUnknown* pSrc, const IID& iid) {
+		HRESULT __Unadvise(
+			_Inout_ IUnknown* pSrc,
+			_In_ const IID& iid)
+		{
 			__EventCookieNode* pRoot = __EventCookies;
 			__EventCookieNode* pTheOne = 0;
 			while (pRoot != 0) {

@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef ATLDEBUG_SHAREDMEORY_ALLOCATOR_HEADER
@@ -34,7 +34,7 @@ class CAtlAllocator
 {
 public:
 	CAtlAllocator() :
-		m_dwPageSize(0), 
+		m_dwPageSize(0),
 		m_hMap(NULL),
 		m_bValid(false),
 		m_pProcess(NULL),
@@ -42,41 +42,53 @@ public:
 	{
 	}
 
-	~CAtlAllocator() 
+	~CAtlAllocator()
 	{
 		Close();
 	}
 
-	bool Init(const CHAR *pszFileMappingName, DWORD dwMaxSize);
-	bool Open(const CHAR *pszFileMappingName);
-	void Close(bool bForceUnmap = false);
-	bool IsValid() const {return m_bValid;}
+	bool Init(
+		_In_z_ const CHAR *pszFileMappingName,
+		_In_ DWORD dwMaxSize);
+	bool Open(_In_z_ const CHAR *pszFileMappingName);
+	void Close(_In_ bool bForceUnmap = false);
+	bool IsValid() const
+	{
+		return m_bValid;
+	}
 
-	CAtlTraceProcess *GetProcess() const {return m_pProcess;}
-	CAtlTraceModule *GetModule(int iModule) const;
+	CAtlTraceProcess *GetProcess() const
+	{
+		return m_pProcess;
+	}
+	CAtlTraceModule *GetModule(_In_ int iModule) const;
 //	CAtlTraceCategory *GetCategory(int iModule, unsigned nCategory) const;
-	CAtlTraceCategory* GetCategory(int iCategory) const;
+	CAtlTraceCategory* GetCategory(_In_ int iCategory) const;
 
 	/*
 	bool Lock(DWORD dwTimeOut);
 	void Unlock();
 	*/
 
-	bool LoadSettings(const CHAR *pszFileName);
-	bool LoadSettings(const WCHAR *pszFileName);
-	bool SaveSettings(const CHAR *pszFileName);
-	bool SaveSettings(const WCHAR *pszFileName);
+	bool LoadSettings(_In_z_ const CHAR *pszFileName);
+	bool LoadSettings(_In_z_ const WCHAR *pszFileName);
+	bool SaveSettings(_In_z_ const CHAR *pszFileName);
+	bool SaveSettings(_In_z_ const WCHAR *pszFileName);
 
 	int GetModuleCount() const;
-	int GetCategoryCount(int iModule) const;
-	int GetCategoryCount(const CAtlTraceModule& Module) const;
+	int GetCategoryCount(_In_ int iModule) const;
+	int GetCategoryCount(_In_ const CAtlTraceModule& Module) const;
 
-	bool FindModule(const WCHAR *pszModuleName, unsigned *pnModule) const;
+	bool FindModule(
+		_In_z_ const WCHAR *pszModuleName,
+		_Out_ unsigned *pnModule) const;
 
-	int AddModule(HINSTANCE hInst);
-	int AddCategory(int iModule, const WCHAR *szCategoryName);
+	int AddModule(_In_ HINSTANCE hInst);
+	int AddCategory(
+		_In_ int iModule,
+		_In_z_ const WCHAR *szCategoryName);
 
-	bool RemoveModule(int iModule);
+	bool RemoveModule(_In_ int iModule);
 
 	void CleanUp();
 

@@ -14,8 +14,6 @@
 #include <fcntl.h>
 #include "sal.h"
 
-
-
 #define new DEBUG_NEW
 
 ////////////////////////////////////////////////////////////////////////////
@@ -23,36 +21,63 @@
 
 CStdioFile::CStdioFile()
 {
-	m_pStream = NULL;
+	CommonBaseInit(NULL, NULL);
+}
+
+CStdioFile::CStdioFile(CAtlTransactionManager* pTM)
+{
+	CommonBaseInit(NULL, pTM);
 }
 
 CStdioFile::CStdioFile(FILE* pOpenStream)
 {
 	ASSERT(pOpenStream != NULL);
-	
 	if (pOpenStream == NULL)
 	{
 		AfxThrowInvalidArgException();
 	}
-	
-	m_pStream = pOpenStream;
-	m_hFile = (HANDLE) _get_osfhandle(_fileno(pOpenStream));
-	ASSERT(!m_bCloseOnDelete);
+
+	CommonBaseInit(pOpenStream, NULL);
 }
 
 CStdioFile::CStdioFile(LPCTSTR lpszFileName, UINT nOpenFlags)
 {
+	CommonInit(lpszFileName, nOpenFlags, NULL);
+}
+
+CStdioFile::CStdioFile(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM)
+{
+	CommonInit(lpszFileName, nOpenFlags, pTM);
+}
+
+void CStdioFile::CommonBaseInit(FILE* pOpenStream, CAtlTransactionManager* pTM)
+{
+	m_pStream = pOpenStream;
+	m_pTM = pTM;
+
+	if (pOpenStream != NULL)
+	{
+		m_hFile = (HANDLE)_get_osfhandle(_fileno(pOpenStream));
+		ASSERT(!m_bCloseOnDelete);
+	}
+}
+
+void CStdioFile::CommonInit(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM)
+{
 	ASSERT(lpszFileName != NULL);
 	ASSERT(AfxIsValidString(lpszFileName));
-
 	if (lpszFileName == NULL)
 	{
 		AfxThrowInvalidArgException();
 	}
 
+	CommonBaseInit(NULL, pTM);
+
 	CFileException e;
 	if (!Open(lpszFileName, nOpenFlags, &e))
+	{
 		AfxThrowFileException(e.m_cause, e.m_lOsError, e.m_strFileName);
+	}
 }
 
 CStdioFile::~CStdioFile()
@@ -62,13 +87,20 @@ CStdioFile::~CStdioFile()
 	ASSERT_VALID(this);
 
 	if (m_pStream != NULL && m_bCloseOnDelete)
+	{
 		Close();
+	}
 
 	AFX_END_DESTRUCTOR
 }
 
-BOOL CStdioFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags,
-	CFileException* pException)
+BOOL CStdioFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM, CFileException* pException)
+{
+	m_pTM = pTM;
+	return Open(lpszFileName, nOpenFlags, pException);
+}
+
+BOOL CStdioFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags, CFileException* pException)
 {
 	ASSERT(pException == NULL || AfxIsValidAddress(pException, sizeof(CFileException)));
 	ASSERT(lpszFileName != NULL);

@@ -18,7 +18,7 @@ namespace ATL
 {
 
 template< typename BaseType, class StringTraits >
-CStringT< BaseType, StringTraits >::CStringT( const VARIANT& varSrc ) :
+CStringT< BaseType, StringTraits >::CStringT(_In_ const VARIANT& varSrc) :
 	CThisSimpleString( StringTraits::GetDefaultManager() )
 {
 	CComVariant varResult;
@@ -32,7 +32,9 @@ CStringT< BaseType, StringTraits >::CStringT( const VARIANT& varSrc ) :
 }
 
 template< typename BaseType, class StringTraits >
-CStringT< BaseType, StringTraits >::CStringT( const VARIANT& varSrc, IAtlStringMgr* pStringMgr ) :
+CStringT< BaseType, StringTraits >::CStringT(
+		_In_ const VARIANT& varSrc,
+		_In_ IAtlStringMgr* pStringMgr) :
 	CThisSimpleString( pStringMgr )
 {
 	CComVariant varResult;
@@ -46,7 +48,8 @@ CStringT< BaseType, StringTraits >::CStringT( const VARIANT& varSrc, IAtlStringM
 }
 
 template< typename BaseType, class StringTraits >
-CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator=( const VARIANT& var )
+CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator=(
+	_In_ const VARIANT& var)
 {
 	CComVariant varResult;
 	HRESULT hr = ::VariantChangeType( &varResult, const_cast< VARIANT* >( &var ), 0, VT_BSTR );
@@ -61,7 +64,8 @@ CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator
 }
 
 template< typename BaseType, class StringTraits >
-CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator+=( const VARIANT& var )
+CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator+=(
+	_In_ const VARIANT& var)
 {
 	CComVariant varResult;
 	HRESULT hr = ::VariantChangeType( &varResult, const_cast< VARIANT* >( &var ), 0, VT_BSTR );
@@ -74,6 +78,5 @@ CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator
 
 	return( *this );
 }
-
 
 }	// namespace ATL

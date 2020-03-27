@@ -35,15 +35,17 @@ public:
 	{
 		 m_currency.int64 = 0;
 	}
-	CComCurrency(CURRENCY cySrc) throw()
+	CComCurrency(_In_ CURRENCY cySrc) throw()
 	{
 		m_currency.int64 = cySrc.int64;
 	}
-	CComCurrency(const CComCurrency& curSrc) throw()
+	CComCurrency(_In_ const CComCurrency& curSrc) throw()
 	{
 		*this = curSrc;
 	}
-	CComCurrency(LONGLONG nInteger, SHORT nFraction)
+	CComCurrency(
+		_In_ LONGLONG nInteger,
+		_In_ SHORT nFraction)
 	{
 		m_currency.int64 = 0;
 		HRESULT hRes = SetInteger(nInteger);
@@ -53,43 +55,43 @@ public:
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
-	CComCurrency(BYTE bSrc)
+	CComCurrency(_In_ BYTE bSrc)
 	{
 		*this = bSrc;
 	}
-	CComCurrency(SHORT sSrc)
+	CComCurrency(_In_ SHORT sSrc)
 	{
 		*this = sSrc;
 	}
-	CComCurrency(LONG lSrc)
+	CComCurrency(_In_ LONG lSrc)
 	{
 		*this = lSrc;
 	}
-	CComCurrency(FLOAT fSrc)
+	CComCurrency(_In_ FLOAT fSrc)
 	{
 		*this = fSrc;
 	}
-	CComCurrency(DOUBLE dSrc)
+	CComCurrency(_In_ DOUBLE dSrc)
 	{
 		*this = dSrc;
 	}
-	CComCurrency(CHAR cSrc)
+	CComCurrency(_In_ CHAR cSrc)
 	{
 		*this = cSrc;
 	}
-	CComCurrency(USHORT usSrc)
+	CComCurrency(_In_ USHORT usSrc)
 	{
 		*this = usSrc;
 	}
-	CComCurrency(ULONG ulSrc)
+	CComCurrency(_In_ ULONG ulSrc)
 	{
 		*this = ulSrc;
 	}
-	CComCurrency(DECIMAL dSrc)
+	CComCurrency(_In_ DECIMAL dSrc)
 	{
 		*this = dSrc;
 	}
-	explicit CComCurrency(LPCSTR szSrc)
+	explicit CComCurrency(_In_z_ LPCSTR szSrc)
 	{
 		ATLASSERT(szSrc);
 		if( szSrc == NULL )
@@ -104,14 +106,14 @@ public:
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
-	explicit CComCurrency(LPCWSTR szSrc)
+	explicit CComCurrency(_In_z_ LPCWSTR szSrc)
 	{
 		ATLENSURE(szSrc);
 		HRESULT hRes = VarCyFromStr(const_cast<LPWSTR>(szSrc), GetThreadLocale(), LOCALE_NOUSEROVERRIDE, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
-	explicit CComCurrency(const VARIANT& varSrc)
+	explicit CComCurrency(_In_ const VARIANT& varSrc)
 	{
 		VARIANT var;
 		VariantInit(&var);
@@ -120,7 +122,7 @@ public:
 			AtlThrow(hRes);
 		m_currency.int64 = V_CY(&var).int64;
 	}
-	explicit CComCurrency(LPDISPATCH pDispSrc)
+	explicit CComCurrency(_In_ LPDISPATCH pDispSrc)
 	{
 		ATLENSURE(pDispSrc);
 		HRESULT hRes = VarCyFromDisp(pDispSrc, GetThreadLocale(), &m_currency);
@@ -129,73 +131,73 @@ public:
 	}
 
 // assignment operators
-	const CComCurrency& operator=(CURRENCY cySrc) throw()
+	const CComCurrency& operator=(_In_ CURRENCY cySrc) throw()
 	{
 		m_currency.int64 = cySrc.int64;
 		return *this;
 	}
-	const CComCurrency& operator=(const CComCurrency& curSrc) throw()
+	const CComCurrency& operator=(_In_ const CComCurrency& curSrc) throw()
 	{
 		m_currency.int64 = curSrc.m_currency.int64;
 		return *this;
 	}
-	const CComCurrency& operator=(BYTE bSrc)
+	const CComCurrency& operator=(_In_ BYTE bSrc)
 	{
 		HRESULT hRes = VarCyFromUI1(bSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(SHORT sSrc)
+	const CComCurrency& operator=(_In_ SHORT sSrc)
 	{
 		HRESULT hRes = VarCyFromI2(sSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(LONG lSrc)
+	const CComCurrency& operator=(_In_ LONG lSrc)
 	{
 		HRESULT hRes = VarCyFromI4(lSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(FLOAT fSrc)
+	const CComCurrency& operator=(_In_ FLOAT fSrc)
 	{
 		HRESULT hRes = VarCyFromR4(fSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(DOUBLE dSrc)
+	const CComCurrency& operator=(_In_ DOUBLE dSrc)
 	{
 		HRESULT hRes = VarCyFromR8(dSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(CHAR cSrc)
+	const CComCurrency& operator=(_In_ CHAR cSrc)
 	{
 		HRESULT hRes = VarCyFromI1(cSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(USHORT usSrc)
+	const CComCurrency& operator=(_In_ USHORT usSrc)
 	{
 		HRESULT hRes = VarCyFromUI2(usSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(ULONG ulSrc)
+	const CComCurrency& operator=(_In_ ULONG ulSrc)
 	{
 		HRESULT hRes = VarCyFromUI4(ulSrc, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator=(DECIMAL dSrc)
+	const CComCurrency& operator=(_In_ DECIMAL dSrc)
 	{
 		HRESULT hRes = VarCyFromDec(&dSrc, &m_currency);
 		if (FAILED(hRes))
@@ -204,35 +206,35 @@ public:
 	}
 
 // comparison operators
-	bool operator==(const CComCurrency& cur) const
+	bool operator==(_In_ const CComCurrency& cur) const
 	{
 		return (static_cast<HRESULT>(VARCMP_EQ) == VarCyCmp(m_currency, cur.m_currency));
 	}
-	bool operator!=(const CComCurrency& cur) const
+	bool operator!=(_In_ const CComCurrency& cur) const
 	{
 		return (static_cast<HRESULT>(VARCMP_EQ) != VarCyCmp(m_currency, cur.m_currency));
 	}
-	bool operator<(const CComCurrency& cur) const
+	bool operator<(_In_ const CComCurrency& cur) const
 	{
 		return (static_cast<HRESULT>(VARCMP_LT) == VarCyCmp(m_currency, cur.m_currency));
 	}
-	bool operator>(const CComCurrency& cur) const
+	bool operator>(_In_ const CComCurrency& cur) const
 	{
 		return (static_cast<HRESULT>(VARCMP_GT) == VarCyCmp(m_currency, cur.m_currency));
 	}
-	bool operator<=(const CComCurrency& cur) const
+	bool operator<=(_In_ const CComCurrency& cur) const
 	{
 		HRESULT hRes = VarCyCmp(m_currency, cur.m_currency);
 		return (static_cast<HRESULT>(VARCMP_LT) == hRes || (HRESULT)VARCMP_EQ == hRes);
 	}
-	bool operator>=(const CComCurrency& cur) const
+	bool operator>=(_In_ const CComCurrency& cur) const
 	{
 		HRESULT hRes = VarCyCmp(m_currency, cur.m_currency);
 		return (static_cast<HRESULT>(VARCMP_GT) == hRes || static_cast<HRESULT>(VARCMP_EQ) == hRes);
 	}
 
 // math operators
-	CComCurrency operator+(const CComCurrency& cur) const
+	CComCurrency operator+(_In_ const CComCurrency& cur) const
 	{
 		CURRENCY cy;
 		HRESULT hRes = VarCyAdd(m_currency, cur.m_currency, &cy);
@@ -240,7 +242,7 @@ public:
 			AtlThrow(hRes);
 		return cy;
 	}
-	CComCurrency operator-(const CComCurrency& cur) const
+	CComCurrency operator-(_In_ const CComCurrency& cur) const
 	{
 		CURRENCY cy;
 		HRESULT hRes = VarCySub(m_currency, cur.m_currency, &cy);
@@ -248,21 +250,21 @@ public:
 			AtlThrow(hRes);
 		return cy;
 	}
-	const CComCurrency& operator+=(const CComCurrency& cur)
+	const CComCurrency& operator+=(_In_ const CComCurrency& cur)
 	{
 		HRESULT hRes = VarCyAdd(m_currency, cur.m_currency, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	const CComCurrency& operator-=(const CComCurrency& cur)
+	const CComCurrency& operator-=(_In_ const CComCurrency& cur)
 	{
 		HRESULT hRes = VarCySub(m_currency, cur.m_currency, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	CComCurrency operator*(const CComCurrency& cur) const
+	CComCurrency operator*(_In_ const CComCurrency& cur) const
 	{
 		CURRENCY cy;
 		HRESULT hRes = VarCyMul(m_currency, cur.m_currency, &cy);
@@ -270,14 +272,14 @@ public:
 			AtlThrow(hRes);
 		return cy;
 	}
-	const CComCurrency& operator*=(const CComCurrency& cur)
+	const CComCurrency& operator*=(_In_ const CComCurrency& cur)
 	{
 		HRESULT hRes = VarCyMul(m_currency, cur.m_currency, &m_currency);
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 		return *this;
 	}
-	CComCurrency operator*(long nOperand) const
+	CComCurrency operator*(_In_ long nOperand) const
 	{
 		CURRENCY cy;
 		HRESULT hRes = VarCyMulI4(m_currency, nOperand, &cy);
@@ -285,7 +287,7 @@ public:
 			AtlThrow(hRes);
 		return cy;
 	}
-	const CComCurrency& operator*=(long nOperand)
+	const CComCurrency& operator*=(_In_ long nOperand)
 	{
 		HRESULT hRes = VarCyMulI4(m_currency, nOperand, &m_currency);
 		if (FAILED(hRes))
@@ -300,7 +302,7 @@ public:
 			AtlThrow(hRes);
 		return cy;
 	}
-	CComCurrency operator/(long nOperand) const
+	CComCurrency operator/(_In_ long nOperand) const
 	{
 		ATLASSERT(nOperand);
 		if( nOperand == 0 )
@@ -310,7 +312,7 @@ public:
 		cy.int64 = m_currency.int64 / nOperand;
 		return cy;
 	}
-	const CComCurrency& operator/=(long nOperand)
+	const CComCurrency& operator/=(_In_ long nOperand)
 	{
 		ATLASSERT(nOperand);
 		if( nOperand == 0 )
@@ -335,7 +337,7 @@ public:
 	}
 
 // misc functions
-	HRESULT Round(int nDecimals)
+	HRESULT Round(_In_ int nDecimals)
 	{
 		ATLASSERT(nDecimals >= 0 && nDecimals <= 4);
 		if( nDecimals < 0 || nDecimals > 4 )
@@ -344,7 +346,7 @@ public:
 		return VarCyRound(m_currency, nDecimals, &m_currency);
 	}
 
-	HRESULT SetInteger(LONGLONG nInteger)
+	HRESULT SetInteger(_In_ LONGLONG nInteger)
 	{
 		// check if within range
 		ATLASSERT(nInteger >= CY_MIN_INTEGER && nInteger <= CY_MAX_INTEGER);
@@ -374,7 +376,7 @@ public:
 	}
 
 	// Based on 4 digits.  To set .2, pass 2000, to set .0002, pass a 2
-	HRESULT SetFraction(SHORT nFraction)
+	HRESULT SetFraction(_In_ SHORT nFraction)
 	{
 		// check if within range
 		ATLASSERT(nFraction >= CY_MIN_FRACTION && nFraction <= CY_MAX_FRACTION);
@@ -407,7 +409,7 @@ public:
 		if (m_currency.int64)
 			return (m_currency.int64 / CY_SCALE);
 		else
-			return 0;		
+			return 0;
 	}
 
 	SHORT GetFraction() const

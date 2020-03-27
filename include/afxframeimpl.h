@@ -45,6 +45,7 @@ class CFrameImpl
 	friend class CPaneFrameWnd;
 	friend class CFullScreenImpl;
 	friend class CMDIChildWndEx;
+	friend class CMDIClientAreaWnd;
 
 public:
 	CFrameImpl(CFrameWnd* pFrame);

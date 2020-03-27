@@ -633,36 +633,13 @@ void CMFCVisualManagerOfficeXP::OnFillBarBackground(CDC* pDC, CBasePane* pBar, C
 	{
 		pDC->FillRect(rectClip, &m_brMenuLight);
 
-		BOOL bQuickMode = FALSE;
-
 		CMFCPopupMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCPopupMenuBar, pBar);
 		if (!pMenuBar->m_bDisableSideBarInXPMode)
 		{
-			CWnd* pWnd = pMenuBar->GetParent();
-
-			if (pWnd != NULL && pWnd->IsKindOf(RUNTIME_CLASS(CMFCPopupMenu)))
-			{
-				CMFCPopupMenu* pMenu = DYNAMIC_DOWNCAST(CMFCPopupMenu, pWnd);
-
-				if (pMenu->IsCustomizePane())
-				{
-					bQuickMode = TRUE;
-				}
-			}
-
 			CRect rectImages = rectClient;
+			rectImages.right = rectImages.left + pMenuBar->GetGutterWidth ();
+			rectImages.DeflateRect (0, 1);
 
-			if (bQuickMode)
-			{
-				rectImages.right = rectImages.left + 2*CMFCToolBar::GetMenuImageSize().cx + 4 * GetMenuImageMargin() + 4;
-
-			}
-			else
-			{
-				rectImages.right = rectImages.left + CMFCToolBar::GetMenuImageSize().cx + 2 * GetMenuImageMargin() + 2;
-			}
-
-			rectImages.DeflateRect(0, 1);
 			pDC->FillRect(rectImages, &m_brBarBkgnd);
 		}
 
@@ -1974,7 +1951,10 @@ void CMFCVisualManagerOfficeXP::OnDrawTask(CDC* pDC, CMFCTasksPaneTask* pTask, C
 	}
 	else
 	{
-		pDC->DrawText(pTask->m_strName, rectText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+		CString strText = pTask->m_strName;
+		strText.Remove (_T('\n'));
+		strText.Remove (_T('\r'));
+		pDC->DrawText(strText, rectText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 	}
 
 	pDC->SetBkMode(nBkModeOld);
@@ -2482,8 +2462,7 @@ void CMFCVisualManagerOfficeXP::OnDrawRibbonCategoryScroll (CDC* pDC, CRibbonCat
 	CRect rect = pScroll->GetRect();
 	rect.bottom--;
 
-	OnFillHighlightedArea(pDC, rect, 
-		pScroll->IsHighlighted () ? &m_brHighlight : &afxGlobalData.brBarFace, NULL);
+	OnFillHighlightedArea(pDC, rect, pScroll->IsHighlighted() ? &m_brHighlight : &afxGlobalData.brBarFace, NULL);
 
 	BOOL bIsLeft = pScroll->IsLeftScroll();
 	if (afxGlobalData.m_bIsRTL)

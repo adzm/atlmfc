@@ -62,10 +62,15 @@ public:
 
 	virtual void Redraw();
 	virtual void OnHighlight(BOOL bHighlight);
+	virtual void OnSetFocus(BOOL bSet);
+	virtual BOOL PreLMouseDown(CPoint point);
 
 	virtual BOOL IsHighlighted() const { return m_bIsHighlighted || m_bIsEditFocused; }
 	virtual BOOL HasFocus() const { return m_bIsEditFocused; }
 	virtual BOOL HasSpinButtons() const { return m_bHasSpinButtons; }
+
+	virtual int GetRangeMin() const { return m_nMin; }
+	virtual int GetRangeMax() const { return m_nMax; }
 
 	virtual void OnDraw(CDC* pDC);
 	virtual void OnDrawOnList(CDC* pDC, CString strText, int nTextOffset, CRect rect, BOOL bIsSelected, BOOL bHighlighted);
@@ -96,8 +101,8 @@ public:
 // Operations:
 protected:
 	BOOL CreateSpinButton(CMFCRibbonRichEditCtrl* pWndEdit, CWnd* pWndParent);
-	void CommonInit ();
-	void RepositionRibbonEditCtrl ();
+	void CommonInit();
+	void RepositionRibbonEditCtrl();
 
 
 // Attributes:
@@ -112,6 +117,7 @@ protected:
 	BOOL m_bHasDropDownList;
 	BOOL m_bHasSpinButtons;
 	BOOL m_bIsEditFocused;
+	BOOL m_bNotifyCommand;
 
 	CString m_strEdit;
 	CMFCRibbonRichEditCtrl* m_pWndEdit;
@@ -125,11 +131,19 @@ class CMFCRibbonRichEditCtrl : public CRichEditCtrl
 {
 	friend class CMFCRibbonEdit;
 
+	DECLARE_DYNAMIC(CMFCRibbonRichEditCtrl)
+
 // Construction
 public:
 	CMFCRibbonRichEditCtrl(CMFCRibbonEdit& edit);
 
 // Attributes
+public:
+	CMFCRibbonEdit& GetOwnerRibbonEdit()
+	{
+		return m_edit;
+	}
+
 protected:
 	CMFCRibbonEdit& m_edit;
 	BOOL m_bTracked;
@@ -150,7 +164,6 @@ protected:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnPaint();
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
 	afx_msg void OnChange();

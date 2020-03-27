@@ -516,7 +516,7 @@ CSize CPreviewDC::ComputeDeltas(int& x, LPCTSTR lpszString, UINT &nCount,
 	::GetTextMetrics(m_hDC, &tmScreen);
 
 	CSize sizeExtent;
-	::GetTextExtentPoint32A(m_hAttribDC, "A", 1, &sizeExtent);
+	::GetTextExtentPoint32W(m_hAttribDC, L"A", 1, &sizeExtent);
 
 	CPoint ptCurrent;
 	UINT nAlignment = ::GetTextAlign(m_hAttribDC);
@@ -544,8 +544,8 @@ CSize CPreviewDC::ComputeDeltas(int& x, LPCTSTR lpszString, UINT &nCount,
 		else
 		{
 			// Get default size of a tab
-			nTabWidth = LOWORD(::GetTabbedTextExtentA(m_hAttribDC,
-				"\t", 1, 0, NULL));
+			nTabWidth = LOWORD(::GetTabbedTextExtentW(m_hAttribDC,
+				L"\t", 1, 0, NULL));
 		}
 	}
 

@@ -105,8 +105,8 @@ BOOL CDialogEx::SetBackgroundImage(UINT uiBmpResId, BackgroundLocation location,
 
 	if (uiBmpResId != 0)
 	{
-		hBitmap = ::LoadBitmap(AfxFindResourceHandle(MAKEINTRESOURCE(uiBmpResId), RT_BITMAP), 
-			MAKEINTRESOURCE(uiBmpResId));
+		hBitmap = ::LoadBitmapW(AfxFindResourceHandle(MAKEINTRESOURCE(uiBmpResId), RT_BITMAP),
+			MAKEINTRESOURCEW(uiBmpResId));
 		if (hBitmap == NULL)
 		{
 			ASSERT(FALSE);
@@ -246,20 +246,18 @@ HBRUSH CDialogEx::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			::GetClassName(pWnd->GetSafeHwnd(), lpszClassName, AFX_MAX_CLASS_NAME);
 			CString strClass = lpszClassName;
 
-			if (strClass == AFX_STATIC_CLASS)
+			if (strClass == AFX_BUTTON_CLASS || strClass == AFX_STATIC_CLASS)
 			{
 				pDC->SetBkMode(TRANSPARENT);
-				return(HBRUSH) ::GetStockObject(HOLLOW_BRUSH);
-			}
 
-			if (strClass == AFX_BUTTON_CLASS)
-			{
-				// if ((pWnd->GetStyle() & BS_GROUPBOX) == 0)
+				if (m_brBkgr.GetSafeHandle() != NULL && CThemeHelper::IsAppThemed())
 				{
-					pDC->SetBkMode(TRANSPARENT);
+					return (HBRUSH)m_brBkgr.GetSafeHandle();
 				}
-
-				return(HBRUSH) ::GetStockObject(HOLLOW_BRUSH);
+				else
+				{
+					return (HBRUSH)::GetStockObject(HOLLOW_BRUSH);
+				}
 			}
 		}
 	}
@@ -311,5 +309,3 @@ void CDialogEx::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 		afxGlobalData.OnSettingChange();
 	}
 }
-
-

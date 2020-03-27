@@ -17,16 +17,12 @@
 #endif
 
 #include <atlbase.h>
-
 #include <winnls.h>
 #include <limits.h>
-
 #include <cstringt.h>
-
 
 #pragma pack(push,_ATL_PACKING)
 
- 
 namespace ATL
 {
 
@@ -34,7 +30,7 @@ class CAtlStringMgr :
 	public IAtlStringMgr
 {
 public:
-	CAtlStringMgr( _In_opt_ IAtlMemMgr* pMemMgr = NULL ) throw() :
+	CAtlStringMgr(_In_opt_ IAtlMemMgr* pMemMgr = NULL) throw() :
 		m_pMemMgr( pMemMgr )
 	{
 		m_nil.SetManager( this );
@@ -43,7 +39,7 @@ public:
 	{
 	}
 
-	void SetMemoryManager( __reserved IAtlMemMgr* pMemMgr ) throw()
+	void SetMemoryManager(_In_ IAtlMemMgr* pMemMgr) throw()
 	{
 		ATLASSUME( m_pMemMgr == NULL );
 		m_pMemMgr = pMemMgr;
@@ -51,7 +47,9 @@ public:
 
 // IAtlStringMgr
 public:
-	_Ret_opt_bytecap_x_(sizeof(CStringData) + nChars*nCharSize) virtual CStringData* Allocate( _In_ int nChars, _In_ int nCharSize ) throw()
+	_Ret_opt_bytecap_x_(sizeof(CStringData) + nChars*nCharSize) virtual CStringData* Allocate(
+		_In_ int nChars,
+		_In_ int nCharSize) throw()
 	{
 		size_t nTotalSize;
 		CStringData* pData;
@@ -76,12 +74,17 @@ public:
 
 		return( pData );
 	}
-	virtual void Free( _Inout_ CStringData* pData ) throw()
-	{
-		ATLASSERT( pData->pStringMgr == this );
+	virtual void Free(_In_ CStringData* pData) throw()
+	{		
+		ATLASSUME(pData != NULL);
+		ATLASSERT(pData->pStringMgr == this);
+			
 		m_pMemMgr->Free( pData );
 	}
-	_Ret_opt_bytecap_x_(sizeof(CStringData) + nChars*nCharSize) virtual CStringData* Reallocate( _Inout_ CStringData* pData, _In_ int nChars, _In_ int nCharSize ) throw()
+	_Ret_opt_bytecap_x_(sizeof(CStringData) + nChars*nCharSize) virtual CStringData* Reallocate(
+		_Inout_ _Post_bytecount_x_(sizeof(CStringData)) CStringData* pData,
+		_In_ int nChars,
+		_In_ int nCharSize) throw()
 	{
 		CStringData* pNewData;
 		ULONG nTotalSize;
@@ -135,11 +138,16 @@ public:
 		LPCSTR pnext = CharNext(p);
 		return ((pnext-p)>1) ? 2 : 1;
 	}
-	static LPCSTR strchr(_In_z_ LPCSTR p, _In_ char ch) throw()
+	_Ret_opt_z_ static LPCSTR strchr(
+		_In_z_ LPCSTR p,
+		_In_ char ch) throw()
 	{
 		return AtlstrchrT(p,ch);
 	}
-	static LPCSTR strchr_db(_In_z_ LPCSTR p, _In_ char ch1, _In_ char ch2) throw()
+	_Ret_opt_z_ static LPCSTR strchr_db(
+		_In_z_ LPCSTR p,
+		_In_ char ch1,
+		_In_ char ch2) throw()
 	{
 		ATLASSERT(p != NULL);
 		while (*p != 0)
@@ -152,8 +160,10 @@ public:
 		}
 		return NULL;
 	}
-	static LPCSTR strrchr(_In_z_ LPCSTR p, _In_ char ch) throw()
-	{		
+	_Ret_opt_z_ static LPCSTR strrchr(
+		_In_z_ LPCSTR p,
+		_In_ char ch) throw()
+	{
 		ATLASSERT(p != NULL);
 		const _CharType* pch = NULL;
 		while (*p != 0)
@@ -165,13 +175,13 @@ public:
 			p = CharNext(p);
 		}
 		//for strrchr(buff,'\0')
-		if (*p == ch) 
+		if (*p == ch)
 		{
 			pch = p;
 		}
 		return const_cast< _CharType* >( pch );
 	}
-	static _CharType* _strrev(_Inout_ _CharType* psz) throw()
+	static _CharType* _strrev(_Inout_opt_z_ _CharType* psz) throw()
 	{
 		// Optimize NULL, zero-length, and single-char case.
 		if ((psz == NULL) || (psz[0] == '\0') || (psz[1] == '\0'))
@@ -179,7 +189,7 @@ public:
 
 		_CharType* p = psz;
 		// first go through and reverse the bytes in MBCS chars
-		while (*p != _T('\0')) 
+		while (*p != _T('\0'))
 		{
 			if (IsDBCSLeadByte(*p++))
 			{
@@ -200,22 +210,22 @@ public:
 
                         //So what we choose to do is assert and purge the dud byte from within the
                         //string.
-                    
+
                     ATLASSERT(FALSE && _T("Bad MBCS string passed into __strev"));
 
-                    // String has at least moved once already, so this is safe 
+                    // String has at least moved once already, so this is safe
                     ATLASSERT(p>psz);
 
                     // move back one to point at the dud leadbyte
                     --p;
 
-                    // now truncate the string one byte earlier 
+                    // now truncate the string one byte earlier
                     *p='\0';
 
 				}
 			}
 
-			
+
 		} //end while
 
 		_CharType* q = psz;
@@ -230,11 +240,15 @@ public:
 		}
 		return psz;
 	}
-	static LPCSTR strstr(_In_z_ LPCSTR pStr, _In_z_ LPCSTR pCharSet) throw()
-	{		
+	_Ret_opt_z_ static LPCSTR strstr(
+		_In_z_ LPCSTR pStr,
+		_In_z_ LPCSTR pCharSet) throw()
+	{
 		return strstrT< ChTraitsOS<XCHAR> >(pStr,pCharSet);
 	}
-	static int strspn(_In_ const _CharType* pStr, _In_ const _CharType* pCharSet) throw()
+	static int strspn(
+		_In_z_ const _CharType* pStr,
+		_In_z_ const _CharType* pCharSet) throw()
 	{
 		ATLASSERT(pStr != NULL);
 		int nRet = 0;
@@ -258,7 +272,9 @@ public:
 		}
 		return nRet;
 	}
-	static int strcspn(_In_ const _CharType* pStr, _In_ const _CharType* pCharSet) throw()
+	static int strcspn(
+		_In_z_ const _CharType* pStr,
+		_In_z_ const _CharType* pCharSet) throw()
 	{
 		ATLASSERT(pStr != NULL);
 		int nRet = 0;
@@ -282,15 +298,17 @@ public:
 		}
 		return nRet;
 	}
-	static LPCSTR strpbrk(_In_z_ LPCSTR p, _In_z_ LPCSTR lpszCharSet) throw()
+	_Ret_opt_z_ static LPCSTR strpbrk(
+		_In_z_ LPCSTR p,
+		_In_z_ LPCSTR lpszCharSet) throw()
 	{
 		int nRet=0;
 		nRet=strcspn(p,lpszCharSet);
 		if (p[nRet]){
-		p+=nRet;
-		return p;
+			p+=nRet;
+			return p;
 		}
-     return NULL;
+		return NULL;
 	}
 
 	static _CharType* CharNext(_In_ const _CharType* p) throw()
@@ -312,89 +330,104 @@ public:
 		return (type & C1_SPACE) == C1_SPACE;
 	}
 
-	static int StringCompare(_In_ const _CharType* pstrOne,
-		_In_ const _CharType* pstrOther) throw()
+	static int StringCompare(
+		_In_z_ const _CharType* pstrOne,
+		_In_z_ const _CharType* pstrOther) throw()
 	{
 		return lstrcmpA((LPCSTR) pstrOne, (LPCSTR) pstrOther);
 	}
 
-	static int StringCompareIgnore(_In_ const _CharType* pstrOne,
-		_In_ const _CharType* pstrOther) throw()
+	static int StringCompareIgnore(
+		_In_z_ const _CharType* pstrOne,
+		_In_z_ const _CharType* pstrOther) throw()
 	{
 		return lstrcmpiA((LPCSTR) pstrOne, (LPCSTR) pstrOther);
 	}
 
-	static int StringCollate(_In_ const _CharType* pstrOne,
-		_In_ const _CharType* pstrOther) throw()
+	static int StringCollate(
+		_In_z_ const _CharType* pstrOne,
+		_In_z_ const _CharType* pstrOther) throw()
 	{
-		int nRet = CompareStringA(GetThreadLocale(), 0, (LPCSTR)pstrOne, -1, 
+		int nRet = CompareStringA(GetThreadLocale(), 0, (LPCSTR)pstrOne, -1,
 			(LPCSTR)pstrOther, -1);
 		ATLASSERT(nRet != 0);
 		return nRet-2;  // Convert to strcmp convention.  This really is documented.
 	}
 
-	static int StringCollateIgnore(_In_ const _CharType* pstrOne,
-		_In_ const _CharType* pstrOther) throw()
+	static int StringCollateIgnore(
+		_In_z_ const _CharType* pstrOne,
+		_In_z_ const _CharType* pstrOther) throw()
 	{
-		int nRet = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, (LPCSTR)pstrOne, -1, 
+		int nRet = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, (LPCSTR)pstrOne, -1,
 			(LPCSTR)pstrOther, -1);
 		ATLASSERT(nRet != 0);
 		return nRet-2;  // Convert to strcmp convention.  This really is documented.
 	}
 
-	static LPCSTR StringFindString(_In_z_ LPCSTR pstrBlock,
+	_Ret_opt_z_ static LPCSTR StringFindString(
+		_In_z_ LPCSTR pstrBlock,
 		_In_z_ LPCSTR pstrMatch) throw()
 	{
 		return strstr(pstrBlock, pstrMatch);
 	}
 
-	static LPSTR StringFindString(_In_z_ LPSTR pszBlock, _In_z_ LPCSTR pszMatch) throw()
+	_Ret_opt_z_ static LPSTR StringFindString(
+		_In_z_ LPSTR pszBlock,
+		_In_z_ LPCSTR pszMatch) throw()
 	{
 		return( const_cast< LPSTR >( StringFindString( const_cast< LPCSTR >( pszBlock ), pszMatch ) ) );
 	}
 
-	static LPCSTR StringFindChar(_In_z_ LPCSTR pszBlock,
+	_Ret_opt_z_ static LPCSTR StringFindChar(
+		_In_z_ LPCSTR pszBlock,
 		_In_ char chMatch) throw()
 	{
 		return strchr(pszBlock, chMatch);
 	}
 
-	static LPCSTR StringFindCharRev(_In_z_ LPCSTR psz, _In_ char ch) throw()
+	_Ret_opt_z_ static LPCSTR StringFindCharRev(
+		_In_z_ LPCSTR psz,
+		_In_ char ch) throw()
 	{
 		return strrchr(psz, ch);
 	}
 
-	static LPCSTR StringScanSet(_In_z_ LPCSTR pszBlock,
+	_Ret_opt_z_ static LPCSTR StringScanSet(
+		_In_z_ LPCSTR pszBlock,
 		_In_z_ LPCSTR pszMatch) throw()
 	{
 		return strpbrk(pszBlock, pszMatch);
 	}
 
-	static int StringSpanIncluding(_In_ const _CharType* pstrBlock,
-		_In_ const _CharType* pstrSet) throw()
+	static int StringSpanIncluding(
+		_In_z_ const _CharType* pstrBlock,
+		_In_z_ const _CharType* pstrSet) throw()
 	{
 		return strspn(pstrBlock, pstrSet);
 	}
 
-	static int StringSpanExcluding(_In_ const _CharType* pstrBlock,
-		_In_ const _CharType* pstrSet) throw()
+	static int StringSpanExcluding(
+		_In_z_ const _CharType* pstrBlock,
+		_In_z_ const _CharType* pstrSet) throw()
 	{
 		return strcspn(pstrBlock, pstrSet);
 	}
 
 	_ATL_INSECURE_DEPRECATE("ChTraitsOS::StringUppercase must be passed a buffer size")
-	static _CharType* StringUppercase(_Inout_ _CharType* psz) throw()
+	static _CharType* StringUppercase(_Inout_z_ _CharType* psz) throw()
 	{
 		return CharUpperA( psz );
 	}
 
 	_ATL_INSECURE_DEPRECATE("ChTraitsOS::StringLowercase must be passed a buffer size")
-	static _CharType* StringLowercase(_Inout_ _CharType* psz) throw()
+	static _CharType* StringLowercase(_Inout_z_ _CharType* psz) throw()
 	{
 		return CharLowerA( psz );
 	}
 
-	static _CharType* StringUppercase(_Inout_cap_(size) _CharType* psz, _In_ size_t size) throw()
+	static _CharType* StringUppercase(
+		_Inout_z_cap_(size) _CharType* psz,
+		_In_ size_t size) throw()
 	{
 		if(size>UINT_MAX)
 		{
@@ -406,7 +439,9 @@ public:
 		return psz;
 	}
 
-	static _CharType* StringLowercase(_Inout_cap_(size) _CharType* psz, size_t size) throw()
+	static _CharType* StringLowercase(
+		_Inout_z_cap_(size) _CharType* psz,
+		_In_ size_t size) throw()
 	{
 		if(size>UINT_MAX)
 		{
@@ -418,20 +453,21 @@ public:
 		return psz;
 	}
 
-
-
-	static _CharType* StringReverse(_Inout_ _CharType* psz) throw()
+	static _CharType* StringReverse(_Inout_z_ _CharType* psz) throw()
 	{
 		return _strrev( psz );
 	}
 
-	static int GetFormattedLength(_In_ _Printf_format_string_ const _CharType* pszFormat, va_list args)
+	static int GetFormattedLength(
+		_In_z_ _Printf_format_string_ const _CharType* pszFormat, 
+		_In_ va_list args)
 	{
 		_CharType szBuffer[1028];
 		int nLength = 0;
 
 		SetLastError(ERROR_SUCCESS);
 #pragma warning(push)
+#pragma warning(disable:4995)
 #pragma warning(disable:4996)
 		// wvsprintf always truncates the output to 1024 character plus the '\0'.
 		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
@@ -447,21 +483,29 @@ public:
 	}
 
 	_ATL_INSECURE_DEPRECATE("CSimpleStringT::Format must be passed a buffer size")
-	static int Format(_Out_ _CharType* pszBuffer, _In_ _Printf_format_string_ const _CharType* pszFormat,
-		va_list args) throw()
+	static int Format(
+		_Out_ _Post_z_count_(return) _CharType* pszBuffer,
+		_In_z_ _Printf_format_string_ const _CharType* pszFormat,
+		_In_ va_list args) throw()
 	{
 #pragma warning(push)
+#pragma warning(disable:4995)
 #pragma warning(disable:4996)
 		return wvsprintfA(pszBuffer, pszFormat, args);
 #pragma warning(pop)
 	}
-	static int Format(_Out_cap_post_count_(nlength, return) _CharType*  pszBuffer, _In_ size_t nlength, _In_ _Printf_format_string_ const _CharType* pszFormat, va_list args )
+	static int Format(
+		_Out_z_cap_post_count_(nlength, return) _CharType*  pszBuffer,
+		_In_ size_t nlength,
+		_In_z_ _Printf_format_string_ const _CharType* pszFormat, 
+		_In_ va_list args )
 	{
 		_CharType buffSafe[1030]; //wvsprintf output is max 1024.
 		int nCharsWritten = 0;
-		
+
 		SetLastError(ERROR_SUCCESS);
 #pragma warning(push)
+#pragma warning(disable:4995)
 #pragma warning(disable:4996)
 		// wvsprintf always truncates the output to 1024 character plus the '\0'.
 		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
@@ -474,7 +518,7 @@ public:
 		//nlength should have room for nCharsWritten + NULL
 		ATLENSURE_THROW((size_t)nCharsWritten < nlength ,E_INVALIDARG);
 		Checked::strcpy_s(pszBuffer,nlength,buffSafe);
-		return nCharsWritten;		
+		return nCharsWritten;
 	}
 
 	static int GetBaseTypeLength(_In_z_ const char* pszSrc) throw()
@@ -483,7 +527,9 @@ public:
 		return lstrlenA(pszSrc);
 	}
 
-	static int GetBaseTypeLength(_In_z_ const char* pszSrc, _In_ int nLength) throw()
+	static int GetBaseTypeLength(
+		_In_z_ const char* pszSrc,
+		_In_ int nLength) throw()
 	{
 		(void)pszSrc;
 		// Returns required buffer length in XCHARs
@@ -496,30 +542,38 @@ public:
 		return ::WideCharToMultiByte(_AtlGetConversionACP(), 0, pszSrc, -1, NULL, 0, NULL, NULL)-1;
 	}
 
-	static int GetBaseTypeLength(_In_count_(nLength) const wchar_t* pszSrc, _In_ int nLength) throw()
-	{		
+	static int GetBaseTypeLength(
+		_In_count_(nLength) const wchar_t* pszSrc,
+		_In_ int nLength) throw()
+	{
 		// Returns required buffer length in XCHARs
 		return ::WideCharToMultiByte(_AtlGetConversionACP(), 0, pszSrc, nLength, NULL, 0, NULL, NULL);
 	}
 
-	static void ConvertToBaseType(_Out_cap_(nDestLength) _CharType* pszDest, _In_ int nDestLength,
-		_In_count_(nSrcLength) const char* pszSrc, _In_ int nSrcLength = -1) throw()
-	{			
+	static void ConvertToBaseType(
+		_Out_cap_(nDestLength) _CharType* pszDest,
+		_In_ int nDestLength,
+		_In_count_(nSrcLength) const char* pszSrc,
+		_In_ int nSrcLength = -1) throw()
+	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
 		// nLen is in chars
-		Checked::memcpy_s(pszDest, nDestLength*sizeof(_CharType), 
+		Checked::memcpy_s(pszDest, nDestLength*sizeof(_CharType),
 			pszSrc, nSrcLength*sizeof(_CharType));
 	}
 
-	static void ConvertToBaseType(_Out_cap_(nDestLength) _CharType* pszDest, _In_ int nDestLength,
-		_In_count_(nSrcLength) const wchar_t* pszSrc, _In_ int nSrcLength = -1) throw()
-	{		
+	static void ConvertToBaseType(
+		_Out_cap_(nDestLength) _CharType* pszDest,
+		_In_ int nDestLength,
+		_In_count_(nSrcLength) const wchar_t* pszSrc,
+		_In_ int nSrcLength = -1) throw()
+	{
 		// nLen is in XCHARs
 		::WideCharToMultiByte(_AtlGetConversionACP(), 0, pszSrc, nSrcLength, pszDest, nDestLength, NULL, NULL);
 	}
 
 	_ATL_INSECURE_DEPRECATE("ChTraitsOS::ConvertToOem must be passed a buffer size")
-	static void ConvertToOem(_Inout_ _CharType* pstrString) throw()
+	static void ConvertToOem(_Inout_z_ _CharType* pstrString) throw()
 	{
 		BOOL fSuccess=::CharToOemA(pstrString, pstrString);
 		// old version can't report error
@@ -527,14 +581,16 @@ public:
 	}
 
 	_ATL_INSECURE_DEPRECATE("ChTraitsOS::ConvertToAnsi must be passed a buffer size")
-	static void ConvertToAnsi(_Inout_ _CharType* pstrString) throw()
+	static void ConvertToAnsi(_Inout_z_ _CharType* pstrString) throw()
 	{
 		BOOL fSuccess=::OemToCharA(pstrString, pstrString);
 		// old version can't report error
 		ATLASSERT(fSuccess);
 	}
 
-	static void ConvertToOem(_Out_cap_(size) _CharType* pstrString, _In_ size_t size)
+	static void ConvertToOem(
+		_Out_z_cap_(size) _CharType* pstrString,
+		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
 		{
@@ -549,7 +605,9 @@ public:
 		}
 	}
 
-	static void ConvertToAnsi(_Out_cap_(size) _CharType* pstrString, _In_ size_t size)
+	static void ConvertToAnsi(
+		_Out_z_cap_(size) _CharType* pstrString,
+		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
 		{
@@ -564,27 +622,33 @@ public:
 		}
 	}
 
-	static void FloodCharacters(_In_ _CharType ch, _In_ int nLength, _Out_bytecapcount_(nLength) _CharType* pstr) throw()
+	static void FloodCharacters(
+		_In_ _CharType ch,
+		_In_ int nLength,
+		_Out_bytecapcount_(nLength) _CharType* pstr) throw()
 	{
 		// nLength is in XCHARs
 		memset(pstr, ch, nLength);
 	}
 
-	static BSTR AllocSysString(_In_count_(nDataLength) const _CharType* pchData, _In_ int nDataLength) throw()
+	_Ret_z_ static BSTR AllocSysString(
+		_In_count_(nDataLength) const _CharType* pchData,
+		_In_ int nDataLength) throw()
 	{
 		int nLen = MultiByteToWideChar(_AtlGetConversionACP(), 0, pchData, nDataLength,
 			NULL, NULL);
 		BSTR bstr = ::SysAllocStringLen(NULL, nLen);
 		if (bstr != NULL)
 		{
-			MultiByteToWideChar(_AtlGetConversionACP(), 0, pchData, nDataLength,
-				bstr, nLen);
+			MultiByteToWideChar(_AtlGetConversionACP(), 0, pchData, nDataLength, bstr, nLen);
 		}
 
 		return bstr;
 	}
 
-	static BOOL ReAllocSysString(_In_bytecount_(nDataLength) const _CharType* pchData, _Inout_ BSTR* pbstr,
+	static BOOL ReAllocSysString(
+		_In_bytecount_(nDataLength) const _CharType* pchData,
+		_Inout_ _Deref_post_opt_valid_ BSTR* pbstr,
 		_In_ int nDataLength) throw()
 	{
 		int nLen = MultiByteToWideChar(_AtlGetConversionACP(), 0, pchData,
@@ -599,27 +663,32 @@ public:
 		return bSuccess;
 	}
 
-	static DWORD FormatMessage(_In_ DWORD dwFlags, _In_ LPCVOID lpSource,
-		_In_ DWORD dwMessageID, _In_ DWORD dwLanguageID, _Out_cap_(nSize) char* pstrBuffer,
-		_In_ DWORD nSize, va_list* pArguments) throw()
+	static DWORD FormatMessage(
+		_In_ DWORD dwFlags,
+		_In_ LPCVOID lpSource,
+		_In_ DWORD dwMessageID,
+		_In_ DWORD dwLanguageID,
+		_Out_z_cap_(nSize) char* pstrBuffer,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* pArguments) throw()
 	{
 		return ::FormatMessageA(dwFlags, lpSource, dwMessageID, dwLanguageID,
 				pstrBuffer, nSize, pArguments);
 	}
 
-	static int SafeStringLen(_In_opt_ const char* psz) throw()
+	static int SafeStringLen(_In_opt_z_ const char* psz) throw()
 	{
 		// returns length in bytes
 		return (psz != NULL) ? lstrlenA(psz) : 0;
 	}
 
-	static int SafeStringLen(_In_opt_ const wchar_t* psz) throw()
+	static int SafeStringLen(_In_opt_z_ const wchar_t* psz) throw()
 	{
 		// returns length in wchar_ts
 		return (psz != NULL) ? lstrlenW(psz) : 0;
 	}
 
-	static int GetCharLen(const wchar_t*) throw()
+	static int GetCharLen(_In_opt_z_ const wchar_t*) throw()
 	{
 		// returns char length
 		return 1;
@@ -630,8 +699,10 @@ public:
 		return (p - psz);
 	}
 
-	static DWORD GetEnvironmentVariable(_In_ const _CharType* pstrVar,
-		_Out_opt_cap_(dwSize) _CharType* pstrBuffer, _In_ DWORD dwSize) throw()
+	static DWORD GetEnvironmentVariable(
+		_In_z_ const _CharType* pstrVar,
+		_Out_opt_z_cap_(dwSize) _CharType* pstrBuffer,
+		_In_ DWORD dwSize) throw()
 	{
 		return ::GetEnvironmentVariableA(pstrVar, pstrBuffer, dwSize);
 	}
@@ -643,14 +714,23 @@ class ChTraitsOS< wchar_t > :
 	public ChTraitsBase< wchar_t >
 {
 protected:
-	static int CompareStringW(_In_ LCID lcid, _In_ DWORD dwFlags, 
-		_In_count_(nLength1) LPCWSTR pszString1, _In_ int nLength1, _In_count_(nLength2) LPCWSTR pszString2, _In_ int nLength2)
+	static int CompareStringW(
+		_In_ LCID lcid,
+		_In_ DWORD dwFlags,
+		_In_count_(nLength1) LPCWSTR pszString1,
+		_In_ int nLength1,
+		_In_count_(nLength2) LPCWSTR pszString2,
+		_In_ int nLength2)
 	{
-		return ::CompareStringW(lcid, dwFlags, pszString1, nLength1, 
+		return ::CompareStringW(lcid, dwFlags, pszString1, nLength1,
 			pszString2, nLength2);
 	}
-	static BOOL GetStringTypeExW(_In_ LCID lcid, _In_ DWORD dwInfoType, _In_count_(nLength) LPCWSTR pszSrc,
-		_In_ int nLength, _Out_ LPWORD pwCharType)
+	static BOOL GetStringTypeExW(
+		_In_ LCID lcid,
+		_In_ DWORD dwInfoType,
+		_In_count_(nLength) LPCWSTR pszSrc,
+		_In_ int nLength,
+		_Out_ LPWORD pwCharType)
 	{
 		return ::GetStringTypeExW(lcid, dwInfoType, pszSrc, nLength, pwCharType);
 	}
@@ -658,30 +738,37 @@ protected:
 	{
 		return ::lstrcmpiW(psz1, psz2);
 	}
-	static LPWSTR CharLowerW(_Inout_ LPWSTR psz)
+	static LPWSTR CharLowerW(_Inout_z_ LPWSTR psz)
 	{
 		return ::CharLowerW(psz);
 	}
-	static LPWSTR CharUpperW(_Inout_ LPWSTR psz)
+	static LPWSTR CharUpperW(_Inout_z_ LPWSTR psz)
 	{
 		return ::CharUpperW(psz);
 	}
-	static DWORD _GetEnvironmentVariableW(_In_z_ LPCWSTR pszName, _Out_opt_cap_(nSize) LPWSTR pszBuffer, _In_ DWORD nSize)
+	static DWORD _GetEnvironmentVariableW(
+		_In_z_ LPCWSTR pszName,
+		_Out_opt_z_cap_(nSize) LPWSTR pszBuffer,
+		_In_ DWORD nSize)
 	{
 		return ::GetEnvironmentVariableW(pszName, pszBuffer, nSize);
 	}
 
 public:
-	static int tclen(const wchar_t*) throw()
+	static int tclen(_In_opt_z_ const wchar_t*) throw()
 	{
 		return 1;
 	}
-	static LPCWSTR strchr(_In_z_ LPCWSTR p, _In_ wchar_t ch) throw()
+	_Ret_opt_z_ static LPCWSTR strchr(
+		_In_z_ LPCWSTR p,
+		_In_ wchar_t ch) throw()
 	{
 		return AtlstrchrT(p,ch);
 	}
-	static LPCWSTR strrchr(_In_z_ LPCWSTR p, _In_ wchar_t ch) throw()
-	{		
+	_Ret_opt_z_ static LPCWSTR strrchr(
+		_In_z_ LPCWSTR p,
+		_In_ wchar_t ch) throw()
+	{
 		const wchar_t* pch = p+lstrlenW(p);
 		while ((pch != p) && (*pch != ch))
 		{
@@ -696,12 +783,13 @@ public:
 			return NULL;
 		}
 	}
-	static wchar_t* _strrev(_Inout_z_ wchar_t* psz) throw()
+	_Ret_opt_z_ static wchar_t* _strrev(_Inout_opt_z_ wchar_t* psz) throw()
 	{
-		// Optimize NULL, zero-length, and single-char case.
-		#pragma warning(suppress:6385)
+		// Optimize NULL, zero-length, and single-char case.		
+		ATLPREFAST_SUPPRESS(6385)
 		if ((psz == NULL) || (psz[0] == L'\0') || (psz[1] == L'\0'))
 			return psz;
+		ATLPREFAST_UNSUPPRESS()
 
 		wchar_t* p = psz+(lstrlenW( psz )-1);
 		wchar_t* q = psz;
@@ -715,11 +803,15 @@ public:
 		}
 		return psz;
 	}
-	static LPCWSTR strstr(_In_z_ LPCWSTR pStr, _In_z_ LPCWSTR pCharSet) throw()
+	_Ret_opt_z_ static LPCWSTR strstr(
+		_In_z_ LPCWSTR pStr,
+		_In_z_ LPCWSTR pCharSet) throw()
 	{
-		return strstrT< ChTraitsOS<XCHAR> >(pStr,pCharSet);				
+		return strstrT< ChTraitsOS<XCHAR> >(pStr,pCharSet);
 	}
-	static int strspn(_In_z_ const wchar_t* psz, _In_z_ const wchar_t* pszCharSet) throw()
+	static int strspn(
+		_In_z_ const wchar_t* psz,
+		_In_z_ const wchar_t* pszCharSet) throw()
 	{
 		int nRet = 0;
 		const wchar_t* p = psz;
@@ -732,7 +824,9 @@ public:
 		}
 		return nRet;
 	}
-	static int strcspn(_In_z_ const wchar_t* psz, _In_z_ const wchar_t* pszCharSet) throw()
+	static int strcspn(
+		_In_z_ const wchar_t* psz,
+		_In_z_ const wchar_t* pszCharSet) throw()
 	{
 		int nRet = 0;
 		const wchar_t* p = psz;
@@ -745,7 +839,9 @@ public:
 		}
 		return nRet;
 	}
-	static LPCWSTR strpbrk(_In_z_ LPCWSTR psz, _In_z_ LPCWSTR pszCharSet) throw()
+	_Ret_opt_z_ static LPCWSTR strpbrk(
+		_In_z_ LPCWSTR psz,
+		_In_z_ LPCWSTR pszCharSet) throw()
 	{
 		const wchar_t* p = psz;
 		while (*p != 0)
@@ -757,7 +853,7 @@ public:
 		return NULL;
 	}
 
-	static wchar_t* CharNext(_In_z_ const wchar_t* p) throw()
+	static wchar_t* CharNext(_In_ const wchar_t* p) throw()
 	{
 		return AtlCharNext(p);
 	}
@@ -777,21 +873,24 @@ public:
 	}
 
 
-	static int StringCompare(_In_z_ const wchar_t* pstrOne,
+	static int StringCompare(
+		_In_z_ const wchar_t* pstrOne,
 		_In_z_ const wchar_t* pstrOther) throw()
 	{
 		return wcscmp(pstrOne, pstrOther);
 	}
 
-	static int StringCompareIgnore(_In_z_ const wchar_t* pstrOne,
+	static int StringCompareIgnore(
+		_In_z_ const wchar_t* pstrOne,
 		_In_z_ const wchar_t* pstrOther) throw()
 	{
 		return lstrcmpiW(pstrOne, pstrOther);
 	}
 
-	static int StringCollate(_In_z_ const wchar_t* pstrOne,
+	static int StringCollate(
+		_In_z_ const wchar_t* pstrOne,
 		_In_z_ const wchar_t* pstrOther) throw()
-	{ 
+	{
 		int nRet;
 
 		nRet = CompareStringW(GetThreadLocale(), 0, pstrOne, -1, pstrOther, -1);
@@ -799,7 +898,8 @@ public:
 		return nRet-2;  // Convert to strcmp convention.  This really is documented.
 	}
 
-	static int StringCollateIgnore(_In_z_ const wchar_t* pstrOne,
+	static int StringCollateIgnore(
+		_In_z_ const wchar_t* pstrOne,
 		_In_z_ const wchar_t* pstrOther) throw()
 	{
 		int nRet = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, pstrOne, -1, pstrOther, -1);
@@ -807,61 +907,72 @@ public:
 		return nRet-2;  // Convert to strcmp convention.  This really is documented.
 	}
 
-	static LPCWSTR StringFindString(_In_z_ LPCWSTR pstrBlock,
+	_Ret_opt_z_ static LPCWSTR StringFindString(
+		_In_z_ LPCWSTR pstrBlock,
 		_In_z_ LPCWSTR pstrMatch) throw()
 	{
 		return strstr(pstrBlock, pstrMatch);
 	}
 
-	static LPWSTR StringFindString( _In_z_ LPWSTR pszBlock, _In_z_ LPCWSTR pszMatch ) throw()
+	_Ret_opt_z_ static LPWSTR StringFindString(
+		_In_z_ LPWSTR pszBlock,
+		_In_z_ LPCWSTR pszMatch) throw()
 	{
 		return( const_cast< LPWSTR >( StringFindString( const_cast< LPCWSTR >( pszBlock ), pszMatch ) ) );
 	}
 
-	static LPCWSTR StringFindChar(_In_z_ LPCWSTR pstrBlock,
+	_Ret_opt_z_ static LPCWSTR StringFindChar(
+		_In_z_ LPCWSTR pstrBlock,
 		_In_ wchar_t pstrMatch) throw()
 	{
 		return strchr(pstrBlock, pstrMatch);
 	}
 
-	static LPCWSTR StringFindCharRev(_In_z_ LPCWSTR pstr, _In_ wchar_t ch) throw()
+	_Ret_opt_z_ static LPCWSTR StringFindCharRev(
+		_In_z_ LPCWSTR pstr,
+		_In_ wchar_t ch) throw()
 	{
 		return strrchr(pstr, ch);
 	}
 
-	static LPCWSTR StringScanSet(_In_z_ LPCWSTR pszBlock,
+	_Ret_opt_z_ static LPCWSTR StringScanSet(
+		_In_z_ LPCWSTR pszBlock,
 		_In_z_ LPCWSTR pszMatch) throw()
 	{
 		return strpbrk(pszBlock, pszMatch);
 	}
 
-	static int StringSpanIncluding(_In_z_ const wchar_t* pszBlock,
+	static int StringSpanIncluding(
+		_In_z_ const wchar_t* pszBlock,
 		_In_z_ const wchar_t* pszSet) throw()
 	{
 		return strspn(pszBlock, pszSet);
 	}
 
-	static int StringSpanExcluding(_In_z_ const wchar_t* pszBlock,
+	static int StringSpanExcluding(
+		_In_z_ const wchar_t* pszBlock,
 		_In_z_ const wchar_t* pszSet) throw()
 	{
 		return strcspn(pszBlock, pszSet);
 	}
 
 	_ATL_INSECURE_DEPRECATE("ChTraitsOS::StringUppercase must be passed a buffer size")
-	static wchar_t* StringUppercase(_Inout_ wchar_t* psz) throw()
+	static wchar_t* StringUppercase(_Inout_z_ wchar_t* psz) throw()
 	{
 		CharUpperW(psz);
 		return psz;
 	}
 
 	_ATL_INSECURE_DEPRECATE("ChTraitsOS::StringUppercase must be passed a buffer size")
-	static wchar_t* StringLowercase(_Inout_ wchar_t* psz) throw()
+	static wchar_t* StringLowercase(_Inout_z_ wchar_t* psz) throw()
 	{
 		CharLowerW(psz);
 		return psz;
 	}
 
-	static wchar_t* StringUppercase(_Inout_cap_(size) wchar_t* psz, _In_ size_t size) throw()
+	_Ret_z_ static wchar_t* StringUppercase(
+		_Inout_z_cap_(size) wchar_t* psz,
+		_In_ size_t size) throw()
 	{
 		if(size>(UINT_MAX/sizeof(wchar_t)))
 		{
@@ -873,7 +984,9 @@ public:
 		return psz;
 	}
 
-	static wchar_t* StringLowercase(_Inout_cap_(size) wchar_t* psz, _In_ size_t size) throw()
+	_Ret_z_ static wchar_t* StringLowercase(
+		_Inout_z_cap_(size) wchar_t* psz,
+		_In_ size_t size) throw()
 	{
 		if(size>(UINT_MAX/sizeof(wchar_t)))
 		{
@@ -885,19 +998,21 @@ public:
 		return psz;
 	}
 
-	static wchar_t* StringReverse(_Inout_z_ wchar_t* psz) throw()
+	_Ret_opt_z_ static wchar_t* StringReverse(_Inout_z_ wchar_t* psz) throw()
 	{
 		return _strrev(psz);
 	}
 
-#ifdef _UNICODE
-	static int GetFormattedLength(_In_ _Printf_format_string_ const wchar_t* pszFormat, va_list args)
+	static int GetFormattedLength(
+		_In_z_ _Printf_format_string_ const wchar_t* pszFormat, 
+		_In_ va_list args)
 	{
 		wchar_t szBuffer[1028];
 		int nLength = 0;
 
 		SetLastError(ERROR_SUCCESS);
 #pragma warning(push)
+#pragma warning(disable:4995)
 #pragma warning(disable:4996)
 		// wvsprintf always truncates the output to 1024 character plus the '\0'.
 		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
@@ -913,22 +1028,30 @@ public:
 	}
 
 	_ATL_INSECURE_DEPRECATE("ChTraitsOS::Format must be passed a buffer size")
-	static int Format(_Out_ wchar_t* pszBuffer, _In_ _Printf_format_string_ const wchar_t* pszFormat,
-		va_list args) throw()
+	static int Format(
+		_Out_ _Post_z_ wchar_t* pszBuffer,
+		_In_z_ _Printf_format_string_ const wchar_t* pszFormat,
+		_In_ va_list args) throw()
 	{
 #pragma warning(push)
+#pragma warning(disable:4995)
 #pragma warning(disable:4996)
 		return wvsprintfW(pszBuffer, pszFormat, args);
 #pragma warning(pop)
 	}
 
-	static int Format(_Out_cap_(nLength) wchar_t* pszBuffer, _In_ size_t nLength, _In_ _Printf_format_string_ const wchar_t* pszFormat, va_list args )
+	static int Format(
+		_Out_z_cap_(nLength) wchar_t* pszBuffer,
+		_In_ size_t nLength,
+		_In_z_ _Printf_format_string_ const wchar_t* pszFormat,
+		_In_ va_list args)
 	{
 		wchar_t buffSafe[1028];
 		int nCharsWritten = 0;
 
 		SetLastError(ERROR_SUCCESS);
 #pragma warning(push)
+#pragma warning(disable:4995)
 #pragma warning(disable:4996)
 		// wvsprintf always truncates the output to 1024 character plus the '\0'.
 		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
@@ -941,14 +1064,14 @@ public:
 		//nlength should have room for nCharsWritten + NULL
 		ATLENSURE_THROW((size_t)nCharsWritten < nLength ,E_INVALIDARG);
 		ATLENSURE_THROW(wcslen(buffSafe) < nLength ,E_INVALIDARG);
-#pragma warning(push)
-#pragma warning(disable:6386)
+
+ATLPREFAST_SUPPRESS(6386)
 		/* prefast noise 497597 */
 		Checked::wcscpy_s(pszBuffer,nLength,buffSafe);
-#pragma warning(pop)
+ATLPREFAST_UNSUPPRESS()
+	
 		return nCharsWritten;
 	}
-#endif
 
 	static int GetBaseTypeLength(_In_z_ const char* pszSrc) throw()
 	{
@@ -956,7 +1079,9 @@ public:
 		return ::MultiByteToWideChar(_AtlGetConversionACP(), 0, pszSrc, -1, NULL, 0)-1;
 	}
 
-	static int GetBaseTypeLength(_In_count_(nLength) const char* pszSrc, _In_ int nLength) throw()
+	static int GetBaseTypeLength(
+		_In_count_(nLength) const char* pszSrc,
+		_In_ int nLength) throw()
 	{
 		// Returns required buffer size in wchar_ts
 		return ::MultiByteToWideChar(_AtlGetConversionACP(), 0, pszSrc, nLength, NULL, 0);
@@ -968,22 +1093,30 @@ public:
 		return lstrlenW(pszSrc);
 	}
 
-	static int GetBaseTypeLength(_In_count_(nLength) const wchar_t* pszSrc, _In_ int nLength) throw()
+	static int GetBaseTypeLength(
+		_In_count_(nLength) const wchar_t* pszSrc,
+		_In_ int nLength) throw()
 	{
 		(void)pszSrc;
 		// Returns required buffer size in wchar_ts
 		return nLength;
 	}
 
-	static void ConvertToBaseType(_Out_cap_(nDestLength) wchar_t* pszDest, int nDestLength,
-		_In_count_(nSrcLength) const char* pszSrc, _In_ int nSrcLength = -1) throw()
+	static void ConvertToBaseType(
+		_Out_cap_(nDestLength) wchar_t* pszDest,
+		_In_ int nDestLength,
+		_In_count_(nSrcLength) const char* pszSrc,
+		_In_ int nSrcLength = -1) throw()
 	{
 		// nLen is in wchar_ts
 		::MultiByteToWideChar(_AtlGetConversionACP(), 0, pszSrc, nSrcLength, pszDest, nDestLength);
 	}
 
-	static void ConvertToBaseType(_Out_cap_(nDestLength) wchar_t* pszDest, _In_ int nDestLength,
-		_In_count_(nSrcLength) const wchar_t* pszSrc, int nSrcLength = -1) throw()
+	static void ConvertToBaseType(
+		_Out_cap_(nDestLength) wchar_t* pszDest,
+		_In_ int nDestLength,
+		_In_count_(nSrcLength) const wchar_t* pszSrc,
+		_In_ int nSrcLength = -1) throw()
 	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
 		// nLen is in wchar_ts
@@ -992,7 +1125,7 @@ public:
 
 	// this conversion on Unicode strings makes no sense
 	/*
-	static void ConvertToOem(wchar_t*)
+	static void ConvertToOem(_In_opt_z_ wchar_t*)
 	{
 		ATLASSERT(FALSE);
 	}
@@ -1000,53 +1133,64 @@ public:
 
 	// this conversion on Unicode strings makes no sense
 	/*
-	static void ConvertToAnsi(wchar_t*)
+	static void ConvertToAnsi(_In_opt_z_ wchar_t*)
 	{
 		ATLASSERT(FALSE);
 	}
 	*/
 
-	static void FloodCharacters(_In_ wchar_t ch, _In_ int nLength, _Out_capcount_(nLength) wchar_t* pstr) throw()
+	static void FloodCharacters(
+		_In_ wchar_t ch,
+		_In_ int nLength,
+		_Out_z_capcount_(nLength) wchar_t* pstr) throw()
 	{
 		// nLength is in XCHARs
 		for (int i = 0; i < nLength; i++)
 			pstr[i] = ch;
 	}
 
-	static BSTR AllocSysString(_In_count_(nDataLength) const wchar_t* pchData, _In_ int nDataLength) throw()
+	static BSTR AllocSysString(
+		_In_count_(nDataLength) const wchar_t* pchData,
+		_In_ int nDataLength) throw()
 	{
 		BSTR bstr = ::SysAllocStringLen(pchData, nDataLength);
 		return bstr;
 	}
 
-	static BOOL ReAllocSysString(_In_count_(nDataLength) const wchar_t* pchData, _Inout_ BSTR* pbstr,
+	static BOOL ReAllocSysString(
+		_In_count_(nDataLength) const wchar_t* pchData,
+		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
 		_In_ int nDataLength) throw()
 	{
 		return ::SysReAllocStringLen(pbstr, pchData, nDataLength);
 	}
 
-#ifdef _UNICODE
-	static DWORD FormatMessage(_In_ DWORD dwFlags, _In_ LPCVOID lpSource,
-		_In_ DWORD dwMessageID, _In_ DWORD dwLanguageID, _Out_cap_(nSize) wchar_t* pstrBuffer,
-		_In_ DWORD nSize, va_list* pArguments) throw()
+	static DWORD FormatMessage(
+		_In_ DWORD dwFlags,
+		_In_ LPCVOID lpSource,
+		_In_ DWORD dwMessageID,
+		_In_ DWORD dwLanguageID,
+		_Out_z_cap_(nSize) wchar_t* pstrBuffer,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* pArguments) throw()
 	{
 		return ::FormatMessageW(dwFlags, lpSource, dwMessageID, dwLanguageID,
 				pstrBuffer, nSize, pArguments);
 	}
-#endif
-	static int SafeStringLen(_In_opt_ const char* psz) throw()
+
+	static int SafeStringLen(_In_opt_z_ const char* psz) throw()
 	{
 		// returns length in bytes
 		return (psz != NULL) ? lstrlenA(psz) : 0;
 	}
 
-	static int SafeStringLen(_In_opt_ const wchar_t* psz) throw()
+	static int SafeStringLen(_In_opt_z_ const wchar_t* psz) throw()
 	{
 		// returns length in wchar_ts
 		return (psz != NULL) ? lstrlenW(psz) : 0;
 	}
 
-	static int GetCharLen(const wchar_t*) throw()
+	static int GetCharLen(_In_opt_z_ const wchar_t*) throw()
 	{
 		// returns char length
 		return 1;
@@ -1057,15 +1201,19 @@ public:
 		return int( p-psz );
 	}
 
-	static DWORD GetEnvironmentVariable(_In_z_ const wchar_t* pstrVar,
-		_Out_opt_cap_(dwSize) wchar_t* pstrBuffer, _In_ DWORD dwSize) throw()
+	static DWORD GetEnvironmentVariable(
+		_In_z_ const wchar_t* pstrVar,
+		_Out_opt_z_cap_(dwSize) wchar_t* pstrBuffer,
+		_In_ DWORD dwSize) throw()
 	{
 		return ::GetEnvironmentVariableW(pstrVar, pstrBuffer, dwSize);
 	}
 };
 
 template <class ChTraits>
-inline typename ChTraits::PCXSTR strstrT(_In_ typename ChTraits::PCXSTR pStr,_In_ typename ChTraits::PCXSTR pCharSet)
+inline typename ChTraits::PCXSTR strstrT(
+	_In_ typename ChTraits::PCXSTR pStr,
+	_In_ typename ChTraits::PCXSTR pCharSet)
 {
 	ATLASSERT(pStr != NULL);
 	size_t nCharSetLen = ChTraits::GetBaseTypeLength(pCharSet);
@@ -1094,7 +1242,8 @@ inline typename ChTraits::PCXSTR strstrT(_In_ typename ChTraits::PCXSTR pStr,_In
 }
 
 template< typename _BaseType = char, class StringIterator = ChTraitsOS< _BaseType > >
-class StrTraitATL : public StringIterator
+class StrTraitATL : 
+	public StringIterator
 {
 public:
 	static HINSTANCE FindStringResourceInstance(_In_ UINT nID) throw()

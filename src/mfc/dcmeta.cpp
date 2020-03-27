@@ -139,7 +139,7 @@ CSize CMetaFileDC::TabbedTextOut(int x, int y, LPCTSTR lpszString,
 	CSize size;
 	int cxTabStop = 0;
 	int cxDefaultTab = (int)LOWORD(
-		::GetTabbedTextExtentA(m_hAttribDC, "\t", 1, 0, NULL));
+		::GetTabbedTextExtentW(m_hAttribDC, L"\t", 1, 0, NULL));
 
 	if (!lpnTabStopPositions)
 	{
@@ -159,7 +159,7 @@ CSize CMetaFileDC::TabbedTextOut(int x, int y, LPCTSTR lpszString,
 	{
 		// find next tab character
 		LPCTSTR lpszTab = lpszString;
-		while (nCount != 0 && *lpszTab != '\t' && *lpszTab != '\0')
+		while (nCount != 0 && *lpszTab != _T('\t') && *lpszTab != _T('\0'))
 		{
 			if (_istlead(*lpszTab))
 				++lpszTab, --nCount;
@@ -168,7 +168,6 @@ CSize CMetaFileDC::TabbedTextOut(int x, int y, LPCTSTR lpszString,
 		}
 
 		// write the string
-	  //IA64: Assume string < 2G chars
 		int nChars = int(lpszTab - lpszString);
 		::TextOut(m_hDC, x, y, lpszString, nChars);
 
@@ -178,9 +177,9 @@ CSize CMetaFileDC::TabbedTextOut(int x, int y, LPCTSTR lpszString,
 		x += size.cx;
 
 		// advance current x co-ordinate based on tab stops
-		if (nCount != 0 && *lpszTab != '\0')
+		if (nCount != 0 && *lpszTab != _T('\0'))
 		{
-			ASSERT(*lpszTab == '\t');
+			ASSERT(*lpszTab == _T('\t'));
 			lpszString = lpszTab + 1;   // skip over the tab
 			--nCount;
 

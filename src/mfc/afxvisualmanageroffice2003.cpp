@@ -267,34 +267,12 @@ void CMFCVisualManagerOffice2003::OnFillBarBackground(CDC* pDC, CBasePane* pBar,
 	{
 		pDC->FillRect(rectClip, &m_brMenuLight);
 
-		BOOL bQuickMode = FALSE;
-
 		CMFCPopupMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCPopupMenuBar, pBar);
 		if (!pMenuBar->m_bDisableSideBarInXPMode)
 		{
-			CWnd* pWnd = pMenuBar->GetParent();
-
-			if (pWnd != NULL && pWnd->IsKindOf(RUNTIME_CLASS(CMFCPopupMenu)))
-			{
-				CMFCPopupMenu* pMenu = DYNAMIC_DOWNCAST(CMFCPopupMenu, pWnd);
-
-				if (pMenu->IsCustomizePane())
-				{
-					bQuickMode = TRUE;
-				}
-			}
-
 			CRect rectImages = rectClient;
+			rectImages.right = rectImages.left + pMenuBar->GetGutterWidth();
 			rectImages.DeflateRect(0, 1);
-
-			if (bQuickMode)
-			{
-				rectImages.right = rectImages.left + 2*CMFCToolBar::GetMenuImageSize().cx + 4 * GetMenuImageMargin() + 4;
-			}
-			else
-			{
-				rectImages.right = rectImages.left + CMFCToolBar::GetMenuImageSize().cx + 2 * GetMenuImageMargin() + 2;
-			}
 
 			dm.FillGradient(rectImages, m_clrToolBarGradientLight, m_clrToolBarGradientDark, FALSE, 35);
 		}
@@ -2516,19 +2494,20 @@ COLORREF CMFCVisualManagerOffice2003::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibb
 
 	bIsActive = bIsActive && ((pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS) == 0 || pTab->GetDroppedDown() != NULL);
 
-	const BOOL bIsHighlighted = pTab->IsHighlighted() && !pTab->IsDroppedDown();
+	const BOOL bIsFocused	= pTab->IsFocused() && (pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS);
+	const BOOL bIsHighlighted = (pTab->IsHighlighted() || bIsFocused) && !pTab->IsDroppedDown();
 
 	CRect rectTab = pTab->GetRect();
 	rectTab.top += 3;
 
-	const int nTrancateRatio = pBar->GetTabTrancateRatio();
+	const int nTruncateRatio = pBar->GetTabTruncateRatio();
 
-	if (nTrancateRatio > 0)
+	if (nTruncateRatio > 0)
 	{
 		CRect rectRight = rectTab;
 		rectRight.left = rectRight.right - 1;
 
-		const int nPercent = max(10, 100 - nTrancateRatio / 2);
+		const int nPercent = max(10, 100 - nTruncateRatio / 2);
 
 		COLORREF color1 = CDrawingManager::PixelAlpha(afxGlobalData.clrBarShadow, nPercent);
 		COLORREF color2 = CDrawingManager::PixelAlpha(color1, 120);

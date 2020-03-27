@@ -55,19 +55,15 @@ public:
 
 	void FillAlpha(const CRect& rect, BYTE bValue = 255);
 
-	BOOL GrayRect(	CRect rect,					// Rectangle to be grayed
-					int nPercentage = -1,		// < 100 - darker, > 100 - lighter, -1 - default light
-					COLORREF clrTransparent = (COLORREF)-1,	// Don't change this color
-					COLORREF clrDisabled = (COLORREF)-1);		// Use this color for desaturation
+	BOOL GrayRect(CRect rect,					// Rectangle to be grayed
+				int nPercentage = -1,		// < 100 - darker, > 100 - lighter, -1 - default light
+				COLORREF clrTransparent = (COLORREF)-1,	// Don't change this color
+				COLORREF clrDisabled = (COLORREF)-1);		// Use this color for desaturation
 
 	void MirrorRect(CRect rect, BOOL bHorz = TRUE);
 
-	BOOL DrawGradientRing(CRect rect,
-							COLORREF colorStart, COLORREF colorFinish,
-							COLORREF colorBorder,
-							int nAngle /* 0 - 360 */,
-							int nWidth,
-							COLORREF clrFace = (COLORREF) -1);
+	BOOL DrawGradientRing(CRect rect, COLORREF colorStart, COLORREF colorFinish, COLORREF colorBorder, int nAngle /* 0 - 360 */,
+				int nWidth, COLORREF clrFace = (COLORREF) -1);
 
 	void DrawLine(int x1, int y1, int x2, int y2, COLORREF clrLine);
 	void DrawLineA(double x1, double y1, double x2, double y2, COLORREF clrLine);
@@ -75,12 +71,18 @@ public:
 	void DrawRect(const CRect& rect, COLORREF clrFill, COLORREF clrLine);
 	void DrawAlpha(CDC* pDstDC, const CRect& rectDst, CDC* pSrcDC, const CRect& rectSrc);
 
+	/// <summary>
+	/// Rotates a source DC content inside the given rectangle by +/- 90 degrees</summary>
+	/// <param name="rectDest">Destination rectangle</param>
+	/// <param name="dcSrc">The source device content.</param>
+	/// <param name="bClockWise">TRUE - rotate +90 degrees, FALSE - 90.</param>
+	void DrawRotated(CRect rectDest, CDC& dcSrc, BOOL bClockWise);
+
 // Helpers:
 	static COLORREF __stdcall PixelAlpha(COLORREF srcPixel, int percent);
 	static COLORREF __stdcall PixelAlpha(COLORREF srcPixel, double percentR, double percentG, double percentB);
 	static COLORREF __stdcall PixelAlpha(COLORREF srcPixel, COLORREF dstPixel, int percent);
-	static void __stdcall SetAlphaPixel(COLORREF* pBits, CRect rect, int x, int y, int percent, int iShadowSize,
-		COLORREF clrBase = (COLORREF)-1, BOOL bIsRight = TRUE);
+	static void __stdcall SetAlphaPixel(COLORREF* pBits, CRect rect, int x, int y, int percent, int iShadowSize, COLORREF clrBase = (COLORREF)-1, BOOL bIsRight = TRUE);
 	static void __stdcall SetPixel(COLORREF* pBits, int cx, int cy, int x, int y, COLORREF color);
 
 // Conversion between the HSL (Hue, Saturation, and Luminosity) and RGB:
@@ -96,15 +98,23 @@ public:
 
 	static COLORREF __stdcall SmartMixColors(COLORREF color1, COLORREF color2, double dblLumRatio = 1., int k1 = 1, int k2 = 1);
 
-	static HBITMAP __stdcall CreateBitmap_32 (const CSize& size, void** pBits);
-	static HBITMAP __stdcall PrepareShadowMask (int nDepth,
-                                      COLORREF clrBase,
-                                      int iMinBrightness = 0, int iMaxBrightness = 100);
+	/// <summary> Creates an empty 32 bit bitmap.</summary>
+	/// <returns> A handle to created bitmap, or NULL, if creation fails.</returns>
+	/// <param name="size">Specifies bitmap size.</param>
+	/// <param name="pBits">When the function returns contains a pointer to bitmap bits.</param>
+	static HBITMAP __stdcall CreateBitmap_32(const CSize& size, void** pBits);
+
+	/// <summary> Creates a 32 bit bitmap from the specified bitmap.</summary>
+	/// <returns> A handle to created bitmap, or NULL, if creation fails.</returns>
+	/// <param name="bitmap"> A handle to the original bitmap.</param>
+	/// <param name="clrTransparent"> An RGB value specifying transparent color of the original bitmap.</param>
+	static HBITMAP __stdcall CreateBitmap_32(HBITMAP bitmap, COLORREF clrTransparent = -1);
+
+	static HBITMAP __stdcall PrepareShadowMask(int nDepth, COLORREF clrBase, int iMinBrightness = 0, int iMaxBrightness = 100);
 
 
 protected:
-	void _FillGradient(CRect rect, COLORREF colorStart, COLORREF colorFinish,
-		BOOL bHorz = TRUE, int nStartFlatPercentage = 0, int nEndFlatPercentage = 0);
+	void _FillGradient(CRect rect, COLORREF colorStart, COLORREF colorFinish, BOOL bHorz = TRUE, int nStartFlatPercentage = 0, int nEndFlatPercentage = 0);
 
 // Attributes:
 protected:

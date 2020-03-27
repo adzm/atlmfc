@@ -24,7 +24,7 @@ AfxOleHookProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 COlePropertiesDialog::COlePropertiesDialog(
 	COleClientItem* pItem, UINT nScaleMin, UINT nScaleMax, CWnd* pParentWnd)
-	: COleDialog(pParentWnd), m_xLinkInfo(NULL)
+	: COleDialog(pParentWnd), m_xLinkInfo(pItem)
 {
 	ASSERT_VALID(pItem);
 
@@ -403,7 +403,7 @@ void COlePropertiesDialog::AssertValid() const
 // ChangeSource dialog wrapper
 
 COleChangeSourceDialog::COleChangeSourceDialog(COleClientItem* pItem,
-	CWnd* pParentWnd) : COleDialog(pParentWnd), m_xLinkInfo(NULL)
+	CWnd* pParentWnd) : COleDialog(pParentWnd), m_xLinkInfo(pItem)
 {
 	ASSERT_VALID(pItem);
 

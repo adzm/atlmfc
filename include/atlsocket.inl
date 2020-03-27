@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #include <wtypes.h>
@@ -15,7 +15,7 @@
 namespace ATL
 {
 ////////////////////////////////////////////////////////////////////////////
-// CSocketAddr implmenetation. 
+// CSocketAddr implmenetation.
 ////////////////////////////////////////////////////////////////////////////
 
 inline CSocketAddr::CSocketAddr() throw()
@@ -33,13 +33,12 @@ inline CSocketAddr::~CSocketAddr() throw()
 }
 
 inline int CSocketAddr::FindAddr(
-	LPCTSTR szHost,
-	LPCTSTR szPortOrServiceName,
-	int flags,
-	int addr_family,
-	int sock_type,
-	int ai_proto
-) throw()
+	_In_z_ LPCTSTR szHost,
+	_In_z_ LPCTSTR szPortOrServiceName,
+	_In_ int flags,
+	_In_ int addr_family,
+	_In_ int sock_type,
+	_In_ int ai_proto) throw()
 {
 	if (m_pAddrs)
 	{
@@ -70,17 +69,16 @@ inline int CSocketAddr::FindAddr(
 	return ::GetAddrInfo(pszHost, pszPortOrServiceName, &hints, &m_pAddrs);
 #else
 	return ::GetAddrInfo(szHost, szPortOrServiceName, &hints, &m_pAddrs);
-#endif	
+#endif
 }
 
 inline int CSocketAddr::FindAddr(
-	LPCTSTR szHost,
-	int nPortNo,
-	int flags,
-	int addr_family,
-	int sock_type,
-	int ai_proto
-) throw()
+	_In_z_ LPCTSTR szHost,
+	_In_ int nPortNo,
+	_In_ int flags,
+	_In_ int addr_family,
+	_In_ int sock_type,
+	_In_ int ai_proto) throw()
 {
 	// convert port number to string
 	TCHAR szPort[12];
@@ -91,15 +89,13 @@ inline int CSocketAddr::FindAddr(
 	}
 
 	return FindAddr(szHost, szPort, flags, addr_family, sock_type, ai_proto);
-} 
+}
 
-inline int CSocketAddr::FindINET4Addr
-(
-	LPCTSTR szHost,
-	int nPortNo,
-	int flags /* = 0 */,
-	int sock_type /* = SOCK_STREAM */
-) throw()
+inline int CSocketAddr::FindINET4Addr(
+	_In_z_ LPCTSTR szHost,
+	_In_ int nPortNo,
+	_In_ int flags /* = 0 */,
+	_In_ int sock_type /* = SOCK_STREAM */) throw()
 {
 	// convert port number to string
 	TCHAR szPort[12];
@@ -111,13 +107,11 @@ inline int CSocketAddr::FindINET4Addr
 	return FindAddr(szHost, szPort, flags, PF_INET, sock_type, IPPROTO_IP);
 }
 
-inline int CSocketAddr::FindINET6Addr
-(
-	LPCTSTR szHost,
-	int nPortNo,
-	int flags /* = 0 */,
-	int sock_type /* = SOCK_STREAM */
-) throw()
+inline int CSocketAddr::FindINET6Addr(
+	_In_z_ LPCTSTR szHost,
+	_In_ int nPortNo,
+	_In_ int flags /* = 0 */,
+	_In_ int sock_type /* = SOCK_STREAM */) throw()
 {
 	// convert port number to string
 	TCHAR szPort[12];
@@ -136,7 +130,7 @@ inline ADDRINFOT* const CSocketAddr::GetAddrInfoList() const
 	return m_pAddrs;
 }
 
-inline ADDRINFOT* const CSocketAddr::GetAddrInfo(int nIndex /* = 0 */) const
+inline ADDRINFOT* const CSocketAddr::GetAddrInfo(_In_ int nIndex /* = 0 */) const
 {
 	if (!m_pAddrs)
 		return NULL;
@@ -151,3 +145,4 @@ inline ADDRINFOT* const CSocketAddr::GetAddrInfo(int nIndex /* = 0 */) const
 
 
 }; // namespace ATL
+

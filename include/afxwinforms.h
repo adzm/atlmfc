@@ -39,11 +39,11 @@
 #define AFX_MFCM_EXPORT __declspec(dllimport)
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "90"
+#define _MFC_FILENAME_VER "100"
 #endif
 
 #ifndef _MFC_FILENAME_VER_DOT
-#define _MFC_FILENAME_VER_DOT "9.0"
+#define _MFC_FILENAME_VER_DOT "10.0"
 #endif
 
 #ifndef _UNICODE
@@ -134,7 +134,7 @@ public:
 	void Unadvise(IHandleEvents* pSink);
 	
 
-protected:
+private:
 	void OnHandleCreated( System::Object^ o, System::EventArgs^ args);
 	
 	void OnHandleDestroyed( System::Object^ o, System::EventArgs^ args);

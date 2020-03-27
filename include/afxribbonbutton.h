@@ -29,6 +29,8 @@ class CMFCRibbonButton : public CMFCRibbonBaseElement
 	friend class CMFCRibbonPanel;
 	friend class CMFCRibbonPanelMenuBar;
 	friend class CMFCToolTipCtrl;
+	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonConstructor;
 
 	DECLARE_DYNCREATE(CMFCRibbonButton)
 

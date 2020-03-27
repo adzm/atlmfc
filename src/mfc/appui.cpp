@@ -74,13 +74,25 @@ void CWinApp::AddToRecentFileList(LPCTSTR lpszPathName)
 	ASSERT(AfxIsValidString(lpszPathName));
 	
 	if (m_pRecentFileList != NULL)
+	{
+#if (WINVER >= 0x0601)
+		m_pRecentFileList->Add(lpszPathName, m_pszAppID);
+#else
 		m_pRecentFileList->Add(lpszPathName);
+#endif
+	}
 }
 
 CDocument* CWinApp::OpenDocumentFile(LPCTSTR lpszFileName)
 {
 	ENSURE_VALID(m_pDocManager);
 	return m_pDocManager->OpenDocumentFile(lpszFileName);
+}
+
+CDocument* CWinApp::OpenDocumentFile(LPCTSTR lpszFileName, BOOL bAddToMRU)
+{
+	ENSURE_VALID(m_pDocManager);
+	return m_pDocManager->OpenDocumentFile(lpszFileName, bAddToMRU);
 }
 
 void CWinApp::CloseAllDocuments(BOOL bEndSession)
@@ -116,6 +128,8 @@ BOOL CWinApp::OnDDECommand(_In_z_ LPTSTR lpszCommand)
 /////////////////////////////////////////////////////////////////////////////
 // MRU file list default implementation
 
+BOOL g_bRemoveFromMRU;
+
 BOOL CWinApp::OnOpenRecentFile(UINT nID)
 {
 	ASSERT_VALID(this);
@@ -129,8 +143,15 @@ BOOL CWinApp::OnOpenRecentFile(UINT nID)
 	TRACE(traceAppMsg, 0, _T("MRU: open file (%d) '%s'.\n"), (nIndex) + 1,
 			(LPCTSTR)(*m_pRecentFileList)[nIndex]);
 
+	g_bRemoveFromMRU = TRUE;
 	if (OpenDocumentFile((*m_pRecentFileList)[nIndex]) == NULL)
-		m_pRecentFileList->Remove(nIndex);
+	{
+		if (g_bRemoveFromMRU)
+		{
+			m_pRecentFileList->Remove(nIndex);
+		}
+	}
+	g_bRemoveFromMRU = TRUE;
 
 	return TRUE;
 }

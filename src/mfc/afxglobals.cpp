@@ -9,7 +9,6 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "comdef.h"
 #include "afxcontrolbarutil.h"
 #include "afxglobals.h"
@@ -31,8 +30,6 @@
 
 extern CObList afxAllToolBars;
 
-BOOL g_bInSettingChange = FALSE;
-
 BOOL CMemDC::m_bUseMemoryDC = TRUE;
 
 static const CString strOfficeFontName = _T("Tahoma");
@@ -40,6 +37,17 @@ static const CString strOffice2007FontName = _T("Segoe UI");
 static const CString strDefaultFontName = _T("MS Sans Serif");
 static const CString strVertFontName = _T("Arial");
 static const CString strMarlettFontName = _T("Marlett");
+
+HINSTANCE AFX_GLOBAL_DATA::m_hinstD2DDLL = NULL;
+HINSTANCE AFX_GLOBAL_DATA::m_hinstDWriteDLL = NULL;
+
+ID2D1Factory* AFX_GLOBAL_DATA::m_pDirect2dFactory = NULL;
+IDWriteFactory* AFX_GLOBAL_DATA::m_pWriteFactory = NULL;
+IWICImagingFactory* AFX_GLOBAL_DATA::m_pWicFactory = NULL;
+
+D2D1MAKEROTATEMATRIX AFX_GLOBAL_DATA::m_pfD2D1MakeRotateMatrix = NULL;
+
+BOOL AFX_GLOBAL_DATA::m_bD2DInitialized = FALSE;
 
 CMemDC::CMemDC(CDC& dc, CWnd* pWnd) :
 	m_dc(dc), m_bMemDC(FALSE), m_hBufferedPaint(NULL), m_pOldBmp(NULL)
@@ -54,6 +62,12 @@ CMemDC::CMemDC(CDC& dc, CWnd* pWnd) :
 	if (afxGlobalData.m_pfBeginBufferedPaint != NULL && afxGlobalData.m_pfEndBufferedPaint != NULL)
 	{
 		HDC hdcPaint = NULL;
+
+		if (!afxGlobalData.m_bBufferedPaintInited && afxGlobalData.m_pfBufferedPaintInit != NULL && afxGlobalData.m_pfBufferedPaintUnInit != NULL)
+		{
+			afxGlobalData.m_pfBufferedPaintInit();
+			afxGlobalData.m_bBufferedPaintInited = TRUE;
+		}
 
 		m_hBufferedPaint = (*afxGlobalData.m_pfBeginBufferedPaint)(dc.GetSafeHdc(), m_rect, AFX_BPBF_TOPDOWNDIB, NULL, &hdcPaint);
 
@@ -84,6 +98,12 @@ CMemDC::CMemDC(CDC& dc, const CRect& rect) :
 	if (afxGlobalData.m_pfBeginBufferedPaint != NULL && afxGlobalData.m_pfEndBufferedPaint != NULL)
 	{
 		HDC hdcPaint = NULL;
+
+		if (!afxGlobalData.m_bBufferedPaintInited && afxGlobalData.m_pfBufferedPaintInit != NULL && afxGlobalData.m_pfBufferedPaintUnInit != NULL)
+		{
+			afxGlobalData.m_pfBufferedPaintInit();
+			afxGlobalData.m_bBufferedPaintInited = TRUE;
+		}
 
 		m_hBufferedPaint = (*afxGlobalData.m_pfBeginBufferedPaint)(dc.GetSafeHdc(), m_rect, AFX_BPBF_TOPDOWNDIB, NULL, &hdcPaint);
 
@@ -144,11 +164,41 @@ static int CALLBACK FontFamalyProcFonts(const LOGFONT FAR* lplf, const TEXTMETRI
 	return strFont.CollateNoCase((LPCTSTR) lParam) == 0 ? 0 : 1;
 }
 
-extern HMODULE AfxLoadSystemLibraryUsingFullPath(const WCHAR *pszLibrary);
+/////////////////////////////////////////////////////////////////////////////
+// DLL Load Helper
+
+inline HMODULE AfxLoadSystemLibraryUsingFullPath(_In_z_ const WCHAR *pszLibrary)
+{
+	WCHAR wszLoadPath[MAX_PATH+1];
+	if (::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath)) == 0)
+	{
+		return NULL;
+	}
+
+	if (wszLoadPath[wcslen(wszLoadPath)-1] != L'\\')
+	{
+		if (wcscat_s(wszLoadPath, _countof(wszLoadPath), L"\\") != 0)
+		{
+			return NULL;
+		}
+	}
+
+	if (wcscat_s(wszLoadPath, _countof(wszLoadPath), pszLibrary) != 0)
+	{
+		return NULL;
+	}
+
+	return(::AfxCtxLoadLibraryW(wszLoadPath));
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // Cached system metrics, etc
 AFX_GLOBAL_DATA afxGlobalData;
+
+#ifdef _AFXDLL
+// Reference count on global data
+DWORD g_dwAfxGlobalDataRef = 0;
+#endif
 
 // Initialization code
 AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
@@ -159,27 +209,10 @@ AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 
 	::GetVersionEx(&osvi);
 
-	bIsOSAlphaBlendingSupport = (osvi.dwMajorVersion > 4) || ((osvi.dwMajorVersion == 4) &&(osvi.dwMinorVersion > 0));
-
-	bIsRemoteSession = FALSE;
-
-	if ((osvi.dwPlatformId == VER_PLATFORM_WIN32_NT) && (osvi.dwMajorVersion >= 5))
-	{
-		bIsRemoteSession = GetSystemMetrics(SM_REMOTESESSION);
-	}
-
-	bGDIPlusSupport = ((osvi.dwMajorVersion >= 6) || (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion >= 1));
-	if (!bGDIPlusSupport)
-	{
-		HINSTANCE hinstGDIPlus = ::AfxCtxLoadLibrary(_T("GDIPlus.dll"));
-		if (hinstGDIPlus != NULL)
-		{
-			bGDIPlusSupport = TRUE;
-			::FreeLibrary(hinstGDIPlus);
-		}
-	}
+	bIsRemoteSession = GetSystemMetrics(SM_REMOTESESSION);
 
 	bIsWindowsVista = (osvi.dwMajorVersion >= 6);
+	bIsWindows7 = (osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1) || (osvi.dwMajorVersion > 6) ;
 	bDisableAero = FALSE;
 
 	m_bIsRibbonImageScale = TRUE;
@@ -191,11 +224,15 @@ AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 
 	UpdateSysColors();
 
-	m_hinstUXThemeDLL = AfxLoadSystemLibraryUsingFullPath(L"UxTheme.dll");
+	m_hinstUXThemeDLL = ::AfxCtxLoadLibraryW(L"UxTheme.dll");
 	if (m_hinstUXThemeDLL != NULL)
 	{
 		m_pfDrawThemeBackground = (DRAWTHEMEPARENTBACKGROUND)::GetProcAddress(m_hinstUXThemeDLL, "DrawThemeParentBackground");
 		m_pfDrawThemeTextEx = (DRAWTHEMETEXTEX)::GetProcAddress(m_hinstUXThemeDLL, "DrawThemeTextEx");
+
+		m_pfBufferedPaintInit = (BUFFEREDPAINTINIT)::GetProcAddress(m_hinstUXThemeDLL, "BufferedPaintInit");
+		m_pfBufferedPaintUnInit = (BUFFEREDPAINTUNINIT)::GetProcAddress(m_hinstUXThemeDLL, "BufferedPaintUnInit");
+
 		m_pfBeginBufferedPaint = (BEGINBUFFEREDPAINT)::GetProcAddress(m_hinstUXThemeDLL, "BeginBufferedPaint");
 		m_pfEndBufferedPaint = (ENDBUFFEREDPAINT)::GetProcAddress(m_hinstUXThemeDLL, "EndBufferedPaint");
 	}
@@ -203,25 +240,12 @@ AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 	{
 		m_pfDrawThemeBackground = NULL;
 		m_pfDrawThemeTextEx = NULL;
+
+		m_pfBufferedPaintInit = NULL;
+		m_pfBufferedPaintUnInit = NULL;
+
 		m_pfBeginBufferedPaint = NULL;
 		m_pfEndBufferedPaint = NULL;
-	}
-
-	if (!bIsOSAlphaBlendingSupport)
-	{
-		m_hinstUser32 = NULL;
-		m_pfSetLayeredWindowAttributes = NULL;
-	}
-	else
-	{
-		if ((m_hinstUser32 = ::AfxCtxLoadLibrary(_T("USER32.DLL"))) == NULL)
-		{
-			ASSERT(FALSE);
-		}
-		else
-		{
-			m_pfSetLayeredWindowAttributes = (SETLAYEATTRIB)::GetProcAddress(m_hinstUser32, "SetLayeredWindowAttributes");
-		}
 	}
 
 	m_hinstDwmapiDLL = AfxLoadSystemLibraryUsingFullPath(L"dwmapi.dll");
@@ -249,15 +273,13 @@ AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 	m_hcurNoMoveTab = NULL;
 
 	m_bUseSystemFont = FALSE;
+	m_bInSettingChange = FALSE;
 
 	UpdateFonts();
 	OnSettingChange();
 
 	m_bIsRTL = FALSE;
-
-	// Small icon sizes:
-	m_sizeSmallIcon.cx = ::GetSystemMetrics(SM_CXSMICON);
-	m_sizeSmallIcon.cy = ::GetSystemMetrics(SM_CYSMICON);
+	m_bBufferedPaintInited = FALSE;
 
 	m_nDragFrameThicknessFloat = 4;  // pixels
 	m_nDragFrameThicknessDock = 3;   // pixels
@@ -273,6 +295,12 @@ AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 
 	m_bUseBuiltIn32BitIcons = TRUE;
 
+	m_bComInitialized = FALSE;
+
+	m_pTaskbarList = NULL;
+	m_pTaskbarList3 = NULL;
+	m_bTaskBarInterfacesAvailable = TRUE;
+
 	EnableAccessibilitySupport();
 }
 
@@ -284,6 +312,12 @@ AFX_GLOBAL_DATA::~AFX_GLOBAL_DATA()
 void AFX_GLOBAL_DATA::UpdateFonts()
 {
 	CWindowDC dc(NULL);
+	m_dblRibbonImageScale = dc.GetDeviceCaps(LOGPIXELSX) / 96.0f;
+
+	if (m_dblRibbonImageScale > 1. && m_dblRibbonImageScale < 1.1)
+	{
+		m_dblRibbonImageScale = 1.;
+	}
 
 	if (fontRegular.GetSafeHandle() != NULL)
 	{
@@ -338,6 +372,7 @@ void AFX_GLOBAL_DATA::UpdateFonts()
 	// Initialize fonts:
 
 	NONCLIENTMETRICS info;
+	info.cbSize = sizeof(info);
 	GetNonClientMetrics (info);
 
 	LOGFONT lf;
@@ -405,6 +440,7 @@ void AFX_GLOBAL_DATA::UpdateFonts()
 
 	// Create tooltip font:
 	NONCLIENTMETRICS ncm;
+	ncm.cbSize = sizeof(ncm);
 	GetNonClientMetrics (ncm);
 
 	lf.lfItalic = ncm.lfStatusFont.lfItalic;
@@ -472,8 +508,6 @@ void AFX_GLOBAL_DATA::UpdateFonts()
 
 	UpdateTextMetrics();
 
-	m_dblRibbonImageScale = (m_nTextHeightHorz <= 21) ? 1. : 1.5;
-
 	// Notify toolbars about font changing:
 	for (POSITION posTlb = afxAllToolBars.GetHeadPosition(); posTlb != NULL;)
 	{
@@ -510,7 +544,10 @@ static BOOL CALLBACK InfoEnumProc( HMONITOR hMonitor, HDC /*hdcMonitor*/, LPRECT
 
 void AFX_GLOBAL_DATA::OnSettingChange()
 {
-	g_bInSettingChange = TRUE;
+	m_bInSettingChange = TRUE;
+
+	m_sizeSmallIcon.cx = ::GetSystemMetrics(SM_CXSMICON);
+	m_sizeSmallIcon.cy = ::GetSystemMetrics(SM_CYSMICON);
 
 	m_rectVirtual.SetRectEmpty();
 
@@ -523,11 +560,6 @@ void AFX_GLOBAL_DATA::OnSettingChange()
 	m_bMenuAnimation = FALSE;
 	m_bMenuFadeEffect = FALSE;
 
-	OSVERSIONINFO osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-	::GetVersionEx(&osvi);
-
 	if (!bIsRemoteSession)
 	{
 		::SystemParametersInfo(SPI_GETMENUANIMATION, 0, &m_bMenuAnimation, 0);
@@ -539,8 +571,12 @@ void AFX_GLOBAL_DATA::OnSettingChange()
 	}
 
 	m_nShellAutohideBars = 0;
+	m_bRefreshAutohideBars = TRUE;
 
-	g_bInSettingChange = FALSE;
+	::SystemParametersInfo(SPI_GETMENUUNDERLINES, 0, &m_bSysUnderlineKeyboardShortcuts, 0);
+	m_bUnderlineKeyboardShortcuts = m_bSysUnderlineKeyboardShortcuts;
+
+	m_bInSettingChange = FALSE;
 }
 
 void AFX_GLOBAL_DATA::UpdateSysColors()
@@ -571,6 +607,9 @@ void AFX_GLOBAL_DATA::UpdateSysColors()
 
 	clrActiveCaption = ::GetSysColor(COLOR_ACTIVECAPTION);
 	clrInactiveCaption = ::GetSysColor(COLOR_INACTIVECAPTION);
+
+	clrActiveCaptionGradient = ::GetSysColor(COLOR_GRADIENTACTIVECAPTION);
+	clrInactiveCaptionGradient = ::GetSysColor(COLOR_GRADIENTINACTIVECAPTION);
 
 	clrActiveBorder = ::GetSysColor(COLOR_ACTIVEBORDER);
 	clrInactiveBorder = ::GetSysColor(COLOR_INACTIVEBORDER);
@@ -769,6 +808,89 @@ HBITMAP AFX_GLOBAL_DATA::CreateDitherBitmap(HDC hDC)
 	return hbm;
 }
 
+#if (WINVER >= 0x0601)
+ITaskbarList* AFX_GLOBAL_DATA::GetITaskbarList()
+{
+	HRESULT hr = S_OK;
+
+	if (!bIsWindows7 || !m_bTaskBarInterfacesAvailable)
+	{
+		return NULL;
+	}
+
+	if (m_pTaskbarList != NULL)
+	{
+		return m_pTaskbarList;
+	}
+
+	if (!m_bComInitialized)
+	{
+		hr = CoInitialize(NULL);
+		if (SUCCEEDED(hr))
+		{
+			m_bComInitialized = TRUE;
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pTaskbarList));
+	}
+
+	ASSERT(SUCCEEDED(hr));
+	return m_pTaskbarList;
+}
+
+ITaskbarList3* AFX_GLOBAL_DATA::GetITaskbarList3()
+{
+	HRESULT hr = S_OK;
+
+	if (!bIsWindows7 || !m_bTaskBarInterfacesAvailable)
+	{
+		return NULL;
+	}
+
+	if (m_pTaskbarList3 != NULL)
+	{
+		return m_pTaskbarList3;
+	}
+
+	if (!m_bComInitialized)
+	{
+		hr = CoInitialize(NULL);
+		if (SUCCEEDED(hr))
+		{
+			m_bComInitialized = TRUE;
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pTaskbarList3));
+	}
+
+	ASSERT(SUCCEEDED(hr));
+	return m_pTaskbarList3;
+}
+
+void AFX_GLOBAL_DATA::ReleaseTaskBarRefs()
+{
+	m_bTaskBarInterfacesAvailable = FALSE;
+
+	if (m_pTaskbarList != NULL)
+	{
+		RELEASE(m_pTaskbarList);
+		m_pTaskbarList = NULL;
+	}
+
+	if (m_pTaskbarList3 != NULL)
+	{
+		RELEASE(m_pTaskbarList3);
+		m_pTaskbarList3 = NULL;
+	}
+}
+#endif
+
 void AFX_GLOBAL_DATA::CleanUp()
 {
 	if (brLight.GetSafeHandle())
@@ -784,16 +906,19 @@ void AFX_GLOBAL_DATA::CleanUp()
 	fontVertCaption.DeleteObject();
 	fontTooltip.DeleteObject();
 
+	ReleaseTaskBarRefs();
+	ReleaseD2DRefs();
+
+	if (m_bBufferedPaintInited && m_pfBufferedPaintUnInit != NULL)
+	{
+		m_pfBufferedPaintUnInit();
+		m_bBufferedPaintInited = FALSE;
+	}
+
 	if (m_hinstUXThemeDLL != NULL)
 	{
 		::FreeLibrary(m_hinstUXThemeDLL);
 		m_hinstUXThemeDLL = NULL;
-	}
-
-	if (m_hinstUser32 != NULL)
-	{
-		::FreeLibrary(m_hinstUser32);
-		m_hinstUser32 = NULL;
 	}
 
 	if (m_hinstDwmapiDLL != NULL)
@@ -802,8 +927,13 @@ void AFX_GLOBAL_DATA::CleanUp()
 		m_hinstDwmapiDLL = NULL;
 	}
 
-	m_pfSetLayeredWindowAttributes = NULL;
 	m_bEnableAccessibility = FALSE;
+
+	if (m_bComInitialized)
+	{
+		CoUninitialize();
+		m_bComInitialized = FALSE;
+	}
 }
 
 void ControlBarCleanUp()
@@ -826,6 +956,22 @@ void ControlBarCleanUp()
 	CMFCVisualManager::DestroyInstance(TRUE /* bAutoDestroyOnly */);
 	CMFCVisualManagerOffice2007::CleanStyle();
 }
+
+#ifdef _AFXDLL
+void AfxGlobalsAddRef()
+{
+	g_dwAfxGlobalDataRef++;
+}
+
+void AfxGlobalsRelease()
+{
+	g_dwAfxGlobalDataRef--;
+	if (g_dwAfxGlobalDataRef == 0)
+	{
+		ControlBarCleanUp();
+	}
+}
+#endif
 
 BOOL AFX_GLOBAL_DATA::DrawParentBackground(CWnd* pWnd, CDC* pDC, LPRECT rectClip)
 {
@@ -939,12 +1085,7 @@ COLORREF AFX_GLOBAL_DATA::GetColor(int nColor)
 
 BOOL AFX_GLOBAL_DATA::SetLayeredAttrib(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags)
 {
-	if (m_pfSetLayeredWindowAttributes == NULL)
-	{
-		return FALSE;
-	}
-
-	return(*m_pfSetLayeredWindowAttributes)(hwnd, crKey, bAlpha, dwFlags);
+	return(::SetLayeredWindowAttributes(hwnd, crKey, bAlpha, dwFlags));
 }
 
 void AFX_GLOBAL_DATA::EnableAccessibilitySupport(BOOL bEnable/* = TRUE*/)
@@ -1173,7 +1314,7 @@ HCURSOR AFX_GLOBAL_DATA::GetHandCursor()
 {
 	if (m_hcurHand == NULL)
 	{
-		m_hcurHand = ::LoadCursor(NULL, MAKEINTRESOURCE(IDC_HAND));
+		m_hcurHand = ::LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_HAND));
 	}
 
 	return m_hcurHand;
@@ -1181,21 +1322,14 @@ HCURSOR AFX_GLOBAL_DATA::GetHandCursor()
 
 BOOL AFX_GLOBAL_DATA::Resume()
 {
-	m_hinstUXThemeDLL = AfxLoadSystemLibraryUsingFullPath(L"UxTheme.dll");
+	m_hinstUXThemeDLL = ::AfxCtxLoadLibraryW(L"UxTheme.dll");
 
 	if (m_hinstUXThemeDLL != NULL)
 	{
-		m_pfDrawThemeBackground = 
-			(DRAWTHEMEPARENTBACKGROUND)::GetProcAddress (m_hinstUXThemeDLL, "DrawThemeParentBackground");
-
-		m_pfDrawThemeTextEx =
-			(DRAWTHEMETEXTEX)::GetProcAddress (m_hinstUXThemeDLL, "DrawThemeTextEx");
-
-		m_pfBeginBufferedPaint =
-			(BEGINBUFFEREDPAINT)::GetProcAddress (m_hinstUXThemeDLL, "BeginBufferedPaint");
-
-		m_pfEndBufferedPaint =
-			(ENDBUFFEREDPAINT)::GetProcAddress (m_hinstUXThemeDLL, "EndBufferedPaint");
+		m_pfDrawThemeBackground = (DRAWTHEMEPARENTBACKGROUND)::GetProcAddress (m_hinstUXThemeDLL, "DrawThemeParentBackground");
+		m_pfDrawThemeTextEx = (DRAWTHEMETEXTEX)::GetProcAddress (m_hinstUXThemeDLL, "DrawThemeTextEx");
+		m_pfBeginBufferedPaint = (BEGINBUFFEREDPAINT)::GetProcAddress (m_hinstUXThemeDLL, "BeginBufferedPaint");
+		m_pfEndBufferedPaint = (ENDBUFFEREDPAINT)::GetProcAddress (m_hinstUXThemeDLL, "EndBufferedPaint");
 	}
 	else
 	{
@@ -1205,40 +1339,14 @@ BOOL AFX_GLOBAL_DATA::Resume()
 		m_pfEndBufferedPaint = NULL;
 	}
 
-	m_hinstUser32 = ::AfxCtxLoadLibrary(_T("USER32.DLL"));
-
-	if (!bIsOSAlphaBlendingSupport)
-	{
-		m_pfSetLayeredWindowAttributes = NULL;
-	}
-	else
-	{
-		if (m_hinstUser32 == NULL)
-		{
-			ASSERT (FALSE);
-			return FALSE;
-		}
-		else
-		{
-			m_pfSetLayeredWindowAttributes = 
-				(SETLAYEATTRIB)::GetProcAddress (
-					m_hinstUser32, "SetLayeredWindowAttributes");
-		}
-	}
-
 	if (m_hinstDwmapiDLL != NULL)
 	{
 		m_hinstDwmapiDLL = AfxLoadSystemLibraryUsingFullPath(L"dwmapi.dll");
 		ENSURE(m_hinstDwmapiDLL != NULL);
 
-		m_pfDwmExtendFrameIntoClientArea = 
-			(DWMEXTENDFRAMEINTOCLIENTAREA)::GetProcAddress (m_hinstDwmapiDLL, "DwmExtendFrameIntoClientArea");
-
-		m_pfDwmDefWindowProc = 
-			(DWMDEFWINDOWPROC) ::GetProcAddress (m_hinstDwmapiDLL, "DwmDefWindowProc");
-
-		m_pfDwmIsCompositionEnabled =
-			(DWMISCOMPOSITIONENABLED)::GetProcAddress (m_hinstDwmapiDLL, "DwmIsCompositionEnabled");
+		m_pfDwmExtendFrameIntoClientArea = (DWMEXTENDFRAMEINTOCLIENTAREA)::GetProcAddress (m_hinstDwmapiDLL, "DwmExtendFrameIntoClientArea");
+		m_pfDwmDefWindowProc = (DWMDEFWINDOWPROC) ::GetProcAddress (m_hinstDwmapiDLL, "DwmDefWindowProc");
+		m_pfDwmIsCompositionEnabled = (DWMISCOMPOSITIONENABLED)::GetProcAddress (m_hinstDwmapiDLL, "DwmIsCompositionEnabled");
 	}
 
 	if (m_bEnableAccessibility)
@@ -1277,12 +1385,12 @@ BOOL AFX_GLOBAL_DATA::GetNonClientMetrics (NONCLIENTMETRICS& info)
 		LOGFONT lfMessageFont;
 	};
 
-	const UINT cbProperSize = (_AfxGetComCtlVersion() < MAKELONG(1, 6))
-		? sizeof(AFX_OLDNONCLIENTMETRICS) : sizeof(NONCLIENTMETRICS);
+	if (_AfxGetComCtlVersion() < MAKELONG(1, 6))
+	{
+		info.cbSize = sizeof(AFX_OLDNONCLIENTMETRICS);
+	}
 
-	info.cbSize = cbProperSize;
-
-	return ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, cbProperSize, &info, 0);
+	return ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, info.cbSize, &info, 0);
 }
 
 
@@ -1321,4 +1429,122 @@ BOOL AFXAPI AfxIsMFCToolBar(CWnd* pWnd)
 		return TRUE;
 	}
 	return FALSE;
+}
+
+HRESULT AFX_GLOBAL_DATA::ShellCreateItemFromParsingName(PCWSTR pszPath, IBindCtx *pbc, REFIID riid, void **ppv)
+{
+	static HMODULE hShellDll = AfxCtxLoadLibrary(_T("Shell32.dll"));
+	ENSURE(hShellDll != NULL);
+
+	typedef	HRESULT (__stdcall *PFNSHCREATEITEMFROMPARSINGNAME)(
+		PCWSTR,
+		IBindCtx*,
+		REFIID,
+		void**
+		);
+
+	PFNSHCREATEITEMFROMPARSINGNAME pSHCreateItemFromParsingName =
+		(PFNSHCREATEITEMFROMPARSINGNAME)GetProcAddress(hShellDll, "SHCreateItemFromParsingName");
+	if (pSHCreateItemFromParsingName == NULL)
+	{
+		return E_FAIL;
+	}
+
+	return (*pSHCreateItemFromParsingName)(pszPath, pbc, riid, ppv);
+}
+
+BOOL AFX_GLOBAL_DATA::InitD2D(D2D1_FACTORY_TYPE d2dFactoryType, DWRITE_FACTORY_TYPE writeFactoryType)
+{
+	if (m_bD2DInitialized)
+	{
+		return TRUE;
+	}
+
+	HRESULT hr = S_OK;
+
+	if (!m_bComInitialized)
+	{
+		hr = CoInitialize(NULL);
+		if (FAILED(hr))
+		{
+			return FALSE;
+		}
+	}
+
+	m_bComInitialized = TRUE;
+
+	if ((m_hinstD2DDLL = AfxLoadSystemLibraryUsingFullPath(L"D2D1.dll")) == NULL)
+	{
+		return FALSE;
+	}
+
+	typedef HRESULT (WINAPI * D2D1CREATEFACTORY)(D2D1_FACTORY_TYPE factoryType, REFIID riid, CONST D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
+	typedef HRESULT (WINAPI * DWRITECREATEFACTORY)(DWRITE_FACTORY_TYPE factoryType, REFIID riid, IUnknown **factory);
+
+	D2D1CREATEFACTORY pfD2D1CreateFactory = (D2D1CREATEFACTORY)::GetProcAddress(m_hinstD2DDLL, "D2D1CreateFactory");
+	if (pfD2D1CreateFactory != NULL)
+	{
+		hr = (*pfD2D1CreateFactory)(d2dFactoryType, __uuidof(ID2D1Factory),
+			NULL, reinterpret_cast<void **>(&m_pDirect2dFactory));
+		if (FAILED(hr))
+		{
+			m_pDirect2dFactory = NULL;
+			return FALSE;
+		}
+	}
+
+	m_pfD2D1MakeRotateMatrix = (D2D1MAKEROTATEMATRIX)::GetProcAddress(m_hinstD2DDLL, "D2D1MakeRotateMatrix");
+
+	m_hinstDWriteDLL = AfxLoadSystemLibraryUsingFullPath(L"DWrite.dll");
+	if (m_hinstDWriteDLL != NULL)
+	{
+		DWRITECREATEFACTORY pfD2D1CreateFactory = (DWRITECREATEFACTORY)::GetProcAddress(m_hinstDWriteDLL, "DWriteCreateFactory");
+		if (pfD2D1CreateFactory != NULL)
+		{
+			hr = (*pfD2D1CreateFactory)(writeFactoryType, __uuidof(IDWriteFactory), (IUnknown**)&m_pWriteFactory);
+		}
+	}
+
+	hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)&m_pWicFactory);
+
+	m_bD2DInitialized = TRUE;
+	return TRUE;
+}
+
+void AFX_GLOBAL_DATA::ReleaseD2DRefs()
+{
+	if (!m_bD2DInitialized)
+	{
+		return;
+	}
+
+	if (m_pDirect2dFactory != NULL)
+	{
+		m_pDirect2dFactory->Release();
+		m_pDirect2dFactory = NULL;
+	}
+
+	if (m_pWriteFactory != NULL)
+	{
+		m_pWriteFactory->Release();
+		m_pWriteFactory = NULL;
+	}
+
+	if (m_pWicFactory != NULL)
+	{
+		m_pWicFactory->Release();
+		m_pWicFactory = NULL;
+	}
+
+	if (m_hinstD2DDLL != NULL)
+	{
+		::FreeLibrary(m_hinstD2DDLL);
+	}
+
+	if (m_hinstDWriteDLL != NULL)
+	{
+		::FreeLibrary(m_hinstDWriteDLL);
+	}
+
+	m_bD2DInitialized = FALSE;
 }

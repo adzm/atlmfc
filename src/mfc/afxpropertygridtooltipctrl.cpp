@@ -9,7 +9,6 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "afxcontrolbarutil.h"
 #include "afxglobals.h"
 #include "afxpropertygridtooltipctrl.h"
@@ -297,6 +296,3 @@ BOOL CMFCPropertyGridToolTipCtrl::PreTranslateMessage(MSG* pMsg)
 
 	return CWnd::PreTranslateMessage(pMsg);
 }
-
-
-

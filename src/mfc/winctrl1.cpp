@@ -194,10 +194,8 @@ int CListBox::CompareItem(LPCOMPAREITEMSTRUCT)
 void CListBox::DeleteItem(LPDELETEITEMSTRUCT)
 	{ /* default to nothing */ }
 int CListBox::VKeyToItem(UINT, UINT)
-//IA64: Assume item count < 2G
 	{ return int(Default()); }
 int CListBox::CharToItem(UINT, UINT)
-//IA64: Assume item count < 2G
 	{ return int(Default()); }
 
 BOOL CListBox::OnChildNotify(UINT message, WPARAM wParam, LPARAM lParam,

@@ -13,14 +13,11 @@
 #include "occimpl.h"
 #endif
 
-#pragma warning(disable:4706)
-#define COMPILE_MULTIMON_STUBS
-#include <multimon.h>
-#pragma warning(default:4706)
-
 #include <atlacc.h>	// Accessible Proxy from ATL
 #include "sal.h"
 
+#include "afxctrlcontainer.h"
+#include "afxglobals.h"
 
 // for dll builds we just delay load it
 #ifndef _AFXDLL
@@ -33,7 +30,6 @@ PROCESS_LOCAL(_AFX_HTMLHELP_STATE, _afxHtmlHelpState)
 // Globals
 
 const UINT CWnd::m_nMsgDragList = ::RegisterWindowMessage(DRAGLISTMSGSTRING);
-CWnd::PFNNOTIFYWINEVENT CWnd::m_pfnNotifyWinEvent = NULL;
 
 // CWnds for setting z-order with SetWindowPos's pWndInsertAfter parameter
 const AFX_DATADEF CWnd CWnd::wndTop(HWND_TOP);
@@ -47,6 +43,14 @@ const TCHAR _afxWndMDIFrame[] = AFX_WNDMDIFRAME;
 const TCHAR _afxWndFrameOrView[] = AFX_WNDFRAMEORVIEW;
 const TCHAR _afxWndOleControl[] = AFX_WNDOLECONTROL;
 
+CMap<CWnd*, CWnd*, CHwndRenderTarget*, CHwndRenderTarget*>	g_RenderTargets;
+CCriticalSection g_RenderTargetCriticalSection;
+
+/////////////////////////////////////////////////////////////////////////////
+// D2D notification messages:
+UINT AFX_WM_DRAW2D = ::RegisterWindowMessage(_T("AFX_WM_DRAW2D"));
+UINT AFX_WM_RECREATED2DRESOURCES = ::RegisterWindowMessage(_T("AFX_WM_RECREATED2DRESOURCES"));
+
 /////////////////////////////////////////////////////////////////////////////
 // CWnd construction
 
@@ -54,6 +58,7 @@ CWnd::CWnd()
 {
 	m_hWnd = NULL;
 	m_bEnableActiveAccessibility = false;
+	m_bIsTouchWindowRegistered = FALSE;
 	m_pProxy = NULL;
 	m_pStdObject = NULL;
 	m_hWndOwner = NULL;
@@ -65,13 +70,19 @@ CWnd::CWnd()
 	m_pCtrlCont = NULL;
 	m_pCtrlSite = NULL;
 #endif
+	m_pMFCCtrlContainer = NULL;
 
+	m_ptGestureFrom = CPoint(-1, -1);
+	m_ulGestureArg = 0;
+	m_bGestureInited = FALSE;
+	m_pCurrentGestureInfo = NULL;
 }
 
 CWnd::CWnd(HWND hWnd)
 {
 	m_hWnd = hWnd;
 	m_bEnableActiveAccessibility = false;
+	m_bIsTouchWindowRegistered = FALSE;
 	m_pProxy = NULL;
 	m_hWndOwner = NULL;
 	m_nFlags = 0;
@@ -82,6 +93,12 @@ CWnd::CWnd(HWND hWnd)
 	m_pCtrlCont = NULL;
 	m_pCtrlSite = NULL;
 #endif
+	m_pMFCCtrlContainer = NULL;
+
+	m_ptGestureFrom = CPoint(-1, -1);
+	m_ulGestureArg = 0;
+	m_bGestureInited = FALSE;
+	m_pCurrentGestureInfo = NULL;
 }
 
 // Change a window's style
@@ -122,7 +139,7 @@ CWnd::ModifyStyleEx(HWND hWnd, DWORD dwRemove, DWORD dwAdd, UINT nFlags)
 AFX_STATIC void AFXAPI _AfxPreInitDialog(
 	CWnd* pWnd, LPRECT lpRectOld, DWORD* pdwStyleOld)
 {
-	ASSERT(lpRectOld != NULL);	
+	ASSERT(lpRectOld != NULL);
 	ASSERT(pdwStyleOld != NULL);
 
 	pWnd->GetWindowRect(lpRectOld);
@@ -132,7 +149,7 @@ AFX_STATIC void AFXAPI _AfxPreInitDialog(
 AFX_STATIC void AFXAPI _AfxPostInitDialog(
 	CWnd* pWnd, const RECT& rectOld, DWORD dwStyleOld)
 {
-	// must be hidden to start with		
+	// must be hidden to start with
 	if (dwStyleOld & WS_VISIBLE)
 		return;
 
@@ -188,7 +205,7 @@ _AfxHandleSetCursor(CWnd* pWnd, UINT nHitTest, UINT nMsg)
 		 nMsg == WM_RBUTTONDOWN))
 	{
 		// activate the last active window if not active
-		CWnd* pLastActive = pWnd->GetTopLevelParent();		
+		CWnd* pLastActive = pWnd->GetTopLevelParent();
 		if (pLastActive != NULL)
 			pLastActive = pLastActive->GetLastActivePopup();
 		if (pLastActive != NULL &&
@@ -227,7 +244,7 @@ LRESULT AFXAPI AfxCallWndProc(CWnd* pWnd, HWND hWnd, UINT nMsg,
 #ifndef _AFX_NO_OCC_SUPPORT
 		// special case for WM_DESTROY
 		if ((nMsg == WM_DESTROY) && (pWnd->m_pCtrlCont != NULL))
-			pWnd->m_pCtrlCont->OnUIActivate(NULL);				
+			pWnd->m_pCtrlCont->OnUIActivate(NULL);
 #endif
 
 		// special case for WM_INITDIALOG
@@ -736,6 +753,12 @@ BOOL CWnd::PreCreateWindow(CREATESTRUCT& cs)
 		ASSERT(cs.style & WS_CHILD);
 		cs.lpszClass = _afxWnd;
 	}
+
+	if ((cs.hMenu == NULL) && (cs.style & WS_CHILD))
+	{
+		cs.hMenu = (HMENU)(UINT_PTR)this;
+	}
+
 	return TRUE;
 }
 
@@ -777,6 +800,13 @@ CWnd::~CWnd()
 	if (m_pCtrlSite != NULL && m_pCtrlSite->m_pWndCtrl == this)
 		m_pCtrlSite->m_pWndCtrl = NULL;
 #endif
+
+	delete m_pMFCCtrlContainer;
+
+	if (m_pCurrentGestureInfo != NULL)
+	{
+		delete m_pCurrentGestureInfo;
+	}
 }
 
 void CWnd::OnDestroy()
@@ -793,6 +823,22 @@ void CWnd::OnDestroy()
 	if (m_pStdObject != NULL)
 		m_pStdObject->Release();
 
+	if (m_bIsTouchWindowRegistered)
+	{
+		RegisterTouchWindow(FALSE);
+	}
+
+	CHwndRenderTarget* pRenderTarget = NULL;
+	g_RenderTargetCriticalSection.Lock();
+	
+	if (g_RenderTargets.Lookup(this, pRenderTarget))
+	{
+		ASSERT_VALID(pRenderTarget);
+		g_RenderTargets.RemoveKey(this);
+		delete pRenderTarget;
+	}
+
+	g_RenderTargetCriticalSection.Unlock();
 	Default();
 }
 
@@ -1088,7 +1134,7 @@ INT_PTR CWnd::OnToolHitTest(CPoint point, TOOLINFO* pTI) const
 {
 	// find child window which hits the point
 	// (don't use WindowFromPoint, because it ignores disabled windows)
-	HWND hWndChild = _AfxChildWindowFromPoint(m_hWnd, point);
+	HWND hWndChild = _AfxTopChildWindowFromPoint(m_hWnd, point);
 	if (hWndChild != NULL)
 	{
 		// return positive hit if control ID isn't -1
@@ -1289,8 +1335,8 @@ AFX_STATIC CMenu* AFXAPI _AfxFindPopupMenuFromID(CMenu* pMenu, UINT nID)
 {
 	ENSURE_VALID(pMenu);
 	// walk through all items, looking for ID match
-	UINT nItems = pMenu->GetMenuItemCount();
-	for (int iItem = 0; iItem < (int)nItems; iItem++)
+	int nItems = pMenu->GetMenuItemCount();
+	for (int iItem = 0; iItem < nItems; iItem++)
 	{
 		CMenu* pPopup = pMenu->GetSubMenu(iItem);
 		if (pPopup != NULL)
@@ -1482,6 +1528,289 @@ LRESULT CWnd::OnNTCtlColor(WPARAM wParam, LPARAM lParam)
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// Multi-touch support:
+
+BOOL CWnd::RegisterTouchWindow(BOOL bRegister, ULONG ulFlags)
+{
+	m_bIsTouchWindowRegistered = FALSE;
+	
+	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	ENSURE(hUserDll != NULL);
+
+	typedef	BOOL (__stdcall *PFNREGISTERTOUCHWINDOW)(HWND, ULONG);
+	typedef	BOOL (__stdcall *PFNUNREGISTERTOUCHWINDOW)(HWND);
+
+	static PFNREGISTERTOUCHWINDOW pfRegister = (PFNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "RegisterTouchWindow");
+	static PFNUNREGISTERTOUCHWINDOW pfUnregister = (PFNUNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "UnregisterTouchWindow");
+
+	if (pfRegister == NULL || pfUnregister == NULL)
+	{
+		return FALSE;
+	}
+
+	if (!bRegister)
+	{
+		return (*pfUnregister)(GetSafeHwnd());
+	}
+	
+	m_bIsTouchWindowRegistered = (*pfRegister)(GetSafeHwnd(), ulFlags);
+	return m_bIsTouchWindowRegistered;
+}
+
+BOOL CWnd::IsTouchWindow() const
+{
+	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	ENSURE(hUserDll != NULL);
+
+	typedef	BOOL (__stdcall *PFNISTOUCHWINDOW)(HWND);
+	static PFNISTOUCHWINDOW pfIsTouchWindow = (PFNISTOUCHWINDOW)GetProcAddress(hUserDll, "IsTouchWindow");
+
+	if (pfIsTouchWindow == NULL)
+	{
+		return FALSE;
+	}
+
+	return (*pfIsTouchWindow)(GetSafeHwnd());
+}
+
+LRESULT CWnd::OnTabletQuerySystemGestureStatus(WPARAM /*wParam*/, LPARAM lParam)
+{
+	CPoint ptTouch(GET_X_LPARAM (lParam), GET_Y_LPARAM(lParam));
+	ScreenToClient(&ptTouch);
+
+	return (LRESULT)GetGestureStatus(ptTouch);
+}
+
+ULONG CWnd::GetGestureStatus(CPoint /*ptTouch*/)
+{
+	return TABLET_DISABLE_PRESSANDHOLD;
+}
+
+LRESULT CWnd::OnTouchMessage(WPARAM wParam, LPARAM lParam)
+{
+	HANDLE hTouchInput = (HANDLE)lParam;
+
+	UINT nInputsCount = LOWORD(wParam);
+	if (nInputsCount == 0)
+	{
+		return Default();
+	}
+
+	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	ENSURE(hUserDll != NULL);
+
+	typedef	BOOL (__stdcall *PFNGETTOUCHINPUTINFO)(HANDLE, UINT, PTOUCHINPUT, int);
+	static PFNGETTOUCHINPUTINFO pfGetTouchInputInfo = (PFNGETTOUCHINPUTINFO)GetProcAddress(hUserDll, "GetTouchInputInfo");
+
+	typedef	BOOL (__stdcall *PFNCLOSETOUCHINPUTHANDLE)(HANDLE);
+	static PFNCLOSETOUCHINPUTHANDLE pfCloseTouchInputHandle = (PFNCLOSETOUCHINPUTHANDLE)GetProcAddress(hUserDll, "CloseTouchInputHandle");
+
+	if (pfGetTouchInputInfo == NULL || pfCloseTouchInputHandle == NULL)
+	{
+		return Default();
+	}
+
+	PTOUCHINPUT pInputs = new TOUCHINPUT[nInputsCount];
+	if (pInputs == NULL)
+	{
+		ASSERT(FALSE);
+		return Default();
+	}
+
+	if (!(*pfGetTouchInputInfo)(hTouchInput, nInputsCount, pInputs, sizeof(TOUCHINPUT)))
+	{
+		ASSERT(FALSE);
+		return Default();
+	}
+
+	BOOL bRes = OnTouchInputs(nInputsCount, pInputs);
+
+	delete [] pInputs;
+	(*pfCloseTouchInputHandle)(hTouchInput);
+
+	return bRes ? 0 : Default ();
+}
+
+BOOL CWnd::OnTouchInputs(UINT nInputsCount, PTOUCHINPUT pInputs)
+{
+    for (UINT i = 0; i < nInputsCount; i++)
+	{
+		CPoint ptCurr(TOUCH_COORD_TO_PIXEL(pInputs[i].x), TOUCH_COORD_TO_PIXEL(pInputs[i].y));
+		ScreenToClient(&ptCurr);
+
+		if (!OnTouchInput(ptCurr, i, nInputsCount, &pInputs[i]))
+		{
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL CWnd::OnTouchInput(CPoint /* pt */, int /* nInputNumber */, int /* nInputsCount */, PTOUCHINPUT /* pInput */)
+{
+	ASSERT(FALSE);	// Should be implemented in derived class
+	return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Gesture support:
+
+BOOL CWnd::SetGestureConfig(CGestureConfig* pConfig)
+{
+	ASSERT_VALID(this);
+	ASSERT_VALID(pConfig);
+
+	GESTURECONFIG* pConfigs = pConfig->m_pConfigs;
+	UINT cIDs = (UINT)pConfig->m_nConfigs;
+
+	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	ENSURE(hUserDll != NULL);
+
+	typedef	BOOL (__stdcall *SETGESTURECONFIG)(HWND, DWORD, UINT, PGESTURECONFIG, UINT);
+	static SETGESTURECONFIG pfSetGestureConfig = (SETGESTURECONFIG)GetProcAddress(hUserDll, "SetGestureConfig");
+	if (pfSetGestureConfig == NULL)
+	{
+		return FALSE;
+	}
+
+	return (*pfSetGestureConfig)(GetSafeHwnd(), 0, cIDs, pConfigs, sizeof(GESTURECONFIG));
+}
+
+BOOL CWnd::GetGestureConfig(CGestureConfig* pConfig)
+{
+	ASSERT_VALID(this);
+	ASSERT_VALID(pConfig);
+
+	if (!m_bGestureInited)
+	{
+		CGestureConfig configDefault;
+		SetGestureConfig(&configDefault);
+		m_bGestureInited = TRUE;
+	}
+
+	GESTURECONFIG* pConfigs = pConfig->m_pConfigs;
+	UINT cIDs = (UINT)pConfig->m_nConfigs;
+
+	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	ENSURE(hUserDll != NULL);
+
+	typedef	BOOL (__stdcall *GETGESTURECONFIG)(HWND, DWORD, DWORD, PUINT, PGESTURECONFIG, UINT);
+	static GETGESTURECONFIG pfGetGestureConfig = (GETGESTURECONFIG)GetProcAddress(hUserDll, "GetGestureConfig");
+	if (pfGetGestureConfig == NULL)
+	{
+		return FALSE;
+	}
+
+	return (*pfGetGestureConfig)(GetSafeHwnd(), 0, 0, &cIDs, pConfigs, sizeof(GESTURECONFIG));
+}
+
+LRESULT CWnd::OnGesture(WPARAM /*wParam*/, LPARAM lParam)
+{
+	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	ENSURE(hUserDll != NULL);
+
+	typedef	BOOL (__stdcall *GETGESTUREINFO)(HGESTUREINFO, PGESTUREINFO);
+	typedef	BOOL (__stdcall *CLOSEGESTUREINFOHANDLE)(HGESTUREINFO);
+
+	static GETGESTUREINFO pfGetGestureInfo = (GETGESTUREINFO)GetProcAddress(hUserDll, "GetGestureInfo");
+	static CLOSEGESTUREINFOHANDLE pfCloseGestureInfoHandle = (CLOSEGESTUREINFOHANDLE)GetProcAddress(hUserDll, "CloseGestureInfoHandle");
+
+	if (pfGetGestureInfo == NULL || pfCloseGestureInfoHandle == NULL)
+	{
+		return Default ();
+	}
+
+	if (m_pCurrentGestureInfo == NULL)
+	{
+		m_pCurrentGestureInfo = new GESTUREINFO;
+	}
+
+	ZeroMemory(m_pCurrentGestureInfo, sizeof(GESTUREINFO));
+	m_pCurrentGestureInfo->cbSize = sizeof(GESTUREINFO);
+
+	if (!(*pfGetGestureInfo)((HGESTUREINFO)lParam, m_pCurrentGestureInfo) || m_pCurrentGestureInfo->hwndTarget != GetSafeHwnd())
+	{
+		ZeroMemory(m_pCurrentGestureInfo, sizeof(GESTUREINFO));
+		return Default ();
+	}
+
+	CPoint pt(m_pCurrentGestureInfo->ptsLocation.x, m_pCurrentGestureInfo->ptsLocation.y);
+	ScreenToClient(&pt);
+
+	BOOL bDefaultProcessing = TRUE;
+
+	switch (m_pCurrentGestureInfo->dwID)
+	{
+	case GID_BEGIN:
+		m_ptGestureFrom = pt;
+		m_ulGestureArg = m_pCurrentGestureInfo->ullArguments;
+		return Default();
+
+	case GID_END:
+		m_ptGestureFrom = CPoint(-1, -1);
+		m_ulGestureArg = 0;
+		ZeroMemory(m_pCurrentGestureInfo, sizeof(GESTUREINFO));
+		return Default();
+
+	case GID_ZOOM:
+		bDefaultProcessing = !OnGestureZoom(pt, (long)(m_pCurrentGestureInfo->ullArguments - m_ulGestureArg));
+		break;
+
+	case GID_PAN:
+		bDefaultProcessing = !OnGesturePan(m_ptGestureFrom, pt);
+		break;
+
+	case GID_ROTATE:
+		bDefaultProcessing = !OnGestureRotate(pt, GID_ROTATE_ANGLE_FROM_ARGUMENT(m_pCurrentGestureInfo->ullArguments));
+		break;
+
+	case GID_TWOFINGERTAP:
+		bDefaultProcessing = !OnGestureTwoFingerTap(pt);
+		break;
+
+	case GID_PRESSANDTAP:
+		bDefaultProcessing = !OnGesturePressAndTap(pt, (long)m_pCurrentGestureInfo->ullArguments);
+		break;
+	}
+
+	if (!bDefaultProcessing)
+	{
+		(*pfCloseGestureInfoHandle)((HGESTUREINFO)lParam);
+	}
+
+	m_ptGestureFrom = pt;
+	m_ulGestureArg = m_pCurrentGestureInfo->ullArguments;
+
+	return bDefaultProcessing ? Default() : 0;
+}
+
+BOOL CWnd::OnGestureZoom(CPoint /*ptCenter*/, long /*lDelta*/)
+{
+	return FALSE;	// Default processing
+}
+
+BOOL CWnd::OnGesturePan(CPoint /*ptFrom*/, CPoint /*ptTo*/)
+{
+	return FALSE;	// Default processing
+}
+
+BOOL CWnd::OnGestureRotate(CPoint /*ptCenter*/, double /*dblAngle*/)
+{
+	return FALSE;	// Default processing
+}
+
+BOOL CWnd::OnGestureTwoFingerTap(CPoint /*ptCenter*/)
+{
+	return FALSE;	// Default processing
+}
+
+BOOL CWnd::OnGesturePressAndTap(CPoint /*ptPress*/, long /*lDelta*/)
+{
+	return FALSE;	// Default processing
+}
+
+/////////////////////////////////////////////////////////////////////////////
 // CWnd extensions for help support
 
 void CWnd::WinHelp(DWORD_PTR dwData, UINT nCmd)
@@ -1582,7 +1911,7 @@ HWND WINAPI AfxHtmlHelp(HWND hWnd, LPCTSTR szHelpFilePath, UINT nCmd, DWORD_PTR 
 	{
 		// load the library
 		ASSERT(!pState->m_hInstHtmlHelp);
-		pState->m_hInstHtmlHelp = AfxCtxLoadLibraryA("hhctrl.ocx");
+		pState->m_hInstHtmlHelp = AfxCtxLoadLibraryW(L"hhctrl.ocx");
 		if (!pState->m_hInstHtmlHelp)
 			return NULL;
 		pState->m_pfnHtmlHelp = (HTMLHELPPROC *) GetProcAddress(pState->m_hInstHtmlHelp, _HTMLHELP_ENTRY);
@@ -1633,7 +1962,7 @@ BEGIN_MESSAGE_MAP(CWnd, CCmdTarget)
 	ON_MESSAGE(WM_CTLCOLORMSGBOX, &CWnd::OnNTCtlColor)
 	ON_MESSAGE(WM_CTLCOLORSCROLLBAR, &CWnd::OnNTCtlColor)
 	//{{AFX_MSG_MAP(CWnd)
-   ON_WM_SETFOCUS()
+    ON_WM_SETFOCUS()
 	ON_WM_DRAWITEM()
 	ON_WM_MEASUREITEM()
 	ON_WM_CTLCOLOR()
@@ -1658,6 +1987,9 @@ BEGIN_MESSAGE_MAP(CWnd, CCmdTarget)
 	ON_MESSAGE(WM_DISPLAYCHANGE, &CWnd::OnDisplayChange)
 	ON_REGISTERED_MESSAGE(CWnd::m_nMsgDragList, &CWnd::OnDragList)
 	ON_MESSAGE(WM_GETOBJECT, &CWnd::OnGetObject)
+	ON_MESSAGE(WM_TOUCH, &CWnd::OnTouchMessage)
+	ON_MESSAGE(WM_TABLET_QUERYSYSTEMGESTURESTATUS, &CWnd::OnTabletQuerySystemGestureStatus)
+	ON_MESSAGE(WM_GESTURE, &CWnd::OnGesture)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1812,6 +2144,39 @@ BOOL CWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult
    {
 	  goto LReturnTrue;
    }
+
+	switch (message)
+	{
+	case WM_SIZE:
+		{
+			CHwndRenderTarget* pRenderTarget = GetRenderTarget();
+			if (pRenderTarget != NULL && pRenderTarget->IsValid())
+			{
+				pRenderTarget->Resize(CD2DSizeU(UINT32(LOWORD(lParam)), UINT32(HIWORD(lParam))));
+				RedrawWindow();
+			}
+		}
+		break;
+
+	case WM_PAINT:
+		if (DoD2DPaint())
+		{
+			lResult = 1;
+			goto LReturnTrue;
+		}
+		break;
+
+	case WM_ERASEBKGND:
+		{
+			CHwndRenderTarget* pRenderTarget = GetRenderTarget();
+			if (pRenderTarget != NULL && pRenderTarget->IsValid())
+			{
+				lResult = 1;
+				goto LReturnTrue;
+			}
+		}
+		break;
+	}
 
 	const AFX_MSGMAP* pMessageMap; pMessageMap = GetMessageMap();
 	UINT iHash; iHash = (LOWORD((DWORD_PTR)pMessageMap) ^ message) & (iHashMax-1);
@@ -2239,11 +2604,11 @@ LDispatch:
 		lResult = TRUE;
 		break;
 	case AfxSig_INPUTLANGCHANGE:
-		(this->*mmf.pfn_INPUTLANGCHANGE)(static_cast<BYTE>(wParam), static_cast<UINT>(lParam));
+		(this->*mmf.pfn_INPUTLANGCHANGE)(static_cast<UINT>(wParam), static_cast<UINT>(lParam));
 		lResult = TRUE;
 		break;
 	case AfxSig_INPUTDEVICECHANGE:
-		(this->*mmf.pfn_INPUTDEVICECHANGE)(GET_DEVICE_CHANGE_LPARAM(wParam));
+		(this->*mmf.pfn_INPUTDEVICECHANGE)(GET_DEVICE_CHANGE_LPARAM(wParam), reinterpret_cast<HANDLE>(lParam));
 		break;
 	case AfxSig_v_u_hkl:
 		(this->*mmf.pfn_v_u_h)(static_cast<UINT>(wParam), reinterpret_cast<HKL>(lParam));
@@ -3920,14 +4285,14 @@ void CWnd::OnVScroll(UINT, UINT, CScrollBar* pScrollBar)
 
 void CWnd::OnPaint()
 {
-   if (m_pCtrlCont != NULL)
-   {
-	  // Paint windowless controls
-	  CPaintDC dc(this);
-	  m_pCtrlCont->OnPaint(&dc);
-   }
+	if (m_pCtrlCont != NULL)
+	{
+		// Paint windowless controls
+		CPaintDC dc(this);
+		m_pCtrlCont->OnPaint(&dc);
+	}
 
-   Default();
+	Default();
 }
 
 void CWnd::OnEnterIdle(UINT /*nWhy*/, CWnd* /*pWho*/)
@@ -4020,7 +4385,7 @@ BOOL CWnd::UpdateData(BOOL bSaveAndValidate)
 	CATCH(CUserException, e)
 	{
 		// validation failed - user already alerted, fall through
-		ASSERT(!bOK);											
+		ASSERT(!bOK);
 		// Note: DELETE_EXCEPTION_(e) not required
 	}
 	AND_CATCH_ALL(e)
@@ -4182,6 +4547,13 @@ BOOL CWnd::ExecuteDlgInit(LPCTSTR lpszResourceName)
 
 BOOL CWnd::ExecuteDlgInit(LPVOID lpResource)
 {
+	// Subclass Feature Pack controls: 
+	if (m_pMFCCtrlContainer == NULL)
+	{
+		m_pMFCCtrlContainer = new CMFCControlContainer (this);
+		m_pMFCCtrlContainer->SubclassDlgControls ();
+	}
+
 	BOOL bSuccess = TRUE;
 	if (lpResource != NULL)
 	{
@@ -4193,7 +4565,7 @@ BOOL CWnd::ExecuteDlgInit(LPVOID lpResource)
 			DWORD dwLen = *((UNALIGNED DWORD*&)lpnRes)++;
 
 			// In Win32 the WM_ messages have changed.  They have
-			// to be translated from the 32-bit values to 16-bit
+			// to be translated from the 16-bit values to 32-bit
 			// values here.
 
 			#define WIN16_LB_ADDSTRING  0x0401
@@ -4211,10 +4583,10 @@ BOOL CWnd::ExecuteDlgInit(LPVOID lpResource)
 			// check for invalid/unknown message types
 #ifdef _AFX_NO_OCC_SUPPORT
 			ASSERT(nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING ||
-				nMsg == CBEM_INSERTITEM);
+				nMsg == CBEM_INSERTITEM || nMsg == WM_MFC_INITCTRL);
 #else
 			ASSERT(nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING ||
-				nMsg == CBEM_INSERTITEM ||
+				nMsg == CBEM_INSERTITEM || nMsg == WM_MFC_INITCTRL ||
 				nMsg == WM_OCC_LOADFROMSTREAM ||
 				nMsg == WM_OCC_LOADFROMSTREAM_EX ||
 				nMsg == WM_OCC_LOADFROMSTORAGE ||
@@ -4240,6 +4612,15 @@ BOOL CWnd::ExecuteDlgInit(LPVOID lpResource)
 				item.pszText = const_cast<LPTSTR>(strText.GetString());
 				if (::SendDlgItemMessage(m_hWnd, nIDC, nMsg, 0, (LPARAM) &item) == -1)
 					bSuccess = FALSE;
+			}
+			else if (nMsg == WM_MFC_INITCTRL)
+			{
+				if (::SendDlgItemMessage(m_hWnd, nIDC, nMsg, (WPARAM)dwLen, (LPARAM) lpnRes) == -1)
+					bSuccess = FALSE;
+				if (m_pMFCCtrlContainer != NULL)
+				{
+					m_pMFCCtrlContainer->SetControlData(nIDC, dwLen, (BYTE*) lpnRes);
+				}
 			}
 #ifndef _AFX_NO_OCC_SUPPORT
 			else if (nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING)
@@ -4436,6 +4817,12 @@ void CWnd::EndModalLoop(int nResult)
 	}
 }
 
+void CWnd::OnDrawIconicThumbnailOrLivePreview(CDC& dc, CRect /*rect*/, CSize /*szRequiredThumbnailSize*/, BOOL /*bIsThumbnail*/, BOOL& /*bAlphaChannelSet*/)
+{
+	ASSERT_VALID(&dc);
+	SendMessage(WM_PRINT, (WPARAM)dc.GetSafeHdc(), (LPARAM)(PRF_CLIENT | PRF_ERASEBKGND | PRF_CHILDREN | PRF_NONCLIENT));
+}
+
 #ifndef _AFX_NO_OCC_SUPPORT
 
 BOOL CWnd::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO*)
@@ -4445,7 +4832,7 @@ BOOL CWnd::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO*)
 }
 _AFX_OCC_DIALOG_INFO* CWnd::GetOccDialogInfo()
 {	
-	return NULL;	
+	return NULL;
 }
 
 #endif
@@ -4459,7 +4846,7 @@ AFX_STATIC BOOL AFXAPI _AfxRegisterWithIcon(WNDCLASS* pWndCls,
 	pWndCls->lpszClassName = lpszClassName;
 	HINSTANCE hInst = AfxFindResourceHandle(
 		ATL_MAKEINTRESOURCE(nIDIcon), ATL_RT_GROUP_ICON);
-	if ((pWndCls->hIcon = ::LoadIcon(hInst, ATL_MAKEINTRESOURCE(nIDIcon))) == NULL)
+	if ((pWndCls->hIcon = ::LoadIconW(hInst, ATL_MAKEINTRESOURCEW(nIDIcon))) == NULL)
 	{
 		// use default icon
 		pWndCls->hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
@@ -4796,9 +5183,246 @@ COleControlContainer* CWnd::GetControlContainer()
 	return m_pCtrlCont;
 }
 
+void CWnd::EnableD2DSupport(BOOL bEnable)
+{
+	if (bEnable)
+	{
+		if (!afxGlobalData.InitD2D())
+		{
+			// D2D is not supported by system
+			return;
+		}
+
+		if (IsD2DSupportEnabled())
+		{
+			// Already enabled
+			return;
+		}
+
+		CHwndRenderTarget* pRenderTarget = new CHwndRenderTarget(GetSafeHwnd());
+		ASSERT_VALID(pRenderTarget);
+
+		g_RenderTargetCriticalSection.Lock();
+		g_RenderTargets.SetAt(this, pRenderTarget);
+		g_RenderTargetCriticalSection.Unlock();
+	}
+	else
+	{
+		CHwndRenderTarget* pRenderTarget = NULL;
+
+		g_RenderTargetCriticalSection.Lock();
+		if (g_RenderTargets.Lookup(this, pRenderTarget))
+		{
+			ASSERT_VALID(pRenderTarget);
+			g_RenderTargets.RemoveKey(this);
+			delete pRenderTarget;
+		}
+		
+		g_RenderTargetCriticalSection.Unlock();
+	}
+}
+
+BOOL CWnd::IsD2DSupportEnabled()
+{
+	return GetRenderTarget() != NULL;
+}
+
+CHwndRenderTarget* CWnd::GetRenderTarget()
+{
+	CHwndRenderTarget* pRenderTarget = NULL;
+
+	g_RenderTargetCriticalSection.Lock();
+
+	BOOL bRes = g_RenderTargets.Lookup(this, pRenderTarget);
+
+	g_RenderTargetCriticalSection.Unlock();
+
+	if (bRes)
+	{
+		ASSERT_VALID(pRenderTarget);
+		return pRenderTarget;
+	}
+
+	return NULL;
+}
+
+BOOL CWnd::DoD2DPaint()
+{
+	CHwndRenderTarget* pRenderTarget = GetRenderTarget();
+	if (pRenderTarget == NULL)
+	{
+		return FALSE;
+	}
+
+	ASSERT_VALID(pRenderTarget);
+
+	if (!pRenderTarget->IsValid())
+	{
+		pRenderTarget->Create(GetSafeHwnd());
+	}
+
+	if (pRenderTarget->IsValid())
+	{
+		pRenderTarget->BeginDraw();
+
+		BOOL bD2DIsReady = (BOOL)SendMessage(AFX_WM_DRAW2D, 0, (LPARAM)pRenderTarget);
+
+		if (pRenderTarget->EndDraw() == D2DERR_RECREATE_TARGET)
+		{
+			pRenderTarget->ReCreate(GetSafeHwnd());
+			SendMessage(AFX_WM_RECREATED2DRESOURCES, 0, (LPARAM)pRenderTarget);
+		}
+
+		if (bD2DIsReady)
+		{
+			ValidateRect(NULL);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 
 IMPLEMENT_DYNCREATE(CWnd, CCmdTarget)
 
 /////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// CGestureConfig functions
+
+CGestureConfig::CGestureConfig()
+{
+	m_nConfigs = GID_PRESSANDTAP - GID_ZOOM + 1;
+	m_pConfigs = new GESTURECONFIG[m_nConfigs];
+
+	// Enable all gesture features by default:
+	for (int i = 0; i < m_nConfigs; i++)
+	{
+		m_pConfigs[i].dwID = GID_ZOOM + i;
+		m_pConfigs[i].dwWant = GC_ALLGESTURES;
+		m_pConfigs[i].dwBlock = 0;
+	}
+
+	// Disable rotate:
+	EnableRotate(FALSE);
+
+	// By default Pan supports Gutter, Inertia only and Single Finger Vertically:
+	EnablePan(TRUE,  GC_PAN_WITH_GUTTER | GC_PAN_WITH_INERTIA | GC_PAN_WITH_SINGLE_FINGER_VERTICALLY);
+}
+
+CGestureConfig::~CGestureConfig()
+{
+	delete[] m_pConfigs;
+}
+
+#ifdef _DEBUG
+void CGestureConfig::Dump(CDumpContext& dc) const
+{
+	CObject::Dump(dc);
+
+	for (int i = 0; i < m_nConfigs; i++)
+	{
+		dc << m_pConfigs[i].dwID;
+		dc << _T(" Want: ");
+		dc << m_pConfigs[i].dwWant;
+		dc << _T(" Block: ");
+		dc << m_pConfigs[i].dwBlock;
+		dc << _T("\n");
+	}
+}
+#endif
+
+BOOL CGestureConfig::Modify(DWORD dwID, DWORD dwWant, DWORD dwBlock)
+{
+	ASSERT_VALID(this);
+
+	ASSERT((dwWant & dwBlock) == 0);	// Should be exclusive!
+
+	for (int i = 0; i < m_nConfigs; i++)
+	{
+		if (m_pConfigs[i].dwID == dwID)
+		{
+			m_pConfigs[i].dwWant |= dwWant;
+			m_pConfigs[i].dwBlock |= dwBlock;
+
+			// Clean-up dwWant from block and dwBlock from want:
+			m_pConfigs[i].dwWant &= ((~dwBlock) & (DWORD)-1);
+			m_pConfigs[i].dwBlock &= ((~dwWant) & (DWORD)-1);
+
+			return TRUE;
+		}
+	}
+
+	// Unknown or unsupported ID
+	ASSERT(FALSE);
+	return FALSE;
+}
+
+DWORD CGestureConfig::Get(DWORD dwID, BOOL bWant) const
+{
+	ASSERT_VALID(this);
+
+	for (int i = 0; i < m_nConfigs; i++)
+	{
+		if (m_pConfigs[i].dwID == dwID)
+		{
+			return bWant ? m_pConfigs[i].dwWant : m_pConfigs[i].dwBlock;
+		}
+	}
+
+	// Unknown or unsupported ID
+	ASSERT(FALSE);
+	return (UINT)-1;
+}
+
+void CGestureConfig::EnableZoom(BOOL bEnable)
+{
+	Modify(GID_ZOOM, bEnable ? GC_ZOOM : 0, bEnable ? 0 : GC_ZOOM);
+}
+
+void CGestureConfig::EnableRotate(BOOL bEnable)
+{
+	Modify(GID_ROTATE, bEnable ? GC_ROTATE : 0, bEnable ? 0 : GC_ROTATE);
+}
+
+void CGestureConfig::EnableTwoFingerTap(BOOL bEnable)
+{
+	Modify(GID_TWOFINGERTAP, bEnable ? GC_TWOFINGERTAP : 0, bEnable ? 0 : GC_TWOFINGERTAP);
+}
+
+void CGestureConfig::EnablePressAndTap(BOOL bEnable)
+{
+	Modify(GID_PRESSANDTAP, bEnable ? GC_PRESSANDTAP : 0, bEnable ? 0 : GC_PRESSANDTAP);
+}
+
+void CGestureConfig::EnablePan(BOOL bEnable, DWORD dwFlags)
+{
+	if (!bEnable)
+	{
+		Modify(GID_PAN, 0, GC_PAN);	// Disable all pan features
+		return;
+	}
+
+	DWORD dwWant = GC_PAN;
+	DWORD dwBlock = 0;
+
+	DWORD dwAllFlags[] = { GC_PAN_WITH_SINGLE_FINGER_VERTICALLY, GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY, GC_PAN_WITH_GUTTER, GC_PAN_WITH_INERTIA };
+
+	for (int i = 0; i < sizeof(dwAllFlags) / sizeof(DWORD); i++)
+	{
+		if ((dwFlags & dwAllFlags[i]) == dwAllFlags[i])
+		{
+			dwWant |= dwAllFlags[i];
+		}
+		else
+		{
+			dwBlock |= dwAllFlags[i];
+		}
+	}
+
+	Modify(GID_PAN, dwWant, dwBlock);
+}

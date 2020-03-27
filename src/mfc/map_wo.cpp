@@ -16,10 +16,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-
-
-
-
+#include <afxtempl.h>
 
 #define new DEBUG_NEW
 
@@ -41,8 +38,7 @@ CMapWordToOb::CMapWordToOb(INT_PTR nBlockSize)
 
 inline UINT CMapWordToOb::HashKey(WORD key) const
 {
-	// default identity hash - works for most primitive values
-	return ((DWORD)key) >> 4;
+	return (::HashKey<WORD>(key));
 }
 
 void CMapWordToOb::InitHashTable(

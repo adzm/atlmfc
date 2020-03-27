@@ -172,7 +172,10 @@ BOOL CMFCStatusBar::CreateEx(CWnd* pParentWnd, DWORD /*dwCtrlStyle*/, DWORD dwSt
 	}
 	else if (pParentWnd->IsKindOf(RUNTIME_CLASS(CDialog)))
 	{
-		afxGlobalUtils.m_bDialogApp = TRUE;
+		if (pParentWnd->GetSafeHwnd() == AfxGetMainWnd()->GetSafeHwnd())
+		{
+			afxGlobalUtils.m_bDialogApp = TRUE;
+		}
 	}
 
 	return TRUE;

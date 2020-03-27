@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #include "stdafx.h"
@@ -23,14 +23,14 @@ CAtlTraceModuleInfo::CAtlTraceModuleInfo() :
 	m_szName[0] = L'\0';
 }
 
-void CAtlTraceModuleInfo::Reset(HINSTANCE hInst)
+void CAtlTraceModuleInfo::Reset(_In_ HINSTANCE hInst)
 {
 	WCHAR szModulePath[MAX_PATH] = {L'\0'};
-	
+
 	GetModuleFileNameW(hInst, szModulePath, MAX_PATH);
-	
+
 	szModulePath[MAX_PATH - 1] = 0;
-	
+
 	ATL_CRT_ERRORCHECK(wcsncpy_s(m_szPath, _countof(m_szPath), szModulePath, _TRUNCATE));
 	WCHAR *pszShortName = m_szPath + wcslen(m_szPath);
 	while(pszShortName > m_szPath && *(pszShortName - 1) != L'\\')
@@ -43,16 +43,20 @@ void CAtlTraceModuleInfo::Reset(HINSTANCE hInst)
 }
 
 // Categories
-CAtlTraceCategory::CAtlTraceCategory() : 
-	m_nModuleCookie(0)
+CAtlTraceCategory::CAtlTraceCategory() :
+	m_nModuleCookie(0),
+	m_iNextCategory(-1)
 {
 	Reset(L"", 0);
 }
 
-void CAtlTraceCategory::Reset(const WCHAR *pszName, LONG nModuleCookie)
+void CAtlTraceCategory::Reset(
+	_In_z_ const WCHAR *pszName,
+	_In_ LONG nModuleCookie)
 {
 	ATL_CRT_ERRORCHECK(wcsncpy_s(m_szName, _countof(m_szName), pszName, wcslen(pszName)));
 	m_nModuleCookie = nModuleCookie;
+	m_iNextCategory = -1;
 }
 
 // Modules
@@ -61,7 +65,8 @@ CAtlTraceModule::CAtlTraceModule() :
 {
 }
 
-void CAtlTraceModule::CrtDbgReport(CAtlTraceModule::fnCrtDbgReport_t pfnCrtDbgReport)
+void CAtlTraceModule::CrtDbgReport(
+	_In_opt_ CAtlTraceModule::fnCrtDbgReport_t pfnCrtDbgReport)
 {
 #ifdef _DEBUG
 	m_pfnCrtDbgReport = pfnCrtDbgReport ? pfnCrtDbgReport : _CrtDbgReport;
@@ -71,7 +76,7 @@ void CAtlTraceModule::CrtDbgReport(CAtlTraceModule::fnCrtDbgReport_t pfnCrtDbgRe
 }
 
 // Processes
-CAtlTraceProcess::CAtlTraceProcess(DWORD_PTR dwMaxSize) :
+CAtlTraceProcess::CAtlTraceProcess(_In_ DWORD_PTR dwMaxSize) :
 	CAtlTraceModuleInfo(),
 	m_dwId(GetCurrentProcessId()), m_nRef(1), m_dwMaxSize(dwMaxSize),
 	m_dwFrontAlloc(0), m_dwBackAlloc(0), m_dwCurrFront(0), m_dwCurrBack(0),

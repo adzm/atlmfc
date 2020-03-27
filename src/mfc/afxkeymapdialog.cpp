@@ -129,13 +129,14 @@ BOOL CMFCKeyMapDialog::OnInitDialog()
 
 	{
 		// Set dialog icon:
-		LPCTSTR lpszResourceName = MAKEINTRESOURCE(IDI_AFXBARRES_HELP);
-		ENSURE(lpszResourceName != NULL);
-
-		SetIcon((HICON) ::LoadImage (
-			AfxFindResourceHandle(lpszResourceName, RT_ICON), 
-			lpszResourceName,
-			IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_SHARED), FALSE);
+		SetIcon((HICON) ::LoadImageW(
+				AfxFindResourceHandle(MAKEINTRESOURCE(IDI_AFXBARRES_HELP), RT_GROUP_ICON),
+				MAKEINTRESOURCEW(IDI_AFXBARRES_HELP),
+				IMAGE_ICON,
+				::GetSystemMetrics(SM_CXSMICON),
+				::GetSystemMetrics(SM_CYSMICON),
+				LR_SHARED),
+			FALSE);
 
 		// Setup buttons:
 		m_ButtonPrint.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
@@ -664,5 +665,3 @@ CString CMFCKeyMapDialog::GetCommandKeys(UINT uiCmdID) const
 
 	return strKey;
 }
-
-

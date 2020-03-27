@@ -483,12 +483,11 @@ BOOL CMFCToolBarsCustomizeDialog::AddToolBar(LPCTSTR lpszCategory, UINT uiToolba
 		{ return(WORD*)(this+1); }
 	};
 
-	LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiToolbarResId);
-	ENSURE(lpszResourceName != NULL);
+	ENSURE(uiToolbarResId != 0);
 
 	// determine location of the bitmap in resource fork:
-	HINSTANCE hInst = AfxFindResourceHandle(lpszResourceName, RT_TOOLBAR);
-	HRSRC hRsrc = ::FindResource(hInst, lpszResourceName, RT_TOOLBAR);
+	HINSTANCE hInst = AfxFindResourceHandle(MAKEINTRESOURCE(uiToolbarResId), RT_TOOLBAR);
+	HRSRC hRsrc = ::FindResourceW(hInst, MAKEINTRESOURCEW(uiToolbarResId), (LPWSTR) RT_TOOLBAR);
 	if (hRsrc == NULL)
 	{
 		TRACE(_T("CMFCToolBarsCustomizeDialog::AddToolBar: Can't load toolbar %x\n"), uiToolbarResId);
@@ -910,7 +909,7 @@ void CMFCToolBarsCustomizeDialog::AddMenuCommands(const CMenu* pMenu, BOOL bPopu
 	ASSERT_VALID(pMenu);
 
 	BOOL bIsWindowsMenu = FALSE;
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 
 	for (int i = 0; i < iCount; i ++)
 	{
@@ -1278,6 +1277,3 @@ BOOL CMFCToolBarsCustomizeDialog::OnEditToolbarMenuImage(CWnd* pWndParent, CBitm
 	CMFCImageEditorDialog dlg(&bitmap, pWndParent, nBitsPerPixel);
 	return(dlg.DoModal() == IDOK);
 }
-
-
-

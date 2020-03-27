@@ -28,35 +28,38 @@ namespace ATL
 {
 
 HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
-	IAccessible* pAccessible, 
-	DISPID dispIdMember,
-	REFIID,
-	LCID,
-	WORD wFlags,
-	DISPPARAMS *pDispParams,
-	VARIANT *pVarResult,
-	EXCEPINFO *,
-	UINT *puArgErr);
+	_Inout_ IAccessible* pAccessible,
+	_In_ DISPID dispIdMember,
+	_In_ REFIID,
+	_In_ LCID,
+	_In_ WORD wFlags,
+	_In_ DISPPARAMS *pDispParams,
+	_Out_opt_ VARIANT *pVarResult,
+	_Out_opt_ EXCEPINFO *,
+	_Out_opt_ UINT *puArgErr);
 
 HRESULT STDMETHODCALLTYPE AtlIAccessibleGetIDsOfNamesHelper(
-			REFIID,
-			LPOLESTR *rgszNames,
-			UINT cNames,
-			LCID,
-			DISPID *rgDispId);
+	_In_ REFIID,
+	_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+	_In_ UINT cNames,
+	_In_ LCID,
+	_Out_cap_(cNames) DISPID *rgDispId);
 
 
 template <class T>
-class IAccessibleProxyImpl : public IAccessible, public IAccessibleProxy
+class IAccessibleProxyImpl :
+	public IAccessible,
+	public IAccessibleProxy
 {
 public :
 	IAccessible* m_pAccessible;
 	IAccessibleServer* m_pAccessibleServer;
-	IAccessibleProxyImpl() : m_pAccessible(NULL), m_pAccessibleServer(NULL)
+	IAccessibleProxyImpl() :
+		m_pAccessible(NULL), m_pAccessibleServer(NULL)
 	{
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accParent(IDispatch **ppdispParent)
+	HRESULT STDMETHODCALLTYPE get_accParent(_Deref_out_ IDispatch **ppdispParent)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -65,7 +68,7 @@ public :
 		return m_pAccessible->get_accParent(ppdispParent);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accChildCount(long *pcountChildren)
+	HRESULT STDMETHODCALLTYPE get_accChildCount(_Out_ long *pcountChildren)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -74,7 +77,9 @@ public :
 		return m_pAccessible->get_accChildCount(pcountChildren);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accChild(VARIANT varChild, IDispatch **ppdispChild)
+	HRESULT STDMETHODCALLTYPE get_accChild(
+		_In_ VARIANT varChild,
+		_Deref_out_ IDispatch **ppdispChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -83,7 +88,9 @@ public :
 		return m_pAccessible->get_accChild(varChild, ppdispChild);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accName(VARIANT varChild, BSTR *pszName)
+	HRESULT STDMETHODCALLTYPE get_accName(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszName)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -92,7 +99,9 @@ public :
 		return m_pAccessible->get_accName(varChild, pszName);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accValue(VARIANT varChild, BSTR *pszValue)
+	HRESULT STDMETHODCALLTYPE get_accValue(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszValue)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -101,7 +110,9 @@ public :
 		return m_pAccessible->get_accValue(varChild, pszValue);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accDescription(VARIANT varChild, BSTR *pszDescription)
+	HRESULT STDMETHODCALLTYPE get_accDescription(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszDescription)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -110,7 +121,9 @@ public :
 		return m_pAccessible->get_accDescription(varChild, pszDescription);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accRole(VARIANT varChild, VARIANT *pvarRole)
+	HRESULT STDMETHODCALLTYPE get_accRole(
+		_In_ VARIANT varChild,
+		_Out_ VARIANT *pvarRole)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -119,7 +132,9 @@ public :
 		return m_pAccessible->get_accRole(varChild, pvarRole);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accState(VARIANT varChild, VARIANT *pvarState)
+	HRESULT STDMETHODCALLTYPE get_accState(
+		_In_ VARIANT varChild,
+		_Out_ VARIANT *pvarState)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -128,8 +143,9 @@ public :
 		return m_pAccessible->get_accState(varChild, pvarState);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE get_accHelp(VARIANT varChild, BSTR *pszHelp)
+	HRESULT STDMETHODCALLTYPE get_accHelp(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszHelp)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -138,7 +154,10 @@ public :
 		return m_pAccessible->get_accHelp(varChild, pszHelp);
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accHelpTopic(BSTR *pszHelpFile, VARIANT varChild, long *pidTopic)
+	HRESULT STDMETHODCALLTYPE get_accHelpTopic(
+		_Deref_out_z_ BSTR *pszHelpFile,
+		_In_ VARIANT varChild,
+		_Out_ long *pidTopic)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -149,8 +168,9 @@ public :
 		return m_pAccessible->get_accHelpTopic(pszHelpFile, varChild, pidTopic);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut(VARIANT varChild, BSTR *pszKeyboardShortcut)
+	HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszKeyboardShortcut)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -159,8 +179,8 @@ public :
 		return m_pAccessible->get_accKeyboardShortcut(varChild, pszKeyboardShortcut);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE get_accFocus(VARIANT *pvarChild)
+	HRESULT STDMETHODCALLTYPE get_accFocus(
+		_Out_ VARIANT *pvarChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -169,8 +189,8 @@ public :
 		return m_pAccessible->get_accFocus(pvarChild);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE get_accSelection(VARIANT *pvarChildren)
+	HRESULT STDMETHODCALLTYPE get_accSelection(
+		_Out_ VARIANT *pvarChildren)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -179,8 +199,9 @@ public :
 		return m_pAccessible->get_accSelection(pvarChildren);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction)
+	HRESULT STDMETHODCALLTYPE get_accDefaultAction(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszDefaultAction)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -189,16 +210,21 @@ public :
 		return m_pAccessible->get_accDefaultAction(varChild, pszDefaultAction);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE accSelect(long flagsSelect, VARIANT varChild)
+	HRESULT STDMETHODCALLTYPE accSelect(
+		_In_ long flagsSelect,
+		_In_ VARIANT varChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
 		return m_pAccessible->accSelect(flagsSelect, varChild);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild)
+	HRESULT STDMETHODCALLTYPE accLocation(
+		_Out_ long *pxLeft,
+		_Out_ long *pyTop,
+		_Out_ long *pcxWidth,
+		_Out_ long *pcyHeight,
+		_Inout_ VARIANT varChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -216,8 +242,10 @@ public :
 		return m_pAccessible->accLocation(pxLeft, pyTop, pcxWidth, pcyHeight, varChild);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt)
+	HRESULT STDMETHODCALLTYPE accNavigate(
+		_In_ long navDir,
+		_In_ VARIANT varStart,
+		_Out_ VARIANT *pvarEndUpAt)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -226,8 +254,10 @@ public :
 		return m_pAccessible->accNavigate(navDir, varStart, pvarEndUpAt);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+	HRESULT STDMETHODCALLTYPE accHitTest(
+		_In_ long xLeft,
+		_In_ long yTop,
+		_Out_ VARIANT *pvarChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -236,69 +266,79 @@ public :
 		return m_pAccessible->accHitTest(xLeft, yTop, pvarChild);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE accDoDefaultAction(VARIANT varChild)
+	HRESULT STDMETHODCALLTYPE accDoDefaultAction(_In_ VARIANT varChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
 		return m_pAccessible->accDoDefaultAction(varChild);
 	}
 
-
-	HRESULT STDMETHODCALLTYPE put_accName(VARIANT /*varChild*/, BSTR /*szName*/)
+	HRESULT STDMETHODCALLTYPE put_accName(
+		_In_ VARIANT /*varChild*/,
+		_In_z_ BSTR /*szName*/)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
 		return E_NOTIMPL;
 	}
 
-
-	HRESULT STDMETHODCALLTYPE put_accValue(VARIANT /*varChild*/, BSTR /*szValue*/)
+	HRESULT STDMETHODCALLTYPE put_accValue(
+		_In_ VARIANT /*varChild*/,
+		_In_z_ BSTR /*szValue*/)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
 		return E_NOTIMPL;
 	}
 
-	HRESULT STDMETHODCALLTYPE SetServer(IAccessible *pAccessible, IAccessibleServer* pServer)
+	HRESULT STDMETHODCALLTYPE SetServer(
+		_In_ IAccessible *pAccessible,
+		_In_ IAccessibleServer* pServer)
 	{
 		// hold a weak reference to the server
 		m_pAccessible = pAccessible;
 		m_pAccessibleServer = pServer;
 		return S_OK;
 	}
+
 	virtual HRESULT STDMETHODCALLTYPE Invoke(
-				DISPID dispIdMember,
-				REFIID riid,
-				LCID lcid,
-				WORD wFlags,
-				DISPPARAMS *pDispParams,
-				VARIANT *pVarResult,
-				EXCEPINFO *pExcepInfo,
-				UINT *puArgErr) 
+		_In_ DISPID dispIdMember,
+		_In_ REFIID riid,
+		_In_ LCID lcid,
+		_In_ WORD wFlags,
+		_In_ DISPPARAMS *pDispParams,
+		_Out_opt_ VARIANT *pVarResult,
+		_Out_opt_ EXCEPINFO *pExcepInfo,
+		_Out_opt_ UINT *puArgErr)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
 		return m_pAccessible->Invoke(dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 	}
+
 	virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(
-				REFIID riid,
-				LPOLESTR *rgszNames,
-				UINT cNames,
-				LCID lcid,
-				DISPID *rgDispId) 
+		_In_ REFIID riid,
+		_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+		_In_ UINT cNames,
+		_In_ LCID lcid,
+		_Out_cap_(cNames) DISPID *rgDispId)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
 		return m_pAccessible->GetIDsOfNames(riid, rgszNames, cNames, lcid, rgDispId);
 	}
-	virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(unsigned int*  pctinfo) 
+
+	virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(_Out_ unsigned int* pctinfo)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
 		return m_pAccessible->GetTypeInfoCount(pctinfo);
 	}
-	virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(unsigned int iTInfo, LCID lcid, ITypeInfo** ppTInfo) 
+
+	virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(
+		_In_ unsigned int iTInfo,
+		_In_ LCID lcid,
+		_Deref_out_ ITypeInfo** ppTInfo)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -306,7 +346,7 @@ public :
 	}
 };
 
-class ATL_NO_VTABLE CAccessibleProxy : 
+class ATL_NO_VTABLE CAccessibleProxy :
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public IAccessibleProxyImpl<CAccessibleProxy>,
 	public IOleWindow
@@ -319,12 +359,12 @@ public:
 	{
 	}
 
-	HRESULT STDMETHODCALLTYPE GetWindow(HWND* /*phwnd*/)
+	HRESULT STDMETHODCALLTYPE GetWindow(_In_opt_ HWND* /*phwnd*/)
 	{
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE ContextSensitiveHelp(BOOL /*fEnterMode*/)
+	HRESULT STDMETHODCALLTYPE ContextSensitiveHelp(_In_ BOOL /*fEnterMode*/)
 	{
 		return E_NOTIMPL;
 	}
@@ -347,7 +387,9 @@ public:
 };
 
 template <class T>
-class IAccessibleImpl : public IAccessible, public IAccessibleServer
+class IAccessibleImpl :
+	public IAccessible,
+	public IAccessibleServer
 {
 public :
 	IAccessibleImpl() : m_pProxy(NULL)
@@ -369,28 +411,32 @@ public :
 	}
 
 	// Delegate to standard helper?
-	HRESULT STDMETHODCALLTYPE get_accParent(IDispatch **ppdispParent)
+	HRESULT STDMETHODCALLTYPE get_accParent(_Deref_out_ IDispatch **ppdispParent)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accParent(ppdispParent);
 	}
 
 	// Delegate to standard helper?
-	HRESULT STDMETHODCALLTYPE get_accChildCount(long *pcountChildren)
+	HRESULT STDMETHODCALLTYPE get_accChildCount(_Out_ long *pcountChildren)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accChildCount(pcountChildren);
 	}
 
 	// Delegate to standard helper?
-	HRESULT STDMETHODCALLTYPE get_accChild(VARIANT varChild, IDispatch **ppdispChild)
+	HRESULT STDMETHODCALLTYPE get_accChild(
+		_In_ VARIANT varChild,
+		_Deref_out_ IDispatch **ppdispChild)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accChild(varChild, ppdispChild);
 	}
 
 	// Override in users code
-	HRESULT STDMETHODCALLTYPE get_accName(VARIANT varChild, BSTR *pszName)
+	HRESULT STDMETHODCALLTYPE get_accName(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszName)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accName(varChild, pszName);
@@ -398,130 +444,166 @@ public :
 
 	// Override in users code
 	// Default inplementation will get window text and return it.
-	HRESULT STDMETHODCALLTYPE get_accValue(VARIANT varChild, BSTR *pszValue)
+	HRESULT STDMETHODCALLTYPE get_accValue(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszValue)
 	{
 		return m_spStdObject->get_accValue(varChild, pszValue);
 	}
 
 	// Override in users code
-	HRESULT STDMETHODCALLTYPE get_accDescription(VARIANT varChild, BSTR *pszDescription)
+	HRESULT STDMETHODCALLTYPE get_accDescription(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszDescription)
 	{
 		return m_spStdObject->get_accDescription(varChild, pszDescription);
 	}
 
 	// Investigate
-	HRESULT STDMETHODCALLTYPE get_accRole(VARIANT varChild, VARIANT *pvarRole)
+	HRESULT STDMETHODCALLTYPE get_accRole(
+		_In_ VARIANT varChild,
+		_Out_ VARIANT *pvarRole)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accRole(varChild, pvarRole);
 	}
 
 	// Investigate
-	HRESULT STDMETHODCALLTYPE get_accState(VARIANT varChild, VARIANT *pvarState)
+	HRESULT STDMETHODCALLTYPE get_accState(
+		_In_ VARIANT varChild,
+		_Out_ VARIANT *pvarState)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accState(varChild, pvarState);
 	}
 
 	// Override in User's code?
-	HRESULT STDMETHODCALLTYPE get_accHelp(VARIANT varChild, BSTR *pszHelp)
+	HRESULT STDMETHODCALLTYPE get_accHelp(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszHelp)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accHelp(varChild, pszHelp);
 	}
 
 	// Override in user's code?
-	HRESULT STDMETHODCALLTYPE get_accHelpTopic(BSTR *pszHelpFile, VARIANT varChild, long *pidTopic)
+	HRESULT STDMETHODCALLTYPE get_accHelpTopic(
+		_Deref_out_z_ BSTR *pszHelpFile,
+		_In_ VARIANT varChild,
+		_Out_ long *pidTopic)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accHelpTopic(pszHelpFile, varChild, pidTopic);
 	}
 
 	// Override in user's code?
-	HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut(VARIANT varChild, BSTR *pszKeyboardShortcut)
+	HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszKeyboardShortcut)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accKeyboardShortcut(varChild, pszKeyboardShortcut);
 	}
 
 	// Delegate to standard implementation?
-	HRESULT STDMETHODCALLTYPE get_accFocus(VARIANT *pvarChild)
+	HRESULT STDMETHODCALLTYPE get_accFocus(
+		_Out_ VARIANT *pvarChild)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accFocus(pvarChild);
 	}
 
 	// Investigate
-	HRESULT STDMETHODCALLTYPE get_accSelection(VARIANT *pvarChildren)
+	HRESULT STDMETHODCALLTYPE get_accSelection(
+		_Out_ VARIANT *pvarChildren)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accSelection(pvarChildren);
 	}
 
 	// Override in user's code
-	HRESULT STDMETHODCALLTYPE get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction)
+	HRESULT STDMETHODCALLTYPE get_accDefaultAction(
+		_In_ VARIANT varChild,
+		_Deref_out_z_ BSTR *pszDefaultAction)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accDefaultAction(varChild, pszDefaultAction);
 	}
 
 	// Investigate
-	HRESULT STDMETHODCALLTYPE accSelect(long flagsSelect, VARIANT varChild)
+	HRESULT STDMETHODCALLTYPE accSelect(
+		_In_ long flagsSelect,
+		_In_ VARIANT varChild)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->accSelect(flagsSelect, varChild);
 	}
 
 	// Delegate?
-	HRESULT STDMETHODCALLTYPE accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild)
+	HRESULT STDMETHODCALLTYPE accLocation(
+		_Out_ long *pxLeft,
+		_Out_ long *pyTop,
+		_Out_ long *pcxWidth,
+		_Out_ long *pcyHeight,
+		_Inout_ VARIANT varChild)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->accLocation(pxLeft, pyTop, pcxWidth, pcyHeight, varChild);
 	}
 
 	// Delegate? May have to implement for COM children
-	HRESULT STDMETHODCALLTYPE accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt)
+	HRESULT STDMETHODCALLTYPE accNavigate(
+		_In_ long navDir,
+		_In_ VARIANT varStart,
+		_Out_ VARIANT *pvarEndUpAt)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->accNavigate(navDir, varStart, pvarEndUpAt);
 	}
 
 	// Delegate?
-	HRESULT STDMETHODCALLTYPE accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+	HRESULT STDMETHODCALLTYPE accHitTest(
+		_In_ long xLeft,
+		_In_ long yTop,
+		_Out_ VARIANT *pvarChild)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->accHitTest(xLeft, yTop, pvarChild);
 	}
 
 	// Override in user's code
-	HRESULT STDMETHODCALLTYPE accDoDefaultAction(VARIANT varChild)
+	HRESULT STDMETHODCALLTYPE accDoDefaultAction(_In_ VARIANT varChild)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->accDoDefaultAction(varChild);
 	}
 
 	// Obsolete
-	HRESULT STDMETHODCALLTYPE put_accName(VARIANT varChild, BSTR szName)
+	HRESULT STDMETHODCALLTYPE put_accName(
+		_In_ VARIANT varChild,
+		_In_z_ BSTR szName)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->put_accName(varChild, szName);
 	}
 
 	// Obsolete
-	HRESULT STDMETHODCALLTYPE put_accValue(VARIANT varChild, BSTR szValue)
+	HRESULT STDMETHODCALLTYPE put_accValue(
+		_In_ VARIANT varChild,
+		_In_z_ BSTR szValue)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->put_accValue(varChild, szValue);
 	}
 
-	HRESULT STDMETHODCALLTYPE SetProxy(IAccessibleProxy *pUnknown)
+	HRESULT STDMETHODCALLTYPE SetProxy(_In_ IAccessibleProxy *pUnknown)
 	{
 		// We keep a weak reference to the server
 		m_pProxy = pUnknown;
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE GetHWND(HWND *phWnd)
+	HRESULT STDMETHODCALLTYPE GetHWND(_Out_ HWND *phWnd)
 	{
 		if (phWnd == NULL)
 			return E_POINTER;
@@ -530,7 +612,8 @@ public :
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE GetEnumVariant(IEnumVARIANT **ppEnumVariant)
+	HRESULT STDMETHODCALLTYPE GetEnumVariant(
+		_Deref_out_opt_ IEnumVARIANT **ppEnumVariant)
 	{
 		if (ppEnumVariant == NULL)
 			return E_POINTER;
@@ -539,41 +622,48 @@ public :
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE Invoke(
-				DISPID dispIdMember,
-				REFIID refiid,
-				LCID lcid,
-				WORD wFlags,
-				DISPPARAMS *pDispParams,
-				VARIANT *pVarResult,
-				EXCEPINFO *pExcepInfo,
-				UINT *puArgErr) 
+		_In_ DISPID dispIdMember,
+		_In_ REFIID refiid,
+		_In_ LCID lcid,
+		_In_ WORD wFlags,
+		_In_ DISPPARAMS *pDispParams,
+		_Out_opt_ VARIANT *pVarResult,
+		_Out_opt_ EXCEPINFO *pExcepInfo,
+		_Out_opt_ UINT *puArgErr)
 	{
-		return AtlIAccessibleInvokeHelper(this, dispIdMember, refiid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+		return AtlIAccessibleInvokeHelper(this, dispIdMember, refiid,
+				lcid, wFlags, pDispParams, pVarResult,
+					pExcepInfo, puArgErr);
 	}
 	virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(
-				REFIID refiid,
-				LPOLESTR *rgszNames,
-				UINT cNames,
-				LCID lcid,
-				DISPID *rgDispId) 
+		_In_ REFIID refiid,
+		_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+		_In_ UINT cNames,
+		_In_ LCID lcid,
+		_Out_cap_(cNames) DISPID *rgDispId)
 	{
 		return AtlIAccessibleGetIDsOfNamesHelper(refiid, rgszNames, cNames, lcid, rgDispId);
 	}
 
-	virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(unsigned int*  pctinfo) 
+	virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(_Out_ unsigned int*  pctinfo)
 	{
-		if (pctinfo == NULL) 
+		if (pctinfo == NULL)
 		{
 			return E_POINTER;
 		}
 		*pctinfo = 1;
 		return S_OK;
 	}
-	virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(unsigned int /*iTInfo*/, LCID /*lcid*/, ITypeInfo** /*ppTInfo*/) 
+	virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(
+		_In_ unsigned int /*iTInfo*/,
+		_In_ LCID /*lcid*/,
+		_In_opt_ ITypeInfo** /*ppTInfo*/)
 	{
 		return E_NOTIMPL;
 	}
-	long __stdcall QueryInterface(const struct _GUID &/*refIID*/, void **ppv )
+	long __stdcall QueryInterface(
+		_In_ const struct _GUID &/*refIID*/,
+		_Deref_out_opt_ _Deref_post_opt_bytecount_c_(sizeof(IUnknown)) void **ppv)
 	{
 		if (ppv == NULL)
 			return E_POINTER;
@@ -610,7 +700,10 @@ public :
 		return 1;
 	}
 
-	HRESULT CreateAccessibleProxy(WPARAM wParam, LPARAM lParam, LRESULT *pResult)
+	HRESULT CreateAccessibleProxy(
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Out_ LRESULT *pResult)
 	{
 		ATLASSERT(pResult != NULL);
 		DWORD dwObjId = (DWORD) lParam;
@@ -618,7 +711,7 @@ public :
 
 		if(pResult == NULL)
 			return E_INVALIDARG;
-			
+
 		if (dwObjId == OBJID_CLIENT)
 		{
 			hr = EnsureStdObj();
@@ -653,15 +746,15 @@ public :
 };
 
 inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
-			IAccessible* pAccessible, 
-			DISPID dispIdMember,
-			REFIID,
-			LCID,
-			WORD wFlags,
-			DISPPARAMS *pDispParams,
-			VARIANT *pVarResult,
-			EXCEPINFO *,
-			UINT *puArgErr) 
+	_Inout_ IAccessible* pAccessible,
+	_In_ DISPID dispIdMember,
+	_In_ REFIID,
+	_In_ LCID,
+	_In_ WORD wFlags,
+	_In_ DISPPARAMS *pDispParams,
+	_Out_opt_ VARIANT *pVarResult,
+	_Out_opt_ EXCEPINFO *,
+	_Out_opt_ UINT *puArgErr)
 {
 	UINT uArgErr;
 	VARIANT vResult;
@@ -671,8 +764,8 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 	{
 		return E_INVALIDARG;
 	}
-		
-	if (pDispParams == 0) 
+
+	if (pDispParams == NULL)
 	{
 		return DISP_E_BADVARTYPE;
 	}
@@ -683,18 +776,21 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 	}
 
 	VARIANTARG * rgpParams[5];
-	UINT i = 0;
-	for (; i < pDispParams->cNamedArgs; i++)
 	{
-		if ((UINT)pDispParams->rgdispidNamedArgs[i] >= pDispParams->cArgs)
+		ATLASSERT(pDispParams->cNamedArgs <= pDispParams->cArgs);
+		UINT i = 0;
+		for (; i < pDispParams->cNamedArgs; i++)
 		{
-			return DISP_E_BADPARAMCOUNT;
+			if ((UINT)pDispParams->rgdispidNamedArgs[i] >= pDispParams->cArgs)
+			{
+				return DISP_E_BADPARAMCOUNT;
+			}
+			rgpParams[pDispParams->rgdispidNamedArgs[i]] = &pDispParams->rgvarg[i];
 		}
-		rgpParams[pDispParams->rgdispidNamedArgs[i]] = &pDispParams->rgvarg[i];
-	}
-	for (; i < pDispParams->cArgs; i++)
-	{
-		rgpParams[pDispParams->cArgs - i - 1] = &pDispParams->rgvarg[i];
+		for (; i < pDispParams->cArgs; i++)
+		{
+			rgpParams[pDispParams->cArgs - i - 1] = &pDispParams->rgvarg[i];
+		}
 	}
 
 	HRESULT hr = DISP_E_MEMBERNOTFOUND;
@@ -711,7 +807,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 	VARIANT varg;
 	VariantInit(&varg);
 
-	switch (dispIdMember) 
+	switch (dispIdMember)
 	{
 	case DISPID_ACC_DODEFAULTACTION :		// -5018
 		{
@@ -785,6 +881,8 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 		}
 	case DISPID_ACC_LOCATION :				// -5015
 		{
+			BOOL bError = FALSE;
+
 			if(pDispParams->cArgs != 5)
 			{
 				hr = DISP_E_BADPARAMCOUNT;
@@ -792,12 +890,13 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 			}
 
 			long *pI4Params[4];
-			for (int iParam = 0; iParam < 4; i++)
+			for (int iParam = 0; iParam < 4; iParam++)
 			{
 				if (!(rgpParams[iParam]->vt & VT_BYREF) ||
 					(rgpParams[iParam]->vt & (VT_VARIANT | VT_I4)) == 0)
 				{
 					hr = DISP_E_TYPEMISMATCH;
+					bError = TRUE;
 					*puArgErr = iParam;
 					break;
 				}
@@ -813,8 +912,11 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 				}
 			}
 
-			VARIANT i5 = *rgpParams[4];
-			hr = pAccessible->accLocation(pI4Params[0], pI4Params[1], pI4Params[2], pI4Params[3], i5);
+			if (!bError)
+			{
+				VARIANT i5 = *rgpParams[4];
+				hr = pAccessible->accLocation(pI4Params[0], pI4Params[1], pI4Params[2], pI4Params[3], i5);
+			}
 			break;
 		}
 	case DISPID_ACC_SELECT :				// -5014
@@ -852,7 +954,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 
 			VARIANT i1 = *rgpParams[0];
 
-			BSTR * i2 = &(V_BSTR(pVarResult));  
+			BSTR * i2 = &(V_BSTR(pVarResult));
 			hr = pAccessible->get_accDefaultAction(i1, i2);
 			if(SUCCEEDED(hr))
 			{
@@ -879,7 +981,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 			}
 			VARIANT i1 = *rgpParams[0];
 
-			BSTR* i2 = &(V_BSTR(pVarResult)); 
+			BSTR* i2 = &(V_BSTR(pVarResult));
 			hr = pAccessible->get_accKeyboardShortcut(i1, i2);
 			if(SUCCEEDED(hr))
 			{
@@ -921,7 +1023,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 				rgpParams[0]->vt = VT_BSTR;
 			}
 
-			VARIANT i2 = *rgpParams[1];   
+			VARIANT i2 = *rgpParams[1];
 			long* i3 = &(V_I4(pVarResult));
 
 			hr = pAccessible->get_accHelpTopic(i1, i2, i3);
@@ -958,7 +1060,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 				break;
 			}
 
-			VARIANT i1 = *rgpParams[0];                
+			VARIANT i1 = *rgpParams[0];
 			hr = pAccessible->get_accState(i1, pVarResult);
 			break;
 		}
@@ -994,7 +1096,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 		}
 	case DISPID_ACC_VALUE :					// -5004
 		{
-			if (wFlags & 2) 
+			if (wFlags & 2)
 			{
 				if(pDispParams->cArgs != 1)
 				{
@@ -1012,7 +1114,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 
 				break;
 			}
-			else if (wFlags & 4) 
+			else if (wFlags & 4)
 			{
 				if(pDispParams->cArgs != 2)
 				{
@@ -1040,7 +1142,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 		}
 	case DISPID_ACC_NAME :					// -5003
 		{
-			if (wFlags & 2) 
+			if (wFlags & 2)
 			{
 				if(pDispParams->cArgs != 1)
 				{
@@ -1060,7 +1162,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 
 				break;
 			}
-			else if (wFlags & 4) 
+			else if (wFlags & 4)
 			{
 				if(pDispParams->cArgs != 2)
 				{
@@ -1134,36 +1236,36 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 }
 
 inline HRESULT STDMETHODCALLTYPE AtlIAccessibleGetIDsOfNamesHelper(
-			REFIID,
-			LPOLESTR *rgszNames,
-			UINT cNames,
-			LCID,
-			DISPID *rgDispId) 
+	_In_ REFIID,
+	_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+	_In_ UINT cNames,
+	_In_ LCID,
+	_Out_cap_(cNames) DISPID *rgDispId)
 {
-	static LPOLESTR names[] = 
-	{ 
-		L"accParent", 
-		L"accChildCount", 
-		L"accChild", 
-		L"accName", 
-		L"accValue", 
-		L"accDescription", 
-		L"accRole", 
-		L"accState", 
-		L"accHelp", 
-		L"accHelpTopic", 
-		L"accKeyboardShortcut", 
-		L"accFocus", 
-		L"accSelection", 
-		L"accDefaultAction", 
-		L"accSelect", 
-		L"accLocation", 
-		L"accNavigate", 
-		L"accHitTest", 
+	static LPOLESTR names[] =
+	{
+		L"accParent",
+		L"accChildCount",
+		L"accChild",
+		L"accName",
+		L"accValue",
+		L"accDescription",
+		L"accRole",
+		L"accState",
+		L"accHelp",
+		L"accHelpTopic",
+		L"accKeyboardShortcut",
+		L"accFocus",
+		L"accSelection",
+		L"accDefaultAction",
+		L"accSelect",
+		L"accLocation",
+		L"accNavigate",
+		L"accHitTest",
 		L"accDoDefaultAction"
 	};
-	static DISPID dids[] = 
-	{ 
+	static DISPID dids[] =
+	{
 		DISPID_ACC_PARENT,				// -5000
 		DISPID_ACC_CHILDCOUNT,			// -5001
 		DISPID_ACC_CHILD,				// -5002
@@ -1184,18 +1286,18 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleGetIDsOfNamesHelper(
 		DISPID_ACC_HITTEST,				// -5017
 		DISPID_ACC_DODEFAULTACTION		// -5018
 	};
-	for (unsigned int i = 0; i < cNames; ++i) 
+	for (unsigned int i = 0; i < cNames; ++i)
 	{
 		bool bFoundIt = false;
-		for (unsigned int j = 0; j < sizeof(names)/sizeof(LPOLESTR); ++j) 
+		for (unsigned int j = 0; j < sizeof(names)/sizeof(LPOLESTR); ++j)
 		{
-			if (lstrcmpW(rgszNames[i], names[j]) == 0) 
+			if (lstrcmpW(rgszNames[i], names[j]) == 0)
 			{
 				bFoundIt = true;
 				rgDispId[i] = dids[j];
 			}
 		}
-		if (!bFoundIt) 
+		if (!bFoundIt)
 		{
 			return DISP_E_UNKNOWNNAME;
 		}

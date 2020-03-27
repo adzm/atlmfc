@@ -257,7 +257,6 @@ UINT AFX_CDECL CDialogTemplate::GetTemplateSize(const DLGTEMPLATE* pTemplate)
 		--nCtrl;
 	}
 
-   //IA64: Max dialog template size of 4GB should be fine
 	return UINT(pb - (BYTE*)pTemplate);
 }
 
@@ -355,7 +354,6 @@ BOOL CDialogTemplate::SetFont(LPCTSTR lpFaceName, WORD nFontSize)
 	*(WORD*)pb = nFontSize;
 	Checked::memmove_s(pb + cbFontAttr, cbNew - cbFontAttr, pbNew, cbNew - cbFontAttr);
 
-   //IA64: Max dialog template size of 4GB should be fine
 	m_dwTemplateSize += ULONG(pNewControls - pOldControls);
 
 	GlobalUnlock(m_hTemplate);

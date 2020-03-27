@@ -9,6 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
+#include <math.h>
 #include "afxglobals.h"
 #include "afxtoolbarimages.h"
 #include "afxtoolbar.h"
@@ -57,6 +58,719 @@ code depending on the byte order we're targeting.
 #define AFX_IMAGE_LIGHT  0
 #define AFX_IMAGE_SHADOW 1
 
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#endif
+
+static inline double clamp(double value, double low, double high)
+{
+	return value < low ? low : (value > high ? high : value);
+}
+
+static inline double clamp_to_byte(double value)
+{
+	return clamp(value, 0.0, 255.0);
+}
+
+class CMFCZoomKernel
+{
+public:
+	typedef double XFilterProc(double dValue);
+	typedef XFilterProc* XLPFilterProc;
+
+	struct XKernel
+	{
+		long   pixel;
+		double weight;
+	};
+
+	struct XKernelList
+	{
+		DWORD         count;
+		XKernel* stat;
+	};
+
+	enum XZoomType
+	{
+		e_ZoomTypeFirst     = 0,
+		e_ZoomTypeStretch   = e_ZoomTypeFirst,
+		e_ZoomTypeFitImage  = 1,
+		e_ZoomTypeFitWidth  = 2,
+		e_ZoomTypeFitHeight = 3,
+		e_ZoomTypeLast      = e_ZoomTypeFitHeight
+	};
+
+	enum XFilterType
+	{
+		e_FilterTypeFirst    = 0,
+		e_FilterTypeBox      = e_FilterTypeFirst,
+		e_FilterTypeBilinear = 1,
+		e_FilterTypeBicubic  = 2,
+		e_FilterTypeBell     = 3,
+		e_FilterTypeBSpline  = 4,
+		e_FilterTypeLanczos3 = 5,
+		e_FilterTypeMitchell = 6,
+		e_FilterTypeLast     = e_FilterTypeMitchell
+	};
+
+public:
+	CMFCZoomKernel();
+	virtual ~CMFCZoomKernel();
+
+	void Create(long sizeSrc, long sizeDst, long originSrc, long widthSrc, XFilterType ft);
+	void Create(long sizeSrc, long sizeDst, XFilterType ft);
+	void Empty();
+
+	inline  XKernelList& operator [](long index);
+	inline  const XKernelList& operator [](long index) const;
+
+	static  double          FilterWidth(XFilterType ft);
+	static  XLPFilterProc   FilterProc(XFilterType ft);
+	static  double          Filter(XFilterType ft, double value);
+
+	static  void            CorrectZoomSize(const CSize& sizeSrc, CSize& sizeDst, XZoomType zt);
+
+private:
+	DWORD        m_Size;
+	XKernelList* m_List;
+};
+
+void CMFCZoomKernel::CorrectZoomSize(const CSize& sizeSrc, CSize& sizeDst, XZoomType zt)
+{
+	double ZoomX = (double)sizeDst.cx / (double)sizeSrc.cx;
+	double ZoomY = (double)sizeDst.cy / (double)sizeSrc.cy;
+
+	if(zt != e_ZoomTypeStretch)
+	{
+		switch(zt)
+		{
+		case e_ZoomTypeFitWidth:
+			ZoomY = ZoomX;
+			break;
+		case e_ZoomTypeFitHeight:
+			ZoomX = ZoomY;
+			break;
+		case e_ZoomTypeFitImage:
+			ZoomX = min(ZoomX, ZoomY);
+			ZoomY = ZoomX;
+			break;
+		}
+
+		sizeDst.cx = (long)(sizeSrc.cx * ZoomX);
+		sizeDst.cy = (long)(sizeSrc.cy * ZoomY);
+	}
+}
+
+inline double SinC(double dValue)
+{
+	if (dValue != 0.0)
+	{
+		dValue *= M_PI;
+		return sin (dValue) / dValue;
+	}
+
+	return 1.0;
+}
+
+inline double Filter_Box(double dValue)
+{
+	if ((dValue > -0.5) && (dValue <= 0.5))
+	{
+		return 1.0;
+	}
+
+	return 0.0;
+}
+
+// Bilinear filter
+// a.k.a. "Linear" or "Triangle" filter
+inline double Filter_Bilinear(double dValue)
+{
+	if (dValue < 0.0)
+	{
+		dValue = -dValue;
+	}
+
+	if (dValue < 1.0)
+	{
+		return 1.0 - dValue;
+	}
+
+	return 0.0;
+}
+
+inline double Filter_Bicubic(double dValue)
+{
+	if (dValue < 0.0)
+	{
+		dValue = -dValue;
+	}
+
+	if (dValue < 1.0)
+	{
+		return (2.0 * dValue - 3.0) * dValue * dValue + 1.0;
+	}
+
+	return 0.0;
+}
+
+// Bell filter
+inline double Filter_Bell(double dValue)
+{
+	if (dValue < 0.0)
+	{
+		dValue = -dValue;
+	}
+
+	if (dValue < 0.5)
+	{
+		return 0.75 - dValue * dValue;
+	}
+	else
+	{
+		if (dValue < 1.5)
+		{
+			dValue = dValue - 1.5;
+			return 0.5 * dValue * dValue;
+		}
+	}
+
+	return 0.0;
+}
+
+inline double Filter_BSpline(double dValue)
+{
+	if (dValue < 0.0)
+	{
+		dValue = -dValue;
+	}
+
+	if (dValue < 1.0)
+	{
+		double tt = dValue * dValue;
+		return 0.5 * tt * dValue - tt + 2.0 / 3.0;
+	}
+	else
+	{
+		if (dValue < 2.0)
+		{
+			dValue = 2.0 - dValue;
+			return dValue * dValue * dValue / 6.0;
+		}
+	}
+
+	return 0.0;
+}
+
+inline double Filter_Lanczos3(double dValue)
+{
+	if (dValue < 0.0)
+	{
+		dValue = -dValue;
+	}
+
+	if (dValue < 3.0)
+	{
+		return SinC(dValue) * SinC(dValue / 3.0);
+	}
+
+	return 0.0;
+}
+
+inline double Filter_Mitchell(double dValue)
+{
+	static double B = 1.0 / 3.0;
+	static double C = B;
+
+	if (dValue < 0.0)
+	{
+		dValue = -dValue;
+	}
+
+	const double tt = dValue * dValue;
+	if (dValue < 1.0)
+	{
+		return ((12.0 - 9.0 * B - 6.0 * C) * (dValue * tt) + 
+			(-18.0 + 12.0 * B + 6.0 * C) * tt + 
+			(6.0 - 2.0 * B)) / 6.0;
+	}
+	else
+	{
+		if (dValue < 2.0)
+		{
+			return ((-1.0 * B - 6.0 * C) *(dValue * tt) +
+				(6.0 * B + 30.0 * C) * tt + 
+				(-12.0 * B - 48.0 * C) * dValue +
+				(8.0 * B + 24.0 * C)) / 6.0;
+		}
+	}
+
+	return 0.0;
+}
+
+struct CMFCImageResizeFilter
+{
+	CMFCZoomKernel::XLPFilterProc Proc;
+	double        Width;
+};
+
+static CMFCImageResizeFilter Filters[7] =
+{
+	{ &Filter_Box     , 0.5},
+	{ &Filter_Bilinear, 1.0},
+	{ &Filter_Bicubic , 1.0},
+	{ &Filter_Bell    , 1.5},
+	{ &Filter_BSpline , 2.0},
+	{ &Filter_Lanczos3, 3.0},
+	{ &Filter_Mitchell, 2.0}
+};
+
+CMFCZoomKernel::XLPFilterProc CMFCZoomKernel::FilterProc(CMFCZoomKernel::XFilterType ft)
+{
+	return Filters[ft].Proc;
+}
+
+double CMFCZoomKernel::FilterWidth(CMFCZoomKernel::XFilterType ft)
+{
+	return Filters[ft].Width;
+}
+
+double CMFCZoomKernel::Filter(CMFCZoomKernel::XFilterType ft, double value)
+{
+	return Filters[ft].Proc(value);
+}
+
+CMFCZoomKernel::CMFCZoomKernel(): m_Size(0), m_List(NULL)
+{
+}
+
+CMFCZoomKernel::~CMFCZoomKernel()
+{
+	Empty();
+}
+
+void CMFCZoomKernel::Create(long sizeSrc, long sizeDst, long originSrc, long widthSrc, XFilterType ft)
+{
+	if(sizeSrc <= 0)
+	{
+		ASSERT(FALSE);
+		return;
+	}
+
+	if(sizeDst <= 0)
+	{
+		ASSERT(FALSE);
+		return;
+	}
+
+	Empty();
+
+	m_Size = sizeDst;
+	const double dScale = (double)(m_Size) / (double)(sizeSrc);
+
+	const XLPFilterProc lpFilterProc = Filters[ft].Proc;
+	const double dFilterWidth        = Filters[ft].Width;
+
+	m_List = new XKernelList[m_Size];
+
+	double width = dFilterWidth;
+	double scale = 1.0;
+	double correction = -0.25;
+	if (dScale < 1.0)
+	{
+		width /= dScale;
+		scale = dScale;
+		correction = -correction;
+	}
+
+	for (DWORD i = 0; i < m_Size; i++)
+	{
+		double center = i / dScale;
+
+		long left  = (long)floor(center - width);
+		long right = (long)ceil(center + width);
+
+		const long c_Count = right - left + 1;
+
+		m_List[i].count = 0;
+
+		if (c_Count == 0)
+		{
+			continue;
+		}
+
+		m_List[i].stat  = new XKernel[c_Count];
+
+		bool bCross = false;
+		DWORD index = 0;
+		double weightSum = 0.0;
+
+		XKernel* pStat = m_List[i].stat;
+
+		bool bFirst = true;
+		for(long j = left; j <= right; j++)
+		{
+			double weight = lpFilterProc((center - (double)j + correction) * scale) * scale;
+			if(weight == 0.0)
+			{
+				if (!bFirst)
+				{
+					break;
+				}
+
+				continue;
+			}
+
+			bFirst = false;
+
+			long pixel = j + originSrc;
+			if (pixel < 0)
+			{
+				pixel = -pixel;
+				bCross = true;
+			}
+			else if (pixel >= widthSrc)
+			{
+				pixel = 2 * widthSrc - pixel - 1;
+				bCross = true;
+			}
+
+			bool bFound = false;
+			if(bCross)
+			{
+				for(DWORD k = 0; k < index; k++)
+				{
+					if(pStat[k].pixel == pixel)
+					{
+						pStat[k].weight += weight;
+						bFound = true;
+						break;
+					}
+				}
+			}
+
+			if(!bFound)
+			{
+				pStat[index].pixel  = pixel;
+				pStat[index].weight = weight;
+				index++;
+				m_List[i].count = index;
+			}
+
+			weightSum += weight;
+		}
+
+		if(weightSum != 0.0)
+		{
+			for(DWORD j = 0; j <= m_List[i].count; j++)
+			{
+				m_List[i].stat[j].weight /= weightSum;
+			}
+		}
+	}
+}
+
+void CMFCZoomKernel::Create(long sizeSrc, long sizeDst, XFilterType ft)
+{
+	Create(sizeSrc, sizeDst, 0, sizeSrc, ft);
+}
+
+void CMFCZoomKernel::Empty()
+{
+	if (m_List != NULL)
+	{
+		for (DWORD i = 0; i < m_Size; i++)
+		{
+			if (m_List[i].count > 0)
+			{
+				delete [] m_List[i].stat;
+			}
+		}
+
+		delete [] m_List;
+
+		m_List = NULL;
+		m_Size = 0;
+	}
+}
+
+CMFCZoomKernel::XKernelList& CMFCZoomKernel::operator [](long index)
+{
+	return m_List[index];
+}
+
+const CMFCZoomKernel::XKernelList& CMFCZoomKernel::operator [](long index) const
+{
+	return m_List[index];
+}
+
+class CMFCScanliner
+{
+public:
+	CMFCScanliner()
+	{
+		empty();
+	}
+
+	CMFCScanliner(LPBYTE data, const CSize& size, size_t height = 0, size_t pitch = 0, BYTE channels = 4, BOOL invert = FALSE)
+	{
+		attach(data, size, height, pitch, channels, invert);
+	}
+
+	CMFCScanliner(LPBYTE data, const CRect& rect, size_t height = 0, size_t pitch = 0, BYTE channels = 4, BOOL invert = FALSE)
+	{
+		attach(data, rect, height, pitch, channels, invert);
+	}
+
+	void attach(LPBYTE data, const CSize& size, size_t height = 0, size_t pitch = 0, BYTE channels = 4, BOOL invert = FALSE)
+	{
+		attach(data, CRect(CPoint(0, 0), size), height, pitch, channels, invert);
+	}
+
+	void attach(LPBYTE data, const CRect& rect, size_t height = 0, size_t pitch = 0, BYTE channels = 4, BOOL invert = FALSE)
+	{
+		empty();
+
+		ASSERT(data != NULL);
+
+		CPoint point(rect.TopLeft());
+		CSize size(rect.Size());
+		if(pitch == 0)
+		{
+			pitch = size.cx;
+		}
+		if(height == 0)
+		{
+			height = point.y + size.cy;
+		}
+
+		ASSERT((size_t)size.cx <= pitch);
+		ASSERT((size_t)(point.y + size.cy) <= height);
+
+		m_rows     = size.cy;
+		m_cols     = size.cx * channels;
+		m_pitch    = pitch;
+		m_offset   = (long)m_pitch;
+		if (invert)
+		{
+			m_offset = -m_offset;
+		}
+		m_channels = channels;
+		m_height   = height;
+
+		m_start_row = point.y;
+		m_start_col = point.x;
+
+		m_line_begin = _begin(data);
+		m_line_end   = _end(data);
+		m_line       = m_line_begin;
+	}
+
+	inline LPBYTE begin()
+	{
+		m_line = m_line_begin;
+		return m_line;
+	}
+
+	inline LPBYTE end()
+	{
+		m_line = m_line_end;
+		return m_line;
+	}
+
+	inline LPBYTE operator[](long index)
+	{
+		return m_line_begin + m_offset * index;
+	}
+
+	inline const LPBYTE operator[](long index) const
+	{
+		return m_line_begin + m_offset * index;
+	}
+
+	inline LPBYTE get()
+	{
+		return m_line;
+	}
+
+	inline const LPBYTE get() const
+	{
+		return m_line;
+	}
+
+	inline size_t pitch() const
+	{
+		return m_pitch;
+	}
+
+	inline DWORD rows() const
+	{
+		return m_rows;
+	}
+
+	inline DWORD cols() const
+	{
+		return m_cols;
+	}
+
+	inline BYTE channels() const
+	{
+		return m_channels;
+	}
+
+	~CMFCScanliner()
+	{
+		empty();
+	}
+
+	inline  const CMFCScanliner& operator += (DWORD line)
+	{
+		m_line += m_offset * line;
+		return *this;
+	}
+
+	inline  const CMFCScanliner& operator -= (DWORD line)
+	{
+		m_line -= m_offset * line;
+		return *this;
+	}
+
+	inline  const CMFCScanliner& operator ++ ()
+	{
+		m_line += m_offset;
+		return *this;
+	}
+
+	inline  const CMFCScanliner& operator ++ (int)
+	{
+		m_line += m_offset;
+		return *this;
+	}
+
+	inline  const CMFCScanliner& operator -- ()
+	{
+		m_line -= m_offset;
+		return *this;
+	}
+
+	inline  const CMFCScanliner& operator -- (int)
+	{
+		m_line += m_offset;
+		return *this;
+	}
+
+protected:
+	void empty()
+	{
+		m_line      = NULL;
+		m_pitch     = 0;
+		m_start_row = 0;
+		m_start_col = 0;
+		m_rows      = 0;
+		m_cols      = 0;
+		m_offset    = 0;
+		m_height    = 0;
+
+		m_line_begin = NULL;
+		m_line_end   = NULL;
+	}
+
+	inline LPBYTE _begin(LPBYTE data) const
+	{
+		LPBYTE line = data;
+
+		if(m_offset > 0)
+		{
+			line += m_start_row * m_pitch;
+		}
+		else
+		{
+			line += (m_height - m_start_row - 1) * m_pitch;
+		}
+
+		if(m_start_col != 0)
+		{
+			line += m_start_col * m_channels;
+		}
+
+		return line;
+	}
+
+	inline LPBYTE _end(LPBYTE data) const
+	{
+		LPBYTE line = data;
+
+		if(m_offset > 0)
+		{
+			line += (m_start_row + m_rows - 1) * m_pitch;
+		}
+		else
+		{
+			line += (m_height - m_start_row - m_rows) * m_pitch;
+		}
+
+		if(m_start_col != 0)
+		{
+			line += m_start_col * m_channels;
+		}
+
+		return line;
+	}
+
+private:
+	LPBYTE  m_line;
+	LPBYTE  m_line_begin;
+	LPBYTE  m_line_end;
+	size_t  m_pitch;
+	DWORD   m_start_row;
+	DWORD   m_start_col;
+	DWORD   m_rows;
+	DWORD   m_cols;
+	long    m_offset;
+	BYTE    m_channels;
+	size_t  m_height;
+};
+
+class CMFCScanlinerBitmap: public CMFCScanliner
+{
+public:
+	CMFCScanlinerBitmap()
+	{
+		empty();
+	}
+
+	void attach(HBITMAP bitmap, const CPoint& ptBegin = CPoint(0, 0))
+	{
+		if (bitmap == NULL)
+		{
+			ASSERT(FALSE);
+			return;
+		}
+
+		BITMAP bmp;
+		if (::GetObject(bitmap, sizeof(BITMAP), &bmp) == 0 ||
+			bmp.bmBits == 0 || bmp.bmBitsPixel < 24)
+		{
+			ASSERT(FALSE);
+			return;
+		}
+
+		CSize size(bmp.bmWidth, abs(bmp.bmHeight));
+		CRect rect(CPoint(0, 0), size);
+		rect.IntersectRect(CRect(ptBegin, size), rect);
+
+		int channels = bmp.bmBitsPixel / 8;
+		int pitch = channels * size.cx;
+		if (pitch % 4)
+		{
+			pitch += 4 - (pitch % 4);
+		}
+
+		CMFCScanliner::attach((LPBYTE) bmp.bmBits, 
+			size, size.cy, pitch, (BYTE) channels, bmp.bmHeight < 0);
+	}
+};
+
 /////////////////////////////////////////////////////////////////////////////
 // Init / Term
 
@@ -74,7 +788,7 @@ void __stdcall CMFCToolBarImages::CleanUp()
 		hDCGlyphs = NULL;
 	}
 
-	CPngImage::CleanUp ();
+	CPngImage::CleanUp();
 }
 
 // a special struct that will cleanup automatically
@@ -122,10 +836,11 @@ CMFCToolBarImages::CMFCToolBarImages()
 		bInitialized = TRUE;
 	}
 
-	m_clrTransparent = (COLORREF) -1;
+	m_clrTransparentOriginal = m_clrTransparent = (COLORREF) -1;
 
 	// UISG standard sizes
 	m_sizeImage = CSize(16, 15);
+	m_sizeImageOriginal = CSize(0, 0);
 	m_sizeImageDest = CSize(0, 0);
 	m_rectLastDraw = CRect(0, 0, 0, 0);
 	m_rectSubImage = CRect(0, 0, 0, 0);
@@ -141,6 +856,8 @@ CMFCToolBarImages::CMFCToolBarImages()
 	m_bMapTo3DColors = TRUE;
 	m_bAutoCheckPremlt = FALSE;
 	m_bCreateMonoDC = TRUE;
+
+	m_dblScale = 1.0;
 
 	OnSysColorChange();
 }
@@ -321,7 +1038,7 @@ BOOL CMFCToolBarImages::Load(LPCTSTR lpszBmpFileName, DWORD dwMaxFileSize /* = 8
 	// Check that file size does not exceed specified limit
 	if (dwMaxFileSize > 0)
 	{
-		HANDLE hFile = CreateFile(lpszBmpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, NULL);
+		HANDLE hFile = CreateFile(lpszBmpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hFile != INVALID_HANDLE_VALUE)
 		{
 			DWORD dwFileSize = GetFileSize(hFile, NULL);
@@ -1015,6 +1732,24 @@ void CMFCToolBarImages::OnSysColorChange()
 
 	int iOldCount = m_iCount;
 
+	if (m_dblScale != 1.0)
+	{
+		m_dblScale = 1.0;
+		m_nBitsPerPixel = 0;
+
+		if (m_clrTransparentOriginal != (COLORREF)-1)
+		{
+			m_clrTransparent = m_clrTransparentOriginal;
+			m_clrTransparentOriginal = (COLORREF)-1;
+		}
+
+		m_sizeImage = m_sizeImageOriginal;
+		m_sizeImageOriginal = CSize (0, 0);
+		m_sizeImageDest = CSize(0, 0);
+		m_rectLastDraw = CRect(0, 0, 0, 0);
+		m_rectSubImage = CRect(0, 0, 0, 0);
+	}
+
 	// re-color bitmap for toolbar
 	if (m_hbmImageWell != NULL)
 	{
@@ -1063,7 +1798,7 @@ void CMFCToolBarImages::OnSysColorChange()
 						uiLoadImageFlags |= LR_LOADMAP3DCOLORS;
 					}
 
-					hbmp = (HBITMAP) ::LoadImage(hInst, MAKEINTRESOURCE(uiResId), IMAGE_BITMAP, 0, 0, uiLoadImageFlags);
+					hbmp = (HBITMAP) ::LoadImageW(hInst, MAKEINTRESOURCEW(uiResId), IMAGE_BITMAP, 0, 0, uiLoadImageFlags);
 				}
 
 				BITMAP bmp;
@@ -1071,6 +1806,8 @@ void CMFCToolBarImages::OnSysColorChange()
 				{
 					ASSERT(FALSE);
 				}
+
+				m_nBitsPerPixel = bmp.bmBitsPixel;
 
 				if (bmp.bmBitsPixel >= 32)
 				{
@@ -1150,6 +1887,31 @@ int CMFCToolBarImages::AddImage(HBITMAP hbmp, BOOL bSetBitPerPixel/* = FALSE*/)
 
 		hbmp = (HBITMAP) ::CopyImage(hbmp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 		MirrorBitmap(hbmp, m_sizeImage.cx);
+	}
+
+	if (IsScaled ())
+	{
+		BITMAP bmpScale;
+		if (::GetObject(hbmp, sizeof(BITMAP), &bmpScale) == 0)
+		{
+			return -1;
+		}
+
+		if (bmpScale.bmHeight != m_sizeImage.cy)
+		{
+			CMFCToolBarImages imageForScale;
+			imageForScale.m_hbmImageWell = hbmp;
+
+			imageForScale.m_nBitsPerPixel = bmpScale.bmBitsPixel;
+
+			imageForScale.SetImageSize(m_sizeImageOriginal);
+			imageForScale.m_iCount = bmpScale.bmWidth / m_sizeImageOriginal.cx;
+			imageForScale.SmoothResize(m_dblScale);
+			imageForScale.m_bIsTemporary = TRUE;
+
+			::DeleteObject (hbmp);
+			hbmp = imageForScale.GetImageWell();
+		}
 	}
 
 	// Create memory source DC and select an original bitmap:
@@ -1280,12 +2042,15 @@ int CMFCToolBarImages::AddImage(const CMFCToolBarImages& imageList, int nIndex)
 
 	CWindowDC dc(NULL);
 
-	m_sizeImage = imageList.m_sizeImage;
-	m_sizeImageDest = imageList.m_sizeImageDest;
-	m_clrTransparent = imageList.m_clrTransparent;
-	m_clrImageShadow = imageList.m_clrImageShadow;
-	m_bFadeInactive = imageList.m_bFadeInactive;
-	m_nBitsPerPixel = imageList.m_nBitsPerPixel;
+	if (!IsScaled())
+	{
+		m_sizeImage = imageList.m_sizeImage;
+		m_sizeImageDest = imageList.m_sizeImageDest;	
+		m_clrTransparent = imageList.m_clrTransparent;
+		m_clrImageShadow = imageList.m_clrImageShadow;
+		m_bFadeInactive = imageList.m_bFadeInactive;
+		m_nBitsPerPixel = imageList.m_nBitsPerPixel;
+	}
 
 	CDC memDCSrc;
 	memDCSrc.CreateCompatibleDC(NULL);
@@ -1296,11 +2061,30 @@ int CMFCToolBarImages::AddImage(const CMFCToolBarImages& imageList, int nIndex)
 	memDCDest.CreateCompatibleDC(NULL);
 
 	CBitmap bitmap;
-	bitmap.CreateCompatibleBitmap(&dc, m_sizeImage.cx, m_sizeImage.cy);
+	DIBSECTION ds = {0};
+
+	if (imageList.m_nBitsPerPixel >= 24 && ::GetObject(m_hbmImageWell, sizeof(DIBSECTION), &ds) != 0)
+	{
+		BITMAPINFO bi = {0};
+		bi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+		bi.bmiHeader.biWidth       = imageList.m_sizeImage.cx;
+		bi.bmiHeader.biHeight      = imageList.m_sizeImage.cy;
+		bi.bmiHeader.biPlanes      = ds.dsBmih.biPlanes;
+		bi.bmiHeader.biBitCount    = ds.dsBmih.biBitCount;
+		bi.bmiHeader.biCompression = BI_RGB;
+
+		COLORREF* pBits = NULL;
+		HBITMAP hNewBitmap = ::CreateDIBSection(dc, &bi, DIB_RGB_COLORS, (void **)&pBits, NULL, NULL);
+		bitmap.Attach (hNewBitmap);
+	}
+	else
+	{
+		bitmap.CreateCompatibleBitmap (&dc, imageList.m_sizeImage.cx, imageList.m_sizeImage.cy);
+	}
 
 	CBitmap* pOldBitmapDest = memDCDest.SelectObject(&bitmap);
 
-	memDCDest.BitBlt(0, 0, m_sizeImage.cx, m_sizeImage.cy, &memDCSrc, nIndex * m_sizeImage.cx, 0, SRCCOPY);
+	memDCDest.BitBlt (0, 0, imageList.m_sizeImage.cx, imageList.m_sizeImage.cy, &memDCSrc, nIndex * imageList.m_sizeImage.cx, 0, SRCCOPY);
 
 	memDCDest.SelectObject(pOldBitmapDest);
 	memDCSrc.SelectObject(hOldBitmapSrc);
@@ -1322,18 +2106,24 @@ int CMFCToolBarImages::AddIcon(HICON hIcon, BOOL bAlphaBlend/* = FALSE*/)
 
 	CBitmap bmpMem;
 
+	CSize sizeIcon = m_sizeImage;
+	if (IsScaled())
+	{
+		sizeIcon = m_sizeImageOriginal;
+	}
+
 	if (bAlphaBlend)
 	{
 		BITMAPINFO bi;
 
 		// Fill in the BITMAPINFOHEADER
 		bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		bi.bmiHeader.biWidth = m_sizeImage.cx;
-		bi.bmiHeader.biHeight = m_sizeImage.cy;
+		bi.bmiHeader.biWidth = sizeIcon.cx;
+		bi.bmiHeader.biHeight = sizeIcon.cy;
 		bi.bmiHeader.biPlanes = 1;
 		bi.bmiHeader.biBitCount = 32;
 		bi.bmiHeader.biCompression = BI_RGB;
-		bi.bmiHeader.biSizeImage = m_sizeImage.cx * m_sizeImage.cy;
+		bi.bmiHeader.biSizeImage = sizeIcon.cx * sizeIcon.cy;
 		bi.bmiHeader.biXPelsPerMeter = 0;
 		bi.bmiHeader.biYPelsPerMeter = 0;
 		bi.bmiHeader.biClrUsed = 0;
@@ -1351,19 +2141,19 @@ int CMFCToolBarImages::AddIcon(HICON hIcon, BOOL bAlphaBlend/* = FALSE*/)
 	}
 	else
 	{
-		bmpMem.CreateCompatibleBitmap(&dc, m_sizeImage.cx, m_sizeImage.cy);
+		bmpMem.CreateCompatibleBitmap(&dc, sizeIcon.cx, sizeIcon.cy);
 	}
 
 	CBitmap* pBmpOriginal = dcMem.SelectObject(&bmpMem);
 
 	if (!bAlphaBlend)
 	{
-		dcMem.FillRect(CRect(0, 0, m_sizeImage.cx, m_sizeImage.cy), &afxGlobalData.brBtnFace);
+		dcMem.FillRect(CRect(0, 0, sizeIcon.cx, sizeIcon.cy), &afxGlobalData.brBtnFace);
 	}
 
 	if (hIcon != NULL)
 	{
-		dcMem.DrawState(CPoint(0, 0), m_sizeImage, hIcon, DSS_NORMAL, (CBrush*) NULL);
+		dcMem.DrawState(CPoint(0, 0), sizeIcon, hIcon, DSS_NORMAL, (CBrush*) NULL);
 	}
 
 	dcMem.SelectObject(pBmpOriginal);
@@ -1804,10 +2594,10 @@ static HANDLE __stdcall DDBToDIB(HBITMAP bitmap, DWORD dwCompression)
 	// Each scan line of the image is aligned on a DWORD(32bit) boundary
 	if (bi.biSizeImage == 0){bi.biSizeImage = ((((bi.biWidth * bi.biBitCount) + 31) & ~31) / 8) * bi.biHeight;
 
-		// If a compression scheme is used the result may infact be larger
-		// Increase the size to account for this.
-		if (dwCompression != BI_RGB)
-			bi.biSizeImage = (bi.biSizeImage * 3) / 2;
+	// If a compression scheme is used the result may infact be larger
+	// Increase the size to account for this.
+	if (dwCompression != BI_RGB)
+		bi.biSizeImage = (bi.biSizeImage * 3) / 2;
 	}
 
 	// Realloc the buffer so that it can hold all the bits
@@ -1982,45 +2772,74 @@ BOOL CMFCToolBarImages::CopyTo(CMFCToolBarImages& dest)
 
 	if (afxGlobalData.bIsWindowsVista)
 	{
-		// Create memory source DC and select an original bitmap:
-		CDC memDCSrc;
-		memDCSrc.CreateCompatibleDC(NULL);
-
-		HBITMAP hOldBitmapSrc = (HBITMAP) memDCSrc.SelectObject(m_hbmImageWell);
-
-		if (hOldBitmapSrc == NULL)
+		BITMAP bmp;
+		if (::GetObject(m_hbmImageWell, sizeof(BITMAP), &bmp) == sizeof(BITMAP))
 		{
-			return FALSE;
+			CSize sizeImage (bmp.bmWidth, abs(bmp.bmHeight));
+
+			// Create memory source DC and select an original bitmap:
+			CDC memDCSrc;
+			memDCSrc.CreateCompatibleDC(NULL);
+
+			HBITMAP hOldBitmapSrc = (HBITMAP)memDCSrc.SelectObject(m_hbmImageWell);
+			if (hOldBitmapSrc != NULL)
+			{
+				// Create a new bitmap compatible with the source memory DC
+				// (original bitmap SHOULD BE ALREADY SELECTED!):
+				HBITMAP hNewBitmap = NULL;
+
+				DIBSECTION ds = {0};
+				if (bmp.bmBitsPixel >= 24 && ::GetObject (m_hbmImageWell, sizeof (DIBSECTION), &ds) != 0)
+				{
+					BITMAPINFO bi = {0};
+					bi.bmiHeader.biSize        = sizeof (BITMAPINFOHEADER);
+					bi.bmiHeader.biWidth       = bmp.bmWidth;
+					bi.bmiHeader.biHeight      = bmp.bmHeight;
+					bi.bmiHeader.biPlanes      = bmp.bmPlanes;
+					bi.bmiHeader.biBitCount    = bmp.bmBitsPixel;
+					bi.bmiHeader.biCompression = BI_RGB;
+
+					COLORREF* pBits = NULL;
+					hNewBitmap = ::CreateDIBSection (
+						memDCSrc, &bi, DIB_RGB_COLORS, (void **)&pBits,
+						NULL, NULL);
+				}
+				else
+				{
+					hNewBitmap = (HBITMAP) ::CreateCompatibleBitmap (memDCSrc,
+						sizeImage.cx, sizeImage.cy);
+				}
+
+				if (hNewBitmap != NULL)
+				{
+					//------------------------------------------------------
+					// Create memory destination DC and select a new bitmap:
+					//------------------------------------------------------
+					CDC memDCDst;
+					memDCDst.CreateCompatibleDC (&memDCSrc);
+
+					HBITMAP hOldBitmapDst = (HBITMAP) memDCDst.SelectObject (hNewBitmap);
+					if (hOldBitmapDst != NULL)
+					{
+						//-----------------------------
+						// Copy original bitmap to new:
+						//-----------------------------
+						memDCDst.BitBlt (0, 0, sizeImage.cx, sizeImage.cy,
+							&memDCSrc, 0, 0, SRCCOPY);
+
+						memDCDst.SelectObject (hOldBitmapDst);
+
+						dest.m_hbmImageWell = hNewBitmap;
+					}
+					else
+					{
+						::DeleteObject (hNewBitmap);
+					}
+				}
+
+				memDCSrc.SelectObject (hOldBitmapSrc);
+			}
 		}
-
-		// Create a new bitmap compatibel with the source memory DC
-		//(original bitmap SHOULD BE ALREADY SELECTED!):
-		HBITMAP hNewBitmap = (HBITMAP) ::CreateCompatibleBitmap(memDCSrc, m_iCount * m_sizeImage.cx, m_sizeImage.cy);
-		if (hNewBitmap == NULL)
-		{
-			memDCSrc.SelectObject(hOldBitmapSrc);
-			return FALSE;
-		}
-
-		// Create memory destination DC and select a new bitmap:
-		CDC memDCDst;
-		memDCDst.CreateCompatibleDC(&memDCSrc);
-
-		HBITMAP hOldBitmapDst = (HBITMAP) memDCDst.SelectObject(hNewBitmap);
-		if (hOldBitmapDst == NULL)
-		{
-			memDCSrc.SelectObject(hOldBitmapSrc);
-			::DeleteObject(hNewBitmap);
-			return FALSE;
-		}
-
-		// Copy original bitmap to new:
-		memDCDst.BitBlt(0, 0, m_iCount * m_sizeImage.cx, m_sizeImage.cy, &memDCSrc, 0, 0, SRCCOPY);
-
-		memDCDst.SelectObject(hOldBitmapDst);
-		memDCSrc.SelectObject(hOldBitmapSrc);
-
-		dest.m_hbmImageWell = hNewBitmap;
 	}
 	else
 	{
@@ -2046,6 +2865,7 @@ BOOL CMFCToolBarImages::CopyTo(CMFCToolBarImages& dest)
 	dest.m_clrImageShadow = m_clrImageShadow;
 	dest.m_bFadeInactive = m_bFadeInactive;
 	dest.m_nBitsPerPixel = m_nBitsPerPixel;
+	dest.m_dblScale = m_dblScale;
 
 	for (POSITION pos = m_lstOrigResIds.GetHeadPosition(); pos != NULL;)
 	{
@@ -2095,10 +2915,17 @@ void CMFCToolBarImages::Clear()
 	m_bIsGray = FALSE;
 	m_nGrayImageLuminancePercentage = 0;
 	m_nBitsPerPixel = 0;
+
+	if (m_dblScale != 1.0)
+	{
+		m_sizeImage = m_sizeImageOriginal;
+		m_sizeImageOriginal = CSize (0, 0);
+		m_dblScale = 1.0;
+	}
 }
 
 void __stdcall CMFCToolBarImages::TransparentBlt( HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight,
-	CDC* pDcSrc, int nXSrc, int nYSrc, COLORREF colorTransparent, int nWidthDest/* = -1*/, int nHeightDest/* = -1*/)
+												 CDC* pDcSrc, int nXSrc, int nYSrc, COLORREF colorTransparent, int nWidthDest/* = -1*/, int nHeightDest/* = -1*/)
 {
 	int cx = nWidthDest == -1 ? nWidth : nWidthDest;
 	int cy = nHeightDest == -1 ? nHeight : nHeightDest;
@@ -2303,12 +3130,7 @@ BOOL CMFCToolBarImages::UpdateInternalImage(int nIndex)
 		return TRUE;
 	}
 
-	OSVERSIONINFO osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-	::GetVersionEx(&osvi);
-
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || osvi.dwPlatformId != VER_PLATFORM_WIN32_NT)
+	if (afxGlobalData.m_nBitsPerPixel <= 8)
 	{
 		return TRUE;
 	}
@@ -2498,7 +3320,7 @@ BOOL CMFCToolBarImages::CreateFromImageList(const CImageList& imageList)
 
 BOOL __stdcall CMFCToolBarImages::Is32BitTransparencySupported()
 {
-	return afxGlobalData.bIsOSAlphaBlendingSupport;
+	return TRUE;
 }
 
 BOOL CMFCToolBarImages::GrayImages(int nGrayImageLuminancePercentage)
@@ -2511,12 +3333,7 @@ BOOL CMFCToolBarImages::GrayImages(int nGrayImageLuminancePercentage)
 		return TRUE;
 	}
 
-	OSVERSIONINFO osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-	::GetVersionEx(&osvi);
-
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || osvi.dwPlatformId != VER_PLATFORM_WIN32_NT)
+	if (afxGlobalData.m_nBitsPerPixel <= 8)
 	{
 		return TRUE;
 	}
@@ -3128,14 +3945,8 @@ BOOL CPngImage::Load(UINT uiResID, HINSTANCE hinstRes)
 	return Load(MAKEINTRESOURCE(uiResID), hinstRes);
 }
 
-//*******************************************************************************
-BOOL CPngImage::Load (LPCTSTR lpszResourceName, HINSTANCE hinstRes)
+BOOL CPngImage::Load(LPCTSTR lpszResourceName, HINSTANCE hinstRes)
 {
-	if (!afxGlobalData.bGDIPlusSupport)
-	{
-		return FALSE;
-	}
-
 	if (hinstRes == NULL)
 	{
 		hinstRes = AfxFindResourceHandle(lpszResourceName, CMFCToolBarImages::m_strPngResType);
@@ -3147,7 +3958,7 @@ BOOL CPngImage::Load (LPCTSTR lpszResourceName, HINSTANCE hinstRes)
 		return FALSE;
 	}
 
-	HGLOBAL hGlobal = LoadResource (hinstRes, hRsrc);
+	HGLOBAL hGlobal = LoadResource(hinstRes, hRsrc);
 	if (hGlobal == NULL)
 	{
 		return FALSE;
@@ -3160,7 +3971,7 @@ BOOL CPngImage::Load (LPCTSTR lpszResourceName, HINSTANCE hinstRes)
 		return FALSE;
 	}
 
-	BOOL bRes = LoadFromBuffer ((LPBYTE) lpBuffer, (UINT) ::SizeofResource (hinstRes, hRsrc));
+	BOOL bRes = LoadFromBuffer((LPBYTE) lpBuffer, (UINT) ::SizeofResource(hinstRes, hRsrc));
 
 	UnlockResource(hGlobal);
 	FreeResource(hGlobal);
@@ -3168,16 +3979,11 @@ BOOL CPngImage::Load (LPCTSTR lpszResourceName, HINSTANCE hinstRes)
 	return bRes;
 }
 //*******************************************************************************
-BOOL CPngImage::LoadFromFile (LPCTSTR lpszPath)
+BOOL CPngImage::LoadFromFile(LPCTSTR lpszPath)
 {
-	if (!afxGlobalData.bGDIPlusSupport)
-	{
-		return FALSE;
-	}
-
 	if (CMFCToolBarImages::m_bMultiThreaded)
 	{
-		CMFCToolBarImages::m_CriticalSection.Lock ();
+		CMFCToolBarImages::m_CriticalSection.Lock();
 	}
 
 	BOOL bRes = FALSE;
@@ -3188,41 +3994,36 @@ BOOL CPngImage::LoadFromFile (LPCTSTR lpszPath)
 		ENSURE(m_pImage != NULL);
 	}
 
-	if (m_pImage->Load (lpszPath) == S_OK)
+	if (m_pImage->Load(lpszPath) == S_OK)
 	{
-		bRes = Attach (m_pImage->Detach ());
+		bRes = Attach(m_pImage->Detach());
 	}
 
 	if (CMFCToolBarImages::m_bMultiThreaded)
 	{
-		CMFCToolBarImages::m_CriticalSection.Unlock ();
+		CMFCToolBarImages::m_CriticalSection.Unlock();
 	}
 
 	return bRes;
 }
 //*******************************************************************************
-BOOL CPngImage::LoadFromBuffer (LPBYTE lpBuffer, UINT uiSize)
+BOOL CPngImage::LoadFromBuffer(LPBYTE lpBuffer, UINT uiSize)
 {
-	if (!afxGlobalData.bGDIPlusSupport)
-	{
-		return FALSE;
-	}
-
 	ASSERT(lpBuffer != NULL);
 
-	HGLOBAL hRes = ::GlobalAlloc (GMEM_MOVEABLE, uiSize);
+	HGLOBAL hRes = ::GlobalAlloc(GMEM_MOVEABLE, uiSize);
 	if (hRes == NULL)
 	{
 		return FALSE;
 	}
 
 	IStream* pStream = NULL;
-	LPVOID lpResBuffer = ::GlobalLock (hRes);
+	LPVOID lpResBuffer = ::GlobalLock(hRes);
 	ASSERT (lpResBuffer != NULL);
 
-	memcpy (lpResBuffer, lpBuffer, uiSize);
+	memcpy(lpResBuffer, lpBuffer, uiSize);
 
-	HRESULT hResult = ::CreateStreamOnHGlobal (hRes, TRUE, &pStream);
+	HRESULT hResult = ::CreateStreamOnHGlobal(hRes, TRUE, &pStream);
 
 	if (hResult != S_OK)
 	{
@@ -3231,7 +4032,7 @@ BOOL CPngImage::LoadFromBuffer (LPBYTE lpBuffer, UINT uiSize)
 
 	if (CMFCToolBarImages::m_bMultiThreaded)
 	{
-		CMFCToolBarImages::m_CriticalSection.Lock ();
+		CMFCToolBarImages::m_CriticalSection.Lock();
 	}
 
 	if (m_pImage == NULL)
@@ -3240,15 +4041,330 @@ BOOL CPngImage::LoadFromBuffer (LPBYTE lpBuffer, UINT uiSize)
 		ENSURE(m_pImage != NULL);
 	}
 
-	m_pImage->Load (pStream);
-	pStream->Release ();
+	m_pImage->Load(pStream);
+	pStream->Release();
 
-	BOOL bRes = Attach (m_pImage->Detach ());
+	BOOL bRes = Attach(m_pImage->Detach());
 
 	if (CMFCToolBarImages::m_bMultiThreaded)
 	{
-		CMFCToolBarImages::m_CriticalSection.Unlock ();
+		CMFCToolBarImages::m_CriticalSection.Unlock();
 	}
 
 	return bRes;
+}
+
+HBITMAP CMFCToolBarImages::Copy(HBITMAP hbmpSrc)
+{
+	if (hbmpSrc == NULL)
+	{
+		ASSERT (FALSE);
+		return NULL;
+	}
+
+	if (!afxGlobalData.bIsWindowsVista)
+	{
+		return (HBITMAP) ::CopyImage(hbmpSrc, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+	}
+
+	//-------------------------------------------------------
+	// Windows Vista has some problems in ::CopyImage method,
+	// copy bitmap not using this method:
+	//-------------------------------------------------------
+
+	CDC memDCSrc;
+	memDCSrc.CreateCompatibleDC(NULL);
+
+	HBITMAP hOldBitmapSrc = (HBITMAP) memDCSrc.SelectObject(hbmpSrc);
+	if (hOldBitmapSrc == NULL)
+	{
+		return NULL;
+	}
+
+	BITMAP bmp;
+	::GetObject(hbmpSrc, sizeof(BITMAP), &bmp);
+
+	//----------------------------------------------------------
+	// Create a new bitmap compatibel with the source memory DC:
+	//----------------------------------------------------------
+	HBITMAP hNewBitmap = (HBITMAP) ::CreateCompatibleBitmap(memDCSrc, bmp.bmWidth, bmp.bmHeight);
+	if (hNewBitmap == NULL)
+	{
+		memDCSrc.SelectObject(hOldBitmapSrc);
+		return NULL;
+	}
+
+	//------------------------------------------------------
+	// Create memory destination DC and select a new bitmap:
+	//------------------------------------------------------
+	CDC memDCDst;
+	memDCDst.CreateCompatibleDC(&memDCSrc);
+
+	HBITMAP hOldBitmapDst = (HBITMAP) memDCDst.SelectObject(hNewBitmap);
+	if (hOldBitmapDst == NULL)
+	{
+		memDCSrc.SelectObject(hOldBitmapSrc);
+		::DeleteObject(hNewBitmap);
+		return NULL;
+	}
+
+	//-----------------------------
+	// Copy original bitmap to new:
+	//-----------------------------
+	memDCDst.BitBlt(0, 0, bmp.bmWidth, bmp.bmHeight, &memDCSrc, 0, 0, SRCCOPY);
+
+	memDCDst.SelectObject(hOldBitmapDst);
+	memDCSrc.SelectObject(hOldBitmapSrc);
+
+	return hNewBitmap;
+}
+
+BOOL CMFCToolBarImages::SmoothResize(double dblImageScale)
+{
+	if (m_hbmImageWell == NULL)
+	{
+		return FALSE;
+	}
+
+	if (m_nBitsPerPixel < 24)
+	{
+		return FALSE;
+	}
+
+	if (dblImageScale == 0.0)
+	{
+		ASSERT(FALSE);
+		return FALSE;
+	}
+
+	if (dblImageScale == 1.0)
+	{
+		return TRUE;
+	}
+
+	CSize sizeNew((int)(.5 + m_sizeImage.cx * dblImageScale), (int)(.5 + m_sizeImage.cy * dblImageScale));
+
+	if (sizeNew == m_sizeImage || m_sizeImage.cx <= 0 || m_sizeImage.cy <= 0 || sizeNew.cx <= 0 || sizeNew.cy <= 0)
+	{
+		return TRUE;
+	}
+
+	int nImageCount = GetCount();
+	if (nImageCount == 0)
+	{
+		return TRUE;
+	}
+
+	BOOL bInvert = FALSE;
+	CSize  sizeIW(0, 0);
+	{
+		BITMAP bmp;
+		if (::GetObject(GetImageWell(), sizeof(BITMAP), &bmp) == 0)
+		{
+			ASSERT(FALSE);
+			return FALSE;
+		}
+
+		sizeIW.cx = bmp.bmWidth;
+		sizeIW.cy = abs(bmp.bmHeight);
+		bInvert = bmp.bmHeight < 0;
+	}
+
+	m_dblScale *= dblImageScale;
+
+	CPoint offSrc(m_sizeImage.cx, 0);
+	CPoint offDst(0, 0);
+
+	if (nImageCount == 1)
+	{
+		if (sizeIW.cy > m_sizeImage.cy)
+		{
+			nImageCount = sizeIW.cy / m_sizeImage.cy;
+			offSrc = CPoint(0, m_sizeImage.cy);
+		}
+	}
+
+
+	HBITMAP hBmpSrc = CDrawingManager::CreateBitmap_32(m_hbmImageWell, m_clrTransparent);
+	if (hBmpSrc == NULL)
+	{
+		ASSERT(FALSE);
+		return FALSE;
+	}
+
+	CSize sizeNewIW(sizeNew);
+	if (offSrc.x > 0)
+	{
+		sizeNewIW.cx *= nImageCount;
+		offDst.x = sizeNew.cx;
+	}
+	else
+	{
+		sizeNewIW.cy *= nImageCount;
+		offDst.y = sizeNew.cy;
+	}
+
+	if (bInvert)
+	{
+		sizeNewIW.cy = -sizeNewIW.cy;
+	}
+
+	HBITMAP hBmpDst = CDrawingManager::CreateBitmap_32(sizeNewIW, NULL);
+
+	sizeNewIW.cy = abs(sizeNewIW.cy);
+
+	if (hBmpDst == NULL)
+	{
+		ASSERT(FALSE);
+		::DeleteObject(hBmpSrc);
+		return FALSE;
+	}
+
+	CMFCZoomKernel::XFilterType ft = dblImageScale < 1.0
+		? CMFCZoomKernel::e_FilterTypeLanczos3
+		: CMFCZoomKernel::e_FilterTypeMitchell;
+
+
+	CMFCScanlinerBitmap ms;
+	ms.attach(hBmpSrc);
+	CMFCScanlinerBitmap md;
+	md.attach(hBmpDst);
+
+	DWORD channel = ms.channels();
+
+	CMFCZoomKernel KernelX;
+	KernelX.Create(m_sizeImage.cx, sizeNew.cx, 0, m_sizeImage.cx, ft);
+
+	CMFCZoomKernel KernelY;
+	KernelY.Create(m_sizeImage.cy, sizeNew.cy, 0, m_sizeImage.cy, ft);
+
+	double* values  = new double[channel];
+	double* values2 = new double[channel];
+
+	CPoint offSrcSum(0, 0);
+	CPoint offDstSum(0, 0);
+
+	for (int index = 0; index < nImageCount; index++)
+	{
+		const DWORD val_size   = sizeof(double) * channel;
+		const DWORD offsetDstX = offDstSum.x * channel;
+
+		for (DWORD dy = 0; dy < (DWORD)sizeNew.cy; dy++)
+		{
+			const CMFCZoomKernel::XKernelList& listY = KernelY[dy];
+
+			LPBYTE pRowDst = md[dy + offDstSum.y] + offsetDstX;
+
+			for (DWORD dx = 0; dx < (DWORD)sizeNew.cx; dx++)
+			{
+				const CMFCZoomKernel::XKernelList& listX = KernelX[dx];
+
+				memset(values, 0, val_size);
+
+				for (DWORD sy = 0; sy < listY.count; sy++)
+				{
+					const CMFCZoomKernel::XKernel& statY = listY.stat[sy];
+
+					const LPBYTE pRowSrc = ms[statY.pixel + offSrcSum.y];
+					double weight    = statY.weight;
+
+					memset(values2, 0, val_size);
+
+					for (DWORD sx = 0; sx < listX.count; sx++)
+					{
+						const CMFCZoomKernel::XKernel& statX = listX.stat[sx];
+
+						LPBYTE pRowSrc2 = pRowSrc + (statX.pixel + offSrcSum.x) * channel;
+						double weight2    = statX.weight;
+
+						for(DWORD c = 0; c < channel; c++)
+						{
+							values2[c] += (double)(*pRowSrc2) * weight2;
+							pRowSrc2++;
+						}
+					}
+
+					for(DWORD c = 0; c < channel; c++)
+					{
+						values[c] += values2[c] * weight;
+					}
+				}
+
+				if (channel == 4)
+				{
+					values[0] = min(values[0], values[3]);
+					values[1] = min(values[1], values[3]);
+					values[2] = min(values[2], values[3]);
+				}
+
+				for(DWORD c = 0; c < channel; c++)
+				{
+					*pRowDst = (BYTE)clamp_to_byte(values[c]);
+					pRowDst++;
+				}
+			}
+		}
+
+		offSrcSum.x += offSrc.x;
+		offSrcSum.y += offSrc.y;
+		offDstSum.x += offDst.x;
+		offDstSum.y += offDst.y;
+	}
+
+	delete [] values;
+	delete [] values2;
+
+	::DeleteObject(hBmpSrc);
+
+	int nOldCount = m_iCount;
+
+	if (m_sizeImageOriginal == CSize(0, 0))
+	{
+		m_sizeImageOriginal = m_sizeImage;
+	}
+
+	SetImageSize(sizeNew);
+	m_clrTransparentOriginal = m_clrTransparent;
+	m_clrTransparent = (COLORREF)-1;
+	m_hbmImageWell = hBmpDst;
+	m_iCount = nOldCount;
+	m_nBitsPerPixel = 32;
+	UpdateInternalImage(AFX_IMAGE_LIGHT);
+	UpdateInternalImage(AFX_IMAGE_SHADOW);
+
+	return IsValid();
+}
+
+BOOL CMFCToolBarImages::ConvertTo32Bits(COLORREF clrTransparent)
+{
+	if (!IsValid())
+	{
+		ASSERT(FALSE);
+		return FALSE;
+	}
+
+	if (m_nBitsPerPixel == 32)
+	{
+		return TRUE;
+	}
+
+	HBITMAP hbmpNew = CDrawingManager::CreateBitmap_32(m_hbmImageWell, clrTransparent == (COLORREF)-1 ? m_clrTransparent : clrTransparent);
+	if (hbmpNew == NULL)
+	{
+		return FALSE;
+	}
+
+	AfxDeleteObject((HGDIOBJ*)&m_hbmImageWell);
+
+	m_hbmImageWell = hbmpNew;
+	m_clrTransparent = (COLORREF)-1;
+	m_nBitsPerPixel = 32;
+
+	AfxDeleteObject((HGDIOBJ*)&m_hbmImageLight);
+	m_hbmImageLight = NULL;
+
+	AfxDeleteObject((HGDIOBJ*)&m_hbmImageShadow);
+	m_hbmImageShadow = NULL;
+
+	return TRUE;
 }

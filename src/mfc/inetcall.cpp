@@ -78,28 +78,6 @@ _AfxParseCall(AFX_PMSG /*pfn*/, void* /*pArgs*/, UINT /*nSizeArgs*/)
 #endif // _MIPS_
 
 /////////////////////////////////////////////////////////////////////////////
-// DEC Alpha AXP version
-
-#ifdef _ALPHA_
-
-// Note: ALPHA version is in src\alpha\inetcal_.s
-
-// The ALPHA compiler does not support inline assembly, so it
-//  must be build separately with the ASAXP assembler.
-
-#endif // _ALPHA_
-
-/////////////////////////////////////////////////////////////////////////////
-// IA64 version
-
-#ifdef _IA64_
-
-// Note: IA64 version is in src\ia64\inetcal_.s
-
-// The IA64 compiler does not support inline assembly, so it
-//  must be build separately with the IAS assembler.
-
-#endif // _IA64_
 
 } // end extern "C" block
 

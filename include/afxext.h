@@ -441,7 +441,7 @@ protected:
 	CSize CalcSize(TBBUTTON* pData, int nCount);
 	int WrapToolBar(TBBUTTON* pData, int nCount, int nWidth);
 	void SizeToolBar(TBBUTTON* pData, int nCount, int nLength, BOOL bVert = FALSE);
-	void Layout(); // called for for delayed button layout
+	void Layout(); // called for delayed button layout
 
 	//{{AFX_MSG(CToolBar)
 	afx_msg LRESULT OnNcHitTest(CPoint);
@@ -645,6 +645,11 @@ protected:
 	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
 	virtual void OnInvertTracker(const CRect& rect);
 
+	/// <summary>
+	/// Called by the framework to draw the splitter window.</summary>
+	/// <param name="pDC"> A pointer to a device context.</param>
+	virtual void OnDraw(CDC* pDC);
+
 public:
 	// for customizing scrollbar regions
 	virtual BOOL CreateScrollBarCtrl(DWORD dwStyle, UINT nID);
@@ -751,6 +756,7 @@ protected:
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT lpcs);
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnDisplayChange();
+	afx_msg LRESULT OnPrintClient(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
@@ -829,6 +835,7 @@ protected:
 	//{{AFX_MSG(CFormView)
 	afx_msg int OnCreate(LPCREATESTRUCT lpcs);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	afx_msg LRESULT OnPrintClient(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

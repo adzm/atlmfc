@@ -195,7 +195,7 @@ void CMFCRibbonButton::SetMenu(HMENU hMenu, BOOL bIsDefaultCommand, BOOL bRightA
 	{
 		CMenu* pMenu = CMenu::FromHandle(hMenu);
 
-		for (int i = 0; i <(int) pMenu->GetMenuItemCount(); i++)
+		for (int i = 0; i < pMenu->GetMenuItemCount(); i++)
 		{
 			UINT uiID = pMenu->GetMenuItemID(i);
 
@@ -263,8 +263,8 @@ void CMFCRibbonButton::SetMenu(UINT uiMenuResID, BOOL bIsDefaultCommand, BOOL bR
 {
 	ASSERT_VALID(this);
 
-	SetMenu( ::LoadMenu(AfxFindResourceHandle(MAKEINTRESOURCE(uiMenuResID), RT_MENU),
-		MAKEINTRESOURCE(uiMenuResID)), bIsDefaultCommand, bRightAlign);
+	SetMenu( ::LoadMenuW(AfxFindResourceHandle(MAKEINTRESOURCE(uiMenuResID), RT_MENU),
+		MAKEINTRESOURCEW(uiMenuResID)), bIsDefaultCommand, bRightAlign);
 
 	m_bAutodestroyMenu = TRUE;
 }
@@ -385,7 +385,7 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 			bIsHighlighted = IsFocused();
 		}
 
-		dummy.OnDraw(pDC, m_rect, NULL, TRUE, FALSE, bIsHighlighted);
+		dummy.OnDraw(pDC, m_rect, NULL, TRUE, FALSE, bIsHighlighted || m_bIsFocused);
 		return;
 	}
 
@@ -498,8 +498,16 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 
 	if (IsApplicationButton())
 	{
+		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		{
+			sizeImage.cx = (int) (.8 * afxGlobalData.GetRibbonImageScale() * sizeImage.cx);
+			sizeImage.cy = (int) (.8 * afxGlobalData.GetRibbonImageScale() * sizeImage.cy);
+		}
+
 		rectImage.left += (rectImage.Width () - sizeImage.cx) / 2;
 		rectImage.top  += (rectImage.Height () - sizeImage.cy) / 2;
+
+		rectImage.OffsetRect(CMFCVisualManager::GetInstance ()->GetRibbonMainImageOffset());
 	}
 	else if (m_bIsLargeImage && !m_bTextAlwaysOnRight)
 	{
@@ -648,11 +656,6 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 
 				int cyMenu = CMenuImages::Size().cy;
 
-				if (afxGlobalData.GetRibbonImageScale() > 1.)
-				{
-					cyMenu = (int)(.5 + afxGlobalData.GetRibbonImageScale() * cyMenu);
-				}
-
 				rectMenuArrow.top = rectMenuArrow.bottom - cyMenu;
 				rectMenuArrow.bottom = rectMenuArrow.top + CMenuImages::Size().cy;
 			}
@@ -668,7 +671,7 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 	{
 		if (!rectMenuArrow.IsRectEmpty())
 		{
-			CMenuImages::IMAGES_IDS id = afxGlobalData.GetRibbonImageScale() > 1. ? CMenuImages::IdArrowDownLarge : CMenuImages::IdArrowDown;
+			CMenuImages::IMAGES_IDS id = CMenuImages::IdArrowDown;
 
 			if (IsMenuMode())
 			{
@@ -806,6 +809,16 @@ CSize CMFCRibbonButton::GetRegularSize(CDC* pDC)
 		if (m_sizeTextRight.cx > 0)
 		{
 			cx += m_szMargin.cx + m_sizeTextRight.cx;
+
+			if (sizeImageLarge != CSize(0, 0) && m_bTextAlwaysOnRight)
+			{
+				cx += m_szMargin.cx;
+			}
+		}
+
+		if (sizeImageLarge != CSize(0, 0) && m_bTextAlwaysOnRight)
+		{
+			cx += m_szMargin.cx;
 		}
 
 		int cy = max(sizeImageSmall.cy, m_sizeTextRight.cy) + 2 * m_szMargin.cy;
@@ -1845,14 +1858,33 @@ BOOL CMFCRibbonButton::OnKey(BOOL bIsMenuKey)
 
 	CMFCRibbonBar* pTopLevelRibbon = GetTopLevelRibbonBar();
 
-	if (HasMenu() &&(bIsMenuKey || m_strMenuKeys.IsEmpty()))
+	if (HasMenu() && (bIsMenuKey || m_strMenuKeys.IsEmpty()))
 	{
+		if (IsDroppedDown())
+		{
+			return TRUE;
+		}
+
 		if (pTopLevelRibbon != NULL)
 		{
 			pTopLevelRibbon->HideKeyTips();
 		}
 
+		CMFCRibbonPanel* pPanel = GetParentPanel();
+		if (pPanel != NULL)
+		{
+			ASSERT_VALID(pPanel);
+			pPanel->SetFocused(this);
+		}
+
 		OnShowPopupMenu();
+
+		if (m_pPopupMenu != NULL)
+		{
+			ASSERT_VALID(m_pPopupMenu);
+			m_pPopupMenu->SendMessage(WM_KEYDOWN, VK_HOME);
+		}
+
 		return m_hMenu != NULL;
 	}
 
@@ -2217,12 +2249,7 @@ CSize CMFCRibbonButton::DrawBottomText(CDC* pDC, BOOL bCalcOnly)
 	if (!rectMenuArrow.IsRectEmpty())
 	{
 		int nMenuArrowHeight = CMenuImages::Size().cy;
-
-		if (afxGlobalData.GetRibbonImageScale() > 1.)
-		{
-			nMenuArrowHeight = (int)(.5 + afxGlobalData.GetRibbonImageScale() * nMenuArrowHeight);
-		}
-
+		
 		rectMenuArrow.bottom = rectMenuArrow.top + nMenuArrowHeight;
 		rectMenuArrow.right = rectMenuArrow.left + nMenuArrowWidth;
 

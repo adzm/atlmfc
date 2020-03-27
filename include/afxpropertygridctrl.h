@@ -366,7 +366,7 @@ protected:
 
 	virtual BOOL IsValueChanged() const
 	{
-		return memcmp (&m_lf, &m_lfOrig, sizeof(LOGFONT) != 0) || lstrcmp(m_lf.lfFaceName, m_lfOrig.lfFaceName) != 0;
+		return((memcmp(&m_lf, &m_lfOrig, sizeof(LOGFONT)) != 0) || (lstrcmp(m_lf.lfFaceName, m_lfOrig.lfFaceName) != 0));
 	}
 
 	virtual void ResetOriginalValue();
@@ -567,6 +567,7 @@ protected:
 
 	virtual void OnFillBackground(CDC* pDC, CRect rectClient);
 
+	virtual void OnDraw(CDC* pDC);
 	virtual void OnDrawBorder(CDC* pDC);
 	virtual void OnDrawList(CDC* pDC);
 	virtual void OnDrawDescription(CDC* pDC, CRect rect);
@@ -643,6 +644,8 @@ protected:
 	afx_msg void OnComboKillFocus();
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg LRESULT OnGetObject(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

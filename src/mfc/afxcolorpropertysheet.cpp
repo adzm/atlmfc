@@ -89,7 +89,7 @@ void CMFCColorPropertySheet::LoadAcceleratorTable(UINT nAccelTableID /*=0*/)
 {
 	if (nAccelTableID)
 	{
-		m_hAccel = ::LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(nAccelTableID));
+		m_hAccel = ::LoadAcceleratorsW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(nAccelTableID));
 		ASSERT(m_hAccel);
 	}
 }
@@ -151,5 +151,3 @@ void CMFCColorPropertySheet::ResizeControl()
 		}
 	}
 }
-
-

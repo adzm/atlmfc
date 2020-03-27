@@ -22,6 +22,8 @@
 #include "afxdrawmanager.h"
 #include "afxmaskededit.h"
 #include "afxspinbuttonctrl.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1055,7 +1057,13 @@ void CMFCPropertyGridProperty::OnDrawExpandBox(CDC* pDC, CRect rect)
 
 	CPoint ptCenter = rect.CenterPoint();
 
-	int nBoxSize = min(9, rect.Width());
+	int nMaxBoxSize = 9;
+	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	{
+		nMaxBoxSize = (int)(.5 + nMaxBoxSize * afxGlobalData.GetRibbonImageScale());
+	}
+
+	int nBoxSize = min (nMaxBoxSize, rect.Width ());
 
 	rect = CRect(ptCenter, CSize(1, 1));
 	rect.InflateRect(nBoxSize / 2, nBoxSize / 2);
@@ -1421,6 +1429,8 @@ CWnd* CMFCPropertyGridProperty::CreateInPlaceEdit(CRect rectEdit, BOOL& bDefault
 	if (!m_strEditMask.IsEmpty() || !m_strEditTempl.IsEmpty() || !m_strValidChars.IsEmpty())
 	{
 		CMFCMaskedEdit* pWndEditMask = new CMFCMaskedEdit;
+		pWndEditMask->EnableSetMaskedCharsOnly(FALSE);
+		pWndEditMask->EnableGetMaskedCharsOnly(FALSE);
 
 		if (!m_strEditMask.IsEmpty() && !m_strEditTempl.IsEmpty())
 		{
@@ -2170,6 +2180,11 @@ CString CMFCPropertyGridColorProperty::FormatProperty()
 {
 	ASSERT_VALID(this);
 
+	if (m_Color == (COLORREF)-1)
+	{
+		return m_strAutoColor;
+	}
+
 	CString str;
 	str.Format(_T("%02x%02x%02x"), GetRValue(m_Color), GetGValue(m_Color), GetBValue(m_Color));
 
@@ -2239,9 +2254,13 @@ BOOL CMFCPropertyGridColorProperty::OnUpdateValue()
 	m_pWndInPlace->GetWindowText(strText);
 
 	COLORREF colorCurr = m_Color;
-	int nR = 0, nG = 0, nB = 0;
-	_stscanf_s(strText, _T("%2x%2x%2x"), &nR, &nG, &nB);
-	m_Color = RGB(nR, nG, nB);
+
+	if (!strText.IsEmpty())
+	{
+		int nR = 0, nG = 0, nB = 0;
+		_stscanf_s(strText, _T("%2x%2x%2x"), &nR, &nG, &nB);
+		m_Color = RGB(nR, nG, nB);
+	}
 
 	if (colorCurr != m_Color)
 	{
@@ -2532,6 +2551,7 @@ BEGIN_MESSAGE_MAP(CMFCPropertyGridCtrl, CWnd)
 	ON_MESSAGE(WM_GETFONT, &CMFCPropertyGridCtrl::OnGetFont)
 	ON_MESSAGE(AFX_UM_UPDATESPIN, &CMFCPropertyGridCtrl::OnUpdateSpin)
 	ON_MESSAGE(WM_GETOBJECT, &CMFCPropertyGridCtrl::OnGetObject)
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCPropertyGridCtrl::OnInitControl)
 	ON_NOTIFY(HDN_ITEMCHANGED, AFX_ID_HEADER, &CMFCPropertyGridCtrl::OnHeaderItemChanged)
 	ON_NOTIFY(HDN_TRACK, AFX_ID_HEADER, &CMFCPropertyGridCtrl::OnHeaderTrack)
 	ON_NOTIFY(HDN_ENDTRACK, AFX_ID_HEADER, &CMFCPropertyGridCtrl::OnHeaderEndTrack)
@@ -2541,6 +2561,7 @@ BEGIN_MESSAGE_MAP(CMFCPropertyGridCtrl, CWnd)
 	ON_CBN_SELENDOK(AFX_PROPLIST_ID_INPLACE, &CMFCPropertyGridCtrl::OnSelectCombo)
 	ON_CBN_CLOSEUP(AFX_PROPLIST_ID_INPLACE, &CMFCPropertyGridCtrl::OnCloseCombo)
 	ON_CBN_KILLFOCUS(AFX_PROPLIST_ID_INPLACE, &CMFCPropertyGridCtrl::OnComboKillFocus)
+	ON_MESSAGE(WM_PRINTCLIENT, &CMFCPropertyGridCtrl::OnPrintClient)
 END_MESSAGE_MAP()
 //}}AFX_MSG_MAP
 
@@ -2821,7 +2842,14 @@ HFONT CMFCPropertyGridCtrl::SetCurrFont(CDC* pDC)
 void CMFCPropertyGridCtrl::OnPaint()
 {
 	CPaintDC dcPaint(this); // device context for painting
-	CMemDC memDC(dcPaint, this);
+	OnDraw(&dcPaint);
+}
+
+void CMFCPropertyGridCtrl::OnDraw(CDC* pDCSrc)
+{
+	ASSERT_VALID(pDCSrc);
+
+	CMemDC memDC(*pDCSrc, this);
 	CDC* pDC = &memDC.GetDC();
 
 	m_clrGray = visualManager->GetPropertyGridGroupColor(this);
@@ -4823,6 +4851,11 @@ void CMFCPropertyGridCtrl::UpdateColor(COLORREF color)
 		OnPropertyChanged(pColorProp);
 	}
 
+	if (color == (COLORREF)-1 && pColorProp->m_pWndInPlace != NULL && ::IsWindow(pColorProp->m_pWndInPlace->GetSafeHwnd()))
+	{
+		pColorProp->m_pWndInPlace->SetWindowText(_T(""));
+	}
+
 	pColorProp->OnUpdateValue();
 }
 
@@ -5559,4 +5592,73 @@ HRESULT CMFCPropertyGridCtrl::accHitTest(long  xLeft, long yTop, VARIANT *pvarCh
 
 	m_pAccProp = pProp;
 	return S_OK;
+}
+
+LRESULT CMFCPropertyGridCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
+
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	BOOL bDescriptionArea = TRUE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_DescriptionArea, bDescriptionArea))
+	{
+		EnableDescriptionArea(bDescriptionArea);
+	}
+
+	CString strDescriptionRows;
+	if (tagManager.ExcludeTag(PS_MFCPropertyGrid_DescriptionRows, strDescriptionRows))
+	{
+		if (!strDescriptionRows.IsEmpty())
+		{
+			int nDescriptionRows = _ttoi((LPCTSTR)strDescriptionRows);
+			if (nDescriptionRows >= 0)
+			{
+				SetDescriptionRows(nDescriptionRows);
+			}
+		}
+	}
+
+	BOOL bHeaderCtrl = TRUE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_HeaderCtrl, bHeaderCtrl))
+	{
+		EnableHeaderCtrl(bHeaderCtrl);
+	}
+
+	BOOL bAlphabeticMode = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_AlphabeticMode, bAlphabeticMode))
+	{
+		SetAlphabeticMode(bAlphabeticMode);
+	}
+
+	BOOL bModifiedProperties = TRUE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_ModifiedProperties, bModifiedProperties))
+	{
+		MarkModifiedProperties(bModifiedProperties);
+	}
+
+	BOOL bVSDotNetLook = TRUE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_VSDotNetLook, bVSDotNetLook))
+	{
+		SetVSDotNetLook(bVSDotNetLook);
+	}
+
+	return 0;
+}
+
+LRESULT CMFCPropertyGridCtrl::OnPrintClient(WPARAM wp, LPARAM lp)
+{
+	if (lp & PRF_CLIENT)
+	{
+		CDC* pDC = CDC::FromHandle((HDC) wp);
+		ASSERT_VALID(pDC);
+
+		OnDraw(pDC);
+	}
+
+	return 0;
 }

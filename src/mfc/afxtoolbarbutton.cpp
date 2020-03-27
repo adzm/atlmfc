@@ -484,7 +484,12 @@ void CMFCToolBarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* p
 				rectText.OffsetRect(0, CMFCVisualManager::GetInstance()->GetButtonExtraBorder().cy / 2);
 			}
 
-			pDC->DrawText(strWithoutAmp, &rectText, uiTextFormat);
+			if (!afxGlobalData.m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode())
+			{
+				strText = strWithoutAmp;
+			}
+
+			pDC->DrawText(strText, &rectText, uiTextFormat);
 		}
 		else
 		{
@@ -504,7 +509,7 @@ void CMFCToolBarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* p
 			strText.Remove(_T('&'));
 			strText.Replace(strDummyAmpSeq, _T("&&"));
 
-			if (iAmpIndex >= 0)
+			if (iAmpIndex >= 0 && (afxGlobalData.m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode()))
 			{
 				// Calculate underlined character position:
 				CRect rectSubText;
@@ -833,12 +838,24 @@ int CMFCToolBarButton::OnDrawOnCustomizeList(CDC* pDC, const CRect& rect, BOOL b
 			BOOL bFadeImage = !bSelected && CMFCVisualManager::GetInstance()->IsFadeInactiveImage();
 			BOOL bDrawImageShadow = bSelected && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !afxGlobalData.IsHighContrastMode();
 
+			CSize sizeImageDest(0, 0);
+			if (afxGlobalData.GetRibbonImageScale() != 1. && !CMFCToolBar::m_bDontScaleImages)
+			{
+				sizeImageDest = sizeMenuImage;
+			}
+
 			CAfxDrawState ds;
-			pImages->PrepareDrawImage(ds, CSize(0, 0), bFadeImage);
+			pImages->PrepareDrawImage(ds, sizeImageDest, bFadeImage);
 
 			CPoint pt = rect.TopLeft();
 			pt.x += nMargin;
 			pt.y += nMargin;
+
+			if (afxGlobalData.GetRibbonImageScale() != 1. && CMFCToolBar::m_bDontScaleImages)
+			{
+				pt.x += max (0, (sizeMenuImage.cx - pImages->GetImageSize().cx) / 2);
+				pt.y += max (0, (sizeMenuImage.cy - pImages->GetImageSize().cy) / 2);
+			}
 
 			if (bDrawImageShadow)
 			{
@@ -938,7 +955,7 @@ void __stdcall CMFCToolBarButton::SetClipboardFormatName(LPCTSTR lpszName)
 	m_strClipboardFormatName = lpszName;
 }
 
-void CMFCToolBarButton::FillInterior(CDC* pDC, const CRect& rect, BOOL bHighlight)
+void CMFCToolBarButton::FillInterior(CDC* pDC, const CRect& rect, BOOL bHighlight, BOOL bMenuImage)
 {
 	if (m_bDisableFill)
 	{
@@ -960,7 +977,14 @@ void CMFCToolBarButton::FillInterior(CDC* pDC, const CRect& rect, BOOL bHighligh
 		}
 	}
 
-	CMFCVisualManager::GetInstance()->OnFillButtonInterior(pDC, this, rect, state);
+	if (bMenuImage)
+	{
+		CMFCVisualManager::GetInstance ()->OnFillMenuImageRect(pDC, this, rect, state);
+	}
+	else
+	{
+		CMFCVisualManager::GetInstance()->OnFillButtonInterior(pDC, this, rect, state);
+	}
 }
 
 void CMFCToolBarButton::ResetImageToDefault()

@@ -681,7 +681,7 @@ void CMFCToolBarEditCtrl::OnContextMenu(CWnd* pWnd, CPoint point)
 
 		}
 
-		HMENU hMenu = ::LoadMenu(hInst, MAKEINTRESOURCE(m_buttonEdit.m_uiMenuResID));
+		HMENU hMenu = ::LoadMenuW(hInst, MAKEINTRESOURCEW(m_buttonEdit.m_uiMenuResID));
 
 		if (hMenu == NULL)
 		{
@@ -711,5 +711,3 @@ void CMFCToolBarEditCtrl::OnContextMenu(CWnd* pWnd, CPoint point)
 		CMFCEditBrowseCtrl::OnContextMenu(pWnd, point) ;
 	}
 }
-
-

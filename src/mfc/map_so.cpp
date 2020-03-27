@@ -17,8 +17,6 @@
 
 #include "stdafx.h"
 
-
-
 #include "elements.h"  // used for special creation
 
 #define new DEBUG_NEW
@@ -41,15 +39,24 @@ CMapStringToOb::CMapStringToOb(INT_PTR nBlockSize)
 
 inline UINT CMapStringToOb::HashKey(LPCTSTR key) const
 {
-	UINT nHash = 0;
 	if (key == NULL)
 	{
 		AfxThrowInvalidArgException();
 	}
-	
-	while (*key)
-		nHash = (nHash<<5) + nHash + *key++;
-	return nHash;
+
+	// hash key to UINT value by pseudorandomizing transform
+	// (algorithm copied from STL string hash in xfunctional)
+	UINT uHashVal = 2166136261U;
+	UINT uFirst = 0;
+	UINT uLast = (UINT)_tcslen(key);
+	UINT uStride = 1 + uLast / 10;
+
+	for(; uFirst < uLast; uFirst += uStride)
+	{
+		uHashVal = 16777619U * uHashVal ^ (UINT)key[uFirst];
+	}
+
+	return(uHashVal);
 }
 
 void CMapStringToOb::InitHashTable(

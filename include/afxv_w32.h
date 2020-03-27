@@ -21,52 +21,24 @@
 #define STRICT 1
 #endif
 
-#ifndef WINVER
-#ifdef _WIN32_WINNT
-#define WINVER _WIN32_WINNT
-#else
-#ifndef _M_IA64
-#pragma message(" WINVER not defined. Defaulting to 0x0600 (Windows Vista)")
-#define WINVER 0x0600
-#else
-#pragma message(" WINVER not defined. Defaulting to 0x0502 (Windows 2003 Server)")
-#define WINVER 0x0502
-#endif
-#endif
-#else
-#if WINVER < 0x0400
-#error MFC requires WINVER to be #defined to 0x0400 or greater
-#endif
-#endif
-
-#ifndef _WIN32_IE
-#define _WIN32_IE 0x0700
-#else
-#if _WIN32_IE < 0x0400
-#error MFC requires _WIN32_IE to be #defined to 0x0400 or greater
-#endif
-#endif
-
-#ifndef _WIN32_WINDOWS
-#define _WIN32_WINDOWS 0x0410
-#else
-#if _WIN32_WINDOWS < 0x0400
-#error MFC requires _WIN32_WINDOWS to be #defined to 0x0400 or greater
-#endif
-#endif
+// WinSDKVer.h contains the definition for _WIN32_WINNT_MAXVER (and other maximums).
+#include <winsdkver.h>
 
 #ifndef _WIN32_WINNT
 #ifdef WINVER
 #define _WIN32_WINNT WINVER
 #else
-#pragma message("_WIN32_WINNT not defined. Defaulting to 0x0600 (Windows Vista)")
-#define _WIN32_WINNT 0x0600
+#pragma message("_WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)")
+#define _WIN32_WINNT _WIN32_WINNT_MAXVER
 #endif
 #else
 #if _WIN32_WINNT < 0x0400
 #error MFC requires _WIN32_WINNT to be #defined to 0x0400 or greater
 #endif
 #endif
+
+// SDKDDKVer.h will set any of WINVER, NTDDI_VERSION and _WIN32_IE that are yet unset.
+#include <sdkddkver.h>
 
 // certain parts of WINDOWS.H are necessary
 #undef NOKERNEL
@@ -228,10 +200,8 @@ typedef struct HKEY__ *HKEY;
 // Win32 uses macros with parameters for this, which breaks C++ code.
 #ifdef GetWindowTask
 #undef GetWindowTask
-#ifdef _WIN32
 AFX_INLINE HTASK GetWindowTask(HWND hWnd)
 	{ return (HTASK)(DWORD_PTR)::GetWindowThreadProcessId(hWnd, NULL); }
-#endif
 #endif
 
 // Win32 uses macros with parameters for this, which breaks C++ code.

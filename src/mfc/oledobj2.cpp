@@ -520,32 +520,38 @@ STDMETHODIMP_(ULONG) COleDataSource::XDataObject::Release()
 	return pThis->ExternalRelease();
 }
 
-STDMETHODIMP COleDataSource::XDataObject::QueryInterface(
-	REFIID iid, LPVOID* ppvObj)
+STDMETHODIMP COleDataSource::XDataObject::QueryInterface(REFIID iid, LPVOID* ppvObj)
 {
 	METHOD_PROLOGUE_EX_(COleDataSource, DataObject)
 	return pThis->ExternalQueryInterface(&iid, ppvObj);
 }
 
-STDMETHODIMP COleDataSource::XDataObject::GetData(
-	LPFORMATETC lpFormatEtc, LPSTGMEDIUM lpStgMedium)
+STDMETHODIMP COleDataSource::XDataObject::GetData(LPFORMATETC lpFormatEtc, LPSTGMEDIUM lpStgMedium)
 {
 	METHOD_PROLOGUE_EX(COleDataSource, DataObject)
 	ASSERT_VALID(pThis);
 
+	if (lpFormatEtc == NULL || lpStgMedium == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
 	// attempt to find match in the cache
 	AFX_DATACACHE_ENTRY* pCache = pThis->Lookup(lpFormatEtc, DATADIR_GET);
 	if (pCache == NULL)
+	{
 		return DATA_E_FORMATETC;
+	}
 
 	// use cache if entry is not delay render
 	memset(lpStgMedium, 0, sizeof(STGMEDIUM));
 	if (pCache->m_stgMedium.tymed != TYMED_NULL)
 	{
 		// Copy the cached medium into the lpStgMedium provided by caller.
-		if (!_AfxCopyStgMedium(lpFormatEtc->cfFormat, lpStgMedium,
-		  &pCache->m_stgMedium))
+		if (!_AfxCopyStgMedium(lpFormatEtc->cfFormat, lpStgMedium, &pCache->m_stgMedium))
+		{
 			return DATA_E_FORMATETC;
+		}
 
 		// format was supported for copying
 		return S_OK;
@@ -556,7 +562,9 @@ STDMETHODIMP COleDataSource::XDataObject::GetData(
 	{
 		// attempt LPSTGMEDIUM based delay render
 		if (pThis->OnRenderData(lpFormatEtc, lpStgMedium))
+		{
 			sc = S_OK;
+		}
 	}
 	CATCH_ALL(e)
 	{
@@ -568,11 +576,15 @@ STDMETHODIMP COleDataSource::XDataObject::GetData(
 	return sc;
 }
 
-STDMETHODIMP COleDataSource::XDataObject::GetDataHere(
-	LPFORMATETC lpFormatEtc, LPSTGMEDIUM lpStgMedium)
+STDMETHODIMP COleDataSource::XDataObject::GetDataHere(LPFORMATETC lpFormatEtc, LPSTGMEDIUM lpStgMedium)
 {
 	METHOD_PROLOGUE_EX(COleDataSource, DataObject)
 	ASSERT_VALID(pThis);
+
+	if (lpFormatEtc == NULL || lpStgMedium == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	// these two must be the same
 	ASSERT(lpFormatEtc->tymed == lpStgMedium->tymed);
@@ -581,16 +593,19 @@ STDMETHODIMP COleDataSource::XDataObject::GetDataHere(
 	// attempt to find match in the cache
 	AFX_DATACACHE_ENTRY* pCache = pThis->Lookup(lpFormatEtc, DATADIR_GET);
 	if (pCache == NULL)
+	{
 		return DATA_E_FORMATETC;
+	}
 
 	// handle cached medium and copy
 	if (pCache->m_stgMedium.tymed != TYMED_NULL)
 	{
 		// found a cached format -- copy it to dest medium
 		ASSERT(pCache->m_stgMedium.tymed == lpStgMedium->tymed);
-		if (!_AfxCopyStgMedium(lpFormatEtc->cfFormat, lpStgMedium,
-		  &pCache->m_stgMedium))
+		if (!_AfxCopyStgMedium(lpFormatEtc->cfFormat, lpStgMedium, &pCache->m_stgMedium))
+		{
 			return DATA_E_FORMATETC;
+		}
 
 		// format was supported for copying
 		return S_OK;
@@ -601,7 +616,9 @@ STDMETHODIMP COleDataSource::XDataObject::GetDataHere(
 	{
 		// attempt LPSTGMEDIUM based delay render
 		if (pThis->OnRenderData(lpFormatEtc, lpStgMedium))
+		{
 			sc = S_OK;
+		}
 	}
 	CATCH_ALL(e)
 	{
@@ -617,17 +634,23 @@ STDMETHODIMP COleDataSource::XDataObject::QueryGetData(LPFORMATETC lpFormatEtc)
 {
 	METHOD_PROLOGUE_EX_(COleDataSource, DataObject)
 
+	if (lpFormatEtc == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
 	// attempt to find match in the cache
 	AFX_DATACACHE_ENTRY* pCache = pThis->Lookup(lpFormatEtc, DATADIR_GET);
 	if (pCache == NULL)
+	{
 		return DATA_E_FORMATETC;
+	}
 
 	// it was found in the cache or can be rendered -- success
 	return S_OK;
 }
 
-STDMETHODIMP COleDataSource::XDataObject::GetCanonicalFormatEtc(
-	LPFORMATETC /*lpFormatEtcIn*/, LPFORMATETC /*lpFormatEtcOut*/)
+STDMETHODIMP COleDataSource::XDataObject::GetCanonicalFormatEtc(LPFORMATETC /*lpFormatEtcIn*/, LPFORMATETC /*lpFormatEtcOut*/)
 {
 	// because we support the target-device (ptd) for server metafile format,
 	//  all members of the FORMATETC are significant.
@@ -635,18 +658,24 @@ STDMETHODIMP COleDataSource::XDataObject::GetCanonicalFormatEtc(
 	return DATA_S_SAMEFORMATETC;
 }
 
-STDMETHODIMP COleDataSource::XDataObject::SetData(
-	LPFORMATETC lpFormatEtc, LPSTGMEDIUM lpStgMedium, BOOL bRelease)
+STDMETHODIMP COleDataSource::XDataObject::SetData(LPFORMATETC lpFormatEtc, LPSTGMEDIUM lpStgMedium, BOOL bRelease)
 {
 	METHOD_PROLOGUE_EX(COleDataSource, DataObject)
 	ASSERT_VALID(pThis);
+
+	if (lpFormatEtc == NULL || lpStgMedium == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	ASSERT(lpFormatEtc->tymed == lpStgMedium->tymed);
 
 	// attempt to find match in the cache
 	AFX_DATACACHE_ENTRY* pCache = pThis->Lookup(lpFormatEtc, DATADIR_SET);
 	if (pCache == NULL)
+	{
 		return DATA_E_FORMATETC;
+	}
 
 	ASSERT(pCache->m_stgMedium.tymed == TYMED_NULL);
 
@@ -655,7 +684,9 @@ STDMETHODIMP COleDataSource::XDataObject::SetData(
 	{
 		// attempt LPSTGMEDIUM based SetData
 		if (pThis->OnSetData(lpFormatEtc, lpStgMedium, bRelease))
+		{
 			sc = S_OK;
+		}
 	}
 	CATCH_ALL(e)
 	{
@@ -667,10 +698,14 @@ STDMETHODIMP COleDataSource::XDataObject::SetData(
 	return sc;
 }
 
-STDMETHODIMP COleDataSource::XDataObject::EnumFormatEtc(
-	DWORD dwDirection, LPENUMFORMATETC* ppenumFormatEtc)
+STDMETHODIMP COleDataSource::XDataObject::EnumFormatEtc(DWORD dwDirection, LPENUMFORMATETC* ppenumFormatEtc)
 {
 	METHOD_PROLOGUE_EX_(COleDataSource, DataObject)
+
+	if (ppenumFormatEtc == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*ppenumFormatEtc = NULL;
 
@@ -691,6 +726,7 @@ STDMETHODIMP COleDataSource::XDataObject::EnumFormatEtc(
 				pFormatList->AddFormat(&formatEtc);
 			}
 		}
+
 		// give it away to OLE (ref count is already 1)
 		*ppenumFormatEtc = (LPENUMFORMATETC)&pFormatList->m_xEnumVOID;
 		sc = S_OK;
@@ -700,9 +736,7 @@ STDMETHODIMP COleDataSource::XDataObject::EnumFormatEtc(
 	return sc;
 }
 
-STDMETHODIMP COleDataSource::XDataObject::DAdvise(
-	FORMATETC* /*pFormatetc*/, DWORD /*advf*/,
-	LPADVISESINK /*pAdvSink*/, DWORD* pdwConnection)
+STDMETHODIMP COleDataSource::XDataObject::DAdvise(FORMATETC* /*pFormatetc*/, DWORD /*advf*/, LPADVISESINK /*pAdvSink*/, DWORD* pdwConnection)
 {
 	*pdwConnection = 0;
 	return OLE_E_ADVISENOTSUPPORTED;
@@ -713,8 +747,7 @@ STDMETHODIMP COleDataSource::XDataObject::DUnadvise(DWORD /*dwConnection*/)
 	return OLE_E_ADVISENOTSUPPORTED;
 }
 
-STDMETHODIMP COleDataSource::XDataObject::EnumDAdvise(
-	LPENUMSTATDATA* ppenumAdvise)
+STDMETHODIMP COleDataSource::XDataObject::EnumDAdvise(LPENUMSTATDATA* ppenumAdvise)
 {
 	*ppenumAdvise = NULL;
 	return OLE_E_ADVISENOTSUPPORTED;

@@ -31,6 +31,7 @@ class CMFCRibbonRichEditCtrl;
 class CMFCRibbonComboBox : public CMFCRibbonEdit
 {
 	friend class CMFCDropDownListBox;
+	friend class CMFCRibbonConstructor;
 
 	DECLARE_DYNCREATE(CMFCRibbonComboBox)
 
@@ -138,6 +139,24 @@ public:
 
 	void BuildFonts(int nFontType = DEVICE_FONTTYPE | RASTER_FONTTYPE | TRUETYPE_FONTTYPE, BYTE nCharSet = DEFAULT_CHARSET, BYTE nPitchAndFamily = DEFAULT_PITCH);
 	void RebuildFonts();
+
+	/// <summary>
+	/// Returns which font types to display in the combo box. Valid options are DEVICE_FONTTYPE, RASTER_FONTTYPE, and TRUETYPE_FONTTYPE, or any bitwise combination thereof.</summary>
+	/// <returns> 
+	/// Font types ( see EnumFontFamProc in the Windows SDK documentation).</returns>
+	int GetFontType() const { return m_nFontType; }
+
+	/// <summary>
+	/// Returns the specified character set.</summary>
+	/// <returns> 
+	/// Characters set (see LOGFONT in the Windows SDK documentation).</returns>
+	BYTE GetCharSet() const { return m_nCharSet; }
+
+	/// <summary>
+	/// Returns the pitch and the family of the fonts that are displayed in the combo box.</summary>
+	/// <returns> 
+	/// Pitch and the family (see LOGFONT in the Windows SDK documentation).</returns>
+	BYTE GetPitchAndFamily() const { return m_nPitchAndFamily; }
 
 protected:
 	int GetFontsCount(LPCTSTR lpszName, const CObList& lstFonts);

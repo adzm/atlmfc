@@ -38,21 +38,6 @@
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
-// Manifest with localized DLL information
-
-#ifdef _X86_
-ID_MFCLOC_MANIFEST    RT_MANIFEST    "INTEL\mfc_loc.manifest"
-#endif
-
-#ifdef _AMD64_
-ID_MFCLOC_MANIFEST    RT_MANIFEST    "AMD64\mfc_loc.manifest"
-#endif
-
-#ifdef _IA64_
-ID_MFCLOC_MANIFEST    RT_MANIFEST    "IA64\mfc_loc.manifest"
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
 // Version stamp for this .DLL
 
 #ifdef RC_INVOKED

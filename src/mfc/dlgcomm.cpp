@@ -156,7 +156,6 @@ void CCommonDialog::OnCancel()
 
 BOOL CCommonDialog::OnHelpInfo(HELPINFO*)
 {
-   //IA64: Couldn't find docs for retval of OnHelpInfo
 	return (Default() != 0);
 }
 

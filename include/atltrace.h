@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef __ATLTRACE_H__
@@ -26,7 +26,7 @@
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 #endif  // _DEBUG
- 
+
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
@@ -36,13 +36,15 @@ namespace ATL
 class CTraceCategory
 {
 public:
-	explicit CTraceCategory( LPCTSTR pszCategoryName, UINT nStartingLevel = 0 ) throw();
+	explicit CTraceCategory(
+		_In_z_ LPCTSTR pszCategoryName,
+		_In_ UINT nStartingLevel = 0) throw();
 
 #ifdef _DEBUG
 	UINT GetLevel() const throw();
-	void SetLevel( UINT nLevel ) throw();
+	void SetLevel(_In_ UINT nLevel) throw();
 	ATLTRACESTATUS GetStatus() const throw();
-	void SetStatus( ATLTRACESTATUS eStatus) throw();
+	void SetStatus(_In_ ATLTRACESTATUS eStatus) throw();
 #endif
 
 	operator DWORD_PTR() const throw();
@@ -54,19 +56,27 @@ public:
 };
 
 #ifdef _DEBUG
-extern bool _IsTracingEnabled(DWORD_PTR dwModule, DWORD_PTR dwCategory, UINT nLevel);
+extern bool _IsTracingEnabled(
+	_In_ DWORD_PTR dwModule,
+	_In_ DWORD_PTR dwCategory,
+	_In_ UINT nLevel);
 
 class CTrace
 {
 public:
-	typedef int (__cdecl *fnCrtDbgReport_t)(int,const char *,int,const char *,const char *,...);
+	typedef int (__cdecl *fnCrtDbgReport_t)(
+		_In_ int,
+		_In_z_ const char *,
+		_In_ int,
+		_In_z_ const char *,
+		_In_z_ const char *,...);
 
 private:
 	CTrace(
 #ifdef _ATL_NO_DEBUG_CRT
-		fnCrtDbgReport_t pfnCrtDbgReport = NULL)
+		_In_opt_ fnCrtDbgReport_t pfnCrtDbgReport = NULL)
 #else
-		fnCrtDbgReport_t pfnCrtDbgReport = _CrtDbgReport)
+		_In_opt_ fnCrtDbgReport_t pfnCrtDbgReport = _CrtDbgReport)
 #endif
 		: m_hInst(reinterpret_cast<HINSTANCE>(&__ImageBase)),
 			m_dwModule( 0 )
@@ -80,13 +90,19 @@ private:
 	}
 
 public:
-	bool ChangeCategory(DWORD_PTR dwCategory, UINT nLevel, ATLTRACESTATUS eStatus)
+	bool ChangeCategory(
+		_In_ DWORD_PTR dwCategory,
+		_In_ UINT nLevel,
+		_In_ ATLTRACESTATUS eStatus)
 	{
 		return 0 !=
 			AtlTraceModifyCategory(0, dwCategory, nLevel, eStatus);
 	}
 
-	bool GetCategory(DWORD_PTR dwCategory, UINT *pnLevel, ATLTRACESTATUS *peStatus)
+	bool GetCategory(
+		_In_ DWORD_PTR dwCategory,
+		_Out_ UINT *pnLevel,
+		_Out_ ATLTRACESTATUS *peStatus)
 	{
 		ATLASSERT(pnLevel && peStatus);
 		return 0 != AtlTraceGetCategory(0, dwCategory, pnLevel, peStatus);
@@ -99,7 +115,7 @@ public:
 
 		return nLevel;
 	}
-	void SetLevel(UINT nLevel)
+	void SetLevel(_In_ UINT nLevel)
 	{
 		AtlTraceModifyModule(0, m_dwModule, nLevel, ATLTRACESTATUS_ENABLED);
 	}
@@ -111,32 +127,54 @@ public:
 
 		return eStatus;
 	}
-	void SetStatus(ATLTRACESTATUS eStatus)
+	void SetStatus(_In_ ATLTRACESTATUS eStatus)
 	{
 		ATLTRACESTATUS eOldStatus;
 		UINT nLevel;
 		AtlTraceGetModule(0, m_dwModule, &nLevel, &eOldStatus);
 		AtlTraceModifyModule(0, m_dwModule, nLevel, eStatus);
 	}
-	void __cdecl TraceV(const char *pszFileName, int nLine,
-		DWORD_PTR dwCategory, UINT nLevel, LPCSTR pszFmt, va_list args) const;
-	void __cdecl TraceV(const char *pszFileName, int nLine,
-		DWORD_PTR dwCategory, UINT nLevel, LPCWSTR pszFmt, va_list args) const;
+	void __cdecl TraceV(
+		_In_opt_z_ const char *pszFileName,
+		_In_ int nLine,
+		_In_ DWORD_PTR dwCategory,
+		_In_ UINT nLevel,
+		_In_z_ LPCSTR pszFmt,
+		_In_ va_list args) const;
+	void __cdecl TraceV(
+		_In_opt_z_ const char *pszFileName,
+		_In_ int nLine,
+		_In_ DWORD_PTR dwCategory,
+		_In_ UINT nLevel,
+		_In_z_ LPCWSTR pszFmt,
+		_In_ va_list args) const;
 
-	DWORD_PTR RegisterCategory(LPCSTR pszCategory)
-		{return(AtlTraceRegisterCategoryA(m_dwModule, pszCategory));}
+	DWORD_PTR RegisterCategory(_In_z_ LPCSTR pszCategory)
+	{
+		return(AtlTraceRegisterCategoryA(m_dwModule, pszCategory));
+	}
 #ifdef _UNICODE
-	DWORD_PTR RegisterCategory(LPCWSTR pszCategory)
-		{return(AtlTraceRegisterCategoryU(m_dwModule, pszCategory));}
+	DWORD_PTR RegisterCategory(_In_z_ LPCWSTR pszCategory)
+	{
+		return(AtlTraceRegisterCategoryU(m_dwModule, pszCategory));
+	}
 #endif
 
-	bool LoadSettings(LPCTSTR pszFileName = NULL) const
-		{return 0 != AtlTraceLoadSettings(pszFileName);}
-	void SaveSettings(LPCTSTR pszFileName = NULL) const
-		{AtlTraceSaveSettings(pszFileName);}
+	bool LoadSettings(_In_opt_z_ LPCTSTR pszFileName = NULL) const
+	{
+		return 0 != AtlTraceLoadSettings(pszFileName);
+	}
+	void SaveSettings(_In_opt_z_ LPCTSTR pszFileName = NULL) const
+	{
+		AtlTraceSaveSettings(pszFileName);
+	}
 
-	static bool IsTracingEnabled(DWORD_PTR dwCategory, UINT nLevel)
-		{return _IsTracingEnabled(s_trace.m_dwModule, dwCategory, nLevel);}
+	static bool IsTracingEnabled(
+		_In_ DWORD_PTR dwCategory,
+		_In_ UINT nLevel)
+	{
+		return _IsTracingEnabled(s_trace.m_dwModule, dwCategory, nLevel);
+	}
 public:
 	static CTrace s_trace;
 
@@ -145,34 +183,54 @@ protected:
 	DWORD_PTR m_dwModule;
 };
 
-inline bool IsTracingEnabled(DWORD_PTR dwCategory, UINT nLevel)
+inline bool IsTracingEnabled(
+	_In_ DWORD_PTR dwCategory,
+	_In_ UINT nLevel)
 {
 	return CTrace::IsTracingEnabled(dwCategory, nLevel);
 }
 
-    inline void __cdecl CTrace::TraceV(const char *pszFileName, int nLine,
-		DWORD_PTR dwCategory, UINT nLevel, LPCSTR pszFmt, va_list args) const
-	{
-		AtlTraceVA(m_dwModule, pszFileName, nLine, dwCategory, nLevel, pszFmt, args);
-	}
-	inline void __cdecl CTrace::TraceV(const char *pszFileName, int nLine,
-		DWORD_PTR dwCategory, UINT nLevel, LPCWSTR pszFmt, va_list args) const
-	{
-		AtlTraceVU(m_dwModule, pszFileName, nLine, dwCategory, nLevel, pszFmt, args);
-	}
+inline void __cdecl CTrace::TraceV(
+	_In_opt_z_ const char *pszFileName,
+	_In_ int nLine,
+	_In_ DWORD_PTR dwCategory,
+	_In_ UINT nLevel,
+	_In_z_ LPCSTR pszFmt, 
+	_In_ va_list args) const
+{
+	AtlTraceVA(m_dwModule, pszFileName, nLine, dwCategory, nLevel, pszFmt, args);
+}
+
+inline void __cdecl CTrace::TraceV(
+	_In_opt_z_ const char *pszFileName,
+	_In_ int nLine,
+	_In_ DWORD_PTR dwCategory,
+	_In_ UINT nLevel,
+	_In_z_ LPCWSTR pszFmt,
+	_In_ va_list args) const
+{
+	AtlTraceVU(m_dwModule, pszFileName, nLine, dwCategory, nLevel, pszFmt, args);
+}
 
 extern CTraceCategory atlTraceGeneral;
 
 class CTraceFileAndLineInfo
 {
 public:
-	CTraceFileAndLineInfo(const char *pszFileName, int nLineNo)
+	CTraceFileAndLineInfo(
+			_In_z_ const char *pszFileName,
+			_In_ int nLineNo)
 		: m_pszFileName(pszFileName), m_nLineNo(nLineNo)
-	{}
+	{
+	}
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-	void __cdecl operator()(DWORD_PTR dwCategory, UINT nLevel, const char *pszFmt, ...) const
+	void __cdecl operator()(
+		_In_ DWORD_PTR dwCategory,
+		_In_ UINT nLevel,
+		_In_z_ const char *pszFmt, 
+		...) const
 	{
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::s_trace.TraceV(m_pszFileName, m_nLineNo, dwCategory, nLevel, pszFmt, ptr);
@@ -182,7 +240,11 @@ public:
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-	void __cdecl operator()(DWORD_PTR dwCategory, UINT nLevel, const wchar_t *pszFmt, ...) const
+	void __cdecl operator()(
+		_In_ DWORD_PTR dwCategory,
+		_In_ UINT nLevel,
+		_In_z_ const wchar_t *pszFmt, 
+		...) const
 	{
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::s_trace.TraceV(m_pszFileName, m_nLineNo, dwCategory, nLevel, pszFmt, ptr);
@@ -192,7 +254,9 @@ public:
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-	void __cdecl operator()(const char *pszFmt, ...) const
+	void __cdecl operator()(
+		_In_z_ const char *pszFmt, 
+		...) const
 	{
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::s_trace.TraceV(m_pszFileName, m_nLineNo, atlTraceGeneral, 0, pszFmt, ptr);
@@ -202,7 +266,9 @@ public:
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-	void __cdecl operator()(const wchar_t *pszFmt, ...) const
+	void __cdecl operator()(
+		_In_z_ const wchar_t *pszFmt, 
+		...) const
 	{
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::s_trace.TraceV(m_pszFileName, m_nLineNo, atlTraceGeneral, 0, pszFmt, ptr);
@@ -212,7 +278,7 @@ public:
 
 private:
 	/* unimplemented */
-	CTraceFileAndLineInfo &__cdecl operator=(const CTraceFileAndLineInfo &right);
+	CTraceFileAndLineInfo &__cdecl operator=(_In_ const CTraceFileAndLineInfo &right);
 
 	const char *const m_pszFileName;
 	const int m_nLineNo;
@@ -222,7 +288,9 @@ private:
 
 #ifdef _DEBUG
 
-inline CTraceCategory::CTraceCategory( LPCTSTR pszCategoryName, UINT nStartingLevel ) throw() :
+inline CTraceCategory::CTraceCategory(
+		_In_z_ LPCTSTR pszCategoryName,
+		_In_ UINT nStartingLevel) throw() :
 	m_dwCategory( 0 )
 {
 	m_dwCategory = ATL::CTrace::s_trace.RegisterCategory( pszCategoryName );
@@ -243,7 +311,7 @@ inline UINT CTraceCategory::GetLevel() const throw()
 	return( nLevel );
 }
 
-inline void CTraceCategory::SetLevel( UINT nLevel ) throw()
+inline void CTraceCategory::SetLevel(_In_ UINT nLevel) throw()
 {
 	ATL::CTrace::s_trace.ChangeCategory( m_dwCategory, nLevel, ATLTRACESTATUS_ENABLED );
 }
@@ -257,7 +325,7 @@ inline ATLTRACESTATUS CTraceCategory::GetStatus() const throw()
 	return( eStatus );
 }
 
-inline void CTraceCategory::SetStatus( ATLTRACESTATUS eStatus ) throw()
+inline void CTraceCategory::SetStatus(_In_ ATLTRACESTATUS eStatus) throw()
 {
 	UINT nLevel;
 	ATLTRACESTATUS eOldStatus;
@@ -267,7 +335,9 @@ inline void CTraceCategory::SetStatus( ATLTRACESTATUS eStatus ) throw()
 
 #else  // !_DEBUG
 
-inline CTraceCategory::CTraceCategory( LPCTSTR pszCategoryName, UINT nStartingLevel ) throw()
+inline CTraceCategory::CTraceCategory(
+	_In_z_ LPCTSTR pszCategoryName,
+	_In_ UINT nStartingLevel) throw()
 {
 	(void)pszCategoryName;
 	(void)nStartingLevel;
@@ -281,7 +351,7 @@ inline CTraceCategory::operator DWORD_PTR() const throw()
 #endif  // _DEBUG
 
 }  // namespace ATL
- 
+
 namespace ATL
 {
 
@@ -292,28 +362,28 @@ namespace ATL
 #endif
 
 DECLARE_TRACE_CATEGORY( atlTraceGeneral )
-DECLARE_TRACE_CATEGORY( atlTraceCOM )  
-DECLARE_TRACE_CATEGORY( atlTraceQI )	
+DECLARE_TRACE_CATEGORY( atlTraceCOM )
+DECLARE_TRACE_CATEGORY( atlTraceQI )
 DECLARE_TRACE_CATEGORY( atlTraceRegistrar )
 DECLARE_TRACE_CATEGORY( atlTraceRefcount )
 DECLARE_TRACE_CATEGORY( atlTraceWindowing )
 DECLARE_TRACE_CATEGORY( atlTraceControls )
-DECLARE_TRACE_CATEGORY( atlTraceHosting ) 
-DECLARE_TRACE_CATEGORY( atlTraceDBClient )  
+DECLARE_TRACE_CATEGORY( atlTraceHosting )
+DECLARE_TRACE_CATEGORY( atlTraceDBClient )
 DECLARE_TRACE_CATEGORY( atlTraceDBProvider )
 DECLARE_TRACE_CATEGORY( atlTraceSnapin )
-DECLARE_TRACE_CATEGORY( atlTraceNotImpl )   
+DECLARE_TRACE_CATEGORY( atlTraceNotImpl )
 DECLARE_TRACE_CATEGORY( atlTraceAllocation )
 DECLARE_TRACE_CATEGORY( atlTraceException )
 DECLARE_TRACE_CATEGORY( atlTraceTime )
-DECLARE_TRACE_CATEGORY( atlTraceCache )		
+DECLARE_TRACE_CATEGORY( atlTraceCache )
 DECLARE_TRACE_CATEGORY( atlTraceStencil )
 DECLARE_TRACE_CATEGORY( atlTraceString )
-DECLARE_TRACE_CATEGORY( atlTraceMap )	
-DECLARE_TRACE_CATEGORY( atlTraceUtil )		
+DECLARE_TRACE_CATEGORY( atlTraceMap )
+DECLARE_TRACE_CATEGORY( atlTraceUtil )
 DECLARE_TRACE_CATEGORY( atlTraceSecurity )
 DECLARE_TRACE_CATEGORY( atlTraceSync )
-DECLARE_TRACE_CATEGORY( atlTraceISAPI )		
+DECLARE_TRACE_CATEGORY( atlTraceISAPI )
 
 // atlTraceUser categories are no longer needed.  Just declare your own trace category using CTraceCategory.
 DECLARE_TRACE_CATEGORY( atlTraceUser )
@@ -344,9 +414,12 @@ public:
 	}
 
 private:
-	static int __cdecl CrtHookProc(_In_ int eReportType, _In_z_ char* pszMessage, _Out_ int* pnRetVal)
+	static int __cdecl CrtHookProc(
+		_In_ int eReportType,
+		_In_z_ char* pszMessage,
+		_Inout_ int* pnRetVal)
 	{
-		
+
 		if (eReportType == _CRT_ASSERT)
 		{
 			::OutputDebugStringA( "ASSERTION FAILED\n" );
@@ -386,7 +459,7 @@ __declspec( selectany ) _CRT_REPORT_HOOK CNoUIAssertHook::s_pfnPrevHook = NULL;
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-inline void __cdecl AtlTrace(LPCSTR pszFormat, ...)
+inline void __cdecl AtlTrace(_In_z_ _Printf_format_string_ LPCSTR pszFormat, ...)
 {
 	va_list ptr;
 	va_start(ptr, pszFormat);
@@ -397,7 +470,7 @@ inline void __cdecl AtlTrace(LPCSTR pszFormat, ...)
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-inline void __cdecl AtlTrace(LPCWSTR pszFormat, ...)
+inline void __cdecl AtlTrace(_In_z_ _Printf_format_string_ LPCWSTR pszFormat, ...)
 {
 	va_list ptr;
 	va_start(ptr, pszFormat);
@@ -408,7 +481,10 @@ inline void __cdecl AtlTrace(LPCWSTR pszFormat, ...)
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-inline void __cdecl AtlTrace2(DWORD_PTR dwCategory, UINT nLevel, LPCSTR pszFormat, ...)
+inline void __cdecl AtlTrace2(
+	_In_ DWORD_PTR dwCategory,
+	_In_ UINT nLevel,
+	_In_z_ _Printf_format_string_ LPCSTR pszFormat, ...)
 {
 	va_list ptr;
 	va_start(ptr, pszFormat);
@@ -419,7 +495,10 @@ inline void __cdecl AtlTrace2(DWORD_PTR dwCategory, UINT nLevel, LPCSTR pszForma
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-inline void __cdecl AtlTrace2(DWORD_PTR dwCategory, UINT nLevel, LPCWSTR pszFormat, ...)
+inline void __cdecl AtlTrace2(
+	_In_ DWORD_PTR dwCategory,
+	_In_ UINT nLevel,
+	_In_z_ _Printf_format_string_ LPCWSTR pszFormat, ...)
 {
 	va_list ptr;
 	va_start(ptr, pszFormat);
@@ -434,11 +513,29 @@ inline void __cdecl AtlTrace2(DWORD_PTR dwCategory, UINT nLevel, LPCWSTR pszForm
 
 #pragma warning(push)
 #pragma warning(disable : 4793)
-inline void __cdecl AtlTraceNull(...){}
-inline void __cdecl AtlTrace(LPCSTR , ...){}
-inline void __cdecl AtlTrace2(DWORD_PTR, UINT, LPCSTR , ...){}
-inline void __cdecl AtlTrace(LPCWSTR , ...){}
-inline void __cdecl AtlTrace2(DWORD_PTR, UINT, LPCWSTR , ...){}
+inline void __cdecl AtlTraceNull(...)
+{
+}
+inline void __cdecl AtlTrace(
+	_In_z_ _Printf_format_string_ LPCSTR, ...)
+{
+}
+inline void __cdecl AtlTrace2(
+	_In_ DWORD_PTR,
+	_In_ UINT,
+	_In_z_ _Printf_format_string_ LPCSTR, ...)
+{
+}
+inline void __cdecl AtlTrace(
+	_In_z_ _Printf_format_string_ LPCWSTR, ...)
+{
+}
+inline void __cdecl AtlTrace2(
+	_In_ DWORD_PTR,
+	_In_ UINT,
+	_In_z_ _Printf_format_string_ LPCWSTR, ...)
+{
+}
 #pragma warning(pop)
 
 #ifndef ATLTRACE

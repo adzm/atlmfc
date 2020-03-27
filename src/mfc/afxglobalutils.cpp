@@ -26,10 +26,6 @@
 #include "afxlinkctrl.h"
 #include "afxribbonres.h"
 
-#pragma warning(disable : 4706)
-#include "multimon.h"
-#pragma warning(default : 4706)
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -306,7 +302,10 @@ CDockingManager* CGlobalUtils::GetDockingManager(CWnd* pWnd)
 	}
 	else if (pWnd->IsKindOf(RUNTIME_CLASS(CDialog)) || pWnd->IsKindOf(RUNTIME_CLASS(CPropertySheet)))
 	{
-		m_bDialogApp = TRUE;
+		if (pWnd->GetSafeHwnd() == AfxGetMainWnd()->GetSafeHwnd())
+		{
+			m_bDialogApp = TRUE;
+		}
 	}
 	else if (pWnd->IsKindOf(RUNTIME_CLASS(COleCntrFrameWndEx)))
 	{
@@ -809,6 +808,3 @@ HICON CGlobalUtils::GetWndIcon(CWnd* pWnd)
 
 	return hIcon;
 }
-
-
-

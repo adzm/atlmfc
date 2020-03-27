@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef __ATLSYNC_INL__
@@ -22,31 +22,19 @@ namespace ATL
 
 inline CCriticalSection::CCriticalSection()
 {
-	__try
+	if (!::InitializeCriticalSectionAndSpinCount( this, 0 ))
 	{
-		::InitializeCriticalSection( this );
-	}
-	__except( STATUS_NO_MEMORY == GetExceptionCode() )
-	{
-		AtlThrow( E_OUTOFMEMORY );
+		AtlThrow(HRESULT_FROM_WIN32(GetLastError()));
 	}
 }
 
-#if (_WIN32_WINNT >= 0x0403)
-inline CCriticalSection::CCriticalSection( ULONG nSpinCount )
+inline CCriticalSection::CCriticalSection(_In_ ULONG nSpinCount)
 {
-	__try
+	if (!::InitializeCriticalSectionAndSpinCount( this, nSpinCount ))
 	{
-		BOOL bRet = ::InitializeCriticalSectionAndSpinCount( this, nSpinCount );
-		if (!bRet)
-		{
-			AtlThrow( E_OUTOFMEMORY );
-		}
-	} __except(STATUS_NO_MEMORY == GetExceptionCode()) {
-		AtlThrow( E_OUTOFMEMORY );
+		AtlThrow(HRESULT_FROM_WIN32(GetLastError()));
 	}
 }
-#endif
 
 inline CCriticalSection::~CCriticalSection() throw()
 {
@@ -63,30 +51,28 @@ inline void CCriticalSection::Leave() throw()
 	::LeaveCriticalSection( this );
 }
 
-#if (_WIN32_WINNT >= 0x0403)
-inline ULONG CCriticalSection::SetSpinCount( ULONG nSpinCount ) throw()
+inline ULONG CCriticalSection::SetSpinCount(_In_ ULONG nSpinCount) throw()
 {
 	return( ::SetCriticalSectionSpinCount( this, nSpinCount ) );
 }
-#endif
 
-#if(_WIN32_WINNT >= 0x0400)
 inline BOOL CCriticalSection::TryEnter() throw()
 {
 	return( ::TryEnterCriticalSection( this ) );
 }
-#endif
 
 inline CEvent::CEvent() throw()
 {
 }
 
-inline CEvent::CEvent( CEvent& hEvent ) throw() :
+inline CEvent::CEvent(_Inout_ CEvent& hEvent) throw() :
 	CHandle( hEvent )
 {
 }
 
-inline CEvent::CEvent( BOOL bManualReset, BOOL bInitialState )
+inline CEvent::CEvent(
+	_In_ BOOL bManualReset,
+	_In_ BOOL bInitialState)
 {
 	BOOL bSuccess;
 
@@ -97,7 +83,11 @@ inline CEvent::CEvent( BOOL bManualReset, BOOL bInitialState )
 	}
 }
 
-inline CEvent::CEvent( LPSECURITY_ATTRIBUTES pAttributes, BOOL bManualReset, BOOL bInitialState, LPCTSTR pszName )
+inline CEvent::CEvent(
+	_In_opt_ LPSECURITY_ATTRIBUTES pAttributes,
+	_In_ BOOL bManualReset,
+	_In_ BOOL bInitialState,
+	_In_opt_z_ LPCTSTR pszName)
 {
 	BOOL bSuccess;
 
@@ -109,12 +99,16 @@ inline CEvent::CEvent( LPSECURITY_ATTRIBUTES pAttributes, BOOL bManualReset, BOO
 }
 
 
-inline CEvent::CEvent( HANDLE h ) throw() :
+inline CEvent::CEvent(_In_ HANDLE h) throw() :
 	CHandle( h )
 {
 }
 
-inline BOOL CEvent::Create( LPSECURITY_ATTRIBUTES pSecurity, BOOL bManualReset, BOOL bInitialState, LPCTSTR pszName ) throw()
+inline BOOL CEvent::Create(
+	_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+	_In_ BOOL bManualReset,
+	_In_ BOOL bInitialState,
+	_In_opt_z_ LPCTSTR pszName) throw()
 {
 	ATLASSUME( m_h == NULL );
 
@@ -123,7 +117,10 @@ inline BOOL CEvent::Create( LPSECURITY_ATTRIBUTES pSecurity, BOOL bManualReset, 
 	return( m_h != NULL );
 }
 
-inline BOOL CEvent::Open( DWORD dwAccess, BOOL bInheritHandle, LPCTSTR pszName ) throw()
+inline BOOL CEvent::Open(
+	_In_ DWORD dwAccess,
+	_In_ BOOL bInheritHandle,
+	_In_z_ LPCTSTR pszName) throw()
 {
 	ATLASSUME( m_h == NULL );
 
@@ -157,12 +154,12 @@ inline CMutex::CMutex() throw()
 {
 }
 
-inline CMutex::CMutex( CMutex& hMutex ) throw() :
+inline CMutex::CMutex(_Inout_ CMutex& hMutex) throw() :
 	CHandle( hMutex )
 {
 }
 
-inline CMutex::CMutex( BOOL bInitialOwner )
+inline CMutex::CMutex(_In_ BOOL bInitialOwner)
 {
 	BOOL bSuccess;
 
@@ -173,7 +170,10 @@ inline CMutex::CMutex( BOOL bInitialOwner )
 	}
 }
 
-inline CMutex::CMutex( LPSECURITY_ATTRIBUTES pSecurity, BOOL bInitialOwner, LPCTSTR pszName )
+inline CMutex::CMutex(
+	_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+	_In_ BOOL bInitialOwner,
+	_In_opt_z_ LPCTSTR pszName)
 {
 	BOOL bSuccess;
 
@@ -184,12 +184,15 @@ inline CMutex::CMutex( LPSECURITY_ATTRIBUTES pSecurity, BOOL bInitialOwner, LPCT
 	}
 }
 
-inline CMutex::CMutex( HANDLE h ) throw() :
+inline CMutex::CMutex(_In_ HANDLE h) throw() :
 	CHandle( h )
 {
 }
 
-inline BOOL CMutex::Create( LPSECURITY_ATTRIBUTES pSecurity, BOOL bInitialOwner, LPCTSTR pszName ) throw()
+inline BOOL CMutex::Create(
+	_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+	_In_ BOOL bInitialOwner,
+	_In_opt_z_ LPCTSTR pszName) throw()
 {
 	ATLASSUME( m_h == NULL );
 
@@ -197,7 +200,10 @@ inline BOOL CMutex::Create( LPSECURITY_ATTRIBUTES pSecurity, BOOL bInitialOwner,
 	return( m_h != NULL );
 }
 
-inline BOOL CMutex::Open( DWORD dwAccess, BOOL bInheritHandle, LPCTSTR pszName ) throw()
+inline BOOL CMutex::Open(
+	_In_ DWORD dwAccess,
+	_In_ BOOL bInheritHandle,
+	_In_z_ LPCTSTR pszName) throw()
 {
 	ATLASSUME( m_h == NULL );
 
@@ -212,28 +218,31 @@ inline BOOL CMutex::Release() throw()
 	return( ::ReleaseMutex( m_h ) );
 }
 
-
 inline CSemaphore::CSemaphore() throw()
 {
 }
 
-inline CSemaphore::CSemaphore( CSemaphore& hSemaphore ) throw() :
+inline CSemaphore::CSemaphore(_Inout_ CSemaphore& hSemaphore) throw() :
 	CHandle( hSemaphore )
 {
 }
 
-inline CSemaphore::CSemaphore( LONG nInitialCount, LONG nMaxCount )
+inline CSemaphore::CSemaphore(
+	_In_ LONG nInitialCount,
+	_In_ LONG nMaxCount)
 {
-	BOOL bSuccess;
-
-	bSuccess = Create( NULL, nInitialCount, nMaxCount, NULL );
+	BOOL bSuccess = Create( NULL, nInitialCount, nMaxCount, NULL );
 	if( !bSuccess )
 	{
 		AtlThrowLastWin32();
 	}
 }
 
-inline CSemaphore::CSemaphore( LPSECURITY_ATTRIBUTES pSecurity, LONG nInitialCount, LONG nMaxCount, LPCTSTR pszName )
+inline CSemaphore::CSemaphore(
+	_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+	_In_ LONG nInitialCount,
+	_In_ LONG nMaxCount,
+	_In_opt_z_ LPCTSTR pszName)
 {
 	BOOL bSuccess;
 
@@ -244,13 +253,16 @@ inline CSemaphore::CSemaphore( LPSECURITY_ATTRIBUTES pSecurity, LONG nInitialCou
 	}
 }
 
-
-inline CSemaphore::CSemaphore( HANDLE h ) throw() :
+inline CSemaphore::CSemaphore(_In_ HANDLE h) throw() :
 	CHandle( h )
 {
 }
 
-inline BOOL CSemaphore::Create( LPSECURITY_ATTRIBUTES pSecurity, LONG nInitialCount, LONG nMaxCount, LPCTSTR pszName ) throw()
+inline BOOL CSemaphore::Create(
+	_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+	_In_ LONG nInitialCount,
+	_In_ LONG nMaxCount,
+	_In_opt_z_ LPCTSTR pszName) throw()
 {
 	ATLASSUME( m_h == NULL );
 
@@ -258,7 +270,10 @@ inline BOOL CSemaphore::Create( LPSECURITY_ATTRIBUTES pSecurity, LONG nInitialCo
 	return( m_h != NULL );
 }
 
-inline BOOL CSemaphore::Open( DWORD dwAccess, BOOL bInheritHandle, LPCTSTR pszName ) throw()
+inline BOOL CSemaphore::Open(
+	_In_ DWORD dwAccess,
+	_In_ BOOL bInheritHandle,
+	_In_z_ LPCTSTR pszName) throw()
 {
 	ATLASSUME( m_h == NULL );
 
@@ -266,7 +281,9 @@ inline BOOL CSemaphore::Open( DWORD dwAccess, BOOL bInheritHandle, LPCTSTR pszNa
 	return( m_h != NULL );
 }
 
-inline BOOL CSemaphore::Release( LONG nReleaseCount, LONG* pnOldCount ) throw()
+inline BOOL CSemaphore::Release(
+	_In_ LONG nReleaseCount,
+	_Out_opt_ LONG* pnOldCount) throw()
 {
 	ATLASSUME( m_h != NULL );
 
@@ -274,7 +291,9 @@ inline BOOL CSemaphore::Release( LONG nReleaseCount, LONG* pnOldCount ) throw()
 }
 
 
-inline CMutexLock::CMutexLock( CMutex& mtx, bool bInitialLock ) :
+inline CMutexLock::CMutexLock(
+		_Inout_ CMutex& mtx,
+		_In_ bool bInitialLock) :
 	m_mtx( mtx ),
 	m_bLocked( false )
 {
@@ -300,7 +319,8 @@ inline void CMutexLock::Lock()
 	dwResult = ::WaitForSingleObject( m_mtx, INFINITE );
 	if( dwResult == WAIT_ABANDONED )
 	{
-		ATLTRACE(atlTraceSync, 0, _T("Warning: abandoned mutex 0x%x\n"), (HANDLE)m_mtx);
+		ATLTRACE(atlTraceSync, 0, _T("Warning: abandoned mutex 0x%x\n"), 
+			reinterpret_cast<int>(static_cast<HANDLE>(m_mtx)));
 	}
 	m_bLocked = true;
 }
@@ -311,7 +331,7 @@ inline void CMutexLock::Unlock() throw()
 
 	m_mtx.Release();
 	//ATLASSERT in CMutexLock::Lock prevents calling Lock more than 1 time.
-	m_bLocked = false;  
+	m_bLocked = false;
 }
 
 };  // namespace ATL

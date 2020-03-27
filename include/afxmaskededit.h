@@ -73,6 +73,7 @@ private:
 	BOOL    m_bSelectByGroup;
 	BOOL    m_bMaskKeyInProgress;
 	BOOL    m_bPasteProcessing;
+	BOOL    m_bSetTextProcessing;
 
 protected:
 	//{{AFX_MSG(CMFCMaskedEdit)
@@ -88,6 +89,7 @@ protected:
 	afx_msg LRESULT OnSetText(WPARAM, LPARAM);
 	afx_msg LRESULT OnGetText(WPARAM, LPARAM);
 	afx_msg LRESULT OnGetTextLength(WPARAM, LPARAM);
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()

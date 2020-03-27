@@ -120,6 +120,8 @@ int CMFCOutlookBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 BOOL CMFCOutlookBar::Create(LPCTSTR lpszCaption, CWnd* pParentWnd, const RECT& rect, UINT nID, DWORD dwStyle, DWORD dwControlBarStyle, CCreateContext* pContext)
 {
+	dwControlBarStyle &= ~AFX_CBRS_FLOAT;
+
 	BOOL bResult = CBaseTabbedPane::Create(lpszCaption, pParentWnd, rect, FALSE, nID, dwStyle, AFX_CBRS_OUTLOOK_TABS, dwControlBarStyle, pContext);
 	if (!bResult)
 	{
@@ -398,7 +400,7 @@ BOOL CMFCOutlookBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 		TRACE(_T("Archive exception in CMFCOutlookBar::LoadState()!\n"));
 	}
 
-	free(lpbData);
+	delete [] lpbData;
 	return TRUE;
 }
 

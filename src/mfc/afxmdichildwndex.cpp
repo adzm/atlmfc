@@ -17,6 +17,9 @@
 #include "afxmdiclientareawnd.h"
 #include "afxglobalutils.h"
 #include "afxdockablepane.h"
+#include "afxdatarecovery.h"
+
+#include <dwmapi.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -24,8 +27,12 @@
 
 BOOL CMDIChildWndEx::m_bEnableFloatingBars = FALSE;
 DWORD CMDIChildWndEx::m_dwExcludeStyle = WS_CAPTION | WS_BORDER | WS_THICKFRAME;
+DWORD CMDIChildWndEx::m_dwDefaultTaskbarTabPropertyFlags = STPF_USEAPPTHUMBNAILWHENACTIVE | STPF_USEAPPPEEKWHENACTIVE;
 
-static BOOL bInOnCreate = FALSE;
+typedef HRESULT (STDAPICALLTYPE *PFNSETWINDOWATTRIBUTE)(HWND, DWORD, LPCVOID, DWORD);
+typedef HRESULT (STDAPICALLTYPE *PFNSETICONICTHUMBNAIL)(HWND, HBITMAP, DWORD);
+typedef HRESULT (STDAPICALLTYPE *PFNSETICONICLIVEPRBMP)(HWND, HBITMAP, POINT *, DWORD);
+typedef HRESULT (STDAPICALLTYPE *PFNINVALIDATEICONICBITMAPS)(HWND);
 
 /////////////////////////////////////////////////////////////////////////////
 // CMDIChildWndEx
@@ -42,12 +49,15 @@ CMDIChildWndEx::CMDIChildWndEx() : m_Impl(this)
 	m_bIsMinimized = FALSE;
 	m_rectOriginal.SetRectEmpty();
 	m_bActivating = FALSE;
+	m_bInOnCreate = FALSE;
 
 	// ---- MDITabGroup+
 	m_pRelatedTabGroup = NULL;
 	// ---- MDITabGroup-
 
 	m_pTabbedControlBar = NULL;
+	m_bTabRegistered = FALSE;
+	m_bEnableTaskbarThumbnailClip = TRUE;
 }
 
 #pragma warning(default : 4355)
@@ -70,11 +80,13 @@ BEGIN_MESSAGE_MAP(CMDIChildWndEx, CMDIChildWnd)
 	ON_WM_NCHITTEST()
 	ON_WM_NCCALCSIZE()
 	ON_WM_LBUTTONUP()
+	ON_WM_NCRBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_WINDOWPOSCHANGED()
 	ON_WM_ERASEBKGND()
 	ON_WM_STYLECHANGED()
+	ON_WM_SYSCOMMAND()
 	ON_MESSAGE(WM_SETTEXT, &CMDIChildWndEx::OnSetText)
 	ON_MESSAGE(WM_SETICON, &CMDIChildWndEx::OnSetIcon)
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CMDIChildWndEx::OnIdleUpdateCmdUI)
@@ -108,7 +120,7 @@ int CMDIChildWndEx::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	ASSERT_VALID(m_pMDIFrame);
 
 	m_Impl.m_bHasBorder = (lpCreateStruct->style & WS_BORDER) != NULL;
-	bInOnCreate = TRUE;
+	m_bInOnCreate = TRUE;
 
 	if ((GetStyle() & WS_SYSMENU) == 0)
 	{
@@ -141,7 +153,7 @@ int CMDIChildWndEx::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	if (CMDIChildWnd::OnCreate(lpCreateStruct) == -1)
 	{
-		bInOnCreate = FALSE;
+		m_bInOnCreate = FALSE;
 		return -1;
 	}
 
@@ -151,18 +163,247 @@ int CMDIChildWndEx::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	CFrameImpl::AddFrame(this);
+	RegisterTaskbarTab();
+
 	PostMessage(AFX_WM_CHANGEVISUALMANAGER);
 
-	bInOnCreate = FALSE;
+	m_bInOnCreate = FALSE;
 	return 0;
 }
+void CMDIChildWndEx::RegisterTaskbarTab(CMDIChildWndEx* pWndBefore)
+{
+	ASSERT_VALID(this);
 
+	if (!IsTaskbarTabsSupportEnabled())
+	{
+		return;
+	}
+
+#if (WINVER >= 0x0601)
+	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
+	{
+		// attempt to create a proxy despite it has been already created
+		return;
+	}
+
+	m_tabProxyWnd.SetRelatedMDIChildFrame(this);
+	CRect rect(CPoint(-32000, -32000), CSize(10, 10));
+
+	CString strClassName = afxGlobalData.RegisterWindowClass(_T("AFX_SUPERBAR_TAB"));
+	CString strWindowText;
+	GetWindowText(strWindowText);
+
+	if (!m_tabProxyWnd.CreateEx(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, strClassName, strWindowText, 
+		WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, rect, NULL, 0, NULL))
+	{
+		TRACE1("Creation of tab proxy window failed, error code: %d", GetLastError());
+		return;
+	}
+
+	ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+	if (pTaskbarList3)
+	{
+		CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+		ASSERT_VALID(pTopLevel);
+
+		HRESULT hr = pTaskbarList3->RegisterTab(m_tabProxyWnd.GetSafeHwnd(), pTopLevel->GetSafeHwnd());
+		if (FAILED(hr))
+		{
+			TRACE1("Registration of tab failed, error code: %x", hr);
+			UnregisterTaskbarTab();
+			return;
+		}
+
+		if (pWndBefore == NULL && m_pMDIFrame != NULL)
+		{
+			// attempt to find right place automatically
+			pWndBefore = m_pMDIFrame->m_wndClientArea.FindNextRegisteredWithTaskbarMDIChild(this);
+		}
+
+		CMDITabProxyWnd* pProxyWnd = pWndBefore != NULL ? pWndBefore->GetTabProxyWnd() : NULL;
+
+		hr = pTaskbarList3->SetTabOrder(m_tabProxyWnd.GetSafeHwnd(), pProxyWnd->GetSafeHwnd());
+		if (FAILED(hr))
+		{
+			TRACE1("Setting of tab order failed, error code: %x", hr);
+			UnregisterTaskbarTab();
+			return;
+		}
+
+		if (m_pMDIFrame != NULL && m_pMDIFrame->MDIGetActive() == this)
+		{
+			SetTaskbarTabActive();
+		}
+
+		// Set the appropriate DWM properties on the MDI child window
+		BOOL bHasIconicBitmap = TRUE;
+
+		HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
+		if (hDWMAPI != NULL)
+		{
+			PFNSETWINDOWATTRIBUTE pfnSetWindowAttribute = (PFNSETWINDOWATTRIBUTE)GetProcAddress(hDWMAPI, "DwmSetWindowAttribute");
+			if (pfnSetWindowAttribute)
+			{
+				pfnSetWindowAttribute(m_tabProxyWnd.GetSafeHwnd(), DWMWA_HAS_ICONIC_BITMAP, &bHasIconicBitmap, sizeof(BOOL));
+				pfnSetWindowAttribute(m_tabProxyWnd.GetSafeHwnd(), DWMWA_FORCE_ICONIC_REPRESENTATION, &bHasIconicBitmap, sizeof(BOOL));
+			}
+		}
+
+		SetTaskbarTabProperties(m_dwDefaultTaskbarTabPropertyFlags);
+		SetTaskbarTabText(strWindowText);
+	}
+
+	m_bTabRegistered = TRUE;
+
+	// clips view area on taskbar thumbnail after registration
+	if (IsRegisteredWithTaskbarTabs())
+	{
+		InvalidateIconicBitmaps();
+	}
+
+#endif
+}
+BOOL CMDIChildWndEx::IsRegisteredWithTaskbarTabs()
+{
+	return m_tabProxyWnd.GetSafeHwnd() != NULL;
+}
+BOOL CMDIChildWndEx::IsTaskbarTabsSupportEnabled()
+{
+	CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+	if (pTopLevel == NULL)
+	{
+		return FALSE;
+	}
+
+	ASSERT_VALID(pTopLevel);
+
+	CWinApp* pApp = AfxGetApp();
+	if(pApp == NULL)
+	{
+		return FALSE;
+	}
+
+	ASSERT_VALID(pApp);
+
+	if (!pApp->IsTaskbarInteractionEnabled() || !CanShowOnTaskBarTabs() || !afxGlobalData.bIsWindows7 || (GetStyle () & WS_SYSMENU) != 0)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL CMDIChildWndEx::InvalidateIconicBitmaps()
+{
+	ASSERT_VALID(this);
+
+	if (!IsTaskbarTabsSupportEnabled() || !IsRegisteredWithTaskbarTabs()) 
+	{
+		return FALSE;
+	}
+
+	CRect rectThumbnailClip(0, 0, 0, 0);
+	if (m_bEnableTaskbarThumbnailClip)
+	{
+		rectThumbnailClip = GetTaskbarThumbnailClipRect();
+	}
+
+	SetTaskbarThumbnailClipRect(rectThumbnailClip);
+
+#if (WINVER >= 0x0601)
+	HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
+	if (hDWMAPI != NULL)
+	{
+		PFNINVALIDATEICONICBITMAPS pfnInvalidateIconicBitmaps = (PFNINVALIDATEICONICBITMAPS)GetProcAddress(hDWMAPI, "DwmInvalidateIconicBitmaps");
+		if (pfnInvalidateIconicBitmaps != NULL)
+		{
+			pfnInvalidateIconicBitmaps(m_tabProxyWnd.GetSafeHwnd());
+		}
+	}
+#endif
+
+	return TRUE;
+}
+void CMDIChildWndEx::UpdateTaskbarTabIcon(HICON hIcon)
+{
+	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
+	{
+		m_tabProxyWnd.SetIcon(hIcon, FALSE);
+	}
+}
+void CMDIChildWndEx::SetTaskbarTabOrder(CMDIChildWndEx* pWndBefore)
+{
+	ASSERT_VALID(this);
+
+	if (!IsTaskbarTabsSupportEnabled() || !IsRegisteredWithTaskbarTabs()) 
+	{
+		return;
+	}
+
+	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
+	{
+#if (WINVER >= 0x0601)
+		ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+		ASSERT(pTaskbarList != NULL);
+
+		HWND hWndBefore = pWndBefore != NULL ? pWndBefore->GetTabProxyWnd()->GetSafeHwnd() : NULL;
+		if (pTaskbarList != NULL)
+		{
+			pTaskbarList->SetTabOrder(m_tabProxyWnd.GetSafeHwnd(), hWndBefore);
+		}
+#endif
+	}
+}
+void CMDIChildWndEx::SetTaskbarTabProperties(DWORD dwFlags)
+{
+	ASSERT_VALID(this);
+
+	if (!IsTaskbarTabsSupportEnabled() || !IsRegisteredWithTaskbarTabs()) 
+	{
+		return;
+	}
+
+#if (WINVER >= 0x0601)
+	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
+	{
+		ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+		ASSERT(pTaskbarList != NULL);
+
+		CComQIPtr<ITaskbarList4> spTaskbarList4 = pTaskbarList;
+
+		if (spTaskbarList4 != NULL)
+		{
+			HRESULT hr = spTaskbarList4->SetTabProperties(m_tabProxyWnd.GetSafeHwnd(), (STPFLAG)dwFlags);
+
+			if (FAILED(hr))
+			{
+				TRACE1("CMDIChildWndEx::SetTaskbarTabProperties failed with code %x\n", hr);
+			}
+		}
+	}
+#endif
+}
 BOOL CMDIChildWndEx::DockPaneLeftOf(CPane* pBar, CPane* pLeftOf)
 {
 	m_dockManager.DockPaneLeftOf(pBar, pLeftOf);
 	return TRUE;
 }
+void CMDIChildWndEx::SetTaskbarTabActive()
+{
+	ASSERT_VALID(this);
 
+#if (WINVER >= 0x0601)
+	if (!IsTaskbarTabsSupportEnabled())
+		return;
+
+	ITaskbarList3 *pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+	if (pTaskbarList3)
+	{
+		CMDIFrameWndEx* pParentFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+		ASSERT_VALID(pParentFrame);
+		pTaskbarList3->SetTabActive(m_tabProxyWnd.GetSafeHwnd(), pParentFrame->GetSafeHwnd(), 0);
+	}
+#endif
+}
 void CMDIChildWndEx::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd)
 {
 	static BOOL bActivating = FALSE;
@@ -183,6 +424,30 @@ void CMDIChildWndEx::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDe
 			m_pMDIFrame->m_wndClientArea.SetActiveTab(pActivateWnd->GetSafeHwnd());
 		}
 
+#if (WINVER >= 0x0601)
+		// If in MDI Tabbed or MDI Tabbed Group, mode, and if the application wants
+		// the behavior, set the MDI child as the active tab in the task bar tab list.
+		if (IsTaskbarTabsSupportEnabled() && IsRegisteredWithTaskbarTabs())
+		{
+			CWinApp* pApp = AfxGetApp();
+			if (pApp != NULL)
+			{
+				CDataRecoveryHandler *pHandler = pApp->GetDataRecoveryHandler();
+				if ((pHandler == NULL) || (!pHandler->GetShutdownByRestartManager()))
+				{
+					InvalidateIconicBitmaps();
+					CMDIChildWndEx* pChild = DYNAMIC_DOWNCAST(CMDIChildWndEx, pDeactivateWnd);
+					if (pChild != NULL)
+					{
+						pChild->InvalidateIconicBitmaps();
+					}
+
+					SetTaskbarTabActive();
+				}
+			}
+		}
+#endif
+
 		bActivating = FALSE;
 
 		if (bActivate && m_pMDIFrame != NULL)
@@ -197,6 +462,13 @@ void CMDIChildWndEx::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDe
 			}
 		}
 	}
+
+#if (WINVER >= 0x0601)
+	if (bActivate && !IsTaskbarTabsSupportEnabled() || !IsRegisteredWithTaskbarTabs())
+	{
+		SetTaskbarThumbnailClipRect(CRect(0, 0, 0, 0));
+	}
+#endif
 }
 
 void CMDIChildWndEx::ActivateFrame(int nCmdShow)
@@ -226,7 +498,6 @@ void CMDIChildWndEx::ActivateFrame(int nCmdShow)
 
 	pWndParent->SetRedraw(TRUE);
 	pWndParent->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
-
 }
 
 LRESULT CMDIChildWndEx::OnSetText(WPARAM, LPARAM lParam)
@@ -240,7 +511,44 @@ LRESULT CMDIChildWndEx::OnSetText(WPARAM, LPARAM lParam)
 	}
 
 	m_Impl.OnSetText((LPCTSTR)lParam);
+	SetTaskbarTabText((LPCTSTR)lParam);
+
 	return lRes;
+}
+
+void CMDIChildWndEx::SetTaskbarTabText(LPCTSTR lpcszDefaultText)
+{
+	if (IsTaskbarTabsSupportEnabled() && IsRegisteredWithTaskbarTabs())
+	{
+		CMDIFrameWndEx* pWnd = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+		if (pWnd == NULL)
+		{
+			return;
+		}
+
+		DWORD dwStyle = pWnd->GetStyle();
+
+		if ((dwStyle & FWS_ADDTOTITLE) == FWS_ADDTOTITLE)
+		{
+			CString strFrameTitle = pWnd->GetTitle();
+			CString strWndName;
+			CString strChildTitle(lpcszDefaultText);
+
+			if ((dwStyle & FWS_PREFIXTITLE) == FWS_PREFIXTITLE)
+			{
+				strWndName = strChildTitle + _T(" - ") + strFrameTitle;
+			}
+			else
+			{
+				strWndName = strFrameTitle + _T(" - ") + strChildTitle;
+			}
+			m_tabProxyWnd.SetWindowText((LPCTSTR)strWndName);
+		}
+		else
+		{
+			m_tabProxyWnd.SetWindowText(lpcszDefaultText);
+		}
+	}
 }
 
 LRESULT CMDIChildWndEx::OnSetIcon(WPARAM,LPARAM)
@@ -314,9 +622,11 @@ void CMDIChildWndEx::OnSize(UINT nType, int cx, int cy)
 {
 	if (m_bToBeDestroyed)
 	{
-		// prevents main menu flickering when the last dockument is being closed
+		// prevents main menu flickering when the last document is being closed
 		return;
 	}
+
+	InvalidateIconicBitmaps();
 
 	m_bIsMinimized = (nType == SIZE_MINIMIZED);
 
@@ -496,7 +806,7 @@ void CMDIChildWndEx::AdjustClientArea()
 		m_pTabbedControlBar->GetParent() == this) ? m_pTabbedControlBar : GetDlgItem(AFX_IDW_PANE_FIRST);
 	if (pChildWnd != NULL)
 	{
-		if (!pChildWnd->IsKindOf(RUNTIME_CLASS(CSplitterWnd)))
+		if (!pChildWnd->IsKindOf(RUNTIME_CLASS(CSplitterWnd)) && !pChildWnd->IsKindOf(RUNTIME_CLASS(CFormView)))
 		{
 			pChildWnd->ModifyStyle(0, WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
 		}
@@ -505,7 +815,7 @@ void CMDIChildWndEx::AdjustClientArea()
 			pChildWnd->ModifyStyle(0, WS_CLIPSIBLINGS);
 		}
 
-		if (!bInOnCreate && !CDockingManager::m_bFullScreenMode)
+		if (!m_bInOnCreate && !CDockingManager::m_bFullScreenMode)
 		{
 			CRect rectClientAreaBounds = m_dockManager.GetClientAreaBounds();
 
@@ -614,9 +924,44 @@ void CMDIChildWndEx::OnSizing(UINT fwSide, LPRECT pRect)
 	}
 
 }
+void CMDIChildWndEx::UnregisterTaskbarTab(BOOL bCheckRegisteredMDIChildCount)
+{
+#if (WINVER >= 0x0601)
+	// If in MDI Tabbed or MDI Tabbed Group, mode, and if the application
+	// wants the behavior, remove the MDI child from the task bar tab list.
+	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
+	{
+		ITaskbarList3 *pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+		if (pTaskbarList3)
+		{
+			pTaskbarList3->UnregisterTab(m_tabProxyWnd.GetSafeHwnd());
+		}
+		if (m_tabProxyWnd.GetSafeHwnd() != NULL)
+		{
+			m_tabProxyWnd.DestroyWindow();
+		}
 
+		if (bCheckRegisteredMDIChildCount)
+		{
+			// if no registered children - reset clip rect to full app window
+			CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+			if (pTopLevel != NULL && pTopLevel->GetRegisteredWithTaskBarMDIChildCount() == 0)
+			{
+				ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+				if (pTaskbarList3 != NULL)
+				{
+					pTaskbarList3->SetThumbnailClip(pTopLevel->GetSafeHwnd(), NULL);
+				}
+
+			}
+		}
+	}
+#endif
+}
 void CMDIChildWndEx::OnDestroy()
 {
+	UnregisterTaskbarTab();
+
 	if (m_pMDIFrame != NULL && m_pMDIFrame->IsPrintPreview())
 	{
 		m_pMDIFrame->SendMessage(WM_CLOSE);
@@ -687,6 +1032,15 @@ void CMDIChildWndEx::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 void CMDIChildWndEx::OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct)
 {
 	CMDIChildWnd::OnStyleChanged(nStyleType, lpStyleStruct);
+
+	if (IsTaskbarTabsSupportEnabled())
+	{
+		RegisterTaskbarTab();
+	}
+	else
+	{
+		UnregisterTaskbarTab();
+	}
 
 	BOOL bWasSysMenu = (lpStyleStruct->styleOld & WS_SYSMENU);
 	BOOL bIsSysMenu = (lpStyleStruct->styleNew & WS_SYSMENU);
@@ -789,6 +1143,18 @@ void CMDIChildWndEx::OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct)
 	}
 }
 
+void CMDIChildWndEx::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	if ((nID == SC_KEYMENU) && m_pMDIFrame && m_pMDIFrame->AreMDITabs())
+	{
+		// If in tabbed MDI mode, ignore request for the menu for
+		// the MDI child windows--otherwise we loop infinitely.
+		return;
+	}
+
+	CMDIChildWnd::OnSysCommand(nID, lParam);
+}
+
 LRESULT CMDIChildWndEx::OnIdleUpdateCmdUI(WPARAM, LPARAM)
 {
 	m_dockManager.SendMessageToMiniFrames(WM_IDLEUPDATECMDUI);
@@ -856,6 +1222,16 @@ BOOL CMDIChildWndEx::OnNcActivate(BOOL bActive)
 		RedrawWindow(NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
 	}
 
+	CWinApp* pApp = AfxGetApp();
+	if (pApp != NULL)
+	{
+		CDataRecoveryHandler *pHandler = pApp->GetDataRecoveryHandler();
+		if ((pHandler == NULL) || (!pHandler->GetShutdownByRestartManager()))
+		{
+			InvalidateIconicBitmaps();
+		}
+	}
+
 	return bRes;
 }
 
@@ -884,6 +1260,74 @@ LRESULT CMDIChildWndEx::OnChangeVisualManager(WPARAM, LPARAM)
 	}
 
 	return 0;
+}
+
+#if (WINVER >= 0x0601)
+void CMDIChildWndEx::OnSendIconicThumbnail(WPARAM, LPARAM)
+{
+	CDC dcThumbnail;
+	PrintClient(&dcThumbnail, PRF_CLIENT);
+
+	HBITMAP hBitmap = (HBITMAP)(dcThumbnail.GetCurrentBitmap()->m_hObject);
+	HMODULE hDWMAPI = GetModuleHandleW(L"DWMAPI");
+	if (hDWMAPI != NULL)
+	{
+		PFNSETICONICTHUMBNAIL pfnSetIconicThumbnail = (PFNSETICONICTHUMBNAIL)GetProcAddress(hDWMAPI, "DwmSetIconicThumbnail");
+		if (pfnSetIconicThumbnail)
+		{
+			pfnSetIconicThumbnail(GetSafeHwnd(), hBitmap, DWM_SIT_DISPLAYFRAME);
+		}
+	}
+}
+
+void CMDIChildWndEx::OnSendIconicLivePreviewBitmap(WPARAM, LPARAM)
+{
+	CDC dcThumbnail;
+	PrintClient(&dcThumbnail, PRF_CLIENT);
+
+	CRect rectClient;
+	GetClientRect(rectClient);
+	CPoint ptClient;
+	ptClient.x = rectClient.left;
+	ptClient.y = rectClient.top;
+
+	HBITMAP hBitmap = (HBITMAP)(dcThumbnail.GetCurrentBitmap()->m_hObject);
+	HMODULE hDWMAPI = GetModuleHandleW(L"DWMAPI");
+	if (hDWMAPI != NULL)
+	{
+		PFNSETICONICLIVEPRBMP pfnSetIconicLivePreviewBitmap = (PFNSETICONICLIVEPRBMP)GetProcAddress(hDWMAPI, "DwmSetIconicLivePreviewBitmap");
+		if (pfnSetIconicLivePreviewBitmap)
+		{
+			pfnSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, DWM_SIT_DISPLAYFRAME);
+		}
+	}
+}
+#endif
+
+BOOL CMDIChildWndEx::OnTaskbarTabThumbnailStretch(HBITMAP hBmpDst, const CRect& rectDst, HBITMAP hBmpSrc, const CRect& rectSrc)
+{
+	UNREFERENCED_PARAMETER(rectSrc);
+
+	if (hBmpSrc == NULL || hBmpDst == NULL)
+	{
+		return FALSE;
+	}
+
+	CImage image;
+	image.Attach(hBmpSrc);
+
+	CClientDC dcClient(this);
+
+	CDC dc;
+	dc.CreateCompatibleDC(&dcClient);
+
+	HBITMAP hOldBmp = (HBITMAP)dc.SelectObject(hBmpDst);
+
+	BOOL bResult = image.Draw(dc.GetSafeHdc(), rectDst, Gdiplus::InterpolationModeHighQualityBicubic);
+
+	dc.SelectObject(hOldBmp);
+
+	return bResult;
 }
 
 void CMDIChildWndEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp)
@@ -937,5 +1381,439 @@ BOOL CMDIChildWndEx::OnEraseBkgnd(CDC* /*pDC*/)
 	return TRUE;
 }
 
+void CMDIChildWndEx::OnNcRButtonUp(UINT nHitTest, CPoint point)
+{
+	if (m_pTabbedControlBar != NULL && nHitTest == HTCAPTION && !IsZoomed())	
+	{
+		ASSERT_VALID(m_pTabbedControlBar);
+		m_pTabbedControlBar->OnShowControlBarMenu(point);
+		return;
+	}
 
+	CMDIChildWnd::OnNcRButtonUp(nHitTest, point);
+}
 
+CWnd* CMDIChildWndEx::GetTaskbarPreviewWnd()
+{
+	ASSERT_VALID(this);
+	CWnd* pWnd = GetDescendantWindow(AFX_IDW_PANE_FIRST);
+
+	if (pWnd->GetSafeHwnd() != NULL)
+	{
+		ASSERT_VALID(pWnd);
+
+		CWnd* pParent = pWnd->GetParent();
+
+		if (pParent != this && pParent->GetSafeHwnd() != NULL && pParent->IsKindOf(RUNTIME_CLASS(CSplitterWnd)))
+		{
+			pWnd = pParent;
+		}
+	}
+	else
+	{
+		pWnd = GetWindow(GW_CHILD);
+	}
+
+	return pWnd;
+}
+
+void CMDIChildWndEx::OnTaskbarTabThumbnailActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+{
+	UNREFERENCED_PARAMETER(pWndOther);
+	UNREFERENCED_PARAMETER(bMinimized);
+
+	CMDIFrameWndEx* pTopLevelFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+	ASSERT_VALID(pTopLevelFrame);
+
+	if (nState != WA_CLICKACTIVE)
+	{
+		ActivateTopLevelFrame();
+	}
+}
+
+int CMDIChildWndEx::OnTaskbarTabThumbnailMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message)
+{
+	UNREFERENCED_PARAMETER(pDesktopWnd);
+	UNREFERENCED_PARAMETER(nHitTest);
+
+	CMDIFrameWndEx* pTopLevelFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+	ASSERT_VALID(pTopLevelFrame);
+
+	if (message == WM_LBUTTONUP)
+	{
+		ActivateTopLevelFrame();
+	}
+	return 1;
+}
+
+void CMDIChildWndEx::OnPressTaskbarThmbnailCloseButton()
+{
+	CMDIFrameWndEx* pTopLevelFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+	ASSERT_VALID(pTopLevelFrame);
+
+	if (pTopLevelFrame == NULL || !pTopLevelFrame->IsWindowEnabled())
+	{
+		return;
+	}
+
+	CDocument* pDoc = GetActiveDocument();
+	if (pDoc != NULL && pDoc->IsModified())
+	{
+		ActivateTopLevelFrame();
+	}
+
+	PostMessage(WM_CLOSE);
+}
+
+void CMDIChildWndEx::EnableTaskbarThumbnailClipRect(BOOL bEnable)
+{
+	m_bEnableTaskbarThumbnailClip = bEnable;
+
+	if (GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	CRect rect(0, 0, 0, 0); 
+	if (bEnable) 
+	{
+		rect = GetTaskbarThumbnailClipRect();
+	}
+
+	SetTaskbarThumbnailClipRect(rect);	
+}
+
+CRect CMDIChildWndEx::GetTaskbarThumbnailClipRect() const
+{
+	ASSERT_VALID(this);
+
+	CRect rect(0, 0, 0, 0);
+	GetWindowRect(rect);
+	
+	return rect;
+}
+
+BOOL CMDIChildWndEx::SetTaskbarThumbnailClipRect(CRect rect)
+{
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return FALSE;
+	}
+	
+	CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+	if (pTopLevel == NULL || pTopLevel->MDIGetActive() != this)
+	{
+		return FALSE;
+	}
+
+	if (!rect.IsRectNull())
+	{
+		pTopLevel->ScreenToClient(rect);
+	}
+	
+	ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+	if (pTaskbarList3 == NULL)
+	{
+		TRACE0("Warning: ITaskbarList3 is NULL.");
+		return FALSE;
+	}
+
+	HRESULT hr = pTaskbarList3->SetThumbnailClip(pTopLevel->GetSafeHwnd(), rect.IsRectNull() || rect.IsRectEmpty() ? NULL : &rect);
+
+	if (!SUCCEEDED(hr))
+	{
+		TRACE1("SetTaskbarThumbnailClipRect failed with code %x.", hr);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+void CMDIChildWndEx::ActivateTopLevelFrame()
+{
+	CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
+	if (pTopLevel == NULL)
+	{
+		return;
+	}
+
+	ActivateFrame();
+	pTopLevel->SetForegroundWindow();
+	if (pTopLevel->IsIconic())
+	{
+		pTopLevel->ShowWindow(SW_RESTORE);
+	}
+	else
+	{
+		pTopLevel->ShowWindow(SW_SHOW);
+	}
+}
+//////////////////////////////////////////////////
+/// CMDITabProxyWnd
+
+#if (WINVER >= 0x0601)
+IMPLEMENT_DYNCREATE(CMDITabProxyWnd, CWnd)
+
+BEGIN_MESSAGE_MAP(CMDITabProxyWnd, CWnd)
+	ON_MESSAGE(WM_DWMSENDICONICTHUMBNAIL, &CMDITabProxyWnd::OnSendIconicThumbnail)
+	ON_MESSAGE(WM_DWMSENDICONICLIVEPREVIEWBITMAP, &CMDITabProxyWnd::OnSendIconicLivePreviewBitmap)
+	ON_WM_ACTIVATE()
+	ON_WM_MOUSEACTIVATE()
+	ON_WM_SYSCOMMAND()
+	ON_WM_CLOSE()
+END_MESSAGE_MAP()
+
+CMDITabProxyWnd::CMDITabProxyWnd() : m_pRelatedMDIChildFrame(NULL)
+{
+}
+
+CMDITabProxyWnd::~CMDITabProxyWnd()
+{
+}
+
+void CMDITabProxyWnd::SetRelatedMDIChildFrame(CMDIChildWndEx* pRelatedMDIFrame)
+{
+	ASSERT_KINDOF(CMDIChildWndEx, pRelatedMDIFrame);
+	m_pRelatedMDIChildFrame = pRelatedMDIFrame;
+}
+
+BOOL CMDITabProxyWnd::IsMDIChildActive()
+{
+	ASSERT_VALID(m_pRelatedMDIChildFrame);
+
+	CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, m_pRelatedMDIChildFrame->GetTopLevelFrame());
+	ASSERT_VALID(pTopLevel);
+
+	if (pTopLevel->IsIconic())
+	{
+		return FALSE;
+	}
+
+	return pTopLevel->MDIGetActive() == m_pRelatedMDIChildFrame;
+}
+
+static double CorrectZoomSize(const CSize& sizeSrc, CSize& sizeDst)
+{
+	double Zoom = min((double)sizeDst.cx / (double)sizeSrc.cx, (double)sizeDst.cy / (double)sizeSrc.cy);
+
+	sizeDst.cx = (long)(sizeSrc.cx * Zoom);
+	sizeDst.cy = (long)(sizeSrc.cy * Zoom);
+
+	return Zoom;
+}
+
+HBITMAP CMDITabProxyWnd::GetClientBitmap (int nWidth, int nHeight, BOOL bIsThumbnail)
+{
+	if (m_pRelatedMDIChildFrame == NULL || nWidth <= 0 || nHeight <= 0)
+	{
+		return NULL;
+	}
+
+	CRect rectWnd;
+	CWnd* pPreviewWnd = m_pRelatedMDIChildFrame->GetTaskbarPreviewWnd();
+
+	ASSERT_VALID(pPreviewWnd);
+	pPreviewWnd->GetWindowRect(rectWnd);
+
+	rectWnd.OffsetRect(-rectWnd.left, -rectWnd.top);
+
+	if (rectWnd.Width() <= 0 || rectWnd.Height() <= 0)
+	{
+		return NULL;
+	}
+
+	CImage bmpSrc;
+	bmpSrc.CreateEx(rectWnd.Width(), rectWnd.Height(), 32, BI_RGB, NULL, CImage::createAlphaChannel);
+
+	CClientDC dcPreview(pPreviewWnd);
+
+	CDC dcThumbnail;
+	dcThumbnail.CreateCompatibleDC(&dcPreview);
+	HBITMAP pOldSrc = (HBITMAP)dcThumbnail.SelectObject(HBITMAP(bmpSrc));
+	BOOL bAlphaChannelSet = FALSE;
+
+	pPreviewWnd->OnDrawIconicThumbnailOrLivePreview(dcThumbnail, rectWnd, CSize (nWidth, nHeight), bIsThumbnail, bAlphaChannelSet);
+	dcThumbnail.SelectObject(pOldSrc);
+
+	if (!bAlphaChannelSet)
+	{
+		LPBYTE pBits = (LPBYTE)bmpSrc.GetBits();
+		if (bmpSrc.GetPitch() < 0)
+		{
+			pBits = pBits + ((bmpSrc.GetHeight() - 1) * bmpSrc.GetPitch());
+		}
+		for (int i = 0; i < rectWnd.Width() * rectWnd.Height(); i++)
+		{
+			pBits[3] = 255;
+			pBits += 4;
+		}
+	}
+
+	CSize szDst(nWidth, nHeight);
+	CorrectZoomSize(rectWnd.Size(), szDst);
+	CRect rectDst (CPoint(0, 0), szDst);
+
+	CImage bmpDst;
+	bmpDst.CreateEx(szDst.cx, -szDst.cy, 32, BI_RGB, NULL, CImage::createAlphaChannel);
+
+	{
+		BOOL bHandled = FALSE;
+		if (bIsThumbnail)
+		{
+			bHandled = m_pRelatedMDIChildFrame->OnTaskbarTabThumbnailStretch(HBITMAP(bmpDst), rectDst, HBITMAP(bmpSrc), rectWnd);
+		}
+		
+		if (!bHandled)
+		{
+			CDC dc;
+			dc.CreateCompatibleDC(&dcPreview);
+			HBITMAP pOldDstBitmap = (HBITMAP)dc.SelectObject(HBITMAP(bmpDst));
+
+			bmpSrc.AlphaBlend(dc.GetSafeHdc(), rectDst, rectWnd);
+			dc.SelectObject(pOldDstBitmap);
+		}
+	}
+
+	return bmpDst.Detach();
+}
+
+LRESULT CMDITabProxyWnd::OnSendIconicThumbnail(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+
+	if (m_pRelatedMDIChildFrame == NULL)
+	{
+		return Default();
+	}
+
+	// Probably _xSize will be swapped with _ySize in Win7 Release, because usually width resides in LOWORD.
+	int nWidth = HIWORD(lParam); 
+	int nHeight = LOWORD(lParam);
+
+	HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
+	if (hDWMAPI != NULL)
+	{
+		PFNSETICONICTHUMBNAIL pfnSetIconicThumbnail = (PFNSETICONICTHUMBNAIL)GetProcAddress(hDWMAPI, "DwmSetIconicThumbnail");
+		if (pfnSetIconicThumbnail)
+		{
+			HBITMAP hBitmap = m_pRelatedMDIChildFrame->OnGetIconicThumbnail(nWidth, nHeight); 
+			if (hBitmap == NULL)
+			{
+				hBitmap = GetClientBitmap(nWidth, nHeight, TRUE);
+			}
+			
+			HRESULT hr = pfnSetIconicThumbnail(GetSafeHwnd(), hBitmap, 0);
+			if (FAILED(hr))
+			{
+				// trace error code
+				TRACE1("pfnSetIconicThumbnail failed with code %x", hr);
+			}
+			DeleteObject(hBitmap);
+		}
+	}
+
+	return Default();
+}
+
+LRESULT CMDITabProxyWnd::OnSendIconicLivePreviewBitmap(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+
+	if (m_pRelatedMDIChildFrame == NULL)
+	{
+		return 0;
+	}
+
+	ASSERT_VALID(m_pRelatedMDIChildFrame);
+
+	BOOL bActive = IsMDIChildActive();
+	CPoint ptClient(0,0);
+	HBITMAP hBitmap = m_pRelatedMDIChildFrame->OnGetIconicLivePreviewBitmap(bActive, ptClient);
+
+	if (hBitmap == NULL)
+	{
+		CMDIFrameWndEx* pTopLevelFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, m_pRelatedMDIChildFrame->GetTopLevelFrame());
+		ASSERT_VALID(pTopLevelFrame);
+
+		CRect rectWnd;
+		
+		CWnd* pPrintWnd = m_pRelatedMDIChildFrame->GetTaskbarPreviewWnd();
+		pPrintWnd->GetWindowRect(rectWnd);
+		pTopLevelFrame->ScreenToClient(rectWnd);
+
+		ptClient.x = rectWnd.left;
+		ptClient.y = rectWnd.top;
+
+		hBitmap = GetClientBitmap(rectWnd.Width(), rectWnd.Height(), FALSE);
+	}
+
+	HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
+	if (hDWMAPI != NULL)
+	{
+		PFNSETICONICLIVEPRBMP pfnSetIconicLivePreviewBitmap = (PFNSETICONICLIVEPRBMP)GetProcAddress(hDWMAPI, "DwmSetIconicLivePreviewBitmap");
+		if (pfnSetIconicLivePreviewBitmap)
+		{
+			pfnSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, 0);
+		}
+	}
+	DeleteObject(hBitmap);
+	return 0;
+}
+
+void CMDITabProxyWnd::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	if (m_pRelatedMDIChildFrame == NULL)
+	{
+		return;
+	}
+
+	ASSERT_VALID(m_pRelatedMDIChildFrame);
+
+	CMDIFrameWndEx* pTopLevelFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, m_pRelatedMDIChildFrame->GetTopLevelFrame());
+	ASSERT_VALID(pTopLevelFrame);
+
+	if (nID != SC_CLOSE)
+	{
+		if (nID != SC_MINIMIZE)
+		{
+			m_pRelatedMDIChildFrame->ActivateTopLevelFrame();
+		}
+
+		pTopLevelFrame->SendMessage(WM_SYSCOMMAND, nID, lParam);	
+		return;
+	}
+
+	Default();
+}
+
+void CMDITabProxyWnd::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+{
+	if (m_pRelatedMDIChildFrame == NULL)
+	{
+		return;
+	}
+
+	m_pRelatedMDIChildFrame->OnTaskbarTabThumbnailActivate(nState, pWndOther, bMinimized);
+}
+
+int CMDITabProxyWnd::OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message)
+{
+	if (m_pRelatedMDIChildFrame == NULL)
+	{
+		return 0;
+	}
+
+	return m_pRelatedMDIChildFrame->OnTaskbarTabThumbnailMouseActivate(pDesktopWnd, nHitTest, message);
+}
+
+void CMDITabProxyWnd::OnClose()
+{
+	if (m_pRelatedMDIChildFrame == NULL)
+	{
+		return;
+	}
+
+	m_pRelatedMDIChildFrame->OnPressTaskbarThmbnailCloseButton();
+}
+#endif

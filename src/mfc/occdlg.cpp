@@ -78,6 +78,7 @@ AFX_STATIC CWnd* AFXAPI _AfxNextControl(CWnd* pWndRoot, CWnd* pWndStart, UINT uF
 	// if pWndStart is already equal to pWndRoot, this confuses this function
 	// badly.
 	ASSERT(pWndRoot != pWndStart);
+	CWnd* pWndStartOriginal = pWndStart;
 
 	if (pWndStart == NULL)
 	{
@@ -111,9 +112,20 @@ Found:
 	{
 		if (((uFlags & CWP_SKIPINVISIBLE) && !pWndStart->IsWindowVisible()) ||
 			((uFlags & CWP_SKIPDISABLED) && !pWndStart->IsWindowEnabled()))
-			pWndStart = _AfxNextControl(pWndRoot, pWndStart, uFlags);
+		{
+			if (pWndStart != pWndStartOriginal)
+			{
+				pWndStart = _AfxNextControl(pWndRoot, pWndStart, uFlags);
+			}
+			else
+			{
+				return NULL;
+			}
+		}
 		else
+		{
 			pWndStart = _AfxNextControl(pWndStart, NULL, uFlags);
+		}
 	}
 
 	return pWndStart;
@@ -200,7 +212,7 @@ AFX_STATIC COleControlSiteOrWnd* AFXAPI _AfxFindNextMnem(CWnd* pWndDlg, COleCont
 	else
 		pWndT = pSiteOrWnd = pCtrlCont->m_listSitesOrWnds.GetNext(pos);
 
-	if (!pos || !pWndT)
+	if (!pWndT)
 		return NULL;
 
 	// walk list from pSiteOrWnd checking for matching mnemonic

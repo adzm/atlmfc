@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef ATLDEBUG_TRACE_MANAGER
@@ -13,42 +13,55 @@
 
 #include "Allocate.h"
 
+//
+// if you make changes to those classes look at file mappings in Externs.cpp
+//
+
 // Names
 class CAtlTraceModuleInfo
 {
 public:
 	explicit CAtlTraceModuleInfo();
 
-	void Reset(HINSTANCE hInst);
-	HINSTANCE GetInstance() const {return m_hInst;}
-
-	const WCHAR *Path() const {return m_szPath;}
-	const WCHAR *Name() const {return m_szName;}
+	void Reset(_In_ HINSTANCE hInst);
+	HINSTANCE GetInstance() const
+	{
+		return m_hInst;
+	}
+	const WCHAR *Path() const
+	{
+		return m_szPath;
+	}
+	const WCHAR *Name() const
+	{
+		return m_szName;
+	}
 
 	int m_iFirstCategory;
 	LONG m_nCategories;
 
 private:
-	WCHAR m_szPath[MAX_PATH], m_szName[_MAX_FNAME];
+	WCHAR m_szPath[MAX_PATH];
+	WCHAR m_szName[_MAX_FNAME];
 	HINSTANCE m_hInst;
 };
 
 class CAtlTraceSettings
 {
 public:
-	CAtlTraceSettings() : 
-		m_nLevel(0), 
-		m_eStatus(Inherit), 
+	CAtlTraceSettings() :
+		m_nLevel(0),
+		m_eStatus(Inherit),
 		m_nRefCount(0),
 		m_nCookie(0)
-		{
-		}
+	{
+	}
 
 	UINT m_nLevel;
 	enum Status
 	{
-		Inherit = 0, 
-		Enabled, 
+		Inherit = 0,
+		Enabled,
 		Disabled
 	};
 
@@ -78,8 +91,8 @@ public:
 		return( false );
 	}
 
-	// Marks the object as valid.  
-	void MarkValid( LONG nCookie )
+	// Marks the object as valid.
+	void MarkValid(_In_ LONG nCookie)
 	{
 		ATLASSERT( nCookie != 0 );
 		m_nCookie = nCookie;
@@ -116,14 +129,20 @@ public:
 };
 
 // Categories
-class CAtlTraceCategory : public CAtlTraceSettings
+class CAtlTraceCategory :
+	public CAtlTraceSettings
 {
 public:
 	CAtlTraceCategory();
 
-	const WCHAR *Name() const {return m_szName;}
+	const WCHAR *Name() const
+	{
+		return m_szName;
+	}
 
-	void Reset(const WCHAR *pszName, LONG nModuleCookie);
+	void Reset(
+		_In_z_ const WCHAR *pszName,
+		_In_ LONG nModuleCookie);
 
 	LONG m_nModuleCookie;
 	int m_iNextCategory;
@@ -133,39 +152,75 @@ private:
 };
 
 // Modules (DLLs)
-class CAtlTraceModule : public CAtlTraceModuleInfo, public CAtlTraceSettings
+class CAtlTraceModule :
+	public CAtlTraceModuleInfo,
+	public CAtlTraceSettings
 {
 public:
-	typedef int (__cdecl *fnCrtDbgReport_t)(int,const CHAR *,int,const CHAR *,const CHAR *,...);
+	typedef int (__cdecl *fnCrtDbgReport_t)(
+		_In_ int,
+		_In_z_ const CHAR *,
+		_In_ int,
+		_In_z_ const CHAR *,
+		_In_z_ _Printf_format_string_ const CHAR *,...);
 
 	explicit CAtlTraceModule();
 
-	void CrtDbgReport(fnCrtDbgReport_t pfnCrtDbgReport);
-	fnCrtDbgReport_t CrtDbgReport() const {return m_pfnCrtDbgReport;}
+	void CrtDbgReport(_In_opt_ fnCrtDbgReport_t pfnCrtDbgReport);
+	fnCrtDbgReport_t CrtDbgReport() const
+	{
+		return m_pfnCrtDbgReport;
+	}
 
 private:
 	fnCrtDbgReport_t m_pfnCrtDbgReport;
 };
 
 // Process Info
-class CAtlTraceProcess : public CAtlTraceModuleInfo
+class CAtlTraceProcess :
+	public CAtlTraceModuleInfo
 {
 public:
-	explicit CAtlTraceProcess(DWORD_PTR dwMaxSize);
-	void Save(FILE *file, UINT nTabs) const;
-	bool Load(FILE *file);
+	explicit CAtlTraceProcess(_In_ DWORD_PTR dwMaxSize);
+	void Save(_In_ FILE *file, _In_ UINT nTabs) const;
+	bool Load(_In_ FILE *file);
 
-	UINT IncRef() {return ++m_nRef;}
-	UINT DecRef() {return --m_nRef;}
-
-	DWORD Id() const {return m_dwId;}
-	DWORD_PTR MaxSize() const {return m_dwMaxSize;}
-	void *Base() const {return m_pvBase;}
-
-	int ModuleCount() const {return m_nModuleCount;}
-	int CategoryCount() const {return m_nCategoryCount;}
-	void IncModuleCount( UINT nModules ) {m_nModuleCount += nModules;}
-	void IncCategoryCount( UINT nCategories ) {m_nCategoryCount += nCategories;}
+	UINT IncRef()
+	{
+		return ++m_nRef;
+	}
+	UINT DecRef()
+	{
+		return --m_nRef;
+	}
+	DWORD Id() const
+	{
+		return m_dwId;
+	}
+	DWORD_PTR MaxSize() const
+	{
+		return m_dwMaxSize;
+	}
+	void *Base() const
+	{
+		return m_pvBase;
+	}
+	int ModuleCount() const
+	{
+		return m_nModuleCount;
+	}
+	int CategoryCount() const
+	{
+		return m_nCategoryCount;
+	}
+	void IncModuleCount(_In_ UINT nModules)
+	{
+		m_nModuleCount += nModules;
+	}
+	void IncCategoryCount(_In_ UINT nCategories)
+	{
+		m_nCategoryCount += nCategories;
+	}
 
 	LONG GetNextCookie();
 

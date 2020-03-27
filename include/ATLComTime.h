@@ -14,9 +14,14 @@
 #pragma once
 
 #pragma warning(push)
-#pragma warning(disable:4159)
+#pragma warning( disable : 4159 ) //pragma has popped previously pushed identifier
+#pragma warning( disable : 4127 ) //constant expression
 
 #include <atltime.h>
+
+#ifndef __oledb_h__
+#include <oledb.h>
+#endif // __oledb_h__
 
 #if defined(_M_IX86)
 #pragma pack(push, 4)
@@ -28,8 +33,6 @@ struct tagVARIANT;
 typedef tagVARIANT VARIANT;
 
 typedef double DATE;
-
-
  
 namespace ATL
 {
@@ -40,8 +43,12 @@ class COleDateTimeSpan
 public:
 	COleDateTimeSpan() throw();
 
-	COleDateTimeSpan(double dblSpanSrc) throw();
-	COleDateTimeSpan(LONG lDays, int nHours, int nMins, int nSecs) throw();
+	COleDateTimeSpan(_In_ double dblSpanSrc) throw();
+	COleDateTimeSpan(
+		_In_ LONG lDays, 
+		_In_ int nHours, 
+		_In_ int nMins, 
+		_In_ int nSecs) throw();
 
 // Attributes
 	enum DateTimeSpanStatus
@@ -54,7 +61,7 @@ public:
 	double m_span;
 	DateTimeSpanStatus m_status;
 
-	void SetStatus(DateTimeSpanStatus status) throw();
+	void SetStatus(_In_ DateTimeSpanStatus status) throw();
 	DateTimeSpanStatus GetStatus() const throw();
 
 	double GetTotalDays() const throw();    // span in days (about -3.65e6 to 3.65e6)
@@ -68,34 +75,37 @@ public:
 	LONG GetSeconds() const throw();    // component seconds in span (-59 to 59)
 
 // Operations
-	COleDateTimeSpan& operator=(double dblSpanSrc) throw();
+	COleDateTimeSpan& operator=(_In_ double dblSpanSrc) throw();
 
-	bool operator==(const COleDateTimeSpan& dateSpan) const throw();
-	bool operator!=(const COleDateTimeSpan& dateSpan) const throw();
-	bool operator<(const COleDateTimeSpan& dateSpan) const throw();
-	bool operator>(const COleDateTimeSpan& dateSpan) const throw();
-	bool operator<=(const COleDateTimeSpan& dateSpan) const throw();
-	bool operator>=(const COleDateTimeSpan& dateSpan) const throw();
+	bool operator==(_In_ const COleDateTimeSpan& dateSpan) const throw();
+	bool operator!=(_In_ const COleDateTimeSpan& dateSpan) const throw();
+	bool operator<(_In_ const COleDateTimeSpan& dateSpan) const throw();
+	bool operator>(_In_ const COleDateTimeSpan& dateSpan) const throw();
+	bool operator<=(_In_ const COleDateTimeSpan& dateSpan) const throw();
+	bool operator>=(_In_ const COleDateTimeSpan& dateSpan) const throw();
 
 	// DateTimeSpan math
-	COleDateTimeSpan operator+(const COleDateTimeSpan& dateSpan) const throw();
-	COleDateTimeSpan operator-(const COleDateTimeSpan& dateSpan) const throw();
-	COleDateTimeSpan& operator+=(const COleDateTimeSpan dateSpan) throw();
-	COleDateTimeSpan& operator-=(const COleDateTimeSpan dateSpan) throw();
+	COleDateTimeSpan operator+(_In_ const COleDateTimeSpan& dateSpan) const throw();
+	COleDateTimeSpan operator-(_In_ const COleDateTimeSpan& dateSpan) const throw();
+	COleDateTimeSpan& operator+=(_In_ const COleDateTimeSpan dateSpan) throw();
+	COleDateTimeSpan& operator-=(_In_ const COleDateTimeSpan dateSpan) throw();
 	COleDateTimeSpan operator-() const throw();
 
 	operator double() const throw();
 
-	void SetDateTimeSpan(LONG lDays, int nHours, int nMins, int nSecs) throw();
+	void SetDateTimeSpan(
+		_In_ LONG lDays, 
+		_In_ int nHours, 
+		_In_ int nMins, 
+		_In_ int nSecs) throw();
 
 	// formatting
-	CString Format(LPCTSTR pFormat) const;
-	CString Format(UINT nID) const;
+	CString Format(_In_z_ LPCTSTR pFormat) const;
+	CString Format(_In_ UINT nID) const;
 
 // Implementation
 	void CheckRange();
 
-private:
 	static const double OLE_DATETIME_HALFSECOND;
 };
 
@@ -107,23 +117,26 @@ public:
 
 	COleDateTime() throw();
 
-	COleDateTime(const VARIANT& varSrc) throw();
-	COleDateTime(DATE dtSrc) throw();
+	COleDateTime(_In_ const VARIANT& varSrc) throw();
+	COleDateTime(_In_ DATE dtSrc) throw();
 
-	COleDateTime(__time32_t timeSrc) throw();
-	COleDateTime(__time64_t timeSrc) throw();
+	COleDateTime(_In_ __time32_t timeSrc) throw();
+	COleDateTime(_In_ __time64_t timeSrc) throw();
 
-	COleDateTime(const SYSTEMTIME& systimeSrc) throw();
-	COleDateTime(const FILETIME& filetimeSrc) throw();
+	COleDateTime(_In_ const SYSTEMTIME& systimeSrc) throw();
+	COleDateTime(_In_ const FILETIME& filetimeSrc) throw();
 
-	COleDateTime(int nYear, int nMonth, int nDay,
-		int nHour, int nMin, int nSec) throw();
-	COleDateTime(WORD wDosDate, WORD wDosTime) throw();
+	COleDateTime(
+		_In_ int nYear, 
+		_In_ int nMonth, 
+		_In_ int nDay,
+		_In_ int nHour, 
+		_In_ int nMin, 
+		_In_ int nSec) throw();
+	COleDateTime(_In_ WORD wDosDate, _In_ WORD wDosTime) throw();
 
-#ifdef __oledb_h__
-	COleDateTime( const DBTIMESTAMP& dbts) throw();
-	bool GetAsDBTIMESTAMP( DBTIMESTAMP& dbts ) const throw();
-#endif
+	COleDateTime(_In_ const DBTIMESTAMP& dbts) throw();
+	bool GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const throw();
 
 // Attributes
 	enum DateTimeStatus
@@ -137,11 +150,11 @@ public:
 	DATE m_dt;
 	DateTimeStatus m_status;
 
-	void SetStatus(DateTimeStatus status) throw();
+	void SetStatus(_In_ DateTimeStatus status) throw();
 	DateTimeStatus GetStatus() const throw();
 
-	bool GetAsSystemTime(SYSTEMTIME& sysTime) const throw();
-	bool GetAsUDATE( UDATE& udate ) const throw();
+	bool GetAsSystemTime(_Out_ SYSTEMTIME& sysTime) const throw();
+	bool GetAsUDATE(_Out_ UDATE& udate) const throw();
 
 	int GetYear() const throw();
 	// Month of year (1 = January)
@@ -160,70 +173,75 @@ public:
 	int GetDayOfYear() const throw();
 
 // Operations
-	COleDateTime& operator=(const VARIANT& varSrc) throw();
-	COleDateTime& operator=(DATE dtSrc) throw();
+	COleDateTime& operator=(_In_ const VARIANT& varSrc) throw();
+	COleDateTime& operator=(_In_ DATE dtSrc) throw();
 
-	COleDateTime& operator=(const __time32_t& timeSrc) throw();
-	COleDateTime& operator=(const __time64_t& timeSrc) throw();
+	COleDateTime& operator=(_In_ const __time32_t& timeSrc) throw();
+	COleDateTime& operator=(_In_ const __time64_t& timeSrc) throw();
 
-	COleDateTime& operator=(const SYSTEMTIME& systimeSrc) throw();
-	COleDateTime& operator=(const FILETIME& filetimeSrc) throw();
-	COleDateTime& operator=(const UDATE& udate) throw();
+	COleDateTime& operator=(_In_ const SYSTEMTIME& systimeSrc) throw();
+	COleDateTime& operator=(_In_ const FILETIME& filetimeSrc) throw();
+	COleDateTime& operator=(_In_ const UDATE& udate) throw();
 
-	bool operator==(const COleDateTime& date) const throw();
-	bool operator!=(const COleDateTime& date) const throw();
-	bool operator<(const COleDateTime& date) const throw();
-	bool operator>(const COleDateTime& date) const throw();
-	bool operator<=(const COleDateTime& date) const throw();
-	bool operator>=(const COleDateTime& date) const throw();
+	bool operator==(_In_ const COleDateTime& date) const throw();
+	bool operator!=(_In_ const COleDateTime& date) const throw();
+	bool operator<(_In_ const COleDateTime& date) const throw();
+	bool operator>(_In_ const COleDateTime& date) const throw();
+	bool operator<=(_In_ const COleDateTime& date) const throw();
+	bool operator>=(_In_ const COleDateTime& date) const throw();
 
 	// DateTime math
-	COleDateTime operator+(COleDateTimeSpan dateSpan) const throw();
-	COleDateTime operator-(COleDateTimeSpan dateSpan) const throw();
-	COleDateTime& operator+=(COleDateTimeSpan dateSpan) throw();
-	COleDateTime& operator-=(COleDateTimeSpan dateSpan) throw();
+	COleDateTime operator+(_In_ COleDateTimeSpan dateSpan) const throw();
+	COleDateTime operator-(_In_ COleDateTimeSpan dateSpan) const throw();
+	COleDateTime& operator+=(_In_ COleDateTimeSpan dateSpan) throw();
+	COleDateTime& operator-=(_In_ COleDateTimeSpan dateSpan) throw();
 
 	// DateTimeSpan math
-	COleDateTimeSpan operator-(const COleDateTime& date) const throw();
+	COleDateTimeSpan operator-(_In_ const COleDateTime& date) const throw();
 
 	operator DATE() const throw();
 
-	int SetDateTime(int nYear, int nMonth, int nDay,
-		int nHour, int nMin, int nSec) throw();
-	int SetDate(int nYear, int nMonth, int nDay) throw();
-	int SetTime(int nHour, int nMin, int nSec) throw();
-	bool ParseDateTime(LPCTSTR lpszDate, DWORD dwFlags = 0,
-		LCID lcid = LANG_USER_DEFAULT) throw();
+	int SetDateTime(
+		_In_ int nYear, 
+		_In_ int nMonth, 
+		_In_ int nDay,
+		_In_ int nHour, 
+		_In_ int nMin, 
+		_In_ int nSec) throw();
+	int SetDate(_In_ int nYear, _In_ int nMonth, _In_ int nDay) throw();
+	int SetTime(_In_ int nHour, _In_ int nMin, _In_ int nSec) throw();
+	bool ParseDateTime(
+		_In_opt_z_ LPCTSTR lpszDate, 
+		_In_ DWORD dwFlags = 0,
+		_In_ LCID lcid = LANG_USER_DEFAULT) throw();
 
 	// formatting
-	CString Format(DWORD dwFlags = 0, LCID lcid = LANG_USER_DEFAULT) const;
-	CString Format(LPCTSTR lpszFormat) const;
-	CString Format(UINT nFormatID) const;
+	CString Format(_In_ DWORD dwFlags = 0, _In_ LCID lcid = LANG_USER_DEFAULT) const;
+	CString Format(_In_z_ LPCTSTR lpszFormat) const;
+	CString Format(_In_ UINT nFormatID) const;
 
 protected:
-	static double WINAPI DoubleFromDate( DATE date ) throw();
-	static DATE WINAPI DateFromDouble( double f ) throw();
+	static double WINAPI DoubleFromDate(_In_ DATE date) throw();
+	static DATE WINAPI DateFromDouble(_In_ double f) throw();
 
 	void CheckRange();	
-	BOOL ConvertSystemTimeToVariantTime(const SYSTEMTIME& systimeSrc);
+	BOOL ConvertSystemTimeToVariantTime(_In_ const SYSTEMTIME& systimeSrc);
 };
 
 }	// namespace ATL
  
-
- 
-
 #ifndef _DEBUG
 #define ATLCOMTIME_INLINE inline
 #include <atlcomtime.inl>
 #endif
-
-
  
 namespace ATL
 {
 
-inline bool COleDateTime::ParseDateTime(LPCTSTR lpszDate, DWORD dwFlags, LCID lcid) throw()
+inline bool COleDateTime::ParseDateTime(
+	_In_opt_z_ LPCTSTR lpszDate, 
+	_In_ DWORD dwFlags, 
+	_In_ LCID lcid) throw()
 {
 	USES_CONVERSION_EX;
 	LPCTSTR pszDate = ( lpszDate == NULL ) ? _T("") : lpszDate;
@@ -269,7 +287,7 @@ inline bool COleDateTime::ParseDateTime(LPCTSTR lpszDate, DWORD dwFlags, LCID lc
 	return true;
 }
 
-inline CString COleDateTimeSpan::Format(LPCTSTR pFormat) const
+inline CString COleDateTimeSpan::Format(_In_z_ LPCTSTR pFormat) const
 {
 	// If null, return empty string
 	if (GetStatus() == null)
@@ -279,7 +297,7 @@ inline CString COleDateTimeSpan::Format(LPCTSTR pFormat) const
 	return tmp.Format(pFormat);
 }
 
-inline CString COleDateTimeSpan::Format(UINT nFormatID) const
+inline CString COleDateTimeSpan::Format(_In_ UINT nFormatID) const
 {
 	CString strFormat;
 	if (!strFormat.LoadString(nFormatID))
@@ -287,7 +305,9 @@ inline CString COleDateTimeSpan::Format(UINT nFormatID) const
 	return Format(strFormat);
 }
 
-inline CString COleDateTime::Format(DWORD dwFlags, LCID lcid) const
+inline CString COleDateTime::Format(
+	_In_ DWORD dwFlags, 
+	_In_ LCID lcid) const
 {
 	// If null, return empty string
 	if (GetStatus() == null)
@@ -315,7 +335,7 @@ inline CString COleDateTime::Format(DWORD dwFlags, LCID lcid) const
 	return tmp;
 }
 
-inline CString COleDateTime::Format(LPCTSTR pFormat) const
+inline CString COleDateTime::Format(_In_z_ LPCTSTR pFormat) const
 {
 	ATLENSURE_THROW(pFormat != NULL, E_INVALIDARG);
 	
@@ -360,15 +380,14 @@ inline CString COleDateTime::Format(LPCTSTR pFormat) const
 	return strDate;
 }
 
-inline CString COleDateTime::Format(UINT nFormatID) const
+inline CString COleDateTime::Format(_In_ UINT nFormatID) const
 {
 	CString strFormat;
 	ATLENSURE(strFormat.LoadString(nFormatID));
 	return Format(strFormat);
 }
 
-#ifdef __oledb_h__
-inline COleDateTime::COleDateTime(const DBTIMESTAMP& dbts)
+inline COleDateTime::COleDateTime(_In_ const DBTIMESTAMP& dbts)
 {
 	SYSTEMTIME st;
 	::ZeroMemory(&st, sizeof(SYSTEMTIME));
@@ -383,7 +402,7 @@ inline COleDateTime::COleDateTime(const DBTIMESTAMP& dbts)
 	m_status = ::SystemTimeToVariantTime(&st, &m_dt) ? valid : invalid;
 }
 
-inline bool COleDateTime::GetAsDBTIMESTAMP(DBTIMESTAMP& dbts) const
+inline bool COleDateTime::GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const
 {
 	UDATE ud;
 	if (S_OK != VarUdateFromDate(m_dt, 0, &ud))
@@ -399,7 +418,6 @@ inline bool COleDateTime::GetAsDBTIMESTAMP(DBTIMESTAMP& dbts) const
 
 	return true;
 }
-#endif
 
 }	// namespace ATL
 #pragma pack(pop)

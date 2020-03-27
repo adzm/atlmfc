@@ -1199,7 +1199,10 @@ void CDockSite::AdjustDockingLayout()
 	}
 	else if (pParent->IsKindOf(RUNTIME_CLASS(CDialog)))
 	{
-		afxGlobalUtils.m_bDialogApp = TRUE;
+		if (pParent->GetSafeHwnd() == AfxGetMainWnd()->GetSafeHwnd())
+		{
+			afxGlobalUtils.m_bDialogApp = TRUE;
+		}
 	}
 }
 

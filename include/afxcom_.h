@@ -396,9 +396,7 @@ CIP<_Interface, _IID>::~CIP()
 {
 }
 
-#if _MSC_VER > 1020
 template<>
-#endif
 class CIP<IUnknown, &IID_IUnknown> : public _CIP<IUnknown, &IID_IUnknown>
 {
 public:

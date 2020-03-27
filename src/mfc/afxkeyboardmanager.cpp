@@ -323,12 +323,9 @@ void CKeyboardManager::ResetAll()
 			UINT uiResId = pTemplate->GetResId();
 			ENSURE(uiResId != 0);
 
-			LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiResId);
-			ENSURE(lpszResourceName != NULL);
+			HINSTANCE hInst = AfxFindResourceHandle(MAKEINTRESOURCE(uiResId), RT_MENU);
 
-			HINSTANCE hInst = AfxFindResourceHandle(lpszResourceName, RT_MENU);
-
-			HACCEL hAccellTable = ::LoadAccelerators(hInst, lpszResourceName);
+			HACCEL hAccellTable = ::LoadAcceleratorsW(hInst, MAKEINTRESOURCEW(uiResId));
 			if (hAccellTable != NULL)
 			{
 				UpdateAccelTable(pTemplate, hAccellTable);
@@ -366,12 +363,9 @@ void CKeyboardManager::ResetAll()
 
 		if (uiResId != 0)
 		{
-			LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiResId);
-			ENSURE(lpszResourceName != NULL);
+			HINSTANCE hInst = AfxFindResourceHandle(MAKEINTRESOURCE(uiResId), RT_MENU);
 
-			HINSTANCE hInst = AfxFindResourceHandle(lpszResourceName, RT_MENU);
-
-			HACCEL hAccellTable = ::LoadAccelerators(hInst, lpszResourceName);
+			HACCEL hAccellTable = ::LoadAcceleratorsW(hInst, MAKEINTRESOURCEW(uiResId));
 			if (hAccellTable != NULL)
 			{
 				UpdateAccelTable(NULL, hAccellTable);
@@ -591,5 +585,3 @@ void __stdcall CKeyboardManager::ShowAllAccelerators(BOOL bShowAll, LPCTSTR lpsz
 		m_bAllAccelerators = FALSE;
 	}
 }
-
-

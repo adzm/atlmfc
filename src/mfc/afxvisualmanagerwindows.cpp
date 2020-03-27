@@ -11,7 +11,6 @@
 
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "afxvisualmanagerwindows.h"
 #include "afxpopupmenubar.h"
 #include "afxbutton.h"
@@ -23,9 +22,11 @@
 #include "afxoutlookbarpanebutton.h"
 #include "afxstatusbar.h"
 #include "afxcaptionbar.h"
+#include "afxcolorbar.h"
 #include "afxdesktopalertwnd.h"
 #include "afxdocksite.h"
 #include "afxribbonstatusbar.h"
+#include "afxribbonpanelmenu.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -238,7 +239,7 @@ void CMFCVisualManagerWindows::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CR
 		}
 	}
 
-	if (m_pfDrawThemeBackground == NULL || m_hThemeRebar == NULL || pBar->IsDialogControl() || pBar->IsKindOf(RUNTIME_CLASS(CMFCCaptionBar)))
+	if (m_pfDrawThemeBackground == NULL || m_hThemeRebar == NULL || pBar->IsDialogControl() || pBar->IsKindOf(RUNTIME_CLASS(CMFCCaptionBar)) || pBar->IsKindOf(RUNTIME_CLASS(CMFCColorBar)))
 	{
 		CMFCVisualManagerOfficeXP::OnFillBarBackground(pDC, pBar,rectClient, rectClip, bNCArea);
 		return;
@@ -253,6 +254,16 @@ void CMFCVisualManagerWindows::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CR
 		else
 		{
 			::FillRect(pDC->GetSafeHdc(), rectClient, ::GetSysColorBrush(COLOR_MENU));
+
+			CMFCPopupMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCPopupMenuBar, pBar);
+			if (m_hThemeMenu != NULL && !pMenuBar->m_bDisableSideBarInXPMode)
+			{
+				CRect rectGutter = rectClient;
+				rectGutter.right = rectGutter.left + pMenuBar->GetGutterWidth() + 2;
+				rectGutter.DeflateRect(0, 1);
+
+				(*m_pfDrawThemeBackground)(m_hThemeMenu, pDC->GetSafeHdc(), MENU_POPUPGUTTER, 0, &rectGutter, 0);
+			}
 		}
 
 		return;
@@ -343,15 +354,29 @@ void CMFCVisualManagerWindows::OnHighlightMenuItem(CDC*pDC, CMFCToolBarMenuButto
 	if (m_hThemeWindow == NULL || m_bOfficeStyleMenus)
 	{
 		CMFCVisualManagerOfficeXP::OnHighlightMenuItem(pDC, pButton, rect, clrText);
+		return;
 	}
-	else
+
+	if (m_hThemeMenu == NULL)
 	{
 		CMFCVisualManager::OnHighlightMenuItem(pDC, pButton, rect, clrText);
+		return;
 	}
+
+	(*m_pfDrawThemeBackground)(m_hThemeMenu, pDC->GetSafeHdc(), MENU_POPUPITEM, MPI_HOT, &rect, 0);
+
+	(*m_pfGetThemeColor)(m_hThemeMenu, MENU_POPUPITEM, MPI_HOT, TMT_TEXTCOLOR, &clrText);
 }
 
 COLORREF CMFCVisualManagerWindows::GetHighlightedMenuItemTextColor(CMFCToolBarMenuButton* pButton)
 {
+	if (m_hThemeMenu != NULL && !m_bOfficeStyleMenus)
+	{
+		COLORREF clrText = 0;
+		(*m_pfGetThemeColor)(m_hThemeMenu, MENU_POPUPITEM, 0, TMT_TEXTCOLOR, &clrText);
+		return clrText;
+	}
+
 	if (m_hThemeWindow == NULL || m_bOfficeStyleMenus)
 	{
 		return CMFCVisualManagerOfficeXP::GetHighlightedMenuItemTextColor(pButton);
@@ -377,6 +402,23 @@ void CMFCVisualManagerWindows::OnHighlightRarelyUsedMenuItems(CDC* pDC, CRect re
 	rectRarelyUsed.left --;
 	rectRarelyUsed.right = rectRarelyUsed.left + CMFCToolBar::GetMenuImageSize().cx + 2 * GetMenuImageMargin() + 2;
 	dm.HighlightRect(rectRarelyUsed, 94);
+}
+
+void CMFCVisualManagerWindows::OnFillMenuImageRect(CDC* pDC, CMFCToolBarButton* pButton, CRect rect, CMFCVisualManager::AFX_BUTTON_STATE state)
+{
+	if (m_hThemeMenu == NULL || m_bOfficeStyleMenus || m_pfDrawThemeBackground == NULL)
+	{
+		CMFCVisualManagerOfficeXP::OnFillMenuImageRect(pDC, pButton, rect, state);
+		return;
+	}
+
+	ASSERT_VALID(pDC);
+	ASSERT_VALID(pButton);
+
+	if (pButton->m_nStyle & TBBS_CHECKED)
+	{
+		(*m_pfDrawThemeBackground)(m_hThemeMenu, pDC->GetSafeHdc(), MENU_POPUPCHECKBACKGROUND, MCB_NORMAL, &rect, 0);
+	}
 }
 
 void CMFCVisualManagerWindows::OnDrawButtonBorder(CDC* pDC, CMFCToolBarButton* pButton, CRect rect, AFX_BUTTON_STATE state)
@@ -430,10 +472,49 @@ void CMFCVisualManagerWindows::OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect 
 		return;
 	}
 
-	if (m_bOfficeStyleMenus && pBar->IsKindOf(RUNTIME_CLASS(CMFCPopupMenuBar)))
+	CMFCPopupMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCPopupMenuBar, pBar);
+	if (pMenuBar != NULL)
 	{
-		CMFCVisualManagerOfficeXP::OnDrawSeparator(pDC, pBar, rect, bHorz);
-		return;
+		if (m_bOfficeStyleMenus)
+		{
+			CMFCVisualManagerOfficeXP::OnDrawSeparator(pDC, pBar, rect, bHorz);
+			return;
+		}
+
+		if (m_hThemeMenu != NULL)
+		{
+			CMFCRibbonPanelMenuBar* pRibbonMenuBar = DYNAMIC_DOWNCAST(CMFCRibbonPanelMenuBar, pBar);
+			BOOL bRibbonPanel = pRibbonMenuBar != NULL && !pRibbonMenuBar->IsMenuMode () && !pRibbonMenuBar->IsMainPanel ();
+			if (bRibbonPanel)
+			{
+				if (bHorz && rect.Width () < 2)
+				{
+					rect.right++;
+				}
+
+				(*m_pfDrawThemeBackground)(m_hThemeToolBar, pDC->GetSafeHdc(), bHorz ? TP_SEPARATOR : TP_SEPARATORVERT, 0, &rect, 0);
+				return;
+			}
+
+			if (pRibbonMenuBar == NULL || !bRibbonPanel)
+			{
+				CRect rectClient;
+				pBar->GetClientRect(rectClient);
+
+				rect.left = rectClient.left + pMenuBar->GetGutterWidth();
+				rect.right = rectClient.right;
+				rect.top = rect.CenterPoint().y - 3;
+				rect.bottom = rect.CenterPoint().y + 3;
+			}
+
+			(*m_pfDrawThemeBackground)(m_hThemeMenu, pDC->GetSafeHdc(), MENU_POPUPSEPARATOR, 0, &rect, 0);
+			return;
+		}
+	}
+
+	if (bHorz && rect.Width() < 2)
+	{
+		rect.right++;
 	}
 
 	if (m_pfDrawThemeBackground != NULL)
@@ -489,10 +570,15 @@ void CMFCVisualManagerWindows::OnDrawCaptionButton(CDC* pDC, CMFCCaptionButton* 
 		case HTCLOSE:
 		case AFX_HTCLOSE:
 
-			if (pButton->IsMiniFrameButton())
+			if (pButton->IsMiniFrameButton() || afxGlobalData.bIsWindowsVista)
 			{
 				nPart = WP_SMALLCLOSEBUTTON;
 				hTheme = m_hThemeWindow;
+
+				if (!pButton->IsMiniFrameButton())
+				{
+					rect.DeflateRect(1, 2);
+				}
 			}
 			else
 			{
@@ -503,12 +589,15 @@ void CMFCVisualManagerWindows::OnDrawCaptionButton(CDC* pDC, CMFCCaptionButton* 
 			break;
 
 		case HTMAXBUTTON:
-			nPart = EBP_HEADERPIN;
-			hTheme = m_hThemeExplorerBar;
-
-			if (!bMaximized)
+			if (!afxGlobalData.bIsWindowsVista)
 			{
-				nState += 3;
+				nPart = EBP_HEADERPIN;
+				hTheme = m_hThemeExplorerBar;
+
+				if (!bMaximized)
+				{
+					nState += 3;
+				}
 			}
 			break;
 		}
@@ -516,7 +605,7 @@ void CMFCVisualManagerWindows::OnDrawCaptionButton(CDC* pDC, CMFCCaptionButton* 
 
 	if (nPart == 0 || hTheme == NULL)
 	{
-		if (!pButton->IsMiniFrameButton())
+		if (!pButton->IsMiniFrameButton() && !afxGlobalData.bIsWindowsVista)
 		{
 			rect.DeflateRect(1, 2);
 		}
@@ -826,6 +915,10 @@ void CMFCVisualManagerWindows::OnDrawMiniFrameBorder( CDC* pDC, CPaneFrameWnd* p
 	{
 		(*m_pfDrawThemeBackground)(m_hThemeWindow, pDC->GetSafeHdc(), WP_SMALLCAPTION, 0, &rectBorder, 0);
 	}
+
+	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarFace, afxGlobalData.clrBarDkShadow);
+	rectBorder.DeflateRect(1, 1);
+	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
 }
 
 void CMFCVisualManagerWindows::OnDrawFloatingToolbarBorder( CDC* pDC, CMFCBaseToolBar* pToolBar, CRect rectBorder, CRect rectBorderSize)
@@ -840,6 +933,10 @@ void CMFCVisualManagerWindows::OnDrawFloatingToolbarBorder( CDC* pDC, CMFCBaseTo
 	{
 		(*m_pfDrawThemeBackground)(m_hThemeWindow, pDC->GetSafeHdc(), WP_SMALLCAPTION, 0, &rectBorder, 0);
 	}
+
+	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarFace, afxGlobalData.clrBarDkShadow);
+	rectBorder.DeflateRect(1, 1);
+	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
 }
 
 void CMFCVisualManagerWindows::OnFillOutlookPageButton(CDC* pDC, const CRect& rectClient, BOOL bIsHighlighted, BOOL bIsPressed, COLORREF& clrText)
@@ -1300,7 +1397,10 @@ void CMFCVisualManagerWindows::OnDrawTask(CDC* pDC, CMFCTasksPaneTask* pTask, CI
 	}
 	else
 	{
-		pDC->DrawText(pTask->m_strName, rectText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+		CString strText = pTask->m_strName;
+		strText.Remove (_T('\n'));
+		strText.Remove (_T('\r'));
+		pDC->DrawText(strText, rectText, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 	}
 
 	pDC->SetBkMode(nBkModeOld);
@@ -1375,7 +1475,7 @@ void CMFCVisualManagerWindows::OnDrawControlBorder(CWnd* pWndCtrl)
 
 	COLORREF clrBorder = (COLORREF)-1;
 
-	if ((m_pfGetThemeColor == NULL) || ((*m_pfGetThemeColor)(m_hThemeComboBox, 5, 0, 3801, &clrBorder) != S_OK))
+	if ((m_pfGetThemeColor == NULL) || ((*m_pfGetThemeColor)(m_hThemeComboBox, 5, 0, TMT_BORDERCOLOR, &clrBorder) != S_OK))
 	{
 		CMFCVisualManagerOfficeXP::OnDrawControlBorder(pWndCtrl);
 		return;
@@ -1678,6 +1778,16 @@ COLORREF CMFCVisualManagerWindows::OnDrawPaneCaption(CDC* pDC, CDockablePane* pB
 		return CMFCVisualManagerOfficeXP::OnDrawPaneCaption(pDC, pBar, bActive, rectCaption, rectButtons);
 	}
 
+	if (afxGlobalData.bIsWindowsVista)
+	{
+		CDrawingManager dm(*pDC);
+		dm.FillGradient(rectCaption, 
+			bActive ? afxGlobalData.clrActiveCaptionGradient : afxGlobalData.clrInactiveCaptionGradient, 
+			bActive ? afxGlobalData.clrActiveCaption : afxGlobalData.clrInactiveCaption, TRUE);
+
+		return bActive ? afxGlobalData.clrCaptionText : afxGlobalData.clrInactiveCaptionText;
+	}
+
 	if (m_pfDrawThemeBackground != NULL)
 	{
 		(*m_pfDrawThemeBackground)(m_hThemeExplorerBar, pDC->GetSafeHdc(), EBP_HEADERBACKGROUND, 0, &rectCaption, 0);
@@ -1706,6 +1816,3 @@ COLORREF CMFCVisualManagerWindows::OnDrawPaneCaption(CDC* pDC, CDockablePane* pB
 
 	return clrText;
 }
-
-
-

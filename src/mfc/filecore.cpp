@@ -76,29 +76,57 @@ const HANDLE CFile::hFileNull = INVALID_HANDLE_VALUE;
 
 CFile::CFile()
 {
-	m_hFile = INVALID_HANDLE_VALUE;
-	m_bCloseOnDelete = FALSE;
+	CommonBaseInit(INVALID_HANDLE_VALUE, NULL);
+}
+
+CFile::CFile(CAtlTransactionManager* pTM)
+{
+	CommonBaseInit(INVALID_HANDLE_VALUE, pTM);
 }
 
 CFile::CFile(HANDLE hFile)
 {
-	 ASSERT(hFile != INVALID_HANDLE_VALUE);
-#ifdef _DEBUG	
-	DWORD dwFlags=0;
-	ASSERT(GetHandleInformation(hFile,&dwFlags) != 0 );
+	ASSERT(hFile != INVALID_HANDLE_VALUE);
+#ifdef _DEBUG
+	DWORD dwFlags = 0;
+	ASSERT(GetHandleInformation(hFile, &dwFlags) != 0);
 #endif
-	m_hFile = hFile;
-	m_bCloseOnDelete = FALSE;
+	CommonBaseInit(hFile, NULL);
 }
 
 CFile::CFile(LPCTSTR lpszFileName, UINT nOpenFlags)
 {
+	CommonInit(lpszFileName, nOpenFlags, NULL);
+}
+
+CFile::CFile(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM)
+{
+	CommonInit(lpszFileName, nOpenFlags, pTM);
+}
+
+void CFile::CommonBaseInit(HANDLE hFile, CAtlTransactionManager* pTM)
+{
+	m_hFile = hFile;
+	m_bCloseOnDelete = FALSE;
+	m_pTM = pTM;
+}
+
+void CFile::CommonInit(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM)
+{
+	ASSERT(lpszFileName != NULL);
 	ASSERT(AfxIsValidString(lpszFileName));
-	m_hFile = INVALID_HANDLE_VALUE;
+	if (lpszFileName == NULL)
+	{
+		AfxThrowInvalidArgException();
+	}
+
+	CommonBaseInit(INVALID_HANDLE_VALUE, pTM);
 
 	CFileException e;
 	if (!Open(lpszFileName, nOpenFlags, &e))
+	{
 		AfxThrowFileException(e.m_cause, e.m_lOsError, e.m_strFileName);
+	}
 }
 
 CFile::~CFile()
@@ -106,7 +134,9 @@ CFile::~CFile()
 	AFX_BEGIN_DESTRUCTOR
 
 	if (m_hFile != INVALID_HANDLE_VALUE && m_bCloseOnDelete)
+	{
 		Close();
+	}
 
 	AFX_END_DESTRUCTOR
 }
@@ -127,11 +157,20 @@ CFile* CFile::Duplicate() const
 	pFile->m_hFile = hFile;
 	ASSERT(pFile->m_hFile != INVALID_HANDLE_VALUE);
 	pFile->m_bCloseOnDelete = m_bCloseOnDelete;
+	pFile->m_pTM = m_pTM;
+
 	return pFile;
 }
 
-BOOL CFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags,
-	CFileException* pException)
+BOOL CFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM, CFileException* pException)
+{
+	ASSERT_VALID(this);
+
+	m_pTM = pTM;
+	return Open(lpszFileName, nOpenFlags, pException);
+}
+
+BOOL CFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags, CFileException* pException)
 {
 	ASSERT_VALID(this);
 	ASSERT(AfxIsValidString(lpszFileName));
@@ -247,8 +286,9 @@ BOOL CFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags,
 		dwFlags |= FILE_FLAG_SEQUENTIAL_SCAN;
 
 	// attempt file creation
-	HANDLE hFile = ::CreateFile(lpszFileName, dwAccess, dwShareMode, &sa,
-		dwCreateFlag, dwFlags, NULL);
+	HANDLE hFile = m_pTM != NULL ? 
+		m_pTM->CreateFile(lpszFileName, dwAccess, dwShareMode, &sa, dwCreateFlag, dwFlags, NULL) :
+		::CreateFile(lpszFileName, dwAccess, dwShareMode, &sa, dwCreateFlag, dwFlags, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		_AfxFillExceptionInfo(pException,lpszFileName);		
@@ -438,15 +478,17 @@ UINT CFile::GetBufferPtr(UINT nCommand, UINT /*nCount*/,
 	return 0;   // no support
 }
 
-void PASCAL CFile::Rename(LPCTSTR lpszOldName, LPCTSTR lpszNewName)
+void PASCAL CFile::Rename(LPCTSTR lpszOldName, LPCTSTR lpszNewName, CAtlTransactionManager* pTM)
 {
-	if (!::MoveFile((LPTSTR)lpszOldName, (LPTSTR)lpszNewName))
+	BOOL bRes = (pTM != NULL) ? pTM->MoveFile(lpszOldName, lpszNewName) : ::MoveFile((LPTSTR)lpszOldName, (LPTSTR)lpszNewName);
+	if (!bRes)
 		CFileException::ThrowOsError((LONG)::GetLastError(), lpszOldName);
 }
 
-void PASCAL CFile::Remove(LPCTSTR lpszFileName)
+void PASCAL CFile::Remove(LPCTSTR lpszFileName, CAtlTransactionManager* pTM)
 {
-	if (!::DeleteFile((LPTSTR)lpszFileName))
+	BOOL bRes = (pTM != NULL) ? pTM->DeleteFile(lpszFileName) : ::DeleteFile((LPTSTR)lpszFileName);
+	if (!bRes)
 		CFileException::ThrowOsError((LONG)::GetLastError(), lpszFileName);
 }
 
@@ -535,13 +577,13 @@ BOOL AFXAPI AfxGetInProcServer(LPCTSTR lpszCLSID, CString& str)
 	DWORD dwType = REG_NONE;
 	LONG lRes = ~ERROR_SUCCESS;
 
-	if (RegOpenKey(HKEY_CLASSES_ROOT, _T("CLSID"), &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"CLSID", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		HKEY hKeyCLSID = NULL;
-		if (RegOpenKey(hKey, lpszCLSID, &hKeyCLSID) == ERROR_SUCCESS)
+		if (RegOpenKeyEx(hKey, lpszCLSID, 0, KEY_READ, &hKeyCLSID) == ERROR_SUCCESS)
 		{
 			HKEY hKeyInProc = NULL;
-			if (RegOpenKey(hKeyCLSID, _T("InProcServer32"), &hKeyInProc) ==
+			if (RegOpenKeyExW(hKeyCLSID, L"InProcServer32", 0, KEY_QUERY_VALUE, &hKeyInProc) ==
 				ERROR_SUCCESS)
 			{
 				lRes = ::RegQueryValueEx(hKeyInProc, _T(""),
@@ -805,6 +847,13 @@ UINT AFXAPI AfxGetFileTitle(LPCTSTR lpszPathName, _Out_cap_(nMax) LPTSTR lpszTit
 	return lpszTitle == NULL ? lstrlen(lpszTemp)+1 : 0;
 }
 
+void AFXAPI AfxGetModuleFileName(HINSTANCE hInst, CString& strFileName)
+{
+	TCHAR szLongPathName[_MAX_PATH];
+	::GetModuleFileName(hInst, szLongPathName, _MAX_PATH);
+	strFileName = szLongPathName;
+}
+
 void AFXAPI AfxGetModuleShortFileName(HINSTANCE hInst, CString& strShortName)
 {
 	TCHAR szLongPathName[_MAX_PATH];
@@ -817,8 +866,6 @@ void AFXAPI AfxGetModuleShortFileName(HINSTANCE hInst, CString& strShortName)
 	}
 	strShortName.ReleaseBuffer();
 }
-
-
 
 /////////////////////////////////////////////////////////////////////////////
 // CFile diagnostics

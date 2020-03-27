@@ -901,20 +901,19 @@ BOOL CMFCPropertySheet::SetIconsList(UINT uiImageListResID, int cx, COLORREF clr
 {
 	ASSERT_VALID(this);
 
-	LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiImageListResID);
-	ENSURE(lpszResourceName != NULL);
+	ENSURE(uiImageListResID != 0);
 
 	HBITMAP hbmp = NULL;
 
 	// Try to load PNG image first:
 	CPngImage pngImage;
-	if (pngImage.Load(lpszResourceName))
+	if (pngImage.Load(MAKEINTRESOURCE(uiImageListResID)))
 	{
 		hbmp = (HBITMAP) pngImage.Detach();
 	}
 	else
 	{
-		hbmp = (HBITMAP) ::LoadImage(AfxFindResourceHandle(lpszResourceName, RT_BITMAP), lpszResourceName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+		hbmp = (HBITMAP) ::LoadImageW(AfxFindResourceHandle(MAKEINTRESOURCE(uiImageListResID), RT_BITMAP), MAKEINTRESOURCEW(uiImageListResID), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 	}
 
 	if (hbmp == NULL)
@@ -1346,6 +1345,3 @@ void CMFCPropertySheet::EnablePageHeader(int nHeaderHeight)
 void CMFCPropertySheet::OnDrawPageHeader(CDC* /*pDC*/, int /*nPage*/, CRect /*rectHeader*/)
 {
 }
-
-
-

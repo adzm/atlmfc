@@ -10,8 +10,6 @@
 
 #include "stdafx.h"
 
-
-
 #define new DEBUG_NEW
 
 /////////////////////////////////////////////////////////////////////////////
@@ -78,9 +76,14 @@ void CSingleDocTemplate::RemoveDocument(CDocument* pDoc)
 /////////////////////////////////////////////////////////////////////////////
 // CSingleDocTemplate commands
 
-CDocument* CSingleDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName,
-	BOOL bMakeVisible)
-	// if lpszPathName == NULL => create new file of this type
+extern BOOL g_bRemoveFromMRU;
+
+CDocument* CSingleDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL bMakeVisible)
+{
+	return OpenDocumentFile(lpszPathName, TRUE, bMakeVisible);
+}
+
+CDocument* CSingleDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL bAddToMRU, BOOL bMakeVisible)
 {
 	CDocument* pDocument = NULL;
 	CFrameWnd* pFrame = NULL;
@@ -92,7 +95,12 @@ CDocument* CSingleDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName,
 		// already have a document - reinit it
 		pDocument = m_pOnlyDoc;
 		if (!pDocument->SaveModified())
+		{
+			// set a flag to indicate that the document being opened should not
+			// be removed from the MRU list, if it was being opened from there
+			g_bRemoveFromMRU = FALSE;
 			return NULL;        // leave the original one
+		}
 
 		pFrame = (CFrameWnd*)AfxGetMainWnd();
 		ASSERT(pFrame != NULL);
@@ -185,7 +193,8 @@ CDocument* CSingleDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName,
 			}
 			return NULL;        // open failed
 		}
-		pDocument->SetPathName(lpszPathName);
+		pDocument->SetPathName(lpszPathName, bAddToMRU);
+		pDocument->OnDocumentEvent(CDocument::onAfterOpenDocument);
 	}
 
 	CWinThread* pThread = AfxGetThread();

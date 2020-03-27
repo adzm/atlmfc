@@ -40,9 +40,9 @@ void CMultiDocTemplate::LoadTemplate()
 	{
 		HINSTANCE hInst = AfxFindResourceHandle(
 			MAKEINTRESOURCE(m_nIDResource), RT_MENU);
-		m_hMenuShared = ::LoadMenu(hInst, MAKEINTRESOURCE(m_nIDResource));
+		m_hMenuShared = ::LoadMenuW(hInst, MAKEINTRESOURCEW(m_nIDResource));
 		m_hAccelTable =
-			::LoadAccelerators(hInst, MAKEINTRESOURCE(m_nIDResource));
+			::LoadAcceleratorsW(hInst, MAKEINTRESOURCEW(m_nIDResource));
 	}
 
 #ifdef _DEBUG
@@ -104,8 +104,12 @@ void CMultiDocTemplate::RemoveDocument(CDocument* pDoc)
 /////////////////////////////////////////////////////////////////////////////
 // CMultiDocTemplate commands
 
-CDocument* CMultiDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName,
-	BOOL bMakeVisible)
+CDocument* CMultiDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL bMakeVisible)
+{
+	return OpenDocumentFile(lpszPathName, TRUE, bMakeVisible);
+}
+
+CDocument* CMultiDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL bAddToMRU, BOOL bMakeVisible)
 {
 	CDocument* pDocument = CreateNewDocument();
 	if (pDocument == NULL)
@@ -159,7 +163,8 @@ CDocument* CMultiDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName,
 			pFrame->DestroyWindow();
 			return NULL;
 		}
-		pDocument->SetPathName(lpszPathName);
+		pDocument->SetPathName(lpszPathName, bAddToMRU);
+		pDocument->OnDocumentEvent(CDocument::onAfterOpenDocument);
 	}
 
 	InitialUpdateFrame(pFrame, pDocument, bMakeVisible);

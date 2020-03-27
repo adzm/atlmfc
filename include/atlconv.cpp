@@ -10,5 +10,6 @@
 
 #pragma message("atlconv.cpp is obsolete. Please remove it from your project.")
 
-///////////////////////////////////////
-// No longer used
+/////////////////////////////////////////
+// No longer used    
+

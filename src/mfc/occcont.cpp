@@ -680,7 +680,6 @@ UINT COleControlContainer::IsDlgButtonChecked(int nIDButton) const
 		return 0;
 
 	if (pWnd->m_pCtrlSite == NULL)
-	  //IA64: Assume retval of BM_GETCHECK is still 32-bit
 		return UINT(pWnd->SendMessage(BM_GETCHECK, 0, 0));
 
 	DWORD dwValue;

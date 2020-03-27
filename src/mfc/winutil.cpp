@@ -83,6 +83,37 @@ HWND AFXAPI _AfxChildWindowFromPoint(HWND hWnd, POINT pt)
 	return NULL;    // not found
 }
 
+HWND AFXAPI _AfxTopChildWindowFromPoint(HWND hWnd, POINT pt)
+{
+	ASSERT(hWnd != NULL);
+
+	// ask Windows for the child window at the point
+	HWND hWndRet = ::RealChildWindowFromPoint(hWnd, pt);
+	if (hWndRet != NULL)
+	{
+		return ((hWndRet == hWnd) ? NULL : hWndRet);
+	}
+
+	// fallback: check child windows, return the topmost child that contains the point
+	::ClientToScreen(hWnd, &pt);
+	HWND hWndChild = ::GetWindow(hWnd, GW_CHILD);
+	for (; hWndChild != NULL; hWndChild = ::GetWindow(hWndChild, GW_HWNDNEXT))
+	{
+		if (_AfxGetDlgCtrlID(hWndChild) != (WORD)-1 && (::GetWindowLong(hWndChild, GWL_STYLE) & WS_VISIBLE))
+		{
+			// see if point hits the child window
+			CRect rect;
+			::GetWindowRect(hWndChild, rect);
+			if (rect.PtInRect(pt))
+			{
+				hWndRet = hWndChild;
+			}
+		}
+	}
+
+	return hWndRet;    // not found
+}
+
 void AFXAPI AfxSetWindowText(HWND hWndCtrl, LPCTSTR lpszNew)
 {
 	ENSURE(hWndCtrl);

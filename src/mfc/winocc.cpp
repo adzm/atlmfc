@@ -359,9 +359,17 @@ CWnd* CWnd::SetFocus()
 	ASSERT(::IsWindow(m_hWnd) || (m_pCtrlSite != NULL));
 
 	if (m_pCtrlSite == NULL)
+	{
+		if (GetParent() && GetParent()->GetControlContainer())
+		{
+			GetParent()->GetControlContainer()->m_pSiteFocus = NULL;
+		}
 		return CWnd::FromHandle(::SetFocus(m_hWnd));
+	}
 	else
+	{
 		return m_pCtrlSite->SetFocus();
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef __ATLBASE_INL__
@@ -24,11 +24,15 @@ namespace ATL
 /////////////////////////////////////////////////////////////////////////////
 // Connection Point Helpers
 
-ATLINLINE ATLAPI AtlAdvise(IUnknown* pUnkCP, IUnknown* pUnk, const IID& iid, LPDWORD pdw)
+ATLINLINE ATLAPI AtlAdvise(
+	_Inout_ IUnknown* pUnkCP,
+	_Inout_opt_ IUnknown* pUnk,
+	_In_ const IID& iid,
+	_Out_ LPDWORD pdw)
 {
 	if(pUnkCP == NULL)
 		return E_INVALIDARG;
-		
+
 	CComPtr<IConnectionPointContainer> pCPC;
 	CComPtr<IConnectionPoint> pCP;
 	HRESULT hRes = pUnkCP->QueryInterface(__uuidof(IConnectionPointContainer), (void**)&pCPC);
@@ -39,11 +43,14 @@ ATLINLINE ATLAPI AtlAdvise(IUnknown* pUnkCP, IUnknown* pUnk, const IID& iid, LPD
 	return hRes;
 }
 
-ATLINLINE ATLAPI AtlUnadvise(IUnknown* pUnkCP, const IID& iid, DWORD dw)
+ATLINLINE ATLAPI AtlUnadvise(
+	_Inout_ IUnknown* pUnkCP,
+	_In_ const IID& iid,
+	_In_ DWORD dw)
 {
 	if(pUnkCP == NULL)
 		return E_INVALIDARG;
-		
+
 	CComPtr<IConnectionPointContainer> pCPC;
 	CComPtr<IConnectionPoint> pCP;
 	HRESULT hRes = pUnkCP->QueryInterface(__uuidof(IConnectionPointContainer), (void**)&pCPC);
@@ -59,7 +66,7 @@ ATLINLINE ATLAPI AtlUnadvise(IUnknown* pUnkCP, const IID& iid, DWORD dw)
 
 //This API should be called from the same thread that called
 //AtlMarshalPtrInProc
-ATLINLINE ATLAPI AtlFreeMarshalStream(IStream* pStream)
+ATLINLINE ATLAPI AtlFreeMarshalStream(_Inout_ IStream* pStream)
 {
 	HRESULT hRes=S_OK;
 	if (pStream != NULL)
@@ -73,12 +80,16 @@ ATLINLINE ATLAPI AtlFreeMarshalStream(IStream* pStream)
 	return hRes;
 }
 
-ATLINLINE ATLAPI AtlMarshalPtrInProc(IUnknown* pUnk, const IID& iid, IStream** ppStream)
+ATLPREFAST_SUPPRESS(6387)
+ATLINLINE ATLAPI AtlMarshalPtrInProc(
+	_Inout_ IUnknown* pUnk,
+	_In_ const IID& iid,
+	_Deref_out_ IStream** ppStream)
 {
 	ATLASSERT(ppStream != NULL);
 	if (ppStream == NULL)
 		return E_POINTER;
-		
+
 	HRESULT hRes = CreateStreamOnHGlobal(NULL, TRUE, ppStream);
 	if (SUCCEEDED(hRes))
 	{
@@ -92,8 +103,12 @@ ATLINLINE ATLAPI AtlMarshalPtrInProc(IUnknown* pUnk, const IID& iid, IStream** p
 	}
 	return hRes;
 }
+ATLPREFAST_UNSUPPRESS()
 
-ATLINLINE ATLAPI AtlUnmarshalPtr(IStream* pStream, const IID& iid, IUnknown** ppUnk)
+ATLINLINE ATLAPI AtlUnmarshalPtr(
+	_Inout_ IStream* pStream,
+	_In_ const IID& iid,
+	_Deref_out_ IUnknown** ppUnk)
 {
 	ATLASSERT(ppUnk != NULL);
 	if (ppUnk == NULL)
@@ -113,18 +128,30 @@ ATLINLINE ATLAPI AtlUnmarshalPtr(IStream* pStream, const IID& iid, IUnknown** pp
 
 /////////////////////////////////////////////////////////////////////////////
 // Module
-
-ATLINLINE ATLAPI AtlComModuleGetClassObject(_ATL_COM_MODULE* pComModule, REFCLSID rclsid, REFIID riid, LPVOID* ppv)
+ATLPREFAST_SUPPRESS(6387)
+ATLINLINE ATLAPI AtlComModuleGetClassObject(
+	_Inout_ _ATL_COM_MODULE* pComModule,
+	_In_ REFCLSID rclsid,
+	_In_ REFIID riid,
+	_Deref_out_ LPVOID* ppv)
 {
 	if (ppv == NULL)
+	{
 		return E_POINTER;
+	}
+
 	*ppv = NULL;
 
 	ATLASSERT(pComModule != NULL);
 	if (pComModule == NULL)
+	{
 		return E_INVALIDARG;
+	}
+
 	if (pComModule->cbSize == 0)  // Module hasn't been initialized
+	{
 		return E_UNEXPECTED;
+	}
 
 	HRESULT hr = S_OK;
 
@@ -132,7 +159,8 @@ ATLINLINE ATLAPI AtlComModuleGetClassObject(_ATL_COM_MODULE* pComModule, REFCLSI
 	{
 		if (*ppEntry != NULL)
 		{
-			_ATL_OBJMAP_ENTRY* pEntry = *ppEntry;
+			const _ATL_OBJMAP_ENTRY* pEntry = *ppEntry;
+
 			if ((pEntry->pfnGetClassObject != NULL) && InlineIsEqualGUID(rclsid, *pEntry->pclsid))
 			{
 				if (pEntry->pCF == NULL)
@@ -142,25 +170,38 @@ ATLINLINE ATLAPI AtlComModuleGetClassObject(_ATL_COM_MODULE* pComModule, REFCLSI
 					if (FAILED(hr))
 					{
 						ATLTRACE(atlTraceCOM, 0, _T("ERROR : Unable to lock critical section in AtlComModuleGetClassObject\n"));
-						ATLASSERT(0);
+						ATLASSERT(FALSE);
 						break;
 					}
+
 					if (pEntry->pCF == NULL)
+					{
 						hr = pEntry->pfnGetClassObject(pEntry->pfnCreateInstance, __uuidof(IUnknown), (LPVOID*)&pEntry->pCF);
+					}
 				}
+
 				if (pEntry->pCF != NULL)
+				{
 					hr = pEntry->pCF->QueryInterface(riid, ppv);
+				}
 				break;
 			}
 		}
 	}
 
 	if (*ppv == NULL && hr == S_OK)
+	{
 		hr = CLASS_E_CLASSNOTAVAILABLE;
+	}
+
 	return hr;
 }
+ATLPREFAST_UNSUPPRESS()
 
-ATLINLINE ATLAPI AtlComModuleRegisterClassObjects(_ATL_COM_MODULE* pComModule, DWORD dwClsContext, DWORD dwFlags)
+ATLINLINE ATLAPI AtlComModuleRegisterClassObjects(
+	_Inout_ _ATL_COM_MODULE* pComModule,
+	_In_ DWORD dwClsContext,
+	_In_ DWORD dwFlags)
 {
 	ATLASSERT(pComModule != NULL);
 	if (pComModule == NULL)
@@ -175,7 +216,8 @@ ATLINLINE ATLAPI AtlComModuleRegisterClassObjects(_ATL_COM_MODULE* pComModule, D
 	return hr;
 }
 
-ATLINLINE ATLAPI AtlComModuleRevokeClassObjects(_ATL_COM_MODULE* pComModule)
+ATLINLINE ATLAPI AtlComModuleRevokeClassObjects(
+	_Inout_ _ATL_COM_MODULE* pComModule)
 {
 	ATLASSERT(pComModule != NULL);
 	if (pComModule == NULL)
@@ -190,14 +232,14 @@ ATLINLINE ATLAPI AtlComModuleRevokeClassObjects(_ATL_COM_MODULE* pComModule)
 	return hr;
 }
 
-ATLINLINE ATLAPI_(BOOL) AtlWaitWithMessageLoop(HANDLE hEvent)
+ATLINLINE ATLAPI_(BOOL) AtlWaitWithMessageLoop(_In_ HANDLE hEvent)
 {
 	DWORD dwRet;
 	MSG msg;
 
 	while(1)
 	{
-		dwRet = MsgWaitForMultipleObjects(1, &hEvent, FALSE, INFINITE, QS_ALLINPUT);
+		dwRet = MsgWaitForMultipleObjectsEx(1, &hEvent, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
 
 		if (dwRet == WAIT_OBJECT_0)
 			return TRUE;    // The event was signaled
@@ -236,16 +278,19 @@ ATLINLINE ATLAPI_(BOOL) AtlWaitWithMessageLoop(HANDLE hEvent)
 
 /////////////////////////////////////////////////////////////////////////////
 // QI support
-
-ATLINLINE ATLAPI AtlInternalQueryInterface(void* pThis,
-	const _ATL_INTMAP_ENTRY* pEntries, REFIID iid, void** ppvObject)
+ATLPREFAST_SUPPRESS(6387)
+ATLINLINE ATLAPI AtlInternalQueryInterface(
+	_Inout_ void* pThis,
+	_In_ const _ATL_INTMAP_ENTRY* pEntries,
+	_In_ REFIID iid,
+	_Deref_out_ void** ppvObject)
 {
 	ATLASSERT(pThis != NULL);
 	ATLASSERT(pEntries!= NULL);
-	
+
 	if(pThis == NULL || pEntries == NULL)
-		return E_INVALIDARG ;
-		
+		return E_INVALIDARG;
+
 	// First entry in the com map should be a simple map entry
 	ATLASSERT(pEntries->pFunc == _ATL_SIMPLEMAPENTRY);
 	if (ppvObject == NULL)
@@ -283,8 +328,9 @@ ATLINLINE ATLAPI AtlInternalQueryInterface(void* pThis,
 	}
 	return E_NOINTERFACE;
 }
+ATLPREFAST_UNSUPPRESS()
 
-ATLINLINE ATLAPI_(DWORD) AtlGetVersion(void* /* pReserved */)
+ATLINLINE ATLAPI_(DWORD) AtlGetVersion(_In_opt_ void* /* pReserved */)
 {
 	return _ATL_VER;
 }
@@ -292,7 +338,10 @@ ATLINLINE ATLAPI_(DWORD) AtlGetVersion(void* /* pReserved */)
 /////////////////////////////////////////////////////////////////////////////
 // Windowing
 
-ATLINLINE ATLAPI_(void) AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE* pWinModule, _AtlCreateWndData* pData, void* pObject)
+ATLINLINE ATLAPI_(void) AtlWinModuleAddCreateWndData(
+	_Inout_ _ATL_WIN_MODULE* pWinModule,
+	_Inout_ _AtlCreateWndData* pData,
+	_In_ void* pObject)
 {
 	if (pWinModule == NULL)
 		_AtlRaiseException((DWORD)EXCEPTION_ACCESS_VIOLATION);
@@ -300,7 +349,7 @@ ATLINLINE ATLAPI_(void) AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE* pWinModule
 	ATLASSERT(pData != NULL && pObject != NULL);
 	if(pData == NULL || pObject == NULL)
 		_AtlRaiseException((DWORD)EXCEPTION_ACCESS_VIOLATION);
-		
+
 	pData->m_pThis = pObject;
 	pData->m_dwThreadID = ::GetCurrentThreadId();
 	CComCritSecLock<CComCriticalSection> lock(pWinModule->m_csWindowCreate, false);
@@ -314,7 +363,8 @@ ATLINLINE ATLAPI_(void) AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE* pWinModule
 	pWinModule->m_pCreateWndList = pData;
 }
 
-ATLINLINE ATLAPI_(void*) AtlWinModuleExtractCreateWndData(_ATL_WIN_MODULE* pWinModule)
+ATLINLINE ATLAPI_(void*) AtlWinModuleExtractCreateWndData(
+	_Inout_opt_ _ATL_WIN_MODULE* pWinModule)
 {
 	if (pWinModule == NULL)
 		return NULL;
@@ -350,12 +400,12 @@ ATLINLINE ATLAPI_(void*) AtlWinModuleExtractCreateWndData(_ATL_WIN_MODULE* pWinM
 	return pv;
 }
 
-
-ATLINLINE ATLAPI AtlWinModuleInit(_ATL_WIN_MODULE* pWinModule)
+ATLINLINE ATLAPI AtlWinModuleInit(
+	_Inout_ _ATL_WIN_MODULE* pWinModule)
 {
 	if (pWinModule == NULL)
 		return E_INVALIDARG;
-		
+
 	// check only in the DLL
 	if (pWinModule->cbSize != sizeof(_ATL_WIN_MODULE))
 		return E_INVALIDARG;
@@ -374,11 +424,14 @@ ATLINLINE ATLAPI AtlWinModuleInit(_ATL_WIN_MODULE* pWinModule)
 /////////////////////////////////////////////////////////////////////////////
 // Module
 
-ATLINLINE ATLAPI AtlModuleAddTermFunc(_ATL_MODULE* pModule, _ATL_TERMFUNC* pFunc, DWORD_PTR dw)
+ATLINLINE ATLAPI AtlModuleAddTermFunc(
+	_Inout_ _ATL_MODULE* pModule,
+	_In_ _ATL_TERMFUNC* pFunc,
+	_In_ DWORD_PTR dw)
 {
 	if (pModule == NULL)
 		return E_INVALIDARG;
-		
+
 	HRESULT hr = S_OK;
 	_ATL_TERMFUNC_ELEM* pNew = NULL;
 	ATLTRY(pNew = new _ATL_TERMFUNC_ELEM);
@@ -405,11 +458,11 @@ ATLINLINE ATLAPI AtlModuleAddTermFunc(_ATL_MODULE* pModule, _ATL_TERMFUNC* pFunc
 	return hr;
 }
 
-ATLINLINE ATLAPI_(void) AtlCallTermFunc(_ATL_MODULE* pModule)
+ATLINLINE ATLAPI_(void) AtlCallTermFunc(_Inout_ _ATL_MODULE* pModule)
 {
 	if (pModule == NULL)
 		_AtlRaiseException((DWORD)EXCEPTION_ACCESS_VIOLATION);
-		
+
 	_ATL_TERMFUNC_ELEM* pElem = pModule->m_pTermFuncs;
 	_ATL_TERMFUNC_ELEM* pNext = NULL;
 	while (pElem != NULL)

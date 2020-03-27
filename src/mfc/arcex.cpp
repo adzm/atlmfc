@@ -27,6 +27,7 @@ static const LPCSTR rgszCArchiveExceptionCause[] =
 	"badIndex",
 	"badClass",
 	"badSchema",
+	"bufferFull",
 };
 static const char szUnknown[] = "unknown";
 #endif

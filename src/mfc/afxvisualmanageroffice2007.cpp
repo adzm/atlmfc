@@ -297,6 +297,7 @@ CMFCVisualManagerOffice2007::CMFCVisualManagerOffice2007() : m_bNcTextCenter(FAL
 {
 	m_szNcBtnSize[0] = CSize(0, 0);
 	m_szNcBtnSize[1] = CSize(0, 0);
+	m_ptRibbonMainImageOffset = CPoint(0, -1);
 }
 
 CMFCVisualManagerOffice2007::~CMFCVisualManagerOffice2007()
@@ -369,7 +370,6 @@ BOOL __stdcall CMFCVisualManagerOffice2007::SetStyle(Style style, LPCTSTR lpszPa
 	CleanStyle();
 	m_Style = style;
 	SetResourceHandle(hinstRes);
-	m_bAutoFreeRes = TRUE;
 
 	return TRUE;
 }
@@ -611,7 +611,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 
 	CMFCVisualManagerOffice2003::OnUpdateSystemColors();
 
-	if (!afxGlobalData.bIsOSAlphaBlendingSupport || afxGlobalData.IsHighContrastMode() || afxGlobalData.m_nBitsPerPixel <= 8)
+	if (afxGlobalData.IsHighContrastMode() || afxGlobalData.m_nBitsPerPixel <= 8)
 	{
 		return;
 	}
@@ -784,6 +784,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 			CTagManager tmCaption(strCaption);
 
 			NONCLIENTMETRICS ncm;
+			ncm.cbSize = sizeof(ncm);
 			if (afxGlobalData.GetNonClientMetrics (ncm))
 			{
 				tmCaption.ReadFont(_T("FONT"), ncm.lfCaptionFont);
@@ -1434,6 +1435,8 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 					tmCaption.ReadToolBarImages(_T("LAUNCH_ICON"), m_RibbonBtnLaunchIcon, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_LAUNCH_ICON")));
 					tmCaption.ReadColor(_T("TextNormal"), m_clrRibbonPanelCaptionText);
 					tmCaption.ReadColor(_T("TextHighlighted"), m_clrRibbonPanelCaptionTextHighlighted);
+
+					m_RibbonBtnLaunchIcon.SmoothResize(afxGlobalData.GetRibbonImageScale());
 				}
 			}
 
@@ -1476,6 +1479,8 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 					tmButtons.ReadControlRenderer(_T("BUTTON_MENU_V_C"), m_ctrlRibbonBtnMenuV[0], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_MENU_V_C")));
 					tmButtons.ReadControlRenderer(_T("BUTTON_MENU_V_M"), m_ctrlRibbonBtnMenuV[1], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_MENU_V_M")));
 					tmButtons.ReadControlRenderer(_T("BUTTON_CHECK"), m_ctrlRibbonBtnCheck, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_CHECK")));
+
+					m_ctrlRibbonBtnCheck.SmoothResize(afxGlobalData.GetRibbonImageScale());
 
 					tmButtons.ReadControlRenderer(_T("BUTTON_PNL_T"), m_ctrlRibbonBtnPalette[0], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_PALETTE_T")));
 					tmButtons.ReadControlRenderer(_T("BUTTON_PNL_M"), m_ctrlRibbonBtnPalette[1], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_PALETTE_M")));
@@ -1634,6 +1639,11 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 
 		tmItem.ReadControlRenderer(_T("MAIN_BUTTON"), m_RibbonBtnMain, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_MAIN")));
 
+		if (m_RibbonBtnMain.IsValid())
+		{
+			m_RibbonBtnMain.SmoothResize (afxGlobalData.GetRibbonImageScale());
+		}
+
 		if (tmItem.ExcludeTag(_T("MAIN"), str))
 		{
 			CTagManager tmMain(str);
@@ -1662,6 +1672,10 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 				tmSlider.ReadControlRenderer(_T("THUMB"), m_ctrlRibbonSliderThumb, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_SLIDER_THUMB")));
 				tmSlider.ReadControlRenderer(_T("PLUS"), m_ctrlRibbonSliderBtnPlus, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_SLIDER_BTN_PLUS")));
 				tmSlider.ReadControlRenderer(_T("MINUS"), m_ctrlRibbonSliderBtnMinus, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_SLIDER_BTN_MINUS")));
+
+				m_ctrlRibbonSliderThumb.SmoothResize(afxGlobalData.GetRibbonImageScale());
+				m_ctrlRibbonSliderBtnMinus.SmoothResize(afxGlobalData.GetRibbonImageScale());
+				m_ctrlRibbonSliderBtnPlus.SmoothResize(afxGlobalData.GetRibbonImageScale());
 			}
 
 			CString strProgress;
@@ -2744,38 +2758,15 @@ void CMFCVisualManagerOffice2007::OnFillBarBackground(CDC* pDC, CBasePane* pBar,
 	{
 		pDC->FillRect(rectClip, &m_brMenuLight);
 
-		BOOL bQuickMode = FALSE;
-
 		CMFCPopupMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCPopupMenuBar, pBar);
 		if (!pMenuBar->m_bDisableSideBarInXPMode)
 		{
-			CWnd* pWnd = pMenuBar->GetParent();
-
-			if (pWnd != NULL && pWnd->IsKindOf(RUNTIME_CLASS(CMFCPopupMenu)))
-			{
-				CMFCPopupMenu* pMenu = DYNAMIC_DOWNCAST(CMFCPopupMenu, pWnd);
-
-				if (pMenu->IsCustomizePane())
-				{
-					bQuickMode = TRUE;
-				}
-			}
-
 			CRect rectImages = rectClient;
-			//rectImages.DeflateRect(0, 1);
-
-			if (bQuickMode)
-			{
-				rectImages.right = rectImages.left + 2 * CMFCToolBar::GetMenuImageSize().cx + 4 * GetMenuImageMargin() + 4;
-			}
-			else
-			{
-				rectImages.right = rectImages.left + CMFCToolBar::GetMenuImageSize().cx + 2 * GetMenuImageMargin() + 2;
-			}
+			rectImages.right = rectImages.left + pMenuBar->GetGutterWidth();
+			rectImages.DeflateRect (0, 1);
 
 			pDC->FillRect(rectImages, &m_brBarBkgnd);
 
-			CRect rect(rectImages);
 			rectImages.left = rectImages.right;
 			rectImages.right += 2;
 			DrawSeparator(pDC, rectImages, FALSE);
@@ -4638,8 +4629,7 @@ void CMFCVisualManagerOffice2007::OnDrawCheckBoxEx(CDC *pDC, CRect rect, int nSt
 		m_ctrlRibbonBtnCheck.Mirror();
 	}
 
-	m_ctrlRibbonBtnCheck.FillInterior(pDC, rect, afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignHorzStretch : CMFCToolBarImages::ImageAlignHorzCenter,
-		afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignVertStretch : CMFCToolBarImages::ImageAlignVertCenter, index);
+	m_ctrlRibbonBtnCheck.FillInterior(pDC, rect, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter, index);
 
 	if (afxGlobalData.m_bIsRTL)
 	{
@@ -4833,7 +4823,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCaptionButton(CDC* pDC, CMFCRibbon
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pButton);
 
-	const BOOL bHighlighted = pButton->IsHighlighted();
+	const BOOL bHighlighted = pButton->IsHighlighted() || pButton->IsFocused();
 	const BOOL bPressed = pButton->IsPressed();
 
 	AFX_BUTTON_STATE state = ButtonsIsRegular;
@@ -4912,7 +4902,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonApplicationButton(CDC* pDC, CMFCRi
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pButton);
 
-	BOOL bHighlighted = pButton->IsHighlighted();
+	BOOL bHighlighted = pButton->IsHighlighted() || pButton->IsFocused();
 	BOOL bPressed = pButton->IsPressed();
 
 	if (pButton->IsDroppedDown())
@@ -5057,12 +5047,12 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCategoryScroll (
 	if (pScroll->IsPressed ())
 	{
 		index = 1;
-		if (pScroll->IsHighlighted ())
+		if (pScroll->IsHighlighted())
 		{
 			index = 2;
 		}
 	}
-	else if (pScroll->IsHighlighted ())
+	else if (pScroll->IsHighlighted())
 	{
 		index = 1;
 	}
@@ -5099,7 +5089,8 @@ COLORREF CMFCVisualManagerOffice2007::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibb
 	bIsActive = bIsActive && ((pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS) == 0 || pTab->GetDroppedDown() != NULL);
 
 	const BOOL bPressed     = pTab->IsPressed();
-	const BOOL bIsHighlight = pTab->IsHighlighted() && !pTab->IsDroppedDown();
+	const BOOL bIsFocused	= pTab->IsFocused() && (pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS);
+	const BOOL bIsHighlight = (pTab->IsHighlighted() || bIsFocused) && !pTab->IsDroppedDown();
 
 	CRect rectTab(pTab->GetRect());
 	rectTab.bottom++;
@@ -5107,7 +5098,7 @@ COLORREF CMFCVisualManagerOffice2007::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibb
 	int ratio = 0;
 	if (!IsBeta() && m_ctrlRibbonCategoryTabSep.IsValid())
 	{
-		ratio = pBar->GetTabTrancateRatio();
+		ratio = pBar->GetTabTruncateRatio();
 	}
 
 	if (ratio > 0)
@@ -5295,6 +5286,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonP
 
 	if (!str.IsEmpty())
 	{
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 		if (pPanel->GetLaunchButton().GetID() > 0)
 		{
 			rectCaption.right = pPanel->GetLaunchButton().GetRect().left;
@@ -5303,6 +5295,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonP
 			rectCaption.OffsetRect(-1, -1);
 		}
 		else
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 		{
 			rectCaption.DeflateRect(1, 1);
 
@@ -5321,6 +5314,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonP
 	}
 }
 
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 void CMFCVisualManagerOffice2007::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel)
 {
 	if (!CanDrawImage())
@@ -5341,7 +5335,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonL
 		rect.bottom--;
 	}
 
-	BOOL bHighlighted = pButton->IsHighlighted();
+	BOOL bHighlighted = pButton->IsHighlighted() || pButton->IsFocused();
 
 	int index = 0;
 
@@ -5388,29 +5382,10 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonL
 
 	if (m_RibbonBtnLaunchIcon.IsValid())
 	{
-		const double dblImageScale = afxGlobalData.GetRibbonImageScale();
-
-		if (dblImageScale == 1.)
-		{
-			m_RibbonBtnLaunchIcon.DrawEx(pDC, rect, index, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter);
-		}
-		else
-		{
-			CSize sizeImage = m_RibbonBtnLaunchIcon.GetImageSize();
-
-			sizeImage.cx = (int)(.5 + dblImageScale * sizeImage.cx);
-			sizeImage.cy = (int)(.5 + dblImageScale * sizeImage.cy);
-
-			rect.left = rect.CenterPoint().x - sizeImage.cx / 2;
-			rect.right = rect.left + sizeImage.cx;
-
-			rect.top = rect.CenterPoint().y - sizeImage.cy / 2;
-			rect.bottom = rect.top + sizeImage.cy;
-
-			m_RibbonBtnLaunchIcon.DrawEx(pDC, rect, index, CMFCToolBarImages::ImageAlignHorzStretch, CMFCToolBarImages::ImageAlignVertStretch);
-		}
+		m_RibbonBtnLaunchIcon.DrawEx(pDC, rect, index, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter);
 	}
 }
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 COLORREF CMFCVisualManagerOffice2007::OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButton)
 {
@@ -5432,11 +5407,16 @@ COLORREF CMFCVisualManagerOffice2007::OnFillRibbonButton(CDC* pDC, CMFCRibbonBut
 
 	BOOL bDisabled    = pButton->IsDisabled();
 	BOOL bFocused     = pButton->IsFocused();
+	BOOL bDroppedDown = pButton->IsDroppedDown();
 	BOOL bPressed     = pButton->IsPressed() && !bIsMenuMode;
 	BOOL bChecked     = pButton->IsChecked();
-	BOOL bHighlighted = pButton->IsHighlighted();
+	BOOL bHighlighted = pButton->IsHighlighted() || bFocused;
 
 	BOOL bDefaultPanelButton = pButton->IsDefaultPanelButton() && !pButton->IsQATMode();
+	if (bFocused)
+	{
+		bDisabled = FALSE;
+	}
 
 	if (pButton->IsDroppedDown() && !bIsMenuMode)
 	{
@@ -5593,6 +5573,12 @@ COLORREF CMFCVisualManagerOffice2007::OnFillRibbonButton(CDC* pDC, CMFCRibbonBut
 					}
 					else
 					{
+						if (bFocused)
+						{
+							indexC = 6;
+							indexM = 5;
+						}
+
 						if (bHighlightedC || bHighlightedM)
 						{
 							if (bChecked)
@@ -5691,7 +5677,7 @@ COLORREF CMFCVisualManagerOffice2007::OnFillRibbonButton(CDC* pDC, CMFCRibbonBut
 				index = 3;
 			}
 
-			if (bDisabled)
+			if (bDisabled && !bFocused)
 			{
 				index = 0;
 			}
@@ -5727,6 +5713,11 @@ COLORREF CMFCVisualManagerOffice2007::OnFillRibbonButton(CDC* pDC, CMFCRibbonBut
 		else if (bChecked)
 		{
 			index = 2;
+		}
+
+		if (bFocused && !bDroppedDown && m_ctrlRibbonBtnDefault.GetImageCount() > 3)
+		{
+			index = 3;
 		}
 
 		if (index != -1)
@@ -5864,6 +5855,12 @@ COLORREF CMFCVisualManagerOffice2007::OnFillRibbonButton(CDC* pDC, CMFCRibbonBut
 					}
 					else
 					{
+						if (bFocused)
+						{
+							indexC = 5;
+							indexM = 4;
+						}
+
 						if (bChecked)
 						{
 							indexC = 2;
@@ -6009,7 +6006,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonButtonBorder(CDC* pDC, CMFCRibbonB
 		{
 			colorBorder = m_clrRibbonEditBorderDisabled;
 		}
-		else if (pButton->IsHighlighted() || pButton->IsDroppedDown())
+		else if (pButton->IsHighlighted() || pButton->IsDroppedDown() || pButton->IsFocused())
 		{
 			colorBorder = pButton->IsDroppedDown() ? m_clrRibbonEditBorderPressed : m_clrRibbonEditBorderHighlighted;
 		}
@@ -6091,7 +6088,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonDefaultPaneButton(CDC* pDC, CMFCRi
 					index = 2;
 				}
 			}
-			else if (pButton->IsHighlighted())
+			else if (pButton->IsHighlighted() || pButton->IsFocused())
 			{
 				index = 1;
 			}
@@ -6280,7 +6277,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonGalleryButton(CDC* pDC, CMFCRibbon
 				index = 2;
 			}
 		}
-		else if (pButton->IsHighlighted())
+		else if (pButton->IsHighlighted() || pButton->IsFocused())
 		{
 			index = 1;
 		}
@@ -6418,8 +6415,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonSliderZoomButton( CDC* pDC, CMFCRi
 		index = 1;
 	}
 
-	pRenderer->FillInterior(pDC, rect, afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignHorzStretch : CMFCToolBarImages::ImageAlignHorzCenter,
-		afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignVertStretch : CMFCToolBarImages::ImageAlignVertCenter, index);
+	pRenderer->FillInterior(pDC, rect, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter, index);
 }
 
 void CMFCVisualManagerOffice2007::OnDrawRibbonSliderChannel(CDC* pDC, CMFCRibbonSlider* pSlider, CRect rect)
@@ -6461,8 +6457,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonSliderThumb(CDC* pDC, CMFCRibbonSl
 		index = 1;
 	}
 
-	m_ctrlRibbonSliderThumb.FillInterior(pDC, rect, afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignHorzStretch : CMFCToolBarImages::ImageAlignHorzCenter,
-		afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignVertStretch : CMFCToolBarImages::ImageAlignVertCenter, index);
+	m_ctrlRibbonSliderThumb.FillInterior(pDC, rect, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter, index);
 }
 
 void CMFCVisualManagerOffice2007::OnDrawRibbonProgressBar(CDC* pDC, CMFCRibbonProgressBar* pProgress, CRect rectProgress, CRect rectChunk, BOOL bInfiniteMode)
@@ -6685,11 +6680,11 @@ COLORREF CMFCVisualManagerOffice2007::GetRibbonHyperlinkTextColor(CMFCRibbonLink
 	return clrText;
 }
 
-COLORREF CMFCVisualManagerOffice2007::GetRibbonEditBackgroundColor(BOOL bIsHighlighted, BOOL bIsDisabled)
+COLORREF CMFCVisualManagerOffice2007::GetRibbonEditBackgroundColor(CMFCRibbonRichEditCtrl* pEdit, BOOL bIsHighlighted, BOOL bIsPaneHighlighted, BOOL bIsDisabled)
 {
 	if (!CanDrawImage())
 	{
-		return (bIsHighlighted && !bIsDisabled) ? afxGlobalData.clrWindow : afxGlobalData.clrBarFace;
+		return CMFCVisualManagerOffice2003::GetRibbonEditBackgroundColor(pEdit, bIsHighlighted, bIsPaneHighlighted, bIsDisabled);
 	}
 
 	COLORREF color = m_clrRibbonEdit;
@@ -6829,5 +6824,14 @@ COLORREF CMFCVisualManagerOffice2007::OnFillCaptionBarButton(CDC* pDC, CMFCCapti
 	return clrText;
 }
 
+AFX_SMARTDOCK_THEME CMFCVisualManagerOffice2007::GetSmartDockingTheme()
+{
+	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() || !afxGlobalData.IsWindowsLayerSupportAvailable() || !afxGlobalData.bIsWindowsVista)
+	{
+		return CMFCVisualManagerOffice2003::GetSmartDockingTheme();
+	}
+
+	return AFX_SDT_VS2008;
+}
 
 

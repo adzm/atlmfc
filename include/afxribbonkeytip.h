@@ -44,7 +44,7 @@ protected:
 
 // Operations
 public:
-	BOOL Show();
+	BOOL Show(BOOL bRepos);
 	void Hide();
 
 protected:

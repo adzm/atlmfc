@@ -11,14 +11,6 @@
 #include "stdafx.h"
 #include "sal.h"
 
-#ifdef _AFXDLL
-	#if defined(_M_IX86)
-		#pragma comment(linker, "/include:__forceMFCManifestRTM")
-	#else
-		#pragma comment(linker, "/include:_forceMFCManifestRTM")
-	#endif
-#endif
-
 /////////////////////////////////////////////////////////////////////////////
 // export WinMain to force linkage to this module
 extern int AFXAPI AfxWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,

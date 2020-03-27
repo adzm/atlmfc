@@ -415,7 +415,10 @@ void CMFCRibbonQuickAccessToolBar::OnAfterChangeRect(CDC* pDC)
 		{
 			if (m_pRibbonBar->IsQuickAccessToolbarOnTop())
 			{
-				rectChevron.OffsetRect(CMFCVisualManager::GetInstance()->GetRibbonQuickAccessToolBarChevronOffset(), 0);
+				if (!m_pRibbonBar->IsWindows7Look ())
+				{
+					rectChevron.OffsetRect(CMFCVisualManager::GetInstance()->GetRibbonQuickAccessToolBarChevronOffset(), 0);
+				}
 
 				if (CMFCVisualManager::GetInstance()->GetRibbonQuickAccessToolBarRightMargin() > 0)
 				{

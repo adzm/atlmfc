@@ -140,7 +140,7 @@ void COleServerDocEx::OnResizeBorder( LPCRECT lpRectBorder, LPOLEINPLACEUIWINDOW
 	}
 
 	if (AfxGetThread()->m_pActiveWnd == m_pInPlaceFrame)
-		OnShowPanes(pMainFrame, TRUE);
+		OnShowControlBars(pMainFrame, TRUE);
 
 	pDockManager->m_rectInPlace = rcCurBorders;
 	pDockManager->AdjustDockingLayout();
@@ -159,13 +159,13 @@ void COleServerDocEx::OnResizeBorder( LPCRECT lpRectBorder, LPOLEINPLACEUIWINDOW
 	}
 	else
 	{
-		OnShowPanes(pMainFrame, FALSE);
+		OnShowControlBars(pMainFrame, FALSE);
 		CRect rect(0,0,0,0);
 		lpUIWindow->SetBorderSpace(&rect);
 	}
 }
 
-void COleServerDocEx::OnShowPanes(CFrameWnd* pFrameWnd, BOOL bShow)
+void COleServerDocEx::OnShowControlBars(CFrameWnd* pFrameWnd, BOOL bShow)
 {
 	COleServerDoc::OnShowControlBars(pFrameWnd, bShow);
 	COleCntrFrameWndEx* pMainFrame = DYNAMIC_DOWNCAST(COleCntrFrameWndEx, pFrameWnd);

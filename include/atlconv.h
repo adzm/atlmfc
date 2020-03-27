@@ -28,23 +28,15 @@
 
 #ifndef __wtypes_h__
 
-#if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && defined(_M_IX86)
+#if !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && defined(_M_IX86)
 #define _X86_
 #endif
 
-#if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && defined(_M_AMD64)
+#if !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && defined(_M_AMD64)
 #define _AMD64_
 #endif
 
-#if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && defined(_M_M68K)
-#define _68K_
-#endif
-
-#if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && defined(_M_MPPC)
-#define _MPPC_
-#endif
-
-#if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_M_IX86) && !defined(_AMD64_) && defined(_M_IA64)
+#if !defined(_X86_) && !defined(_M_IX86) && !defined(_AMD64_) && defined(_M_IA64)
 #if !defined(_IA64_)
 #define _IA64_
 #endif // !_IA64_
@@ -55,7 +47,7 @@
 #include <winbase.h>
 #include <winnls.h>
 
-#if defined(_WIN32) && !defined(OLE2ANSI)
+#if !defined(OLE2ANSI)
 
 typedef WCHAR OLECHAR;
 typedef OLECHAR  *LPOLESTR;
@@ -69,7 +61,7 @@ typedef LPSTR     LPOLESTR;
 typedef LPCSTR    LPCOLESTR;
 #define OLESTR(str) str
 
-#endif	// _WIN32 && !OLE2ANSI
+#endif	// !OLE2ANSI
 #endif	// __wtypes_h__
 
 #ifndef _OLEAUTO_H_
@@ -77,19 +69,28 @@ typedef LPWSTR BSTR;// must (semantically) match typedef in oleauto.h
 
 extern "C"
 {
-__declspec(dllimport) BSTR __stdcall SysAllocString(const OLECHAR *);
-__declspec(dllimport) BSTR __stdcall SysAllocStringLen(const OLECHAR *, UINT);
-__declspec(dllimport) INT  __stdcall SysReAllocStringLen(BSTR *, const OLECHAR *, UINT);
-__declspec(dllimport) void __stdcall SysFreeString(BSTR);
+__declspec(dllimport) _Ret_opt_z_ BSTR __stdcall SysAllocString(_In_opt_z_ const OLECHAR *);
+__declspec(dllimport) _Ret_opt_z_ BSTR __stdcall SysAllocStringLen(
+	_In_z_count_(nLen) const OLECHAR *, 
+	_In_ UINT nLen);
+__declspec(dllimport) INT  __stdcall SysReAllocStringLen(
+	_Deref_out_opt_z_ BSTR*, 
+	_In_opt_z_count_(nLen) const OLECHAR *, 
+	_In_ UINT nLen);
+__declspec(dllimport) void __stdcall SysFreeString(_In_opt_z_ BSTR);
 }
 #endif
 
 // we use our own implementation of InterlockedExchangePointer because of problems with the one in system headers
 #ifdef _M_IX86
 #undef InterlockedExchangePointer
-inline void* WINAPI InterlockedExchangePointer(void** pp, void* pNew) throw()
+inline void* WINAPI InterlockedExchangePointer(
+	_Inout_ void** pp, 
+	_In_opt_ void* pNew) throw()
 {
-	return( reinterpret_cast<void*>(static_cast<LONG_PTR>(::InterlockedExchange(reinterpret_cast<LONG*>(pp), static_cast<LONG>(reinterpret_cast<LONG_PTR>(pNew))))) );
+	return( reinterpret_cast<void*>(static_cast<LONG_PTR>(
+		::InterlockedExchange(reinterpret_cast<LONG*>(pp), 
+			static_cast<LONG>(reinterpret_cast<LONG_PTR>(pNew))))) );
 }
 #endif
 
@@ -109,7 +110,11 @@ inline UINT WINAPI _AtlGetConversionACP() throw()
 }
 
 template <class _CharType>
-inline  void AtlConvAllocMemory(_Inout_ _Deref_post_opt_cap_(nLength) _CharType** ppBuff,_In_ int nLength,_Inout_cap_(nFixedBufferLength) _CharType* pszFixedBuffer,_In_ int nFixedBufferLength)
+inline void AtlConvAllocMemory(
+	_Inout_ _Deref_post_cap_(nLength) _CharType** ppBuff,
+	_In_ int nLength,
+	_Inout_cap_(nFixedBufferLength) _CharType* pszFixedBuffer,
+	_In_ int nFixedBufferLength)
 {
 	ATLENSURE_THROW(ppBuff != NULL, E_INVALIDARG);
 	ATLENSURE_THROW(nLength >= 0, E_INVALIDARG);
@@ -147,11 +152,13 @@ inline  void AtlConvAllocMemory(_Inout_ _Deref_post_opt_cap_(nLength) _CharType*
 	{
 		AtlThrow( E_OUTOFMEMORY );
 	}
-
 }
 
 template <class _CharType>
-inline void AtlConvFreeMemory(_CharType* pBuff,_CharType* pszFixedBuffer,int nFixedBufferLength)
+inline void AtlConvFreeMemory(
+	_Inout_ _CharType* pBuff,
+	_Inout_cap_(nFixedBufferLength) _CharType* pszFixedBuffer,
+	_In_ int nFixedBufferLength)
 {
 	(nFixedBufferLength);
 	if( pBuff != pszFixedBuffer )
@@ -164,19 +171,20 @@ inline void AtlConvFreeMemory(_CharType* pBuff,_CharType* pszFixedBuffer,int nFi
 		memset(pszFixedBuffer,ATLCONV_DEADLAND_FILL,nFixedBufferLength*sizeof(_CharType));
 	}
 #endif
-
 }
 
 template< int t_nBufferLength = 128 >
 class CW2WEX
 {
 public:
-	CW2WEX( _In_opt_ LPCWSTR psz ) throw(...) :
+	CW2WEX(_In_z_ LPCWSTR psz) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		Init( psz );
 	}
-	CW2WEX( _In_opt_ LPCWSTR psz, UINT nCodePage ) throw(...) :
+	CW2WEX(
+			_In_z_ LPCWSTR psz, 
+			_In_ UINT nCodePage) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		(void)nCodePage;  // Code page doesn't matter
@@ -188,13 +196,13 @@ public:
 		AtlConvFreeMemory(m_psz,m_szBuffer,t_nBufferLength);
 	}
 
-	operator LPWSTR() const throw()
+	_Ret_z_ operator LPWSTR() const throw()
 	{
 		return( m_psz );
 	}
 
 private:
-	void Init( _In_opt_ LPCWSTR psz ) throw(...)
+	void Init(_In_z_ LPCWSTR psz) throw(...)
 	{
 		if (psz == NULL)
 		{
@@ -212,8 +220,8 @@ public:
 	wchar_t m_szBuffer[t_nBufferLength];
 
 private:
-	CW2WEX( const CW2WEX& ) throw();
-	CW2WEX& operator=( const CW2WEX& ) throw();
+	CW2WEX(_In_ const CW2WEX&) throw();
+	CW2WEX& operator=(_In_ const CW2WEX&) throw();
 };
 typedef CW2WEX<> CW2W;
 
@@ -221,12 +229,14 @@ template< int t_nBufferLength = 128 >
 class CA2AEX
 {
 public:
-	CA2AEX( _In_opt_ LPCSTR psz ) throw(...) :
+	CA2AEX(_In_z_ LPCSTR psz) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		Init( psz );
 	}
-	CA2AEX( _In_opt_ LPCSTR psz, UINT nCodePage ) throw(...) :
+	CA2AEX(
+			_In_z_ LPCSTR psz, 
+			_In_ UINT nCodePage) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		(void)nCodePage;  // Code page doesn't matter
@@ -238,13 +248,13 @@ public:
 		AtlConvFreeMemory(m_psz,m_szBuffer,t_nBufferLength);
 	}
 
-	operator LPSTR() const throw()
+	_Ret_z_ operator LPSTR() const throw()
 	{
 		return( m_psz );
 	}
 
 private:
-	void Init( _In_opt_ LPCSTR psz ) throw(...)
+	void Init(_In_z_ LPCSTR psz) throw(...)
 	{
 		if (psz == NULL)
 		{
@@ -261,8 +271,8 @@ public:
 	char m_szBuffer[t_nBufferLength];
 
 private:
-	CA2AEX( const CA2AEX& ) throw();
-	CA2AEX& operator=( const CA2AEX& ) throw();
+	CA2AEX(_In_ const CA2AEX&) throw();
+	CA2AEX& operator=(_In_ const CA2AEX&) throw();
 };
 typedef CA2AEX<> CA2A;
 
@@ -270,11 +280,13 @@ template< int t_nBufferLength = 128 >
 class CA2CAEX
 {
 public:
-	CA2CAEX( _In_ LPCSTR psz ) throw(...) :
+	CA2CAEX(_In_z_ LPCSTR psz) throw(...) :
 		m_psz( psz )
 	{
 	}
-	CA2CAEX( _In_ LPCSTR psz, UINT nCodePage ) throw(...) :
+	CA2CAEX(
+			_In_z_ LPCSTR psz, 
+			_In_ UINT nCodePage) throw(...) :
 		m_psz( psz )
 	{
 		(void)nCodePage;
@@ -282,18 +294,18 @@ public:
 	~CA2CAEX() throw()
 	{
 	}
-
-	operator LPCSTR() const throw()
+	
+	_Ret_z_ operator LPCSTR() const throw()
 	{
 		return( m_psz );
 	}
-
+	
 public:
 	LPCSTR m_psz;
 
 private:
-	CA2CAEX( const CA2CAEX& ) throw();
-	CA2CAEX& operator=( const CA2CAEX& ) throw();
+	CA2CAEX(_In_ const CA2CAEX&) throw();
+	CA2CAEX& operator=(_In_ const CA2CAEX&) throw();
 };
 typedef CA2CAEX<> CA2CA;
 
@@ -301,20 +313,22 @@ template< int t_nBufferLength = 128 >
 class CW2CWEX
 {
 public:
-	CW2CWEX( _In_ LPCWSTR psz ) throw(...) :
+	CW2CWEX(_In_z_ LPCWSTR psz) throw(...) :
 		m_psz( psz )
 	{
 	}
-	CW2CWEX( _In_ LPCWSTR psz, UINT nCodePage ) throw(...) :
+	CW2CWEX(
+			_In_z_ LPCWSTR psz, 
+			_In_ UINT nCodePage) throw(...) :
 		m_psz( psz )
-	{
-		(void)nCodePage;
+	{		
+		UNREFERENCED_PARAMETER(nCodePage);
 	}
 	~CW2CWEX() throw()
 	{
 	}
 
-	operator LPCWSTR() const throw()
+	_Ret_z_ operator LPCWSTR() const throw()
 	{
 		return( m_psz );
 	}
@@ -323,8 +337,8 @@ public:
 	LPCWSTR m_psz;
 
 private:
-	CW2CWEX( const CW2CWEX& ) throw();
-	CW2CWEX& operator=( const CW2CWEX& ) throw();
+	CW2CWEX(_In_ const CW2CWEX&) throw();
+	CW2CWEX& operator=(_In_ const CW2CWEX&) throw();
 };
 typedef CW2CWEX<> CW2CW;
 
@@ -332,12 +346,14 @@ template< int t_nBufferLength = 128 >
 class CA2WEX
 {
 public:
-	CA2WEX( _In_opt_ LPCSTR psz ) throw(...) :
+	CA2WEX(_In_z_ LPCSTR psz) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		Init( psz, _AtlGetConversionACP() );
 	}
-	CA2WEX( _In_opt_ LPCSTR psz, UINT nCodePage ) throw(...) :
+	CA2WEX(
+			_In_z_ LPCSTR psz, 
+			_In_ UINT nCodePage) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		Init( psz, nCodePage );
@@ -347,13 +363,15 @@ public:
 		AtlConvFreeMemory(m_psz,m_szBuffer,t_nBufferLength);
 	}
 
-	operator LPWSTR() const throw()
+	_Ret_z_ operator LPWSTR() const throw()
 	{
 		return( m_psz );
 	}
 
 private:
-	void Init( _In_opt_ LPCSTR psz, UINT nCodePage ) throw(...)
+	void Init(
+		_In_z_ LPCSTR psz, 
+		_In_ UINT nCodePage) throw(...)
 	{
 		if (psz == NULL)
 		{
@@ -386,8 +404,8 @@ public:
 	wchar_t m_szBuffer[t_nBufferLength];
 
 private:
-	CA2WEX( const CA2WEX& ) throw();
-	CA2WEX& operator=( const CA2WEX& ) throw();
+	CA2WEX(_In_ const CA2WEX&) throw();
+	CA2WEX& operator=(_In_ const CA2WEX&) throw();
 };
 typedef CA2WEX<> CA2W;
 
@@ -395,12 +413,14 @@ template< int t_nBufferLength = 128 >
 class CW2AEX
 {
 public:
-	CW2AEX( _In_opt_ LPCWSTR psz ) throw(...) :
+	CW2AEX(_In_z_ LPCWSTR psz) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		Init( psz, _AtlGetConversionACP() );
 	}
-	CW2AEX( _In_opt_ LPCWSTR psz, UINT nCodePage ) throw(...) :
+	CW2AEX(
+			_In_z_ LPCWSTR psz, 
+			_In_ UINT nCodePage) throw(...) :
 		m_psz( m_szBuffer )
 	{
 		Init( psz, nCodePage );
@@ -410,13 +430,15 @@ public:
 		AtlConvFreeMemory(m_psz,m_szBuffer,t_nBufferLength);
 	}
 
-	operator LPSTR() const throw()
+	_Ret_z_ operator LPSTR() const throw()
 	{
 		return( m_psz );
 	}
 
 private:
-	void Init( _In_opt_ LPCWSTR psz, _In_ UINT nConvertCodePage ) throw(...)
+	void Init(
+		_In_z_ LPCWSTR psz, 
+		_In_ UINT nConvertCodePage) throw(...)
 	{
 		if (psz == NULL)
 		{
@@ -449,50 +471,50 @@ public:
 	char m_szBuffer[t_nBufferLength];
 
 private:
-	CW2AEX( const CW2AEX& ) throw();
-	CW2AEX& operator=( const CW2AEX& ) throw();
+	CW2AEX(_In_ const CW2AEX&) throw();
+	CW2AEX& operator=(_In_ const CW2AEX&) throw();
 };
 typedef CW2AEX<> CW2A;
 
 #ifdef _UNICODE
 
-	#define CW2T CW2W
-	#define CW2TEX CW2WEX
-	#define CW2CT CW2CW
-	#define CW2CTEX CW2CWEX
-	#define CT2W CW2W
-	#define CT2WEX CW2WEX
-	#define CT2CW CW2CW
-	#define CT2CWEX CW2CWEX
+#define CW2T CW2W
+#define CW2TEX CW2WEX
+#define CW2CT CW2CW
+#define CW2CTEX CW2CWEX
+#define CT2W CW2W
+#define CT2WEX CW2WEX
+#define CT2CW CW2CW
+#define CT2CWEX CW2CWEX
 
-	#define CA2T CA2W
-	#define CA2TEX CA2WEX
-	#define CA2CT CA2W
-	#define CA2CTEX CA2WEX
-	#define CT2A CW2A
-	#define CT2AEX CW2AEX
-	#define CT2CA CW2A
-	#define CT2CAEX CW2AEX
+#define CA2T CA2W
+#define CA2TEX CA2WEX
+#define CA2CT CA2W
+#define CA2CTEX CA2WEX
+#define CT2A CW2A
+#define CT2AEX CW2AEX
+#define CT2CA CW2A
+#define CT2CAEX CW2AEX
 
 #else  // !_UNICODE
 
-	#define CW2T CW2A
-	#define CW2TEX CW2AEX
-	#define CW2CT CW2A
-	#define CW2CTEX CW2AEX
-	#define CT2W CA2W
-	#define CT2WEX CA2WEX
-	#define CT2CW CA2W
-	#define CT2CWEX CA2WEX
+#define CW2T CW2A
+#define CW2TEX CW2AEX
+#define CW2CT CW2A
+#define CW2CTEX CW2AEX
+#define CT2W CA2W
+#define CT2WEX CA2WEX
+#define CT2CW CA2W
+#define CT2CWEX CA2WEX
 
-	#define CA2T CA2A
-	#define CA2TEX CA2AEX
-	#define CA2CT CA2CA
-	#define CA2CTEX CA2CAEX
-	#define CT2A CA2A
-	#define CT2AEX CA2AEX
-	#define CT2CA CA2CA
-	#define CT2CAEX CA2CAEX
+#define CA2T CA2A
+#define CA2TEX CA2AEX
+#define CA2CT CA2CA
+#define CA2CTEX CA2CAEX
+#define CT2A CA2A
+#define CT2AEX CA2AEX
+#define CT2CA CA2CA
+#define CT2CAEX CA2CAEX
 
 #endif  // !_UNICODE
 
@@ -527,13 +549,17 @@ typedef CW2AEX<> CW2A;
 #endif
 
 #ifdef _WINGDI_
-	ATLAPI_(LPDEVMODEA) AtlDevModeW2A(_Inout_ LPDEVMODEA lpDevModeA, _In_ const DEVMODEW* lpDevModeW);
+	ATLAPI_(LPDEVMODEA) AtlDevModeW2A(_Inout_opt_ LPDEVMODEA lpDevModeA, _In_ const DEVMODEW* lpDevModeW);
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Global UNICODE<>ANSI translation helpers
-_Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(_Out_z_cap_(nChars) LPWSTR lpw, _In_z_ LPCSTR lpa, _In_ int nChars, _In_ UINT acp) throw()
-{
+_Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(
+	_Out_opt_z_cap_(nChars) LPWSTR lpw, 
+	_In_opt_z_ LPCSTR lpa, 
+	_In_ int nChars, 
+	_In_ UINT acp) throw()
+{	
 	ATLASSERT(lpa != NULL);
 	ATLASSERT(lpw != NULL);
 	if (lpw == NULL || lpa == NULL)
@@ -551,7 +577,11 @@ _Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(_Out_z_cap_(nChars) LP
 	return lpw;
 }
 
-_Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(_Out_z_cap_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, _In_ int nChars, _In_ UINT acp) throw()
+_Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
+	_Out_opt_z_cap_(nChars) LPSTR lpa, 
+	_In_opt_z_ LPCWSTR lpw, 
+	_In_ int nChars, 
+	_In_ UINT acp) throw()
 {
 	ATLASSERT(lpw != NULL);
 	ATLASSERT(lpa != NULL);
@@ -569,12 +599,18 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(_Out_z_cap_(nChars) LPS
 	}
 	return lpa;
 }
-_Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(_Out_z_cap_(nChars) LPWSTR lpw, _In_z_ LPCSTR lpa, _In_ int nChars) throw()
+_Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(
+	_Out_opt_z_cap_(nChars) LPWSTR lpw, 
+	_In_opt_z_ LPCSTR lpa, 
+	_In_ int nChars) throw()
 {
 	return AtlA2WHelper(lpw, lpa, nChars, CP_ACP);
 }
 
-_Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(_Out_z_cap_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, _In_ int nChars) throw()
+_Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
+	_Out_opt_z_cap_(nChars) LPSTR lpa, 
+	_In_opt_z_ LPCWSTR lpw, 
+	_In_ int nChars) throw()
 {
 	return AtlW2AHelper(lpa, lpw, nChars, CP_ACP);
 }
@@ -686,198 +722,414 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(_Out_z_cap_(nChars) LPS
 #define A2CW_CP_EX(lpa, nChar, cp) ((LPCWSTR)A2W_CP_EX(lpa, nChar, (cp)))
 #define W2CA_CP_EX(lpw, nChar, cp) ((LPCSTR)W2A_CP_EX(lpw, nChar, (cp)))
 
-	inline int ocslen(_In_z_ LPCOLESTR x) throw() { return lstrlenW(x); }
+inline int ocslen(_In_z_ LPCOLESTR x) throw() 
+{ 
+	return lstrlenW(x); 
+}
 
-	inline bool ocscpy_s(_Out_z_cap_(maxSize) LPOLESTR dest, _In_ size_t maxSize, _In_z_ LPCOLESTR src) throw() 
-		{ return 0 == memcpy_s(dest, maxSize*sizeof(WCHAR), src, (ocslen(src)+1)*sizeof(WCHAR)); }
-	inline bool ocscat_s(_Inout_z_cap_(maxSize) LPOLESTR dest, _In_ size_t maxSize, _In_z_ LPCOLESTR src) throw() 
-		{ return 0 == wcscat_s(dest, maxSize,src); }
+inline bool ocscpy_s(
+	_Out_z_cap_(maxSize) LPOLESTR dest, 
+	_In_ size_t maxSize, 
+	_In_z_ LPCOLESTR src) throw() 
+{ 
+	return 0 == memcpy_s(dest, maxSize*sizeof(WCHAR), src, (ocslen(src)+1)*sizeof(WCHAR)); 
+}
+
+inline bool ocscat_s(
+	_Inout_z_cap_(maxSize) LPOLESTR dest, 
+	_In_ size_t maxSize, 
+	_In_z_ LPCOLESTR src) throw() 
+{ 
+	return 0 == wcscat_s(dest, maxSize,src); 
+}
 
 #if defined(_UNICODE)
 
 // in these cases the default (TCHAR) is the same as OLECHAR
 
-	_ATL_INSECURE_DEPRECATE("ocscpy is not safe. Intead, use ocscpy_s")
-	inline OLECHAR* ocscpy(_Pre_notnull_ _Post_z_ LPOLESTR dest, _In_z_ LPCOLESTR src) throw()
-	{
+_ATL_INSECURE_DEPRECATE("ocscpy is not safe. Intead, use ocscpy_s")
+inline OLECHAR* ocscpy(
+	_Inout_ _Post_z_ LPOLESTR dest, 
+	_In_z_ LPCOLESTR src) throw()
+{
 #pragma warning(push)
 #pragma warning(disable:4996)
-		return wcscpy(dest, src);
+	return wcscpy(dest, src);
 #pragma warning(pop)
-	}
-	_ATL_INSECURE_DEPRECATE("ocscat is not safe. Intead, use ocscat_s")
-	inline OLECHAR* ocscat(_Pre_notnull_ _Post_z_ LPOLESTR dest, _In_z_ LPCOLESTR src) throw()
-	{
-#pragma warning(push)
-#pragma warning(disable:4996)
-		return wcscat(dest, src);
-#pragma warning(pop)
-	}
+}
 
-	inline LPCOLESTR T2COLE_EX(_In_opt_ LPCTSTR lp, UINT) { return lp; }
-	inline LPCOLESTR T2COLE_EX_DEF(_In_opt_ LPCTSTR lp) { return lp; }
-	inline LPCTSTR OLE2CT_EX(_In_opt_ LPCOLESTR lp, UINT) { return lp; }
-	inline LPCTSTR OLE2CT_EX_DEF(_In_opt_ LPCOLESTR lp) { return lp; }
-	inline LPOLESTR T2OLE_EX(_In_opt_ LPTSTR lp, UINT) { return lp; }
-	inline LPOLESTR T2OLE_EX_DEF(_In_opt_ LPTSTR lp) { return lp; }
-	inline LPTSTR OLE2T_EX(_In_opt_ LPOLESTR lp, UINT) { return lp; }	
-	inline LPTSTR OLE2T_EX_DEF(_In_opt_ LPOLESTR lp) { return lp; }	
+_ATL_INSECURE_DEPRECATE("ocscat is not safe. Intead, use ocscat_s")
+inline OLECHAR* ocscat(
+	_Inout_ _Post_z_ LPOLESTR dest, 
+	_In_z_ LPCOLESTR src) throw()
+{
+#pragma warning(push)
+#pragma warning(disable:4996)
+	return wcscat(dest, src);
+#pragma warning(pop)
+}
+
+_Ret_z_ inline LPCOLESTR T2COLE_EX(
+	_In_z_ LPCTSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCOLESTR T2COLE_EX_DEF(_In_z_ LPCTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR OLE2CT_EX(
+	_In_z_ LPCOLESTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR OLE2CT_EX_DEF(_In_z_ LPCOLESTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPOLESTR T2OLE_EX(
+	_In_z_ LPTSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPOLESTR T2OLE_EX_DEF(_In_z_ LPTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR OLE2T_EX(
+	_In_z_ LPOLESTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}	
+_Ret_z_ inline LPTSTR OLE2T_EX_DEF(_In_z_ LPOLESTR lp) 
+{ 
+	return lp; 
+}	
 
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-	inline LPCOLESTR T2COLE(_In_opt_ LPCTSTR lp) { return lp; }
-	inline LPCTSTR OLE2CT(_In_opt_ LPCOLESTR lp) { return lp; }
-	inline LPOLESTR T2OLE(_In_opt_ LPTSTR lp) { return lp; }
-	inline LPTSTR OLE2T(_In_opt_ LPOLESTR lp) { return lp; }
+_Ret_z_ inline LPCOLESTR T2COLE(_In_z_ LPCTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR OLE2CT(_In_z_ LPCOLESTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPOLESTR T2OLE(_In_z_ LPTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR OLE2T(_In_z_ LPOLESTR lp) 
+{ 
+	return lp; 
+}
 
 #endif	 // _ATL_EX_CONVERSION_MACROS_ONLY
 
 #else // !defined(_UNICODE)
 
-	_ATL_INSECURE_DEPRECATE("ocscpy is not safe. Intead, use ocscpy_s")
-	inline OLECHAR* ocscpy(_Pre_notnull_ _Post_z_ LPOLESTR dest, _In_z_ LPCOLESTR src) throw()
-	{
+_ATL_INSECURE_DEPRECATE("ocscpy is not safe. Intead, use ocscpy_s")
+inline OLECHAR* ocscpy(
+	_Inout_ _Post_z_ LPOLESTR dest, 
+	_In_z_ LPCOLESTR src) throw()
+{
 #pragma warning(push)
 #pragma warning(disable:4996)
-		return (LPOLESTR) memcpy(dest, src, (lstrlenW(src)+1)*sizeof(WCHAR));
+	return (LPOLESTR) memcpy(dest, src, (lstrlenW(src)+1)*sizeof(WCHAR));
 #pragma warning(pop)
-	}
-	_ATL_INSECURE_DEPRECATE("ocscat is not safe. Intead, use ocscat_s")
-	inline OLECHAR* ocscat(_Inout_z_ LPOLESTR dest, _In_z_ LPCOLESTR src) throw()
-	{
-#pragma warning(push)
-#pragma warning(disable:4996)
-		return ocscpy(dest+ocslen(dest), src);
-#pragma warning(pop)
-	}
+}
 
-	#define T2COLE_EX(lpa, nChar) A2CW_EX(lpa, nChar)
-	#define T2COLE_EX_DEF(lpa) A2CW_EX_DEF(lpa)
-	#define T2OLE_EX(lpa, nChar) A2W_EX(lpa, nChar)
-	#define T2OLE_EX_DEF(lpa) A2W_EX_DEF(lpa)
-	#define OLE2CT_EX(lpo, nChar) W2CA_EX(lpo, nChar)
-	#define OLE2CT_EX_DEF(lpo) W2CA_EX_DEF(lpo)
-	#define OLE2T_EX(lpo, nChar) W2A_EX(lpo, nChar)
-	#define OLE2T_EX_DEF(lpo) W2A_EX_DEF(lpo)
+_ATL_INSECURE_DEPRECATE("ocscat is not safe. Intead, use ocscat_s")
+inline OLECHAR* ocscat(
+	_Inout_ _Post_z_ LPOLESTR dest, 
+	_In_z_ LPCOLESTR src) throw()
+{
+#pragma warning(push)
+#pragma warning(disable:4996)
+	return ocscpy(dest+ocslen(dest), src);
+#pragma warning(pop)
+}
+
+#define T2COLE_EX(lpa, nChar) A2CW_EX(lpa, nChar)
+#define T2COLE_EX_DEF(lpa) A2CW_EX_DEF(lpa)
+#define T2OLE_EX(lpa, nChar) A2W_EX(lpa, nChar)
+#define T2OLE_EX_DEF(lpa) A2W_EX_DEF(lpa)
+#define OLE2CT_EX(lpo, nChar) W2CA_EX(lpo, nChar)
+#define OLE2CT_EX_DEF(lpo) W2CA_EX_DEF(lpo)
+#define OLE2T_EX(lpo, nChar) W2A_EX(lpo, nChar)
+#define OLE2T_EX_DEF(lpo) W2A_EX_DEF(lpo)
 
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-	#define T2COLE(lpa) A2CW(lpa)
-	#define T2OLE(lpa) A2W(lpa)
-	#define OLE2CT(lpo) W2CA(lpo)
-	#define OLE2T(lpo) W2A(lpo)
+#define T2COLE(lpa) A2CW(lpa)
+#define T2OLE(lpa) A2W(lpa)
+#define OLE2CT(lpo) W2CA(lpo)
+#define OLE2T(lpo) W2A(lpo)
 
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 
 #endif // defined(_UNICODE)
 
-	inline LPOLESTR W2OLE_EX(_In_opt_ LPWSTR lp, UINT) { return lp; }
-	inline LPOLESTR W2OLE_EX_DEF(_In_opt_ LPWSTR lp) { return lp; }
-	inline LPWSTR OLE2W_EX(_In_opt_ LPOLESTR lp, UINT) { return lp; }
-	inline LPWSTR OLE2W_EX_DEF(_In_opt_ LPOLESTR lp) { return lp; }
-	#define A2OLE_EX A2W_EX
-	#define A2OLE_EX_DEF A2W_EX_DEF
-	#define OLE2A_EX W2A_EX
-	#define OLE2A_EX_DEF W2A_EX_DEF
-	inline LPCOLESTR W2COLE_EX(_In_opt_ LPCWSTR lp, UINT) { return lp; }
-	inline LPCOLESTR W2COLE_EX_DEF(_In_opt_ LPCWSTR lp) { return lp; }
-	inline LPCWSTR OLE2CW_EX(_In_opt_ LPCOLESTR lp, UINT) { return lp; }
-	inline LPCWSTR OLE2CW_EX_DEF(_In_opt_ LPCOLESTR lp) { return lp; }
-	#define A2COLE_EX A2CW_EX
-	#define A2COLE_EX_DEF A2CW_EX_DEF
-	#define OLE2CA_EX W2CA_EX
-	#define OLE2CA_EX_DEF W2CA_EX_DEF
+_Ret_z_ inline LPOLESTR W2OLE_EX(
+	_In_z_ LPWSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPOLESTR W2OLE_EX_DEF(_In_z_ LPWSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPWSTR OLE2W_EX(
+	_In_z_ LPOLESTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPWSTR OLE2W_EX_DEF(_In_z_ LPOLESTR lp) 
+{ 
+	return lp; 
+}
+
+#define A2OLE_EX A2W_EX
+#define A2OLE_EX_DEF A2W_EX_DEF
+#define OLE2A_EX W2A_EX
+#define OLE2A_EX_DEF W2A_EX_DEF
+
+_Ret_z_ inline LPCOLESTR W2COLE_EX(
+	_In_z_ LPCWSTR lp,
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCOLESTR W2COLE_EX_DEF(_In_z_ LPCWSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCWSTR OLE2CW_EX(
+	_In_z_ LPCOLESTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCWSTR OLE2CW_EX_DEF(_In_z_ LPCOLESTR lp) 
+{ 
+	return lp; 
+}
+
+#define A2COLE_EX A2CW_EX
+#define A2COLE_EX_DEF A2CW_EX_DEF
+#define OLE2CA_EX W2CA_EX
+#define OLE2CA_EX_DEF W2CA_EX_DEF
 
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-	inline LPOLESTR W2OLE(_In_opt_ LPWSTR lp) { return lp; }
-	inline LPWSTR OLE2W(_In_opt_ LPOLESTR lp) { return lp; }
-	#define A2OLE A2W
-	#define OLE2A W2A
-	inline LPCOLESTR W2COLE(_In_opt_ LPCWSTR lp) { return lp; }
-	inline LPCWSTR OLE2CW(_In_opt_ LPCOLESTR lp) { return lp; }
-	#define A2COLE A2CW
-	#define OLE2CA W2CA
-	
+_Ret_z_ inline LPOLESTR W2OLE(_In_z_ LPWSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPWSTR OLE2W(_In_z_ LPOLESTR lp) 
+{ 
+	return lp; 
+}
+
+#define A2OLE A2W
+#define OLE2A W2A
+
+_Ret_z_ inline LPCOLESTR W2COLE(_In_z_ LPCWSTR lp) 
+{
+	return lp; 
+}
+_Ret_z_ inline LPCWSTR OLE2CW(_In_z_ LPCOLESTR lp) 
+{ 
+	return lp; 
+}
+
+#define A2COLE A2CW
+#define OLE2CA W2CA
+
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 
 #if defined(_UNICODE)
 
-	#define T2A_EX W2A_EX
-	#define T2A_EX_DEF W2A_EX_DEF
-	#define A2T_EX A2W_EX
-	#define A2T_EX_DEF A2W_EX_DEF
-	inline LPWSTR T2W_EX(_In_opt_ LPTSTR lp, UINT) { return lp; }
-	inline LPWSTR T2W_EX_DEF(_In_opt_ LPTSTR lp) { return lp; }
-	inline LPTSTR W2T_EX(_In_opt_ LPWSTR lp, UINT) { return lp; }
-	inline LPTSTR W2T_DEF(_In_opt_ LPWSTR lp) { return lp; }
-	#define T2CA_EX W2CA_EX
-	#define T2CA_EX_DEF W2CA_EX_DEF
-	#define A2CT_EX A2CW_EX
-	#define A2CT_EX_DEF A2CW_EX_DEF
-	inline LPCWSTR T2CW_EX(_In_opt_ LPCTSTR lp, UINT) { return lp; }
-	inline LPCWSTR T2CW_EX_DEF(_In_opt_ LPCTSTR lp) { return lp; }
-	inline LPCTSTR W2CT_EX(_In_opt_ LPCWSTR lp, UINT) { return lp; }
-	inline LPCTSTR W2CT_EX_DEF(_In_opt_ LPCWSTR lp) { return lp; }
+#define T2A_EX W2A_EX
+#define T2A_EX_DEF W2A_EX_DEF
+#define A2T_EX A2W_EX
+#define A2T_EX_DEF A2W_EX_DEF
+
+_Ret_z_ inline LPWSTR T2W_EX(
+	_In_z_ LPTSTR lp,
+	_In_ UINT) 
+{	
+	return lp; 
+}
+_Ret_z_ inline LPWSTR T2W_EX_DEF(_In_z_ LPTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR W2T_EX(
+	_In_z_ LPWSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR W2T_DEF(_In_z_ LPWSTR lp) 
+{ 
+	return lp; 
+}
+
+#define T2CA_EX W2CA_EX
+#define T2CA_EX_DEF W2CA_EX_DEF
+#define A2CT_EX A2CW_EX
+#define A2CT_EX_DEF A2CW_EX_DEF
+
+_Ret_z_ inline LPCWSTR T2CW_EX(
+	_In_z_ LPCTSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCWSTR T2CW_EX_DEF(_In_z_ LPCTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR W2CT_EX(
+	_In_z_ LPCWSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR W2CT_EX_DEF(_In_z_ LPCWSTR lp) 
+{ 
+	return lp; 
+}
 
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-	#define T2A W2A
-	#define A2T A2W
-	inline LPWSTR T2W(_In_opt_ LPTSTR lp) { return lp; }
-	inline LPTSTR W2T(_In_opt_ LPWSTR lp) { return lp; }
-	#define T2CA W2CA
-	#define A2CT A2CW
-	inline LPCWSTR T2CW(_In_opt_ LPCTSTR lp) { return lp; }
-	inline LPCTSTR W2CT(_In_opt_ LPCWSTR lp) { return lp; }
+#define T2A W2A
+#define A2T A2W
+
+_Ret_z_ inline LPWSTR T2W(_In_z_ LPTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR W2T(_In_z_ LPWSTR lp) 
+{ 
+	return lp; 
+}
+
+#define T2CA W2CA
+#define A2CT A2CW
+
+_Ret_z_ inline LPCWSTR T2CW(_In_z_ LPCTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR W2CT(_In_z_ LPCWSTR lp) 
+{ 
+	return lp; 
+}
 
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 	
 #else // !defined(_UNICODE)
 
-	#define T2W_EX A2W_EX
-	#define T2W_EX_DEF A2W_EX_DEF
-	#define W2T_EX W2A_EX
-	#define W2T_EX_DEF W2A_EX_DEF
-	inline LPSTR T2A_EX(_In_opt_ LPTSTR lp, UINT) { return lp; }
-	inline LPSTR T2A_EX_DEF(_In_opt_ LPTSTR lp) { return lp; }
-	inline LPTSTR A2T_EX(_In_opt_ LPSTR lp, UINT) { return lp; }
-	inline LPTSTR A2T_EX_DEF(_In_opt_ LPSTR lp) { return lp; }
-	#define T2CW_EX A2CW_EX
-	#define T2CW_EX_DEF A2CW_EX_DEF
-	#define W2CT_EX W2CA_EX
-	#define W2CT_EX_DEF W2CA_EX_DEF
-	inline LPCSTR T2CA_EX(_In_opt_ LPCTSTR lp, UINT) { return lp; }
-	inline LPCSTR T2CA_EX_DEF(_In_opt_ LPCTSTR lp) { return lp; }
-	inline LPCTSTR A2CT_EX(_In_opt_ LPCSTR lp, UINT) { return lp; }
-	inline LPCTSTR A2CT_EX_DEF(_In_opt_ LPCSTR lp) { return lp; }
+#define T2W_EX A2W_EX
+#define T2W_EX_DEF A2W_EX_DEF
+#define W2T_EX W2A_EX
+#define W2T_EX_DEF W2A_EX_DEF
+
+_Ret_z_ inline LPSTR T2A_EX(
+	_In_z_ LPTSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPSTR T2A_EX_DEF(_In_z_ LPTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR A2T_EX(
+	_In_z_ LPSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR A2T_EX_DEF(_In_z_ LPSTR lp) 
+{ 
+	return lp; 
+}
+
+#define T2CW_EX A2CW_EX
+#define T2CW_EX_DEF A2CW_EX_DEF
+#define W2CT_EX W2CA_EX
+#define W2CT_EX_DEF W2CA_EX_DEF
+
+_Ret_z_ inline LPCSTR T2CA_EX(
+	_In_z_ LPCTSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCSTR T2CA_EX_DEF(_In_z_ LPCTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR A2CT_EX(
+	_In_z_ LPCSTR lp, 
+	_In_ UINT) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR A2CT_EX_DEF(_In_z_ LPCSTR lp) 
+{ 
+	return lp; 
+}
 
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-	#define T2W A2W
-	#define W2T W2A
-	inline LPSTR T2A(_In_opt_ LPTSTR lp) { return lp; }
-	inline LPTSTR A2T(_In_opt_ LPSTR lp) { return lp; }
-	#define T2CW A2CW
-	#define W2CT W2CA
-	inline LPCSTR T2CA(_In_opt_ LPCTSTR lp) { return lp; }
-	inline LPCTSTR A2CT(_In_opt_ LPCSTR lp) { return lp; }
+#define T2W A2W
+#define W2T W2A
+_Ret_z_ inline LPSTR T2A(_In_z_ LPTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPTSTR A2T(_In_z_ LPSTR lp) 
+{ 
+	return lp; 
+}
+#define T2CW A2CW
+#define W2CT W2CA
+_Ret_z_ inline LPCSTR T2CA(_In_z_ LPCTSTR lp) 
+{ 
+	return lp; 
+}
+_Ret_z_ inline LPCTSTR A2CT(_In_z_ LPCSTR lp) 
+{ 
+	return lp; 
+}
 
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 
 #endif // defined(_UNICODE)
 
-_Check_return_ inline BSTR A2WBSTR(_In_opt_ LPCSTR lp, int nLen = -1)
+_Check_return_ _Ret_opt_z_ inline BSTR A2WBSTR(
+	_In_opt_z_ LPCSTR lp, 
+	_In_ int nLen = -1)
 {
 	if (lp == NULL || nLen == 0)
 		return NULL;
 	USES_CONVERSION_EX;
 	BSTR str = NULL;
-#pragma warning(push)
-#pragma warning(disable: 6385)
-	int nConvertedLen = MultiByteToWideChar(_acp_ex, 0, lp,
-		nLen, NULL, NULL);
-#pragma warning(pop)
+
+ATLPREFAST_SUPPRESS(6385)
+	int nConvertedLen = MultiByteToWideChar(_acp_ex, 0, lp, nLen, NULL, 0);
+ATLPREFAST_UNSUPPRESS()
 	int nAllocLen = nConvertedLen;
 	if (nLen == -1)
 		nAllocLen -= 1;  // Don't allocate terminating '\0'
@@ -898,31 +1150,70 @@ _Check_return_ inline BSTR A2WBSTR(_In_opt_ LPCSTR lp, int nLen = -1)
 	return str;
 }
 
-inline BSTR OLE2BSTR(_In_opt_ LPCOLESTR lp) {return ::SysAllocString(lp);}
+_Ret_opt_z_ inline BSTR OLE2BSTR(_In_opt_z_ LPCOLESTR lp) 
+{
+	return ::SysAllocString(lp);
+}
 #if defined(_UNICODE)
 // in these cases the default (TCHAR) is the same as OLECHAR
-	inline BSTR T2BSTR_EX(_In_opt_ LPCTSTR lp) {return ::SysAllocString(lp);}
-	inline BSTR A2BSTR_EX(_In_opt_ LPCSTR lp) {return A2WBSTR(lp);}
-	inline BSTR W2BSTR_EX(_In_opt_ LPCWSTR lp) {return ::SysAllocString(lp);}
+_Ret_opt_z_ inline BSTR T2BSTR_EX(_In_opt_z_ LPCTSTR lp) 
+{
+	return ::SysAllocString(lp);
+}
+_Ret_opt_z_ inline BSTR A2BSTR_EX(_In_opt_z_ LPCSTR lp) 
+{
+	return A2WBSTR(lp);
+}
+_Ret_opt_z_ inline BSTR W2BSTR_EX(_In_opt_z_ LPCWSTR lp) 
+{
+	return ::SysAllocString(lp);
+}
 
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-	inline BSTR T2BSTR(_In_opt_ LPCTSTR lp) {return ::SysAllocString(lp);}
-	inline BSTR A2BSTR(_In_opt_ LPCSTR lp) {return A2WBSTR(lp);}
-	inline BSTR W2BSTR(_In_opt_ LPCWSTR lp) {return ::SysAllocString(lp);}
+_Ret_opt_z_ inline BSTR T2BSTR(_In_opt_z_ LPCTSTR lp) 
+{
+	return ::SysAllocString(lp);
+}
+_Ret_opt_z_ inline BSTR A2BSTR(_In_opt_z_ LPCSTR lp) 
+{
+	return A2WBSTR(lp);
+}
+_Ret_opt_z_ inline BSTR W2BSTR(_In_opt_z_ LPCWSTR lp) 
+{
+	return ::SysAllocString(lp);
+}
 	
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 
 #else // !defined(_UNICODE)
-	inline BSTR T2BSTR_EX(_In_opt_ LPCTSTR lp) {return A2WBSTR(lp);}
-	inline BSTR A2BSTR_EX(_In_opt_ LPCSTR lp) {return A2WBSTR(lp);}
-	inline BSTR W2BSTR_EX(_In_opt_ LPCWSTR lp) {return ::SysAllocString(lp);}
+_Ret_opt_z_ inline BSTR T2BSTR_EX(_In_opt_z_ LPCTSTR lp) 
+{
+	return A2WBSTR(lp);
+}
+_Ret_opt_z_ inline BSTR A2BSTR_EX(_In_opt_z_ LPCSTR lp) 
+{
+	return A2WBSTR(lp);
+}
+_Ret_opt_z_ inline BSTR W2BSTR_EX(_In_opt_z_ LPCWSTR lp) 
+{
+	return ::SysAllocString(lp);
+}
 	
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-	inline BSTR T2BSTR(_In_opt_ LPCTSTR lp) {return A2WBSTR(lp);}
-	inline BSTR A2BSTR(_In_opt_ LPCSTR lp) {return A2WBSTR(lp);}
-	inline BSTR W2BSTR(_In_opt_ LPCWSTR lp) {return ::SysAllocString(lp);}
+_Ret_opt_z_ inline BSTR T2BSTR(_In_opt_z_ LPCTSTR lp) 
+{
+	return A2WBSTR(lp);
+}
+_Ret_opt_z_ inline BSTR A2BSTR(_In_opt_z_ LPCSTR lp) 
+{
+	return A2WBSTR(lp);
+}
+_Ret_opt_z_ inline BSTR W2BSTR(_In_opt_z_ LPCWSTR lp) 
+{
+	return ::SysAllocString(lp);
+}
 
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 
@@ -931,7 +1222,9 @@ inline BSTR OLE2BSTR(_In_opt_ LPCOLESTR lp) {return ::SysAllocString(lp);}
 #ifdef _WINGDI_
 /////////////////////////////////////////////////////////////////////////////
 // Global UNICODE<>ANSI translation helpers
-inline LPDEVMODEW AtlDevModeA2W(_Inout_ LPDEVMODEW lpDevModeW, _In_ const DEVMODEA* lpDevModeA)
+inline LPDEVMODEW AtlDevModeA2W(
+	_Inout_ LPDEVMODEW lpDevModeW, 
+	_In_ const DEVMODEA* lpDevModeA)
 {
 	USES_CONVERSION_EX;
 	ATLASSERT(lpDevModeW != NULL);
@@ -971,7 +1264,9 @@ inline LPDEVMODEW AtlDevModeA2W(_Inout_ LPDEVMODEW lpDevModeW, _In_ const DEVMOD
 	return lpDevModeW;
 }
 
-inline LPTEXTMETRICW AtlTextMetricA2W(_Out_ LPTEXTMETRICW lptmW, _In_ LPTEXTMETRICA lptmA)
+inline LPTEXTMETRICW AtlTextMetricA2W(
+	_Out_ LPTEXTMETRICW lptmW, 
+	_In_ LPTEXTMETRICA lptmA)
 {
 	USES_CONVERSION_EX;
 	ATLASSERT(lptmW != NULL);
@@ -1015,7 +1310,9 @@ inline LPTEXTMETRICW AtlTextMetricA2W(_Out_ LPTEXTMETRICW lptmW, _In_ LPTEXTMETR
 	return lptmW;
 }
 
-inline LPTEXTMETRICA AtlTextMetricW2A(_Out_ LPTEXTMETRICA lptmA, _In_ LPTEXTMETRICW lptmW)
+inline LPTEXTMETRICA AtlTextMetricW2A(
+	_Out_ LPTEXTMETRICA lptmA, 
+	_In_ LPTEXTMETRICW lptmW)
 {
 	USES_CONVERSION_EX;
 	ATLASSERT(lptmA != NULL);
@@ -1098,27 +1395,56 @@ inline LPTEXTMETRICA AtlTextMetricW2A(_Out_ LPTEXTMETRICA lptmA, _In_ LPTEXTMETR
 
 #if defined(_UNICODE)
 // in these cases the default (TCHAR) is the same as OLECHAR
-	inline LPDEVMODEW DEVMODEOLE2T_EX(LPDEVMODEOLE lp) { return lp; }
-	inline LPDEVMODEOLE DEVMODET2OLE_EX(LPDEVMODEW lp) { return lp; }
-	inline LPTEXTMETRICW TEXTMETRICOLE2T_EX(LPTEXTMETRICOLE lp) { return lp; }
-	inline LPTEXTMETRICOLE TEXTMETRICT2OLE_EX(LPTEXTMETRICW lp) { return lp; }
+inline LPDEVMODEW DEVMODEOLE2T_EX(_In_opt_ LPDEVMODEOLE lp) 
+{ 
+	return lp; 
+}
+inline LPDEVMODEOLE DEVMODET2OLE_EX(_In_opt_ LPDEVMODEW lp) 
+{ 
+	return lp; 
+}
+inline LPTEXTMETRICW TEXTMETRICOLE2T_EX(_In_ LPTEXTMETRICOLE lp) 
+{ 
+	return lp; 
+}
+inline LPTEXTMETRICOLE TEXTMETRICT2OLE_EX(_In_ LPTEXTMETRICW lp) 
+{ 
+	return lp; 
+}
+
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
-	inline LPDEVMODEW DEVMODEOLE2T(LPDEVMODEOLE lp) { return lp; }
-	inline LPDEVMODEOLE DEVMODET2OLE(LPDEVMODEW lp) { return lp; }
-	inline LPTEXTMETRICW TEXTMETRICOLE2T(LPTEXTMETRICOLE lp) { return lp; }
-	inline LPTEXTMETRICOLE TEXTMETRICT2OLE(LPTEXTMETRICW lp) { return lp; }
+inline LPDEVMODEW DEVMODEOLE2T(_In_ LPDEVMODEOLE lp) 
+{ 
+	return lp; 
+}
+inline LPDEVMODEOLE DEVMODET2OLE(_In_ LPDEVMODEW lp) 
+{ 
+	return lp; 
+}
+inline LPTEXTMETRICW TEXTMETRICOLE2T(_In_ LPTEXTMETRICOLE lp) 
+{ 
+	return lp; 
+}
+inline LPTEXTMETRICOLE TEXTMETRICT2OLE(_In_ LPTEXTMETRICW lp) 
+{ 
+	return lp; 
+}
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 	
 #else // !defined(_UNICODE)
-	#define DEVMODEOLE2T_EX(lpo) DEVMODEW2A_EX(lpo)
-	#define DEVMODET2OLE_EX(lpa) DEVMODEA2W_EX(lpa)
-	#define TEXTMETRICOLE2T_EX(lptmw) TEXTMETRICW2A_EX(lptmw)
-	#define TEXTMETRICT2OLE_EX(lptma) TEXTMETRICA2W_EX(lptma)
+
+#define DEVMODEOLE2T_EX(lpo) DEVMODEW2A_EX(lpo)
+#define DEVMODET2OLE_EX(lpa) DEVMODEA2W_EX(lpa)
+#define TEXTMETRICOLE2T_EX(lptmw) TEXTMETRICW2A_EX(lptmw)
+#define TEXTMETRICT2OLE_EX(lptma) TEXTMETRICA2W_EX(lptma)
+
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
-	#define DEVMODEOLE2T(lpo) DEVMODEW2A(lpo)
-	#define DEVMODET2OLE(lpa) DEVMODEA2W(lpa)
-	#define TEXTMETRICOLE2T(lptmw) TEXTMETRICW2A(lptmw)
-	#define TEXTMETRICT2OLE(lptma) TEXTMETRICA2W(lptma)
+
+#define DEVMODEOLE2T(lpo) DEVMODEW2A(lpo)
+#define DEVMODET2OLE(lpa) DEVMODEA2W(lpa)
+#define TEXTMETRICOLE2T(lptmw) TEXTMETRICW2A(lptmw)
+#define TEXTMETRICT2OLE(lptma) TEXTMETRICA2W(lptma)
+
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY	
 
 #endif // defined(_UNICODE)
@@ -1133,7 +1459,9 @@ inline LPTEXTMETRICA AtlTextMetricW2A(_Out_ LPTEXTMETRICA lptmA, _In_ LPTEXTMETR
 
 #ifdef _WINGDI_
 
-ATLINLINE ATLAPI_(LPDEVMODEA) AtlDevModeW2A(_Inout_ LPDEVMODEA lpDevModeA, _In_ const DEVMODEW* lpDevModeW)
+ATLINLINE ATLAPI_(LPDEVMODEA) AtlDevModeW2A(
+	_Inout_opt_ LPDEVMODEA lpDevModeA, 
+	_In_ const DEVMODEW* lpDevModeW)
 {
 	USES_CONVERSION_EX;
 	ATLASSERT(lpDevModeA != NULL);

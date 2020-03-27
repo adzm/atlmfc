@@ -103,6 +103,15 @@ void CMFCRibbonCheckBox::OnDraw(CDC* pDC)
 	{
 		pDC->SetTextColor(clrTextOld);
 	}
+
+	if (IsFocused())
+	{
+		CRect rectFocus = rectText;
+		rectFocus.OffsetRect(-nTextMarginLeft / 2, 0);
+		rectFocus.DeflateRect(0, 2);
+
+		pDC->DrawFocusRect(rectFocus);
+	}
 }
 
 void CMFCRibbonCheckBox::OnDrawOnList(CDC* pDC, CString strText, int nTextOffset, CRect rect, BOOL bIsSelected, BOOL bHighlighted)

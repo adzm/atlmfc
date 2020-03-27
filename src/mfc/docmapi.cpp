@@ -50,7 +50,7 @@ void CDocument::OnFileSendMail()
 
 	_AFX_MAIL_STATE* pMailState = _afxMailState;
 	if (pMailState->m_hInstMail == NULL)
-		pMailState->m_hInstMail = ::AfxCtxLoadLibraryA("MAPI32.DLL");
+		pMailState->m_hInstMail = ::AfxCtxLoadLibraryW(L"MAPI32.DLL");
 
 	if (pMailState->m_hInstMail == NULL)
 	{

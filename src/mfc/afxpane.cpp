@@ -1892,10 +1892,7 @@ void CPane::OnPressCloseButton()
 	CPaneFrameWnd* pMiniFrame = GetParentMiniFrame();
 	if (pMiniFrame != NULL)
 	{
-		if (pMiniFrame->OnCloseMiniFrame())
-		{
-			pMiniFrame->CloseMiniFrame();
-		}
+		pMiniFrame->CloseMiniFrame();
 	}
 }
 
@@ -1949,7 +1946,7 @@ BOOL CPane::CanBeTabbedDocument() const
 		return FALSE;
 	}
 
-	return pMDIFrame->AreMDITabs();
+	return TRUE;
 }
 
 void CPane::ConvertToTabbedDocument(BOOL /*bActiveTabOnly*/)

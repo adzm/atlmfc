@@ -68,18 +68,18 @@ typedef tagVARIANT VARIANT;
 /////////////////////////////////////////////////////////////////////////////
 // Naming conventions:
 //    The term "length" can be confusing when dealing with ANSI, Unicode, and
-//    MBCS character sets, so this file will use the following naming 
-//    conventions to differentiate between the different meanings of 
+//    MBCS character sets, so this file will use the following naming
+//    conventions to differentiate between the different meanings of
 //    "length":
 //
-//    'Byte Length' - Length of a buffer in bytes, regardless of character 
+//    'Byte Length' - Length of a buffer in bytes, regardless of character
 //       size
 //    'Char Length' - Number of distinct characters in string.  For wide-
-//       character strings, this is equivalent to half the 'Byte Length'.  
+//       character strings, this is equivalent to half the 'Byte Length'.
 //       For ANSI strings, this is equivalent to the 'Byte Length'.  For MBCS
 //       strings, 'Char Length' counts a lead-byte/trail-byte combination
 //       as one character.
-//    'Length' - When neither of the above terms is used, 'Length' refers to 
+//    'Length' - When neither of the above terms is used, 'Length' refers to
 //       length in XCHARs, which is equal to 'Byte Length'/sizeof(XCHAR).
 /////////////////////////////////////////////////////////////////////////////
 
@@ -101,7 +101,10 @@ template <class StringType,int t_nChars> struct CConstFixedStringT
 /////////////////////////////////////////////////////////////////////////////
 // inline helpers
 
-inline int _wcstombsz(_Out_cap_(count) char* mbstr, _In_z_ const wchar_t* wcstr, _In_ ULONG count) throw()
+inline int _wcstombsz(
+	_Out_cap_(count) char* mbstr,
+	_In_z_ const wchar_t* wcstr,
+	_In_ ULONG count) throw()
 {
 	// count is number of bytes
 	if (count == 0 && mbstr != NULL)
@@ -113,7 +116,10 @@ inline int _wcstombsz(_Out_cap_(count) char* mbstr, _In_z_ const wchar_t* wcstr,
 	return result;
 }
 
-inline int _mbstowcsz(_Out_z_cap_(count) wchar_t* wcstr, _In_z_ const char* mbstr, _In_ ULONG count)
+inline int _mbstowcsz(
+	_Out_cap_(count) wchar_t* wcstr,
+	_In_z_ const char* mbstr,
+	_In_ ULONG count)
 {
 	// count is number of wchar_t's
 	if (count == 0 && wcstr != NULL)
@@ -138,80 +144,102 @@ class ChTraitsCRT :
 	public ChTraitsBase< _CharType >
 {
 public:
-	static char* __cdecl CharNext( _In_z_ const char* p ) throw()
+	static char* __cdecl CharNext(_In_ const char* p) throw()
 	{
 		return reinterpret_cast< char* >( _mbsinc( reinterpret_cast< const unsigned char* >( p ) ) );
 	}
 
-	static int __cdecl IsDigit( _In_ char ch ) throw()
+	static int __cdecl IsDigit(_In_ char ch) throw()
 	{
 		return _ismbcdigit( ch );
 	}
 
-	static int __cdecl IsSpace( _In_ char ch ) throw()
+	static int __cdecl IsSpace(_In_ char ch) throw()
 	{
 		return _ismbcspace( ch );
 	}
 
-	static int __cdecl StringCompare( _In_z_ LPCSTR pszA, _In_z_ LPCSTR pszB ) throw()
+	static int __cdecl StringCompare(
+		_In_z_ LPCSTR pszA,
+		_In_z_ LPCSTR pszB) throw()
 	{
 		return _mbscmp( reinterpret_cast< const unsigned char* >( pszA ), reinterpret_cast< const unsigned char* >( pszB ) );
 	}
 
-	static int __cdecl StringCompareIgnore( _In_z_ LPCSTR pszA, _In_z_ LPCSTR pszB ) throw()
+	static int __cdecl StringCompareIgnore(
+		_In_z_ LPCSTR pszA,
+		_In_z_ LPCSTR pszB) throw()
 	{
 		return _mbsicmp( reinterpret_cast< const unsigned char* >( pszA ), reinterpret_cast< const unsigned char* >( pszB ) );
 	}
 
-	static int __cdecl StringCollate( _In_z_ LPCSTR pszA, _In_z_ LPCSTR pszB ) throw()
+	static int __cdecl StringCollate(
+		_In_z_ LPCSTR pszA,
+		_In_z_ LPCSTR pszB) throw()
 	{
 		return _mbscoll( reinterpret_cast< const unsigned char* >( pszA ), reinterpret_cast< const unsigned char* >( pszB ) );
 	}
 
-	static int __cdecl StringCollateIgnore( _In_z_ LPCSTR pszA, _In_z_ LPCSTR pszB ) throw()
+	static int __cdecl StringCollateIgnore(
+		_In_z_ LPCSTR pszA,
+		_In_z_ LPCSTR pszB) throw()
 	{
 		return _mbsicoll( reinterpret_cast< const unsigned char* >( pszA ), reinterpret_cast< const unsigned char* >( pszB ) );
 	}
 
-	static LPCSTR __cdecl StringFindString( _In_z_ LPCSTR pszBlock, _In_z_ LPCSTR pszMatch ) throw()
+	static LPCSTR __cdecl StringFindString(
+		_In_z_ LPCSTR pszBlock,
+		_In_z_ LPCSTR pszMatch) throw()
 	{
 		return reinterpret_cast< LPCSTR >( _mbsstr( reinterpret_cast< const unsigned char* >( pszBlock ),
 			reinterpret_cast< const unsigned char* >( pszMatch ) ) );
 	}
 
-	static LPSTR __cdecl StringFindString( _In_z_ LPSTR pszBlock, _In_z_ LPCSTR pszMatch ) throw()
+	static LPSTR __cdecl StringFindString(
+		_In_z_ LPSTR pszBlock,
+		_In_z_ LPCSTR pszMatch) throw()
 	{
 		return( const_cast< LPSTR >( StringFindString( const_cast< LPCSTR >( pszBlock ), pszMatch ) ) );
 	}
 
-	static LPCSTR __cdecl StringFindChar( _In_z_ LPCSTR pszBlock, _In_ char chMatch ) throw()
+	static LPCSTR __cdecl StringFindChar(
+		_In_z_ LPCSTR pszBlock,
+		_In_ char chMatch) throw()
 	{
 		return reinterpret_cast< LPCSTR >( _mbschr( reinterpret_cast< const unsigned char* >( pszBlock ), (unsigned char)chMatch ) );
 	}
 
-	static LPCSTR __cdecl StringFindCharRev( _In_z_ LPCSTR psz, _In_ char ch ) throw()
+	static LPCSTR __cdecl StringFindCharRev(
+		_In_z_ LPCSTR psz,
+		_In_ char ch) throw()
 	{
 		return reinterpret_cast< LPCSTR >( _mbsrchr( reinterpret_cast< const unsigned char* >( psz ), (unsigned char)ch ) );
 	}
 
-	static LPCSTR __cdecl StringScanSet( _In_z_ LPCSTR pszBlock, _In_z_ LPCSTR pszMatch ) throw()
+	static LPCSTR __cdecl StringScanSet(
+		_In_z_ LPCSTR pszBlock,
+		_In_z_ LPCSTR pszMatch) throw()
 	{
 		return reinterpret_cast< LPCSTR >( _mbspbrk( reinterpret_cast< const unsigned char* >( pszBlock ),
 			reinterpret_cast< const unsigned char* >( pszMatch ) ) );
 	}
 
-	static int __cdecl StringSpanIncluding( _In_z_ LPCSTR pszBlock, _In_z_ LPCSTR pszSet ) throw()
+	static int __cdecl StringSpanIncluding(
+		_In_z_ LPCSTR pszBlock,
+		_In_z_ LPCSTR pszSet) throw()
 	{
 		return (int)_mbsspn( reinterpret_cast< const unsigned char* >( pszBlock ), reinterpret_cast< const unsigned char* >( pszSet ) );
 	}
 
-	static int __cdecl StringSpanExcluding( _In_z_ LPCSTR pszBlock, _In_z_ LPCSTR pszSet ) throw()
+	static int __cdecl StringSpanExcluding(
+		_In_z_ LPCSTR pszBlock,
+		_In_z_ LPCSTR pszSet) throw()
 	{
 		return (int)_mbscspn( reinterpret_cast< const unsigned char* >( pszBlock ), reinterpret_cast< const unsigned char* >( pszSet ) );
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output size to ChTraitsCRT::StringUppercase")
-	static LPSTR __cdecl StringUppercase( _Inout_ LPSTR psz ) throw()
+	static LPSTR __cdecl StringUppercase(_Inout_z_ LPSTR psz) throw()
 	{
 #pragma warning (push)
 #pragma warning(disable : 4996)
@@ -220,7 +248,7 @@ public:
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output size to ChTraitsCRT::StringLowercase")
-	static LPSTR __cdecl StringLowercase( _Inout_ LPSTR psz ) throw()
+	static LPSTR __cdecl StringLowercase(_Inout_z_ LPSTR psz) throw()
 	{
 #pragma warning (push)
 #pragma warning(disable : 4996)
@@ -228,79 +256,99 @@ public:
 #pragma warning (pop)
 	}
 
-	static LPSTR __cdecl StringUppercase( _Inout_cap_(size) LPSTR psz, _In_ size_t size ) throw()
+	static LPSTR __cdecl StringUppercase(
+		_Inout_z_cap_(size) LPSTR psz,
+		_In_ size_t size) throw()
 	{
 		Checked::mbsupr_s(reinterpret_cast< unsigned char* >( psz ), size);
 		return psz;
 	}
 
-	static LPSTR __cdecl StringLowercase( _Inout_cap_(size) LPSTR psz, _In_ size_t size ) throw()
+	static LPSTR __cdecl StringLowercase(
+		_Inout_z_cap_(size) LPSTR psz,
+		_In_ size_t size) throw()
 	{
 		Checked::mbslwr_s( reinterpret_cast< unsigned char* >( psz ), size );
 		return psz;
 	}
 
-	static LPSTR __cdecl StringReverse( _Inout_ LPSTR psz ) throw()
+	static LPSTR __cdecl StringReverse(_Inout_z_ LPSTR psz) throw()
 	{
 		return reinterpret_cast< LPSTR >( _mbsrev( reinterpret_cast< unsigned char* >( psz ) ) );
 	}
 
-	static int __cdecl GetFormattedLength( _In_ _Printf_format_string_ LPCSTR pszFormat, va_list args ) throw()
+	static int __cdecl GetFormattedLength(
+		_In_z_ _Printf_format_string_ LPCSTR pszFormat, va_list args) throw()
 	{
 		return _vscprintf( pszFormat, args );
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output size to ChTraitsCRT::Format")
-	static int __cdecl Format( _Out_ LPSTR pszBuffer, _In_ _Printf_format_string_ LPCSTR pszFormat, va_list args ) throw()
+	static int __cdecl Format(
+		_Out_ _Post_z_ LPSTR pszBuffer,
+		_In_z_ _Printf_format_string_ LPCSTR pszFormat,
+		va_list args ) throw()
 	{
-		#pragma warning (push)
-		#pragma warning(disable : 4996)
+#pragma warning (push)
+#pragma warning(disable : 4995)
+#pragma warning(disable : 4996)
 		return vsprintf( pszBuffer, pszFormat, args );
-		#pragma warning (pop)
-
+#pragma warning (pop)
 	}
-	static int __cdecl Format
-		( _Out_cap_post_count_(nlength, return) LPSTR pszBuffer, _In_ size_t nlength, _In_ _Printf_format_string_ LPCSTR pszFormat, va_list args ) throw()
+	static int __cdecl Format(
+		_Out_z_cap_post_count_(nlength, return) LPSTR pszBuffer,
+		_In_ size_t nlength,
+		_In_z_ _Printf_format_string_ LPCSTR pszFormat, va_list args ) throw()
 	{
 		return vsprintf_s( pszBuffer, nlength, pszFormat, args );
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_z_ LPCSTR pszSrc ) throw()
+	static int __cdecl GetBaseTypeLength(_In_z_ LPCSTR pszSrc) throw()
 	{
 		// Returns required buffer length in XCHARs
 		return int( strlen( pszSrc ) );
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_count_(nLength) LPCSTR pszSrc, int nLength ) throw()
+	static int __cdecl GetBaseTypeLength(
+		_In_z_count_(nLength) LPCSTR pszSrc,
+		_In_ int nLength) throw()
 	{
 		(void)pszSrc;
 		// Returns required buffer length in XCHARs
 		return nLength;
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_z_ LPCWSTR pszSource ) throw()
+	static int __cdecl GetBaseTypeLength(_In_z_ LPCWSTR pszSource) throw()
 	{
 		// Returns required buffer length in XCHARs
 		return ::WideCharToMultiByte( _AtlGetConversionACP(), 0, pszSource, -1, NULL, 0, NULL, NULL )-1;
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_count_(nLength) LPCWSTR pszSource, int nLength ) throw()
+	static int __cdecl GetBaseTypeLength(
+		_In_count_(nLength) LPCWSTR pszSource,
+		_In_ int nLength) throw()
 	{
 		// Returns required buffer length in XCHARs
 		return ::WideCharToMultiByte( _AtlGetConversionACP(), 0, pszSource, nLength, NULL, 0, NULL, NULL );
 	}
 
-	static void __cdecl ConvertToBaseType( _Out_cap_(nDestLength) LPSTR pszDest, _In_ int nDestLength,
-		_In_z_ LPCSTR pszSrc, int nSrcLength = -1 ) throw()
+	static void __cdecl ConvertToBaseType(
+		_Out_cap_(nDestLength) LPSTR pszDest,
+		_In_ int nDestLength,
+		_In_z_ LPCSTR pszSrc,
+		_In_ int nSrcLength = -1) throw()
 	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
 		// nLen is in XCHARs
-		Checked::memcpy_s( pszDest, nDestLength*sizeof( char ), 
+		Checked::memcpy_s( pszDest, nDestLength*sizeof( char ),
 			pszSrc, nSrcLength*sizeof( char ) );
 	}
 
-	static void __cdecl ConvertToBaseType( _Out_cap_(nDestLength) LPSTR pszDest, _In_ int nDestLength,
-		_In_z_ LPCWSTR pszSrc, _In_ int nSrcLength = -1) throw()
+	static void __cdecl ConvertToBaseType(
+		_Out_cap_(nDestLength) LPSTR pszDest,
+		_In_ int nDestLength,
+		_In_ LPCWSTR pszSrc,
+		_In_ int nSrcLength = -1) throw()
 	{
 		// nLen is in XCHARs
 		::WideCharToMultiByte( _AtlGetConversionACP(), 0, pszSrc, nSrcLength, pszDest, nDestLength, NULL, NULL );
@@ -322,7 +370,9 @@ public:
 		ATLASSERT(fSuccess);
 	}
 
-	static void ConvertToOem(_Inout_cap_(size) _CharType* pstrString, _In_ size_t size)
+	static void ConvertToOem(
+		_Inout_cap_(size) _CharType* pstrString,
+		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
 		{
@@ -337,7 +387,9 @@ public:
 		}
 	}
 
-	static void ConvertToAnsi(_Inout_cap_(size) _CharType* pstrString, _In_ size_t size)
+	static void ConvertToAnsi(
+		_Inout_cap_(size) _CharType* pstrString,
+		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
 		{
@@ -352,13 +404,18 @@ public:
 		}
 	}
 
-	static void __cdecl FloodCharacters( _In_ char ch, _In_ int nLength, _Out_capcount_(nLength) char* pch ) throw()
+	static void __cdecl FloodCharacters(
+		_In_ char ch,
+		_In_ int nLength,
+		_Out_capcount_(nLength) char* pch) throw()
 	{
 		// nLength is in XCHARs
 		memset( pch, ch, nLength );
 	}
 
-	static BSTR __cdecl AllocSysString( _In_count_(nDataLength) const char* pchData, int nDataLength ) throw()
+	static BSTR __cdecl AllocSysString(
+		_In_count_(nDataLength) const char* pchData,
+		_In_ int nDataLength) throw()
 	{
 		int nLen = ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength,
 			NULL, NULL );
@@ -372,7 +429,10 @@ public:
 		return bstr;
 	}
 
-	static BOOL __cdecl ReAllocSysString( _In_count_(nDataLength) const char* pchData, _Out_ BSTR* pbstr, _In_ int nDataLength ) throw()
+	static BOOL __cdecl ReAllocSysString(
+		_In_count_(nDataLength) const char* pchData,
+		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
+		_In_ int nDataLength) throw()
 	{
 		int nLen = ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength, NULL, NULL );
 		BOOL bSuccess = ::SysReAllocStringLen( pbstr, NULL, nLen );
@@ -384,50 +444,62 @@ public:
 		return bSuccess;
 	}
 
-	static DWORD __cdecl _AFX_FUNCNAME(FormatMessage)( _In_ DWORD dwFlags, LPCVOID pSource,
-		_In_ DWORD dwMessageID, _In_ DWORD dwLanguageID, _Out_cap_(nSize) LPSTR pszBuffer,
-		DWORD nSize, va_list* pArguments ) throw()
+	static DWORD __cdecl _AFX_FUNCNAME(FormatMessage)(
+		_In_ DWORD dwFlags,
+		_In_opt_ LPCVOID pSource,
+		_In_ DWORD dwMessageID,
+		_In_ DWORD dwLanguageID,
+		_Out_z_cap_(nSize) LPSTR pszBuffer,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* pArguments) throw()
 	{
 		return ::FormatMessageA( dwFlags, pSource, dwMessageID, dwLanguageID,
 				pszBuffer, nSize, pArguments );
 	}
 
 #if defined(_AFX)
-	static DWORD __cdecl FormatMessage( _In_ DWORD dwFlags, LPCVOID pSource,
-		_In_ DWORD dwMessageID, _In_ DWORD dwLanguageID, _Out_cap_(nSize) LPSTR pszBuffer,
-		DWORD nSize, va_list* pArguments ) throw()
+	static DWORD __cdecl FormatMessage(
+		_In_ DWORD dwFlags,
+		_In_opt_ LPCVOID pSource,
+		_In_ DWORD dwMessageID,
+		_In_ DWORD dwLanguageID,
+		_Out_z_cap_(nSize) LPSTR pszBuffer,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* pArguments) throw()
 	{
 		return _AFX_FUNCNAME(FormatMessage)(dwFlags, pSource, dwMessageID, dwLanguageID, pszBuffer, nSize, pArguments);
 	}
 #endif
 
-	static int __cdecl SafeStringLen( _In_opt_z_ LPCSTR psz ) throw()
+	static int __cdecl SafeStringLen(_In_opt_z_ LPCSTR psz) throw()
 	{
 		// returns length in bytes
 		return (psz != NULL) ? int( strlen( psz ) ) : 0;
 	}
 
-	static int __cdecl SafeStringLen( _In_opt_z_ LPCWSTR psz ) throw()
+	static int __cdecl SafeStringLen(_In_opt_z_ LPCWSTR psz) throw()
 	{
 		// returns length in wchar_ts
 		return (psz != NULL) ? int( wcslen( psz ) ) : 0;
 	}
 
-	static int __cdecl GetCharLen( _In_z_ const wchar_t* pch ) throw()
+	static int __cdecl GetCharLen(_In_opt_z_ const wchar_t* pch) throw()
 	{
 		(void)pch;
 		// returns char length
 		return 1;
 	}
 
-	static int __cdecl GetCharLen( _In_z_ const char* pch ) throw()
+	static int __cdecl GetCharLen(_In_z_ const char* pch) throw()
 	{
 		// returns char length
 		return int( _mbclen( reinterpret_cast< const unsigned char* >( pch ) ) );
 	}
 
-	static DWORD __cdecl GetEnvironmentVariable( _In_z_ LPCSTR pszVar,
-		_Out_opt_cap_(dwSize) LPSTR pszBuffer, _In_ DWORD dwSize ) throw()
+	static DWORD __cdecl GetEnvironmentVariable(
+		_In_z_ LPCSTR pszVar,
+		_Out_opt_z_cap_(dwSize) LPSTR pszBuffer,
+		_In_ DWORD dwSize) throw()
 	{
 		return ::GetEnvironmentVariableA( pszVar, pszBuffer, dwSize );
 	}
@@ -438,84 +510,109 @@ template<>
 class ChTraitsCRT< wchar_t > :
 	public ChTraitsBase< wchar_t >
 {
-	static DWORD __cdecl _GetEnvironmentVariableW( _In_z_ LPCWSTR pszName, _Out_opt_cap_post_count_(nSize, return) LPWSTR pszBuffer, _In_ DWORD nSize ) throw()
+	static DWORD __cdecl _GetEnvironmentVariableW(
+		_In_z_ LPCWSTR pszName,
+		_Out_opt_z_cap_post_count_(nSize, return) LPWSTR pszBuffer,
+		_In_ DWORD nSize) throw()
 	{
 		return ::GetEnvironmentVariableW( pszName, pszBuffer, nSize );
 	}
 
 public:
-	static LPWSTR __cdecl CharNext( _In_z_ LPCWSTR psz ) throw()
+	static LPWSTR __cdecl CharNext(_In_ LPCWSTR psz) throw()
 	{
 		return const_cast< LPWSTR >( psz+1 );
 	}
 
-	static int __cdecl IsDigit( _In_ wchar_t ch ) throw()
+	static int __cdecl IsDigit(_In_ wchar_t ch) throw()
 	{
 		return iswdigit( static_cast<unsigned short>(ch) );
 	}
 
-	static int __cdecl IsSpace( _In_ wchar_t ch ) throw()
+	static int __cdecl IsSpace(_In_ wchar_t ch) throw()
 	{
 		return iswspace( static_cast<unsigned short>(ch) );
 	}
 
-	static int __cdecl StringCompare( _In_z_ LPCWSTR pszA, _In_z_ LPCWSTR pszB ) throw()
+	static int __cdecl StringCompare(
+		_In_z_ LPCWSTR pszA,
+		_In_z_ LPCWSTR pszB) throw()
 	{
 		return wcscmp( pszA, pszB );
 	}
 
-	static int __cdecl StringCompareIgnore( _In_z_ LPCWSTR pszA, _In_z_ LPCWSTR pszB ) throw()
+	static int __cdecl StringCompareIgnore(
+		_In_z_ LPCWSTR pszA,
+		_In_z_ LPCWSTR pszB) throw()
 	{
 		return _wcsicmp( pszA, pszB );
 	}
 
-	static int __cdecl StringCollate( _In_z_ LPCWSTR pszA, _In_z_ LPCWSTR pszB ) throw()
+	static int __cdecl StringCollate(
+		_In_z_ LPCWSTR pszA,
+		_In_z_ LPCWSTR pszB) throw()
 	{
 		return wcscoll( pszA, pszB );
 	}
 
-	static int __cdecl StringCollateIgnore( _In_z_ LPCWSTR pszA, _In_z_ LPCWSTR pszB ) throw()
+	static int __cdecl StringCollateIgnore(
+		_In_z_ LPCWSTR pszA,
+		_In_z_ LPCWSTR pszB) throw()
 	{
 		return _wcsicoll( pszA, pszB );
 	}
 
-	static LPCWSTR __cdecl StringFindString( _In_z_ LPCWSTR pszBlock, _In_z_ LPCWSTR pszMatch ) throw()
+	static LPCWSTR __cdecl StringFindString(
+		_In_z_ LPCWSTR pszBlock,
+		_In_z_ LPCWSTR pszMatch) throw()
 	{
 		return wcsstr( pszBlock, pszMatch );
 	}
 
-	static LPWSTR __cdecl StringFindString( _In_z_ LPWSTR pszBlock, _In_z_ LPCWSTR pszMatch ) throw()
+	static LPWSTR __cdecl StringFindString(
+		_In_z_ LPWSTR pszBlock,
+		_In_z_ LPCWSTR pszMatch) throw()
 	{
 		return( const_cast< LPWSTR >( StringFindString( const_cast< LPCWSTR >( pszBlock ), pszMatch ) ) );
 	}
 
-	static LPCWSTR __cdecl StringFindChar( _In_z_ LPCWSTR pszBlock, _In_ wchar_t chMatch ) throw()
+	static LPCWSTR __cdecl StringFindChar(
+		_In_z_ LPCWSTR pszBlock,
+		_In_ wchar_t chMatch) throw()
 	{
 		return wcschr( pszBlock, chMatch );
 	}
 
-	static LPCWSTR __cdecl StringFindCharRev( _In_z_ LPCWSTR psz, _In_ wchar_t ch ) throw()
+	static LPCWSTR __cdecl StringFindCharRev(
+		_In_z_ LPCWSTR psz,
+		_In_ wchar_t ch) throw()
 	{
 		return wcsrchr( psz, ch );
 	}
 
-	static LPCWSTR __cdecl StringScanSet( _In_z_ LPCWSTR pszBlock, _In_z_ LPCWSTR pszMatch ) throw()
+	static LPCWSTR __cdecl StringScanSet(
+		_In_z_ LPCWSTR pszBlock,
+		_In_z_ LPCWSTR pszMatch) throw()
 	{
 		return wcspbrk( pszBlock, pszMatch );
 	}
 
-	static int __cdecl StringSpanIncluding( _In_z_ LPCWSTR pszBlock, _In_z_ LPCWSTR pszSet ) throw()
+	static int __cdecl StringSpanIncluding(
+		_In_z_ LPCWSTR pszBlock,
+		_In_z_ LPCWSTR pszSet) throw()
 	{
 		return (int)wcsspn( pszBlock, pszSet );
 	}
 
-	static int __cdecl StringSpanExcluding( _In_z_ LPCWSTR pszBlock, _In_z_ LPCWSTR pszSet ) throw()
+	static int __cdecl StringSpanExcluding(
+		_In_z_ LPCWSTR pszBlock,
+		_In_z_ LPCWSTR pszSet) throw()
 	{
 		return (int)wcscspn( pszBlock, pszSet );
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output size to ChTraitsCRT::StringUppercase")
-	static LPWSTR __cdecl StringUppercase( _Inout_ LPWSTR psz ) throw()
+	static LPWSTR __cdecl StringUppercase(_Inout_z_ LPWSTR psz) throw()
 	{
 #pragma warning (push)
 #pragma warning(disable : 4996)
@@ -524,7 +621,7 @@ public:
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output size to ChTraitsCRT::StringLowercase")
-	static LPWSTR __cdecl StringLowercase( _Inout_ LPWSTR psz ) throw()
+	static LPWSTR __cdecl StringLowercase(_Inout_z_ LPWSTR psz) throw()
 	{
 #pragma warning (push)
 #pragma warning(disable : 4996)
@@ -532,83 +629,106 @@ public:
 #pragma warning (pop)
 	}
 
-	static LPWSTR __cdecl StringUppercase( _Inout_cap_(size) LPWSTR psz, _In_ size_t size ) throw()
+	static LPWSTR __cdecl StringUppercase(
+		_Inout_cap_(size) LPWSTR psz,
+		_In_ size_t size) throw()
 	{
 		errno_t err = _wcsupr_s( psz, size );
 		return (err == 0) ? psz : NULL;
 	}
 
-	static LPWSTR __cdecl StringLowercase( _Inout_cap_(size) LPWSTR psz, _In_ size_t size ) throw()
+	static LPWSTR __cdecl StringLowercase(
+		_Inout_cap_(size) LPWSTR psz,
+		_In_ size_t size) throw()
 	{
 		errno_t err = _wcslwr_s( psz, size );
 		return (err == 0) ? psz : NULL;
 	}
 
-	static LPWSTR __cdecl StringReverse( _Inout_ LPWSTR psz ) throw()
+	static LPWSTR __cdecl StringReverse(_Inout_z_ LPWSTR psz) throw()
 	{
 		return _wcsrev( psz );
 	}
 
-	static int __cdecl GetFormattedLength( _In_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
+	static int __cdecl GetFormattedLength(
+		_In_z_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
 	{
 		return _vscwprintf( pszFormat, args );
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output size to ChTraitsCRT::Format")
-	static int __cdecl Format( _Out_ LPWSTR pszBuffer, _In_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
+	static int __cdecl Format(
+		_Out_ _Post_z_ LPWSTR pszBuffer,
+		_In_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
 	{
-		#pragma warning (push)
-		#pragma warning(disable : 4996)
+#pragma warning (push)
+#pragma warning(disable : 4995)
+#pragma warning(disable : 4996)
 		return vswprintf( pszBuffer, pszFormat, args );
-		#pragma warning (pop)
+#pragma warning (pop)
 	}
-	static int __cdecl Format
-		( _Out_cap_(nLength) LPWSTR pszBuffer, _In_ size_t nLength, _In_ __format_string LPCWSTR pszFormat, va_list args) throw()
+	static int __cdecl Format(
+		_Out_cap_(nLength) LPWSTR pszBuffer,
+		_In_ size_t nLength,
+		_In_z_ __format_string LPCWSTR pszFormat, va_list args) throw()
 	{
 		return vswprintf_s( pszBuffer, nLength, pszFormat, args );
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_z_ LPCSTR pszSrc ) throw()
+	static int __cdecl GetBaseTypeLength(_In_z_ LPCSTR pszSrc) throw()
 	{
 		// Returns required buffer size in wchar_ts
 		return ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pszSrc, -1, NULL, 0 )-1;
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_count_(nLength) LPCSTR pszSrc, _In_ int nLength ) throw()
+	static int __cdecl GetBaseTypeLength(
+		_In_count_(nLength) LPCSTR pszSrc,
+		_In_ int nLength) throw()
 	{
 		// Returns required buffer size in wchar_ts
 		return ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pszSrc, nLength, NULL, 0 );
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_z_ LPCWSTR pszSrc ) throw()
+	static int __cdecl GetBaseTypeLength(_In_z_ LPCWSTR pszSrc) throw()
 	{
 		// Returns required buffer size in wchar_ts
 		return (int)wcslen( pszSrc );
 	}
 
-	static int __cdecl GetBaseTypeLength( _In_count_(nLength) LPCWSTR pszSrc, _In_ int nLength ) throw()
+	static int __cdecl GetBaseTypeLength(
+		_In_count_(nLength) LPCWSTR pszSrc,
+		_In_ int nLength) throw()
 	{
 		(void)pszSrc;
 		// Returns required buffer size in wchar_ts
 		return nLength;
 	}
 
-	static void __cdecl ConvertToBaseType( _Out_cap_(nDestLength) LPWSTR pszDest, _In_ int nDestLength,
-		_In_z_ LPCSTR pszSrc, _In_ int nSrcLength = -1) throw()
+	static void __cdecl ConvertToBaseType(
+		_Out_cap_(nDestLength) LPWSTR pszDest,
+		_In_ int nDestLength,
+		_In_ LPCSTR pszSrc,
+		_In_ int nSrcLength = -1) throw()
 	{
 		// nLen is in wchar_ts
 		::MultiByteToWideChar( _AtlGetConversionACP(), 0, pszSrc, nSrcLength, pszDest, nDestLength );
 	}
 
-	static void __cdecl ConvertToBaseType( _Out_cap_(nDestLength) LPWSTR pszDest, _In_ int nDestLength,
-		_In_z_ LPCWSTR pszSrc, int nSrcLength = -1 ) throw()
-	{		
+	static void __cdecl ConvertToBaseType(
+		_Out_cap_(nDestLength) LPWSTR pszDest,
+		_In_ int nDestLength,
+		_In_ LPCWSTR pszSrc,
+		_In_ int nSrcLength = -1 ) throw()
+	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
 		// nLen is in wchar_ts
 		Checked::wmemcpy_s(pszDest, nDestLength, pszSrc, nSrcLength);
 	}
 
-	static void __cdecl FloodCharacters( _In_ wchar_t ch, _In_ int nLength, _Out_capcount_(nLength) LPWSTR psz ) throw()
+	static void __cdecl FloodCharacters(
+		_In_ wchar_t ch,
+		_In_ int nLength,
+		_Out_capcount_(nLength) LPWSTR psz) throw()
 	{
 		// nLength is in XCHARs
 		for( int i = 0; i < nLength; i++ )
@@ -617,98 +737,133 @@ public:
 		}
 	}
 
-	static BSTR __cdecl AllocSysString( _In_count_(nDataLength) const wchar_t* pchData, _In_ int nDataLength ) throw()
+	_Ret_opt_z_ static BSTR __cdecl AllocSysString(
+		_In_count_(nDataLength) const wchar_t* pchData,
+		_In_ int nDataLength) throw()
 	{
 		return ::SysAllocStringLen( pchData, nDataLength );
 	}
 
-	static BOOL __cdecl ReAllocSysString( _In_count_(nDataLength) const wchar_t* pchData, _Inout_ BSTR* pbstr, _In_ int nDataLength ) throw()
+	static BOOL __cdecl ReAllocSysString(
+		_In_count_(nDataLength) const wchar_t* pchData,
+		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
+		_In_ int nDataLength) throw()
 	{
 		return ::SysReAllocStringLen( pbstr, pchData, nDataLength );
 	}
 
-	static int __cdecl SafeStringLen( _In_opt_z_ LPCSTR psz ) throw()
+	static int __cdecl SafeStringLen(_In_opt_z_ LPCSTR psz) throw()
 	{
 		// returns length in bytes
 		return (psz != NULL) ? (int)strlen( psz ) : 0;
 	}
 
-	static int __cdecl SafeStringLen( _In_opt_ LPCWSTR psz ) throw()
+	static int __cdecl SafeStringLen(_In_opt_z_ LPCWSTR psz) throw()
 	{
 		// returns length in wchar_ts
 		return (psz != NULL) ? (int)wcslen( psz ) : 0;
 	}
 
-	static int __cdecl GetCharLen( _In_z_ const wchar_t* pch ) throw()
+	static int __cdecl GetCharLen(_In_opt_z_ const wchar_t* pch) throw()
 	{
 		(void)pch;
 		// returns char length
 		return 1;
 	}
 
-	static int __cdecl GetCharLen( _In_z_ const char* pch ) throw()
+	static int __cdecl GetCharLen(_In_z_ const char* pch) throw()
 	{
 		// returns char length
 		return (int)( _mbclen( reinterpret_cast< const unsigned char* >( pch ) ) );
 	}
 
-	static DWORD __cdecl GetEnvironmentVariable( _In_z_ LPCWSTR pszVar, _Out_opt_cap_(dwSize) LPWSTR pszBuffer, _In_ DWORD dwSize ) throw()
+	static DWORD __cdecl GetEnvironmentVariable(
+		_In_z_ LPCWSTR pszVar,
+		_Out_opt_z_cap_(dwSize) LPWSTR pszBuffer,
+		_In_ DWORD dwSize) throw()
 	{
 		return _GetEnvironmentVariableW( pszVar, pszBuffer, dwSize );
 	}
 
-	static void __cdecl ConvertToOem( __reserved LPWSTR /*psz*/ )
+	static void __cdecl ConvertToOem(_In_opt_z_ LPWSTR /*psz*/)
 	{
-		ATLENSURE(FALSE); // Unsupported Feature 
+		ATLENSURE(FALSE); // Unsupported Feature
 	}
 
-	static void __cdecl ConvertToAnsi( __reserved LPWSTR /*psz*/ )
+	static void __cdecl ConvertToAnsi(_In_opt_z_ LPWSTR /*psz*/)
 	{
-		ATLENSURE(FALSE); // Unsupported Feature 
+		ATLENSURE(FALSE); // Unsupported Feature
 	}
 
-	static void __cdecl ConvertToOem( __reserved LPWSTR /*psz*/, size_t )
+	static void __cdecl ConvertToOem(
+		_In_count_(nLen) LPWSTR /*psz*/,
+		_In_ size_t nLen)
 	{
-		ATLENSURE(FALSE); // Unsupported Feature 
+		UNREFERENCED_PARAMETER(nLen);
+		ATLENSURE(FALSE); // Unsupported Feature
 	}
 
-	static void __cdecl ConvertToAnsi( __reserved LPWSTR /*psz*/, size_t ) 
+	static void __cdecl ConvertToAnsi(
+		_In_count_(nLen) LPWSTR /*psz*/,
+		_In_ size_t nLen)
 	{
-		ATLENSURE(FALSE); // Unsupported Feature 
+		UNREFERENCED_PARAMETER(nLen);
+		ATLENSURE(FALSE); // Unsupported Feature
 	}
 
 #ifdef _UNICODE
 public:
-	static DWORD __cdecl _AFX_FUNCNAME(FormatMessage)( _In_ DWORD dwFlags, LPCVOID pSource,
-		_In_ DWORD dwMessageID, _In_ DWORD dwLanguageID, _Out_cap_(nSize) LPWSTR pszBuffer,
-		_In_ DWORD nSize, va_list* pArguments ) throw()
+	static DWORD __cdecl _AFX_FUNCNAME(FormatMessage)(
+		_In_ DWORD dwFlags,
+		_In_opt_ LPCVOID pSource,
+		_In_ DWORD dwMessageID,
+		_In_ DWORD dwLanguageID,
+		_Out_z_cap_(nSize) LPWSTR pszBuffer,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* pArguments) throw()
 	{
 		return ::FormatMessageW( dwFlags, pSource, dwMessageID, dwLanguageID,
 				pszBuffer, nSize, pArguments );
 	}
 
 #if defined(_AFX)
-	static DWORD __cdecl FormatMessage( _In_ DWORD dwFlags, LPCVOID pSource,
-		_In_ DWORD dwMessageID, _In_ DWORD dwLanguageID, _Out_cap_(nSize) LPWSTR pszBuffer,
-		_In_ DWORD nSize, va_list* pArguments ) throw()
+	static DWORD __cdecl FormatMessage(
+		_In_ DWORD dwFlags,
+		_In_opt_ LPCVOID pSource,
+		_In_ DWORD dwMessageID,
+		_In_ DWORD dwLanguageID,
+		_Out_z_cap_(nSize) LPWSTR pszBuffer,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* pArguments) throw()
 	{
 		return _AFX_FUNCNAME(FormatMessage)(dwFlags, pSource, dwMessageID, dwLanguageID, pszBuffer, nSize, pArguments);
 	}
 #endif
 
 #else
-	static DWORD __cdecl _AFX_FUNCNAME(FormatMessage)( DWORD /*dwFlags*/, LPCVOID /*pSource*/,
-		DWORD /*dwMessageID*/, DWORD /*dwLanguageID*/, __reserved LPWSTR /*pszBuffer*/,
-		DWORD /*nSize*/, va_list* /*pArguments*/ )
+	static DWORD __cdecl _AFX_FUNCNAME(FormatMessage)(
+		_In_ DWORD /*dwFlags*/,
+		_In_opt_ LPCVOID /*pSource*/,
+		_In_ DWORD /*dwMessageID*/,
+		_In_ DWORD /*dwLanguageID*/,
+		_Out_z_cap_(nSize) LPWSTR /*pszBuffer*/,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* /*pArguments*/)
 	{
-		ATLENSURE(FALSE); // Unsupported Feature 
+		ATLENSURE(FALSE); // Unsupported Feature
+		UNREFERENCED_PARAMETER(nSize);
 		return 0;
 	}
 
 #if defined(_AFX)
-	static DWORD __cdecl FormatMessage( DWORD dwFlags, LPCVOID pSource,
-		DWORD dwMessageID, DWORD dwLanguageID, __reserved LPWSTR pszBuffer,
-		DWORD nSize, va_list* pArguments )
+	static DWORD __cdecl FormatMessage(
+		_In_ DWORD dwFlags,
+		_In_opt_ LPCVOID pSource,
+		_In_ DWORD dwMessageID,
+		_In_ DWORD dwLanguageID,
+		_Out_z_cap_(nSize) LPWSTR pszBuffer,
+		_In_ DWORD nSize,
+		_In_opt_ va_list* pArguments)
 	{
 		return _AFX_FUNCNAME(FormatMessage)(dwFlags, pSource, dwMessageID, dwLanguageID, pszBuffer, nSize, pArguments);
 	}
@@ -735,7 +890,7 @@ struct _MFCDLLTraitsCheck
 	const static bool c_bIsMFCDLLTraits = false;
 };
 
-template<typename _CharType> 
+template<typename _CharType>
 struct _MFCDLLTraitsCheck<_CharType, StrTraitMFC_DLL<_CharType, ATL::ChTraitsCRT< _CharType > > >
 {
 	const static bool c_bIsMFCDLLTraits = true;
@@ -769,21 +924,24 @@ public:
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 	}
-	explicit CStringT( IAtlStringMgr* pStringMgr ) throw() :
+	explicit CStringT(
+			_In_ IAtlStringMgr* pStringMgr) throw() :
 		CThisSimpleString( pStringMgr )
-	{ 
+	{
 	}
 
-	CStringT( const VARIANT& varSrc );
-	CStringT( const VARIANT& varSrc, IAtlStringMgr* pStringMgr );
+	CStringT(_In_ const VARIANT& varSrc);
+	CStringT(
+		_In_ const VARIANT& varSrc,
+		_In_ IAtlStringMgr* pStringMgr);
 
-	static void __cdecl Construct( CStringT* pString )
+	static void __cdecl Construct(_In_ CStringT* pString)
 	{
 		new( pString ) CStringT;
 	}
 
 	// Copy constructor
-	CStringT( const CStringT& strSrc ) :
+	CStringT(_In_ const CStringT& strSrc) :
 		CThisSimpleString( strSrc )
 	{
 	}
@@ -793,33 +951,14 @@ public:
 	{
 		return *(CSimpleStringT<BaseType, !_CSTRING_IMPL_::_MFCDLLTraitsCheck<BaseType, StringTraits>::c_bIsMFCDLLTraits >*)this;
 	}
+
 	template <bool bMFCDLL>
-	CStringT( _In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc ) :
+	CStringT(_In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc) :
 		CThisSimpleString( strSrc )
 	{
 	}
 
-	CStringT( _In_opt_z_ const XCHAR* pszSrc ) :
-		CThisSimpleString( StringTraits::GetDefaultManager() )
-	{
-		if( !CheckImplicitLoad( pszSrc ) )
-		{
-			// nDestLength is in XCHARs
-			*this = pszSrc;
-		}
-	}
-
-	CStringT( _In_opt_z_ LPCSTR pszSrc, _In_ IAtlStringMgr* pStringMgr ) :
-		CThisSimpleString( pStringMgr )
-	{
-		if( !CheckImplicitLoad( pszSrc ) )
-		{
-			// nDestLength is in XCHARs
-			*this = pszSrc;
-		}
-	}
-
-	CSTRING_EXPLICIT CStringT( _In_opt_z_ const YCHAR* pszSrc ) :
+	CStringT(_In_opt_z_ const XCHAR* pszSrc) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		if( !CheckImplicitLoad( pszSrc ) )
@@ -828,7 +967,9 @@ public:
 		}
 	}
 
-	CStringT( _In_opt_z_ LPCWSTR pszSrc, _In_ IAtlStringMgr* pStringMgr ) :
+	CStringT(
+			_In_opt_z_ const XCHAR* pszSrc,
+			_In_ IAtlStringMgr* pStringMgr) :
 		CThisSimpleString( pStringMgr )
 	{
 		if( !CheckImplicitLoad( pszSrc ) )
@@ -836,6 +977,28 @@ public:
 			*this = pszSrc;
 		}
 	}
+
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	CSTRING_EXPLICIT CStringT(_In_opt_z_ const YCHAR* pszSrc) :
+		CThisSimpleString( StringTraits::GetDefaultManager() )
+	{
+		if( !CheckImplicitLoad( pszSrc ) )
+		{
+			*this = pszSrc;
+		}
+	}
+
+	CStringT(
+			_In_opt_z_ const YCHAR* pszSrc,
+			_In_ IAtlStringMgr* pStringMgr) :
+		CThisSimpleString( pStringMgr )
+	{
+		if( !CheckImplicitLoad( pszSrc ) )
+		{
+			*this = pszSrc;
+		}
+	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
 	// This template will compile only for
 	// class SystemString == System::String
@@ -843,7 +1006,7 @@ public:
 #if defined(__cplusplus_cli)
 
 	template <class SystemString>
-	CStringT( SystemString^ pString ) :
+	CStringT(_In_ SystemString^ pString) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		cli::pin_ptr<const System::Char> pChar = PtrToStringChars( pString );
@@ -854,26 +1017,29 @@ public:
 #elif defined(_MANAGED)
 
 	template<class SystemString>
-	CStringT( SystemString __gc* pString ) :
+	CStringT(_In_ SystemString __gc* pString) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
-	{		
+	{
 		const wchar_t __pin* psz = PtrToStringChars( pString );
 		*this = psz;
 	}
 
 #endif
 
-	CSTRING_EXPLICIT CStringT( const unsigned char* pszSrc ) :
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	CSTRING_EXPLICIT CStringT(_In_z_ const unsigned char* pszSrc) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		*this = reinterpret_cast< const char* >( pszSrc );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+
 //ctors to prevent from oldSyntax template ctor (above) hijack certain types.
-//MFC dll instantiate all CStringT methods inside the dll and declares dllimport for 
+//MFC dll instantiate all CStringT methods inside the dll and declares dllimport for
 //all methods in user build (see afxstr.h), so need to include the methods in MFC dll builds.
 #if defined(_AFXDLL) && defined(_MFC_DLL_BLD) || !defined(__cplusplus_cli) && defined(_MANAGED)
 
-	/*CSTRING_EXPLICIT*/ CStringT( _In_opt_z_ char* pszSrc ) :
+	/*CSTRING_EXPLICIT*/ CStringT(_In_opt_z_ char* pszSrc) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		const char *psz = reinterpret_cast< const char* >( pszSrc );
@@ -883,7 +1049,7 @@ public:
 		}
 	}
 
-	CSTRING_EXPLICIT CStringT( _In_opt_z_ unsigned char* pszSrc ) :
+	CSTRING_EXPLICIT CStringT(_In_opt_z_ unsigned char* pszSrc) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		const char *psz = reinterpret_cast< const char* >( pszSrc );
@@ -893,7 +1059,7 @@ public:
 		}
 	}
 
-	CSTRING_EXPLICIT CStringT( _In_opt_z_ wchar_t* pszSrc ) :
+	CSTRING_EXPLICIT CStringT(_In_opt_z_ wchar_t* pszSrc) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		const wchar_t *psz = reinterpret_cast< const wchar_t* >( pszSrc );
@@ -904,13 +1070,26 @@ public:
 	}
 #endif
 
-	CStringT( _In_opt_z_ const unsigned char* pszSrc, _In_ IAtlStringMgr* pStringMgr ) :
+
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	CStringT(
+			_In_opt_z_ const unsigned char* pszSrc,
+			_In_ IAtlStringMgr* pStringMgr) :
 		CThisSimpleString( pStringMgr )
 	{
 		*this = reinterpret_cast< const char* >( pszSrc );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	CSTRING_EXPLICIT CStringT( _In_ char ch, _In_ int nLength = 1 ) :
+#ifdef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+#define _CSTRING_CHAR_T XCHAR
+#else // def _CSTRING_NARROW_WIDE_CONVERSION
+#define _CSTRING_CHAR_T char
+#endif // def _CSTRING_NARROW_WIDE_CONVERSION
+
+	CSTRING_EXPLICIT CStringT(
+			_In_ _CSTRING_CHAR_T ch,
+			_In_ int nLength = 1) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		ATLASSERT( nLength >= 0 );
@@ -921,13 +1100,17 @@ public:
 			ReleaseBufferSetLength( nLength );
 		}
 	}
+#undef _CSTRING_CHAR_T
 
-	CSTRING_EXPLICIT CStringT( _In_ wchar_t ch, _In_ int nLength = 1 ) :
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	CSTRING_EXPLICIT CStringT(
+			_In_ wchar_t ch,
+			_In_ int nLength = 1) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		ATLASSERT( nLength >= 0 );
 		if( nLength > 0 )
-		{			
+		{
 			//Convert ch to the BaseType
 			wchar_t pszCh[2] = { ch , 0 };
 			int nBaseTypeCharLen = 1;
@@ -937,41 +1120,56 @@ public:
 				nBaseTypeCharLen = StringTraits::GetBaseTypeLength(pszCh);
 			}
 
-			CTempBuffer<XCHAR,10> buffBaseTypeChar;			
+			CTempBuffer<XCHAR,10> buffBaseTypeChar;
 			buffBaseTypeChar.Allocate(nBaseTypeCharLen+1);
 			StringTraits::ConvertToBaseType( buffBaseTypeChar, nBaseTypeCharLen+1, pszCh, 1 );
 			//Allocate enough characters in String and flood (replicate) with the (converted character)*nLength
 			PXSTR pszBuffer = GetBuffer( nLength*nBaseTypeCharLen );
 			if (nBaseTypeCharLen == 1)
 			{   //Optimization for a common case - wide char translates to 1 ansi/wide char.
-				StringTraits::FloodCharacters( buffBaseTypeChar[0], nLength, pszBuffer );				
+				StringTraits::FloodCharacters( buffBaseTypeChar[0], nLength, pszBuffer );
 			} else
 			{
 				XCHAR* p=pszBuffer;
 				for (int i=0 ; i < nLength ;++i)
 				{
 					for (int j=0 ; j < nBaseTypeCharLen ;++j)
-					{	
+					{
 						*p=buffBaseTypeChar[j];
 						++p;
 					}
 				}
 			}
-			ReleaseBufferSetLength( nLength*nBaseTypeCharLen );			
+			ReleaseBufferSetLength( nLength*nBaseTypeCharLen );
 		}
 	}
+#else
+private:
+	CSTRING_EXPLICIT CStringT(
+		_In_ YCHAR ch,
+		_In_ int nLength = 1);
+public:
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	CStringT( _In_count_(nLength) const XCHAR* pch, _In_ int nLength ) :
+	CStringT(
+			_In_count_(nLength) const XCHAR* pch,
+			_In_ int nLength) :
 		CThisSimpleString( pch, nLength, StringTraits::GetDefaultManager() )
 	{
 	}
 
-	CStringT( _In_count_(nLength) const XCHAR* pch, _In_ int nLength, _In_ IAtlStringMgr* pStringMgr ) :
+	CStringT(
+			_In_count_(nLength) const XCHAR* pch,
+			_In_ int nLength,
+			_In_ IAtlStringMgr* pStringMgr) :
 		CThisSimpleString( pch, nLength, pStringMgr )
 	{
 	}
 
-	CStringT( _In_count_(nLength) const YCHAR* pch, _In_ int nLength ) :
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	CStringT(
+			_In_count_(nLength) const YCHAR* pch,
+			_In_ int nLength) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
 		ATLASSERT( nLength >= 0 );
@@ -988,7 +1186,10 @@ public:
 		}
 	}
 
-	CStringT( _In_count_(nLength) const YCHAR* pch, _In_ int nLength, _In_ IAtlStringMgr* pStringMgr ) :
+	CStringT(
+			_In_count_(nLength) const YCHAR* pch,
+			_In_ int nLength,
+			_In_ IAtlStringMgr* pStringMgr) :
 		CThisSimpleString( pStringMgr )
 	{
 		ATLASSERT( nLength >= 0 );
@@ -1004,6 +1205,7 @@ public:
 			ReleaseBufferSetLength( nDestLength );
 		}
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
 	// Destructor
 	~CStringT() throw()
@@ -1011,29 +1213,30 @@ public:
 	}
 
 	// Assignment operators
-	CStringT& operator=( _In_ const CStringT& strSrc )
+	CStringT& operator=(_In_ const CStringT& strSrc)
 	{
 		CThisSimpleString::operator=( strSrc );
 
 		return( *this );
 	}
-	
+
 	template <bool bMFCDLL>
-	CStringT& operator=( _In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc )
+	CStringT& operator=(_In_ const CSimpleStringT<BaseType, bMFCDLL>& strSrc)
 	{
 		CThisSimpleString::operator=( strSrc );
 
 		return( *this );
 	}
 
-	CStringT& operator=( _In_opt_z_ PCXSTR pszSrc )
+	CStringT& operator=(_In_opt_z_ PCXSTR pszSrc)
 	{
 		CThisSimpleString::operator=( pszSrc );
 
 		return( *this );
 	}
 
-	CStringT& operator=( _In_opt_z_ PCYSTR pszSrc )
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	CStringT& operator=(_In_opt_z_ PCYSTR pszSrc)
 	{
 		// nDestLength is in XCHARs
 		int nDestLength = (pszSrc != NULL) ? StringTraits::GetBaseTypeLength( pszSrc ) : 0;
@@ -1051,83 +1254,96 @@ public:
 		return( *this );
 	}
 
-	CStringT& operator=( _In_opt_z_ const unsigned char* pszSrc )
+	CStringT& operator=(_In_opt_z_ const unsigned char* pszSrc)
 	{
 		return( operator=( reinterpret_cast< const char* >( pszSrc ) ) );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	CStringT& operator=( _In_ char ch )
+	CStringT& operator=(_In_ XCHAR ch)
 	{
-		char ach[2] = { ch, 0 };
+		XCHAR ach[2] = { ch, 0 };
 
 		return( operator=( ach ) );
 	}
 
-	CStringT& operator=( _In_ wchar_t ch )
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+
+	CStringT& operator=(_In_ YCHAR ch)
 	{
-		wchar_t ach[2] = { ch, 0 };
+		YCHAR ach[2] = { ch, 0 };
 
 		return( operator=( ach ) );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	CStringT& operator=( _In_ const VARIANT& var );
+	CStringT& operator=(_In_ const VARIANT& var);
 
-	CStringT& operator+=( _In_ const CThisSimpleString& str )
+	CStringT& operator+=(_In_ const CThisSimpleString& str)
 	{
 		CThisSimpleString::operator+=( str );
 
 		return( *this );
 	}
 	template <bool bMFCDLL>
-	CStringT& operator+=( _In_ const CSimpleStringT<BaseType, bMFCDLL>& str )
+	CStringT& operator+=(_In_ const CSimpleStringT<BaseType, bMFCDLL>& str)
 	{
 		CThisSimpleString::operator+=( str );
 
 		return( *this );
 	}
-	
-	CStringT& operator+=( _In_opt_z_ PCXSTR pszSrc )
+
+	CStringT& operator+=(_In_z_ PCXSTR pszSrc)
 	{
 		CThisSimpleString::operator+=( pszSrc );
 
 		return( *this );
 	}
 	template< int t_nSize >
-	CStringT& operator+=( _In_ const CStaticString< XCHAR, t_nSize >& strSrc )
+	CStringT& operator+=(_In_ const CStaticString< XCHAR, t_nSize >& strSrc)
 	{
 		CThisSimpleString::operator+=( strSrc );
 
 		return( *this );
 	}
-	CStringT& operator+=( _In_opt_z_ PCYSTR pszSrc )
+
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	CStringT& operator+=(_In_opt_z_ PCYSTR pszSrc)
 	{
 		CStringT str( pszSrc, GetManager() );
 
 		return( operator+=( str ) );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	CStringT& operator+=( _In_ char ch )
+	CStringT& operator+=(_In_ XCHAR ch)
 	{
 		CThisSimpleString::operator+=( ch );
 
 		return( *this );
 	}
 
-	CStringT& operator+=( _In_ unsigned char ch )
+#ifdef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+private:
+	CStringT& operator+=(_In_ YCHAR ch);
+public:
+#else
+	CStringT& operator+=(_In_ unsigned char ch)
 	{
 		CThisSimpleString::operator+=( ch );
 
 		return( *this );
 	}
 
-	CStringT& operator+=( _In_ wchar_t ch )
+	CStringT& operator+=(_In_ YCHAR ch)
 	{
 		CThisSimpleString::operator+=( ch );
 
 		return( *this );
 	}
+#endif // def _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	CStringT& operator+=( _In_ const VARIANT& var );
+	CStringT& operator+=(_In_ const VARIANT& var);
 
 	// Override from base class
 	IAtlStringMgr* GetManager() const throw()
@@ -1141,27 +1357,27 @@ public:
 
 	// Comparison
 
-	int Compare( _In_opt_z_ PCXSTR psz ) const
+	int Compare(_In_z_ PCXSTR psz) const
 	{
 		ATLENSURE( AtlIsValidString( psz ) );
 		__analysis_assume(psz); // AtlIsValidString guarantees that psz != NULL
 		return( StringTraits::StringCompare( GetString(), psz ) );
 	}
 
-	int CompareNoCase( _In_opt_z_ PCXSTR psz ) const
+	int CompareNoCase(_In_z_ PCXSTR psz) const
 	{
 		ATLENSURE( AtlIsValidString( psz ) );
 		__analysis_assume(psz); // AtlIsValidString guarantees that psz != NULL
 		return( StringTraits::StringCompareIgnore( GetString(), psz ) );
 	}
 
-	int Collate( _In_opt_z_ PCXSTR psz ) const throw()
+	int Collate(_In_z_ PCXSTR psz) const throw()
 	{
 		ATLASSERT( AtlIsValidString( psz ) );
 		return( StringTraits::StringCollate( GetString(), psz ) );
 	}
 
-	int CollateNoCase( _In_opt_z_ PCXSTR psz ) const throw()
+	int CollateNoCase(_In_z_ PCXSTR psz) const throw()
 	{
 		ATLASSERT( AtlIsValidString( psz ) );
 		return( StringTraits::StringCollateIgnore( GetString(), psz ) );
@@ -1170,11 +1386,13 @@ public:
 	// Advanced manipulation
 
 	// Delete 'nCount' characters, starting at index 'iIndex'
-	int Delete( _In_ int iIndex, _In_ int nCount = 1 )
+	int Delete(
+		_In_ int iIndex,
+		_In_ int nCount = 1)
 	{
 		if( iIndex < 0 )
 			iIndex = 0;
-		
+
 		if( nCount < 0 )
 			nCount = 0;
 
@@ -1188,7 +1406,7 @@ public:
 			int nNewLength = nLength-nCount;
 			int nXCHARsToCopy = nLength-(iIndex+nCount)+1;
 			PXSTR pszBuffer = GetBuffer();
-			Checked::memmove_s( pszBuffer+iIndex, nXCHARsToCopy*sizeof( XCHAR ), 
+			Checked::memmove_s( pszBuffer+iIndex, nXCHARsToCopy*sizeof( XCHAR ),
 				pszBuffer+iIndex+nCount, nXCHARsToCopy*sizeof( XCHAR ) );
 			ReleaseBufferSetLength( nNewLength );
 		}
@@ -1197,11 +1415,13 @@ public:
 	}
 
 	// Insert character 'ch' before index 'iIndex'
-	int Insert( _In_ int iIndex, _In_ XCHAR ch )
+	int Insert(
+		_In_ int iIndex,
+		_In_ XCHAR ch)
 	{
 		if( iIndex < 0 )
 			iIndex = 0;
-			
+
 		if( iIndex > GetLength() )
 		{
 			iIndex = GetLength();
@@ -1210,8 +1430,8 @@ public:
 
 		PXSTR pszBuffer = GetBuffer( nNewLength );
 
-		// move existing bytes down 
-		Checked::memmove_s( pszBuffer+iIndex+1, (nNewLength-iIndex)*sizeof( XCHAR ), 
+		// move existing bytes down
+		Checked::memmove_s( pszBuffer+iIndex+1, (nNewLength-iIndex)*sizeof( XCHAR ),
 			pszBuffer+iIndex, (nNewLength-iIndex)*sizeof( XCHAR ) );
 		pszBuffer[iIndex] = ch;
 
@@ -1221,7 +1441,9 @@ public:
 	}
 
 	// Insert string 'psz' before index 'iIndex'
-	int Insert( _In_ int iIndex, _In_ PCXSTR psz )
+	int Insert(
+		_In_ int iIndex,
+		_In_z_ PCXSTR psz)
 	{
 		if( iIndex < 0 )
 			iIndex = 0;
@@ -1239,10 +1461,10 @@ public:
 			nNewLength += nInsertLength;
 
 			PXSTR pszBuffer = GetBuffer( nNewLength );
-			// move existing bytes down 
-			Checked::memmove_s( pszBuffer+iIndex+nInsertLength, (nNewLength-iIndex-nInsertLength+1)*sizeof( XCHAR ), 
+			// move existing bytes down
+			Checked::memmove_s( pszBuffer+iIndex+nInsertLength, (nNewLength-iIndex-nInsertLength+1)*sizeof( XCHAR ),
 				pszBuffer+iIndex, (nNewLength-iIndex-nInsertLength+1)*sizeof( XCHAR ) );
-			Checked::memcpy_s( pszBuffer+iIndex, nInsertLength*sizeof( XCHAR ), 
+			Checked::memcpy_s( pszBuffer+iIndex, nInsertLength*sizeof( XCHAR ),
 				psz, nInsertLength*sizeof( XCHAR ) );
 			ReleaseBufferSetLength( nNewLength );
 		}
@@ -1251,7 +1473,9 @@ public:
 	}
 
 	// Replace all occurrences of character 'chOld' with character 'chNew'
-	int Replace( _In_ XCHAR chOld, _In_ XCHAR chNew )
+	int Replace(
+		_In_ XCHAR chOld,
+		_In_ XCHAR chNew)
 	{
 		int nCount = 0;
 
@@ -1289,7 +1513,9 @@ public:
 	}
 
 	// Replace all occurrences of string 'pszOld' with string 'pszNew'
-	int Replace( _In_ PCXSTR pszOld, _In_ PCXSTR pszNew )
+	int Replace(
+		_In_z_ PCXSTR pszOld,
+		_In_z_ PCXSTR pszNew)
 	{
 		// can't have empty or NULL lpszOld
 
@@ -1337,9 +1563,9 @@ public:
 				while( (pszTarget = StringTraits::StringFindString( pszStart, pszOld ) ) != NULL )
 				{
 					int nBalance = nOldLength-int(pszTarget-pszBuffer+nSourceLen);
-					Checked::memmove_s( pszTarget+nReplacementLen, nBalance*sizeof( XCHAR ), 
+					Checked::memmove_s( pszTarget+nReplacementLen, nBalance*sizeof( XCHAR ),
 						pszTarget+nSourceLen, nBalance*sizeof( XCHAR ) );
-					Checked::memcpy_s( pszTarget, nReplacementLen*sizeof( XCHAR ), 
+					Checked::memcpy_s( pszTarget, nReplacementLen*sizeof( XCHAR ),
 						pszNew, nReplacementLen*sizeof( XCHAR ) );
 					pszStart = pszTarget+nReplacementLen;
 					pszTarget[nReplacementLen+nBalance] = 0;
@@ -1355,7 +1581,7 @@ public:
 	}
 
 	// Remove all occurrences of character 'chRemove'
-	int Remove( _In_ XCHAR chRemove )
+	int Remove(_In_ XCHAR chRemove)
 	{
 		int nLength = GetLength();
 		PXSTR pszBuffer = GetBuffer( nLength );
@@ -1390,13 +1616,15 @@ public:
 		return( nCount );
 	}
 
-	CStringT Tokenize( _In_ PCXSTR pszTokens, _Inout_ int& iStart ) const
+	CStringT Tokenize(
+		_In_z_ PCXSTR pszTokens,
+		_Inout_ int& iStart) const
 	{
 		ATLASSERT( iStart >= 0 );
-			
+
 		if(iStart < 0)
-			AtlThrow(E_INVALIDARG);			
-			
+			AtlThrow(E_INVALIDARG);
+
 		if( (pszTokens == NULL) || (*pszTokens == (XCHAR)0) )
 		{
 			if (iStart < GetLength())
@@ -1436,7 +1664,9 @@ public:
 	// find routines
 
 	// Find the first occurrence of character 'ch', starting at index 'iStart'
-	int Find( _In_ XCHAR ch, _In_ int iStart = 0 ) const throw()
+	int Find(
+		_In_ XCHAR ch,
+		_In_ int iStart = 0) const throw()
 	{
 		// iStart is in XCHARs
 		ATLASSERT( iStart >= 0 );
@@ -1458,7 +1688,9 @@ public:
 	// look for a specific sub-string
 
 	// Find the first occurrence of string 'pszSub', starting at index 'iStart'
-	int Find( _In_ PCXSTR pszSub, _In_ int iStart = 0 ) const throw()
+	int Find(
+		_In_z_ PCXSTR pszSub,
+		_In_ int iStart = 0) const throw()
 	{
 		// iStart is in XCHARs
 		ATLASSERT( iStart >= 0 );
@@ -1483,7 +1715,7 @@ public:
 	}
 
 	// Find the first occurrence of any of the characters in string 'pszCharSet'
-	int FindOneOf( _In_ PCXSTR pszCharSet ) const throw()
+	int FindOneOf(_In_z_ PCXSTR pszCharSet) const throw()
 	{
 		ATLASSERT( AtlIsValidString( pszCharSet ) );
 		PCXSTR psz = StringTraits::StringScanSet( GetString(), pszCharSet );
@@ -1491,7 +1723,7 @@ public:
 	}
 
 	// Find the last occurrence of character 'ch'
-	int ReverseFind( _In_ XCHAR ch ) const throw()
+	int ReverseFind(_In_ XCHAR ch) const throw()
 	{
 		// find last single character
 		PCXSTR psz = StringTraits::StringFindCharRev( GetString(), ch );
@@ -1590,7 +1822,7 @@ public:
 			PXSTR pszBuffer = GetBuffer( GetLength() );
 			psz = pszBuffer+iFirst;
 			int nDataLength = GetLength()-iFirst;
-			Checked::memmove_s( pszBuffer, (GetLength()+1)*sizeof( XCHAR ), 
+			Checked::memmove_s( pszBuffer, (GetLength()+1)*sizeof( XCHAR ),
 				psz, (nDataLength+1)*sizeof( XCHAR ) );
 			ReleaseBufferSetLength( nDataLength );
 		}
@@ -1605,13 +1837,13 @@ public:
 	}
 
 	// Remove all leading and trailing occurrences of character 'chTarget'
-	CStringT& Trim( _In_ XCHAR chTarget )
+	CStringT& Trim(_In_ XCHAR chTarget)
 	{
 		return( TrimRight( chTarget ).TrimLeft( chTarget ) );
 	}
 
 	// Remove all leading and trailing occurrences of any of the characters in the string 'pszTargets'
-	CStringT& Trim( _In_ PCXSTR pszTargets )
+	CStringT& Trim(_In_z_ PCXSTR pszTargets)
 	{
 		return( TrimRight( pszTargets ).TrimLeft( pszTargets ) );
 	}
@@ -1619,7 +1851,7 @@ public:
 	// trimming anything (either side)
 
 	// Remove all trailing occurrences of character 'chTarget'
-	CStringT& TrimRight( _In_ XCHAR chTarget )
+	CStringT& TrimRight(_In_ XCHAR chTarget)
 	{
 		// find beginning of trailing matches
 		// by starting at beginning (DBCS aware)
@@ -1645,7 +1877,7 @@ public:
 
 		if( pszLast != NULL )
 		{
-			// truncate at left-most matching character  
+			// truncate at left-most matching character
 			int iLast = int( pszLast-GetString() );
 			Truncate( iLast );
 		}
@@ -1654,7 +1886,7 @@ public:
 	}
 
 	// Remove all trailing occurrences of any of the characters in string 'pszTargets'
-	CStringT& TrimRight( _In_ PCXSTR pszTargets )
+	CStringT& TrimRight(_In_z_ PCXSTR pszTargets)
 	{
 		// if we're not trimming anything, we're not doing any work
 		if( (pszTargets == NULL) || (*pszTargets == 0) )
@@ -1686,7 +1918,7 @@ public:
 
 		if( pszLast != NULL )
 		{
-			// truncate at left-most matching character  
+			// truncate at left-most matching character
 			int iLast = int( pszLast-GetString() );
 			Truncate( iLast );
 		}
@@ -1695,7 +1927,7 @@ public:
 	}
 
 	// Remove all leading occurrences of character 'chTarget'
-	CStringT& TrimLeft( _In_ XCHAR chTarget )
+	CStringT& TrimLeft(_In_ XCHAR chTarget)
 	{
 		// find first non-matching character
 		PCXSTR psz = GetString();
@@ -1712,7 +1944,7 @@ public:
 			PXSTR pszBuffer = GetBuffer( GetLength() );
 			psz = pszBuffer+iFirst;
 			int nDataLength = GetLength()-iFirst;
-			Checked::memmove_s( pszBuffer, (GetLength()+1)*sizeof( XCHAR ), 
+			Checked::memmove_s( pszBuffer, (GetLength()+1)*sizeof( XCHAR ),
 				psz, (nDataLength+1)*sizeof( XCHAR ) );
 			ReleaseBufferSetLength( nDataLength );
 		}
@@ -1721,7 +1953,7 @@ public:
 	}
 
 	// Remove all leading occurrences of any of the characters in string 'pszTargets'
-	CStringT& TrimLeft( _In_ PCXSTR pszTargets )
+	CStringT& TrimLeft(_In_z_ PCXSTR pszTargets)
 	{
 		// if we're not trimming anything, we're not doing any work
 		if( (pszTargets == NULL) || (*pszTargets == 0) )
@@ -1742,7 +1974,7 @@ public:
 			PXSTR pszBuffer = GetBuffer( GetLength() );
 			psz = pszBuffer+iFirst;
 			int nDataLength = GetLength()-iFirst;
-			Checked::memmove_s( pszBuffer, (GetLength()+1)*sizeof( XCHAR ), 
+			Checked::memmove_s( pszBuffer, (GetLength()+1)*sizeof( XCHAR ),
 				psz, (nDataLength+1)*sizeof( XCHAR ) );
 			ReleaseBufferSetLength( nDataLength );
 		}
@@ -1760,6 +1992,7 @@ public:
 	}
 
 	// Convert the string to the ANSI character set
+
 	void OemToAnsi()
 	{
 		int nLength = GetLength();
@@ -1771,13 +2004,15 @@ public:
 	// Very simple sub-string extraction
 
 	// Return the substring starting at index 'iFirst'
-	CStringT Mid( _In_ int iFirst ) const
+	CStringT Mid(_In_ int iFirst) const
 	{
 		return( Mid( iFirst, GetLength()-iFirst ) );
 	}
 
 	// Return the substring starting at index 'iFirst', with length 'nCount'
-	CStringT Mid( _In_ int iFirst, _In_ int nCount ) const
+	CStringT Mid(
+		_In_ int iFirst,
+		_In_ int nCount) const
 	{
 		// nCount is in XCHARs
 
@@ -1808,7 +2043,7 @@ public:
 	}
 
 	// Return the substring consisting of the rightmost 'nCount' characters
-	CStringT Right( _In_ int nCount ) const
+	CStringT Right(_In_ int nCount) const
 	{
 		// nCount is in XCHARs
 		if (nCount < 0)
@@ -1824,7 +2059,7 @@ public:
 	}
 
 	// Return the substring consisting of the leftmost 'nCount' characters
-	CStringT Left( _In_ int nCount ) const
+	CStringT Left(_In_ int nCount) const
 	{
 		// nCount is in XCHARs
 		if (nCount < 0)
@@ -1840,7 +2075,7 @@ public:
 	}
 
 	// Return the substring consisting of the leftmost characters in the set 'pszCharSet'
-	CStringT SpanIncluding( _In_ PCXSTR pszCharSet ) const
+	CStringT SpanIncluding(_In_z_ PCXSTR pszCharSet) const
 	{
 		ATLASSERT( AtlIsValidString( pszCharSet ) );
 		if(pszCharSet == NULL)
@@ -1850,7 +2085,7 @@ public:
 	}
 
 	// Return the substring consisting of the leftmost characters not in the set 'pszCharSet'
-	CStringT SpanExcluding( _In_ PCXSTR pszCharSet ) const
+	CStringT SpanExcluding(_In_z_ PCXSTR pszCharSet) const
 	{
 		ATLASSERT( AtlIsValidString( pszCharSet ) );
 		if(pszCharSet == NULL)
@@ -1860,64 +2095,92 @@ public:
  	}
 
 	// Format data using format string 'pszFormat'
-	void __cdecl Format( _In_ _Printf_format_string_ PCXSTR pszFormat, ... );
+	void __cdecl Format(_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, ...);
 
 	// Format data using format string loaded from resource 'nFormatID'
-	void __cdecl Format( _Printf_format_string_ UINT nFormatID, ... );
+	void __cdecl Format(_In_ _FormatMessage_format_string_ UINT nFormatID, ...);
 
 	// Append formatted data using format string loaded from resource 'nFormatID'
-	void __cdecl AppendFormat( _In_ UINT nFormatID, ... );
+	void __cdecl AppendFormat(_In_ _FormatMessage_format_string_ UINT nFormatID, ...);
 
 	// Append formatted data using format string 'pszFormat'
-	void __cdecl AppendFormat( _In_ _Printf_format_string_ PCXSTR pszFormat, ... );
-	void AppendFormatV( _In_ _Printf_format_string_ PCXSTR pszFormat, va_list args )
+	void __cdecl AppendFormat(_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, ...);
+
+	void AppendFormatV(
+		_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+		_In_ va_list args)
 	{
 		ATLASSERT( AtlIsValidString( pszFormat ) );
+		if(pszFormat == NULL)
+			AtlThrow(E_INVALIDARG);
 
 		int nCurrentLength = GetLength();
 		int nAppendLength = StringTraits::GetFormattedLength( pszFormat, args );
+
+		if (nAppendLength < 0)
+			AtlThrow(E_FAIL);
+
 		PXSTR pszBuffer = GetBuffer( nCurrentLength+nAppendLength );
-		StringTraits::Format( pszBuffer+nCurrentLength, 
+		StringTraits::Format( pszBuffer+nCurrentLength,
 			nAppendLength+1, pszFormat, args );
 		ReleaseBufferSetLength( nCurrentLength+nAppendLength );
 	}
 
-	void FormatV( _In_ _Printf_format_string_ PCXSTR pszFormat, va_list args )
+	void FormatV(
+		_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+		_In_ va_list args)
 	{
 		ATLASSERT( AtlIsValidString( pszFormat ) );
 		if(pszFormat == NULL)
 			AtlThrow(E_INVALIDARG);
 
 		int nLength = StringTraits::GetFormattedLength( pszFormat, args );
+
+		if (nLength < 0)
+			AtlThrow(E_FAIL);
+
 		PXSTR pszBuffer = GetBuffer( nLength );
 		StringTraits::Format( pszBuffer, nLength+1, pszFormat, args );
 		ReleaseBufferSetLength( nLength );
 	}
 
 	// Format a message using format string 'pszFormat'
-	void __cdecl _AFX_FUNCNAME(FormatMessage)( _In_ _Printf_format_string_ PCXSTR pszFormat, ... );
+	void __cdecl _AFX_FUNCNAME(FormatMessage)(_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, ...);
 
 	// Format a message using format string loaded from resource 'nFormatID'
-	void __cdecl _AFX_FUNCNAME(FormatMessage)( _In_ UINT nFormatID, ... );
+	void __cdecl _AFX_FUNCNAME(FormatMessage)(_In_ _FormatMessage_format_string_ UINT nFormatID, ...);
 
 #if defined(_AFX)
-	void __cdecl FormatMessage( _In_ _Printf_format_string_ PCXSTR pszFormat, ... );
+	void __cdecl FormatMessage(_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, ...);
 
-	void __cdecl FormatMessage( _In_ UINT nFormatID, ... );
+	void __cdecl FormatMessage(_In_ _FormatMessage_format_string_ UINT nFormatID, ...);
 #endif
 
 	// Format a message using format string 'pszFormat' and va_list
-	void FormatMessageV( _In_ _Printf_format_string_ PCXSTR pszFormat, va_list* pArgList )
+	void FormatMessageV(
+		_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+		_In_opt_ va_list* pArgList)
 	{
 		// format message into temporary buffer pszTemp
 		CHeapPtr< XCHAR, CLocalAllocator > pszTemp;
-		DWORD dwResult = StringTraits::_AFX_FUNCNAME(FormatMessage)( FORMAT_MESSAGE_FROM_STRING|
+		/*
+			FormatMessage returns zero in case of failure or the number of characters
+			if it is success, but we may actually get 0 as a number of characters.
+			So to avoid this situation use SetLastError and GetLastErorr to determine
+			whether the function FormatMessage has failed.
+		*/
+		DWORD dwLastError = ::GetLastError();
+		::SetLastError(0);
+
+		StringTraits::_AFX_FUNCNAME(FormatMessage)( FORMAT_MESSAGE_FROM_STRING|
 			FORMAT_MESSAGE_ALLOCATE_BUFFER, pszFormat, 0, 0, reinterpret_cast< PXSTR >( &pszTemp ),
 			0, pArgList );
-		if( dwResult == 0 )
+
+		if( ::GetLastError() != 0 )
 		{
 			ThrowMemoryException();
 		}
+		::SetLastError(dwLastError);
 
 		*this = pszTemp;
 	}
@@ -1925,25 +2188,18 @@ public:
 	// OLE BSTR support
 
 	// Allocate a BSTR containing a copy of the string
-	BSTR AllocSysString() const
+	_Ret_opt_z_ BSTR AllocSysString() const
 	{
 		BSTR bstrResult = StringTraits::AllocSysString( GetString(), GetLength() );
 
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "We are deliberately checking if this has already been allocated")
 		if( bstrResult == NULL )
 		{
 			ThrowMemoryException();
 		}
-#pragma prefast(pop)
-#pragma warning(pop)
-
 		return( bstrResult );
 	}
 
-	BSTR SetSysString( _Out_ BSTR* pbstr ) const
+	BSTR SetSysString(_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr) const
 	{
 		ATLASSERT( AtlIsValidAddress( pbstr, sizeof( BSTR ) ) );
 
@@ -1953,19 +2209,13 @@ public:
 			ThrowMemoryException();
 		}
 
-#pragma warning(push)
-#pragma warning(disable:4068)
-#pragma prefast(push)
-#pragma prefast(disable:325, "We are deliberately checking if this has already been allocated")
 		ATLASSERT( *pbstr != NULL );
-#pragma prefast(pop)
-#pragma warning(pop)
 
 		return( *pbstr );
 	}
 
 	// Set the string to the value of environment variable 'pszVar'
-	_Check_return_ BOOL GetEnvironmentVariable( _In_ PCXSTR pszVar )
+	_Check_return_ BOOL GetEnvironmentVariable(_In_z_ PCXSTR pszVar)
 	{
 		ULONG nLength = StringTraits::GetEnvironmentVariable( pszVar, NULL, 0 );
 		BOOL bRetVal = FALSE;
@@ -1986,7 +2236,7 @@ public:
 	}
 
 	// Load the string from resource 'nID'
-	_Check_return_ BOOL LoadString( _In_ UINT nID )
+	_Check_return_ BOOL LoadString(_In_ UINT nID)
 	{
 		HINSTANCE hInst = StringTraits::FindStringResourceInstance( nID );
 		if( hInst == NULL )
@@ -1994,11 +2244,13 @@ public:
 			return( FALSE );
 		}
 
-		return( LoadString( hInst, nID ) );		
+		return( LoadString( hInst, nID ) );
 	}
 
 	// Load the string from resource 'nID' in module 'hInstance'
-	_Check_return_ BOOL LoadString( _In_ HINSTANCE hInstance, _In_ UINT nID )
+	_Check_return_ BOOL LoadString(
+		_In_ HINSTANCE hInstance,
+		_In_ UINT nID)
 	{
 		const ATLSTRINGRESOURCEIMAGE* pImage = AtlGetStringResourceImage( hInstance, nID );
 		if( pImage == NULL )
@@ -2015,7 +2267,10 @@ public:
 	}
 
 	// Load the string from resource 'nID' in module 'hInstance', using language 'wLanguageID'
-	_Check_return_ BOOL LoadString( _In_ HINSTANCE hInstance, _In_ UINT nID, _In_ WORD wLanguageID )
+	_Check_return_ BOOL LoadString(
+		_In_ HINSTANCE hInstance,
+		_In_ UINT nID,
+		_In_ WORD wLanguageID)
 	{
 		const ATLSTRINGRESOURCEIMAGE* pImage = AtlGetStringResourceImage( hInstance, nID, wLanguageID );
 		if( pImage == NULL )
@@ -2031,7 +2286,9 @@ public:
 		return( TRUE );
 	}
 
-	friend CStringT operator+( _In_ const CStringT& str1, _In_ const CStringT& str2 )
+	friend CStringT operator+(
+		_In_ const CStringT& str1,
+		_In_ const CStringT& str2)
 	{
 		CStringT strResult( str1.GetManager() );
 
@@ -2040,7 +2297,9 @@ public:
 		return( strResult );
 	}
 
-	friend CStringT operator+( _In_ const CStringT& str1, _In_ PCXSTR psz2 )
+	friend CStringT operator+(
+		_In_ const CStringT& str1,
+		_In_z_ PCXSTR psz2)
 	{
 		CStringT strResult( str1.GetManager() );
 
@@ -2049,7 +2308,9 @@ public:
 		return( strResult );
 	}
 
-	friend CStringT operator+( _In_ PCXSTR psz1, _In_ const CStringT& str2 )
+	friend CStringT operator+(
+		_In_z_ PCXSTR psz1,
+		_In_ const CStringT& str2)
 	{
 		CStringT strResult( str2.GetManager() );
 
@@ -2058,7 +2319,15 @@ public:
 		return( strResult );
 	}
 
-	friend CStringT operator+( _In_ const CStringT& str1, _In_ wchar_t ch2 )
+#ifdef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+#define _CSTRING_CHAR_T XCHAR
+#else // def _CSTRING_NARROW_WIDE_CONVERSION
+#define _CSTRING_CHAR_T char
+#endif // def _CSTRING_NARROW_WIDE_CONVERSION
+
+	friend CStringT operator+(
+		_In_ const CStringT& str1,
+		_In_ _CSTRING_CHAR_T ch2)
 	{
 		CStringT strResult( str1.GetManager() );
 		XCHAR chTemp = XCHAR( ch2 );
@@ -2068,7 +2337,22 @@ public:
 		return( strResult );
 	}
 
-	friend CStringT operator+( _In_ const CStringT& str1, _In_ char ch2 )
+	friend CStringT operator+(
+		_In_ _CSTRING_CHAR_T ch1,
+		_In_ const CStringT& str2)
+	{
+		CStringT strResult( str2.GetManager() );
+		XCHAR chTemp = XCHAR( ch1 );
+
+		Concatenate( strResult, &chTemp, 1, str2, str2.GetLength() );
+
+		return( strResult );
+	}
+
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
+	friend CStringT operator+(
+		_In_ const CStringT& str1,
+		_In_ wchar_t ch2)
 	{
 		CStringT strResult( str1.GetManager() );
 		XCHAR chTemp = XCHAR( ch2 );
@@ -2078,7 +2362,9 @@ public:
 		return( strResult );
 	}
 
-	friend CStringT operator+( _In_ wchar_t ch1, _In_ const CStringT& str2 )
+	friend CStringT operator+(
+		_In_ wchar_t ch1,
+		_In_ const CStringT& str2)
 	{
 		CStringT strResult( str2.GetManager() );
 		XCHAR chTemp = XCHAR( ch1 );
@@ -2087,36 +2373,33 @@ public:
 
 		return( strResult );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	friend CStringT operator+( _In_ char ch1, _In_ const CStringT& str2 )
-	{
-		CStringT strResult( str2.GetManager() );
-		XCHAR chTemp = XCHAR( ch1 );
-
-		Concatenate( strResult, &chTemp, 1, str2, str2.GetLength() );
-
-		return( strResult );
-	}
-
-	friend bool operator==( _In_ const CStringT& str1, _In_ const CStringT& str2 ) throw()
+	friend bool operator==(
+		_In_ const CStringT& str1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str1.Compare( str2 ) == 0 );
 	}
 
 	friend bool operator==(
-		_In_ const CStringT& str1, _In_ PCXSTR psz2 ) throw()
+		_In_ const CStringT& str1,
+		_In_z_ PCXSTR psz2) throw()
 	{
 		return( str1.Compare( psz2 ) == 0 );
 	}
 
 	friend bool operator==(
-		_In_ PCXSTR psz1, _In_ const CStringT& str2 ) throw()
+		_In_z_ PCXSTR psz1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str2.Compare( psz1 ) == 0 );
 	}
 
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 	friend bool operator==(
-		_In_ const CStringT& str1, _In_ PCYSTR psz2 ) throw( ... )
+		_In_ const CStringT& str1,
+		_In_z_ PCYSTR psz2) throw( ... )
 	{
 		CStringT str2( psz2, str1.GetManager() );
 
@@ -2124,33 +2407,40 @@ public:
 	}
 
 	friend bool operator==(
-		_In_ PCYSTR psz1, _In_ const CStringT& str2 ) throw( ... )
+		_In_z_ PCYSTR psz1,
+		_In_ const CStringT& str2) throw( ... )
 	{
 		CStringT str1( psz1, str2.GetManager() );
 
 		return( str1 == str2 );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
 	friend bool operator!=(
-		_In_ const CStringT& str1, _In_ const CStringT& str2 ) throw()
+		_In_ const CStringT& str1,
+		_In_ const CStringT& str2 ) throw()
 	{
 		return( str1.Compare( str2 ) != 0 );
 	}
 
 	friend bool operator!=(
-		_In_ const CStringT& str1, _In_ PCXSTR psz2 ) throw()
+		_In_ const CStringT& str1,
+		_In_z_ PCXSTR psz2) throw()
 	{
 		return( str1.Compare( psz2 ) != 0 );
 	}
 
 	friend bool operator!=(
-		_In_ PCXSTR psz1, _In_ const CStringT& str2 ) throw()
+		_In_z_ PCXSTR psz1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str2.Compare( psz1 ) != 0 );
 	}
 
+#ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 	friend bool operator!=(
-		_In_ const CStringT& str1, _In_ PCYSTR psz2 ) throw( ... )
+		_In_ const CStringT& str1,
+		_In_z_ PCYSTR psz2) throw( ... )
 	{
 		CStringT str2( psz2, str1.GetManager() );
 
@@ -2158,95 +2448,129 @@ public:
 	}
 
 	friend bool operator!=(
-		_In_ PCYSTR psz1, _In_ const CStringT& str2 ) throw( ... )
+		_In_z_ PCYSTR psz1,
+		_In_ const CStringT& str2) throw( ... )
 	{
 		CStringT str1( psz1, str2.GetManager() );
 
 		return( str1 != str2 );
 	}
+#endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
-	friend bool operator<( _In_ const CStringT& str1, _In_ const CStringT& str2 ) throw()
+	friend bool operator<(
+		_In_ const CStringT& str1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str1.Compare( str2 ) < 0 );
 	}
 
-	friend bool operator<( _In_ const CStringT& str1, _In_ PCXSTR psz2 ) throw()
+	friend bool operator<(
+		_In_ const CStringT& str1,
+		_In_z_ PCXSTR psz2 ) throw()
 	{
 		return( str1.Compare( psz2 ) < 0 );
 	}
 
-	friend bool operator<( _In_ PCXSTR psz1, _In_ const CStringT& str2 ) throw()
+	friend bool operator<(
+		_In_z_ PCXSTR psz1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str2.Compare( psz1 ) > 0 );
 	}
 
-	friend bool operator>( _In_ const CStringT& str1, _In_ const CStringT& str2 ) throw()
+	friend bool operator>(
+		_In_ const CStringT& str1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str1.Compare( str2 ) > 0 );
 	}
 
-	friend bool operator>( _In_ const CStringT& str1, _In_ PCXSTR psz2 ) throw()
+	friend bool operator>(
+		_In_ const CStringT& str1,
+		_In_z_ PCXSTR psz2) throw()
 	{
 		return( str1.Compare( psz2 ) > 0 );
 	}
 
-	friend bool operator>( _In_ PCXSTR psz1, _In_ const CStringT& str2 ) throw()
+	friend bool operator>(
+		_In_z_ PCXSTR psz1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str2.Compare( psz1 ) < 0 );
 	}
 
-	friend bool operator<=( _In_ const CStringT& str1, _In_ const CStringT& str2 ) throw()
+	friend bool operator<=(
+		_In_ const CStringT& str1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str1.Compare( str2 ) <= 0 );
 	}
 
-	friend bool operator<=( _In_ const CStringT& str1, _In_ PCXSTR psz2 ) throw()
+	friend bool operator<=(
+		_In_ const CStringT& str1,
+		_In_z_ PCXSTR psz2) throw()
 	{
 		return( str1.Compare( psz2 ) <= 0 );
 	}
 
-	friend bool operator<=( _In_ PCXSTR psz1, _In_ const CStringT& str2 ) throw()
+	friend bool operator<=(
+		_In_z_ PCXSTR psz1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str2.Compare( psz1 ) >= 0 );
 	}
 
-	friend bool operator>=( _In_ const CStringT& str1, _In_ const CStringT& str2 ) throw()
+	friend bool operator>=(
+		_In_ const CStringT& str1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str1.Compare( str2 ) >= 0 );
 	}
 
-	friend bool operator>=( _In_ const CStringT& str1, _In_ PCXSTR psz2 ) throw()
+	friend bool operator>=(
+		_In_ const CStringT& str1,
+		_In_z_ PCXSTR psz2) throw()
 	{
 		return( str1.Compare( psz2 ) >= 0 );
 	}
 
-	friend bool operator>=( _In_ PCXSTR psz1, _In_ const CStringT& str2 ) throw()
+	friend bool operator>=(
+		_In_z_ PCXSTR psz1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( str2.Compare( psz1 ) <= 0 );
 	}
 
-	friend bool operator==( _In_ XCHAR ch1, _In_ const CStringT& str2 ) throw()
+	friend bool operator==(
+		_In_ XCHAR ch1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( (str2.GetLength() == 1) && (str2[0] == ch1) );
 	}
 
-	friend bool operator==( _In_ const CStringT& str1, _In_ XCHAR ch2 ) throw()
+	friend bool operator==(
+		_In_ const CStringT& str1,
+		_In_ XCHAR ch2) throw()
 	{
 		return( (str1.GetLength() == 1) && (str1[0] == ch2) );
 	}
 
-	friend bool operator!=( _In_ XCHAR ch1, _In_ const CStringT& str2 ) throw()
+	friend bool operator!=(
+		_In_ XCHAR ch1,
+		_In_ const CStringT& str2) throw()
 	{
 		return( (str2.GetLength() != 1) || (str2[0] != ch1) );
 	}
 
-	friend bool operator!=( _In_ const CStringT& str1, _In_ XCHAR ch2 ) throw()
+	friend bool operator!=(
+		_In_ const CStringT& str1,
+		_In_ XCHAR ch2) throw()
 	{
 		return( (str1.GetLength() != 1) || (str1[0] != ch2) );
 	}
 
 private:
-	bool CheckImplicitLoad( _In_opt_ const void* pv )
+	bool CheckImplicitLoad(_In_opt_ const void* pv)
 	{
 		bool bRet = false;
 
@@ -2273,7 +2597,9 @@ private:
 #pragma warning(disable : 4793)
 // Format data using format string 'pszFormat'
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::Format( _In_ _Printf_format_string_ PCXSTR pszFormat, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::Format(
+	_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat,
+	...)
 {
 	ATLASSERT( AtlIsValidString( pszFormat ) );
 
@@ -2285,7 +2611,9 @@ inline void __cdecl CStringT<BaseType, StringTraits>::Format( _In_ _Printf_forma
 
 // Format data using format string loaded from resource 'nFormatID'
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::Format( _Printf_format_string_ UINT nFormatID, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::Format(
+	_In_ _FormatMessage_format_string_ UINT nFormatID,
+	...)
 {
 	CStringT strFormat( GetManager() );
 	ATLENSURE( strFormat.LoadString( nFormatID ) );
@@ -2298,13 +2626,15 @@ inline void __cdecl CStringT<BaseType, StringTraits>::Format( _Printf_format_str
 
 // Append formatted data using format string loaded from resource 'nFormatID'
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat( _In_ UINT nFormatID, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat(
+	_In_ _FormatMessage_format_string_ UINT nFormatID,
+	...)
 {
 	va_list argList;
 	va_start( argList, nFormatID );
 
 	CStringT strFormat( GetManager() );
-	ATLENSURE( strFormat.LoadString( nFormatID ) ); 
+	ATLENSURE( strFormat.LoadString( nFormatID ) );
 
 	AppendFormatV( strFormat, argList );
 
@@ -2314,7 +2644,9 @@ inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat( _In_ UINT nF
 
 // Append formatted data using format string 'pszFormat'
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat( _In_ _Printf_format_string_ PCXSTR pszFormat, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat(
+	_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+	...)
 {
 	ATLASSERT( AtlIsValidString( pszFormat ) );
 
@@ -2328,7 +2660,9 @@ inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat( _In_ _Printf
 
 // Format a message using format string 'pszFormat'
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::_AFX_FUNCNAME(FormatMessage)( _In_ _Printf_format_string_ PCXSTR pszFormat, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::_AFX_FUNCNAME(FormatMessage)(
+	_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+	...)
 {
 	if(pszFormat == NULL)
 		AtlThrow(E_INVALIDARG);
@@ -2343,7 +2677,9 @@ inline void __cdecl CStringT<BaseType, StringTraits>::_AFX_FUNCNAME(FormatMessag
 
 #if defined(_AFX)
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::FormatMessage( _In_ _Printf_format_string_ PCXSTR pszFormat, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::FormatMessage(
+	_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+	...)
 {
 	if(pszFormat == NULL)
 		AtlThrow(E_INVALIDARG);
@@ -2359,7 +2695,9 @@ inline void __cdecl CStringT<BaseType, StringTraits>::FormatMessage( _In_ _Print
 
 // Format a message using format string loaded from resource 'nFormatID'
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::_AFX_FUNCNAME(FormatMessage)( _In_ UINT nFormatID, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::_AFX_FUNCNAME(FormatMessage)(
+	_In_ _FormatMessage_format_string_ UINT nFormatID, 
+	...)
 {
 	// get format string from string table
 	CStringT strFormat( GetManager() );
@@ -2378,7 +2716,9 @@ inline void __cdecl CStringT<BaseType, StringTraits>::_AFX_FUNCNAME(FormatMessag
 
 #if defined(_AFX)
 template< typename BaseType, class StringTraits >
-inline void __cdecl CStringT<BaseType, StringTraits>::FormatMessage( _In_ UINT nFormatID, ... )
+inline void __cdecl CStringT<BaseType, StringTraits>::FormatMessage(
+	_In_ _FormatMessage_format_string_ UINT nFormatID, 
+	...)
 {
 	// get format string from string table
 	CStringT strFormat( GetManager() );
@@ -2402,15 +2742,24 @@ inline void __cdecl CStringT<BaseType, StringTraits>::FormatMessage( _In_ UINT n
 class IFixedStringLog
 {
 public:
-	virtual void OnAllocateSpill( int nActualChars, int nFixedChars, const CStringData* pData ) throw() = 0;
-	virtual void OnReallocateSpill( int nActualChars, int nFixedChars, const CStringData* pData ) throw() = 0;
+	virtual void OnAllocateSpill(
+		_In_ int nActualChars,
+		_In_ int nFixedChars,
+		_In_ const CStringData* pData) throw() = 0;
+	virtual void OnReallocateSpill(
+		_In_ int nActualChars,
+		_In_ int nFixedChars,
+		_In_ const CStringData* pData) throw() = 0;
 };
 
 class CFixedStringMgr :
 	public IAtlStringMgr
 {
 public:
-	CFixedStringMgr( _In_ CStringData* pData, _In_ int nChars, _In_opt_ IAtlStringMgr* pMgr = NULL ) throw() :
+	CFixedStringMgr(
+			_Inout_ CStringData* pData,
+			_In_ int nChars,
+			_In_opt_ IAtlStringMgr* pMgr = NULL) throw() :
 		m_pData( pData ),
 		m_pMgr( pMgr )
 	{
@@ -2426,7 +2775,9 @@ public:
 
 // IAtlStringMgr
 public:
-	virtual CStringData* Allocate( _In_ int nChars, _In_ int nCharSize ) throw()
+	virtual CStringData* Allocate(
+		_In_ int nChars,
+		_In_ int nCharSize) throw()
 	{
 		ATLASSUME( m_pData->nRefs == -1 );
 		ATLASSUME( m_pData->nDataLength == 0 );
@@ -2460,7 +2811,7 @@ public:
 
 		return m_pData;
 	}
-	virtual void Free( _Inout_ CStringData* pData ) throw()
+	virtual void Free(_Inout_ CStringData* pData) throw()
 	{
 		ATLASSERT( pData->nRefs <= 0 );
 		if( pData != m_pData )
@@ -2475,7 +2826,10 @@ public:
 		m_pData->nDataLength = 0;
 		*static_cast< wchar_t* >( m_pData->data() ) = 0;
 	}
-	virtual CStringData* Reallocate( _Inout_ CStringData* pData, _In_ int nChars, _In_ int nCharSize ) throw()
+	virtual CStringData* Reallocate(
+		_Inout_ CStringData* pData,
+		_In_ int nChars,
+		_In_ int nCharSize) throw()
 	{
 		CStringData* pNewData;
 
@@ -2507,8 +2861,8 @@ public:
 					return NULL;
 				}
 
-				// Copy the string data 
-				Checked::memcpy_s( pNewData->data(), nChars*nCharSize, 
+				// Copy the string data
+				Checked::memcpy_s( pNewData->data(), nChars*nCharSize,
 					pData->data(), (pData->nAllocLength+1)*nCharSize );
 				pNewData->nRefs = pData->nRefs;  // Locked
 				pNewData->pStringMgr = this;
@@ -2565,43 +2919,43 @@ public:
 	{
 	}
 
-	explicit CFixedStringT( _In_ IAtlStringMgr* pStringMgr ) throw() :
+	explicit CFixedStringT(_In_ IAtlStringMgr* pStringMgr) throw() :
 		CFixedStringMgr( &m_data, t_nChars, pStringMgr ),
 		StringType( static_cast< IAtlStringMgr* >( this ) )
 	{
 	}
 
-	CFixedStringT( _In_ const CFixedStringT< StringType, t_nChars >& str ) :
+	CFixedStringT(_In_ const CFixedStringT< StringType, t_nChars >& str) :
 		CFixedStringMgr( &m_data, t_nChars, StrTraits::GetDefaultManager() ),
 		StringType( str.GetString(), str.GetLength(), static_cast< CFixedStringMgr* >( this ) )
 	{
 	}
 
-	CFixedStringT( _In_ const StringType& str ) :
+	CFixedStringT(_In_ const StringType& str) :
 		CFixedStringMgr( &m_data, t_nChars, StrTraits::GetDefaultManager() ),
 		StringType( str.GetString(), str.GetLength(), static_cast< CFixedStringMgr* >( this ) )
 	{
 	}
 
-	CFixedStringT( _In_ const typename StringType::XCHAR* psz ) :
+	CFixedStringT(_In_z_ const typename StringType::XCHAR* psz) :
 		CFixedStringMgr( &m_data, t_nChars, StrTraits::GetDefaultManager() ),
 		StringType( psz, static_cast< CFixedStringMgr* >( this ) )
 	{
 	}
 
-	CFixedStringT( _In_count_(nLength) const typename StringType::XCHAR* psz, _In_ int nLength ) :
+	CFixedStringT(_In_count_(nLength) const typename StringType::XCHAR* psz, _In_ int nLength) :
 		CFixedStringMgr( &m_data, t_nChars, StrTraits::GetDefaultManager() ),
 		StringType( psz, nLength, static_cast< CFixedStringMgr* >( this ) )
 	{
 	}
 
-	explicit CFixedStringT( _In_ const typename StringType::YCHAR* psz ) :
+	explicit CFixedStringT(_In_z_ const typename StringType::YCHAR* psz) :
 		CFixedStringMgr( &m_data, t_nChars, StrTraits::GetDefaultManager() ),
 		StringType( psz, static_cast< CFixedStringMgr* >( this ) )
 	{
 	}
 
-	explicit CFixedStringT( _In_ const unsigned char* psz ) :
+	explicit CFixedStringT(_In_z_ const unsigned char* psz) :
 		CFixedStringMgr( &m_data, t_nChars, StrTraits::GetDefaultManager() ),
 		StringType( psz, static_cast< CFixedStringMgr* >( this ) )
 	{
@@ -2612,31 +2966,32 @@ public:
 		Empty();
 	}
 
-	CFixedStringT< StringType, t_nChars >& operator=( _In_ const CFixedStringT< StringType, t_nChars >& str )
+	CFixedStringT< StringType, t_nChars >& operator=(
+		_In_ const CFixedStringT< StringType, t_nChars >& str)
 	{
 		StringType::operator=( str );
 		return *this;
 	}
 
-	CFixedStringT< StringType, t_nChars >& operator=( _In_z_ const char* psz )
+	CFixedStringT< StringType, t_nChars >& operator=(_In_z_ const char* psz)
 	{
 		StringType::operator=( psz );
 		return *this;
 	}
 
-	CFixedStringT< StringType, t_nChars >& operator=( _In_z_ const wchar_t* psz )
+	CFixedStringT< StringType, t_nChars >& operator=(_In_z_ const wchar_t* psz)
 	{
 		StringType::operator=( psz );
 		return *this;
 	}
 
-	CFixedStringT< StringType, t_nChars >& operator=( _In_z_ const unsigned char* psz )
+	CFixedStringT< StringType, t_nChars >& operator=(_In_z_ const unsigned char* psz)
 	{
 		StringType::operator=( psz );
 		return *this;
 	}
 
-	CFixedStringT< StringType, t_nChars >& operator=( _In_ const StringType& str )
+	CFixedStringT< StringType, t_nChars >& operator=(_In_ const StringType& str)
 	{
 		StringType::operator=( str );
 		return *this;
@@ -2663,14 +3018,20 @@ public:
 	}
 
 public:
-	void OnAllocateSpill( _In_ int nActualChars, _In_ int nFixedChars, _In_ const CStringData* pData ) throw()
+	void OnAllocateSpill(
+		_In_ int nActualChars,
+		_In_ int nFixedChars,
+		_In_ const CStringData* pData) throw()
 	{
 		(void)nActualChars;
 		(void)nFixedChars;
 		(void)pData;
 		ATLTRACE( atlTraceString, 0, _T( "CFixedStringMgr::Allocate() spilling to heap.  %d chars (fixed size = %d chars)\n" ), nActualChars, nFixedChars );
 	}
-	void OnReallocateSpill( _In_ int nActualChars, _In_ int nFixedChars, _In_ const CStringData* pData ) throw()
+	void OnReallocateSpill(
+		_In_ int nActualChars,
+		_In_ int nFixedChars,
+		_In_ const CStringData* pData) throw()
 	{
 		(void)nActualChars;
 		(void)nFixedChars;
@@ -2686,7 +3047,10 @@ public:
 	typedef typename T::PCXSTR INARGTYPE;
 	typedef T& OUTARGTYPE;
 
-	static void __cdecl CopyElements( _Out_capcount_(nElements) T* pDest, _In_count_(nElements) const T* pSrc, _In_ size_t nElements )
+	static void __cdecl CopyElements(
+		_Out_capcount_(nElements) T* pDest,
+		_In_count_(nElements) const T* pSrc,
+		_In_ size_t nElements)
 	{
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
 		{
@@ -2694,12 +3058,15 @@ public:
 		}
 	}
 
-	static void __cdecl RelocateElements( _Out_capcount_(nElements) T* pDest, _In_count_(nElements) T* pSrc, _In_ size_t nElements )
+	static void __cdecl RelocateElements(
+		_Out_capcount_(nElements) T* pDest,
+		_In_count_(nElements) T* pSrc,
+		_In_ size_t nElements)
 	{
 		Checked::memmove_s( pDest, nElements*sizeof( T ), pSrc, nElements*sizeof( T ) );
 	}
 
-	static ULONG __cdecl Hash( _In_ INARGTYPE str )
+	static ULONG __cdecl Hash(_In_ INARGTYPE str)
 	{
 		ATLENSURE( str != NULL );
 		ULONG nHash = 0;
@@ -2713,12 +3080,16 @@ public:
 		return( nHash );
 	}
 
-	static bool __cdecl CompareElements( _In_ INARGTYPE str1, _In_ INARGTYPE str2 )
+	static bool __cdecl CompareElements(
+		_In_ INARGTYPE str1,
+		_In_ INARGTYPE str2)
 	{
 		return( T::StrTraits::StringCompare( str1, str2 ) == 0 );
 	}
 
-	static int __cdecl CompareElementsOrdered( _In_ INARGTYPE str1, _In_ INARGTYPE str2 )
+	static int __cdecl CompareElementsOrdered(
+		_In_ INARGTYPE str1,
+		_In_ INARGTYPE str2)
 	{
 		return( T::StrTraits::StringCompare( str1, str2 ) );
 	}
@@ -2742,7 +3113,6 @@ public:
 #ifndef _ATL_NO_PRAGMA_WARNINGS
 #pragma warning (pop)
 #endif
-
 
 
 #endif	// __CSTRINGT_H__ (whole file)

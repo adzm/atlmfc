@@ -58,8 +58,10 @@ CWinAppEx::CWinAppEx(BOOL bResourceSmartUpdate/* = TRUE*/) :
 	m_bMouseManagerAutocreated = FALSE;
 	m_bUserToolsManagerAutoCreated = FALSE;
 	m_bTearOffManagerAutoCreated = FALSE;
-	m_bShellManagerAutocreated = FALSE;
 	m_bTooltipManagerAutocreated = FALSE;
+
+	m_bShellManagerAutocreated = FALSE;
+	InitShellManager();
 
 	const CString strRegEntryNameWorkspace = _T("Workspace");
 	m_strRegSection = strRegEntryNameWorkspace;
@@ -80,7 +82,6 @@ CWinAppEx::CWinAppEx(BOOL bResourceSmartUpdate/* = TRUE*/) :
 
 int CWinAppEx::ExitInstance() 
 {
-	ControlBarCleanUp();
 	return CWinApp::ExitInstance();
 }
 
@@ -140,12 +141,12 @@ BOOL CWinAppEx::InitShellManager()
 {
 	if (afxShellManager != NULL)
 	{
-		ASSERT(FALSE);
-		return FALSE;
+		return TRUE;
 	}
 
 	afxShellManager = new CShellManager;
 	m_bShellManagerAutocreated = TRUE;
+
 	return TRUE;
 }
 
@@ -491,7 +492,23 @@ BOOL CWinAppEx::LoadState(LPCTSTR lpszSectionName /*=NULL*/, CFrameImpl* pFrameI
 
 		if (pFrameImpl->m_pFrame->IsZoomed())
 		{
+			CView* pViewFirst = NULL;
+			if (pFrameImpl->m_pFrame->GetActiveView() == NULL)
+			{
+				// InitialUpdateFrame wasn't called yet
+				pViewFirst = DYNAMIC_DOWNCAST(CView, pFrameImpl->m_pFrame->GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE));
+				if (pViewFirst->GetSafeHwnd() != NULL)
+				{
+					pViewFirst->m_bInitialRedraw = TRUE;
+				}
+			}
+			
 			pFrameImpl->m_pFrame->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
+
+			if (pViewFirst->GetSafeHwnd() != NULL)
+			{
+				pViewFirst->m_bInitialRedraw = FALSE;
+			}
 		}
 	}
 
@@ -743,7 +760,23 @@ BOOL CWinAppEx::ReloadWindowPlacement(CFrameWnd* pFrameWnd)
 			SystemParametersInfo(SPI_GETWORKAREA,0, (PVOID)&rectDesktop,0);
 			OffsetRect(&wp.rcNormalPosition, -rectDesktop.left, -rectDesktop.top);
 
+			CView* pViewFirst = NULL;
+			if (pFrameWnd->GetActiveView() == NULL)
+			{
+				// InitialUpdateFrame wasn't called yet
+				pViewFirst = DYNAMIC_DOWNCAST(CView, pFrameWnd->GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE));
+				if (pViewFirst->GetSafeHwnd() != NULL)
+				{
+					pViewFirst->m_bInitialRedraw = TRUE;
+				}
+			}
+			
 			pFrameWnd->SetWindowPlacement(&wp);
+
+			if (pViewFirst->GetSafeHwnd() != NULL)
+			{
+				pViewFirst->m_bInitialRedraw = FALSE;
+			}
 
 			bRet = TRUE;
 		}
@@ -984,7 +1017,11 @@ BOOL CWinAppEx::WriteSectionObject(LPCTSTR lpszSubSection, LPCTSTR lpszEntry, CO
 
 void CWinAppEx::OnAppContextHelp(CWnd* pWndControl, const DWORD dwHelpIDArray [])
 {
-	::WinHelp(pWndControl->GetSafeHwnd(), AfxGetApp()->m_pszHelpFilePath, HELP_CONTEXTMENU, (DWORD_PTR)(LPVOID) dwHelpIDArray);
+	ASSERT_VALID(pWndControl);
+	if (pWndControl != NULL)
+	{
+		pWndControl->WinHelpInternal((DWORD_PTR)(LPVOID)dwHelpIDArray, HELP_CONTEXTMENU);
+	}
 }
 
 BOOL CWinAppEx::SaveState(CMDIFrameWndEx* pFrame, LPCTSTR lpszSectionName /*=NULL*/)

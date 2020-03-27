@@ -20,7 +20,7 @@ HWND CDataExchange::PrepareEditCtrl(int nIDC)
 	HWND hWndCtrl = PrepareCtrl(nIDC);
 	m_bEditLastControl = TRUE;
 
-   return hWndCtrl;
+	return hWndCtrl;
 }
 
 HWND CDataExchange::PrepareCtrl(int nIDC)
@@ -28,23 +28,23 @@ HWND CDataExchange::PrepareCtrl(int nIDC)
 	ASSERT(nIDC != 0);
 	ASSERT(nIDC != -1); // not allowed
 	HWND hWndCtrl;
-   COleControlSite* pSite = NULL;
+	COleControlSite* pSite = NULL;
 	m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
 	if (hWndCtrl == NULL)
 	{
-	  // Could be a windowless OCX
-	  pSite = m_pDlgWnd->GetOleControlSite(nIDC);
-	  if (pSite == NULL)
-	  {
-		   TRACE(traceAppMsg, 0, "Error: no data exchange control with ID 0x%04X.\n", nIDC);
-		   ASSERT(FALSE);
-		   AfxThrowNotSupportedException();
-	  }
+		// Could be a windowless OCX
+		pSite = m_pDlgWnd->GetOleControlSite(nIDC);
+		if (pSite == NULL)
+		{
+			TRACE(traceAppMsg, 0, "Error: no data exchange control with ID 0x%04X.\n", nIDC);
+			ASSERT(FALSE);
+			AfxThrowNotSupportedException();
+		}
 	}
 	m_idLastControl = nIDC;
 	m_bEditLastControl = FALSE; // not an edit item by default
 
-   return hWndCtrl;
+	return hWndCtrl;
 }
 
 void CDataExchange::Fail()
@@ -57,14 +57,14 @@ void CDataExchange::Fail()
 	else if (m_idLastControl != NULL)
 	{
 		// restore focus and selection to offending field
-	  HWND hWndLastControl;
-	  m_pDlgWnd->GetDlgItem(m_idLastControl, &hWndLastControl);
-	  if (hWndLastControl != NULL)
-	  {
-		   ::SetFocus(hWndLastControl);
-		   if (m_bEditLastControl) // select edit item
-			   ::SendMessage(hWndLastControl, EM_SETSEL, 0, -1);
-	  }
+		HWND hWndLastControl;
+		m_pDlgWnd->GetDlgItem(m_idLastControl, &hWndLastControl);
+		if (hWndLastControl != NULL)
+		{
+			::SetFocus(hWndLastControl);
+			if (m_bEditLastControl) // select edit item
+				::SendMessage(hWndLastControl, EM_SETSEL, 0, -1);
+		}
 	}
 	else
 	{
@@ -90,14 +90,14 @@ void CDataExchange::Fail()
 /////////////////////////////////////////////////////////////////////////////
 
 AFX_STATIC void AFX_CDECL _Afx_DDX_TextWithFormat(CDataExchange* pDX, int nIDC,
-	LPCTSTR lpszFormat, UINT nIDPrompt, ...)
-	// only supports windows output formats - no floating point
+												  LPCTSTR lpszFormat, UINT nIDPrompt, ...)
+												  // only supports windows output formats - no floating point
 {
 	va_list pData;
 	va_start(pData, nIDPrompt);
 
 	HWND hWndCtrl = pDX->PrepareEditCtrl(nIDC);
-   ASSERT( hWndCtrl != NULL );
+	ASSERT( hWndCtrl != NULL );
 
 	const int SZT_SIZE = 64;
 	TCHAR szT[SZT_SIZE];
@@ -116,9 +116,9 @@ AFX_STATIC void AFX_CDECL _Afx_DDX_TextWithFormat(CDataExchange* pDX, int nIDC,
 	}
 	else
 	{
-		
+
 		ATL_CRT_ERRORCHECK_SPRINTF(_vsntprintf_s(szT, _countof(szT), _countof(szT) - 1, lpszFormat, pData));
-			// does not support floating point numbers - see dlgfloat.cpp
+		// does not support floating point numbers - see dlgfloat.cpp
 		AfxSetWindowText(hWndCtrl, szT);
 	}
 
@@ -204,7 +204,7 @@ void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, ULONGLONG& value)
 void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, CString& value)
 {
 	HWND hWndCtrl = pDX->PrepareEditCtrl(nIDC);
-   if (pDX->m_bSaveAndValidate)
+	if (pDX->m_bSaveAndValidate)
 	{
 		int nLen = ::GetWindowTextLength(hWndCtrl);
 		::GetWindowText(hWndCtrl, value.GetBufferSetLength(nLen), nLen+1);
@@ -240,8 +240,8 @@ void AFXAPI DDX_Text(_Inout_ CDataExchange* pDX, _In_ int nIDC, _Out_z_cap_(nMax
 void AFXAPI DDX_Check(CDataExchange* pDX, int nIDC, int& value)
 {
 	pDX->PrepareCtrl(nIDC);
-   HWND hWndCtrl;
-   pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+	HWND hWndCtrl;
+	pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
 	if (pDX->m_bSaveAndValidate)
 	{
 		value = (int)::SendMessage(hWndCtrl, BM_GETCHECK, 0, 0L);
@@ -252,7 +252,7 @@ void AFXAPI DDX_Check(CDataExchange* pDX, int nIDC, int& value)
 		if (value < 0 || value > 2)
 		{
 			TRACE(traceAppMsg, 0, "Warning: dialog data checkbox value (%d) out of range.\n",
-				 value);
+				value);
 			value = 0;  // default to off
 		}
 		::SendMessage(hWndCtrl, BM_SETCHECK, (WPARAM)value, 0L);
@@ -260,11 +260,11 @@ void AFXAPI DDX_Check(CDataExchange* pDX, int nIDC, int& value)
 }
 
 void AFXAPI DDX_Radio(CDataExchange* pDX, int nIDC, int& value)
-	// must be first in a group of auto radio buttons
+// must be first in a group of auto radio buttons
 {
 	pDX->PrepareCtrl(nIDC);
-   HWND hWndCtrl;
-   pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+	HWND hWndCtrl;
+	pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
 
 	ASSERT(::GetWindowLong(hWndCtrl, GWL_STYLE) & WS_GROUP);
 	ASSERT(::SendMessage(hWndCtrl, WM_GETDLGCODE, 0, 0L) & DLGC_RADIOBUTTON);
@@ -310,8 +310,8 @@ void AFXAPI DDX_Radio(CDataExchange* pDX, int nIDC, int& value)
 void AFXAPI DDX_LBString(CDataExchange* pDX, int nIDC, CString& value)
 {
 	pDX->PrepareCtrl(nIDC);
-   HWND hWndCtrl;
-   pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+	HWND hWndCtrl;
+	pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
 	if (pDX->m_bSaveAndValidate)
 	{
 		int nIndex = (int)::SendMessage(hWndCtrl, LB_GETCURSEL, 0, 0L);
@@ -319,7 +319,7 @@ void AFXAPI DDX_LBString(CDataExchange* pDX, int nIDC, CString& value)
 		{
 			int nLen = (int)::SendMessage(hWndCtrl, LB_GETTEXTLEN, nIndex, 0L);
 			::SendMessage(hWndCtrl, LB_GETTEXT, nIndex,
-					(LPARAM)(LPVOID)value.GetBufferSetLength(nLen));
+				(LPARAM)(LPVOID)value.GetBufferSetLength(nLen));
 		}
 		else
 		{
@@ -332,7 +332,7 @@ void AFXAPI DDX_LBString(CDataExchange* pDX, int nIDC, CString& value)
 	{
 		// set current selection based on data string
 		if (::SendMessage(hWndCtrl, LB_SELECTSTRING, (WPARAM)-1,
-		  (LPARAM)(LPCTSTR)value) == LB_ERR)
+			(LPARAM)(LPCTSTR)value) == LB_ERR)
 		{
 			// no selection match
 			TRACE(traceAppMsg, 0, "Warning: no listbox item selected.\n");
@@ -343,8 +343,8 @@ void AFXAPI DDX_LBString(CDataExchange* pDX, int nIDC, CString& value)
 void AFXAPI DDX_LBStringExact(CDataExchange* pDX, int nIDC, CString& value)
 {
 	pDX->PrepareCtrl(nIDC);
-   HWND hWndCtrl;
-   pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+	HWND hWndCtrl;
+	pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
 	if (pDX->m_bSaveAndValidate)
 	{
 		DDX_LBString(pDX, nIDC, value);
@@ -353,7 +353,7 @@ void AFXAPI DDX_LBStringExact(CDataExchange* pDX, int nIDC, CString& value)
 	{
 		// set current selection based on data string
 		int i = (int)::SendMessage(hWndCtrl, LB_FINDSTRINGEXACT, (WPARAM)-1,
-		  (LPARAM)(LPCTSTR)value);
+			(LPARAM)(LPCTSTR)value);
 		if (i < 0)
 		{
 			// no selection match
@@ -369,9 +369,18 @@ void AFXAPI DDX_LBStringExact(CDataExchange* pDX, int nIDC, CString& value)
 
 void AFXAPI DDX_CBString(CDataExchange* pDX, int nIDC, CString& value)
 {
-	pDX->PrepareCtrl(nIDC);
-   HWND hWndCtrl;
-   pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+	HWND hWndCtrl;
+	pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+
+	if ((::GetWindowLong(hWndCtrl, GWL_STYLE) & CBS_DROPDOWNLIST) != CBS_DROPDOWNLIST)
+	{
+		pDX->PrepareEditCtrl(nIDC);
+	}
+	else
+	{
+		pDX->PrepareCtrl(nIDC);
+	}
+
 	if (pDX->m_bSaveAndValidate)
 	{
 		// just get current edit item text (or drop list static)
@@ -403,9 +412,18 @@ void AFXAPI DDX_CBString(CDataExchange* pDX, int nIDC, CString& value)
 
 void AFXAPI DDX_CBStringExact(CDataExchange* pDX, int nIDC, CString& value)
 {
-	pDX->PrepareCtrl(nIDC);
 	HWND hWndCtrl;
 	pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+
+	if ((::GetWindowLong(hWndCtrl, GWL_STYLE) & CBS_DROPDOWNLIST) != CBS_DROPDOWNLIST)
+	{
+		pDX->PrepareEditCtrl(nIDC);
+	}
+	else
+	{
+		pDX->PrepareCtrl(nIDC);
+	}
+
 	if (pDX->m_bSaveAndValidate)
 	{
 		DDX_CBString(pDX, nIDC, value);
@@ -414,7 +432,7 @@ void AFXAPI DDX_CBStringExact(CDataExchange* pDX, int nIDC, CString& value)
 	{
 		// set current selection based on data string
 		int i = (int)::SendMessage(hWndCtrl, CB_FINDSTRINGEXACT, (WPARAM)-1,
-		  (LPARAM)(LPCTSTR)value);
+			(LPARAM)(LPCTSTR)value);
 		if (i < 0)
 		{
 			// just set the edit text (will be ignored if DROPDOWNLIST)
@@ -488,9 +506,9 @@ void AFXAPI DDX_IPAddress(CDataExchange* pDX, int nIDC, DWORD& value)
 // Range Dialog Data Validation
 
 AFX_STATIC void AFXAPI _AfxFailMinMaxWithFormat(CDataExchange* pDX,
-	 LONGLONG minVal, LONGLONG maxVal, LPCTSTR lpszFormat, UINT nIDPrompt)
-	// error string must have '%1' and '%2' strings for min and max values
-	// since minVal and maxVal are 64-bit, lpszFormat should be "%I64d" or "%I64u"
+												LONGLONG minVal, LONGLONG maxVal, LPCTSTR lpszFormat, UINT nIDPrompt)
+												// error string must have '%1' and '%2' strings for min and max values
+												// since minVal and maxVal are 64-bit, lpszFormat should be "%I64d" or "%I64u"
 {
 	ASSERT(lpszFormat != NULL);
 
@@ -499,11 +517,11 @@ AFX_STATIC void AFXAPI _AfxFailMinMaxWithFormat(CDataExchange* pDX,
 		TRACE(traceAppMsg, 0, "Warning: initial dialog data is out of range.\n");
 		return;     // don't stop now
 	}
-	
+
 	const int MINMAX_BUFFER_SIZE = 64;
 	TCHAR szMin[MINMAX_BUFFER_SIZE];
 	TCHAR szMax[MINMAX_BUFFER_SIZE];
-	
+
 	ATL_CRT_ERRORCHECK_SPRINTF(_sntprintf_s(szMin, _countof(szMin), _countof(szMin) - 1, lpszFormat, minVal));
 	ATL_CRT_ERRORCHECK_SPRINTF(_sntprintf_s(szMax, _countof(szMax), _countof(szMax) - 1, lpszFormat, maxVal));
 
@@ -520,7 +538,7 @@ void AFXAPI DDV_MinMaxByte(CDataExchange* pDX, BYTE value, BYTE minVal, BYTE max
 	ASSERT(minVal <= maxVal);
 	if (value < minVal || value > maxVal)
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64u"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxShort(CDataExchange* pDX, short value, short minVal, short maxVal)
@@ -528,7 +546,7 @@ void AFXAPI DDV_MinMaxShort(CDataExchange* pDX, short value, short minVal, short
 	ASSERT(minVal <= maxVal);
 	if (value < minVal || value > maxVal)
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64d"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxInt(CDataExchange* pDX, int value, int minVal, int maxVal)
@@ -536,7 +554,7 @@ void AFXAPI DDV_MinMaxInt(CDataExchange* pDX, int value, int minVal, int maxVal)
 	ASSERT(minVal <= maxVal);
 	if (value < minVal || value > maxVal)
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64d"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxLong(CDataExchange* pDX, long value, long minVal, long maxVal)
@@ -544,7 +562,7 @@ void AFXAPI DDV_MinMaxLong(CDataExchange* pDX, long value, long minVal, long max
 	ASSERT(minVal <= maxVal);
 	if (value < minVal || value > maxVal)
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64d"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxUInt(CDataExchange* pDX, UINT value, UINT minVal, UINT maxVal)
@@ -552,7 +570,7 @@ void AFXAPI DDV_MinMaxUInt(CDataExchange* pDX, UINT value, UINT minVal, UINT max
 	ASSERT(minVal <= maxVal);
 	if (value < minVal || value > maxVal)
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64u"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxDWord(CDataExchange* pDX, DWORD value, DWORD minVal, DWORD maxVal)
@@ -560,7 +578,7 @@ void AFXAPI DDV_MinMaxDWord(CDataExchange* pDX, DWORD value, DWORD minVal, DWORD
 	ASSERT(minVal <= maxVal);
 	if (value < minVal || value > maxVal)
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64u"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxLongLong(CDataExchange* pDX, LONGLONG value, LONGLONG minVal, LONGLONG maxVal)
@@ -568,7 +586,7 @@ void AFXAPI DDV_MinMaxLongLong(CDataExchange* pDX, LONGLONG value, LONGLONG minV
 	ASSERT(minVal <= maxVal);
 	if ((value < minVal) || (value > maxVal))
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64d"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxULongLong(CDataExchange* pDX, ULONGLONG value, ULONGLONG minVal, ULONGLONG maxVal)
@@ -576,7 +594,7 @@ void AFXAPI DDV_MinMaxULongLong(CDataExchange* pDX, ULONGLONG value, ULONGLONG m
 	ASSERT(minVal <= maxVal);
 	if ((value < minVal) || (value > maxVal))
 		_AfxFailMinMaxWithFormat(pDX, minVal, maxVal, _T("%I64u"),
-			AFX_IDP_PARSE_INT_RANGE);
+		AFX_IDP_PARSE_INT_RANGE);
 }
 
 void AFXAPI DDV_MinMaxSlider(CDataExchange* pDX, DWORD value, DWORD minVal, DWORD maxVal)
@@ -593,8 +611,8 @@ void AFXAPI DDV_MinMaxSlider(CDataExchange* pDX, DWORD value, DWORD minVal, DWOR
 		}
 	}
 
-   HWND hWndLastControl;
-   pDX->m_pDlgWnd->GetDlgItem(pDX->m_idLastControl, &hWndLastControl);
+	HWND hWndLastControl;
+	pDX->m_pDlgWnd->GetDlgItem(pDX->m_idLastControl, &hWndLastControl);
 	::SendMessage(hWndLastControl, TBM_SETRANGEMIN, FALSE, (LPARAM) minVal);
 	::SendMessage(hWndLastControl, TBM_SETRANGEMAX, TRUE, (LPARAM) maxVal);
 }
@@ -617,10 +635,14 @@ void AFXAPI DDV_MaxChars(CDataExchange* pDX, CString const& value, int nChars)
 	}
 	else if (pDX->m_idLastControl != 0 && pDX->m_bEditLastControl)
 	{
-	  HWND hWndLastControl;
-	  pDX->m_pDlgWnd->GetDlgItem(pDX->m_idLastControl, &hWndLastControl);
+		HWND hWndLastControl;
+		pDX->m_pDlgWnd->GetDlgItem(pDX->m_idLastControl, &hWndLastControl);
 		// limit the control max-chars automatically
-		::SendMessage(hWndLastControl, EM_LIMITTEXT, nChars, 0);
+		// send messages for both an edit control and a combobox control--one will
+		// be understood and one will be disregarded, but this is the only way to
+		// ensure that the characters will be limited for both kinds of controls.
+		::SendMessage(hWndLastControl, EM_SETLIMITTEXT, nChars, 0);
+		::SendMessage(hWndLastControl, CB_LIMITTEXT, nChars, 0);
 	}
 }
 
@@ -634,8 +656,16 @@ void AFXAPI DDX_Control(CDataExchange* pDX, int nIDC, CWnd& rControl)
 		ASSERT(!pDX->m_bSaveAndValidate);
 
 		pDX->PrepareCtrl(nIDC);
-	  HWND hWndCtrl;
-	  pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+		HWND hWndCtrl;
+		pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
+		
+		CMFCControlContainer* pMFCCtrlContainer = pDX->m_pDlgWnd->GetMFCControlContainer();
+		if (pMFCCtrlContainer != NULL && pMFCCtrlContainer->IsSubclassedFeaturePackControl(hWndCtrl))
+		{
+			pMFCCtrlContainer->ReSubclassControl(hWndCtrl, (WORD)nIDC, rControl);
+			return;
+		}
+		
 		if ((hWndCtrl != NULL) && !rControl.SubclassWindow(hWndCtrl))
 		{
 			ASSERT(FALSE);      // possibly trying to subclass twice?
@@ -644,20 +674,20 @@ void AFXAPI DDX_Control(CDataExchange* pDX, int nIDC, CWnd& rControl)
 #ifndef _AFX_NO_OCC_SUPPORT
 		else
 		{
-		 if (hWndCtrl == NULL)
-		 {
-			if (pDX->m_pDlgWnd->GetOleControlSite(nIDC) != NULL)
+			if (hWndCtrl == NULL)
 			{
-			   rControl.AttachControlSite(pDX->m_pDlgWnd, nIDC);
+				if (pDX->m_pDlgWnd->GetOleControlSite(nIDC) != NULL)
+				{
+					rControl.AttachControlSite(pDX->m_pDlgWnd, nIDC);
+				}
 			}
-		 }
-		 else
-		 {
-			   // If the control has reparented itself (e.g., invisible control),
-			   // make sure that the CWnd gets properly wired to its control site.
-			   if (pDX->m_pDlgWnd->m_hWnd != ::GetParent(rControl.m_hWnd))
-				   rControl.AttachControlSite(pDX->m_pDlgWnd);
-		 }
+			else
+			{
+				// If the control has reparented itself (e.g., invisible control),
+				// make sure that the CWnd gets properly wired to its control site.
+				if (pDX->m_pDlgWnd->m_hWnd != ::GetParent(rControl.m_hWnd))
+					rControl.AttachControlSite(pDX->m_pDlgWnd);
+			}
 		}
 #endif //!_AFX_NO_OCC_SUPPORT
 

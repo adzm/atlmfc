@@ -347,7 +347,7 @@ public:
 	BOOL ApplyPrintDevice(const PRINTDLG* ppd);
 		// these apply the target device to all COleClientItem objects
 
-// Overridables
+	// Overridables
 	virtual COleClientItem* GetPrimarySelectedItem(CView* pView);
 		// return primary selected item or NULL if none
 	virtual void OnShowViews(BOOL bVisible);
@@ -369,6 +369,7 @@ public:
 	virtual void DeleteContents(); // delete client items in list
 	virtual void Serialize(CArchive& ar);   // serialize items to file
 	virtual void PreCloseFrame(CFrameWnd* pFrame);
+	virtual BOOL DoSave(LPCTSTR lpszPathName, BOOL bReplace);
 	virtual BOOL SaveModified();
 	virtual void OnIdle();
 
@@ -394,12 +395,17 @@ protected:
 	BOOL m_bSameAsLoad;     // TRUE = file-save, FALSE = Save [Copy] As
 	BOOL m_bRemember;       // if FALSE, indicates Save Copy As
 
+	CString m_strStorageName; // last storage where the document was loaded/saved (may be different from m_strPathName)
+
 	DVTARGETDEVICE* m_ptd;  // current document target device
 
 	// implementation helpers
 	virtual void LoadFromStorage();
 	virtual void SaveToStorage(CObject* pObject = NULL);
 	CDocItem* GetNextItemOfKind(POSITION& pos, CRuntimeClass* pClass) const;
+
+	// overridables. Currently called by search/organize/preview/live-icon handlers to load data from stream
+	virtual HRESULT OnLoadDocumentFromStream(IStream* pStream, DWORD grfMode);
 
 	// command handling
 public:
@@ -1935,7 +1941,7 @@ LPCTSTR AFXAPI AfxGetSeverityString(SCODE sc);
 LPCTSTR AFXAPI AfxGetFacilityString(SCODE sc);
 
 // Mapping IIDs to readable text
-LPCTSTR AFXAPI AfxGetIIDString(REFIID iid);
+CString AFXAPI AfxGetIIDString(REFIID iid);
 #endif
 
 /////////////////////////////////////////////////////////////////////////////

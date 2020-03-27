@@ -98,8 +98,8 @@ BOOL CFrameWnd::CanEnterHelpMode()
 			// load help cursor after handles have been setup
 			HINSTANCE hInst = AfxFindResourceHandle(
 				ATL_MAKEINTRESOURCE(AFX_IDC_CONTEXTHELP), ATL_RT_GROUP_CURSOR);
-			afxData.hcurHelp = LoadCursor(hInst,
-				ATL_MAKEINTRESOURCE(AFX_IDC_CONTEXTHELP));
+			afxData.hcurHelp = LoadCursorW(hInst,
+				ATL_MAKEINTRESOURCEW(AFX_IDC_CONTEXTHELP));
 		}
 		if (afxData.hcurHelp == NULL)
 			return FALSE;
@@ -267,7 +267,6 @@ AFX_STATIC DWORD AFXAPI _AfxMapClientArea(HWND hWnd, POINT point)
 
 		// check current window
 		::ScreenToClient(hWnd, &point);
-	  //IA64: Assume help context is still 32-bit
 		dwContext = DWORD(::SendMessage(hWnd, WM_HELPHITTEST, 0,
 			MAKELONG(point.x, point.y)));
 		::ClientToScreen(hWnd, &point);

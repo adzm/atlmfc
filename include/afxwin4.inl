@@ -128,12 +128,12 @@ AFX_INLINE CString CComboBox::GetCueBanner() const
 	ASSERT(::IsWindow(m_hWnd));
 	LPTSTR lpszText=NULL;
 	int cchText = 0;
-	CString strOut("");
+	CString strOut;
 	BOOL b = CWnd::EnlargeBufferGetText<BOOL>(FALSE, lpszText, cchText, CB_GETCUEBANNER, (WPARAM&)lpszText, (LPARAM&)cchText, strOut);
 	if (b)
 		return strOut;
 	else
-		return CString("");
+		return CString();
 }
 
 AFX_INLINE BOOL CComboBox::GetCueBanner(_Out_z_cap_(cchText) LPWSTR lpszText, _In_ int cchText) const
@@ -213,12 +213,12 @@ AFX_INLINE CString CEdit::GetCueBanner() const
 	ASSERT(::IsWindow(m_hWnd));
 	LPTSTR lpszText=NULL;
 	int cchText = 0;
-	CString strOut("");
+	CString strOut;
 	BOOL b = CWnd::EnlargeBufferGetText<BOOL>(FALSE, lpszText, cchText, EM_GETCUEBANNER, (WPARAM&)lpszText, (LPARAM&)cchText, strOut);
 	if (b)
 		return strOut;
 	else
-		return CString("");
+		return CString();
 }
 
 AFX_INLINE BOOL CEdit::ShowBalloonTip(_In_z_ LPCWSTR lpszTitle, _In_z_ LPCWSTR lpszText, _In_ INT ttiIcon)
@@ -324,7 +324,7 @@ AFX_INLINE CString CButton::GetNote() const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	UINT nCount = 256;
-	CString str("");
+	CString str;
 	LPTSTR lpstr = str.GetBufferSetLength(nCount);
 	if (lpstr == NULL)
 	{

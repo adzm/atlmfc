@@ -9,7 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-
+#include <atlimage.h>
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CSplitterWnd, CWnd)
 	ON_MESSAGE_VOID(WM_DISPLAYCHANGE,CSplitterWnd::OnDisplayChange)
 	ON_MESSAGE_VOID(WM_WININICHANGE, CSplitterWnd::OnDisplayChange)
 	ON_MESSAGE_VOID(WM_SETTINGCHANGE,CSplitterWnd::OnDisplayChange)
+	ON_MESSAGE(WM_PRINTCLIENT, &CSplitterWnd::OnPrintClient)
 	ON_WM_MOUSEWHEEL()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -60,7 +61,29 @@ END_MESSAGE_MAP()
 
 CSplitterWnd::CSplitterWnd()
 {
-	AFX_ZERO_INIT_OBJECT(CWnd);
+	m_pDynamicViewClass = NULL;
+
+	m_nMaxRows = 0;
+	m_nMaxCols = 0;
+	m_nRows = 0;
+	m_nCols = 0;
+
+	m_bHasHScroll = FALSE;
+	m_bHasVScroll = FALSE;
+
+	m_pColInfo = NULL;
+	m_pRowInfo = NULL;
+
+	m_bTracking = FALSE;
+	m_bTracking2 = FALSE;
+
+	m_ptTrackOffset.x = m_ptTrackOffset.y = 0;
+
+	m_rectLimit.top    = m_rectLimit.bottom    = m_rectLimit.left    = m_rectLimit.right    = 0;
+	m_rectTracker.top  = m_rectTracker.bottom  = m_rectTracker.left  = m_rectTracker.right  = 0;
+	m_rectTracker2.top = m_rectTracker2.bottom = m_rectTracker2.left = m_rectTracker2.right = 0;
+
+	m_htTrack = 0;
 
 	// default splitter box/bar sizes (includes borders)
 	m_cxSplitter = m_cySplitter = 3 + 2 + 2;
@@ -1510,10 +1533,10 @@ void CSplitterWnd::DrawAllSplitBars(CDC* pDC, int cxInside, int cyInside)
 	}
 }
 
-void CSplitterWnd::OnPaint()
+void CSplitterWnd::OnDraw(CDC* pDC)
 {
 	ASSERT_VALID(this);
-	CPaintDC dc(this);
+	ASSERT_VALID(pDC);
 
 	CRect rectClient;
 	GetClientRect(&rectClient);
@@ -1525,20 +1548,48 @@ void CSplitterWnd::OnPaint()
 	// draw the splitter boxes
 	if (m_bHasVScroll && m_nRows < m_nMaxRows)
 	{
-		OnDrawSplitter(&dc, splitBox,
+		OnDrawSplitter(pDC, splitBox,
 			CRect(rectInside.right, rectClient.top,
-				rectClient.right, rectClient.top + m_cySplitter));
+			rectClient.right, rectClient.top + m_cySplitter));
 	}
 
 	if (m_bHasHScroll && m_nCols < m_nMaxCols)
 	{
-		OnDrawSplitter(&dc, splitBox,
+		OnDrawSplitter(pDC, splitBox,
 			CRect(rectClient.left, rectInside.bottom,
-				rectClient.left + m_cxSplitter, rectClient.bottom));
+			rectClient.left + m_cxSplitter, rectClient.bottom));
 	}
 
 	// extend split bars to window border (past margins)
-	DrawAllSplitBars(&dc, rectInside.right, rectInside.bottom);
+	DrawAllSplitBars(pDC, rectInside.right, rectInside.bottom);
+}
+
+void CSplitterWnd::OnPaint()
+{
+	ASSERT_VALID(this);
+	CPaintDC dc(this);
+
+	OnDraw(&dc);
+}
+
+LRESULT CSplitterWnd::OnPrintClient(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	ASSERT_VALID(this);
+
+	HDC hdc = (HDC) wParam;
+	CDC* pDC = CDC::FromHandle(hdc);
+
+	ASSERT_VALID(pDC);
+
+	if (pDC == NULL)
+	{
+		return -1L;
+	}
+
+	OnDraw(pDC);
+
+	return 0L;
 }
 
 BOOL CSplitterWnd::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
@@ -1604,7 +1655,7 @@ void CSplitterWnd::SetSplitCursor(int ht)
 			// This should be done using the Resource.Set Includes... command.
 
 			if ((_afx_hcurDestroy = _afx_hcurLast =
-			   ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(idcPrimary))) == NULL)
+			   ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(idcPrimary))) == NULL)
 			{
 				// will not look as good
 				TRACE(traceAppMsg, 0, "Warning: Could not find splitter cursor - "

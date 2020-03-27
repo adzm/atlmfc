@@ -104,6 +104,7 @@ protected:
 	afx_msg UINT OnGetDlgCode();
 	afx_msg void OnSysColorChange();
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()

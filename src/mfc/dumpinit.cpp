@@ -18,6 +18,7 @@ AFX_DATADEF CDumpContext afxDump;
 AFX_DATADEF BOOL afxTraceEnabled = TRUE;
 AFX_DATADEF UINT afxTraceFlags = 0;
 static BOOL _afxDiagnosticInit = AfxDiagnosticInit();
+static BOOL _afxMemoryLeakDump = TRUE;
 
 /////////////////////////////////////////////////////////////////////////////
 // _AFX_DEBUG_STATE implementation
@@ -32,7 +33,7 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 		return;
 	char sz[256];
 	CObject* pObject = (CObject*)pvData;
-	bool fCLRPresent=(::GetModuleHandle(_T("mscoree.dll"))!=NULL);
+	bool fCLRPresent=(::GetModuleHandleW(L"mscoree.dll")!=NULL);
 
 #ifndef _AFX_PORTABLE
 	// use SEH (structured exception handling) to catch even GPFs
@@ -48,7 +49,7 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 			// 
 			// To investigate leaks like this, you'll likely need to set a breakpoint here and look at the object itself
 			// or force the leak code to run earlier in your process shutdown
-			sprintf_s(sz, _countof(sz), "faulted while dumping object at $%p, %u bytes long\n", pvData, nBytes);
+			sprintf_s(sz, _countof(sz), "an object at $%p, %u bytes long\n", pvData, nBytes);
 			afxDump << sz;
 		}
 		// with vtable, verify that object and vtable are valid
@@ -123,7 +124,8 @@ _AFX_DEBUG_STATE::_AFX_DEBUG_STATE()
 _AFX_DEBUG_STATE::~_AFX_DEBUG_STATE()
 {
 #ifndef _AFX_NO_DEBUG_CRT
-	_CrtDumpMemoryLeaks();
+	if (_afxMemoryLeakDump)
+		_CrtDumpMemoryLeaks();
 	int nOldState = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
 	_CrtSetDbgFlag(nOldState & ~_CRTDBG_LEAK_CHECK_DF);
 
@@ -144,6 +146,17 @@ BOOL AFXAPI AfxDiagnosticInit(void)
 	ASSERT(pState != NULL);
 
 	return TRUE;
+}
+
+BOOL AFXAPI AfxEnableMemoryLeakDump(BOOL bDump)
+{
+	// get the old flag state
+	BOOL bRet = _afxMemoryLeakDump;
+
+	// set the flag to the desired state
+	_afxMemoryLeakDump = bDump;
+
+	return bRet;
 }
 
 #endif //_DEBUG

@@ -35,7 +35,7 @@ protected:
 	virtual BOOL OnNewDocument();
 	virtual COleServerItem* OnGetEmbeddedItem();
 	virtual void OnResizeBorder( LPCRECT lpRectBorder, LPOLEINPLACEUIWINDOW lpUIWindow, BOOL bFrame );
-	virtual void OnShowPanes(CFrameWnd* pFrameWnd, BOOL bShow);
+	virtual void OnShowControlBars(CFrameWnd* pFrameWnd, BOOL bShow);
 	virtual void OnDocWindowActivate( BOOL bActivate );
 
 // Implementation

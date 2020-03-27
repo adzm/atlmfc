@@ -9,7 +9,6 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "multimon.h"
 
 #include <afxpriv.h>
 #include "mmsystem.h"
@@ -320,6 +319,9 @@ int CMFCDropDownFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_pWndOriginToolbar->m_ImagesLocked.CopyTemp(m_wndToolBar.m_ImagesLocked);
 	m_pWndOriginToolbar->m_ColdImagesLocked.CopyTemp(m_wndToolBar.m_ColdImagesLocked);
 	m_pWndOriginToolbar->m_DisabledImagesLocked.CopyTemp(m_wndToolBar.m_DisabledImagesLocked);
+	m_pWndOriginToolbar->m_LargeImagesLocked.CopyTemp(m_wndToolBar.m_LargeImagesLocked);
+	m_pWndOriginToolbar->m_LargeColdImagesLocked.CopyTemp(m_wndToolBar.m_LargeColdImagesLocked);
+	m_pWndOriginToolbar->m_LargeDisabledImagesLocked.CopyTemp(m_wndToolBar.m_LargeDisabledImagesLocked);
 
 	m_wndToolBar.m_sizeButtonLocked = m_pWndOriginToolbar->m_sizeButtonLocked;
 	m_wndToolBar.m_sizeImageLocked = m_pWndOriginToolbar->m_sizeImageLocked;
@@ -688,8 +690,14 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 	// Fill button interior:
 	FillInterior(pDC, rect, bHighlight);
 
-	int nActualArrowSize = CMFCToolBar::IsLargeIcons() ? nArrowSize * 2 : nArrowSize;
-	int nHalfArrowSize = CMFCToolBar::IsLargeIcons() ? nArrowSize : nArrowSize / 2 + 1;
+	int nCurrArrowSize = nArrowSize;
+	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	{
+		nCurrArrowSize = (int) (afxGlobalData.GetRibbonImageScale() * nCurrArrowSize);
+	}
+	
+	int nActualArrowSize = CMFCToolBar::IsLargeIcons() ? nCurrArrowSize * 2 : nCurrArrowSize;
+	int nHalfArrowSize = CMFCToolBar::IsLargeIcons() ? nCurrArrowSize : nCurrArrowSize / 2 + 1;
 
 	CRect rectParent = rect;
 	rectParent.right -= nActualArrowSize / 2 + 1;
@@ -701,15 +709,24 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 		BOOL bImage = m_bImage;
 		m_bInternalDraw = TRUE;
 
+		CSize sizeDest = m_pToolBar->GetImageSize();
+		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		{
+			double dblImageScale = afxGlobalData.GetRibbonImageScale();
+			sizeDest = CSize((int)(.5 + sizeDest.cx * dblImageScale), (int)(.5 + sizeDest.cy * dblImageScale));
+		}
+
+		CMFCToolBarImages& images = (m_pToolBar->m_bLargeIcons && m_pToolBar->m_LargeImagesLocked.GetCount() > 0) ? m_pToolBar->m_LargeImagesLocked : m_pToolBar->m_ImagesLocked;
+
 		if (!m_bLocalUserButton)
 		{
-			m_pToolBar->m_ImagesLocked.SetTransparentColor(afxGlobalData.clrBtnFace);
-			m_pToolBar->m_ImagesLocked.PrepareDrawImage(ds, m_pToolBar->GetImageSize());
+			images.SetTransparentColor(afxGlobalData.clrBtnFace);
+			images.PrepareDrawImage (ds, sizeDest);
 		}
 		else
 		{
 			m_pToolBar->m_pUserImages->SetTransparentColor(afxGlobalData.clrBtnFace);
-			m_pToolBar->m_pUserImages->PrepareDrawImage(ds, m_pToolBar->GetImageSize());
+			m_pToolBar->m_pUserImages->PrepareDrawImage (ds, sizeDest);
 		}
 
 		m_iImage = m_iSelectedImage;
@@ -727,7 +744,7 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 		}
 		else
 		{
-			CMFCToolBarButton::OnDraw(pDC, rectParent, &m_pToolBar->m_ImagesLocked, bHorz, bCustomizeMode, bHighlight, FALSE, bGrayDisabledButtons);
+			CMFCToolBarButton::OnDraw(pDC, rectParent, &images, bHorz, bCustomizeMode, bHighlight, FALSE, bGrayDisabledButtons);
 		}
 		m_bDisableFill = bDisableFill;
 		m_iImage = -1;
@@ -736,7 +753,7 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 
 		if (!m_bLocalUserButton)
 		{
-			m_pToolBar->m_ImagesLocked.EndDrawImage(ds);
+			images.EndDrawImage(ds);
 		}
 		else
 		{
@@ -1010,7 +1027,13 @@ SIZE CMFCDropDownToolbarButton::OnCalculateSize(CDC* pDC, const CSize& sizeDefau
 	m_iImage = -1;
 	m_bImage = bImage;
 
-	int nArrowWidth = CMFCToolBar::IsLargeIcons() ? nArrowSize + 2 : nArrowSize / 2 + 1;
+	int nCurrArrowSize = nArrowSize;
+	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	{
+		nCurrArrowSize = (int) (afxGlobalData.GetRibbonImageScale() * nCurrArrowSize);
+	}
+
+	int nArrowWidth = CMFCToolBar::IsLargeIcons() ? nCurrArrowSize + 2 : nCurrArrowSize / 2 + 1;
 	sizeBtn.cx += nArrowWidth;
 
 	return sizeBtn;
@@ -1094,5 +1117,3 @@ BOOL CMFCDropDownToolbarButton::OnCustomizeMenu(CMenu* pPopup)
 
 	return TRUE;
 }
-
-

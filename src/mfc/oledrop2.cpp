@@ -322,8 +322,7 @@ STDMETHODIMP COleDropTarget::XDropTarget::QueryInterface(
 }
 
 // helper to filter out invalid DROPEFFECTs
-AFX_STATIC DROPEFFECT AFXAPI
-_AfxFilterDropEffect(DROPEFFECT dropEffect, DROPEFFECT dwEffects)
+AFX_STATIC DROPEFFECT AFXAPI _AfxFilterDropEffect(DROPEFFECT dropEffect, DROPEFFECT dwEffects)
 {
 	// return allowed dropEffect and DROPEFFECT_NONE
 	if ((dropEffect & dwEffects) != 0)
@@ -339,12 +338,14 @@ _AfxFilterDropEffect(DROPEFFECT dropEffect, DROPEFFECT dwEffects)
 		else if (dwEffects & DROPEFFECT_LINK)
 			return DROPEFFECT_LINK;
 		break;
+
 	case DROPEFFECT_MOVE:
 		if (dwEffects & DROPEFFECT_COPY)
 			return DROPEFFECT_COPY;
 		else if (dwEffects & DROPEFFECT_LINK)
 			return DROPEFFECT_LINK;
 		break;
+
 	case DROPEFFECT_LINK:
 		break;
 	}
@@ -352,14 +353,18 @@ _AfxFilterDropEffect(DROPEFFECT dropEffect, DROPEFFECT dwEffects)
 	return DROPEFFECT_NONE;
 }
 
-STDMETHODIMP COleDropTarget::XDropTarget::DragEnter(THIS_ LPDATAOBJECT lpDataObject,
-	DWORD dwKeyState, POINTL pt, LPDWORD pdwEffect)
+STDMETHODIMP COleDropTarget::XDropTarget::DragEnter(THIS_ LPDATAOBJECT lpDataObject, DWORD dwKeyState, POINTL pt, LPDWORD pdwEffect)
 {
 	METHOD_PROLOGUE_EX(COleDropTarget, DropTarget)
 	ASSERT_VALID(pThis);
 
 	ASSERT(pdwEffect != NULL);
 	ASSERT(lpDataObject != NULL);
+
+	if (lpDataObject == NULL || pdwEffect == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	SCODE sc = E_UNEXPECTED;
 	TRY
@@ -381,9 +386,9 @@ STDMETHODIMP COleDropTarget::XDropTarget::DragEnter(THIS_ LPDATAOBJECT lpDataObj
 			// funnel through OnDragEnter since not in scroll region
 			COleDataObject dataObject;
 			dataObject.Attach(lpDataObject, FALSE);
-			dropEffect = pThis->OnDragEnter(pWnd, &dataObject, dwKeyState,
-				point);
+			dropEffect = pThis->OnDragEnter(pWnd, &dataObject, dwKeyState, point);
 		}
+
 		*pdwEffect = _AfxFilterDropEffect(dropEffect, *pdwEffect);
 		sc = S_OK;
 	}
@@ -392,14 +397,18 @@ STDMETHODIMP COleDropTarget::XDropTarget::DragEnter(THIS_ LPDATAOBJECT lpDataObj
 	return sc;
 }
 
-STDMETHODIMP COleDropTarget::XDropTarget::DragOver(THIS_ DWORD dwKeyState,
-	POINTL pt, LPDWORD pdwEffect)
+STDMETHODIMP COleDropTarget::XDropTarget::DragOver(THIS_ DWORD dwKeyState, POINTL pt, LPDWORD pdwEffect)
 {
 	METHOD_PROLOGUE_EX(COleDropTarget, DropTarget)
 	ASSERT_VALID(pThis);
 
 	ASSERT(pdwEffect != NULL);
 	ASSERT(pThis->m_lpDataObject != NULL);
+
+	if (pdwEffect == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	SCODE sc = E_UNEXPECTED;
 	TRY
@@ -416,9 +425,9 @@ STDMETHODIMP COleDropTarget::XDropTarget::DragOver(THIS_ DWORD dwKeyState,
 			// funnel through OnDragOver
 			COleDataObject dataObject;
 			dataObject.Attach(pThis->m_lpDataObject, FALSE);
-			dropEffect = pThis->OnDragOver(pWnd, &dataObject, dwKeyState,
-				point);
+			dropEffect = pThis->OnDragOver(pWnd, &dataObject, dwKeyState, point);
 		}
+
 		*pdwEffect = _AfxFilterDropEffect(dropEffect, *pdwEffect);
 		sc = S_OK;
 	}
@@ -449,14 +458,18 @@ STDMETHODIMP COleDropTarget::XDropTarget::DragLeave(THIS)
 	return S_OK;
 }
 
-STDMETHODIMP COleDropTarget::XDropTarget::Drop(THIS_ LPDATAOBJECT lpDataObject,
-	DWORD dwKeyState, POINTL pt, LPDWORD pdwEffect)
+STDMETHODIMP COleDropTarget::XDropTarget::Drop(THIS_ LPDATAOBJECT lpDataObject, DWORD dwKeyState, POINTL pt, LPDWORD pdwEffect)
 {
 	METHOD_PROLOGUE_EX(COleDropTarget, DropTarget)
 	ASSERT_VALID(pThis);
 
 	ASSERT(pdwEffect != NULL);
 	ASSERT(lpDataObject != NULL);
+
+	if (lpDataObject == NULL || pdwEffect == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	SCODE sc = E_UNEXPECTED;
 	TRY
@@ -473,8 +486,7 @@ STDMETHODIMP COleDropTarget::XDropTarget::Drop(THIS_ LPDATAOBJECT lpDataObject,
 		pWnd->ScreenToClient(&point);
 
 		// verify that drop is legal
-		DROPEFFECT dropEffect = _AfxFilterDropEffect(pThis->OnDragOver(pWnd,
-			&dataObject, dwKeyState, point), *pdwEffect);
+		DROPEFFECT dropEffect = _AfxFilterDropEffect(pThis->OnDragOver(pWnd, &dataObject, dwKeyState, point), *pdwEffect);
 
 		// execute the drop (try OnDropEx then OnDrop for backward compatibility)
 		DROPEFFECT temp = pThis->OnDropEx(pWnd, &dataObject, dropEffect, *pdwEffect, point);

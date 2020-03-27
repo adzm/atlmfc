@@ -195,18 +195,14 @@ HINSTANCE AFXAPI AfxLoadLibrary(LPCTSTR lpszModuleName)
 	return hInstLib;
 }
 
- 
- 
-HINSTANCE AFXAPI AfxLoadLibraryEx(LPCTSTR lpFileName,  HANDLE hFile,  DWORD dwFlags)
-{  
-		
+HINSTANCE AFXAPI AfxLoadLibraryEx(LPCTSTR lpFileName, HANDLE hFile, DWORD dwFlags)
+{
 	ASSERT(lpFileName != NULL);
 	AfxLockGlobals(CRIT_LOCKSHARED);
 	HINSTANCE hInstLib = AfxCtxLoadLibraryEx(lpFileName,hFile,dwFlags);
 	AfxUnlockGlobals(CRIT_LOCKSHARED);
 	return hInstLib;
 }
- 
 
 BOOL AFXAPI AfxFreeLibrary(HINSTANCE hInstLib)
 {
@@ -628,7 +624,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID)
 			TCHAR rgchFullModulePath[MAX_PATH + 2];
 			rgchFullModulePath[_countof(rgchFullModulePath) - 1] = 0;
 			rgchFullModulePath[_countof(rgchFullModulePath) - 2] = 0;
-			DWORD dwLen = GetModuleFileName(NULL, rgchFullModulePath, _countof(rgchFullModulePath)-1);
+			DWORD dwLen = GetModuleFileName(reinterpret_cast<HMODULE>(&__ImageBase), rgchFullModulePath, _countof(rgchFullModulePath)-1);
 			if (dwLen > 0)
 			{
 				TCHAR *pszFilename = ::PathFindFileName(rgchFullModulePath);
@@ -878,20 +874,5 @@ static void _AfxForceVectorDelete()
 #endif
 }
 void (*_afxForceVectorDelete_mfc)() = &_AfxForceVectorDelete;
-
-#include <delayimp.h>
-
-extern "C"
-{
-FARPROC
-WINAPI
-Downlevel_DelayLoadFailureHook(
-	UINT unReason,
-	PDelayLoadInfo pDelayInfo
-	);
-
-PfnDliHook __pfnDliFailureHook2 = Downlevel_DelayLoadFailureHook;
-
-}
 
 /////////////////////////////////////////////////////////////////////////////

@@ -158,6 +158,7 @@ public:
 public:
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	virtual HRESULT get_accState(VARIANT varChild, VARIANT *pvarState);
 
 protected:
 	virtual void PreSubclassWindow();
@@ -205,7 +206,9 @@ protected:
 	afx_msg LRESULT OnSetImage(WPARAM, LPARAM);
 	afx_msg LRESULT OnGetImage(WPARAM, LPARAM);
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void InitStyle(DWORD dwStyle);

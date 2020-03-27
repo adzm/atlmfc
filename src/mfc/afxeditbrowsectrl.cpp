@@ -16,6 +16,8 @@
 #include "afxribbonres.h"
 #include "afxshellmanager.h"
 #include "afxeditbrowsectrl.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -53,6 +55,7 @@ BEGIN_MESSAGE_MAP(CMFCEditBrowseCtrl, CEdit)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCEditBrowseCtrl::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -337,6 +340,16 @@ void CMFCEditBrowseCtrl::OnBrowse()
 				{
 					strFile.Empty();
 				}
+
+				const CString strInvalidChars = _T("*?<>|");
+				if (strFile.FindOneOf(strInvalidChars) >= 0)
+				{
+					if (!OnIllegalFileName(strFile))
+					{
+						SetFocus();
+						return;
+					}
+				}
 			}
 
 			CFileDialog dlg(TRUE, !m_strDefFileExt.IsEmpty() ? (LPCTSTR)m_strDefFileExt : (LPCTSTR)NULL, strFile, 0, !m_strFileFilter.IsEmpty() ? (LPCTSTR)m_strFileFilter : (LPCTSTR)NULL, NULL);
@@ -356,6 +369,18 @@ void CMFCEditBrowseCtrl::OnBrowse()
 	}
 
 	SetFocus();
+}
+
+BOOL CMFCEditBrowseCtrl::OnIllegalFileName(CString& strFileName)
+{
+	CString strError;
+	strError.LoadString(AFX_IDP_INVALID_FILENAME);
+
+	CString strMessage;
+	strMessage.Format(_T("%s\r\n%s"), strFileName, strError);
+
+	MessageBox(strMessage, NULL, MB_OK | MB_ICONEXCLAMATION);
+	return FALSE;
 }
 
 void CMFCEditBrowseCtrl::SetBrowseButtonImage(HICON hIcon, BOOL bAutoDestroy)
@@ -686,4 +711,40 @@ BOOL CMFCEditBrowseCtrl::PreTranslateMessage(MSG* pMsg)
 	return CEdit::PreTranslateMessage(pMsg);
 }
 
+LRESULT CMFCEditBrowseCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
+
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	CString strBrowseMode;
+	if (tagManager.ExcludeTag(PS_MFCEditBrowse_BrowseMode, strBrowseMode))
+	{
+		if (!strBrowseMode.IsEmpty())
+		{
+			int nBrowseMode = _ttoi((LPCTSTR)strBrowseMode);
+			switch (nBrowseMode)
+			{
+			case MFC_EB_MODE_NONE:
+				EnableBrowseButton(FALSE);
+				break;
+			case MFC_EB_MODE_FILE:
+				EnableFileBrowseButton();
+				break;
+			case MFC_EB_MODE_FOLDER:
+				EnableFolderBrowseButton();
+				break;
+			case MFC_EB_MODE_CUSTOM:
+				EnableBrowseButton();
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
 

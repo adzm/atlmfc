@@ -1227,7 +1227,10 @@ STDMETHODIMP COleDispatchImpl::GetIDsOfNames(
 	if (riid != IID_NULL)
 		return DISP_E_UNKNOWNINTERFACE;
 
-	SCODE sc;
+	if (cNames == 0)
+		return E_INVALIDARG;
+
+	SCODE sc = DISP_E_UNKNOWNNAME;
 	LPTYPEINFO lpTypeInfo = NULL;
 	if (lcid != 0 && SUCCEEDED(sc = GetTypeInfo(0, lcid, &lpTypeInfo)))
 	{
@@ -1246,7 +1249,7 @@ STDMETHODIMP COleDispatchImpl::GetIDsOfNames(
 		rgdispid[0] = pThis->MemberIDFromName(pDerivMap, strName.GetString());
 		if (rgdispid[0] == DISPID_UNKNOWN)
 			sc = DISP_E_UNKNOWNNAME;
-		else
+		else if (cNames == 1)
 			sc = S_OK;
 
 		// argument names are always DISPID_UNKNOWN (for this implementation)

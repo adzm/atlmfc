@@ -583,7 +583,6 @@ const CString& COleControl::InternalGetText()
 		{
 			// Text was too long: allocate a bigger buffer.
 
-		 //IA64: Assume maximum text length < 2GB
 			int nLen = int(DefWindowProc(WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0) + 1);
 			DefWindowProc(WM_GETTEXT, (WPARAM)nLen,
 				(LPARAM)m_strText.GetBufferSetLength(nLen));

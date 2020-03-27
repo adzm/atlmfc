@@ -243,7 +243,6 @@ DLGTEMPLATE* COccManager::SplitDialogTemplate(const DLGTEMPLATE* pTemplate,
 	DLGITEMTEMPLATE** ppOleDlgItems)
 {
 	DLGITEMTEMPLATE* pFirstItem = _AfxFindFirstDlgItem(pTemplate);
-   //IA64: Assume max header size of 4GB
 	ULONG cbHeader = ULONG((BYTE*)pFirstItem - (BYTE*)pTemplate);
 	ULONG cbNewTemplate = cbHeader;
 
@@ -278,7 +277,6 @@ DLGTEMPLATE* COccManager::SplitDialogTemplate(const DLGTEMPLATE* pTemplate,
 		else
 		{
 			// Item is not an OLE control: make room for it in new template.
-		 //IA64: Assume max template size < 4GB 
 			cbNewTemplate += ULONG((BYTE*)pNextItem - (BYTE*)pItem);
 		}
 
@@ -325,7 +323,6 @@ DLGTEMPLATE* COccManager::SplitDialogTemplate(const DLGTEMPLATE* pTemplate,
 		else
 		{
 			// Item is not an OLE control: copy it to the new template.
-		 //IA64: Assume max item size < 4GB
 			ULONG cbItem = ULONG((BYTE*)pNextItem - (BYTE*)pItem);
 			ASSERT(cbItem >= (size_t)(bDialogEx ?
 				sizeof(DLGITEMTEMPLATEEX) :
@@ -446,6 +443,7 @@ BOOL COccManager::CreateDlgControls(CWnd* pWndParent, void* lpResource,
 
 			ASSERT(nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING ||
 				nMsg == WIN16_LB_ADDSTRING || nMsg == WIN16_CB_ADDSTRING ||
+				nMsg == WM_MFC_INITCTRL ||
 				nMsg == WM_OCC_LOADFROMSTREAM ||
 				nMsg == WM_OCC_LOADFROMSTREAM_EX ||
 				nMsg == WM_OCC_LOADFROMSTORAGE ||

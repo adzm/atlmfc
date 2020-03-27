@@ -373,6 +373,7 @@ BOOL AFXAPI _AfxIsComboBoxControl(HWND hWnd, UINT nStyle);
 BOOL AFXAPI _AfxCheckCenterDialog(LPCTSTR lpszResource);
 BOOL AFXAPI _AfxCompareClassName(HWND hWnd, LPCTSTR lpszClassName);
 HWND AFXAPI _AfxChildWindowFromPoint(HWND, POINT);
+HWND AFXAPI _AfxTopChildWindowFromPoint(HWND, POINT);
 
 // for determining version of COMCTL32.DLL
 #define VERSION_WIN4    MAKELONG(0, 4)
@@ -636,9 +637,9 @@ union MessageMapFunctions
 	UINT (AFX_MSG_CALL CWnd::*pfn_u_u_u)(UINT, UINT);
 	void (AFX_MSG_CALL CWnd::*pfn_MOUSE_XBUTTON)(UINT, UINT, CPoint);
 	void (AFX_MSG_CALL CWnd::*pfn_MOUSE_NCXBUTTON)(short, UINT, CPoint);
-	void (AFX_MSG_CALL CWnd::*pfn_INPUTLANGCHANGE)(BYTE, UINT);
+	void (AFX_MSG_CALL CWnd::*pfn_INPUTLANGCHANGE)(UINT, UINT);
 	BOOL (AFX_MSG_CALL CWnd::*pfn_v_u_h)(UINT, HANDLE);
-	void (AFX_MSG_CALL CWnd::*pfn_INPUTDEVICECHANGE)(unsigned short);
+	void (AFX_MSG_CALL CWnd::*pfn_INPUTDEVICECHANGE)(unsigned short, HANDLE);
 
 	// type safe variant for thread messages
 	void (AFX_MSG_CALL CWinThread::*pfn_THREAD)(WPARAM, LPARAM);

@@ -123,6 +123,16 @@ public:
 	CMFCTabCtrl* FindActiveTabWndByActiveChild();
 	CMFCTabCtrl* FindActiveTabWnd();
 	CMFCTabCtrl* GetFirstTabWnd();
+	/// <summary>
+	/// Finds tab control containing the specified window.</summary>
+	/// <return> 
+	/// A valid pointer to tab control containing the specified window. 
+	/// It's NULL if the specified window is not found.</return>
+	/// <param name="hWndChild">A handle to window, which is contained in the resulting tab control.</param>
+	/// <param name="iIndex">When the function returns it contains an index of hWndChild in tab control.</param>
+	/// <remarks>
+	/// If window specified by hWndChild is found, iIndex contains index of this window in the tabbed group.</remarks>
+	CMFCTabCtrl* FindTabWndByChild(HWND hWndChild, int& iIndex);
 	const CObList& GetMDITabGroups() const { return m_lstTabbedGroups; }
 
 	void MDITabMoveToNextGroup(BOOL bNext = TRUE);
@@ -135,6 +145,28 @@ public:
 	BOOL SaveState(LPCTSTR lpszProfileName, UINT nFrameID);
 	BOOL LoadState(LPCTSTR lpszProfileName, UINT nFrameID);
 	void Serialize(CArchive& ar);
+
+	// Win7 taskbar interaction
+	/// <summary>
+	/// Goes over all tabs and windows and sets proper tab order</summary>
+	void SetTaskbarTabOrder();
+
+	/// <summary>
+	/// Goes over all MDI children starting from the specified tab and returns first encountered MDI child registered with Windows 7 taskbar tabs.</summary>
+	/// <return>
+	/// Returns a valid pointer to CMDIChildWndEx if registered child is found, or NULL.</return>
+	/// <param name="pTabCtrl">A pointer to a tabbed window (tab control) where to look for registered MDI child. </param>
+	/// <param name="iStartFrom">Specifies the starting position for search within tab control.</param>
+	CMDIChildWndEx* FindNextRegisteredWithTaskbarMDIChild(CMFCTabCtrl* pTabCtrl, int iStartFrom = 0);
+
+	/// <summary>
+	/// Finds a tabbed group containing the specified MDI child, then 
+	/// goes over all MDI children starting from the found tab and returns first encountered MDI child registered with Windows 7 taskbar tabs.</summary>
+	/// <return>
+	/// Returns a valid pointer to CMDIChildWndEx if registered child is found, or NULL.</return>
+	/// <param name="pOrgWnd">A valid pointer to an MDI child window, which specifies the starting window for search.</param>
+	CMDIChildWndEx* FindNextRegisteredWithTaskbarMDIChild(CMDIChildWndEx* pOrgWnd);
+
 	// ---- MDITabGroup-
 
 // Overrides
@@ -160,6 +192,7 @@ protected:
 	afx_msg LRESULT OnTabGroupMouseMove(WPARAM wp, LPARAM lp);
 	afx_msg LRESULT OnCancelTabMove(WPARAM wp, LPARAM lp);
 	afx_msg LRESULT OnMoveTabComplete(WPARAM wp, LPARAM lp);
+	afx_msg LRESULT OnActiveTabChanged(WPARAM wp, LPARAM lp);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

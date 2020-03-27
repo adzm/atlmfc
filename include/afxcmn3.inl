@@ -229,12 +229,12 @@ AFX_INLINE CString CListCtrl::GetEmptyText() const
 	ASSERT(::IsWindow(m_hWnd));
 	LPTSTR lpszText=NULL;
 	int cchText = 0;
-	CString strOut("");
+	CString strOut;
 	BOOL fRet = CWnd::EnlargeBufferGetText<BOOL>(FALSE, lpszText, cchText, LVM_GETEMPTYTEXT, (WPARAM &)cchText, (LPARAM &)lpszText, strOut);
 	if (fRet)
 		return strOut;
 	else
-		return CString("");
+		return CString();
 }
 AFX_INLINE BOOL CListCtrl::GetItemIndexRect(PLVITEMINDEX pItemIndex, int iColumn, int rectType, LPRECT pRect) const
 {

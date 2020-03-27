@@ -11,6 +11,8 @@
 #include "stdafx.h"
 #include "afxcontrolbarutil.h"
 #include "afxmaskededit.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -34,6 +36,7 @@ BEGIN_MESSAGE_MAP(CMFCMaskedEdit, CEdit)
 	ON_MESSAGE(WM_SETTEXT, &CMFCMaskedEdit::OnSetText)
 	ON_MESSAGE(WM_GETTEXT, &CMFCMaskedEdit::OnGetText)
 	ON_MESSAGE(WM_GETTEXTLENGTH, &CMFCMaskedEdit::OnGetTextLength)
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCMaskedEdit::OnInitControl)
 END_MESSAGE_MAP()
 //}}AFX_MSG_MAP
 
@@ -44,6 +47,7 @@ CMFCMaskedEdit::CMFCMaskedEdit()
 	m_bSelectByGroup = TRUE;
 	m_bMaskKeyInProgress = FALSE;
 	m_bPasteProcessing = FALSE;
+	m_bSetTextProcessing = FALSE;
 }
 
 CMFCMaskedEdit::~CMFCMaskedEdit()
@@ -1618,24 +1622,33 @@ LRESULT CMFCMaskedEdit::OnPaste(WPARAM, LPARAM)
 
 LRESULT CMFCMaskedEdit::OnSetText(WPARAM, LPARAM lParam)
 {
-	static BOOL bSetTextProcessing = FALSE;
-
-	if (bSetTextProcessing || m_bPasteProcessing)
+	if (m_bSetTextProcessing || m_bPasteProcessing)
 	{
 		return Default();
 	}
 
-	bSetTextProcessing = TRUE;
+	m_bSetTextProcessing = TRUE;
 
 	BOOL bSetValueRes = SetValue((LPCTSTR)lParam, !m_bSetMaskedCharsOnly);
 	if (bSetValueRes)
 	{
-		LRESULT lRes = Default();
-		bSetTextProcessing = FALSE;
+		LRESULT lRes = FALSE;
+		CString strNewValidated = GetValue();
+		if (strNewValidated.Compare((LPCTSTR)lParam) != 0)
+		{
+			// validated new value should differ from lParam
+			lRes = (LRESULT)::SetWindowText(GetSafeHwnd(), (LPCTSTR)strNewValidated);
+		}
+		else
+		{
+			lRes = Default();
+		}
+
+		m_bSetTextProcessing = FALSE;
 		return lRes;
 	}
 
-	bSetTextProcessing = FALSE;
+	m_bSetTextProcessing = FALSE;
 	return FALSE;
 }
 
@@ -1700,4 +1713,77 @@ LRESULT CMFCMaskedEdit::OnGetTextLength(WPARAM, LPARAM)
 	}
 
 	return (LRESULT) strText.GetLength();
+}
+
+LRESULT CMFCMaskedEdit::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
+
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	BOOL bSelectByGroup = TRUE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMaskedEdit_SelectByGroup, bSelectByGroup))
+	{
+		EnableSelectByGroup(bSelectByGroup);
+	}
+
+	// Set mask:
+	BOOL bEnableMask = FALSE;
+	CString strMask;
+	if (tagManager.ExcludeTag(PS_MFCMaskedEdit_Mask, strMask, TRUE))
+	{
+		bEnableMask = !strMask.IsEmpty();
+	}
+
+	CString strInputTemplate;
+	if (tagManager.ExcludeTag(PS_MFCMaskedEdit_InputTemplate, strInputTemplate, TRUE))
+	{
+		// InputTemplate and Mask must be same size
+		if (strInputTemplate.GetLength () != strMask.GetLength())
+		{
+			bEnableMask = FALSE;
+		}
+	}
+
+	TCHAR chDefault = _T('_');
+	CString strDefaultChar;
+	if (tagManager.ExcludeTag(PS_MFCMaskedEdit_DefaultChar, strDefaultChar, TRUE))
+	{
+		if (!strDefaultChar.IsEmpty ())
+		{
+			if (strDefaultChar.GetLength() > 1)
+			{
+				chDefault = strDefaultChar[0];
+			}
+		}
+	}
+
+	try
+	{
+		if (bEnableMask)
+		{
+			EnableMask(strMask, strInputTemplate, chDefault);
+		}
+		else
+		{
+			DisableMask();
+		}
+	}
+	catch(...)
+	{
+		// TRACE(_T("CMFCMaskedEdit: Can't EnableMask.\n"));
+		// strMask and strInputTemplate are not suitable
+	}
+
+	CString strValidChars;
+	if (tagManager.ExcludeTag(PS_MFCMaskedEdit_ValidChars, strValidChars, TRUE))
+	{
+		SetValidChars(strValidChars);
+	}
+
+	return 0;
 }

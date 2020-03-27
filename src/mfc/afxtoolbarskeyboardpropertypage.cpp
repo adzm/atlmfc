@@ -241,8 +241,14 @@ void CMFCToolBarsKeyboardPropertyPage::OnSelchangeCategory()
 
 	BOOL bAllCommands = (strCategory == m_strAllCategory);
 
+	CClientDC dcCommands(&m_wndCommandsList);
+	CFont* pOldFont = dcCommands.SelectObject(m_wndCommandsList.GetFont());
+	ASSERT(pOldFont != NULL);
+
 	CMFCToolBarsCustomizeDialog* pWndParent = DYNAMIC_DOWNCAST(CMFCToolBarsCustomizeDialog, GetParent());
 	ENSURE(pWndParent != NULL);
+
+	int cxCommandsExtentMax = 0;
 
 	for (POSITION pos = pCategoryButtonsList->GetHeadPosition(); pos != NULL;)
 	{
@@ -260,8 +266,13 @@ void CMFCToolBarsKeyboardPropertyPage::OnSelchangeCategory()
 
 			iIndex = m_wndCommandsList.AddString(strText);
 			m_wndCommandsList.SetItemData(iIndex, (DWORD_PTR) pButton);
+
+			cxCommandsExtentMax = max(cxCommandsExtentMax, dcCommands.GetTextExtent(strText).cx);
 		}
 	}
+
+	m_wndCommandsList.SetHorizontalExtent(cxCommandsExtentMax + ::GetSystemMetrics(SM_CXHSCROLL));
+	dcCommands.SelectObject(pOldFont);
 
 	m_wndNewKey.EnableWindow(FALSE);
 

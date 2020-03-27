@@ -201,12 +201,9 @@ HICON CUserTool::LoadDefaultIcon()
 {
 	if (afxGlobalData.m_hiconTool == NULL)
 	{
-		LPCTSTR lpszResourceName = MAKEINTRESOURCE(IDI_AFXRES_TOOL);
-		ENSURE(lpszResourceName != NULL);
-
-		afxGlobalData.m_hiconTool = (HICON) ::LoadImage(
-			AfxFindResourceHandle(lpszResourceName, RT_ICON),
-			lpszResourceName, IMAGE_ICON, afxGlobalData.m_sizeSmallIcon.cx, afxGlobalData.m_sizeSmallIcon.cy, LR_SHARED);
+		afxGlobalData.m_hiconTool = (HICON) ::LoadImageW(
+			AfxFindResourceHandle(MAKEINTRESOURCE(IDI_AFXRES_TOOL), RT_GROUP_ICON),
+			MAKEINTRESOURCEW(IDI_AFXRES_TOOL), IMAGE_ICON, afxGlobalData.m_sizeSmallIcon.cx, afxGlobalData.m_sizeSmallIcon.cy, LR_SHARED);
 	}
 
 	return afxGlobalData.m_hiconTool;
@@ -221,5 +218,3 @@ void CUserTool::DeleteIcon()
 
 	m_hIcon = NULL;
 }
-
-

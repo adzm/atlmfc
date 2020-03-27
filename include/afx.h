@@ -25,6 +25,10 @@
 #endif
 #endif
 
+#if !defined(_M_IX86) && !defined(_M_AMD64)
+	#error Compiling for unsupported platform.  Only x86 and x64 platforms are supported by MFC.
+#endif
+
 // Since MFC itself is built with wchar_t as a native type, it will not have
 // the correct type info for types built with wchar_t typedef'd to unsigned
 // short.  Make sure that the user's app builds this type info in this case.
@@ -104,19 +108,11 @@
 		#pragma comment(lib, "msvcrt.lib")
 	#endif
 #else
-#ifdef _MT
 	#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
 		#pragma comment(lib, "libcmtd.lib")
 	#else
 		#pragma comment(lib, "libcmt.lib")
 	#endif
-#else
-	#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
-		#pragma comment(lib, "libcd.lib")
-	#else
-		#pragma comment(lib, "libc.lib")
-	#endif
-#endif
 #endif
 
 #pragma comment(lib, "kernel32.lib")
@@ -129,6 +125,7 @@
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "windowscodecs.lib")
 
 // force inclusion of NOLIB.OBJ for /disallowlib directives
 #pragma comment(linker, "/include:__afxForceEXCLUDE")
@@ -144,25 +141,6 @@
 #endif
 
 #endif //!_AFX_NOFORCE_LIBS
-
-#if !defined( _AFX_NOFORCE_MANIFEST ) && !defined(_VC_NODEFAULTLIB) && defined( _AFXDLL )
-
-#define __MFC_MAKE_STR_HELPER(x) #x
-#define __MFC_MAKE_STR(x) __MFC_MAKE_STR_HELPER(x)
-
-#include <mfcassem.h>
-
-#if defined( _AFXDLL )
-	#if _BIND_TO_CURRENT_MFC_VERSION
-		#if defined(_M_IX86)
-			#pragma comment(linker, "/include:__forceMFCManifestCUR")
-		#else
-			#pragma comment(linker, "/include:_forceMFCManifestCUR")
-		#endif
-	#endif
-#endif
-
-#endif	// !_AFX_NOFORCE_MANIFEST && !_VC_NODEFAULTLIB && _AFXDLL
 
 #ifdef _MANAGED
 
@@ -385,9 +363,9 @@ inline void AFX_CDECL AfxTrace(...) { }
 #ifdef _DEBUG
 #define UNUSED(x)
 #else
-#define UNUSED(x) x
+#define UNUSED(x) UNREFERENCED_PARAMETER(x)
 #endif
-#define UNUSED_ALWAYS(x) x
+#define UNUSED_ALWAYS(x) UNREFERENCED_PARAMETER(x)
 
 #ifdef _DEBUG
 #define REPORT_EXCEPTION(pException, szMsg) \
@@ -540,16 +518,12 @@ public:
 	void* PASCAL operator new(size_t nSize);
 	void* PASCAL operator new(size_t, void* p);
 	void PASCAL operator delete(void* p);
-#if _MSC_VER >= 1200
 	void PASCAL operator delete(void* p, void* pPlace);
-#endif
 
 #if defined(_DEBUG) && !defined(_AFX_NO_DEBUG_CRT)
 	// for file name/line number tracking using DEBUG_NEW
 	void* PASCAL operator new(size_t nSize, LPCSTR lpszFileName, int nLine);
-#if _MSC_VER >= 1200
 	void PASCAL operator delete(void *p, LPCSTR lpszFileName, int nLine);
-#endif
 #endif
 
 	// Disable the copy constructor and assignment by default so you will get
@@ -719,14 +693,6 @@ public: \
 #define VERSIONABLE_SCHEMA  (0x80000000)
 
 /////////////////////////////////////////////////////////////////////////////
-// other helpers
-
-// zero fill everything after the vtbl pointer
-#define AFX_ZERO_INIT_OBJECT(base_class) \
-	memset(((base_class*)this)+1, 0, sizeof(*this) - sizeof(class base_class));
-
-
-/////////////////////////////////////////////////////////////////////////////
 // Exceptions
 
 class AFX_NOVTABLE CException : public CObject
@@ -754,9 +720,7 @@ public:
 	BOOL m_bAutoDelete;
 #ifdef _DEBUG
 	void PASCAL operator delete(void* pbData);
-#if _MSC_VER >= 1200
 	void PASCAL operator delete(void* pbData, LPCSTR lpszFileName, int nLine);
-#endif
 protected:
 	BOOL m_bReadyForDelete;
 #endif
@@ -931,7 +895,8 @@ public:
 		writeOnly,
 		badIndex,
 		badClass,
-		badSchema
+		badSchema,
+		bufferFull
 	};
 
 #pragma warning(push)
@@ -1016,6 +981,12 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 // File - raw unbuffered disk file I/O
 
+#ifndef __ATLTRANSACTIONMANAGER_H__
+#include <atltransactionmanager.h>
+#endif
+
+using ATL::CAtlTransactionManager;
+
 class CFile : public CObject
 {
 	DECLARE_DYNAMIC(CFile)
@@ -1058,8 +1029,21 @@ public:
 
 // Constructors
 	CFile();
+
+	/// <summary>
+	/// CFile constructor</summary>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	CFile(CAtlTransactionManager* pTM);
+
 	CFile(HANDLE hFile);
 	CFile(LPCTSTR lpszFileName, UINT nOpenFlags);
+
+	/// <summary>
+	/// CFile constructor</summary>
+	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
+	/// <param name="nOpenFlags">Sharing and access mode. Specifies the action to take when opening the file. You can combine options listed below by using the bitwise-OR (|) operator. One access permission and one share option are required; the modeCreate and modeNoInherit modes are optional.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	CFile(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM);
 
 // Attributes
 	HANDLE m_hFile;
@@ -1073,16 +1057,46 @@ public:
 	virtual void SetFilePath(LPCTSTR lpszNewName);
 
 // Operations
-	virtual BOOL Open(LPCTSTR lpszFileName, UINT nOpenFlags,
-		CFileException* pError = NULL);
+	virtual BOOL Open(LPCTSTR lpszFileName, UINT nOpenFlags, CFileException* pError = NULL);
 
-	static void PASCAL Rename(LPCTSTR lpszOldName,
-				LPCTSTR lpszNewName);
-	static void PASCAL Remove(LPCTSTR lpszFileName);
-	static BOOL PASCAL GetStatus(LPCTSTR lpszFileName,
-				CFileStatus& rStatus);
-	static void PASCAL SetStatus(LPCTSTR lpszFileName,
-				const CFileStatus& status);
+	/// <summary>
+	/// Open is designed for use with the default CFile constructor</summary>
+	/// <returns> 
+	/// TRUE if succeeds; otherwise FALSE.</returns>
+	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
+	/// <param name="nOpenFlags">Sharing and access mode. Specifies the action to take when opening the file. You can combine options listed below by using the bitwise-OR (|) operator. One access permission and one share option are required; the modeCreate and modeNoInherit modes are optional.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	/// <param name="pError">A pointer to an existing file-exception object that will receive the status of a failed operation</param>
+	virtual BOOL Open(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM, CFileException* pError);
+
+	/// <summary>
+	/// This static function renames the specified file.</summary>
+	/// <param name="lpszOldName">The old path.</param>
+	/// <param name="lpszNewName">The new path.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	static void PASCAL Rename(LPCTSTR lpszOldName, LPCTSTR lpszNewName, CAtlTransactionManager* pTM = NULL);
+
+	/// <summary>
+	/// This static function deletes the file specified by the path.</summary>
+	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	static void PASCAL Remove(LPCTSTR lpszFileName, CAtlTransactionManager* pTM = NULL); 
+
+	/// <summary>
+	/// This method retrieves status information related to a given CFile object instance or a given file path.</summary>
+	/// <returns> 
+	/// TRUE if succeeds; otherwise FALSE.</returns>
+	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
+	/// <param name="rStatus">A reference to a user-supplied CFileStatus structure that will receive the status information.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	static BOOL PASCAL GetStatus(LPCTSTR lpszFileName, CFileStatus& rStatus, CAtlTransactionManager* pTM = NULL);
+
+	/// <summary>
+	/// Sets the status of the file associated with this file location.</summary>
+	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
+	/// <param name="rStatus">The buffer containing the new status information.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	static void PASCAL SetStatus(LPCTSTR lpszFileName, const CFileStatus& status, CAtlTransactionManager* pTM = NULL);
 
 	ULONGLONG SeekToEnd();
 	void SeekToBegin();
@@ -1121,8 +1135,15 @@ public:
 		void** ppBufStart = NULL, void** ppBufMax = NULL);
 
 protected:
+	void CommonBaseInit(HANDLE hFile, CAtlTransactionManager* pTM);
+	void CommonInit(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM);
+
 	BOOL m_bCloseOnDelete;
 	CString m_strFileName;
+	
+	/// <summary>
+	/// Pointer to CAtlTransactionManager object</summary>
+	CAtlTransactionManager* m_pTM;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1135,8 +1156,21 @@ class CStdioFile : public CFile
 public:
 // Constructors
 	CStdioFile();
+
+	/// <summary>
+	/// CStdioFile constructor</summary>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	CStdioFile(CAtlTransactionManager* pTM);
+
 	CStdioFile(FILE* pOpenStream);
 	CStdioFile(LPCTSTR lpszFileName, UINT nOpenFlags);
+	
+	/// <summary>
+	/// CStdioFile constructor</summary>
+	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
+	/// <param name="nOpenFlags">Sharing and access mode. Specifies the action to take when opening the file. You can combine options listed below by using the bitwise-OR (|) operator. One access permission and one share option are required; the modeCreate and modeNoInherit modes are optional.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	CStdioFile(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM);
 
 // Attributes
 	FILE* m_pStream;    // stdio FILE
@@ -1155,9 +1189,19 @@ public:
 	void Dump(CDumpContext& dc) const;
 #endif
 	virtual ULONGLONG GetPosition() const;
-   virtual ULONGLONG GetLength() const;
-	virtual BOOL Open(LPCTSTR lpszFileName, UINT nOpenFlags,
-		CFileException* pError = NULL);
+	virtual ULONGLONG GetLength() const;
+	virtual BOOL Open(LPCTSTR lpszFileName, UINT nOpenFlags, CFileException* pError = NULL);
+
+	/// <summary>
+	/// Open is designed for use with the default CStdioFile constructor</summary>
+	/// <returns> 
+	/// TRUE if succeeds; otherwise FALSE.</returns>
+	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
+	/// <param name="nOpenFlags">Sharing and access mode. Specifies the action to take when opening the file. You can combine options listed below by using the bitwise-OR (|) operator. One access permission and one share option are required; the modeCreate and modeNoInherit modes are optional.</param>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	/// <param name="pError">A pointer to an existing file-exception object that will receive the status of a failed operation</param>
+	virtual BOOL Open(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM, CFileException* pError);
+
 	virtual UINT Read(void* lpBuf, UINT nCount);
 	virtual void Write(const void* lpBuf, UINT nCount);
 	virtual ULONGLONG Seek(LONGLONG lOff, UINT nFrom);
@@ -1169,6 +1213,10 @@ public:
 	virtual CFile* Duplicate() const;
 	virtual void LockRange(ULONGLONG dwPos, ULONGLONG dwCount);
 	virtual void UnlockRange(ULONGLONG dwPos, ULONGLONG dwCount);
+
+protected:
+	void CommonBaseInit(FILE* pOpenStream, CAtlTransactionManager* pTM);
+	void CommonInit(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM);
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1240,6 +1288,11 @@ class CFileFind : public CObject
 {
 public:
 	CFileFind();
+
+	/// <summary>
+	/// CFileFind constructor</summary>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	CFileFind(CAtlTransactionManager* pTM);
 	virtual ~CFileFind();
 
 // Attributes
@@ -1286,6 +1339,10 @@ protected:
 	HANDLE m_hContext;
 	CString m_strRoot;
 	TCHAR m_chDirSeparator;     // not '\\' for Internet classes
+
+	/// <summary>
+	/// Pointer to CAtlTransactionManager object</summary>
+	CAtlTransactionManager* m_pTM;
 
 #ifdef _DEBUG
 	void Dump(CDumpContext& dc) const;
@@ -1345,16 +1402,12 @@ BOOL AfxIsValidAtom(LPCTSTR psz);
 // Memory tracking allocation
 void* AFX_CDECL operator new(size_t nSize, LPCSTR lpszFileName, int nLine);
 #define DEBUG_NEW new(THIS_FILE, __LINE__)
-#if _MSC_VER >= 1200
 void AFX_CDECL operator delete(void* p, LPCSTR lpszFileName, int nLine);
-#endif
 
 void * __cdecl operator new[](size_t);
-#if _MSC_VER >= 1210
 void* __cdecl operator new[](size_t nSize, LPCSTR lpszFileName, int nLine);
 void __cdecl operator delete[](void* p, LPCSTR lpszFileName, int nLine);
 void __cdecl operator delete[](void *);
-#endif
 
 void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject,
 	LPCSTR lpszFileName, int nLine);
@@ -1387,6 +1440,9 @@ enum AfxMemDF // memory debug/diagnostic flags
 
 // turn on/off tracking for a short while
 BOOL AFXAPI AfxEnableMemoryTracking(BOOL bTrack);
+
+// turn on/off memory leak dump in _AFX_DEBUG_STATE destructor
+BOOL AFXAPI AfxEnableMemoryLeakDump(BOOL bDump);
 
 // Turn on/off the global flag _afxMemoryLeakOverride. if bEnable is TRUE
 // then further calls to AfxEnableMemoryTracking() wont change the current
@@ -1594,7 +1650,7 @@ public:
 	BOOL m_bForceFlat;  // for COleClientItem implementation (default TRUE)
 	BOOL m_bDirectBuffer;   // TRUE if m_pFile supports direct buffering
 	BOOL m_bBlocking;  // TRUE if m_pFile can block for unbounded periods of time
-	void FillBuffer(UINT nBytesNeeded);
+	void FillBuffer(UINT nAdditionalBytesNeeded);
 	void CheckCount();  // throw exception if m_nMapCount is too large
 
 	// special functions for reading and writing (16-bit compatible) counts

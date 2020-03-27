@@ -202,7 +202,9 @@ public:
 	virtual CMDIChildWndEx* ControlBarToTabbedDocument(CDockablePane* pBar);
 	virtual BOOL TabbedDocumentToControlBar(CMDIChildWndEx* pMDIChildWnd);
 
+	void RegisterAllMDIChildrenWithTaskbar(BOOL bRegister = TRUE);
 	void UpdateMDITabbedBarsIcons();
+	int GetRegisteredWithTaskBarMDIChildCount();
 
 	virtual BOOL CanConvertControlBarToMDIChild() { return m_bCanConvertControlBarToMDIChild; }
 

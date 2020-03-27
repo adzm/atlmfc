@@ -237,7 +237,7 @@ extern "C" {  CRegisterWinFormsFactory g_registerWinFormsFactory; }
 
 #if defined(_M_IX86)
 #pragma comment(linker, "/INCLUDE:_g_registerWinFormsFactory")
-#elif defined(_M_IA64) || defined(_M_AMD64)
+#elif defined(_M_AMD64)
 #pragma comment(linker, "/INCLUDE:g_registerWinFormsFactory")
 #else
 #pragma message("Unknown platform.  Make sure the linker includes g_registerWinFormsFactory")

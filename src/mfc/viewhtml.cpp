@@ -15,7 +15,6 @@
 #include <mshtmhst.h>	// IDM_menu item definitions
 #include <mshtml.h>
 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 
@@ -158,6 +157,16 @@ void CHtmlView::OnPaint()
 	Default();
 }
 
+void CHtmlView::OnDrawIconicThumbnailOrLivePreview(CDC& dc, CRect rect, CSize szRequiredThumbnailSize, BOOL bIsThumbnail, BOOL& bAlphaChannelSet)
+{
+	UNREFERENCED_PARAMETER(szRequiredThumbnailSize);
+	UNREFERENCED_PARAMETER(bIsThumbnail);
+	UNREFERENCED_PARAMETER(bAlphaChannelSet);
+
+	ASSERT_VALID(&dc);
+	OleDraw(GetHtmlDocument(), DVASPECT_CONTENT, dc.GetSafeHdc(), rect);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CHtmlView operations
 
@@ -255,7 +264,7 @@ HRESULT CHtmlView::OnShowContextMenu(DWORD, LPPOINT, LPUNKNOWN, LPDISPATCH)
 STDMETHODIMP CHtmlControlSite::XDocHostUIHandler::GetHostInfo(
 	DOCHOSTUIINFO *pInfo)
 {
-	METHOD_PROLOGUE_EX_(CHtmlControlSite, DocHostUIHandler)
+	METHOD_PROLOGUE_EX(CHtmlControlSite, DocHostUIHandler)
 	CHtmlView* pView = pThis->GetView();
 	ASSERT_VALID(pView);
 	if (pView == NULL)
@@ -1049,7 +1058,7 @@ BOOL CHtmlView::GetSource(CString& refString)
 	BOOL bRetVal = FALSE;
 	
 	CComPtr<IDispatch> spDisp; 
-	m_pBrowserApp->get_Document(&spDisp);	
+	m_pBrowserApp->get_Document(&spDisp);
 	if (spDisp != NULL)
 	{
 		HGLOBAL hMemory;
@@ -1064,16 +1073,19 @@ BOOL CHtmlView::GetSource(CString& refString)
 				{
 					spPersistStream->Save(spStream, FALSE);
 
+					STATSTG statStg;
+					spStream->Stat(&statStg, STATFLAG_NONAME);
+
 					LPCSTR pstr = static_cast<LPCSTR>(GlobalLock(hMemory));
 					if (pstr != NULL)
 					{
-						// Stream is always ANSI, but CString
-						// assignment operator will convert implicitly.
+						// Stream is expected to be ANSI (CP-ACP). CString constructor
+						// will convert implicitly, and truncate to correct length.
 
 						bRetVal = TRUE;
 						TRY
-						{						
-							refString = pstr;
+						{
+							refString = CString(pstr, statStg.cbSize.LowPart);
 						}
 						CATCH_ALL(e)
 						{
@@ -1082,7 +1094,7 @@ BOOL CHtmlView::GetSource(CString& refString)
 						}
 						END_CATCH_ALL
 
-						if(bRetVal == FALSE)
+						if (bRetVal == FALSE)
 							GlobalFree(hMemory);
 						else
 							GlobalUnlock(hMemory);
@@ -1103,7 +1115,7 @@ BOOL CHtmlView::GetSource(CString& refString)
 			}
 		}
 	}
-	
+
 	return bRetVal;
 }
 
@@ -1925,6 +1937,7 @@ BOOL CHtmlEditDoc::OnOpenDocument(LPCTSTR lpszFileName)
 		bRet = TRUE;
 	}
 
+	OnDocumentEvent(onAfterNewDocument);
 	return bRet;
 }
 
@@ -1970,6 +1983,7 @@ BOOL CHtmlEditDoc::OnNewDocument()
 	m_strPathName.Empty();      // no path name yet
 	SetModifiedFlag(FALSE);     // make clean
 
+	OnDocumentEvent(onAfterNewDocument);
 	return TRUE;
 }
 

@@ -1464,7 +1464,7 @@ public:
 	DWORD GetHotKey() const;
 
 	// Retrieves the virtual key code and modifier flags of the hot key from the hot key control.
-	void GetHotKey(_Out_ WORD &wVirtualKeyCode, _In_ WORD &wModifiers) const;
+	void GetHotKey(_Out_ WORD &wVirtualKeyCode, _Out_ WORD &wModifiers) const;
 
 	// Retrieves a string representation of the hot key code and flags.
 	CString GetHotKeyName() const;
@@ -1949,7 +1949,7 @@ public:
 	void SetStyle(_In_ DWORD dwStyle);
 
 	// Retrieves extended information for the specified button in the toolbar.
-	BOOL GetButtonInfo(_In_ int nID, _Out_ TBBUTTONINFO* ptbbi) const;
+	int GetButtonInfo(_In_ int nID, _Out_ TBBUTTONINFO* ptbbi) const;
 
 	// Sets the information for the specified button in the toolbar.
 	BOOL SetButtonInfo(_In_ int nID, _In_ TBBUTTONINFO* ptbbi);

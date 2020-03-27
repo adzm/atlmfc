@@ -13,6 +13,8 @@
 #include "afxtoolbar.h"
 #include "afxtoolbarfontcombobox.h"
 #include "afxribbonres.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -38,6 +40,7 @@ BEGIN_MESSAGE_MAP(CMFCFontComboBox, CComboBox)
 	//{{AFX_MSG_MAP(CMFCFontComboBox)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCFontComboBox::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -357,4 +360,46 @@ CMFCFontInfo* CMFCFontComboBox::GetSelFont() const
 	return(CMFCFontInfo*) GetItemData(iIndex);
 }
 
+LRESULT CMFCFontComboBox::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
+
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	BOOL bDrawUsingFont = TRUE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_DrawUsingFont, bDrawUsingFont))
+	{
+		m_bDrawUsingFont = bDrawUsingFont;
+	}
+
+	BOOL bShowTrueTypeFonts = TRUE;
+	CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_ShowTrueTypeFonts, bShowTrueTypeFonts);
+
+	BOOL bShowRasterTypeFonts = TRUE;
+	CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_ShowRasterTypeFonts, bShowRasterTypeFonts);
+
+	BOOL bShowDeviceTypeFonts = TRUE;
+	CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_ShowDeviceTypeFonts, bShowDeviceTypeFonts);
+	
+	int nFontType = 0;
+	if (bShowTrueTypeFonts)
+	{
+		nFontType |= TRUETYPE_FONTTYPE;
+	}
+	if (bShowRasterTypeFonts)
+	{
+		nFontType |= RASTER_FONTTYPE;
+	}
+	if (bShowDeviceTypeFonts)
+	{
+		nFontType |= DEVICE_FONTTYPE;
+	}
+	Setup(nFontType);
+
+	return 0;
+}
 

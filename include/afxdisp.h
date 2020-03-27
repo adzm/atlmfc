@@ -531,27 +531,26 @@ public:
 	COleTemplateServer();
 
 // Operations
-	void ConnectTemplate(REFCLSID clsid, CDocTemplate* pDocTemplate,
-		BOOL bMultiInstance);
-		// set doc template after creating it in InitInstance
-	void UpdateRegistry(OLE_APPTYPE nAppType = OAT_INPLACE_SERVER,
-		LPCTSTR* rglpszRegister = NULL, LPCTSTR* rglpszOverwrite = NULL,
-		BOOL bRegister = TRUE);
-		// may want to UpdateRegistry if not run with /Embedded
+	// set doc template after creating it in InitInstance
+	void ConnectTemplate(REFCLSID clsid, CDocTemplate* pDocTemplate, BOOL bMultiInstance, BOOL bRegisterRichPreviewHandler = FALSE);
+
+	// may want to UpdateRegistry if not run with /Embedded
+	void UpdateRegistry(OLE_APPTYPE nAppType = OAT_INPLACE_SERVER, LPCTSTR* rglpszRegister = NULL, LPCTSTR* rglpszOverwrite = NULL, BOOL bRegister = TRUE);
+
 	BOOL Register();
 	BOOL Unregister();
 
 // Implementation
 protected:
-	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra,
-			AFX_CMDHANDLERINFO* pHandlerInfo);
+	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 	virtual CCmdTarget* OnCreateObject();
 	CDocTemplate* m_pDocTemplate;
 
 private:
-   using COleObjectFactory::UpdateRegistry;
+	using COleObjectFactory::UpdateRegistry;
+
+	// hide base class version of UpdateRegistry
 	void UpdateRegistry(LPCTSTR lpszProgID);
-		// hide base class version of UpdateRegistry
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -575,6 +574,22 @@ BOOL AFXAPI AfxOleUnregisterServerClass(
 	REFCLSID clsid, LPCTSTR lpszClassName, LPCTSTR lpszShortTypeName,
 	LPCTSTR lpszLongTypeName, OLE_APPTYPE nAppType = OAT_SERVER,
 	LPCTSTR* rglpszRegister = NULL, LPCTSTR* rglpszOverwrite = NULL);
+
+// Special helpers used for search/organize/preview/thumbnail handlers
+/// <summary>
+/// A helper to register a preview handler.</summary>
+/// <param name="lpszCLSID">Specifies CLSID of handler.</param>
+/// <param name="lpszShortTypeName">Specifies ProgID of handler.</param>
+/// <param name="lpszFilterExt">Specifies file extension registered with this handler.</param>
+/// <returns>Returns TRUE if this function succeeds, otherwise FALSE..</returns>
+BOOL AFXAPI AfxRegisterPreviewHandler(LPCTSTR lpszCLSID, LPCTSTR lpszShortTypeName, LPCTSTR lpszFilterExt);
+
+/// <summary>
+/// A helper to unregister a preview handler.</summary>
+/// <param name="lpszCLSID">Specifies CLSID of handler to be unregistered.</param>
+/// <returns>Returns TRUE if this function succeeds; otherwise FALSE.</returns>
+BOOL AFXAPI AfxUnRegisterPreviewHandler(LPCTSTR lpszCLSID);
+BOOL AFXAPI AfxRegisterThumbnailHandler(LPCTSTR lpszCLSID, LPCTSTR lpszFilterExt, DWORD nTreatment = 1);
 
 // AfxOleRegisterHelper is a worker function used by
 //  AfxOleRegisterServerClass (available for advanced registry work)
@@ -1218,9 +1233,6 @@ void AFX_CDECL AfxEnableControlContainer(COccManager* pOccManager=NULL);
 #if defined(_M_IX86)
 	#pragma comment(linker, "/include:??0PostDllMain@@$$FQAE@XZ")
 	#pragma comment(linker, "/include:??0PostRawDllMain@@$$FQAE@XZ")
-#elif defined (_M_IA64)
-	#pragma comment(linker, "/include:??0PostDllMain@@$$FQEAA@XZ")
-	#pragma comment(linker, "/include:??0PostRawDllMain@@$$FQEAA@XZ")
 #elif defined (_M_AMD64)
 	#pragma comment(linker, "/include:??0PostDllMain@@$$FQEAA@XZ")
 	#pragma comment(linker, "/include:??0PostRawDllMain@@$$FQEAA@XZ")

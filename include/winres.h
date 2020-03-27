@@ -22,7 +22,7 @@
 #endif
 
 #ifndef WINVER
-#define WINVER 0x0500   // default to Windows 2000
+#define WINVER 0x0501   // default to Windows XP
 #endif
 
 #include <winresrc.h>

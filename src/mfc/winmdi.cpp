@@ -9,8 +9,8 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-
-
+#include "afxmdichildwndex.h"
+#include "afxmdiframewndex.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CMDIFrameWnd
@@ -279,8 +279,6 @@ BOOL CMDIFrameWnd::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle,
 	// save menu to use when no active MDI child window is present
 	ASSERT(m_hWnd != NULL);
 	m_hMenuDefault = ::GetMenu(m_hWnd);
-	if (m_hMenuDefault == NULL)
-		TRACE(traceAppMsg, 0, "Warning: CMDIFrameWnd without a default menu.\n");
 	return TRUE;
 }
 
@@ -636,35 +634,45 @@ BOOL CMDIChildWnd::UpdateClientEdge(LPRECT lpRect)
 	// only adjust for active MDI child window
 	CMDIFrameWnd* pFrameWnd = GetMDIFrame();
 	CMDIChildWnd* pChild = pFrameWnd->MDIGetActive();
-	if (pChild == NULL || pChild == this)
+
+	// Only adjust for regular MDI child windows, not tabbed windows.  Attempting to set WS_EX_CLIENTEDGE on the tabbed
+	// MDI client area window is subverted by CMDIClientAreaWnd::OnStyleChanging, so we always try to reset the style and
+	// always repaint, none of which is necessary since the tabbed MDI children never change from maximized to restored.
+	CMDIChildWndEx* pChildEx = (pChild == NULL) ? NULL : DYNAMIC_DOWNCAST(CMDIChildWndEx, pChild);
+	BOOL bIsTabbedMDIChild = (pChildEx == NULL) ? FALSE : pChildEx->GetMDIFrameWndEx() != NULL && pChildEx->GetMDIFrameWndEx()->AreMDITabs();
+	if ((pChild == NULL || pChild == this) && !bIsTabbedMDIChild)
 	{
 		// need to adjust the client edge style as max/restore happens
 		DWORD dwStyle = ::GetWindowLong(pFrameWnd->m_hWndMDIClient, GWL_EXSTYLE);
 		DWORD dwNewStyle = dwStyle;
-		if (pChild != NULL && !(GetExStyle() & WS_EX_CLIENTEDGE) &&
-		  (GetStyle() & WS_MAXIMIZE))
+		if (pChild != NULL && !(GetExStyle() & WS_EX_CLIENTEDGE) && (GetStyle() & WS_MAXIMIZE))
+		{
 			dwNewStyle &= ~(WS_EX_CLIENTEDGE);
+		}
 		else
+		{
 			dwNewStyle |= WS_EX_CLIENTEDGE;
+		}
 
 		if (dwStyle != dwNewStyle)
 		{
 			// SetWindowPos will not move invalid bits
-			::RedrawWindow(pFrameWnd->m_hWndMDIClient, NULL, NULL,
-				RDW_INVALIDATE | RDW_ALLCHILDREN);
+			::RedrawWindow(pFrameWnd->m_hWndMDIClient, NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
 
 			// remove/add WS_EX_CLIENTEDGE to MDI client area
 			::SetWindowLong(pFrameWnd->m_hWndMDIClient, GWL_EXSTYLE, dwNewStyle);
-			::SetWindowPos(pFrameWnd->m_hWndMDIClient, NULL, 0, 0, 0, 0,
-				SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE |
-				SWP_NOZORDER | SWP_NOCOPYBITS);
+			::SetWindowPos(pFrameWnd->m_hWndMDIClient, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOCOPYBITS);
 
 			// return new client area
 			if (lpRect != NULL)
+			{
 				::GetClientRect(pFrameWnd->m_hWndMDIClient, lpRect);
+			}
+
 			return TRUE;
 		}
 	}
+
 	return FALSE;
 }
 
@@ -793,7 +801,7 @@ void CMDIChildWnd::ActivateFrame(int nCmdShow)
 		{
 			// still active -- fake deactivate it
 			ASSERT(hWnd != NULL);
-			OnMDIActivate(FALSE, NULL, this);
+			::SendMessage(pFrameWnd->m_hWndMDIClient, WM_MDIACTIVATE, (WPARAM)m_hWnd, NULL);
 			m_bPseudoInactive = TRUE;   // so MDIGetActive returns NULL
 		}
 	}
@@ -801,7 +809,7 @@ void CMDIChildWnd::ActivateFrame(int nCmdShow)
 	{
 		// if state transitioned from not visible to visible, but
 		//  was pseudo deactivated -- send activate notify now
-		OnMDIActivate(TRUE, this, NULL);
+		::SendMessage(pFrameWnd->m_hWndMDIClient, WM_MDIACTIVATE, NULL, (LPARAM)m_hWnd);
 		ASSERT(!m_bPseudoInactive); // should get set in OnMDIActivate!
 	}
 }

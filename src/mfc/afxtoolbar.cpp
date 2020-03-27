@@ -52,6 +52,7 @@
 #define AFX_TEXT_MARGIN 3
 #define AFX_STRETCH_DELTA 6
 #define AFX_BUTTON_MIN_WIDTH 5
+#define AFX_TOOLBAR_BUTTON_MARGIN 6
 
 #define AFX_REG_SECTION_FMT _T("%sMFCToolBar-%d")
 #define AFX_REG_SECTION_FMT_EX _T("%sMFCToolBar-%d%x")
@@ -119,6 +120,8 @@ CMFCToolBarImages CMFCToolBar::m_LargeColdImages;
 CMFCToolBarImages CMFCToolBar::m_LargeDisabledImages;
 
 CMFCToolBarImages* CMFCToolBar::m_pUserImages = NULL;
+
+BOOL CMFCToolBar::m_bDontScaleImages = FALSE;
 
 CSize CMFCToolBar::m_sizeButton = CSize(23, 22);
 CSize CMFCToolBar::m_sizeImage = CSize(16, 15);
@@ -199,6 +202,8 @@ m_bIgnoreSetText(FALSE)
 	m_sizeCurImageLocked = CSize(16, 15);
 	m_sizeButtonLocked = CSize(23, 22);
 	m_sizeImageLocked = CSize(16, 15);
+
+	m_bDontScaleLocked = FALSE;
 
 	m_bStretchButton = FALSE;
 	m_rectTrack.SetRectEmpty();
@@ -365,15 +370,25 @@ void __stdcall CMFCToolBar::SetSizes(SIZE sizeButton, SIZE sizeImage)
 		m_sizeCurImage.cy = (int)(.5 + m_dblLargeImageRatio * m_sizeCurImage.cy);
 	}
 
-	if (m_pUserImages != NULL)
+	if (m_pUserImages != NULL && m_pUserImages->GetScale() == 1.)
 	{
-		m_pUserImages->SetImageSize(m_sizeImage);
+		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		{
+			m_pUserImages->SetTransparentColor (afxGlobalData.clrBtnFace);
+			m_pUserImages->SmoothResize (afxGlobalData.GetRibbonImageScale());
+		}
+		else
+		{
+			m_pUserImages->SetImageSize (m_sizeImage);
+		}
 	}
 }
 
-void CMFCToolBar::SetLockedSizes(SIZE sizeButton, SIZE sizeImage)
+void CMFCToolBar::SetLockedSizes(SIZE sizeButton, SIZE sizeImage, BOOL bDontScale)
 {
 	ASSERT(sizeButton.cx > 0 && sizeButton.cy > 0);
+
+	m_bDontScaleLocked = bDontScale;
 
 	m_sizeButtonLocked = sizeButton;
 	m_sizeImageLocked = sizeImage;
@@ -744,8 +759,6 @@ BOOL CMFCToolBar::LoadBitmapEx(CMFCToolBarInfo& params, BOOL bLocked)
 		ASSERT(m_Images.GetCount() == m_DisabledMenuImages.GetCount());
 	}
 
-	ASSERT(m_Images.GetImageSize().cy == m_sizeImage.cy);
-
 	// Load large images:
 	if (params.m_uiLargeHotResID != 0)
 	{
@@ -798,12 +811,11 @@ BOOL CMFCToolBar::LoadToolBarEx(UINT uiToolbarResID, CMFCToolBarInfo& params, BO
 
 	ASSERT_VALID(this);
 
-	LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiToolbarResID);
-	ENSURE(lpszResourceName != NULL);
+	ENSURE(uiToolbarResID != 0);
 
 	// determine location of the bitmap in resource fork:
-	HINSTANCE hInst = AfxFindResourceHandle(lpszResourceName, RT_TOOLBAR);
-	HRSRC hRsrc = ::FindResource(hInst, lpszResourceName, RT_TOOLBAR);
+	HINSTANCE hInst = AfxFindResourceHandle(MAKEINTRESOURCE(uiToolbarResID), RT_TOOLBAR);
+	HRSRC hRsrc = ::FindResourceW(hInst, MAKEINTRESOURCEW(uiToolbarResID), (LPWSTR) RT_TOOLBAR);
 	if (hRsrc == NULL)
 		return FALSE;
 
@@ -819,13 +831,24 @@ BOOL CMFCToolBar::LoadToolBarEx(UINT uiToolbarResID, CMFCToolBarInfo& params, BO
 	UINT* pItems = new UINT[pData->wItemCount];
 	ENSURE(pItems != NULL);
 
+	CSize sizeImage(pData->wWidth, pData->wHeight);
+	CSize sizeButton(pData->wWidth + AFX_TOOLBAR_BUTTON_MARGIN, pData->wHeight + AFX_TOOLBAR_BUTTON_MARGIN);
+
+	BOOL bDontScaleImages = bLocked ? m_bDontScaleLocked : m_bDontScaleImages;
+
+	if (!bDontScaleImages && afxGlobalData.GetRibbonImageScale() != 1.)
+	{
+		double dblImageScale = afxGlobalData.GetRibbonImageScale();
+		sizeButton = CSize ((int)(.5 + sizeButton.cx * dblImageScale), (int)(.5 + sizeButton.cy * dblImageScale));
+	}
+
 	if (bLocked)
 	{
-		SetLockedSizes(CSize(pData->wWidth + 6, pData->wHeight + 6), CSize(pData->wWidth, pData->wHeight));
+		SetLockedSizes(sizeButton, sizeImage);
 	}
-	else
+	else if (!m_Images.IsScaled())
 	{
-		SetSizes( CSize(pData->wWidth + 6, pData->wHeight + 6), CSize(pData->wWidth, pData->wHeight));
+		SetSizes(sizeButton, sizeImage);
 	}
 
 	BOOL bResult = TRUE;
@@ -1417,6 +1440,9 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 		rect.right = rect.left + GetColumnWidth();
 	}
 
+	BOOL bDontScaleImages = m_bLocked ? m_bDontScaleLocked : m_bDontScaleImages;
+	const double dblImageScale = bDontScaleImages ? 1.0 : afxGlobalData.GetRibbonImageScale();
+
 	CMFCToolBarImages* pImages = GetImageList(m_Images, m_ImagesLocked, m_LargeImages, m_LargeImagesLocked);
 	CMFCToolBarImages* pHotImages = pImages;
 	CMFCToolBarImages* pColdImages = GetImageList(m_ColdImages, m_ColdImagesLocked, m_LargeColdImages, m_LargeColdImagesLocked);
@@ -1430,10 +1456,34 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 
 	BOOL bFadeInactiveImages = CMFCVisualManager::GetInstance()->IsFadeInactiveImage();
 
-	CAfxDrawState ds;
-	if (bDrawImages && !pHotImages->PrepareDrawImage(ds, m_bMenuMode ? m_sizeMenuImage : GetImageSize(), bFadeInactiveImages))
+	CSize sizeImageDest = m_bMenuMode ? m_sizeMenuImage : GetImageSize();
+	if (dblImageScale != 1.)
 	{
-		return;     // something went wrong
+		if (m_bMenuMode && sizeImageDest == CSize(-1, -1))
+		{
+			sizeImageDest = GetImageSize();
+
+			if (dblImageScale > 1. && m_bLargeIconsAreEnbaled)
+			{
+				sizeImageDest = m_sizeImage;
+			}
+		}
+
+		sizeImageDest = CSize((int)(.5 + sizeImageDest.cx * dblImageScale), (int)(.5 + sizeImageDest.cy * dblImageScale));
+	}
+
+	CAfxDrawState ds;
+	if (bDrawImages)
+	{
+		if (dblImageScale != 1.0 && pHotImages->GetScale() == 1.0)
+		{
+			pHotImages->SmoothResize(dblImageScale);
+		}
+
+		if (!pHotImages->PrepareDrawImage(ds, sizeImageDest, bFadeInactiveImages))
+		{
+			return;     // something went wrong
+		}
 	}
 
 	CFont* pOldFont;
@@ -1546,7 +1596,12 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 					pImages->EndDrawImage(ds);
 
 					pNewImages->SetTransparentColor(afxGlobalData.clrBtnFace);
-					pNewImages->PrepareDrawImage(ds, m_bMenuMode ? m_sizeMenuImage : GetImageSize(), bFadeInactiveImages);
+					if (dblImageScale != 1.0 && pNewImages->GetScale() == 1.0)
+					{
+						pNewImages->SmoothResize(dblImageScale);
+					}
+
+					pNewImages->PrepareDrawImage (ds, sizeImageDest, bFadeInactiveImages);
 
 					pImages = pNewImages;
 				}
@@ -1745,7 +1800,7 @@ INT_PTR CMFCToolBar::OnToolHitTest(CPoint point, TOOLINFO* pTI) const
 					(CKeyboardManager::FindDefaultAccelerator(pButton->m_nID, strLabel, pParent, TRUE) ||
 						CKeyboardManager::FindDefaultAccelerator( pButton->m_nID, strLabel, pParent->GetActiveFrame(), FALSE)))
 				{
-					strTipText += _T("(");
+					strTipText += _T(" (");
 					strTipText += strLabel;
 					strTipText += _T(')');
 				}
@@ -5010,7 +5065,19 @@ void CMFCToolBar::OnLButtonDblClk(UINT nFlags, CPoint point)
 	}
 	else
 	{
-		CMFCBaseToolBar::OnLButtonDblClk(nFlags, point);
+		if (IsDocked())
+		{
+			CMFCBaseToolBar::OnLButtonDblClk(nFlags, point);
+		}
+		else
+		{
+			CPaneFrameWnd* pMiniFrame = GetParentMiniFrame();
+			if (pMiniFrame != NULL)
+			{
+				ASSERT_VALID(pMiniFrame);
+				pMiniFrame->OnDockToRecentPos();
+			}
+		}
 	}
 }
 
@@ -5623,8 +5690,8 @@ void __stdcall CMFCToolBar::SetMenuSizes(SIZE sizeButton, SIZE sizeImage)
 	ASSERT(sizeButton.cx > 0 && sizeButton.cy > 0);
 
 	// Button must be big enough to hold image + 3 pixels on each side:
-	ASSERT(sizeButton.cx >= sizeImage.cx + 6);
-	ASSERT(sizeButton.cy >= sizeImage.cy + 6);
+	ASSERT(sizeButton.cx >= sizeImage.cx + AFX_TOOLBAR_BUTTON_MARGIN);
+	ASSERT(sizeButton.cy >= sizeImage.cy + AFX_TOOLBAR_BUTTON_MARGIN);
 
 	m_sizeMenuButton = sizeButton;
 	m_sizeMenuImage = sizeImage;
@@ -5635,14 +5702,16 @@ void __stdcall CMFCToolBar::SetMenuSizes(SIZE sizeButton, SIZE sizeImage)
 
 CSize __stdcall CMFCToolBar::GetMenuImageSize()
 {
-	if (m_sizeMenuImage.cx == -1)
+	CSize size = (m_sizeMenuImage.cx == -1) ? m_sizeImage : m_sizeMenuImage;
+
+	if (afxGlobalData.GetRibbonImageScale() != 1.)
 	{
-		return m_sizeImage;
+		size = CSize (
+			(int)(.5 + size.cx * afxGlobalData.GetRibbonImageScale()),
+			(int)(.5 + size.cy * afxGlobalData.GetRibbonImageScale()));
 	}
-	else
-	{
-		return m_sizeMenuImage;
-	}
+
+	return size;
 }
 
 CSize __stdcall CMFCToolBar::GetMenuButtonSize()
@@ -6174,6 +6243,12 @@ void CMFCToolBar::RestoreFocus()
 	}
 
 	m_hwndLastFocus = NULL;
+
+	if (afxGlobalData.m_bUnderlineKeyboardShortcuts && !afxGlobalData.m_bSysUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode ())
+	{
+		afxGlobalData.m_bUnderlineKeyboardShortcuts = FALSE;
+		RedrawUnderlines ();
+	}
 }
 
 void CMFCToolBar::OnToolbarNewMenu()
@@ -6454,6 +6529,7 @@ void __stdcall CMFCToolBar::ResetAllImages()
 	m_LargeImages.Clear();
 	m_LargeColdImages.Clear();
 	m_LargeDisabledImages.Clear();
+	m_sizeImage = CSize (16, 15);
 }
 
 void CMFCToolBar::ResetImages()
@@ -7623,6 +7699,44 @@ LRESULT CMFCToolBar::OnUpdateToolTips(WPARAM wp, LPARAM)
 	return 0;
 }
 
+void __stdcall CMFCToolBar::RedrawUnderlines()
+{
+	for (POSITION posTlb = afxAllToolBars.GetHeadPosition(); posTlb != NULL;)
+	{
+		CMFCToolBar* pToolBar = DYNAMIC_DOWNCAST(CMFCToolBar, afxAllToolBars.GetNext(posTlb));
 
+		if (pToolBar != NULL && CWnd::FromHandlePermanent(pToolBar->m_hWnd) != NULL)
+		{
+			ASSERT_VALID(pToolBar);
 
+			BOOL bRedrawButtons = FALSE;
+				
+			for (POSITION pos = pToolBar->m_Buttons.GetHeadPosition(); pos != NULL;)
+			{
+				CMFCToolBarButton* pButton = (CMFCToolBarButton*)pToolBar->m_Buttons.GetNext(pos);
+				if (pButton == NULL)
+				{
+					break;
+				}
 
+				ASSERT_VALID(pButton);
+
+				if ((pButton->m_nStyle & TBBS_SEPARATOR) || !pButton->m_bText)
+				{
+					continue;
+				}
+
+				if (pButton->m_strText.Find(_T('&')) >= 0)
+				{
+					pToolBar->InvalidateRect(pButton->Rect());
+					bRedrawButtons = TRUE;
+				}
+			}
+
+			if (bRedrawButtons)
+			{
+				pToolBar->UpdateWindow();
+			}
+		}
+	}
+}

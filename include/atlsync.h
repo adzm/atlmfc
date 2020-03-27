@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 
@@ -21,10 +21,8 @@
 
 #include <atlbase.h>
 
-
 #pragma pack(push,_ATL_PACKING)
 
- 
 namespace ATL
 {
 
@@ -33,23 +31,18 @@ class CCriticalSection :
 {
 public:
 	CCriticalSection();
-#if (_WIN32_WINNT >= 0x0403)
-	explicit CCriticalSection( ULONG nSpinCount );
-#endif
+	explicit CCriticalSection(_In_ ULONG nSpinCount);
+
 	~CCriticalSection() throw();
 
 	// Acquire the critical section
 	void Enter();
 	// Release the critical section
 	void Leave() throw();
-#if (_WIN32_WINNT >= 0x0403)
 	// Set the spin count for the critical section
-	ULONG SetSpinCount( ULONG nSpinCount ) throw();
-#endif
-#if (_WIN32_WINNT >= 0x0400)
+	ULONG SetSpinCount(_In_ ULONG nSpinCount) throw();
 	// Attempt to acquire the critical section
 	BOOL TryEnter() throw();
-#endif
 };
 
 class CEvent :
@@ -57,15 +50,28 @@ class CEvent :
 {
 public:
 	CEvent() throw();
-	CEvent( CEvent& h ) throw();
-	CEvent( BOOL bManualReset, BOOL bInitialState );
-	CEvent( LPSECURITY_ATTRIBUTES pSecurity, BOOL bManualReset, BOOL bInitialState, LPCTSTR pszName );
-	explicit CEvent( HANDLE h ) throw();
+	CEvent(_Inout_ CEvent& h) throw();
+	CEvent(
+		_In_ BOOL bManualReset,
+		_In_ BOOL bInitialState);
+	CEvent(
+		_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+		_In_ BOOL bManualReset,
+		_In_ BOOL bInitialState,
+		_In_opt_z_ LPCTSTR pszName);
+	explicit CEvent(_In_ HANDLE h) throw();
 
 	// Create a new event
-	BOOL Create( LPSECURITY_ATTRIBUTES pSecurity, BOOL bManualReset, BOOL bInitialState, LPCTSTR pszName ) throw();
+	BOOL Create(
+		_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+		_In_ BOOL bManualReset,
+		_In_ BOOL bInitialState,
+		_In_opt_z_ LPCTSTR pszName) throw();
 	// Open an existing named event
-	BOOL Open( DWORD dwAccess, BOOL bInheritHandle, LPCTSTR pszName ) throw();
+	BOOL Open(
+		_In_ DWORD dwAccess,
+		_In_ BOOL bInheritHandle,
+		_In_z_ LPCTSTR pszName) throw();
 	// Pulse the event (signals waiting objects, then resets)
 	BOOL Pulse() throw();
 	// Set the event to the non-signaled state
@@ -79,15 +85,24 @@ class CMutex :
 {
 public:
 	CMutex() throw();
-	CMutex( CMutex& h ) throw();
-	explicit CMutex( BOOL bInitialOwner );
-	CMutex( LPSECURITY_ATTRIBUTES pSecurity, BOOL bInitialOwner, LPCTSTR pszName );
-	explicit CMutex( HANDLE h ) throw();
+	CMutex(_Inout_ CMutex& h) throw();
+	explicit CMutex(_In_ BOOL bInitialOwner);
+	CMutex(
+		_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+		_In_ BOOL bInitialOwner,
+		_In_opt_z_ LPCTSTR pszName);
+	explicit CMutex(_In_ HANDLE h) throw();
 
 	// Create a new mutex
-	BOOL Create( LPSECURITY_ATTRIBUTES pSecurity, BOOL bInitialOwner, LPCTSTR pszName ) throw();
+	BOOL Create(
+		_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+		_In_ BOOL bInitialOwner,
+		_In_opt_z_ LPCTSTR pszName) throw();
 	// Open an existing named mutex
-	BOOL Open( DWORD dwAccess, BOOL bInheritHandle, LPCTSTR pszName ) throw();
+	BOOL Open(
+		_In_ DWORD dwAccess,
+		_In_ BOOL bInheritHandle,
+		_In_z_ LPCTSTR pszName) throw();
 	// Release ownership of the mutex
 	BOOL Release() throw();
 };
@@ -97,23 +112,40 @@ class CSemaphore :
 {
 public:
 	CSemaphore() throw();
-	CSemaphore( CSemaphore& h ) throw();
-	CSemaphore( LONG nInitialCount, LONG nMaxCount );
-	CSemaphore( LPSECURITY_ATTRIBUTES pSecurity, LONG nInitialCount, LONG nMaxCount, LPCTSTR pszName );
-	explicit CSemaphore( HANDLE h ) throw();
+	CSemaphore(_Inout_ CSemaphore& h) throw();
+	CSemaphore(
+		_In_ LONG nInitialCount,
+		_In_ LONG nMaxCount);
+	CSemaphore(
+		_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+		_In_ LONG nInitialCount,
+		_In_ LONG nMaxCount,
+		_In_opt_z_ LPCTSTR pszName );
+	explicit CSemaphore(_In_ HANDLE h) throw();
 
 	// Create a new semaphore
-	BOOL Create( LPSECURITY_ATTRIBUTES pSecurity, LONG nInitialCount, LONG nMaxCount, LPCTSTR pszName ) throw();
+	BOOL Create(
+		_In_opt_ LPSECURITY_ATTRIBUTES pSecurity,
+		_In_ LONG nInitialCount,
+		_In_ LONG nMaxCount,
+		_In_opt_z_ LPCTSTR pszName) throw();
 	// Open an existing named semaphore
-	BOOL Open( DWORD dwAccess, BOOL bInheritHandle, LPCTSTR pszName ) throw();
+	BOOL Open(
+		_In_ DWORD dwAccess,
+		_In_ BOOL bInheritHandle,
+		_In_z_ LPCTSTR pszName) throw();
 	// Increase the count of the semaphore
-	BOOL Release( LONG nReleaseCount = 1, LONG* pnOldCount = NULL ) throw();
+	BOOL Release(
+		_In_ LONG nReleaseCount = 1,
+		_Out_opt_ LONG* pnOldCount = NULL) throw();
 };
 
 class CMutexLock
 {
 public:
-	CMutexLock( CMutex& mtx, bool bInitialLock = true );
+	CMutexLock(
+		_Inout_ CMutex& mtx,
+		_In_ bool bInitialLock = true);
 	~CMutexLock() throw();
 
 	void Lock();
@@ -125,15 +157,14 @@ private:
 	bool m_bLocked;
 
 // Private to prevent accidental use
-	CMutexLock( const CMutexLock& ) throw();
-	CMutexLock& operator=( const CMutexLock& ) throw();
+	CMutexLock(_In_ const CMutexLock&) throw();
+	CMutexLock& operator=(_In_ const CMutexLock&) throw();
 };
 
 };  // namespace ATL
- 
+
 
 #include <atlsync.inl>
-
 
 #pragma pack(pop)
 #ifndef _ATL_NO_PRAGMA_WARNINGS

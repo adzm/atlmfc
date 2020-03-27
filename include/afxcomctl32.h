@@ -19,6 +19,11 @@
 
 #pragma once
 
+#if _WIN32_WINNT < 0x0500
+#error This file requires _WIN32_WINNT to be #defined at least to 0x0500. Value 0x0501 or higher is recommended.
+#endif
+
+
 #pragma warning(disable: 4127)  // conditional expression constant
 
 /////////////////////////////////////////////////////////////////////////////
@@ -27,21 +32,9 @@
 
 
 enum eActCtxResult { ActCtxFailed, ActCtxSucceeded, ActCtxNoFusion };
-#if (_WIN32_WINNT >= 0x0500) || (_WIN32_FUSION >= 0x0100) || ISOLATION_AWARE_ENABLED
 
-HANDLE AFXAPI AfxCreateActCtxW(PCACTCTXW pActCtx);
-void AFXAPI AfxReleaseActCtx(HANDLE hActCtx);
-BOOL AFXAPI AfxActivateActCtx(HANDLE hActCtx, ULONG_PTR *lpCookie);
-BOOL AFXAPI AfxDeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie);
-#else
-HANDLE AFXAPI AfxCreateActCtxW(void *pActCtx);
-void AFXAPI AfxReleaseActCtx(HANDLE hActCtx);
-BOOL AFXAPI AfxActivateActCtx(HANDLE hActCtx, ULONG_PTR *lpCookie);
-BOOL AFXAPI AfxDeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie);
-#endif
 BOOL AFXAPI AfxGetAmbientActCtx();
 void AFXAPI AfxSetAmbientActCtx(BOOL bSet);
-eActCtxResult AFXAPI AfxActivateActCtxWrapper(HANDLE hActCtx, ULONG_PTR *lpCookie);
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma push_macro("AFX_ISOLATIONAWARE_COMMON_ACTIVATE")
@@ -54,12 +47,12 @@ eActCtxResult AFXAPI AfxActivateActCtxWrapper(HANDLE hActCtx, ULONG_PTR *lpCooki
 
 #define AFX_ISOLATIONAWARE_COMMON_ACTIVATE() \
 		ULONG_PTR ulActCtxCookie = 0;\
-		eActCtxResult eActResult = AfxActivateActCtxWrapper(AfxGetModuleState()->m_hActCtx, &ulActCtxCookie);\
+		BOOL fActCtxSucceeded = ActivateActCtx(AfxGetModuleState()->m_hActCtx, &ulActCtxCookie);\
 
 #define AFX_ISOLATIONAWARE_FUNC_ACTIVATE(type, failure_retval) \
 		AFX_ISOLATIONAWARE_COMMON_ACTIVATE() \
 		type result=(failure_retval);\
-		if (eActResult==ActCtxFailed)\
+		if (!fActCtxSucceeded)\
 		{\
 			return result;\
 		}\
@@ -69,15 +62,12 @@ eActCtxResult AFXAPI AfxActivateActCtxWrapper(HANDLE hActCtx, ULONG_PTR *lpCooki
 }\
 		__finally\
 		{\
-			if (eActResult!=ActCtxNoFusion)\
+			const BOOL fPreserveLastError = (result == (failure_retval) );\
+			const DWORD dwLastError = fPreserveLastError ? GetLastError() : NO_ERROR;\
+			DeactivateActCtx(0,ulActCtxCookie);\
+			if (fPreserveLastError)\
 			{\
-				const BOOL fPreserveLastError = (result == (failure_retval) );\
-				const DWORD dwLastError = fPreserveLastError ? GetLastError() : NO_ERROR;\
-				AfxDeactivateActCtx(0,ulActCtxCookie);\
-				if (fPreserveLastError)\
-				{\
-					SetLastError(dwLastError);\
-				}\
+				SetLastError(dwLastError);\
 			}\
 		}\
 		return result;
@@ -92,7 +82,7 @@ eActCtxResult AFXAPI AfxActivateActCtxWrapper(HANDLE hActCtx, ULONG_PTR *lpCooki
 
 #define AFX_ISOLATIONAWARE_PROC_ACTIVATE() \
 		AFX_ISOLATIONAWARE_COMMON_ACTIVATE() \
-		if (eActResult==ActCtxFailed)\
+		if (!fActCtxSucceeded)\
 		{\
 			return;\
 		}\
@@ -102,10 +92,7 @@ eActCtxResult AFXAPI AfxActivateActCtxWrapper(HANDLE hActCtx, ULONG_PTR *lpCooki
 }\
 		__finally\
 		{\
-			if (eActResult!=ActCtxNoFusion)\
-			{\
-				AfxDeactivateActCtx(0,ulActCtxCookie);\
-			}\
+			DeactivateActCtx(0, ulActCtxCookie);\
 		}		
 
 #define AFX_ISOLATIONAWARE_STATICLINK_PROC(name, params, args) \

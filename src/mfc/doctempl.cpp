@@ -32,12 +32,17 @@ CDocTemplate::CDocTemplate(UINT nIDResource, CRuntimeClass* pDocClass,
 	m_nIDServerResource = NULL;
 	m_nIDEmbeddingResource = NULL;
 	m_nIDContainerResource = NULL;
+	m_nIDPreviewResource = NULL;
 
 	m_pDocClass = pDocClass;
 	m_pFrameClass = pFrameClass;
 	m_pViewClass = pViewClass;
 	m_pOleFrameClass = NULL;
 	m_pOleViewClass = NULL;
+
+	
+	m_pPreviewFrameClass = NULL;
+	m_pPreviewViewClass = NULL;
 
 	m_pAttachedFactory = NULL;
 	m_hMenuInPlace = NULL;
@@ -78,19 +83,19 @@ void CDocTemplate::LoadTemplate()
 		HINSTANCE hInst = AfxFindResourceHandle(
 			MAKEINTRESOURCE(m_nIDEmbeddingResource), RT_MENU);
 		m_hMenuEmbedding =
-			::LoadMenu(hInst, MAKEINTRESOURCE(m_nIDEmbeddingResource));
+			::LoadMenuW(hInst, MAKEINTRESOURCEW(m_nIDEmbeddingResource));
 		m_hAccelEmbedding =
-			::LoadAccelerators(hInst, MAKEINTRESOURCE(m_nIDEmbeddingResource));
+			::LoadAcceleratorsW(hInst, MAKEINTRESOURCEW(m_nIDEmbeddingResource));
 	}
 	if (m_nIDServerResource != 0 && m_hMenuInPlaceServer == NULL)
 	{
 		// load menu to be used while editing in-place (as a server)
 		HINSTANCE hInst = AfxFindResourceHandle(
 			MAKEINTRESOURCE(m_nIDServerResource), RT_MENU);
-		m_hMenuInPlaceServer = ::LoadMenu(hInst,
-			MAKEINTRESOURCE(m_nIDServerResource));
-		m_hAccelInPlaceServer = ::LoadAccelerators(hInst,
-			MAKEINTRESOURCE(m_nIDServerResource));
+		m_hMenuInPlaceServer = ::LoadMenuW(hInst,
+			MAKEINTRESOURCEW(m_nIDServerResource));
+		m_hAccelInPlaceServer = ::LoadAcceleratorsW(hInst,
+			MAKEINTRESOURCEW(m_nIDServerResource));
 	}
 
 	if (m_nIDContainerResource != 0 && m_hMenuInPlace == NULL)
@@ -98,10 +103,10 @@ void CDocTemplate::LoadTemplate()
 		// load menu to be used while in-place editing session (as a container)
 		HINSTANCE hInst = AfxFindResourceHandle(
 			MAKEINTRESOURCE(m_nIDContainerResource), RT_MENU);
-		m_hMenuInPlace = ::LoadMenu(hInst,
-			MAKEINTRESOURCE(m_nIDContainerResource));
-		m_hAccelInPlace = ::LoadAccelerators(hInst,
-			MAKEINTRESOURCE(m_nIDContainerResource));
+		m_hMenuInPlace = ::LoadMenuW(hInst,
+			MAKEINTRESOURCEW(m_nIDContainerResource));
+		m_hAccelInPlace = ::LoadAcceleratorsW(hInst,
+			MAKEINTRESOURCEW(m_nIDContainerResource));
 	}
 }
 
@@ -132,6 +137,18 @@ void CDocTemplate::SetContainerInfo(UINT nIDOleInPlaceContainer)
 	m_nIDContainerResource = nIDOleInPlaceContainer;
 	if (!CDocManager::bStaticInit)
 		LoadTemplate();
+}
+
+void CDocTemplate::SetPreviewInfo (UINT nIDPreviewFrame, CRuntimeClass* pPreviewFrameClass, CRuntimeClass* pPreviewViewClass)
+{
+	if (nIDPreviewFrame != 0)
+		ASSERT_VALID_IDR(nIDPreviewFrame);
+	ASSERT(pPreviewFrameClass == NULL || pPreviewFrameClass->IsDerivedFrom (RUNTIME_CLASS(CFrameWnd)));
+	ASSERT(pPreviewViewClass == NULL || pPreviewViewClass->IsDerivedFrom (RUNTIME_CLASS(CView)));
+
+	m_nIDPreviewResource = nIDPreviewFrame;
+	m_pPreviewFrameClass = pPreviewFrameClass;
+	m_pPreviewViewClass = pPreviewViewClass;
 }
 
 CDocTemplate::~CDocTemplate()
@@ -319,6 +336,67 @@ CFrameWnd* CDocTemplate::CreateOleFrame(CWnd* pParentWnd, CDocument* pDoc,
 	}
 
 	// it worked !
+	return pFrame;
+}
+
+CFrameWnd* CDocTemplate::CreatePreviewFrame(CWnd* pParentWnd, CDocument* pDoc)
+{
+	CCreateContext context;
+	context.m_pCurrentFrame = NULL;
+	context.m_pCurrentDoc = pDoc;
+	context.m_pNewViewClass = m_pPreviewViewClass != NULL ? m_pPreviewViewClass : m_pViewClass;
+
+	CRuntimeClass* pFrameClass = m_pPreviewFrameClass != NULL ? m_pPreviewFrameClass : RUNTIME_CLASS (CFrameWnd);
+	VERIFY(pFrameClass != NULL);
+
+	CFrameWnd* pFrame = (CFrameWnd*)pFrameClass->CreateObject();
+	if (pFrame == NULL)
+	{
+		TRACE0("Warning: Dynamic create of frame %hs failed.\n");
+		return NULL;
+	}
+	ASSERT_KINDOF(CFrameWnd, pFrame);
+
+	if (m_nIDPreviewResource != 0)
+	{
+		// create new from resource (preview frames are created as child windows)
+		if (!pFrame->LoadFrame(m_nIDPreviewResource,
+			WS_CHILD|WS_CLIPSIBLINGS, pParentWnd, &context))
+		{
+			TRACE(traceAppMsg, 0, "Warning: CDocTemplate couldn't create a preview frame.\n");
+			// frame will be deleted in PostNcDestroy cleanup
+			return NULL;
+		}
+	}
+	else
+	{
+		// create dummy frame
+		CREATESTRUCT cs;
+		memset(&cs, 0, sizeof(CREATESTRUCT));
+		cs.style = WS_CHILD|WS_CLIPSIBLINGS;
+
+		VERIFY(AfxDeferRegisterClass(AFX_WNDFRAMEORVIEW_REG));
+		cs.lpszClass = _afxWndFrameOrView;  // COLOR_WINDOW background
+
+		WNDCLASS wndcls;
+		if (cs.lpszClass != NULL && AfxCtxGetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wndcls))
+		{
+			// register a very similar WNDCLASS
+			LPCTSTR lpcszClassName = AfxRegisterWndClass(wndcls.style, wndcls.hCursor, wndcls.hbrBackground);
+
+			CRect rectEmpty; 
+			rectEmpty.SetRectEmpty ();
+
+			if (!pFrame->Create(lpcszClassName, _T (""), cs.style, rectEmpty,
+				pParentWnd, 0, 0L, &context))
+			{
+				TRACE(traceAppMsg, 0, "Warning: CDocTemplate couldn't create a preview frame.\n");
+				// frame will be deleted in PostNcDestroy cleanup
+				return FALSE;   // will self destruct on failure normally
+			}
+		}
+	}
+
 	return pFrame;
 }
 

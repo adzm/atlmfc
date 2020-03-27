@@ -170,11 +170,13 @@ class CDockContext;                     // for dragging control bars
 #define WM_OCC_LOADFROMSTREAM_EX        0x037A
 #define WM_OCC_LOADFROMSTORAGE_EX       0x037B
 
+// Constant used in DLGINIT resources for MFC controls
+#define WM_MFC_INITCTRL                 0x037C
+
 // Marker used while rearranging the message queue
 #define WM_QUEUE_SENTINEL   0x0379
 
-// Note: Messages 0x037C - 0x37E reserved for future MFC use.
-#define WM_RESERVED_037C    0x037C
+// Note: Messages 0x037D - 0x37E reserved for future MFC use.
 #define WM_RESERVED_037D    0x037D
 #define WM_RESERVED_037E    0x037E
 
@@ -816,15 +818,54 @@ int AFXAPI AfxLoadString(_In_ UINT nIDS, _Out_z_cap_post_count_(nMaxBuf, return 
 int AFXAPI AfxLoadString(_In_ UINT nIDS, _Out_z_cap_post_count_(nMaxBuf, return + 1) LPWSTR lpszBuf, _In_ UINT nMaxBuf = 256);
 
 // registry helpers
-LONG AFXAPI AfxRegCreateKey(  HKEY hKey,  LPCTSTR lpSubKey,  PHKEY phkResult);
-LONG AFXAPI AfxRegOpenKey(  HKEY hKey,  LPCTSTR lpSubKey,  PHKEY phkResult);
-LONG AFXAPI AfxRegOpenKeyEx(  HKEY hKey,  LPCTSTR lpSubKey,  DWORD ulOptions,  REGSAM samDesired,  PHKEY phkResult);
-LONG AFXAPI AfxRegQueryValue(  HKEY hKey,  LPCTSTR lpSubKey,  LPTSTR lpValue,  PLONG lpcbValue);
-LONG AFXAPI AfxRegSetValue(  HKEY hKey,  LPCTSTR lpSubKey,  DWORD dwType,  LPCTSTR lpData,  DWORD cbData);
-LONG AFXAPI AfxRegDeleteKey(  HKEY hKey,  LPCTSTR lpSubKey);
+
+/// <summary>
+/// Creates the specified registry key.</summary>
+/// <returns> 
+/// If the function succeeds, the return value is ERROR_SUCCESS. If the function fails, the return value is a nonzero error code defined in Winerror.h</returns>
+/// <param name="hKey">A handle to an open registry key.</param>
+/// <param name="lpSubKey">The name of a key that this function opens or creates.</param>
+/// <param name="phkResult">A pointer to a variable that receives a handle to the opened or created key.</param>
+/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+LONG AFXAPI AfxRegCreateKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult, CAtlTransactionManager* pTM = NULL);
+
+/// <summary>
+/// Opens the specified registry key.</summary>
+/// <returns> 
+/// If the function succeeds, the return value is ERROR_SUCCESS. If the function fails, the return value is a nonzero error code defined in Winerror.h</returns>
+/// <param name="hKey">A handle to an open registry key.</param>
+/// <param name="lpSubKey">The name of a key that this function opens or creates.</param>
+/// <param name="phkResult">A pointer to a variable that receives a handle to the created key.</param>
+/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+LONG AFXAPI AfxRegOpenKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult, CAtlTransactionManager* pTM = NULL);
+
+/// <summary>
+/// Opens the specified registry key.</summary>
+/// <returns> 
+/// If the function succeeds, the return value is ERROR_SUCCESS. If the function fails, the return value is a nonzero error code defined in Winerror.h</returns>
+/// <param name="hKey">A handle to an open registry key.</param>
+/// <param name="lpSubKey">The name of a key that this function opens or creates.</param>
+/// <param name="ulOptions">This parameter is reserved and must be zero.</param>
+/// <param name="samDesired">A mask that specifies the desired access rights to the key.</param>
+/// <param name="phkResult">A pointer to a variable that receives a handle to the openedkey.</param>
+/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+LONG AFXAPI AfxRegOpenKeyEx(HKEY hKey, LPCTSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult, CAtlTransactionManager* pTM = NULL);
+
+LONG AFXAPI AfxRegQueryValue(HKEY hKey, LPCTSTR lpSubKey, LPTSTR lpValue, PLONG lpcbValue);
+LONG AFXAPI AfxRegSetValue(HKEY hKey, LPCTSTR lpSubKey, DWORD dwType,  LPCTSTR lpData, DWORD cbData);
+
+/// <summary>
+/// Deletes the specified registry key.</summary>
+/// <returns> 
+/// If the function succeeds, the return value is ERROR_SUCCESS. If the function fails, the return value is a nonzero error code defined in Winerror.h</returns>
+/// <param name="hKey">A handle to an open registry key.</param>
+/// <param name="lpSubKey">The name of the key to be deleted.</param>
+/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+LONG AFXAPI AfxRegDeleteKey(HKEY hKey, LPCTSTR lpSubKey, CAtlTransactionManager* pTM = NULL);
 
 HDC AFXAPI AfxCreateDC(HGLOBAL hDevNames, HGLOBAL hDevMode);
 
+void AFXAPI AfxGetModuleFileName(HINSTANCE hInst, CString& strFileName);
 void AFXAPI AfxGetModuleShortFileName(HINSTANCE hInst, CString& strShortName);
 
 // Failure dialog helpers

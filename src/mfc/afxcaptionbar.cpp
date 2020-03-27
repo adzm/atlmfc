@@ -134,7 +134,10 @@ BOOL CMFCCaptionBar::Create(DWORD dwStyle, CWnd* pParentWnd, UINT uID, int nHeig
 	}
 	else if (pParentWnd->IsKindOf(RUNTIME_CLASS(CDialog)))
 	{
-		afxGlobalUtils.m_bDialogApp = TRUE;
+		if (pParentWnd->GetSafeHwnd() == AfxGetMainWnd()->GetSafeHwnd())
+		{
+			afxGlobalUtils.m_bDialogApp = TRUE;
+		}
 	}
 	else
 	{

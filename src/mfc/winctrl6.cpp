@@ -55,7 +55,6 @@ int CIPAddressCtrl::GetAddress(BYTE& nField0, BYTE& nField1, BYTE& nField2, BYTE
 	nField2 = (BYTE) THIRD_IPADDRESS(dwAddress);
 	nField3 = (BYTE) FOURTH_IPADDRESS(dwAddress);
 
-	//IA64: only four fields in an IP address, so an int won't overflow
 	return int(nRetVal);
 }
 
@@ -170,9 +169,7 @@ BOOL CReBarCtrl::SetImageList(CImageList* pImageList)
 
 BOOL CReBarCtrl::GetColorScheme(COLORSCHEME* lpcs) const
 {
-	//IA64: sizeof(COLORSCHEME) should be way less than 4GB, so no overflow
 	lpcs->dwSize = ULONG(sizeof(COLORSCHEME));
-	//IA64: Returns non-zero if successful, so can't just truncate to 32 bits
 	return (::SendMessage(m_hWnd, RB_GETCOLORSCHEME, 0, (LPARAM)lpcs) != 0);
 }
 

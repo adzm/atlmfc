@@ -49,6 +49,24 @@
 #pragma component(minrebuild, off)
 #endif 
 
+#if defined(_MFC_DLL_BLD)
+
+#include <initguid.h>
+
+// Privately define DAO CLSIDs and GUIDs so we don't have to link against
+// DAOUUID.LIB.  That library was not built with the current compiler and
+// linker so it triggers BinScope warnings against the MFC DLLs.
+DEFINE_DAOGUID(CLSID_CDAODBEngine,   0x00000100);
+DEFINE_DAOGUID(IID_IDAODBEngine,     0x00000020);
+DEFINE_DAOGUID(IID_IDAODBEngineW,    0x00000021);
+DEFINE_OLEGUID(IID_ICDAORecordset,   0x00025e31, 0, 0);
+DEFINE_DAOGUID(IID_IDAOField,        0x00000050);
+DEFINE_DAOGUID(IID_IDAOFieldW,       0x00000051);
+DEFINE_DAOGUID(IID_IDAOIndexFields,  0x0000005C);
+DEFINE_DAOGUID(IID_IDAOIndexFieldsW, 0x0000005D);
+
+#else // _MFC_DLL_BLD
+
 #ifndef _AFX_NOFORCE_LIBS
 
 /////////////////////////////////////////////////////////////////////////////
@@ -57,6 +75,8 @@
 #pragma comment(lib, "daouuid.lib")
 
 #endif //!_AFX_NOFORCE_LIBS
+
+#endif // _MFC_DLL_BLD
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -118,6 +138,8 @@ struct CDaoErrorInfo
 	CString m_strHelpFile;
 	long m_lHelpContext;
 
+	virtual ~CDaoErrorInfo() {}
+
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
 #endif
@@ -129,6 +151,8 @@ struct CDaoWorkspaceInfo
 	CString m_strName;              // Primary
 	CString m_strUserName;          // Secondary
 	BOOL m_bIsolateODBCTrans;       // All
+
+	virtual ~CDaoWorkspaceInfo() {}
 
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
@@ -145,6 +169,8 @@ struct CDaoDatabaseInfo
 	long m_lCollatingOrder;         // Secondary
 	short m_nQueryTimeout;          // Secondary
 	CString m_strConnect;           // All
+
+	virtual ~CDaoDatabaseInfo() {}
 
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
@@ -164,6 +190,8 @@ struct CDaoTableDefInfo
 	CString m_strValidationRule;    // All
 	CString m_strValidationText;    // All
 	long m_lRecordCount;            // All
+
+	virtual ~CDaoTableDefInfo() {}
 
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
@@ -188,6 +216,8 @@ struct CDaoFieldInfo
 	CString m_strValidationText;    // All
 	CString m_strDefaultValue;      // All
 
+	virtual ~CDaoFieldInfo() {}
+
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
 #endif
@@ -198,6 +228,8 @@ struct CDaoIndexFieldInfo
 // Attributes
 	CString m_strName;              // Primary
 	BOOL m_bDescending;             // Primary
+
+	virtual ~CDaoIndexFieldInfo() {}
 
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
@@ -235,6 +267,8 @@ struct CDaoRelationFieldInfo
 // Attributes
 	CString m_strName;              // Primary
 	CString m_strForeignName;       // Primary
+
+	virtual ~CDaoRelationFieldInfo() {}
 
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
@@ -276,6 +310,8 @@ struct CDaoQueryDefInfo
 	CString m_strConnect;           // All
 	short m_nODBCTimeout;           // See readme
 
+	virtual ~CDaoQueryDefInfo() {}
+
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
 #endif
@@ -287,6 +323,8 @@ struct CDaoParameterInfo
 	CString m_strName;              // Primary
 	short m_nType;                  // Primary
 	COleVariant m_varValue;         // Secondary
+
+	virtual ~CDaoParameterInfo() {}
 
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;

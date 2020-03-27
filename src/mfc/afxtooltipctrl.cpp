@@ -10,7 +10,6 @@
 // All rights reserved.
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "afxtooltipctrl.h"
 
 #include "afxtoolbarimages.h"
@@ -20,6 +19,7 @@
 #include "afxvisualmanager.h"
 #include "afxoutlookbarpane.h"
 #include "afxribbonbutton.h"
+#include "afxribbonbar.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -238,6 +238,21 @@ void CMFCToolTipCtrl::OnShow(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 	if (nBottom > rectScreen.bottom)
 	{
 		y = ptCursor.y - cy - 1;
+		
+		if (m_pRibbonButton != NULL && m_ptLocation != CPoint(-1, -1))
+		{
+			ASSERT_VALID(m_pRibbonButton);
+
+			CMFCRibbonBar* pRibbon = m_pRibbonButton->GetTopLevelRibbonBar();
+			if (pRibbon->GetSafeHwnd() != NULL)
+			{
+				CRect rectRibbon;
+				pRibbon->GetWindowRect(rectRibbon);
+
+				y = rectRibbon.top - cy;
+			}
+		}
+
 		*pResult = 1;
 	}
 
@@ -676,6 +691,3 @@ int CMFCToolTipCtrl::GetFixedWidth()
 		return m_nFixedWidthWithImage;
 	}
 }
-
-
-

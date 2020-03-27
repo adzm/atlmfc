@@ -63,6 +63,7 @@ public:
 protected:
 	//{{AFX_MSG(CMFCLinkCtrl)
 	afx_msg BOOL OnClicked();
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

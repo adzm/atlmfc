@@ -14,6 +14,9 @@
 #include "afxmenubutton.h"
 #include "afxcontextmenumanager.h"
 #include "afxpopupmenu.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
+#include "afxdialogex.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -50,6 +53,7 @@ BEGIN_MESSAGE_MAP(CMFCMenuButton, CMFCButton)
 	ON_WM_LBUTTONUP()
 	ON_WM_KILLFOCUS()
 	ON_WM_LBUTTONDBLCLK()
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCMenuButton::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -147,12 +151,20 @@ void CMFCMenuButton::OnShowMenu()
 		m_nMenuResult = ::TrackPopupMenu(m_hMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, x, y, 0, GetSafeHwnd(), NULL);
 	}
 
+	CWnd* pParent = GetParent();
+
+#ifdef _DEBUG
+	if ((pParent->IsKindOf(RUNTIME_CLASS(CDialog))) && (!pParent->IsKindOf(RUNTIME_CLASS(CDialogEx))))
+	{
+		TRACE(_T("CMFCMenuButton parent is CDialog, should be CDialogEx for popup menu handling to work correctly.\n"));
+	}
+#endif
+
 	if (m_nMenuResult != 0)
 	{
 		//-------------------------------------------------------
 		// Trigger mouse up event(to button click notification):
 		//-------------------------------------------------------
-		CWnd* pParent = GetParent();
 		if (pParent != NULL)
 		{
 			pParent->SendMessage( WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(), BN_CLICKED), (LPARAM) m_hWnd);
@@ -290,4 +302,48 @@ void CMFCMenuButton::OnLButtonDblClk(UINT nFlags, CPoint point)
 	}
 }
 
+LRESULT CMFCMenuButton::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
 
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	BOOL bOSMenu = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_OSMenu, bOSMenu))
+	{
+		m_bOSMenu = bOSMenu;
+	}
+
+	BOOL bRightArrow = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_RightArrow, bRightArrow))
+	{
+		m_bRightArrow = bRightArrow;
+	}
+
+	BOOL bStayPressed = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_StayPressed, bStayPressed))
+	{
+		m_bStayPressed = bStayPressed;
+	}
+
+	BOOL bDefaultClick = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_DefaultClick, bDefaultClick))
+	{
+		m_bDefaultClick = bDefaultClick;
+	}
+
+	BOOL bAutosize = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_Autosize, bAutosize))
+	{
+		if (bAutosize)
+		{
+			SizeToContent();
+		}
+	}
+
+	return 0;
+}

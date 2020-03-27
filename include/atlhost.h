@@ -61,9 +61,18 @@ inline BOOL AtlAxWinTerm()
 UINT __declspec(selectany) WM_ATLGETHOST = 0;
 UINT __declspec(selectany) WM_ATLGETCONTROL = 0;
 
-typedef HRESULT (__stdcall *typeMkParseDisplayName)(IBindCtx*, LPCWSTR , ULONG*, LPMONIKER*);
-
-static HRESULT CreateNormalizedObject(LPCOLESTR lpszTricsData, REFIID riid, void** ppvObj, bool& bWasHTML, BSTR bstrLicKey)
+typedef HRESULT (__stdcall *typeMkParseDisplayName)(
+	_In_ IBindCtx*,
+	_In_z_ LPCWSTR ,
+	_Out_ ULONG*,
+	_Out_ LPMONIKER*);
+ATLPREFAST_SUPPRESS(6387)
+static HRESULT CreateNormalizedObject(
+	_In_opt_z_ LPCOLESTR lpszTricsData,
+	_In_ REFIID riid,
+	_Deref_out_ void** ppvObj,
+	_Out_ bool& bWasHTML,
+	_In_opt_z_ BSTR bstrLicKey)
 {
 	ATLASSERT(ppvObj);
 	if (ppvObj == NULL)
@@ -138,9 +147,9 @@ static HRESULT CreateNormalizedObject(LPCOLESTR lpszTricsData, REFIID riid, void
 	}
 	return hr;
 }
+ATLPREFAST_UNSUPPRESS()
 
-
-class ATL_NO_VTABLE CAxFrameWindow : 
+class ATL_NO_VTABLE CAxFrameWindow :
 	public CComObjectRootEx<CComObjectThreadModel>,
 	public CWindowImpl<CAxFrameWindow>,
 	public IOleInPlaceFrame
@@ -167,7 +176,7 @@ public:
 	DECLARE_EMPTY_MSG_MAP()
 
 // IOleWindow
-	STDMETHOD(GetWindow)(HWND* phwnd)
+	STDMETHOD(GetWindow)(_Out_ HWND* phwnd)
 	{
 		ATLASSERT(phwnd != NULL);
 		if (phwnd == NULL)
@@ -178,60 +187,69 @@ public:
 		*phwnd = m_hWnd;
 		return S_OK;
 	}
-	STDMETHOD(ContextSensitiveHelp)(BOOL /*fEnterMode*/)
+	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /*fEnterMode*/)
 	{
 		return S_OK;
 	}
 
 // IOleInPlaceUIWindow
-	STDMETHOD(GetBorder)(LPRECT /*lprectBorder*/)
+	STDMETHOD(GetBorder)(_In_ LPRECT /*lprectBorder*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(RequestBorderSpace)(LPCBORDERWIDTHS /*pborderwidths*/)
+	STDMETHOD(RequestBorderSpace)(_In_ LPCBORDERWIDTHS /*pborderwidths*/)
 	{
 		return INPLACE_E_NOTOOLSPACE;
 	}
 
-	STDMETHOD(SetBorderSpace)(LPCBORDERWIDTHS /*pborderwidths*/)
+	STDMETHOD(SetBorderSpace)(_In_ LPCBORDERWIDTHS /*pborderwidths*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(SetActiveObject)(IOleInPlaceActiveObject* pActiveObject, LPCOLESTR /*pszObjName*/)
+	STDMETHOD(SetActiveObject)(
+		_In_ IOleInPlaceActiveObject* pActiveObject,
+		_In_opt_z_ LPCOLESTR /*pszObjName*/)
 	{
 		m_spActiveObject = pActiveObject;
 		return S_OK;
 	}
 
 // IOleInPlaceFrameWindow
-	STDMETHOD(InsertMenus)(HMENU /*hmenuShared*/, LPOLEMENUGROUPWIDTHS /*lpMenuWidths*/)
+	STDMETHOD(InsertMenus)(
+		_In_ HMENU /*hmenuShared*/,
+		_Inout_ LPOLEMENUGROUPWIDTHS /*lpMenuWidths*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(SetMenu)(HMENU /*hmenuShared*/, HOLEMENU /*holemenu*/, HWND /*hwndActiveObject*/)
+	STDMETHOD(SetMenu)(
+		_In_ HMENU /*hmenuShared*/,
+		_In_ HOLEMENU /*holemenu*/,
+		_In_ HWND /*hwndActiveObject*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(RemoveMenus)(HMENU /*hmenuShared*/)
+	STDMETHOD(RemoveMenus)(_In_ HMENU /*hmenuShared*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(SetStatusText)(LPCOLESTR /*pszStatusText*/)
+	STDMETHOD(SetStatusText)(_In_opt_z_ LPCOLESTR /*pszStatusText*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(EnableModeless)(BOOL /*fEnable*/)
+	STDMETHOD(EnableModeless)(_In_ BOOL /*fEnable*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(TranslateAccelerator)(LPMSG /*lpMsg*/, WORD /*wID*/)
+	STDMETHOD(TranslateAccelerator)(
+		_In_ LPMSG /*lpMsg*/,
+		_In_ WORD /*wID*/)
 	{
 		return S_FALSE;
 	}
@@ -240,7 +258,7 @@ public:
 };
 
 
-class ATL_NO_VTABLE CAxUIWindow : 
+class ATL_NO_VTABLE CAxUIWindow :
 	public CComObjectRootEx<CComObjectThreadModel>,
 	public CWindowImpl<CAxUIWindow>,
 	public IOleInPlaceUIWindow
@@ -267,7 +285,7 @@ public:
 	DECLARE_EMPTY_MSG_MAP()
 
 // IOleWindow
-	STDMETHOD(GetWindow)(HWND* phwnd)
+	STDMETHOD(GetWindow)(_Out_ HWND* phwnd)
 	{
 		ATLENSURE_RETURN(phwnd);
 		if (m_hWnd == NULL)
@@ -276,28 +294,30 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(ContextSensitiveHelp)(BOOL /*fEnterMode*/)
+	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /*fEnterMode*/)
 	{
 		return S_OK;
 	}
 
 // IOleInPlaceUIWindow
-	STDMETHOD(GetBorder)(LPRECT /*lprectBorder*/)
+	STDMETHOD(GetBorder)(_In_ LPRECT /*lprectBorder*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(RequestBorderSpace)(LPCBORDERWIDTHS /*pborderwidths*/)
+	STDMETHOD(RequestBorderSpace)(_In_ LPCBORDERWIDTHS /*pborderwidths*/)
 	{
 		return INPLACE_E_NOTOOLSPACE;
 	}
 
-	STDMETHOD(SetBorderSpace)(LPCBORDERWIDTHS /*pborderwidths*/)
+	STDMETHOD(SetBorderSpace)(_In_ LPCBORDERWIDTHS /*pborderwidths*/)
 	{
 		return S_OK;
 	}
 
-	STDMETHOD(SetActiveObject)(IOleInPlaceActiveObject* pActiveObject, LPCOLESTR /*pszObjName*/)
+	STDMETHOD(SetActiveObject)(
+		_In_ IOleInPlaceActiveObject* pActiveObject,
+		_In_opt_z_ LPCOLESTR /*pszObjName*/)
 	{
 		m_spActiveObject = pActiveObject;
 		return S_OK;
@@ -311,7 +331,7 @@ public:
 // CAxHostWindow
 // This class is not cocreateable
 
-class ATL_NO_VTABLE CAxHostWindow : 
+class ATL_NO_VTABLE CAxHostWindow :
 		public CComCoClass<CAxHostWindow , &CLSID_NULL>,
 		public CComObjectRootEx<CComSingleThreadModel>,
 		public CWindowImpl<CAxHostWindow>,
@@ -343,7 +363,7 @@ public:
 		m_bCanWindowlessActivate = TRUE;
 		m_bUserMode = TRUE;
 		m_bDisplayAsDefault = FALSE;
-		m_clrBackground = NULL;
+		m_clrBackground = 0;
 		m_clrForeground = GetSysColor(COLOR_WINDOWTEXT);
 		m_lcidLocaleID = LOCALE_USER_DEFAULT;
 		m_bMessageReflect = true;
@@ -371,7 +391,7 @@ public:
 		ReleaseAll();
 	}
 
-	virtual void OnFinalMessage(HWND /*hWnd*/)
+	virtual void OnFinalMessage(_In_ HWND /*hWnd*/)
 	{
 		GetControllingUnknown()->Release();
 	}
@@ -431,7 +451,7 @@ public:
 			}
 			if (dwHitResult == HITRESULT_HIT)
 			{
-				MESSAGE_HANDLER(WM_MOUSEMOVE, OnWindowlessMouseMessage)				
+				MESSAGE_HANDLER(WM_MOUSEMOVE, OnWindowlessMouseMessage)
 				MESSAGE_HANDLER(WM_LBUTTONUP, OnWindowlessMouseMessage)
 				MESSAGE_HANDLER(WM_RBUTTONUP, OnWindowlessMouseMessage)
 				MESSAGE_HANDLER(WM_MBUTTONUP, OnWindowlessMouseMessage)
@@ -472,9 +492,13 @@ public:
 		MESSAGE_HANDLER(WM_FORWARDMSG, OnForwardMsg)
 	END_MSG_MAP()
 
-	LRESULT OnForwardMsg(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
+	LRESULT OnForwardMsg(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& /*bHandled*/)
 	{
-		ATLASSERT(lParam != 0);
+		ATLASSUME(lParam != 0);
 		LPMSG lpMsg = (LPMSG)lParam;
 		CComQIPtr<IOleInPlaceActiveObject, &__uuidof(IOleInPlaceActiveObject)> spInPlaceActiveObject(m_spUnknown);
 		if(spInPlaceActiveObject)
@@ -485,13 +509,21 @@ public:
 		return 0;
 	}
 
-	LRESULT OnGetUnknown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+	LRESULT OnGetUnknown(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Inout_ BOOL& /*bHandled*/)
 	{
 		IUnknown* pUnk = GetControllingUnknown();
 		pUnk->AddRef();
 		return (LRESULT)pUnk;
 	}
-	LRESULT OnGetControl(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+	LRESULT OnGetControl(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Inout_ BOOL& /*bHandled*/)
 	{
 		IUnknown* pUnk = m_spUnknown;
 		if (pUnk)
@@ -553,9 +585,12 @@ public:
 		}
 	}
 
-
 // window message handlers
-	LRESULT OnEraseBackground(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnEraseBackground(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Inout_ BOOL& bHandled)
 	{
 		if (m_spViewObject == NULL)
 			bHandled = false;
@@ -563,7 +598,11 @@ public:
 		return 1;
 	}
 
-	LRESULT OnMouseActivate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnMouseActivate(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Inout_ BOOL& bHandled)
 	{
 		bHandled = FALSE;
 		if (m_dwMiscStatus & OLEMISC_NOUIACTIVATE)
@@ -578,12 +617,16 @@ public:
 		}
 		else
 		{
-			BOOL b;
+			BOOL b = false;
 			OnSetFocus(0, 0, 0, b);
 		}
 		return 0;
 	}
-	LRESULT OnSetFocus(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnSetFocus(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Inout_ BOOL& bHandled)
 	{
 		m_bHaveFocus = TRUE;
 		if (!m_bReleaseAll)
@@ -603,13 +646,21 @@ public:
 		bHandled = FALSE;
 		return 0;
 	}
-	LRESULT OnKillFocus(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnKillFocus(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Inout_ BOOL& bHandled)
 	{
 		m_bHaveFocus = FALSE;
 		bHandled = FALSE;
 		return 0;
 	}
-	LRESULT OnSize(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled)
+	LRESULT OnSize(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& bHandled)
 	{
 		int nWidth = GET_X_LPARAM(lParam);  // width of client area
 		int nHeight = GET_Y_LPARAM(lParam); // height of client area
@@ -629,7 +680,11 @@ public:
 		bHandled = FALSE;
 		return 0;
 	}
-	LRESULT OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT OnDestroy(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& bHandled)
 	{
 		GetControllingUnknown()->AddRef();
 		DefWindowProc(uMsg, wParam, lParam);
@@ -637,7 +692,11 @@ public:
 		bHandled = FALSE;
 		return 0;
 	}
-	LRESULT OnWindowMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT OnWindowMessage(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& bHandled)
 	{
 		LRESULT lRes = 0;
 		HRESULT hr = S_FALSE;
@@ -647,7 +706,11 @@ public:
 			bHandled = FALSE;
 		return lRes;
 	}
-	LRESULT OnWindowlessMouseMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT OnWindowlessMouseMessage(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& bHandled)
 	{
 		LRESULT lRes = 0;
 		if (m_bInPlaceActive && m_bWindowless && m_spInPlaceObjectWindowless)
@@ -655,7 +718,11 @@ public:
 		bHandled = FALSE;
 		return lRes;
 	}
-	LRESULT OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnPaint(
+		_In_ UINT /*uMsg*/,
+		_In_ WPARAM /*wParam*/,
+		_In_ LPARAM /*lParam*/,
+		_Inout_ BOOL& bHandled)
 	{
 		if (m_spViewObject == NULL)
 		{
@@ -691,7 +758,7 @@ public:
 				HDC hdcCompatible = ::CreateCompatibleDC(hdc);
 				if (hdcCompatible != NULL)
 				{
-					HBITMAP hBitmapOld = (HBITMAP)SelectObject(hdcCompatible, hBitmap); 
+					HBITMAP hBitmapOld = (HBITMAP)SelectObject(hdcCompatible, hBitmap);
 					if (hBitmapOld != NULL)
 					{
 						HBRUSH hbrBack = CreateSolidBrush(m_clrBackground);
@@ -700,11 +767,11 @@ public:
 							FillRect(hdcCompatible, &rcClient, hbrBack);
 							DeleteObject(hbrBack);
 
-							m_spViewObject->Draw(DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdcCompatible, (RECTL*)&m_rcPos, (RECTL*)&m_rcPos, NULL, NULL); 
+							m_spViewObject->Draw(DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdcCompatible, (RECTL*)&m_rcPos, (RECTL*)&m_rcPos, NULL, 0);
 
 							::BitBlt(hdc, 0, 0, rcClient.right, rcClient.bottom,  hdcCompatible, 0, 0, SRCCOPY);
 						}
-						::SelectObject(hdcCompatible, hBitmapOld); 
+						::SelectObject(hdcCompatible, hBitmapOld);
 					}
 					::DeleteDC(hdcCompatible);
 				}
@@ -721,16 +788,27 @@ public:
 	}
 
 // IAxWinHostWindow
-	STDMETHOD(CreateControl)(LPCOLESTR lpTricsData, HWND hWnd, IStream* pStream)
+	STDMETHOD(CreateControl)(
+		_In_z_ LPCOLESTR lpTricsData,
+		_In_ HWND hWnd,
+		_Inout_opt_ IStream* pStream)
 	{
 		CComPtr<IUnknown> p;
 		return CreateControlLicEx(lpTricsData, hWnd, pStream, &p, IID_NULL, NULL, NULL);
 	}
-	STDMETHOD(CreateControlEx)(LPCOLESTR lpszTricsData, HWND hWnd, IStream* pStream, IUnknown** ppUnk, REFIID iidAdvise, IUnknown* punkSink)
+	STDMETHOD(CreateControlEx)(
+		_In_z_ LPCOLESTR lpszTricsData,
+		_In_ HWND hWnd,
+		_Inout_opt_ IStream* pStream,
+		_Deref_out_ IUnknown** ppUnk,
+		_In_ REFIID iidAdvise,
+		_Inout_ IUnknown* punkSink)
 	{
 		return CreateControlLicEx(lpszTricsData, hWnd, pStream, ppUnk, iidAdvise, punkSink, NULL);
 	}
-	STDMETHOD(AttachControl)(IUnknown* pUnkControl, HWND hWnd)
+	STDMETHOD(AttachControl)(
+		_Inout_ IUnknown* pUnkControl,
+		_In_ HWND hWnd)
 	{
 		HRESULT hr = S_FALSE;
 
@@ -768,7 +846,11 @@ public:
 		}
 		return hr;
 	}
-	STDMETHOD(QueryControl)(REFIID riid, void** ppvObject)
+	
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(QueryControl)(
+		_In_ REFIID riid,
+		_Deref_out_ void** ppvObject)
 	{
 		HRESULT hr = E_POINTER;
 		if (ppvObject)
@@ -785,12 +867,14 @@ public:
 		}
 		return hr;
 	}
-	STDMETHOD(SetExternalDispatch)(IDispatch* pDisp)
+ATLPREFAST_UNSUPPRESS()
+	
+	STDMETHOD(SetExternalDispatch)(_In_opt_ IDispatch* pDisp)
 	{
 		m_spExternalDispatch = pDisp;
 		return S_OK;
 	}
-	STDMETHOD(SetExternalUIHandler)(IDocHostUIHandlerDispatch* pUIHandler)
+	STDMETHOD(SetExternalUIHandler)(_In_opt_ IDocHostUIHandlerDispatch* pUIHandler)
 	{
 #ifndef _ATL_NO_DOCHOSTUIHANDLER
 		m_spIDocHostUIHandlerDispatch = pUIHandler;
@@ -798,12 +882,26 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(CreateControlLic)(LPCOLESTR lpTricsData, HWND hWnd, IStream* pStream, BSTR bstrLic)
+ATLPREFAST_SUPPRESS(6387)
+	
+	STDMETHOD(CreateControlLic)(
+		_In_z_ LPCOLESTR lpTricsData,
+		_In_ HWND hWnd,
+		_Inout_opt_ IStream* pStream,
+		_In_opt_z_ BSTR bstrLic)
 	{
 		CComPtr<IUnknown> p;
 		return CreateControlLicEx(lpTricsData, hWnd, pStream, &p, IID_NULL, NULL, bstrLic);
 	}
-	STDMETHOD(CreateControlLicEx)(LPCOLESTR lpszTricsData, HWND hWnd, IStream* pStream, IUnknown** ppUnk, REFIID iidAdvise, IUnknown* punkSink, BSTR bstrLic)
+
+	_Success_(return == S_OK) STDMETHOD(CreateControlLicEx)(
+		_In_z_ LPCOLESTR lpszTricsData,
+		_In_ HWND hWnd,
+		_Inout_opt_ IStream* pStream,
+		_Deref_out_ IUnknown** ppUnk,
+		_In_ REFIID iidAdvise,
+		_Inout_opt_ IUnknown* punkSink,
+		_In_opt_z_ BSTR bstrLic)
 	{
 		ATLASSERT(ppUnk != NULL);
 		if (ppUnk == NULL)
@@ -827,7 +925,7 @@ public:
 				SubclassWindow(hWnd);
 				bReleaseWindowOnFailure = true;
 			}
-			if (m_clrBackground == NULL)
+			if (m_clrBackground == 0)
 			{
 				if (IsParentDialog())
 				{
@@ -844,7 +942,7 @@ public:
 			hr = CreateNormalizedObject(lpszTricsData, __uuidof(IUnknown), (void**)ppUnk, bWasHTML, bstrLic);
 
 			if (SUCCEEDED(hr))
-			{
+			{			
 				hr = ActivateAx(*ppUnk, false, pStream);
 			}
 
@@ -934,13 +1032,16 @@ public:
 		}
 		return hr;
 	}
-
-
-
+ATLPREFAST_UNSUPPRESS()
+	
 #ifndef _ATL_NO_DOCHOSTUIHANDLER
-// IDocHostUIHandler
+	// IDocHostUIHandler
 	// MSHTML requests to display its context menu
-	STDMETHOD(ShowContextMenu)(DWORD dwID, POINT* pptPosition, IUnknown* pCommandTarget, IDispatch* pDispatchObjectHit)
+	STDMETHOD(ShowContextMenu)(
+		_In_ DWORD dwID,
+		_In_ POINT* pptPosition,
+		_In_ IUnknown* pCommandTarget,
+		_Inout_ IDispatch* pDispatchObjectHit)
 	{
 		HRESULT hr = m_bAllowContextMenu ? S_FALSE : S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -954,7 +1055,7 @@ public:
 		return hr;
 	}
 	// Called at initialisation to find UI styles from container
-	STDMETHOD(GetHostInfo)(DOCHOSTUIINFO* pInfo)
+	STDMETHOD(GetHostInfo)(_Inout_ DOCHOSTUIINFO* pInfo)
 	{
 		if (pInfo == NULL)
 			return E_POINTER;
@@ -967,21 +1068,26 @@ public:
 
 		return S_OK;
 	}
-	// Allows the host to replace the IE4/MSHTML menus and toolbars. 
-	STDMETHOD(ShowUI)(DWORD dwID, IOleInPlaceActiveObject* pActiveObject, IOleCommandTarget* pCommandTarget, IOleInPlaceFrame* pFrame, IOleInPlaceUIWindow* pDoc)
+	// Allows the host to replace the IE4/MSHTML menus and toolbars.
+	STDMETHOD(ShowUI)(
+		_In_ DWORD dwID,
+		_Inout_ IOleInPlaceActiveObject* pActiveObject,
+		_Inout_ IOleCommandTarget* pCommandTarget,
+		_Inout_ IOleInPlaceFrame* pFrame,
+		_Inout_ IOleInPlaceUIWindow* pDoc)
 	{
 		HRESULT hr = m_bAllowShowUI ? S_FALSE : S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
 			m_spIDocHostUIHandlerDispatch->ShowUI(
 				dwID,
-				pActiveObject, 
-				pCommandTarget, 
-				pFrame, 
+				pActiveObject,
+				pCommandTarget,
+				pFrame,
 				pDoc,
 				&hr);
 		return hr;
 	}
-	// Called when IE4/MSHTML removes its menus and toolbars. 
+	// Called when IE4/MSHTML removes its menus and toolbars.
 	STDMETHOD(HideUI)()
 	{
 		HRESULT hr = S_OK;
@@ -989,7 +1095,7 @@ public:
 			hr = m_spIDocHostUIHandlerDispatch->HideUI();
 		return hr;
 	}
-	// Notifies the host that the command state has changed. 
+	// Notifies the host that the command state has changed.
 	STDMETHOD(UpdateUI)()
 	{
 		HRESULT hr = S_OK;
@@ -998,7 +1104,7 @@ public:
 		return hr;
 	}
 	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::EnableModeless
-	STDMETHOD(EnableModeless)(BOOL fEnable)
+	STDMETHOD(EnableModeless)(_In_ BOOL fEnable)
 	{
 		HRESULT hr = S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1006,15 +1112,15 @@ public:
 		return hr;
 	}
 	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::OnDocWindowActivate
-	STDMETHOD(OnDocWindowActivate)(BOOL fActivate)
+	STDMETHOD(OnDocWindowActivate)(_In_ BOOL fActivate)
 	{
 		HRESULT hr = S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
 			hr = m_spIDocHostUIHandlerDispatch->OnDocWindowActivate(fActivate ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE);
 		return hr;
 	}
-	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::OnFrameWindowActivate. 
-	STDMETHOD(OnFrameWindowActivate)(BOOL fActivate)
+	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::OnFrameWindowActivate.
+	STDMETHOD(OnFrameWindowActivate)(_In_ BOOL fActivate)
 	{
 		HRESULT hr = S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1022,7 +1128,10 @@ public:
 		return hr;
 	}
 	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::ResizeBorder.
-	STDMETHOD(ResizeBorder)(LPCRECT prcBorder, IOleInPlaceUIWindow* pUIWindow, BOOL fFrameWindow)
+	STDMETHOD(ResizeBorder)(
+		_In_ LPCRECT prcBorder,
+		_Inout_ IOleInPlaceUIWindow* pUIWindow,
+		_In_ BOOL fFrameWindow)
 	{
 		HRESULT hr = S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1035,8 +1144,11 @@ public:
 				fFrameWindow ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE);
 		return hr;
 	}
-	// Called by IE4/MSHTML when IOleInPlaceActiveObject::TranslateAccelerator or IOleControlSite::TranslateAccelerator is called. 
-	STDMETHOD(TranslateAccelerator)(LPMSG lpMsg, const GUID* pguidCmdGroup, DWORD nCmdID)
+	// Called by IE4/MSHTML when IOleInPlaceActiveObject::TranslateAccelerator or IOleControlSite::TranslateAccelerator is called.
+	STDMETHOD(TranslateAccelerator)(
+		_In_ LPMSG lpMsg,
+		_In_ const GUID* pguidCmdGroup,
+		_In_ DWORD nCmdID)
 	{
 		HRESULT hr = S_FALSE;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1045,14 +1157,16 @@ public:
 				lpMsg->message,
 				lpMsg->wParam,
 				lpMsg->lParam,
-				CComBSTR(*pguidCmdGroup), 
+				CComBSTR(*pguidCmdGroup),
 				nCmdID,
 				&hr);
 		return hr;
 	}
-	// Returns the registry key under which IE4/MSHTML stores user preferences. 
+	// Returns the registry key under which IE4/MSHTML stores user preferences.
 	// Returns S_OK if successful, or S_FALSE otherwise. If S_FALSE, IE4/MSHTML will default to its own user options.
-	STDMETHOD(GetOptionKeyPath)(_Deref_out_opt_z_ LPOLESTR* pchKey, DWORD dwReserved)
+	STDMETHOD(GetOptionKeyPath)(
+		_Deref_out_opt_z_ LPOLESTR* pchKey,
+		_In_ DWORD dwReserved)
 	{
 		HRESULT hr = S_FALSE;
 		ATLENSURE_RETURN_VAL(pchKey, E_POINTER);
@@ -1083,8 +1197,11 @@ public:
 		}
 		return hr;
 	}
+ATLPREFAST_SUPPRESS(6387)
 	// Called by IE4/MSHTML when it is being used as a drop target to allow the host to supply an alternative IDropTarget
-	STDMETHOD(GetDropTarget)(IDropTarget* pDropTarget, IDropTarget** ppDropTarget)
+	STDMETHOD(GetDropTarget)(
+		_Inout_ IDropTarget* pDropTarget,
+		_Deref_out_ IDropTarget** ppDropTarget)
 	{
 		ATLASSERT(ppDropTarget != NULL);
 		if (ppDropTarget == NULL)
@@ -1109,8 +1226,11 @@ public:
 		}
 		return hr;
 	}
+ATLPREFAST_UNSUPPRESS()
+	
+ATLPREFAST_SUPPRESS(6387)
 	// Called by IE4/MSHTML to obtain the host's IDispatch interface
-	STDMETHOD(GetExternal)(IDispatch** ppDispatch)
+	STDMETHOD(GetExternal)(_Deref_out_ IDispatch** ppDispatch)
 	{
 		ATLASSERT(ppDispatch != NULL);
 		if (ppDispatch == NULL)
@@ -1136,8 +1256,13 @@ public:
 		}
 		return hr;
 	}
+ATLPREFAST_UNSUPPRESS()
+	
 	// Called by IE4/MSHTML to allow the host an opportunity to modify the URL to be loaded
-	STDMETHOD(TranslateUrl)(DWORD dwTranslate, _In_z_ OLECHAR* pchURLIn, _Deref_out_opt_z_ OLECHAR** ppchURLOut)
+	STDMETHOD(TranslateUrl)(
+		_In_ DWORD dwTranslate,
+		_In_z_ OLECHAR* pchURLIn,
+		_Deref_out_opt_z_ OLECHAR** ppchURLOut)
 	{
 		ATLENSURE_RETURN_VAL(ppchURLOut, E_POINTER);
 		*ppchURLOut = NULL;
@@ -1165,8 +1290,10 @@ public:
 		return hr;
 	}
 	// Called on the host by IE4/MSHTML to allow the host to replace IE4/MSHTML's data object.
-	// This allows the host to block certain clipboard formats or support additional clipboard formats. 
-	STDMETHOD(FilterDataObject)(IDataObject* pDO, IDataObject** ppDORet)
+	// This allows the host to block certain clipboard formats or support additional clipboard formats.
+	STDMETHOD(FilterDataObject)(
+		_Inout_ IDataObject* pDO,
+		_Deref_out_opt_ IDataObject** ppDORet)
 	{
 		ATLASSERT(ppDORet != NULL);
 		if (ppDORet == NULL)
@@ -1187,7 +1314,7 @@ public:
 	}
 #endif
 
-	HRESULT FireAmbientPropertyChange(DISPID dispChanged)
+	HRESULT FireAmbientPropertyChange(_In_ DISPID dispChanged)
 	{
 		HRESULT hr = S_OK;
 		CComQIPtr<IOleControl, &__uuidof(IOleControl)> spOleControl(m_spUnknown);
@@ -1196,12 +1323,18 @@ public:
 		return hr;
 	}
 
-// IAxWinAmbientDispatch
-
+	// IAxWinAmbientDispatch
 	CComPtr<IDispatch> m_spAmbientDispatch;
 
-	STDMETHOD(Invoke)(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-			VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+	STDMETHOD(Invoke)(
+		_In_ DISPID dispIdMember,
+		_In_ REFIID riid,
+		_In_ LCID lcid,
+		_In_ WORD wFlags,
+		_In_ DISPPARAMS *pDispParams,
+		_Out_opt_ VARIANT *pVarResult,
+		_Out_opt_ EXCEPINFO *pExcepInfo,
+		_Out_opt_ UINT *puArgErr)
 	{
 		HRESULT hr = IDispatchImpl<IAxWinAmbientDispatchEx, &__uuidof(IAxWinAmbientDispatchEx), &CAtlModule::m_libid, 0xFFFF, 0xFFFF>::Invoke
 			(dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
@@ -1216,12 +1349,12 @@ public:
 		return hr;
 	}
 
-	STDMETHOD(put_AllowWindowlessActivation)(VARIANT_BOOL bAllowWindowless)
+	STDMETHOD(put_AllowWindowlessActivation)(_In_ VARIANT_BOOL bAllowWindowless)
 	{
 		m_bCanWindowlessActivate = bAllowWindowless;
 		return S_OK;
 	}
-	STDMETHOD(get_AllowWindowlessActivation)(VARIANT_BOOL* pbAllowWindowless)
+	STDMETHOD(get_AllowWindowlessActivation)(_Out_ VARIANT_BOOL* pbAllowWindowless)
 	{
 		ATLASSERT(pbAllowWindowless != NULL);
 		if (pbAllowWindowless == NULL)
@@ -1230,14 +1363,14 @@ public:
 		*pbAllowWindowless = m_bCanWindowlessActivate ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(put_BackColor)(OLE_COLOR clrBackground)
+	STDMETHOD(put_BackColor)(_In_ OLE_COLOR clrBackground)
 	{
 		m_clrBackground = clrBackground;
 		FireAmbientPropertyChange(DISPID_AMBIENT_BACKCOLOR);
 		InvalidateRect(0, FALSE);
 		return S_OK;
 	}
-	STDMETHOD(get_BackColor)(OLE_COLOR* pclrBackground)
+	STDMETHOD(get_BackColor)(_Out_ OLE_COLOR* pclrBackground)
 	{
 		ATLASSERT(pclrBackground != NULL);
 		if (pclrBackground == NULL)
@@ -1246,13 +1379,13 @@ public:
 		*pclrBackground = m_clrBackground;
 		return S_OK;
 	}
-	STDMETHOD(put_ForeColor)(OLE_COLOR clrForeground)
+	STDMETHOD(put_ForeColor)(_In_ OLE_COLOR clrForeground)
 	{
 		m_clrForeground = clrForeground;
 		FireAmbientPropertyChange(DISPID_AMBIENT_FORECOLOR);
 		return S_OK;
 	}
-	STDMETHOD(get_ForeColor)(OLE_COLOR* pclrForeground)
+	STDMETHOD(get_ForeColor)(_Out_ OLE_COLOR* pclrForeground)
 	{
 		ATLASSERT(pclrForeground != NULL);
 		if (pclrForeground == NULL)
@@ -1261,13 +1394,13 @@ public:
 		*pclrForeground = m_clrForeground;
 		return S_OK;
 	}
-	STDMETHOD(put_LocaleID)(LCID lcidLocaleID)
+	STDMETHOD(put_LocaleID)(_In_ LCID lcidLocaleID)
 	{
 		m_lcidLocaleID = lcidLocaleID;
 		FireAmbientPropertyChange(DISPID_AMBIENT_LOCALEID);
 		return S_OK;
 	}
-	STDMETHOD(get_LocaleID)(LCID* plcidLocaleID)
+	STDMETHOD(get_LocaleID)(_Out_ LCID* plcidLocaleID)
 	{
 		ATLASSERT(plcidLocaleID != NULL);
 		if (plcidLocaleID == NULL)
@@ -1276,13 +1409,13 @@ public:
 		*plcidLocaleID = m_lcidLocaleID;
 		return S_OK;
 	}
-	STDMETHOD(put_UserMode)(VARIANT_BOOL bUserMode)
+	STDMETHOD(put_UserMode)(_In_ VARIANT_BOOL bUserMode)
 	{
 		m_bUserMode = bUserMode;
 		FireAmbientPropertyChange(DISPID_AMBIENT_USERMODE);
 		return S_OK;
 	}
-	STDMETHOD(get_UserMode)(VARIANT_BOOL* pbUserMode)
+	STDMETHOD(get_UserMode)(_Out_ VARIANT_BOOL* pbUserMode)
 	{
 		ATLASSERT(pbUserMode != NULL);
 		if (pbUserMode == NULL)
@@ -1291,13 +1424,13 @@ public:
 		*pbUserMode = m_bUserMode ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(put_DisplayAsDefault)(VARIANT_BOOL bDisplayAsDefault)
+	STDMETHOD(put_DisplayAsDefault)(_In_ VARIANT_BOOL bDisplayAsDefault)
 	{
 		m_bDisplayAsDefault = bDisplayAsDefault;
 		FireAmbientPropertyChange(DISPID_AMBIENT_DISPLAYASDEFAULT);
 		return S_OK;
 	}
-	STDMETHOD(get_DisplayAsDefault)(VARIANT_BOOL* pbDisplayAsDefault)
+	STDMETHOD(get_DisplayAsDefault)(_Out_ VARIANT_BOOL* pbDisplayAsDefault)
 	{
 		ATLASSERT(pbDisplayAsDefault != NULL);
 		if (pbDisplayAsDefault == NULL)
@@ -1306,13 +1439,13 @@ public:
 		*pbDisplayAsDefault = m_bDisplayAsDefault ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(put_Font)(IFontDisp* pFont)
+	STDMETHOD(put_Font)(_In_ IFontDisp* pFont)
 	{
 		m_spFont = pFont;
 		FireAmbientPropertyChange(DISPID_AMBIENT_FONT);
 		return S_OK;
 	}
-	STDMETHOD(get_Font)(IFontDisp** pFont)
+	STDMETHOD(get_Font)(_Deref_out_opt_ IFontDisp** pFont)
 	{
 		ATLASSERT(pFont != NULL);
 		if (pFont == NULL)
@@ -1368,15 +1501,14 @@ public:
 
 		return m_spFont.CopyTo(pFont);
 	}
-	STDMETHOD(put_MessageReflect)(VARIANT_BOOL bMessageReflect)
+	STDMETHOD(put_MessageReflect)(_In_ VARIANT_BOOL bMessageReflect)
 	{
 		m_bMessageReflect = bMessageReflect;
 		FireAmbientPropertyChange(DISPID_AMBIENT_MESSAGEREFLECT);
 		return S_OK;
 	}
-	STDMETHOD(get_MessageReflect)(VARIANT_BOOL* pbMessageReflect)
+	STDMETHOD(get_MessageReflect)(_Out_ VARIANT_BOOL* pbMessageReflect)
 	{
-
 		ATLASSERT(pbMessageReflect != NULL);
 		if (pbMessageReflect == NULL)
 			return E_POINTER;
@@ -1384,12 +1516,12 @@ public:
 		*pbMessageReflect = m_bMessageReflect ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(get_ShowGrabHandles)(VARIANT_BOOL* pbShowGrabHandles)
+	STDMETHOD(get_ShowGrabHandles)(_Out_ VARIANT_BOOL* pbShowGrabHandles)
 	{
 		*pbShowGrabHandles = ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(get_ShowHatching)(VARIANT_BOOL* pbShowHatching)
+	STDMETHOD(get_ShowHatching)(_Out_ VARIANT_BOOL* pbShowHatching)
 	{
 		ATLASSERT(pbShowHatching != NULL);
 		if (pbShowHatching == NULL)
@@ -1398,13 +1530,13 @@ public:
 		*pbShowHatching = ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(put_DocHostFlags)(DWORD dwDocHostFlags)
+	STDMETHOD(put_DocHostFlags)(_In_ DWORD dwDocHostFlags)
 	{
 		m_dwDocHostFlags = dwDocHostFlags;
 		FireAmbientPropertyChange(DISPID_UNKNOWN);
 		return S_OK;
 	}
-	STDMETHOD(get_DocHostFlags)(DWORD* pdwDocHostFlags)
+	STDMETHOD(get_DocHostFlags)(_Out_ DWORD* pdwDocHostFlags)
 	{
 		ATLASSERT(pdwDocHostFlags != NULL);
 		if (pdwDocHostFlags == NULL)
@@ -1413,12 +1545,12 @@ public:
 		*pdwDocHostFlags = m_dwDocHostFlags;
 		return S_OK;
 	}
-	STDMETHOD(put_DocHostDoubleClickFlags)(DWORD dwDocHostDoubleClickFlags)
+	STDMETHOD(put_DocHostDoubleClickFlags)(_In_ DWORD dwDocHostDoubleClickFlags)
 	{
 		m_dwDocHostDoubleClickFlags = dwDocHostDoubleClickFlags;
 		return S_OK;
 	}
-	STDMETHOD(get_DocHostDoubleClickFlags)(DWORD* pdwDocHostDoubleClickFlags)
+	STDMETHOD(get_DocHostDoubleClickFlags)(_Out_ DWORD* pdwDocHostDoubleClickFlags)
 	{
 		ATLASSERT(pdwDocHostDoubleClickFlags != NULL);
 		if (pdwDocHostDoubleClickFlags == NULL)
@@ -1427,12 +1559,12 @@ public:
 		*pdwDocHostDoubleClickFlags = m_dwDocHostDoubleClickFlags;
 		return S_OK;
 	}
-	STDMETHOD(put_AllowContextMenu)(VARIANT_BOOL bAllowContextMenu)
+	STDMETHOD(put_AllowContextMenu)(_In_ VARIANT_BOOL bAllowContextMenu)
 	{
 		m_bAllowContextMenu = bAllowContextMenu;
 		return S_OK;
 	}
-	STDMETHOD(get_AllowContextMenu)(VARIANT_BOOL* pbAllowContextMenu)
+	STDMETHOD(get_AllowContextMenu)(_Out_ VARIANT_BOOL* pbAllowContextMenu)
 	{
 		ATLASSERT(pbAllowContextMenu != NULL);
 		if (pbAllowContextMenu == NULL)
@@ -1441,12 +1573,12 @@ public:
 		*pbAllowContextMenu = m_bAllowContextMenu ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(put_AllowShowUI)(VARIANT_BOOL bAllowShowUI)
+	STDMETHOD(put_AllowShowUI)(_In_ VARIANT_BOOL bAllowShowUI)
 	{
 		m_bAllowShowUI = bAllowShowUI;
 		return S_OK;
 	}
-	STDMETHOD(get_AllowShowUI)(VARIANT_BOOL* pbAllowShowUI)
+	STDMETHOD(get_AllowShowUI)(_Out_ VARIANT_BOOL* pbAllowShowUI)
 	{
 		ATLASSERT(pbAllowShowUI != NULL);
 		if (pbAllowShowUI == NULL)
@@ -1455,12 +1587,12 @@ public:
 		*pbAllowShowUI = m_bAllowShowUI ? ATL_VARIANT_TRUE : ATL_VARIANT_FALSE;
 		return S_OK;
 	}
-	STDMETHOD(put_OptionKeyPath)(BSTR bstrOptionKeyPath) throw()
+	STDMETHOD(put_OptionKeyPath)(_In_z_ BSTR bstrOptionKeyPath) throw()
 	{
 		m_bstrOptionKeyPath = bstrOptionKeyPath;
 		return S_OK;
 	}
-	STDMETHOD(get_OptionKeyPath)(BSTR* pbstrOptionKeyPath)
+	STDMETHOD(get_OptionKeyPath)(_Deref_out_opt_z_ BSTR* pbstrOptionKeyPath)
 	{
 		ATLASSERT(pbstrOptionKeyPath != NULL);
 		if (pbstrOptionKeyPath == NULL)
@@ -1470,14 +1602,14 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(SetAmbientDispatch)(IDispatch* pDispatch)
+	STDMETHOD(SetAmbientDispatch)(_In_ IDispatch* pDispatch)
 	{
 		m_spAmbientDispatch = pDispatch;
 		return S_OK;
 	}
 
-// IObjectWithSite
-	STDMETHOD(SetSite)(IUnknown* pUnkSite)
+	// IObjectWithSite
+	STDMETHOD(SetSite)(_Inout_opt_ IUnknown* pUnkSite)
 	{
 		HRESULT hr = IObjectWithSiteImpl<CAxHostWindow>::SetSite(pUnkSite);
 
@@ -1494,16 +1626,19 @@ public:
 		return hr;
 	}
 
-// IOleClientSite
+	// IOleClientSite
 	STDMETHOD(SaveObject)()
 	{
 		ATLTRACENOTIMPL(_T("IOleClientSite::SaveObject"));
 	}
-	STDMETHOD(GetMoniker)(DWORD /*dwAssign*/, DWORD /*dwWhichMoniker*/, IMoniker** /*ppmk*/)
+	STDMETHOD(GetMoniker)(
+		_In_ DWORD /*dwAssign*/,
+		_In_ DWORD /*dwWhichMoniker*/,
+		_In_opt_ IMoniker** /*ppmk*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleClientSite::GetMoniker"));
 	}
-	STDMETHOD(GetContainer)(IOleContainer** ppContainer)
+	STDMETHOD(GetContainer)(_Deref_out_ IOleContainer** ppContainer)
 	{
 		ATLTRACE(atlTraceHosting, 2, _T("IOleClientSite::GetContainer\n"));
 		ATLASSERT(ppContainer != NULL);
@@ -1528,11 +1663,11 @@ public:
 		if (hdc == NULL)
 			return E_FAIL;
 		if (m_spViewObject)
-			m_spViewObject->Draw(DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdc, (RECTL*)&m_rcPos, (RECTL*)&m_rcPos, NULL, NULL); 
+			m_spViewObject->Draw(DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdc, (RECTL*)&m_rcPos, (RECTL*)&m_rcPos, NULL, 0);
 		CWindowImpl<CAxHostWindow>::ReleaseDC(hdc);
 		return S_OK;
 	}
-	STDMETHOD(OnShowWindow)(BOOL /*fShow*/)
+	STDMETHOD(OnShowWindow)(_In_ BOOL /*fShow*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleClientSite::OnShowWindow"));
 	}
@@ -1541,14 +1676,14 @@ public:
 		ATLTRACENOTIMPL(_T("IOleClientSite::RequestNewObjectLayout"));
 	}
 
-// IOleInPlaceSite
-	STDMETHOD(GetWindow)(HWND* phwnd)
+	// IOleInPlaceSite
+	STDMETHOD(GetWindow)(_Out_ HWND* phwnd)
 	{
 		ATLENSURE_RETURN(phwnd);
 		*phwnd = m_hWnd;
 		return S_OK;
 	}
-	STDMETHOD(ContextSensitiveHelp)(BOOL /*fEnterMode*/)
+	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /*fEnterMode*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceSite::ContextSensitiveHelp"));
 	}
@@ -1574,7 +1709,13 @@ public:
 		m_bUIActive = TRUE;
 		return S_OK;
 	}
-	STDMETHOD(GetWindowContext)(IOleInPlaceFrame** ppFrame, IOleInPlaceUIWindow** ppDoc, LPRECT lprcPosRect, LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO pFrameInfo)
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(GetWindowContext)(
+		_Deref_out_ IOleInPlaceFrame** ppFrame,
+		_Deref_out_ IOleInPlaceUIWindow** ppDoc,
+		_Out_ LPRECT lprcPosRect,
+		_Out_ LPRECT lprcClipRect,
+		_Inout_ LPOLEINPLACEFRAMEINFO pFrameInfo)
 	{
 		if (ppFrame != NULL)
 			*ppFrame = NULL;
@@ -1595,6 +1736,7 @@ public:
 			{
 				return hRet;
 			}
+
 			pFrameWindow->QueryInterface(__uuidof(IOleInPlaceFrame), (void**) &m_spInPlaceFrame);
 			ATLASSUME(m_spInPlaceFrame);
 		}
@@ -1606,7 +1748,8 @@ public:
 			if(FAILED(hRet))
 			{
 				return hRet;
-			}
+			}		
+
 			pUIWindow->QueryInterface(__uuidof(IOleInPlaceUIWindow), (void**) &m_spInPlaceUIWindow);
 			ATLASSUME(m_spInPlaceUIWindow);
 		}
@@ -1637,11 +1780,13 @@ public:
 
 		return hr;
 	}
-	STDMETHOD(Scroll)(SIZE /*scrollExtant*/)
+ATLPREFAST_UNSUPPRESS()
+	
+	STDMETHOD(Scroll)(_In_ SIZE /*scrollExtant*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceSite::Scroll"));
 	}
-	STDMETHOD(OnUIDeactivate)(BOOL /*fUndoable*/)
+	STDMETHOD(OnUIDeactivate)(_In_ BOOL /*fUndoable*/)
 	{
 		ATLTRACE(atlTraceHosting, 2, _T("IOleInPlaceSite::OnUIDeactivate\n"));
 		m_bUIActive = FALSE;
@@ -1661,8 +1806,8 @@ public:
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceSite::DeactivateAndUndo"));
 	}
-	STDMETHOD(OnPosRectChange)(LPCRECT lprcPosRect)
-	{		
+	STDMETHOD(OnPosRectChange)(_In_ LPCRECT lprcPosRect)
+	{
 		ATLTRACE2(atlTraceHosting, 0, 	_T("IOleInPlaceSite::OnPosRectChange"));
 		if (lprcPosRect==NULL) { return E_POINTER; }
 
@@ -1684,12 +1829,14 @@ public:
 		}
 		// Do the actual move.
 		MoveWindow( &rect);
-		
-		return S_OK;	
+
+		return S_OK;
 	}
 
 // IOleInPlaceSiteEx
-	STDMETHOD(OnInPlaceActivateEx)(BOOL* /*pfNoRedraw*/, DWORD dwFlags)
+	STDMETHOD(OnInPlaceActivateEx)(
+		_In_opt_ BOOL* /*pfNoRedraw*/,
+		_In_ DWORD dwFlags)
 	{
 		// should only be called once the first time control is inplace-activated
 		ATLASSUME(m_bInPlaceActive == FALSE);
@@ -1712,7 +1859,7 @@ public:
 			m_spInPlaceObjectWindowless->SetObjectRects(&m_rcPos, &m_rcPos);
 		return S_OK;
 	}
-	STDMETHOD(OnInPlaceDeactivateEx)(BOOL /*fNoRedraw*/)
+	STDMETHOD(OnInPlaceDeactivateEx)(_In_ BOOL /*fNoRedraw*/)
 	{
 		m_bInPlaceActive = FALSE;
 		m_spInPlaceObjectWindowless.Release();
@@ -1735,7 +1882,7 @@ public:
 	{
 		return m_bCapture ? S_OK : S_FALSE;
 	}
-	STDMETHOD(SetCapture)(BOOL fCapture)
+	STDMETHOD(SetCapture)(_In_ BOOL fCapture)
 	{
 		if (fCapture)
 		{
@@ -1753,12 +1900,15 @@ public:
 	{
 		return m_bHaveFocus ? S_OK : S_FALSE;
 	}
-	STDMETHOD(SetFocus)(BOOL fGotFocus)
+	STDMETHOD(SetFocus)(_In_ BOOL fGotFocus)
 	{
 		m_bHaveFocus = fGotFocus;
 		return S_OK;
 	}
-	STDMETHOD(GetDC)(LPCRECT /*pRect*/, DWORD grfFlags, HDC* phDC)
+	STDMETHOD(GetDC)(
+		_In_opt_ LPCRECT /*pRect*/,
+		_In_ DWORD grfFlags,
+		_Out_ HDC* phDC)
 	{
 		if (phDC == NULL)
 			return E_POINTER;
@@ -1806,7 +1956,7 @@ public:
 			::FillRect(*phDC, &rect, (HBRUSH) (COLOR_WINDOW+1));
 		return S_OK;
 	}
-	STDMETHOD(ReleaseDC)(HDC hDC)
+	STDMETHOD(ReleaseDC)(_Inout_ HDC hDC)
 	{
 		m_bDCReleased = true;
 		if (m_hDCScreen != NULL)
@@ -1822,54 +1972,71 @@ public:
 		CWindowImpl<CAxHostWindow>::ReleaseDC(hDC);
 		return S_OK;
 	}
-	STDMETHOD(InvalidateRect)(LPCRECT pRect, BOOL fErase)
+	STDMETHOD(InvalidateRect)(
+		_In_opt_ LPCRECT pRect,
+		_In_ BOOL fErase)
 	{
 		CWindowImpl<CAxHostWindow>::InvalidateRect(pRect, fErase);
 		return S_OK;
 	}
-	STDMETHOD(InvalidateRgn)(HRGN hRGN, BOOL fErase)
+	STDMETHOD(InvalidateRgn)(
+		_In_ HRGN hRGN,
+		_In_ BOOL fErase)
 	{
 		CWindowImpl<CAxHostWindow>::InvalidateRgn(hRGN, fErase);
 		return S_OK;
 	}
-	STDMETHOD(ScrollRect)(INT /*dx*/, INT /*dy*/, LPCRECT /*pRectScroll*/, LPCRECT /*pRectClip*/)
+	STDMETHOD(ScrollRect)(
+		_In_ INT /*dx*/,
+		_In_ INT /*dy*/,
+		_In_ LPCRECT /*pRectScroll*/,
+		_In_ LPCRECT /*pRectClip*/)
 	{
 		return S_OK;
 	}
-	STDMETHOD(AdjustRect)(LPRECT /*prc*/)
+	STDMETHOD(AdjustRect)(_In_ LPRECT /*prc*/)
 	{
 		return S_OK;
 	}
-	STDMETHOD(OnDefWindowMessage)(UINT msg, WPARAM wParam, LPARAM lParam, LRESULT* plResult)
+	STDMETHOD(OnDefWindowMessage)(
+		_In_ UINT msg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Out_ LRESULT* plResult)
 	{
 		*plResult = DefWindowProc(msg, wParam, lParam);
 		return S_OK;
 	}
 
-// IOleControlSite
+	// IOleControlSite
 	STDMETHOD(OnControlInfoChanged)()
 	{
 		return S_OK;
 	}
-	STDMETHOD(LockInPlaceActive)(BOOL /*fLock*/)
+	STDMETHOD(LockInPlaceActive)(_In_ BOOL /*fLock*/)
 	{
 		return S_OK;
 	}
-	STDMETHOD(GetExtendedControl)(IDispatch** ppDisp)
+	STDMETHOD(GetExtendedControl)(_Deref_out_ IDispatch** ppDisp)
 	{
 		if (ppDisp == NULL)
 			return E_POINTER;
 		return m_spOleObject.QueryInterface(ppDisp);
 	}
-	STDMETHOD(TransformCoords)(POINTL* /*pPtlHimetric*/, POINTF* /*pPtfContainer*/, DWORD /*dwFlags*/)
+	STDMETHOD(TransformCoords)(
+		_Inout_ POINTL* /*pPtlHimetric*/,
+		_Inout_ POINTF* /*pPtfContainer*/,
+		_In_ DWORD /*dwFlags*/)
 	{
 		ATLTRACENOTIMPL(_T("CAxHostWindow::TransformCoords"));
 	}
-	STDMETHOD(TranslateAccelerator)(LPMSG /*lpMsg*/, DWORD /*grfModifiers*/)
+	STDMETHOD(TranslateAccelerator)(
+		_In_ LPMSG /*lpMsg*/,
+		_In_ DWORD /*grfModifiers*/)
 	{
 		return S_FALSE;
 	}
-	STDMETHOD(OnFocus)(BOOL fGotFocus)
+	STDMETHOD(OnFocus)(_In_ BOOL fGotFocus)
 	{
 		m_bHaveFocus = fGotFocus;
 		return S_OK;
@@ -1879,14 +2046,18 @@ public:
 		ATLTRACENOTIMPL(_T("CAxHostWindow::ShowPropertyFrame"));
 	}
 
-// IAdviseSink
-	STDMETHOD_(void, OnDataChange)(FORMATETC* /*pFormatetc*/, STGMEDIUM* /*pStgmed*/)
+	// IAdviseSink
+	STDMETHOD_(void, OnDataChange)(
+		_In_ FORMATETC* /* pFormatetc */,
+		_In_ STGMEDIUM* /* pStgmed */)
 	{
 	}
-	STDMETHOD_(void, OnViewChange)(DWORD /*dwAspect*/, LONG /*lindex*/)
+	STDMETHOD_(void, OnViewChange)(
+		_In_ DWORD /*dwAspect*/,
+		_In_ LONG /*lindex*/)
 	{
 	}
-	STDMETHOD_(void, OnRename)(IMoniker* /*pmk*/)
+	STDMETHOD_(void, OnRename)(_In_opt_ IMoniker* /* pmk */)
 	{
 	}
 	STDMETHOD_(void, OnSave)()
@@ -1896,23 +2067,32 @@ public:
 	{
 	}
 
-// IOleContainer
-	STDMETHOD(ParseDisplayName)(IBindCtx* /*pbc*/, _In_z_ LPOLESTR /*pszDisplayName*/, ULONG* /*pchEaten*/, IMoniker** /*ppmkOut*/)
+	// IOleContainer
+	STDMETHOD(ParseDisplayName)(
+		_In_opt_ IBindCtx* /*pbc*/,
+		_In_opt_z_ LPOLESTR /*pszDisplayName*/,
+		_In_opt_ ULONG* /*pchEaten*/,
+		_In_opt_ IMoniker** /*ppmkOut*/)
 	{
 		ATLTRACENOTIMPL(_T("CAxHostWindow::ParseDisplayName"));
 	}
-	STDMETHOD(EnumObjects)(DWORD /*grfFlags*/, IEnumUnknown** ppenum)
+	
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(EnumObjects)(
+		_In_ DWORD /*grfFlags*/,
+		_Deref_out_ IEnumUnknown** ppenum)
 	{
 		if (ppenum == NULL)
 			return E_POINTER;
 		*ppenum = NULL;
 		typedef CComObject<CComEnum<IEnumUnknown, &__uuidof(IEnumUnknown), IUnknown*, _CopyInterface<IUnknown> > > enumunk;
 		enumunk* p = NULL;
-#pragma warning(push)
-#pragma warning(disable: 6014)
+
+ATLPREFAST_SUPPRESS(6014)
 		/* prefast noise VSW 489981 */
 		ATLTRY(p = new enumunk);
-#pragma warning(pop)
+ATLPREFAST_UNSUPPRESS()
+	
 		if(p == NULL)
 			return E_OUTOFMEMORY;
 		IUnknown* pTemp = m_spUnknown;
@@ -1924,13 +2104,18 @@ public:
 			delete p;
 		return hRes;
 	}
-	STDMETHOD(LockContainer)(BOOL fLock)
+ATLPREFAST_UNSUPPRESS()
+	
+	STDMETHOD(LockContainer)(_In_ BOOL fLock)
 	{
 		m_bLocked = fLock;
 		return S_OK;
 	}
 
-	HRESULT ActivateAx(IUnknown* pUnkControl, bool bInited, IStream* pStream)
+	HRESULT ActivateAx(
+		_Inout_opt_ IUnknown* pUnkControl,
+		_In_ bool bInited,
+		_Inout_opt_ IStream* pStream)
 	{
 		if (pUnkControl == NULL)
 			return S_OK;
@@ -2048,7 +2233,7 @@ public:
 	DWORD m_dwViewObjectType;
 	DWORD m_dwAdviseSink;
 
-// state
+	// state
 	unsigned long m_bInPlaceActive:1;
 	unsigned long m_bUIActive:1;
 	unsigned long m_bMDIApp:1;
@@ -2084,7 +2269,7 @@ public:
 	DWORD m_dwDocHostDoubleClickFlags;
 	CComBSTR m_bstrOptionKeyPath;
 
-	void SubclassWindow(HWND hWnd)
+	void SubclassWindow(_In_ HWND hWnd)
 	{
 		m_bSubclassed = CWindowImpl<CAxHostWindow>::SubclassWindow(hWnd);
 	}
@@ -2101,14 +2286,18 @@ public:
 	}
 
 	// Reflection
-	LRESULT ReflectNotifications(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT ReflectNotifications(
+		_In_ UINT uMsg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam,
+		_Inout_ BOOL& bHandled)
 	{
 		HWND hWndChild = NULL;
 
 		switch(uMsg)
 		{
 		case WM_COMMAND:
-			if(lParam != NULL)	// not from a menu
+			if(lParam != 0)	// not from a menu
 				hWndChild = (HWND)lParam;
 			break;
 		case WM_NOTIFY:
@@ -2149,8 +2338,8 @@ public:
 					hWndChild =((LPCOMPAREITEMSTRUCT)lParam)->hwndItem;
 			break;
 		case WM_DELETEITEM:
-				// Sent only by combo or list box  
-				hWndChild = ((LPDELETEITEMSTRUCT)lParam)->hwndItem; 
+				// Sent only by combo or list box
+				hWndChild = ((LPDELETEITEMSTRUCT)lParam)->hwndItem;
 			break;
 		case WM_VKEYTOITEM:
 		case WM_CHARTOITEM:
@@ -2189,7 +2378,11 @@ public:
 		return ::SendMessage(hWndChild, OCM__BASE + uMsg, wParam, lParam);
 	}
 
-	STDMETHOD(QueryService)( REFGUID rsid, REFIID riid, void** ppvObj) 
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(QueryService)(
+		_In_ REFGUID rsid,
+		_In_ REFIID riid,
+		_Deref_out_ void** ppvObj)
 	{
 		ATLASSERT(ppvObj != NULL);
 		if (ppvObj == NULL)
@@ -2202,14 +2395,22 @@ public:
 		// No services currently
 
 		// If that failed try to find the service on the outer object
-		if (FAILED(hr) && m_spServices)
+		if (m_spServices)
+		{
 			hr = m_spServices->QueryService(rsid, riid, ppvObj);
+		}
 
 		return hr;
 	}
+ATLPREFAST_UNSUPPRESS()
+	
 };
 
-static LRESULT CALLBACK AtlAxWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK AtlAxWindowProc(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam)
 {
 	switch(uMsg)
 	{
@@ -2240,7 +2441,7 @@ static LRESULT CALLBACK AtlAxWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
-					BYTE* pSource = ((BYTE*)(lpCreate->lpCreateParams)) + sizeof(WORD); 
+					BYTE* pSource = ((BYTE*)(lpCreate->lpCreateParams)) + sizeof(WORD);
 					//Align to DWORD
 					//pSource += (((~((DWORD)pSource)) + 1) & 3);
 					Checked::memcpy_s(pBytes, nCreateSize, pSource, nCreateSize);
@@ -2251,7 +2452,9 @@ static LRESULT CALLBACK AtlAxWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 			USES_CONVERSION_EX;
 			CComPtr<IUnknown> spUnk;
-			HRESULT hRet = AtlAxCreateControlLic(T2COLE_EX_DEF(spName), hWnd, spStream, &spUnk, NULL);
+			LPCOLESTR lpszName = T2COLE_EX_DEF(spName);
+			ATLASSUME(lpszName);			
+			HRESULT hRet = AtlAxCreateControlLic(lpszName, hWnd, spStream, &spUnk, NULL);
 			if(FAILED(hRet))
 			{
 #ifdef _DEBUG
@@ -2286,7 +2489,7 @@ static LRESULT CALLBACK AtlAxWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			{
 				ATLASSERT(lParam);
 				// Set the control parent style for the AxWindow
-				if(lParam != NULL) {
+				if(lParam != 0) {
 					DWORD dwExStyle = ::GetWindowLong((HWND)lParam, GWL_EXSTYLE);
 					if(dwExStyle & WS_EX_CONTROLPARENT)
 					{
@@ -2306,7 +2509,11 @@ static LRESULT CALLBACK AtlAxWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-static LRESULT CALLBACK AtlAxWindowProc2(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK AtlAxWindowProc2(
+	_In_ HWND hWnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam)
 {
 	switch(uMsg)
 	{
@@ -2349,7 +2556,7 @@ static LRESULT CALLBACK AtlAxWindowProc2(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
-					BYTE* pSource = ((BYTE*)(lpCreate->lpCreateParams)) + sizeof(WORD); 
+					BYTE* pSource = ((BYTE*)(lpCreate->lpCreateParams)) + sizeof(WORD);
 					//Align to DWORD
 					//pSource += (((~((DWORD)pSource)) + 1) & 3);
 					Checked::memcpy_s(pBytes, nCreateSize, pSource, nCreateSize);
@@ -2365,7 +2572,9 @@ static LRESULT CALLBACK AtlAxWindowProc2(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 			USES_CONVERSION_EX;
 			CComPtr<IUnknown> spUnk;
-			hRet = AtlAxCreateControlLic(T2COLE_EX_DEF(spName), hWnd, spStream, &spUnk, bstrLicKey);
+			LPCOLESTR lpszName = T2COLE_EX_DEF(spName);
+			ATLASSUME(lpszName);			
+			hRet = AtlAxCreateControlLic(lpszName, hWnd, spStream, &spUnk, bstrLicKey);
 			if(FAILED(hRet))
 			{
 #ifdef _DEBUG
@@ -2399,7 +2608,7 @@ static LRESULT CALLBACK AtlAxWindowProc2(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			{
 				ATLASSERT(lParam);
 				// Set the control parent style for the AxWindow
-				if(lParam != NULL) {
+				if(lParam != 0) {
 					DWORD dwExStyle = ::GetWindowLong((HWND)lParam, GWL_EXSTYLE);
 					if(dwExStyle & WS_EX_CONTROLPARENT)
 					{
@@ -2411,7 +2620,7 @@ static LRESULT CALLBACK AtlAxWindowProc2(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			}
 		}
 		break;
-		
+
 	default:
 		break;
 	}
@@ -2422,12 +2631,18 @@ static LRESULT CALLBACK AtlAxWindowProc2(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 //All exports go here
 #ifndef _ATL_DLL
 
-inline HRSRC AtlFindResource(HMODULE hModule, LPCSTR lpName, LPCSTR lpType)
+inline HRSRC AtlFindResource(
+	_In_opt_ HMODULE hModule,
+	_In_z_ LPCSTR lpName,
+	_In_z_ LPCSTR lpType)
 {
 	return ::FindResourceA(hModule, lpName, lpType);
 }
 
-inline HRSRC AtlFindResource(HMODULE hModule, LPCWSTR lpName, LPCWSTR lpType)
+inline HRSRC AtlFindResource(
+	_In_opt_ HMODULE hModule,
+	_In_z_ LPCWSTR lpName,
+	_In_z_ LPCWSTR lpType)
 {
 	return ::FindResourceW(hModule, lpName, lpType);
 }
@@ -2440,7 +2655,7 @@ public :
 	{
 		return -1;
 	}
-	static bool IsValidReturnVal(ReturnType nRet)
+	static bool IsValidReturnVal(_In_ ReturnType nRet)
 	{
 		return (nRet != 0 && nRet != -1);
 	}
@@ -2454,14 +2669,19 @@ public :
 	{
 		return NULL;
 	}
-	static bool IsValidReturnVal(ReturnType nRet)
+	static bool IsValidReturnVal(_In_ ReturnType nRet)
 	{
 		return (nRet != 0);
 	}
 };
 
 template <class StringType, class Helper, typename Helper::ReturnType (WINAPI *pFunc)(HINSTANCE, LPCDLGTEMPLATE, HWND,DLGPROC, LPARAM)>
-typename Helper::ReturnType AtlAxDialogCreateT(HINSTANCE hInstance, StringType lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam)
+typename Helper::ReturnType AtlAxDialogCreateT(
+	_In_ HINSTANCE hInstance,
+	_In_z_ StringType lpTemplateName,
+	_In_ HWND hWndParent,
+	_In_ DLGPROC lpDialogProc,
+	_In_ LPARAM dwInitParam)
 {
 	AtlAxWinInit();
 	Helper::ReturnType nRet = Helper::GetInvalidValue();
@@ -2511,47 +2731,90 @@ typename Helper::ReturnType AtlAxDialogCreateT(HINSTANCE hInstance, StringType l
 	return nRet;
 }
 
-ATLINLINE ATLAPI_(INT_PTR) AtlAxDialogBoxW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam)
+ATLINLINE ATLAPI_(INT_PTR) AtlAxDialogBoxW(
+	_In_ HINSTANCE hInstance,
+	_In_z_ LPCWSTR lpTemplateName,
+	_In_ HWND hWndParent,
+	_In_ DLGPROC lpDialogProc,
+	_In_ LPARAM dwInitParam)
 {
 	return AtlAxDialogCreateT<LPCWSTR, _AtlDialogBoxIndirectParamHelper, ::DialogBoxIndirectParamW>(
 		hInstance, lpTemplateName, hWndParent, lpDialogProc, dwInitParam);
 }
 
-ATLINLINE ATLAPI_(INT_PTR) AtlAxDialogBoxA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam)
+ATLINLINE ATLAPI_(INT_PTR) AtlAxDialogBoxA(
+	_In_ HINSTANCE hInstance,
+	_In_z_ LPCSTR lpTemplateName,
+	_In_ HWND hWndParent,
+	_In_ DLGPROC lpDialogProc,
+	_In_ LPARAM dwInitParam)
 {
 	return AtlAxDialogCreateT<LPCSTR, _AtlDialogBoxIndirectParamHelper, ::DialogBoxIndirectParamA>(
 		hInstance, lpTemplateName, hWndParent, lpDialogProc, dwInitParam);
 }
 
-ATLINLINE ATLAPI_(HWND) AtlAxCreateDialogW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam)
+ATLINLINE ATLAPI_(HWND) AtlAxCreateDialogW(
+	_In_ HINSTANCE hInstance,
+	_In_z_ LPCWSTR lpTemplateName,
+	_In_ HWND hWndParent,
+	_In_ DLGPROC lpDialogProc,
+	_In_ LPARAM dwInitParam)
 {
 	return AtlAxDialogCreateT<LPCWSTR, _AtlCreateDialogIndirectParamHelper, CreateDialogIndirectParamW>(
 		hInstance, lpTemplateName, hWndParent, lpDialogProc, dwInitParam);
 }
 
-ATLINLINE ATLAPI_(HWND) AtlAxCreateDialogA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam)
+ATLINLINE ATLAPI_(HWND) AtlAxCreateDialogA(
+	_In_ HINSTANCE hInstance,
+	_In_z_ LPCSTR lpTemplateName,
+	_In_ HWND hWndParent,
+	_In_ DLGPROC lpDialogProc,
+	_In_ LPARAM dwInitParam)
 {
 	return AtlAxDialogCreateT<LPCSTR, _AtlCreateDialogIndirectParamHelper, CreateDialogIndirectParamA>(hInstance, lpTemplateName, hWndParent, lpDialogProc, dwInitParam);
 }
 
-ATLINLINE ATLAPI AtlAxCreateControl(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, IUnknown** ppUnkContainer)
+ATLINLINE ATLAPI AtlAxCreateControl(
+	_In_z_ LPCOLESTR lpszName,
+	_In_ HWND hWnd,
+	_Inout_opt_ IStream* pStream,
+	_Deref_out_ IUnknown** ppUnkContainer)
 {
 	return AtlAxCreateControlEx(lpszName, hWnd, pStream, ppUnkContainer, NULL, IID_NULL, NULL);
 }
 
-ATLINLINE ATLAPI AtlAxCreateControlEx(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, 
-		IUnknown** ppUnkContainer, IUnknown** ppUnkControl, REFIID iidSink, IUnknown* punkSink)
+ATLINLINE ATLAPI AtlAxCreateControlEx(
+	_In_z_ LPCOLESTR lpszName,
+	_In_ HWND hWnd,
+	_Inout_opt_ IStream* pStream,
+	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_In_ REFIID iidSink,
+	_Inout_opt_ IUnknown* punkSink)
 {
 	return AtlAxCreateControlLicEx(lpszName, hWnd, pStream, ppUnkContainer, ppUnkControl, iidSink, punkSink, NULL);
 }
 
-ATLINLINE ATLAPI AtlAxCreateControlLic(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, IUnknown** ppUnkContainer, BSTR bstrLic)
+ATLINLINE ATLAPI AtlAxCreateControlLic(
+	_In_z_ LPCOLESTR lpszName,
+	_In_ HWND hWnd,
+	_Inout_opt_ IStream* pStream,
+	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_In_opt_z_ BSTR bstrLic)
 {
 	return AtlAxCreateControlLicEx(lpszName, hWnd, pStream, ppUnkContainer, NULL, IID_NULL, NULL, bstrLic);
 }
 
-ATLINLINE ATLAPI AtlAxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, 
-		IUnknown** ppUnkContainer, IUnknown** ppUnkControl, REFIID iidSink, IUnknown* punkSink, BSTR bstrLic)
+ATLPREFAST_SUPPRESS(6387)
+ATLINLINE ATLAPI AtlAxCreateControlLicEx(
+	_In_z_ LPCOLESTR lpszName,
+	_In_ HWND hWnd,
+	_Inout_opt_ IStream* pStream,
+	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_In_ REFIID iidSink,
+	_Inout_opt_ IUnknown* punkSink,
+	_In_opt_z_ BSTR bstrLic)
 {
 	AtlAxWinInit();
 	HRESULT hr;
@@ -2588,8 +2851,13 @@ ATLINLINE ATLAPI AtlAxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd, IStream*
 	}
 	return hr;
 }
-
-ATLINLINE ATLAPI AtlAxAttachControl(IUnknown* pControl, HWND hWnd, IUnknown** ppUnkContainer)
+ATLPREFAST_UNSUPPRESS()
+	
+ATLPREFAST_SUPPRESS(6387)
+ATLINLINE ATLAPI AtlAxAttachControl(
+	_Inout_ IUnknown* pControl,
+	_In_ HWND hWnd,
+	_Deref_opt_out_ IUnknown** ppUnkContainer)
 {
 	AtlAxWinInit();
 	if (pControl == NULL)
@@ -2610,7 +2878,8 @@ ATLINLINE ATLAPI AtlAxAttachControl(IUnknown* pControl, HWND hWnd, IUnknown** pp
 	}
 	return hr;
 }
-
+ATLPREFAST_UNSUPPRESS()
+	
 #ifdef _ATL_DLL_IMPL
 // global variable in ATL.DLL to keep track if AtlAxWin window class has been registered in ATL.DLL
 bool __declspec(selectany) bAtlAxWinInitialized;
@@ -2655,13 +2924,13 @@ ATLINLINE ATLAPI_(BOOL) AtlAxWinInit()
 		wc.lpszMenuName = NULL;
 		wc.lpszClassName = CAxWindow::GetWndClassName();
 		wc.hIconSm = NULL;
-       
+
 		ATOM atom= ::RegisterClassEx(&wc);
 		if (atom)
-		{	
+		{
 		   _AtlWinModule.m_rgWindowClassAtoms.Add(atom);
 		   bRet=TRUE;
-		}else 
+		}else
 		{
 		  bRet=FALSE;
 		}
@@ -2697,10 +2966,10 @@ ATLINLINE ATLAPI_(BOOL) AtlAxWinInit()
 			ATOM atom= RegisterClassEx(&wc);
 
 			if (atom)
-			{	
+			{
 				_AtlWinModule.m_rgWindowClassAtoms.Add(atom);
 				bRet=TRUE;
-			}else 
+			}else
 			{
 				bRet=FALSE;
 			}
@@ -2710,7 +2979,10 @@ ATLINLINE ATLAPI_(BOOL) AtlAxWinInit()
 	return bRet;
 }
 
-ATLINLINE ATLAPI AtlAxGetControl(HWND h, IUnknown** pp)
+ATLPREFAST_SUPPRESS(6387)
+ATLINLINE ATLAPI AtlAxGetControl(
+	_In_ HWND h,
+	_Deref_out_ IUnknown** pp)
 {
 	ATLASSERT(WM_ATLGETCONTROL != 0);
 	if (pp == NULL)
@@ -2718,8 +2990,12 @@ ATLINLINE ATLAPI AtlAxGetControl(HWND h, IUnknown** pp)
 	*pp = (IUnknown*)SendMessage(h, WM_ATLGETCONTROL, 0, 0);
 	return (*pp) ? S_OK : E_FAIL;
 }
-
-ATLINLINE ATLAPI AtlAxGetHost(HWND h, IUnknown** pp)
+ATLPREFAST_UNSUPPRESS()
+	
+ATLPREFAST_SUPPRESS(6387)
+ATLINLINE ATLAPI AtlAxGetHost(
+	_In_ HWND h,
+	_Deref_out_ IUnknown** pp)
 {
 	ATLASSERT(WM_ATLGETHOST != 0);
 	if (pp == NULL)
@@ -2727,6 +3003,7 @@ ATLINLINE ATLAPI AtlAxGetHost(HWND h, IUnknown** pp)
 	*pp = (IUnknown*)SendMessage(h, WM_ATLGETHOST, 0, 0);
 	return (*pp) ? S_OK : E_FAIL;
 }
+ATLPREFAST_UNSUPPRESS()
 
 #endif // _ATL_DLL
 

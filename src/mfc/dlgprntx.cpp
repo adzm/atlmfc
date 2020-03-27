@@ -117,6 +117,12 @@ CString CPrintDialogEx::GetPortName() const
 BOOL CPrintDialogEx::GetDefaults()
 {
 	m_pdex.Flags |= PD_RETURNDEFAULT;
+	if (m_hWnd == NULL)
+	{
+		// set a reasonable parent HWND so the call can succeed
+		m_pdex.hwndOwner = CWnd::GetSafeOwner_(m_pParentWnd->GetSafeHwnd(), &m_hWndTop);
+	}
+
 	return SUCCEEDED(::AfxCtxPrintDlgEx(&m_pdex));
 }
 

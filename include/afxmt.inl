@@ -12,6 +12,10 @@
 
 #pragma once
 
+#ifndef __AFXMT_H__
+#error afxmt.inl requires afxmt.h to be included first
+#endif
+
 #ifdef _AFXMT_INLINE
 
 /* Special considerations for this file
@@ -25,69 +29,103 @@ should be preceded by :: to ensure that they unambiguously refer to the MFC clas
 in the global namespace */
 
 _AFXMT_INLINE ::CSyncObject::operator HANDLE() const
-	{ return m_hObject;}
+{ 
+	return m_hObject;
+}
 
 _AFXMT_INLINE BOOL (::CSemaphore::Unlock())
-	{ return Unlock(1, NULL); }
+{ 
+	return Unlock(1, NULL); 
+}
 
 _AFXMT_INLINE BOOL (::CEvent::SetEvent())
-	{ ASSERT(m_hObject != NULL); return ::SetEvent(m_hObject); }
+{ 
+	ASSERT(m_hObject != NULL); 
+	
+	return ::SetEvent(m_hObject); 	
+}
+
 _AFXMT_INLINE BOOL (::CEvent::PulseEvent())
-	{ ASSERT(m_hObject != NULL); return ::PulseEvent(m_hObject); }
+{ 
+	ASSERT(m_hObject != NULL); 
+	
+	return ::PulseEvent(m_hObject); 
+}
+
 _AFXMT_INLINE BOOL (::CEvent::ResetEvent())
-	{ ASSERT(m_hObject != NULL); return ::ResetEvent(m_hObject); }
+{ 
+	ASSERT(m_hObject != NULL); 
+	
+	return ::ResetEvent(m_hObject); 
+}
 
 _AFXMT_INLINE ::CSingleLock::~CSingleLock()
-	{ Unlock(); }
+{ 
+	Unlock(); 
+}
+
 _AFXMT_INLINE BOOL (::CSingleLock::IsLocked())
-	{ return m_bAcquired; }
+{ 
+	return m_bAcquired; 
+}
 
 _AFXMT_INLINE BOOL (::CMultiLock::IsLocked(DWORD dwObject))
-	{ ASSERT(dwObject < m_dwCount);
-		 return m_bLockedArray[dwObject]; }
+{ 
+	ASSERT(dwObject < m_dwCount);
+	
+	return m_bLockedArray[dwObject]; 
+}
 
-_AFXMT_INLINE BOOL (::CCriticalSection::Init())
+_AFXMT_INLINE HRESULT (::CCriticalSection::Init())
 {
-	__try
+	if (!InitializeCriticalSectionAndSpinCount(&m_sect, 0))
 	{
-		::InitializeCriticalSection(&m_sect);
+		return HRESULT_FROM_WIN32(GetLastError());
 	}
-	__except(STATUS_NO_MEMORY == GetExceptionCode())
-	{
-		return FALSE;
-	}
-
-	return TRUE;
+	
+	return S_OK;
 }
 
 _AFXMT_INLINE ::CCriticalSection::CCriticalSection() : CSyncObject(NULL)
-	{ 	
-		BOOL bSuccess;
-
-		bSuccess = Init();
-		if (!bSuccess)
-			AfxThrowMemoryException();
-	}
+{ 		
+	HRESULT hr = Init();
+	
+	if (FAILED(hr))
+	{
+		AtlThrow(hr);
+	}		
+}
 
 _AFXMT_INLINE ::CCriticalSection::operator CRITICAL_SECTION*()
-	{ return (CRITICAL_SECTION*) &m_sect; }
+{
+	return (CRITICAL_SECTION*) &m_sect; 
+}
+
 _AFXMT_INLINE ::CCriticalSection::~CCriticalSection()
-	{ ::DeleteCriticalSection(&m_sect); }
+{ 
+	::DeleteCriticalSection(&m_sect); 
+}
+
 _AFXMT_INLINE BOOL (::CCriticalSection::Lock())
-	{	
-		__try
-		{
-			::EnterCriticalSection(&m_sect); 
-		}
-		__except(STATUS_NO_MEMORY == GetExceptionCode())
-		{
-			AfxThrowMemoryException();
-		}
-		return TRUE; 
-	}
+{	
+	::EnterCriticalSection(&m_sect); 
+
+	return TRUE; 
+}
+
 _AFXMT_INLINE BOOL (::CCriticalSection::Lock(DWORD dwTimeout))
-	{ ASSERT(dwTimeout == INFINITE); (void)dwTimeout; return Lock(); }
+{ 
+	ASSERT(dwTimeout == INFINITE); 
+	(void)dwTimeout; 
+	
+	return Lock(); 
+}
+
 _AFXMT_INLINE BOOL (::CCriticalSection::Unlock())
-	{ ::LeaveCriticalSection(&m_sect); return TRUE; }
+{ 
+	::LeaveCriticalSection(&m_sect); 
+	
+	return TRUE; 
+}
 
 #endif //_AFXMT_INLINE

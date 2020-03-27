@@ -74,27 +74,6 @@ _AfxDispatchCall(AFX_PMSG /*pfn*/, void* /*pArgs*/, UINT /*nSizeArgs*/)
 
 #endif // _MIPS_
 
-/////////////////////////////////////////////////////////////////////////////
-// DEC Alpha AXP version
-
-#ifdef _ALPHA_
-
-// Note: ALPHA version is in src\alpha\olecall_.s
-
-// The ALPHA compiler does not support inline assembly, so it
-//  must be build separately with the ASAXP assembler.
-
-#endif // _ALPHA_
-
-#ifdef _IA64_
-
-// Note: IA64 version is in src\ia64\olecall_.s
-
-// The IA64 compiler does not support inline assembly, so it
-//  must be built separately with the IAS assembler.
-
-#endif
-
 } // end extern "C" block
 
 /////////////////////////////////////////////////////////////////////////////

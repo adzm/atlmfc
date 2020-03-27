@@ -29,6 +29,8 @@ class CDockablePane;
 
 class CMFCAutoHideBar : public CPane
 {
+	friend class CMFCVisualManagerVS2008;
+
 	DECLARE_DYNCREATE(CMFCAutoHideBar)
 
 // Construction
@@ -79,6 +81,7 @@ protected:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	//}}AFX_MSG
+	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
 	DECLARE_MESSAGE_MAP()
 
 	CMFCAutoHideButton* ButtonFromPoint (CPoint pt);
@@ -90,9 +93,13 @@ protected:
 protected:
 	CObList          m_lstAutoHideButtons;
 	CMFCAutoHideButton* m_pLastActiveButton;
+	CMFCAutoHideButton* m_pHighlightedButton;
 
 	BOOL     m_bReadyToDisplayAHWnd;
 	UINT_PTR m_nDisplayAHWndTimerID;
+
+private:
+	BOOL m_bTracked;
 };
 
 /////////////////////////////////////////////////////////////////////////////

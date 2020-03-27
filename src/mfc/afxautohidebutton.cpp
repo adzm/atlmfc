@@ -6,7 +6,8 @@
 // Microsoft Foundation Classes Reference and related
 // electronic documentation provided with the library.
 // See these sources for detailed information regarding the
-// Microsoft Foundation Classes product.
+// Microsoft Foundation Classes product.  
+//
 
 #include "stdafx.h"
 #include "afxcontrolbarutil.h"
@@ -16,6 +17,7 @@
 #include "afxglobalutils.h"
 #include "afxvisualmanager.h"
 #include "afxdockingpanesrow.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -37,6 +39,7 @@ CMFCAutoHideButton::CMFCAutoHideButton()
 	m_pAutoHideWindow = NULL;
 	m_dwAlignment = 0;
 	m_bVisible = FALSE;
+	m_bHighlighted = FALSE;
 	m_rect.SetRectEmpty();
 }
 
@@ -373,6 +376,14 @@ void CMFCAutoHideButton::ShowButton(BOOL bShow)
 	ASSERT_VALID(m_pParentBar);
 
 	m_bVisible = bShow;
+}
+
+void CMFCAutoHideButton::HighlightButton(BOOL bHighlight)
+{
+	ASSERT_VALID (this);
+	ASSERT_VALID(m_pParentBar);
+
+	m_bHighlighted = bHighlight;
 }
 
 void CMFCAutoHideButton::UnSetAutoHideMode(CDockablePane* pFirstBarInGroup)

@@ -28,6 +28,8 @@ class CMFCRibbonBaseElement;
 class CMFCRibbonPanel;
 class CMFCRibbonGallery;
 
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
+
 //////////////////////////////////////////////////////////////////////
 // CMFCRibbonLaunchButton
 
@@ -46,6 +48,8 @@ class CMFCRibbonLaunchButton : public CMFCRibbonButton
 	CMFCRibbonPanel* m_pParentPanel;
 };
 
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
+
 //////////////////////////////////////////////////////////////////////
 // CMFCRibbonDefaultPanelButton
 
@@ -62,7 +66,7 @@ class CMFCRibbonDefaultPanelButton : public CMFCRibbonButton
 	virtual void OnShowPopupMenu();
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
 
-	virtual CString GetToolTipText() const { return m_rect.IsRectEmpty() ? _T("") : m_strText; }
+	virtual CString GetToolTipText() const { return m_rect.IsRectEmpty() ? CString() : m_strText; }
 	virtual void OnClick(CPoint /*point*/) { OnShowPopupMenu(); }
 
 	virtual CSize GetImageSize(RibbonImageType /*type*/) const
@@ -103,6 +107,7 @@ class CMFCRibbonPanel : public CObject
 	friend class CMFCRibbonPanelMenuBar;
 	friend class CMFCRibbonPanelMenu;
 	friend class CMFCRibbonBar;
+	friend class CMFCRibbonConstructor;
 
 // Construction
 protected:
@@ -121,9 +126,11 @@ public:
 	LPCTSTR GetName() const { return m_strName; }
 	CMFCRibbonButton& GetDefaultButton() { return m_btnDefault; }
 
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	void EnableLaunchButton(UINT uiCmdID, int nIconIndex = -1, LPCTSTR lpszKeys = NULL);
-
 	CMFCRibbonButton& GetLaunchButton() { return m_btnLaunch; }
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
+
 	BOOL IsHighlighted() const { return m_bIsHighlighted; }
 	BOOL IsCollapsed() const; 	BOOL IsMenuMode() const { return m_bMenuMode; }
 	virtual BOOL IsMainPanel() const { return FALSE; }
@@ -144,6 +151,12 @@ public:
 
 	BOOL IsCenterColumnVert() const { return m_bCenterColumnVert; }
 	void SetCenterColumnVert(BOOL bSet = TRUE) { m_bCenterColumnVert = bSet; }
+
+	/// <summary>
+	/// Indicates whether the parent ribbon has Windows 7-style look (small rectangular application button)</summary>
+	/// <returns> 
+	/// TRUE if the parent ribbon has Windows 7-style look; otherwise FALSE.</returns>
+	BOOL IsWindows7Look() const;
 
 // Operations
 public:
@@ -185,12 +198,34 @@ public:
 	void GetElements(CArray <CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
 	void GetItemIDsList(CList<UINT,UINT>& lstItems) const;
 	void GetElementsByID(UINT uiCmdID, CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
+	/// <summary>
+	/// Obtains an array of visible elements.</summary>
+	/// <param name="arElements"> When the function returns this parameter contains an array of visible elements.</param>
+	void GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
 
 	CMFCRibbonBaseElement* GetDroppedDown() const;
 	CMFCRibbonBaseElement* GetHighlighted() const;
 	CMFCRibbonBaseElement* GetPressed() const;
+	/// <summary>
+	/// Returns a focused element. </summary>
+	/// <returns> A pointer to a focused element or NULL.</returns>
+	CMFCRibbonBaseElement* GetFocused() const;
+
+	/// <summary>
+	/// Sets focus to the specified Ribbon element.</summary>
+	/// <param name="pNewFocus"> A pointer to a Ribbon element that receives focus.</param>
+	void SetFocused(CMFCRibbonBaseElement* pNewFocus);
 
 	CMFCRibbonPanelMenu* ShowPopup(CMFCRibbonDefaultPanelButton* pButton = NULL);
+
+	/// <summary> 
+	/// Scrolls the gallery to make the specified Ribbon element visible.</summary>
+	/// <param name="pItem"> A pointer to a Ribbon element to show.</param>
+	void MakeGalleryItemVisible(CMFCRibbonBaseElement* pItem);
+	/// <summary> 
+	/// Returns a bounding rectangle of Gallery element.</summary> 
+	/// <returns> Size and position of Gallery element within this panel.</returns>
+	CRect GetGalleryRect();
 
 // Overrides
 public:
@@ -236,7 +271,7 @@ protected:
 
 	void CleanUpSizes();
 	void OnDrawPaletteMenu(CDC* pDC);
-	void ScrollPalette(int nScrollOffset);
+	void ScrollPalette(int nScrollOffset, BOOL bIsDelta = FALSE);
 	CSize GetPaltteMinSize() const;
 
 // Attributes
@@ -256,7 +291,7 @@ protected:
 	BOOL m_bJustifyColumns;
 	BOOL m_bSizeIsLocked;
 	BOOL m_bScrollDnAvailable;
-	BOOL m_bTrancateCaption;
+	BOOL m_bTruncateCaption;
 
 	int m_nCurrWidthIndex; // Index of the current width
 	int m_nFullWidth;      // Full width
@@ -277,7 +312,9 @@ protected:
 	CMFCRibbonCategory*          m_pParent;        // Parent category
 	CMFCRibbonPanelMenuBar*      m_pParentMenuBar; // Parent menu bar
 	CMFCRibbonGallery*     m_pPaletteButton;
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	CMFCRibbonLaunchButton       m_btnLaunch;
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	CMFCRibbonBaseElement*       m_pHighlighted;   // Highlighted 
 	CMFCRibbonDefaultPanelButton m_btnDefault;     // Default panel button
 

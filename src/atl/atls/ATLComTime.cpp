@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #include "StdAfx.H"
@@ -19,7 +19,8 @@
 
 namespace ATL
 {
-bool CTime::GetAsDBTIMESTAMP( DBTIMESTAMP& dbts ) const
+
+bool CTime::GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const
 {
 	struct tm tmLocal;
 	GetLocalTm(&tmLocal);
@@ -34,4 +35,5 @@ bool CTime::GetAsDBTIMESTAMP( DBTIMESTAMP& dbts ) const
 
 	return true;
 }
+
 }

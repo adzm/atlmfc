@@ -116,6 +116,7 @@ public:
 	virtual void AdjustSizeImmediate(BOOL /*bRecalcLayout = TRUE*/) {}
 	
 	BOOL BuildOrigItems(UINT uiMenuResID);
+	int GetGutterWidth();
 
 public:
 // Overrides

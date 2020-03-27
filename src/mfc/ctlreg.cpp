@@ -183,7 +183,7 @@ BOOL AFXAPI AfxOleUnregisterTypeLib(REFGUID tlid, WORD wVerMajor,
 		return FALSE;
 
 	HKEY hKeyTypeLib;
-	if (AfxRegOpenKey(HKEY_CLASSES_ROOT, szKeyTypeLib, &hKeyTypeLib) ==
+	if (AfxRegOpenKeyEx(HKEY_CLASSES_ROOT, szKeyTypeLib, 0, KEY_READ | DELETE, &hKeyTypeLib) ==
 		ERROR_SUCCESS)
 	{
 		int iKeyVersion = 0;
@@ -198,7 +198,7 @@ BOOL AFXAPI AfxOleUnregisterTypeLib(REFGUID tlid, WORD wVerMajor,
 			hKeyVersion = NULL;
 			BOOL bSurgicalVersion = FALSE;
 
-			if (RegOpenKey(hKeyTypeLib, szVersion, &hKeyVersion) !=
+			if (RegOpenKeyEx(hKeyTypeLib, szVersion, 0, KEY_READ | DELETE, &hKeyVersion) !=
 				ERROR_SUCCESS)
 			{
 				++iKeyVersion;
@@ -224,7 +224,7 @@ BOOL AFXAPI AfxOleUnregisterTypeLib(REFGUID tlid, WORD wVerMajor,
 
 				hKeyLocale = NULL;
 
-				if (RegOpenKey(hKeyVersion, szLocale, &hKeyLocale) !=
+				if (RegOpenKeyEx(hKeyVersion, szLocale, 0, KEY_READ | DELETE, &hKeyLocale) !=
 					ERROR_SUCCESS)
 				{
 					++iKeyLocale;
@@ -233,7 +233,7 @@ BOOL AFXAPI AfxOleUnregisterTypeLib(REFGUID tlid, WORD wVerMajor,
 
 				// Check if a 16-bit key is found when unregistering 32-bit
 				HKEY hkey;
-				if (RegOpenKey(hKeyLocale, TYPELIBWIN_2, &hkey) ==
+				if (RegOpenKeyEx(hKeyLocale, TYPELIBWIN_2, 0, STANDARD_RIGHTS_READ, &hkey) ==
 					ERROR_SUCCESS)
 				{
 					RegCloseKey(hkey);
@@ -354,7 +354,7 @@ BOOL AFXAPI AfxOleRegisterControlClass(HINSTANCE hInstance,
 		return FALSE;
 
 	CString strPathName;
-	AfxGetModuleShortFileName(hInstance, strPathName);
+	AfxGetModuleFileName(hInstance, strPathName);
 
 	CString strTypeName;
 	if (!strTypeName.LoadString(idTypeName))
@@ -466,7 +466,7 @@ BOOL AFXAPI AfxOleUnregisterClass(REFCLSID clsid, LPCTSTR pszProgID)
 		return FALSE;
 
 	HKEY hkey=NULL;
-	BOOL bSurgical = (AfxRegOpenKey(HKEY_CLASSES_ROOT, szKey, &hkey) == ERROR_SUCCESS);
+	BOOL bSurgical = (AfxRegOpenKeyEx(HKEY_CLASSES_ROOT, szKey, 0, STANDARD_RIGHTS_READ, &hkey) == ERROR_SUCCESS);
 	RegCloseKey(hkey);
 
 	if (bSurgical)
@@ -533,7 +533,7 @@ BOOL AFXAPI AfxOleRegisterPropertyPageClass(HINSTANCE hInstance,
 		return FALSE;
 
 	CString strPathName;
-	AfxGetModuleShortFileName(hInstance, strPathName);
+	AfxGetModuleFileName(hInstance, strPathName);
 
 	CString strTypeName;
 	if (!strTypeName.LoadString(idTypeName))
@@ -547,15 +547,13 @@ BOOL AFXAPI AfxOleRegisterPropertyPageClass(HINSTANCE hInstance,
 	TCHAR szKey[_MAX_PATH];
 	if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%s"), strClassID.GetString()))
 		return FALSE;
-	if (AfxRegCreateKey(HKEY_CLASSES_ROOT, szKey, &hkeyClassID) !=
-		ERROR_SUCCESS)
+	if (AfxRegCreateKey(HKEY_CLASSES_ROOT, szKey, &hkeyClassID) != ERROR_SUCCESS)
 		goto Error;
 
 	LPCTSTR rglpszSymbols[2];
 	rglpszSymbols[0] = strTypeName;
 	rglpszSymbols[1] = strPathName;
-	bSuccess = AfxOleRegisterHelper(_afxPropPageClass, rglpszSymbols,
-		2, TRUE, hkeyClassID);
+	bSuccess = AfxOleRegisterHelper(_afxPropPageClass, rglpszSymbols, 2, TRUE, hkeyClassID);
 
 	if (!bSuccess)
 		goto Error;
@@ -569,31 +567,39 @@ Error:
 	return bSuccess;
 }
 
-LONG AFXAPI AfxRegCreateKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult)
+LONG AFXAPI AfxRegCreateKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult, CAtlTransactionManager* pTM)
 {
 	CString strSubKey = lpSubKey;
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return ::RegCreateKey(hKey, strSubKey, phkResult);
+	DWORD dw = 0;
+
+	return pTM != NULL ? 
+		pTM->RegCreateKeyEx(hKey, strSubKey, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ, NULL, phkResult, &dw) : 
+		::RegCreateKeyEx(hKey, strSubKey, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ, NULL, phkResult, &dw);
 }
 
-LONG AFXAPI AfxRegOpenKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult)
+LONG AFXAPI AfxRegOpenKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult, CAtlTransactionManager* pTM)
 {
 	CString strSubKey = lpSubKey;
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return ::RegOpenKey(hKey, strSubKey, phkResult);
+	return pTM != NULL ? 
+		pTM->RegOpenKeyEx(hKey, strSubKey, 0, KEY_WRITE | KEY_READ, phkResult) : 
+		::RegOpenKeyEx(hKey, strSubKey, 0, KEY_WRITE | KEY_READ, phkResult);
 }
 
-LONG AFXAPI AfxRegOpenKeyEx(HKEY hKey, LPCTSTR lpSubKey,  DWORD ulOptions,  REGSAM samDesired, PHKEY phkResult)
+LONG AFXAPI AfxRegOpenKeyEx(HKEY hKey, LPCTSTR lpSubKey,  DWORD ulOptions, REGSAM samDesired, PHKEY phkResult, CAtlTransactionManager* pTM)
 {
 	CString strSubKey = lpSubKey;
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return ::RegOpenKeyEx(hKey, strSubKey, ulOptions, samDesired, phkResult);
+	return pTM != NULL ? 
+		pTM->RegOpenKeyEx(hKey, strSubKey, ulOptions, samDesired, phkResult) :
+		::RegOpenKeyEx(hKey, strSubKey, ulOptions, samDesired, phkResult);
 }
 
 LONG AFXAPI AfxRegQueryValue(HKEY hKey, LPCTSTR lpSubKey,  LPTSTR lpValue,  PLONG lpcbValue)
@@ -611,16 +617,18 @@ LONG AFXAPI AfxRegSetValue(HKEY hKey, LPCTSTR lpSubKey,  DWORD dwType, LPCTSTR l
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return ::RegSetValue(hKey , strSubKey, dwType, lpData, cbData);
+	return ::RegSetValue(hKey, strSubKey, dwType, lpData, cbData);
 }
 
-LONG AFXAPI AfxRegDeleteKey(HKEY hKey, LPCTSTR lpSubKey)
+LONG AFXAPI AfxRegDeleteKey(HKEY hKey, LPCTSTR lpSubKey, CAtlTransactionManager* pTM)
 {
 	CString strSubKey = lpSubKey;
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return ::RegDeleteKey(hKey, strSubKey);
+	return pTM != NULL ? 
+		pTM->RegDeleteKey(hKey, strSubKey) : 
+		::RegDeleteKey(hKey, strSubKey);
 }
 
 /////////////////////////////////////////////////////////////////////////////

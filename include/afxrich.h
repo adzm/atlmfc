@@ -169,6 +169,7 @@ public:
 	long m_lInitialSearchPos;
 	UINT m_nPasteType;
 	BOOL m_bFirstSearch;
+	BOOL m_bChangeFindRange;
 
 	void TextNotFound(LPCTSTR lpszFind);
 	BOOL FindText(_AFX_RICHEDIT_STATE* pEditState);

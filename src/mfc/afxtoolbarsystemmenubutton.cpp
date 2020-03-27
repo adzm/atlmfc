@@ -144,7 +144,7 @@ HMENU CMFCToolBarSystemMenuButton::CreateMenu() const
 	CMenu* pSysMenu = CMenu::FromHandle(m_hSystemMenu);
 	ASSERT_VALID(pSysMenu);
 
-	int iCount = (int) pSysMenu->GetMenuItemCount();
+	int iCount = pSysMenu->GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		UINT uiState = pSysMenu->GetMenuState(i, MF_BYPOSITION);

@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef __ATL_SOCKET__
@@ -36,7 +36,6 @@
 #define FreeAddrInfo freeaddrinfo
 #endif
 
-
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
@@ -62,51 +61,42 @@ namespace ATL
 		virtual ~CSocketAddr() throw();
 
 		// Operations
-		int FindAddr
-		(
-			LPCTSTR szHost, 				// Host name or dotted IP address
-			LPCTSTR szPortOrServiceName,	// Port number or name of service on host
-			int flags,					// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
-			int addr_family,			// Address family (such as PF_INET)
-			int sock_type,				// Socket type (such as SOCK_STREAM)
-			int ai_proto 				// Protocol (such as IPPROTO_IP or IPPROTO_IPV6)
-		);
+		int FindAddr(
+			_In_z_ LPCTSTR szHost, 				// Host name or dotted IP address
+			_In_z_ LPCTSTR szPortOrServiceName,	// Port number or name of service on host
+			_In_ int flags,						// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
+			_In_ int addr_family,				// Address family (such as PF_INET)
+			_In_ int sock_type,					// Socket type (such as SOCK_STREAM)
+			_In_ int ai_proto);					// Protocol (such as IPPROTO_IP or IPPROTO_IPV6)
 
-		int FindAddr
-		(
-			LPCTSTR szHost, 				// Host name or dotted IP address
-			int nPortNo,				// Port number
-			int flags,					// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
-			int addr_family,			// Address family (such as PF_INET)
-			int sock_type,				// Socket type (such as SOCK_STREAM)
-			int ai_proto 				// Protocol (such as IPPROTO_IP or IPPROTO_IPV6)
-		) throw();
+		int FindAddr(
+			_In_z_ LPCTSTR szHost, 			// Host name or dotted IP address
+			_In_ int nPortNo,				// Port number
+			_In_ int flags,					// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
+			_In_ int addr_family,			// Address family (such as PF_INET)
+			_In_ int sock_type,				// Socket type (such as SOCK_STREAM)
+			_In_ int ai_proto) throw();		// Protocol (such as IPPROTO_IP or IPPROTO_IPV6)
 
-		int FindINET4Addr
-		(
-			LPCTSTR szHost, 				// Host name
-			int nPortNo, 				// Port number
-			int flags = 0, 				// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
-			int sock_type = SOCK_STREAM // Socket type (such as SOCK_STREAM or SOCK_DGRAM)
-		) throw();
+		int FindINET4Addr(
+			_In_z_ LPCTSTR szHost, 						// Host name
+			_In_ int nPortNo, 							// Port number
+			_In_ int flags = 0, 						// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
+			_In_ int sock_type = SOCK_STREAM) throw(); 	// Socket type (such as SOCK_STREAM or SOCK_DGRAM)
 
-		int FindINET6Addr
-		(
-			LPCTSTR szHost, 				// Host name
-			int nPortNo, 				// Port number
-			int flags = 0, 				// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
-			int sock_type = SOCK_STREAM // Socket type (such as SOCK_STREAM or SOCK_DGRAM)
-		) throw();
-		
+		int FindINET6Addr(
+			_In_z_ LPCTSTR szHost, 						// Host name
+			_In_ int nPortNo, 							// Port number
+			_In_ int flags = 0, 						// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
+			_In_ int sock_type = SOCK_STREAM) throw(); 	// Socket type (such as SOCK_STREAM or SOCK_DGRAM)
+
 		ADDRINFOT* const GetAddrInfoList() const;
-		ADDRINFOT* const GetAddrInfo(int nIndex = 0) const;
+		ADDRINFOT* const GetAddrInfo(_In_ int nIndex = 0) const;
 
 		// Implementation
 	private:
 		ADDRINFOT *m_pAddrs;
 	};
 }; // namespace ATL
- 
 
 
 #include <atlsocket.inl>
@@ -115,3 +105,4 @@ namespace ATL
 #pragma warning(pop)
 
 #endif __ATL_SOCKET__
+

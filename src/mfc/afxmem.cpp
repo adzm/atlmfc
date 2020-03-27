@@ -18,9 +18,7 @@
 #ifdef _DEBUG       // most of this file is for debugging
 
 void* __cdecl operator new(size_t nSize, int nType, LPCSTR lpszFileName, int nLine);
-#if _MSC_VER >= 1210
 void* __cdecl operator new[](size_t nSize, int nType, LPCSTR lpszFileName, int nLine);
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // test allocation routines
@@ -43,7 +41,6 @@ void PASCAL CObject::operator delete(void* p)
 #endif
 }
 
-#if _MSC_VER >= 1200
 void PASCAL CObject::operator delete(void* p, void*)
 {
 #ifdef _AFX_NO_DEBUG_CRT
@@ -52,7 +49,6 @@ void PASCAL CObject::operator delete(void* p, void*)
 	_free_dbg(p, _AFX_CLIENT_BLOCK);
 #endif
 }
-#endif
 
 #ifndef _AFX_NO_DEBUG_CRT
 
@@ -61,28 +57,22 @@ void* __cdecl operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
 	return ::operator new(nSize, _NORMAL_BLOCK, lpszFileName, nLine);
 }
 
-#if _MSC_VER >= 1210
 void* __cdecl operator new[](size_t nSize, LPCSTR lpszFileName, int nLine)
 {
 	return ::operator new[](nSize, _NORMAL_BLOCK, lpszFileName, nLine);
 }
-#endif
 
-#if _MSC_VER >= 1200
 void __cdecl operator delete(void* pData, LPCSTR /* lpszFileName */,
 	int /* nLine */)
 {
 	::operator delete(pData);
 }
-#endif
 
-#if _MSC_VER >= 1210
 void __cdecl operator delete[](void* pData, LPCSTR /* lpszFileName */,
 	int /* nLine */)
 {
 	::operator delete(pData);
 }
-#endif
 
 void* PASCAL
 CObject::operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
@@ -90,7 +80,6 @@ CObject::operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
 	return ::operator new(nSize, _AFX_CLIENT_BLOCK, lpszFileName, nLine);
 }
 
-#if _MSC_VER >= 1200
 void PASCAL
 CObject::operator delete(void *pObject, LPCSTR /* lpszFileName */,
 	int /* nLine */)
@@ -101,7 +90,6 @@ CObject::operator delete(void *pObject, LPCSTR /* lpszFileName */,
 	_free_dbg(pObject, _AFX_CLIENT_BLOCK);
 #endif
 }
-#endif
 
 void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject,  LPCSTR lpszFileName, int nLine)
 {
@@ -123,29 +111,15 @@ BOOL AFXAPI _AfxDefaultAllocHook(size_t, BOOL, LONG)
 AFX_STATIC_DATA AFX_ALLOC_HOOK pfnAllocHook = _AfxDefaultAllocHook;
 
 AFX_STATIC_DATA _CRT_ALLOC_HOOK pfnCrtAllocHook = NULL;
-#if _MSC_VER >= 1200
 int __cdecl _AfxAllocHookProxy(int nAllocType, void * pvData, size_t nSize,
 	int nBlockUse, long lRequest, const unsigned char * szFilename, int nLine)
-#else
-int __cdecl _AfxAllocHookProxy(int nAllocType, void * pvData, size_t nSize,
-	int nBlockUse, long lRequest, const char * szFilename, int nLine)
-#endif
 {
-#if _MSC_VER >= 1200
 	if (nAllocType != _HOOK_ALLOC)
 		return (pfnCrtAllocHook)(nAllocType, pvData, nSize,
 			nBlockUse, lRequest, (const unsigned char*) szFilename, nLine);
 	if ((pfnAllocHook)(nSize, _BLOCK_TYPE(nBlockUse) == _AFX_CLIENT_BLOCK, lRequest))
 		return (pfnCrtAllocHook)(nAllocType, pvData, nSize,
 			nBlockUse, lRequest, (const unsigned char*) szFilename, nLine);
-#else
-	if (nAllocType != _HOOK_ALLOC)
-		return (pfnCrtAllocHook)(nAllocType, pvData, nSize,
-			nBlockUse, lRequest, szFilename, nLine);
-	if ((pfnAllocHook)(nSize, _BLOCK_TYPE(nBlockUse) == _AFX_CLIENT_BLOCK, lRequest))
-		return (pfnCrtAllocHook)(nAllocType, pvData, nSize,
-			nBlockUse, lRequest, szFilename, nLine);
-#endif
 	return FALSE;
 }
 
@@ -376,7 +350,6 @@ void __cdecl operator delete(void* p)
 #endif
 }
 
-#if _MSC_VER >= 1210
 void* __cdecl operator new[](size_t nSize)
 {
 	return ::operator new(nSize);
@@ -386,7 +359,6 @@ void __cdecl operator delete[](void* p)
 {
 	::operator delete(p);
 }
-#endif
 
 #ifdef _DEBUG
 
@@ -425,7 +397,6 @@ void* __cdecl operator new(size_t nSize, int nType, LPCSTR lpszFileName, int nLi
 #endif
 }
 
-#if _MSC_VER >= 1200
 void __cdecl operator delete(void* p, int nType, LPCSTR /* lpszFileName */, int /* nLine */)
 {
 #if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
@@ -434,9 +405,7 @@ void __cdecl operator delete(void* p, int nType, LPCSTR /* lpszFileName */, int 
 		free(p);
 #endif
 }
-#endif // _MSC_VER >= 1200
 
-#if _MSC_VER >= 1210
 void* __cdecl operator new[](size_t nSize, int nType, LPCSTR lpszFileName, int nLine)
 {
 	return ::operator new(nSize, nType, lpszFileName, nLine);
@@ -446,7 +415,6 @@ void __cdecl operator delete[](void* p, int nType, LPCSTR lpszFileName, int nLin
 {
 	::operator delete(p, nType, lpszFileName, nLine);
 }
-#endif // _MSC_VER >= 1210
 
 #endif //_DEBUG
 

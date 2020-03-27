@@ -54,7 +54,6 @@ public:
 
 // Overrides
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
-	virtual BOOL ClipPaint() const { return FALSE; }
 
 // Implementation
 #ifndef _AFX_NO_OCC_SUPPORT

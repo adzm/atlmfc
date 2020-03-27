@@ -41,6 +41,15 @@ public:
 	virtual void ShowButton(BOOL bShow); 
 	virtual BOOL IsVisible() const {return m_bVisible;}
 
+	/// <summary>
+	/// Highlights auto hide button.</summary>
+	/// <param name="bHighlight">Specifies the new auto hide button state: TRUE - button is highlighted, FALSE- button is not highlighted.</param>
+	virtual void HighlightButton(BOOL bHighlight);
+	/// <summary>
+	/// Returns highlight state of auto hide button.</summary>
+	/// <returns> Returns TRUE if auto hide button is highlighted; otherwise FALSE.</returns>
+	virtual BOOL IsHighlighted() const { return m_bHighlighted; }
+
 	BOOL IsTop() const {return m_bTop;}
 	BOOL IsActive() const { return m_pParentBar != NULL && m_pParentBar->m_bActiveInGroup; }
 
@@ -73,6 +82,7 @@ public:
 protected:
 	BOOL  m_bTop;
 	BOOL  m_bVisible;
+	BOOL  m_bHighlighted;
 	DWORD m_dwAlignment;
 	int   m_nOffset;  // offset from the left bound of the parent bar for the horz buttons and from left bound for vert buttons
 

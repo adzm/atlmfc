@@ -352,11 +352,11 @@ void AFXAPI _AfxTraceMsg(LPCTSTR lpszPrefix, const MSG* pMsg)
 	{
 #ifdef WIN64
 		TRACE(traceWinMsg, 4, _T("%s: hwnd=%p, msg = 0x%04X (%p, %p)\n"),
-			lpszPrefix, pMsg->hwnd, lpszMsgName,
+			lpszPrefix, pMsg->hwnd, pMsg->message,
 			pMsg->wParam, pMsg->lParam);
 #else
 		TRACE(traceWinMsg, 4, _T("%s: hwnd=0x%08X, msg = 0x%04X (0x%08X, 0x%08X)\n"),
-			lpszPrefix, pMsg->hwnd, lpszMsgName,
+			lpszPrefix, pMsg->hwnd, pMsg->message,
 			pMsg->wParam, pMsg->lParam);
 #endif
 	}

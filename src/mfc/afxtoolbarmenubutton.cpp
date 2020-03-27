@@ -45,6 +45,8 @@ IMPLEMENT_SERIAL(CMFCToolBarMenuButton, CMFCToolBarButton, VERSIONABLE_SCHEMA | 
 
 BOOL CMFCToolBarMenuButton::m_bAlwaysCallOwnerDraw = FALSE;
 
+static const CString strDummyAmpSeq = _T("\001\001");
+
 // Construction/Destruction
 CMFCToolBarMenuButton::CMFCToolBarMenuButton()
 {
@@ -676,7 +678,7 @@ void CMFCToolBarMenuButton::CreateFromMenu(HMENU hMenu)
 
 	UINT uiDefaultCmd = ::GetMenuDefaultItem(hMenu, FALSE, GMDI_USEDISABLED);
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		CMFCToolBarMenuButton* pItem = STATIC_DOWNCAST(CMFCToolBarMenuButton, GetRuntimeClass()->CreateObject());
@@ -953,9 +955,11 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 	{
 		rectFrameBtn = rect;
 
-		rectFrameBtn.left += 2;
-		rectFrameBtn.top++;
-		rectFrameBtn.bottom -= 2;
+		CRect rectOffset = CMFCVisualManager::GetInstance ()->GetMenuImageFrameOffset();
+
+		rectFrameBtn.left += rectOffset.left;
+		rectFrameBtn.top += rectOffset.top;
+		rectFrameBtn.bottom -= rectOffset.bottom;
 		rectFrameBtn.right = rectImage.right;
 	}
 	else
@@ -1051,7 +1055,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 
 	if (bDrawImageFrame && !bContentOnly)
 	{
-		FillInterior(pDC, rectFrameBtn, bHighlight);
+		FillInterior(pDC, rectFrameBtn, bHighlight, TRUE);
 	}
 
 	if (!bDisableImage &&(IsDrawImage() && pImages != NULL) || hDocIcon != NULL)
@@ -1079,6 +1083,12 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 			{
 				CPoint pt = rectImage.TopLeft();
 				pt += ptImageOffset;
+
+				if (afxGlobalData.GetRibbonImageScale() != 1. && CMFCToolBar::m_bDontScaleImages)
+				{
+					pt.x += max (0, (rectImage.Width() - pImages->GetImageSize().cx) / 2);
+					pt.y += max (0, (rectImage.Width() - pImages->GetImageSize().cy) / 2);
+				}
 
 				if (bDrawImageShadow)
 				{
@@ -1224,7 +1234,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 
 			if (!bContentOnly && bDrawImageFrame)
 			{
-				FillInterior(pDC, rectFrameBtn, bHighlight);
+				FillInterior(pDC, rectFrameBtn, bHighlight, TRUE);
 			}
 
 			CMenuImages::Draw(pDC, (CMenuImages::IMAGES_IDS) iSystemImageId, rectSysImage, bDisabled ? CMenuImages::ImageGray : CMenuImages::ImageBlack);
@@ -1299,6 +1309,13 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 		}
 
 		strText += strEllipses;
+	}
+
+	if (!afxGlobalData.m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode())
+	{
+		strText.Replace(_T("&&"), strDummyAmpSeq);
+		strText.Remove(_T('&'));
+		strText.Replace(strDummyAmpSeq, _T("&&"));
 	}
 
 	if (bDisabled && !bHighlight && CMFCVisualManager::GetInstance()->IsEmbossDisabledImage())

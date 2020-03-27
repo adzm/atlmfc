@@ -71,8 +71,6 @@ struct ATL_DRAWINFO
 namespace ATL
 {
 
- 
-
 // Forward declarations
 //
 class ATL_NO_VTABLE CComControlBase;
@@ -87,7 +85,9 @@ class CFirePropNotifyEvent
 {
 public:
 	// Ask any objects sinking the IPropertyNotifySink notification if it is ok to edit a specified property
-	static HRESULT FireOnRequestEdit(IUnknown* pUnk, DISPID dispID)
+	static HRESULT FireOnRequestEdit(
+		_Inout_ IUnknown* pUnk, 
+		_In_ DISPID dispID)
 	{
 		CComQIPtr<IConnectionPointContainer, &__uuidof(IConnectionPointContainer)> pCPC(pUnk);
 		if (!pCPC)
@@ -124,7 +124,9 @@ public:
 		return S_OK;
 	}
 	// Notify any objects sinking the IPropertyNotifySink notification that a property has changed
-	static HRESULT FireOnChanged(IUnknown* pUnk, DISPID dispID)
+	static HRESULT FireOnChanged(
+		_Inout_ IUnknown* pUnk, 
+		_In_ DISPID dispID)
 	{
 		CComQIPtr<IConnectionPointContainer, &__uuidof(IConnectionPointContainer)> pCPC(pUnk);
 		if (!pCPC)
@@ -169,7 +171,7 @@ public:
 	typedef short AppearanceType;  // Override in derived class if your 
 		// m_nAppearance stock property isn't of type 'short'
 public:
-	CComControlBase(HWND& h) : m_hWndCD(h)
+	CComControlBase(_Inout_ HWND& h) : m_hWndCD(h)
 	{
 		memset(this, 0, sizeof(CComControlBase));
 		m_phWndCD = &h;
@@ -189,7 +191,7 @@ public:
 	// Control helper functions can go here non-virtuals only please
 
 	// Mark the control 'dirty' so the container will save it
-	void SetDirty(BOOL bDirty)
+	void SetDirty(_In_ BOOL bDirty)
 	{
 		m_bRequiresSave = bDirty;
 	}
@@ -199,9 +201,9 @@ public:
 		return m_bRequiresSave;
 	}
 	// Get the zoom factor (numerator & denominator) which is factor of the natural extent
-	void GetZoomInfo(ATL_DRAWINFO& di);
+	void GetZoomInfo(_Inout_ ATL_DRAWINFO& di);
 	// Sends a notification that the moniker for the control has changed
-	HRESULT SendOnRename(IMoniker *pmk)
+	HRESULT SendOnRename(_Inout_ IMoniker *pmk)
 	{
 		HRESULT hRes = S_OK;
 		if (m_spOleAdviseHolder)
@@ -225,16 +227,20 @@ public:
 		return hRes;
 	}
 	// Sends a notification that the control's data has changed
-	HRESULT SendOnDataChange(DWORD advf = 0);
+	HRESULT SendOnDataChange(_In_ DWORD advf = 0);
 	// Sends a notification that the control's representation has changed
-	HRESULT SendOnViewChange(DWORD dwAspect, LONG lindex = -1)
+	HRESULT SendOnViewChange(_In_ DWORD dwAspect, _In_ LONG lindex = -1)
 	{
 		if (m_spAdviseSink)
 			m_spAdviseSink->OnViewChange(dwAspect, lindex);
 		return S_OK;
 	}
 	// Sends a notification to the container that the control has received focus
-	LRESULT OnSetFocus(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnSetFocus(
+		_In_ UINT /*uMsg*/, 
+		_In_ WPARAM /*wParam*/, 
+		_In_ LPARAM /*lParam*/, 
+		_Out_ BOOL& bHandled)
 	{
 		if (m_bInPlaceActive)
 		{
@@ -249,7 +255,11 @@ public:
 		bHandled = FALSE;
 		return 1;
 	}
-	LRESULT OnKillFocus(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnKillFocus(
+		_In_ UINT /*uMsg*/, 
+		_In_ WPARAM /*wParam*/, 
+		_In_ LPARAM /*lParam*/, 
+		_Out_ BOOL& bHandled)
 	{
 		CComQIPtr<IOleControlSite, &__uuidof(IOleControlSite)> spSite(m_spClientSite);
 		if (m_bInPlaceActive && spSite != NULL && !::IsChild(m_hWndCD, ::GetFocus()))
@@ -257,7 +267,11 @@ public:
 		bHandled = FALSE;
 		return 1;
 	}
-	LRESULT OnMouseActivate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnMouseActivate(
+		_In_ UINT /*uMsg*/, 
+		_In_ WPARAM /*wParam*/, 
+		_In_ LPARAM /*lParam*/, 
+		_Out_ BOOL& bHandled)
 	{
 		BOOL bUserMode = TRUE;
 		HRESULT hRet = GetAmbientUserMode(bUserMode);
@@ -273,19 +287,23 @@ public:
 		bHandled = FALSE;
 		return 1;
 	}
-	BOOL PreTranslateAccelerator(LPMSG /*pMsg*/, HRESULT& /*hRet*/)
+	BOOL PreTranslateAccelerator(
+		_In_opt_ LPMSG /*pMsg*/, 
+		_In_ HRESULT& /*hRet*/)
 	{
 		return FALSE;
 	}
 
-	HRESULT GetAmbientProperty(DISPID dispid, VARIANT& var)
+	HRESULT GetAmbientProperty(
+		_In_ DISPID dispid, 
+		_Out_ VARIANT& var)
 	{
 		HRESULT hRes = E_FAIL;
 		if (m_spAmbientDispatch.p != NULL)
 			hRes = m_spAmbientDispatch.GetProperty(dispid, &var);
 		return hRes;
 	}
-	HRESULT GetAmbientAppearance(short& nAppearance)
+	HRESULT GetAmbientAppearance(_Out_ short& nAppearance)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_APPEARANCE, var);
@@ -301,7 +319,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientBackColor(OLE_COLOR& BackColor)
+	HRESULT GetAmbientBackColor(_Out_ OLE_COLOR& BackColor)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_BACKCOLOR, var);
@@ -309,14 +327,16 @@ public:
 		BackColor = var.lVal;
 		return hRes;
 	}
-	HRESULT GetAmbientDisplayName(BSTR& bstrDisplayName)
+	HRESULT GetAmbientDisplayName(_Inout_ _Deref_post_opt_z_ BSTR& bstrDisplayName)
 	{
-		CComVariant var;
+		CComVariant var;		
+
 		if (bstrDisplayName)
 		{
 			SysFreeString(bstrDisplayName);
 			bstrDisplayName = NULL;
 		}
+
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_DISPLAYNAME, var);
 		if (SUCCEEDED(hRes))
 		{
@@ -328,7 +348,8 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientFont(IFont** ppFont)
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetAmbientFont(_Deref_out_ IFont** ppFont)
 	{
 		// caller MUST Release the font!
 		if (ppFont == NULL)
@@ -346,7 +367,10 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientFontDisp(IFontDisp** ppFont)
+ATLPREFAST_UNSUPPRESS()
+	
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetAmbientFontDisp(_Deref_out_ IFontDisp** ppFont)
 	{
 		// caller MUST Release the font!
 		if (ppFont == NULL)
@@ -364,7 +388,9 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientForeColor(OLE_COLOR& ForeColor)
+ATLPREFAST_UNSUPPRESS()
+	
+	HRESULT GetAmbientForeColor(_Out_ OLE_COLOR& ForeColor)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_FORECOLOR, var);
@@ -372,7 +398,7 @@ public:
 		ForeColor = var.lVal;
 		return hRes;
 	}
-	HRESULT GetAmbientLocaleID(LCID& lcid)
+	HRESULT GetAmbientLocaleID(_Out_ LCID& lcid)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_LOCALEID, var);
@@ -380,14 +406,16 @@ public:
 		lcid = var.lVal;
 		return hRes;
 	}
-	HRESULT GetAmbientScaleUnits(BSTR& bstrScaleUnits)
+	HRESULT GetAmbientScaleUnits(_Inout_ _Deref_post_opt_z_ BSTR& bstrScaleUnits)
 	{
-		CComVariant var;
+		CComVariant var;		
+
 		if (bstrScaleUnits)
 		{
 			SysFreeString(bstrScaleUnits);
 			bstrScaleUnits = NULL;
 		}
+
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_SCALEUNITS, var);
 		ATLASSERT(var.vt == VT_BSTR || FAILED(hRes));
 		if (SUCCEEDED(hRes))
@@ -400,7 +428,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientTextAlign(short& nTextAlign)
+	HRESULT GetAmbientTextAlign(_Out_ short& nTextAlign)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_TEXTALIGN, var);
@@ -414,7 +442,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientUserMode(BOOL& bUserMode)
+	HRESULT GetAmbientUserMode(_Out_ BOOL& bUserMode)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_USERMODE, var);
@@ -427,7 +455,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientUIDead(BOOL& bUIDead)
+	HRESULT GetAmbientUIDead(_Out_ BOOL& bUIDead)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_UIDEAD, var);
@@ -440,7 +468,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientShowGrabHandles(BOOL& bShowGrabHandles)
+	HRESULT GetAmbientShowGrabHandles(_Out_ BOOL& bShowGrabHandles)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_SHOWGRABHANDLES, var);
@@ -453,7 +481,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientShowHatching(BOOL& bShowHatching)
+	HRESULT GetAmbientShowHatching(_Out_ BOOL& bShowHatching)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_SHOWHATCHING, var);
@@ -466,7 +494,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientMessageReflect(BOOL& bMessageReflect)
+	HRESULT GetAmbientMessageReflect(_Out_ BOOL& bMessageReflect)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_MESSAGEREFLECT, var);
@@ -479,7 +507,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientAutoClip(BOOL& bAutoClip)
+	HRESULT GetAmbientAutoClip(_Out_ BOOL& bAutoClip)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_AUTOCLIP, var);
@@ -492,7 +520,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientDisplayAsDefault(BOOL& bDisplaysDefault)
+	HRESULT GetAmbientDisplayAsDefault(_Out_ BOOL& bDisplaysDefault)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_DISPLAYASDEFAULT, var);
@@ -505,7 +533,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientSupportsMnemonics(BOOL& bSupportMnemonics)
+	HRESULT GetAmbientSupportsMnemonics(_Out_ BOOL& bSupportMnemonics)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_SUPPORTSMNEMONICS, var);
@@ -518,7 +546,7 @@ public:
 		}
 		return hRes;
 	}
-	HRESULT GetAmbientPalette(HPALETTE& hPalette)
+	HRESULT GetAmbientPalette(_Out_ HPALETTE& hPalette)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_PALETTE, var);
@@ -532,7 +560,7 @@ public:
 		return hRes;
 	}
 
-	HRESULT GetAmbientCodePage(ULONG& ulCodePage)
+	HRESULT GetAmbientCodePage(_Out_ ULONG& ulCodePage)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_CODEPAGE, var);
@@ -541,14 +569,16 @@ public:
 		return hRes;
 	}
 
-	HRESULT GetAmbientCharSet(BSTR& bstrCharSet)
+	HRESULT GetAmbientCharSet(_Inout_ _Deref_post_opt_z_ BSTR& bstrCharSet)
 	{
 		CComVariant var;
+
 		if (bstrCharSet)
 		{
 			SysFreeString(bstrCharSet);
 			bstrCharSet = NULL;
 		}
+
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_CHARSET, var);
 		ATLASSERT(var.vt == VT_BSTR || FAILED(hRes));
 		if (SUCCEEDED(hRes))
@@ -562,7 +592,7 @@ public:
 		return hRes;
 	}
 
-	HRESULT GetAmbientRightToLeft(BOOL& bRightToLeft)
+	HRESULT GetAmbientRightToLeft(_Out_ BOOL& bRightToLeft)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_RIGHTTOLEFT, var);
@@ -576,7 +606,7 @@ public:
 		return hRes;
 	}
 
-	HRESULT GetAmbientTopToBottom(BOOL& bTopToBottom)
+	HRESULT GetAmbientTopToBottom(_Out_ BOOL& bTopToBottom)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_TOPTOBOTTOM, var);
@@ -590,7 +620,10 @@ public:
 		return hRes;
 	}
 
-	HRESULT InternalGetSite(REFIID riid, void** ppUnkSite)
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT InternalGetSite(
+		_In_ REFIID riid, 
+		_Deref_out_ void** ppUnkSite)
 	{
 		ATLASSERT(ppUnkSite != NULL);
 		if (ppUnkSite == NULL)
@@ -602,8 +635,9 @@ public:
 		}
 		return m_spClientSite->QueryInterface(riid, ppUnkSite);
 	}
-
-	BOOL DoesVerbUIActivate(LONG iVerb)
+ATLPREFAST_UNSUPPRESS()
+	
+	BOOL DoesVerbUIActivate(_In_ LONG iVerb)
 	{
 		BOOL b = FALSE;
 		switch (iVerb)
@@ -619,7 +653,7 @@ public:
 		return b;
 	}
 
-	BOOL DoesVerbActivate(LONG iVerb)
+	BOOL DoesVerbActivate(_In_ LONG iVerb)
 	{
 		BOOL b = FALSE;
 		switch (iVerb)
@@ -634,32 +668,59 @@ public:
 		return b;
 	}
 
-	BOOL SetControlFocus(BOOL bGrab);
-	HRESULT IQuickActivate_QuickActivate(QACONTAINER *pQACont,
-		QACONTROL *pQACtrl);
-	HRESULT DoVerbProperties(LPCRECT /* prcPosRect */, HWND hwndParent);
-	HRESULT InPlaceActivate(LONG iVerb, const RECT* prcPosRect = NULL);
+	BOOL SetControlFocus(_In_ BOOL bGrab);
+	HRESULT IQuickActivate_QuickActivate(
+		_In_ QACONTAINER *pQACont, 
+		_Inout_ QACONTROL *pQACtrl);
+	HRESULT DoVerbProperties(
+		_In_opt_ LPCRECT /* prcPosRect */, 
+		_In_ HWND hwndParent);
+	HRESULT InPlaceActivate(
+		_In_ LONG iVerb, 
+		_In_opt_ const RECT* prcPosRect = NULL);
 
-	HRESULT IOleObject_SetClientSite(IOleClientSite *pClientSite);
-	HRESULT IOleObject_GetClientSite(IOleClientSite **ppClientSite);
-	HRESULT IOleObject_Advise(IAdviseSink *pAdvSink, DWORD *pdwConnection);
-	HRESULT IOleObject_Close(DWORD dwSaveOption);
-	HRESULT IOleObject_SetExtent(DWORD dwDrawAspect, SIZEL *psizel);
+	HRESULT IOleObject_SetClientSite(_Inout_opt_ IOleClientSite *pClientSite);
+	HRESULT IOleObject_GetClientSite(_Deref_out_opt_ IOleClientSite **ppClientSite);
+	HRESULT IOleObject_Advise(
+		_Inout_ IAdviseSink *pAdvSink, 
+		_Out_ DWORD *pdwConnection);
+	HRESULT IOleObject_Close(_In_ DWORD dwSaveOption);
+	HRESULT IOleObject_SetExtent(
+		_In_ DWORD dwDrawAspect, 
+		_In_bytecount_c_(sizeof(SIZE)) SIZEL *psizel);
 	HRESULT IOleInPlaceObject_InPlaceDeactivate(void);
 	HRESULT IOleInPlaceObject_UIDeactivate(void);
-	HRESULT IOleInPlaceObject_SetObjectRects(LPCRECT prcPos,LPCRECT prcClip);
-	HRESULT IViewObject_Draw(DWORD dwDrawAspect, LONG lindex, void *pvAspect,
-		DVTARGETDEVICE *ptd, HDC hicTargetDev, HDC hdcDraw,
-		LPCRECTL prcBounds, LPCRECTL prcWBounds);
-	HRESULT IDataObject_GetData(FORMATETC *pformatetcIn, STGMEDIUM *pmedium);
+	HRESULT IOleInPlaceObject_SetObjectRects(
+		_In_ LPCRECT prcPos, 
+		_In_ LPCRECT prcClip);
+	HRESULT IViewObject_Draw(
+		_In_ DWORD dwDrawAspect, 
+		_In_ LONG lindex, 
+		_In_opt_ void *pvAspect,
+		_In_opt_ DVTARGETDEVICE *ptd, 
+		_In_ HDC hicTargetDev, 
+		_In_ HDC hdcDraw,
+		_In_opt_ LPCRECTL prcBounds, 
+		_In_opt_ LPCRECTL prcWBounds);
+	HRESULT IDataObject_GetData(
+		_In_ FORMATETC *pformatetcIn, 
+		_Out_ STGMEDIUM *pmedium);
 
 	HRESULT FireViewChange();
-	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& lResult);
+	LRESULT OnPaint(
+		_In_ UINT uMsg, 
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam, 
+		_In_ BOOL& lResult);
 
-	virtual HWND CreateControlWindow(HWND hWndParent, RECT& rcPos) = 0;
-	virtual HRESULT ControlQueryInterface(const IID& iid, void** ppv) = 0;
-	virtual HRESULT OnDrawAdvanced(ATL_DRAWINFO& di);
-	virtual HRESULT OnDraw(ATL_DRAWINFO& di)
+	virtual HWND CreateControlWindow(
+		_In_ HWND hWndParent, 
+		_In_ RECT& rcPos) = 0;
+	virtual HRESULT ControlQueryInterface(
+		_In_ const IID& iid, 
+		_Deref_out_ void** ppv) = 0;
+	virtual HRESULT OnDrawAdvanced(_Inout_ ATL_DRAWINFO& di);
+	virtual HRESULT OnDraw(_In_ ATL_DRAWINFO& di)
 	{
 		::SetTextAlign(di.hdcDraw, TA_CENTER|TA_BASELINE);
 		LPCTSTR pszText = _T("ATL ") _T(_ATL_VER_RBLD);
@@ -708,8 +769,9 @@ public:
 	DECLARE_VIEW_STATUS(VIEWSTATUS_OPAQUE)
 };
 
-inline HRESULT CComControlBase::IQuickActivate_QuickActivate(QACONTAINER *pQACont,
-	QACONTROL *pQACtrl)
+inline HRESULT CComControlBase::IQuickActivate_QuickActivate(
+	_In_ QACONTAINER *pQACont,
+	_Inout_ QACONTROL *pQACtrl)
 {
 	ATLASSERT(pQACont != NULL);
 	ATLASSERT(pQACtrl != NULL);
@@ -788,7 +850,7 @@ inline HRESULT CComControlBase::IQuickActivate_QuickActivate(QACONTAINER *pQACon
 	return S_OK;
 }
 
-inline BOOL CComControlBase::SetControlFocus(BOOL bGrab)
+inline BOOL CComControlBase::SetControlFocus(_In_ BOOL bGrab)
 {
 	if (m_bWndLess)
 	{
@@ -818,7 +880,9 @@ inline BOOL CComControlBase::SetControlFocus(BOOL bGrab)
 	return FALSE;
 }
 
-inline HRESULT CComControlBase::DoVerbProperties(LPCRECT /* prcPosRect */, HWND hwndParent)
+inline HRESULT CComControlBase::DoVerbProperties(
+	_In_opt_ LPCRECT /* prcPosRect */, 
+	_In_ HWND hwndParent)
 {
 	HRESULT hr = S_OK;
 	CComQIPtr <ISpecifyPropertyPages, &__uuidof(ISpecifyPropertyPages)> spPages;
@@ -873,8 +937,10 @@ inline HRESULT CComControlBase::DoVerbProperties(LPCRECT /* prcPosRect */, HWND 
 	return hr;
 }
 
-inline HRESULT CComControlBase::InPlaceActivate(LONG iVerb, const RECT* /*prcPosRect*/)
-{
+inline HRESULT CComControlBase::InPlaceActivate(
+	_In_ LONG iVerb, 
+	_In_opt_ const RECT* /*prcPosRect*/)
+{	
 	HRESULT hr;
 
 	if (m_spClientSite == NULL)
@@ -1018,7 +1084,7 @@ inline HRESULT CComControlBase::InPlaceActivate(LONG iVerb, const RECT* /*prcPos
 	return S_OK;
 }
 
-inline HRESULT CComControlBase::SendOnDataChange(DWORD advf)
+inline HRESULT CComControlBase::SendOnDataChange(_In_ DWORD advf)
 {
 	HRESULT hRes = S_OK;
 	if (m_spDataAdviseHolder)
@@ -1030,7 +1096,7 @@ inline HRESULT CComControlBase::SendOnDataChange(DWORD advf)
 	return hRes;
 }
 
-inline HRESULT CComControlBase::IOleObject_SetClientSite(IOleClientSite *pClientSite)
+inline HRESULT CComControlBase::IOleObject_SetClientSite(_Inout_opt_ IOleClientSite *pClientSite)
 {
 	ATLASSERT(pClientSite == NULL || m_spClientSite == NULL);
 	m_spClientSite = pClientSite;
@@ -1043,7 +1109,7 @@ inline HRESULT CComControlBase::IOleObject_SetClientSite(IOleClientSite *pClient
 	return S_OK;
 }
 
-inline HRESULT CComControlBase::IOleObject_GetClientSite(IOleClientSite **ppClientSite)
+inline HRESULT CComControlBase::IOleObject_GetClientSite(_Deref_out_opt_ IOleClientSite **ppClientSite)
 {
 	ATLASSERT(ppClientSite);
 	if (ppClientSite == NULL)
@@ -1055,8 +1121,9 @@ inline HRESULT CComControlBase::IOleObject_GetClientSite(IOleClientSite **ppClie
 	return S_OK;
 }
 
-inline HRESULT CComControlBase::IOleObject_Advise(IAdviseSink *pAdvSink,
-	DWORD *pdwConnection)
+inline HRESULT CComControlBase::IOleObject_Advise(
+	_Inout_ IAdviseSink *pAdvSink,
+	_Out_ DWORD *pdwConnection)
 {
 	HRESULT hr = S_OK;
 	if (m_spOleAdviseHolder == NULL)
@@ -1066,7 +1133,7 @@ inline HRESULT CComControlBase::IOleObject_Advise(IAdviseSink *pAdvSink,
 	return hr;
 }
 
-inline HRESULT CComControlBase::IOleObject_Close(DWORD dwSaveOption)
+inline HRESULT CComControlBase::IOleObject_Close(_In_ DWORD dwSaveOption)
 {
 	if (m_hWndCD)
 	{
@@ -1175,7 +1242,9 @@ inline HRESULT CComControlBase::IOleInPlaceObject_UIDeactivate(void)
 	return S_OK;
 }
 
-inline HRESULT CComControlBase::IOleInPlaceObject_SetObjectRects(LPCRECT prcPos,LPCRECT prcClip)
+inline HRESULT CComControlBase::IOleInPlaceObject_SetObjectRects(
+	_In_ LPCRECT prcPos, 
+	_In_ LPCRECT prcClip)
 {
 	if (prcPos == NULL || prcClip == NULL)
 		return E_POINTER;
@@ -1208,7 +1277,9 @@ inline HRESULT CComControlBase::IOleInPlaceObject_SetObjectRects(LPCRECT prcPos,
 	return S_OK;
 }
 
-inline HRESULT CComControlBase::IOleObject_SetExtent(DWORD dwDrawAspect, SIZEL *psizel)
+inline HRESULT CComControlBase::IOleObject_SetExtent(
+	_In_ DWORD dwDrawAspect, 
+	_In_bytecount_c_(sizeof(SIZE)) SIZEL *psizel)
 {
 	if (dwDrawAspect != DVASPECT_CONTENT)
 		return DV_E_DVASPECT;
@@ -1241,12 +1312,19 @@ inline HRESULT CComControlBase::IOleObject_SetExtent(DWORD dwDrawAspect, SIZEL *
 	return S_OK;
 }
 
-inline HRESULT CComControlBase::IViewObject_Draw(DWORD dwDrawAspect, LONG lindex,
-	void *pvAspect, DVTARGETDEVICE *ptd, HDC hicTargetDev, HDC hdcDraw,
-	LPCRECTL prcBounds, LPCRECTL prcWBounds)
+inline HRESULT CComControlBase::IViewObject_Draw(
+	_In_ DWORD dwDrawAspect, 
+	_In_ LONG lindex,
+	_In_opt_ void *pvAspect, 
+	_In_opt_ DVTARGETDEVICE *ptd, 
+	_In_ HDC hicTargetDev, 
+	_In_ HDC hdcDraw,
+	_In_opt_ LPCRECTL prcBounds, 
+	_In_opt_ LPCRECTL prcWBounds)
 {
 	ATLTRACE(atlTraceControls,2,_T("Draw dwDrawAspect=%x lindex=%d ptd=%x hic=%x hdc=%x\n"),
-		dwDrawAspect, lindex, ptd, hicTargetDev, hdcDraw);
+		dwDrawAspect, lindex, reinterpret_cast<int>(ptd), 
+			reinterpret_cast<int>(hicTargetDev), reinterpret_cast<int>(hdcDraw));
 #ifdef _DEBUG
 	if (prcBounds == NULL)
 		ATLTRACE(atlTraceControls,2,_T("\tprcBounds=NULL\n"));
@@ -1302,8 +1380,9 @@ inline HRESULT CComControlBase::IViewObject_Draw(DWORD dwDrawAspect, LONG lindex
 	return OnDrawAdvanced(di);
 }
 
-inline HRESULT CComControlBase::IDataObject_GetData(FORMATETC *pformatetcIn,
-	STGMEDIUM *pmedium)
+inline HRESULT CComControlBase::IDataObject_GetData(
+	_In_ FORMATETC *pformatetcIn,
+	_Out_ STGMEDIUM *pmedium)
 {
 	if (pmedium == NULL)
 		return E_POINTER;
@@ -1389,7 +1468,7 @@ inline HRESULT CComControlBase::FireViewChange()
 	return S_OK;
 }
 
-inline void CComControlBase::GetZoomInfo(ATL_DRAWINFO& di)
+inline void CComControlBase::GetZoomInfo(_Inout_ ATL_DRAWINFO& di)
 {
 	const RECTL& rcPos = *di.prcBounds;
 	SIZEL sizeDen;
@@ -1416,7 +1495,7 @@ inline void CComControlBase::GetZoomInfo(ATL_DRAWINFO& di)
 		di.bZoomed = FALSE;
 }
 
-inline HRESULT CComControlBase::OnDrawAdvanced(ATL_DRAWINFO& di)
+inline HRESULT CComControlBase::OnDrawAdvanced(_Inout_ ATL_DRAWINFO& di)
 {
 	BOOL bDeleteDC = FALSE;
 	if (di.hicTargetDev == NULL)
@@ -1446,13 +1525,16 @@ inline HRESULT CComControlBase::OnDrawAdvanced(ATL_DRAWINFO& di)
 	return hRes;
 }
 
-inline LRESULT CComControlBase::OnPaint(UINT /* uMsg */, WPARAM wParam,
-	LPARAM /* lParam */, BOOL& /* lResult */)
+inline LRESULT CComControlBase::OnPaint(
+	_In_ UINT /* uMsg */, 
+	_In_ WPARAM wParam,
+	_In_ LPARAM /* lParam */, 
+	_In_ BOOL& /* lResult */)
 {
 	RECT rc;
 	PAINTSTRUCT ps;
 
-	HDC hdc = (wParam != NULL) ? (HDC)wParam : ::BeginPaint(m_hWndCD, &ps);
+	HDC hdc = (wParam != 0) ? (HDC)wParam : ::BeginPaint(m_hWndCD, &ps);
 	if (hdc == NULL)
 		return 0;
 	::GetClientRect(m_hWndCD, &rc);
@@ -1466,42 +1548,51 @@ inline LRESULT CComControlBase::OnPaint(UINT /* uMsg */, WPARAM wParam,
 	di.prcBounds = (LPCRECTL)&rc;
 
 	OnDrawAdvanced(di);
-	if (wParam == NULL)
+	if (wParam == 0)
 		::EndPaint(m_hWndCD, &ps);
 	return 0;
 }
 
 
 template <class T, class WinBase =  CWindowImpl< T > >
-class ATL_NO_VTABLE CComControl : public CComControlBase, public WinBase
+class ATL_NO_VTABLE CComControl : 
+	public CComControlBase, 
+	public WinBase
 {
 public:
 	CComControl() : CComControlBase(m_hWnd) {}
 
-	virtual HWND CreateControlWindow(HWND hWndParent, RECT& rcPos)
+	virtual HWND CreateControlWindow(
+		_In_ HWND hWndParent, 
+		_In_ RECT& rcPos)
 	{
 		T* pT = static_cast<T*>(this);
 		return pT->Create(hWndParent, rcPos);
 	}
 
-	HRESULT FireOnRequestEdit(DISPID dispID)
+	HRESULT FireOnRequestEdit(_In_ DISPID dispID)
 	{
 		T* pT = static_cast<T*>(this);
 		return T::__ATL_PROP_NOTIFY_EVENT_CLASS::FireOnRequestEdit(pT->GetUnknown(), dispID);
 	}
-	HRESULT FireOnChanged(DISPID dispID)
+	HRESULT FireOnChanged(_In_ DISPID dispID)
 	{
 		T* pT = static_cast<T*>(this);
 		return T::__ATL_PROP_NOTIFY_EVENT_CLASS::FireOnChanged(pT->GetUnknown(), dispID);
 	}
 
-	virtual HRESULT ControlQueryInterface(const IID& iid, void** ppv)
+	virtual HRESULT ControlQueryInterface(
+		_In_ const IID& iid, 
+		_Deref_out_ void** ppv)
 	{
 		T* pT = static_cast<T*>(this);
 		return pT->GetUnknown()->QueryInterface(iid, ppv);
 	}
 
-	int MessageBox(LPCTSTR lpszText, LPCTSTR lpszCaption = _T(""), UINT nType = MB_OK)
+	int MessageBox(
+		_In_z_ LPCTSTR lpszText, 
+		_In_opt_z_ LPCTSTR lpszCaption = _T(""), 
+		_In_ UINT nType = MB_OK)
 	{
 		if (::IsWindow(m_hWndCD))
 			return ::MessageBox(m_hWndCD, lpszText, lpszCaption, nType);
@@ -1533,7 +1624,8 @@ public:
 
 #ifndef _ATL_NO_HOSTING
 template <class T>
-class CComCompositeControl : public CComControl< T, CAxDialogImpl< T > >
+class CComCompositeControl : 
+	public CComControl< T, CAxDialogImpl< T > >
 {
 public:
 	CComCompositeControl()
@@ -1545,7 +1637,7 @@ public:
 	{
 		DeleteObject(m_hbrBackground);
 	}
-	HRESULT AdviseSinkMap(bool bAdvise)
+	HRESULT AdviseSinkMap(_In_ bool bAdvise)
 	{
 		if(!bAdvise && m_hWnd == NULL)
 		{
@@ -1575,7 +1667,7 @@ public:
 		}
 		return hr;
 	}
-	static BOOL CALLBACK BackgroundColorEnumProc(HWND hwnd, LPARAM l)
+	static BOOL CALLBACK BackgroundColorEnumProc(_In_ HWND hwnd, _In_ LPARAM l)
 	{
 		CAxWindow wnd(hwnd);
 		CComPtr<IAxWinAmbientDispatch> spDispatch;
@@ -1584,7 +1676,11 @@ public:
 			spDispatch->put_BackColor((OLE_COLOR)l);
 		return TRUE;
 	}
-	LRESULT OnDialogColor(UINT, WPARAM w, LPARAM, BOOL&)
+	LRESULT OnDialogColor(
+		_In_ UINT, 
+		_In_ WPARAM w, 
+		_In_ LPARAM, 
+		_In_ BOOL&)
 	{
 		HIGHCONTRAST contrastMode;
 		memset(&contrastMode, 0, sizeof(HIGHCONTRAST));
@@ -1601,15 +1697,20 @@ public:
 		::SetBkColor(dc, lb.lbColor);
 		return (LRESULT)m_hbrBackground;
 	}
-	HWND Create(HWND hWndParent, RECT& /*rcPos*/, LPARAM dwInitParam = NULL)
+	HWND Create(
+		_In_ HWND hWndParent, 
+		_In_ RECT& /*rcPos*/, 
+		_In_ LPARAM dwInitParam = NULL)
 	{
 		CComControl< T, CAxDialogImpl< T > >::Create(hWndParent, dwInitParam);
-		SetBackgroundColorFromAmbient();
 		if (m_hWnd != NULL)
+		{
+			SetBackgroundColorFromAmbient();
 			ShowWindow(SW_SHOWNOACTIVATE);
+		}
 		return m_hWnd;
 	}
-	BOOL CalcExtent(SIZE& size)
+	BOOL CalcExtent(_Inout_ SIZE& size)
 	{
 		HINSTANCE hInstance = _AtlBaseModule.GetResourceInstance();
 		LPCTSTR lpTemplateName = MAKEINTRESOURCE(static_cast<T*>(this)->IDD);
@@ -1617,6 +1718,8 @@ public:
 		if (hDlgTempl == NULL)
 			return FALSE;
 		HGLOBAL hResource = LoadResource(hInstance, hDlgTempl);
+		if (hResource == NULL)
+			return FALSE;
 		DLGTEMPLATE* pDlgTempl = (DLGTEMPLATE*)LockResource(hResource);
 		if (pDlgTempl == NULL)
 			return FALSE;
@@ -1625,7 +1728,9 @@ public:
 		return TRUE;
 	}
 //Implementation
-	BOOL PreTranslateAccelerator(LPMSG pMsg, HRESULT& hRet)
+	BOOL PreTranslateAccelerator(
+		_In_ LPMSG pMsg, 
+		_Out_ HRESULT& hRet)
 	{
 		hRet = S_OK;
 
@@ -1789,6 +1894,7 @@ public:
 			while (hWnd != NULL && ::GetParent(hWnd) != m_hWnd);
 			if (hWnd != m_hWndFocus)
 			{
+				ATLASSUME(hWnd != NULL);
 				CComPtr<IUnknown> spUnknown;
 				HRESULT hr = AtlAxGetControl(hWnd, &spUnknown);
 				if (SUCCEEDED(hr))
@@ -1805,7 +1911,9 @@ public:
 		return S_OK;
 	}
 
-	virtual HWND CreateControlWindow(HWND hWndParent, RECT& rcPos)
+	virtual HWND CreateControlWindow(
+		_In_ HWND hWndParent, 
+		_In_ RECT& rcPos)
 	{
 		T* pT = static_cast<T*>(this);
 		HWND h = pT->Create(hWndParent, rcPos);
@@ -1813,7 +1921,7 @@ public:
 			AdviseSinkMap(true);
 		return h;
 	}
-	virtual HRESULT OnDraw(ATL_DRAWINFO& di)
+	virtual HRESULT OnDraw(_In_ ATL_DRAWINFO& di)
 	{
 		if(!m_bInPlaceActive)
 		{
@@ -1828,7 +1936,11 @@ public:
 		}
 		return S_OK;
 	}
-	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnInitDialog(
+		_In_ UINT /*uMsg*/, 
+		_In_ WPARAM /*wParam*/, 
+		_In_ LPARAM /*lParam*/, 
+		_Out_  BOOL& bHandled)
 	{
 		// initialize controls in dialog with DLGINIT resource section
 		ExecuteDlgInit(static_cast<T*>(this)->IDD);
@@ -1836,19 +1948,30 @@ public:
 		return 1;
 	}
 	// save HWND of child that last had focus
-	LRESULT OnChildKillFocus(WORD /*wNotifyCode*/, WORD /*wID*/, HWND hWndCtl, BOOL& bHandled)
+	LRESULT OnChildKillFocus(
+		_In_ WORD /*wNotifyCode*/, 
+		_In_ WORD /*wID*/, 
+		_In_ HWND hWndCtl, 
+		_Out_ BOOL& bHandled)
 	{
 		m_hWndFocus = hWndCtl;
 		bHandled = FALSE;
 		return 0;
 	}
-	LRESULT OnNMKillFocus(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
+	LRESULT OnNMKillFocus(
+		_In_ int /*idCtrl*/, 
+		_In_ LPNMHDR pnmh, 
+		_Out_ BOOL& bHandled)
 	{
 		m_hWndFocus = pnmh->hwndFrom;
 		bHandled = FALSE;
 		return 0;
 	}
-	LRESULT OnSetFocus(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	LRESULT OnSetFocus(
+		_In_ UINT /*uMsg*/, 
+		_In_ WPARAM /*wParam*/, 
+		_In_ LPARAM /*lParam*/, 
+		_Out_ BOOL& bHandled)
 	{
 		// Call base class OnSetFocus so control is UI-activated.
 		baseClass::OnSetFocus(0, 0, 0, bHandled);
@@ -1876,7 +1999,11 @@ public:
 		return 0;
 	}
 	typedef CComControl< T, CAxDialogImpl< T > >	baseClass;
-	LRESULT OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT OnMouseActivate(
+		_In_ UINT uMsg, 
+		_In_ WPARAM wParam, 
+		_In_ LPARAM lParam, 
+		_Out_ BOOL& bHandled)
 	{
 		ATLTRACE(_T("CComCompositeControl::OnMouseActivate\n"));
 		HWND hWndFocus = GetFocus();
@@ -1938,7 +2065,6 @@ public:
 //
 template <class T> class IPersistStorageImpl;
 template <class T> class IPersistPropertyBagImpl;
-
 template <class T> class IOleControlImpl;
 template <class T> class IRunnableObjectImpl;
 template <class T> class IQuickActivateImpl;
@@ -1957,25 +2083,26 @@ template <class T, int nBindFlags> class CBindStatusCallback;
 //////////////////////////////////////////////////////////////////////////////
 // IOleControlImpl
 template <class T>
-class ATL_NO_VTABLE IOleControlImpl : public IOleControl
+class ATL_NO_VTABLE IOleControlImpl : 
+	public IOleControl
 {
 public:
-	STDMETHOD(GetControlInfo)(LPCONTROLINFO /* pCI */)
+	STDMETHOD(GetControlInfo)(_In_ LPCONTROLINFO /* pCI */)
 	{
 		ATLTRACENOTIMPL(_T("IOleControlImpl::GetControlInfo"));
 	}
-	STDMETHOD(OnMnemonic)(LPMSG /* pMsg */)
+	STDMETHOD(OnMnemonic)(_In_ LPMSG /* pMsg */)
 	{
 		ATLTRACENOTIMPL(_T("IOleControlImpl::OnMnemonic"));
 	}
-	STDMETHOD(OnAmbientPropertyChange)(DISPID dispid)
+	STDMETHOD(OnAmbientPropertyChange)(_In_ DISPID dispid)
 	{
-		dispid;
+		UNREFERENCED_PARAMETER(dispid);
 		ATLTRACE(atlTraceControls,2,_T("IOleControlImpl::OnAmbientPropertyChange\n"));
 		ATLTRACE(atlTraceControls,2,_T(" -- DISPID = %d\n"), dispid);
 		return S_OK;
 	}
-	STDMETHOD(FreezeEvents)(BOOL bFreeze)
+	STDMETHOD(FreezeEvents)(_In_ BOOL bFreeze)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleControlImpl::FreezeEvents\n"));
@@ -1991,10 +2118,13 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // IQuickActivateImpl
 template <class T>
-class ATL_NO_VTABLE IQuickActivateImpl : public IQuickActivate
+class ATL_NO_VTABLE IQuickActivateImpl : 
+	public IQuickActivate
 {
 public:
-	STDMETHOD(QuickActivate)(QACONTAINER *pQACont, QACONTROL *pQACtrl)
+	STDMETHOD(QuickActivate)(
+		_In_ QACONTAINER *pQACont, 
+		_Inout_ QACONTROL *pQACtrl)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IQuickActivateImpl::QuickActivate\n"));
@@ -2015,13 +2145,13 @@ public:
 		}
 		return pT->IQuickActivate_QuickActivate(pQACont, pQACtrl);
 	}
-	STDMETHOD(SetContentExtent)(LPSIZEL pSize)
+	STDMETHOD(SetContentExtent)(_In_ LPSIZEL pSize)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IQuickActivateImpl::SetContentExtent\n"));
 		return pT->IOleObjectImpl<T>::SetExtent(DVASPECT_CONTENT, pSize);
 	}
-	STDMETHOD(GetContentExtent)(LPSIZEL pSize)
+	STDMETHOD(GetContentExtent)(_Out_ LPSIZEL pSize)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IQuickActivateImpl::GetContentExtent\n"));
@@ -2033,51 +2163,66 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // IOleObjectImpl
 template <class T>
-class ATL_NO_VTABLE IOleObjectImpl : public IOleObject
+class ATL_NO_VTABLE IOleObjectImpl : 
+	public IOleObject
 {
 public:
-	STDMETHOD(SetClientSite)(IOleClientSite *pClientSite)
+	STDMETHOD(SetClientSite)(_Inout_opt_ IOleClientSite *pClientSite)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::SetClientSite\n"));
 		return pT->IOleObject_SetClientSite(pClientSite);
 	}
-	STDMETHOD(GetClientSite)(IOleClientSite **ppClientSite)
+	STDMETHOD(GetClientSite)(_Deref_out_opt_ IOleClientSite **ppClientSite)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::GetClientSite\n"));
 		return pT->IOleObject_GetClientSite(ppClientSite);
 	}
-	STDMETHOD(SetHostNames)(LPCOLESTR /* szContainerApp */, LPCOLESTR /* szContainerObj */)
+	STDMETHOD(SetHostNames)(
+		_In_opt_z_ LPCOLESTR /* szContainerApp */, 
+		_In_opt_z_ LPCOLESTR /* szContainerObj */)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::SetHostNames\n"));
 		return S_OK;
 	}
-	STDMETHOD(Close)(DWORD dwSaveOption)
+	STDMETHOD(Close)(_In_ DWORD dwSaveOption)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::Close\n"));
 		return pT->IOleObject_Close(dwSaveOption);
 	}
-	STDMETHOD(SetMoniker)(DWORD /* dwWhichMoniker */, IMoniker* /* pmk */)
+	STDMETHOD(SetMoniker)(
+		_In_ DWORD /* dwWhichMoniker */, 
+		_In_opt_ IMoniker* /* pmk */)
 	{
 		ATLTRACENOTIMPL(_T("IOleObjectImpl::SetMoniker"));
 	}
-	STDMETHOD(GetMoniker)(DWORD /* dwAssign */, DWORD /* dwWhichMoniker */, IMoniker** /* ppmk */)
+	STDMETHOD(GetMoniker)(
+		_In_ DWORD /* dwAssign */, 
+		_In_ DWORD /* dwWhichMoniker */, 
+		_In_opt_ IMoniker** /* ppmk */)
 	{
 		ATLTRACENOTIMPL(_T("IOleObjectImpl::GetMoniker"));
 	}
-	STDMETHOD(InitFromData)(IDataObject* /* pDataObject */, BOOL /* fCreation */, DWORD /* dwReserved */)
+	STDMETHOD(InitFromData)(
+		_In_ IDataObject* /* pDataObject */, 
+		_In_ BOOL /* fCreation */, 
+		_In_ DWORD /* dwReserved */)
 	{
 		ATLTRACENOTIMPL(_T("IOleObjectImpl::InitFromData"));
 	}
-	STDMETHOD(GetClipboardData)(DWORD /* dwReserved */, IDataObject** /* ppDataObject */)
+	STDMETHOD(GetClipboardData)(
+		_In_ DWORD /* dwReserved */, 
+		_In_opt_ IDataObject** /* ppDataObject */)
 	{
 		ATLTRACENOTIMPL(_T("IOleObjectImpl::GetClipboardData"));
 	}
 
 	// Helpers for DoVerb - Over-rideable in user class
-	HRESULT DoVerbPrimary(LPCRECT prcPosRect, HWND hwndParent)
+	HRESULT DoVerbPrimary(
+		_In_ LPCRECT prcPosRect, 
+		_In_ HWND hwndParent)
 	{
 		T* pT = static_cast<T*>(this);
 		BOOL bDesignMode = FALSE;
@@ -2091,7 +2236,9 @@ public:
 			return pT->DoVerbProperties(prcPosRect, hwndParent);
 		return pT->DoVerbInPlaceActivate(prcPosRect, hwndParent);
 	}
-	HRESULT DoVerbShow(LPCRECT prcPosRect, HWND /* hwndParent */)
+	HRESULT DoVerbShow(
+		_In_ LPCRECT prcPosRect, 
+		_In_ HWND /* hwndParent */)
 	{
 		T* pT = static_cast<T*>(this);
 		HRESULT hr;
@@ -2104,7 +2251,9 @@ public:
 		}
 		return hr;
 	}
-	HRESULT DoVerbInPlaceActivate(LPCRECT prcPosRect, HWND /* hwndParent */)
+	HRESULT DoVerbInPlaceActivate(
+		_In_ LPCRECT prcPosRect, 
+		_In_ HWND /* hwndParent */)
 	{
 		T* pT = static_cast<T*>(this);
 		HRESULT hr;
@@ -2119,7 +2268,9 @@ public:
 		}
 		return hr;
 	}
-	HRESULT DoVerbUIActivate(LPCRECT prcPosRect, HWND /* hwndParent */)
+	HRESULT DoVerbUIActivate(
+		_In_ LPCRECT prcPosRect, 
+		_In_ HWND /* hwndParent */)
 	{
 		T* pT = static_cast<T*>(this);
 		HRESULT hr = S_OK;
@@ -2135,7 +2286,9 @@ public:
 		}
 		return hr;
 	}
-	HRESULT DoVerbHide(LPCRECT /* prcPosRect */, HWND /* hwndParent */)
+	HRESULT DoVerbHide(
+		_In_opt_ LPCRECT /* prcPosRect */,
+		_In_ HWND /* hwndParent */)
 	{
 		T* pT = static_cast<T*>(this);
 		HRESULT hr;
@@ -2149,7 +2302,9 @@ public:
 		}
 		return hr;
 	}
-	HRESULT DoVerbOpen(LPCRECT /* prcPosRect */, HWND /* hwndParent */)
+	HRESULT DoVerbOpen(
+		_In_opt_ LPCRECT /* prcPosRect */, 
+		_In_ HWND /* hwndParent */)
 	{
 		T* pT = static_cast<T*>(this);
 		HRESULT hr;
@@ -2158,7 +2313,9 @@ public:
 			hr = pT->OnPostVerbOpen();
 		return hr;
 	}
-	HRESULT DoVerbDiscardUndo(LPCRECT /* prcPosRect */, HWND /* hwndParent */)
+	HRESULT DoVerbDiscardUndo(
+		_In_opt_ LPCRECT /* prcPosRect */, 
+		_In_ HWND /* hwndParent */)
 	{
 		T* pT = static_cast<T*>(this);
 		HRESULT hr;
@@ -2167,8 +2324,13 @@ public:
 			hr = pT->OnPostVerbDiscardUndo();
 		return hr;
 	}
-	STDMETHOD(DoVerb)(LONG iVerb, LPMSG /* pMsg */, IOleClientSite* pActiveSite, LONG /* lindex */,
-									 HWND hwndParent, LPCRECT lprcPosRect)
+	STDMETHOD(DoVerb)(
+		_In_ LONG iVerb, 
+		_In_opt_ LPMSG /* pMsg */, 
+		_Inout_ IOleClientSite* pActiveSite, 
+		_In_ LONG /* lindex */,
+		_In_ HWND hwndParent, 
+		_In_ LPCRECT lprcPosRect)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::DoVerb(%d)\n"), iVerb);
@@ -2218,7 +2380,9 @@ public:
 		}
 		return hr;
 	}
-	STDMETHOD(EnumVerbs)(IEnumOLEVERB **ppEnumOleVerb)
+	
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(EnumVerbs)(_Deref_out_ IEnumOLEVERB **ppEnumOleVerb)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::EnumVerbs\n"));
 		ATLASSERT(ppEnumOleVerb);
@@ -2226,6 +2390,8 @@ public:
 			return E_POINTER;
 		return OleRegEnumVerbs(T::GetObjectCLSID(), ppEnumOleVerb);
 	}
+ATLPREFAST_UNSUPPRESS()
+	
 	STDMETHOD(Update)(void)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::Update\n"));
@@ -2236,7 +2402,7 @@ public:
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::IsUpToDate\n"));
 		return S_OK;
 	}
-	STDMETHOD(GetUserClassID)(CLSID *pClsid)
+	STDMETHOD(GetUserClassID)(_Out_ CLSID *pClsid)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::GetUserClassID\n"));
 		ATLASSERT(pClsid);
@@ -2245,18 +2411,28 @@ public:
 		*pClsid = T::GetObjectCLSID();
 		return S_OK;
 	}
-	STDMETHOD(GetUserType)(DWORD dwFormOfType, LPOLESTR *pszUserType)
+	
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(GetUserType)(
+		_In_ DWORD dwFormOfType, 
+		_Deref_out_z_ LPOLESTR *pszUserType)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::GetUserType\n"));
 		return OleRegGetUserType(T::GetObjectCLSID(), dwFormOfType, pszUserType);
 	}
-	STDMETHOD(SetExtent)(DWORD dwDrawAspect, SIZEL *psizel)
+ATLPREFAST_UNSUPPRESS()
+	
+	STDMETHOD(SetExtent)(
+		_In_ DWORD dwDrawAspect, 
+		_In_ SIZEL *psizel)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::SetExtent\n"));
 		return pT->IOleObject_SetExtent(dwDrawAspect, psizel);
 	}
-	STDMETHOD(GetExtent)(DWORD dwDrawAspect, SIZEL *psizel)
+	STDMETHOD(GetExtent)(
+		_In_ DWORD dwDrawAspect, 
+		_Out_ SIZEL *psizel)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::GetExtent\n"));
@@ -2267,13 +2443,15 @@ public:
 		*psizel = pT->m_sizeExtent;
 		return S_OK;
 	}
-	STDMETHOD(Advise)(IAdviseSink *pAdvSink, DWORD *pdwConnection)
+	STDMETHOD(Advise)(
+		_Inout_ IAdviseSink *pAdvSink, 
+		_Out_ DWORD *pdwConnection)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::Advise\n"));
 		return pT->IOleObject_Advise(pAdvSink, pdwConnection);
 	}
-	STDMETHOD(Unadvise)(DWORD dwConnection)
+	STDMETHOD(Unadvise)(_In_ DWORD dwConnection)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::Unadvise\n"));
@@ -2282,7 +2460,9 @@ public:
 			hRes = pT->m_spOleAdviseHolder->Unadvise(dwConnection);
 		return hRes;
 	}
-	STDMETHOD(EnumAdvise)(IEnumSTATDATA **ppenumAdvise)
+	
+ATLPREFAST_SUPPRESS(6387)
+	STDMETHOD(EnumAdvise)(_Deref_out_ IEnumSTATDATA **ppenumAdvise)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::EnumAdvise\n"));
@@ -2293,41 +2473,83 @@ public:
 		HRESULT hRes = E_FAIL;
 		if (pT->m_spOleAdviseHolder != NULL)
 			hRes = pT->m_spOleAdviseHolder->EnumAdvise(ppenumAdvise);
+				
 		return hRes;
 	}
-	STDMETHOD(GetMiscStatus)(DWORD dwAspect, DWORD *pdwStatus)
+ATLPREFAST_UNSUPPRESS()
+	
+	STDMETHOD(GetMiscStatus)(
+		_In_ DWORD dwAspect, 
+		_Out_ DWORD *pdwStatus)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::GetMiscStatus\n"));
 		return OleRegGetMiscStatus(T::GetObjectCLSID(), dwAspect, pdwStatus);
 	}
-	STDMETHOD(SetColorScheme)(LOGPALETTE* /* pLogpal */)
+	STDMETHOD(SetColorScheme)(_In_opt_ LOGPALETTE* /* pLogpal */)
 	{
 		ATLTRACENOTIMPL(_T("IOleObjectImpl::SetColorScheme"));
 	}
 // Implementation
 public:
-	HRESULT OnPreVerbShow() { return S_OK; }
-	HRESULT OnPostVerbShow() { return S_OK; }
-	HRESULT OnPreVerbInPlaceActivate() { return S_OK; }
-	HRESULT OnPostVerbInPlaceActivate() { return S_OK; }
-	HRESULT OnPreVerbUIActivate() { return S_OK; }
-	HRESULT OnPostVerbUIActivate() { return S_OK; }
-	HRESULT OnPreVerbHide() { return S_OK; }
-	HRESULT OnPostVerbHide() { return S_OK; }
-	HRESULT OnPreVerbOpen() { return S_OK; }
-	HRESULT OnPostVerbOpen() { return S_OK; }
-	HRESULT OnPreVerbDiscardUndo() { return S_OK; }
-	HRESULT OnPostVerbDiscardUndo() { return S_OK; }
+	HRESULT OnPreVerbShow() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPostVerbShow() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPreVerbInPlaceActivate() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPostVerbInPlaceActivate() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPreVerbUIActivate() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPostVerbUIActivate() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPreVerbHide() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPostVerbHide() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPreVerbOpen() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPostVerbOpen() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPreVerbDiscardUndo() 
+	{
+		return S_OK; 
+	}
+	HRESULT OnPostVerbDiscardUndo() 
+	{
+		return S_OK; 
+	}
 };
 
 //////////////////////////////////////////////////////////////////////////////
 // IPropertyPageImpl
 template <class T>
-class ATL_NO_VTABLE IPropertyPageImpl : public IPropertyPage
+class ATL_NO_VTABLE IPropertyPageImpl : 
+	public IPropertyPage
 {
 
 public:
-	void SetDirty(BOOL bDirty)
+	void SetDirty(_In_ BOOL bDirty)
 	{
 		T* pT = static_cast<T*>(this);
 		if (pT->m_bDirty != bDirty)
@@ -2367,7 +2589,7 @@ public:
 
 	// IPropertyPage
 	//
-	STDMETHOD(SetPageSite)(IPropertyPageSite *pPageSite)
+	STDMETHOD(SetPageSite)(_Inout_ IPropertyPageSite *pPageSite)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::SetPageSite\n"));
@@ -2392,7 +2614,10 @@ public:
 		pT->m_pPageSite->AddRef();
 		return S_OK;
 	}
-	STDMETHOD(Activate)(HWND hWndParent, LPCRECT pRect, BOOL /* bModal */)
+	STDMETHOD(Activate)(
+		_In_ HWND hWndParent, 
+		_In_ LPCRECT pRect, 
+		_In_ BOOL /* bModal */)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::Activate\n"));
@@ -2412,7 +2637,7 @@ public:
 		return S_OK;
 
 	}
-	STDMETHOD(Deactivate)( void)
+	STDMETHOD(Deactivate)(void)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::Deactivate\n"));
@@ -2428,7 +2653,7 @@ public:
 		return S_OK;
 
 	}
-	STDMETHOD(GetPageInfo)(PROPPAGEINFO *pPageInfo)
+	STDMETHOD(GetPageInfo)(_Inout_ PROPPAGEINFO *pPageInfo)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::GetPageInfo\n"));
@@ -2448,6 +2673,11 @@ public:
 		}
 
 		HGLOBAL hGlob = LoadResource(_AtlBaseModule.GetResourceInstance(), hRsrc);
+		if (hGlob == NULL)
+		{
+			ATLTRACE(atlTraceControls,2,_T("Could not load resource template\n"));
+			return E_UNEXPECTED;
+		}
 		DLGTEMPLATE* pDlgTempl = (DLGTEMPLATE*)LockResource(hGlob);
 		if (pDlgTempl == NULL)
 		{
@@ -2466,7 +2696,9 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(SetObjects)(ULONG nObjects, IUnknown **ppUnk)
+	STDMETHOD(SetObjects)(
+		_In_ ULONG nObjects, 
+		_Inout_ _Deref_pre_opt_valid_ IUnknown **ppUnk)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::SetObjects\n"));
@@ -2498,7 +2730,7 @@ public:
 
 		return S_OK;
 	}
-	STDMETHOD(Show)(UINT nCmdShow)
+	STDMETHOD(Show)(_In_ UINT nCmdShow)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::Show\n"));
@@ -2509,7 +2741,7 @@ public:
 		ShowWindow(pT->m_hWnd, nCmdShow);
 		return S_OK;
 	}
-	STDMETHOD(Move)(LPCRECT pRect)
+	STDMETHOD(Move)(_In_ LPCRECT pRect)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::Move\n"));
@@ -2537,7 +2769,7 @@ public:
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::Apply\n"));
 		return S_OK;
 	}
-	STDMETHOD(Help)(LPCOLESTR pszHelpDir)
+	STDMETHOD(Help)(_In_z_ LPCOLESTR pszHelpDir)
 	{
 		T* pT = static_cast<T*>(this);
 		USES_CONVERSION_EX;
@@ -2560,7 +2792,7 @@ public:
 		WinHelp(pT->m_hWnd, OLE2CT_EX_DEF(szFullFileName), HELP_CONTEXTPOPUP, NULL);
 		return S_OK;
 	}
-	STDMETHOD(TranslateAccelerator)(MSG *pMsg)
+	STDMETHOD(TranslateAccelerator)(_In_ MSG *pMsg)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IPropertyPageImpl::TranslateAccelerator\n"));
 		T* pT = static_cast<T*>(this);
@@ -2588,7 +2820,11 @@ public:
 		MESSAGE_HANDLER(WM_STYLECHANGING, OnStyleChange)
 	END_MSG_MAP()
 
-	LRESULT OnStyleChange(UINT, WPARAM wParam, LPARAM lParam, BOOL&)
+	LRESULT OnStyleChange(
+		_In_ UINT, 
+		_In_ WPARAM wParam, 
+		_In_ LPARAM lParam, 
+		_In_ BOOL&)
 	{
 		if (wParam == GWL_EXSTYLE)
 		{
@@ -2599,7 +2835,7 @@ public:
 		return 1;
 	}
 
-	LPOLESTR LoadStringHelper(UINT idRes)
+	LPOLESTR LoadStringHelper(_In_ UINT idRes)
 	{
 		const ATLSTRINGRESOURCEIMAGE* pString = AtlGetStringResourceImage( 
 			_AtlBaseModule.GetResourceInstance(), idRes);
@@ -2626,11 +2862,12 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // IPropertyPage2Impl
 template <class T>
-class ATL_NO_VTABLE IPropertyPage2Impl : public IPropertyPageImpl<T>
+class ATL_NO_VTABLE IPropertyPage2Impl : 
+	public IPropertyPageImpl<T>
 {
 public:
 
-	STDMETHOD(EditProperty)(DISPID dispID)
+	STDMETHOD(EditProperty)(_In_ DISPID /*dispID*/)
 	{
 		ATLTRACENOTIMPL(_T("IPropertyPage2Impl::EditProperty\n"));
 	}
@@ -2641,13 +2878,16 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // IPerPropertyBrowsingImpl
 template <class T>
-class ATL_NO_VTABLE IPerPropertyBrowsingImpl : public IPerPropertyBrowsing
+class ATL_NO_VTABLE IPerPropertyBrowsingImpl :
+	public IPerPropertyBrowsing
 {
 public:
 	// declare empty map in case derived classes doesn't want to specify one
 	DECLARE_EMPTY_PROP_VAL_MAP()
 
-	STDMETHOD(GetDisplayString)(DISPID dispID, BSTR *pBstr)
+	STDMETHOD(GetDisplayString)(
+		_In_ DISPID dispID, 
+		_Deref_out_opt_z_ BSTR *pBstr)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IPerPropertyBrowsingImpl::GetDisplayString\n"));
 		if (pBstr == NULL)
@@ -2692,7 +2932,9 @@ public:
 		return S_FALSE;
 	}
 
-	STDMETHOD(MapPropertyToPage)(DISPID dispID, CLSID *pClsid)
+	STDMETHOD(MapPropertyToPage)(
+		_In_ DISPID dispID, 
+		_Out_ CLSID *pClsid)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IPerPropertyBrowsingImpl::MapPropertyToPage\n"));
 		if (pClsid == NULL)
@@ -2727,7 +2969,10 @@ public:
 		return E_INVALIDARG;
 	}
 
-	STDMETHOD(GetPredefinedStrings)(DISPID dispID, CALPOLESTR *pCaStringsOut,CADWORD *pCaCookiesOut)
+	STDMETHOD(GetPredefinedStrings)(
+		_In_ DISPID dispID, 
+		_Out_ CALPOLESTR *pCaStringsOut, 
+		_Out_ CADWORD *pCaCookiesOut)
 	{
 		ATL_PROPVALMAP_ENTRY *valmap;
 		int i, cnt, matches, addcnt = 0;
@@ -2809,7 +3054,10 @@ outofmem:
 		return E_OUTOFMEMORY;
 	}
 
-	STDMETHOD(GetPredefinedValue)(DISPID /* dispID */, DWORD dwCookie, VARIANT* pVarOut)
+	STDMETHOD(GetPredefinedValue)(
+		_In_ DISPID /* dispID */, 
+		_In_ DWORD dwCookie, 
+		_Out_ VARIANT* pVarOut)
 	{
 		ATL_PROPVALMAP_ENTRY *valmap;
 		int cnt, index;
@@ -2833,41 +3081,63 @@ outofmem:
 //////////////////////////////////////////////////////////////////////////////
 // IViewObjectExImpl
 template <class T>
-class ATL_NO_VTABLE IViewObjectExImpl : public IViewObjectEx
+class ATL_NO_VTABLE IViewObjectExImpl : 
+	public IViewObjectEx
 {
 public:
-	STDMETHOD(Draw)(DWORD dwDrawAspect, LONG lindex, void *pvAspect,
-					DVTARGETDEVICE *ptd, HDC hicTargetDev, HDC hdcDraw,
-					LPCRECTL prcBounds, LPCRECTL prcWBounds,
-					BOOL (__stdcall * /*pfnContinue*/)(DWORD_PTR dwContinue),
-					DWORD_PTR /*dwContinue*/)
+	STDMETHOD(Draw)(
+		_In_ DWORD dwDrawAspect,
+		_In_ LONG lindex,
+		_In_opt_ void *pvAspect,
+		_In_opt_ DVTARGETDEVICE *ptd,
+		_In_ HDC hicTargetDev,
+		_In_ HDC hdcDraw,
+		_In_opt_ LPCRECTL prcBounds, 
+		_In_ LPCRECTL prcWBounds, 
+		/* _In_opt_ */ BOOL (__stdcall * /*pfnContinue*/)(DWORD_PTR dwContinue),
+		_In_ DWORD_PTR /*dwContinue*/)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::Draw\n"));
 		return pT->IViewObject_Draw(dwDrawAspect, lindex, pvAspect, ptd, hicTargetDev, hdcDraw,
 			prcBounds, prcWBounds);
 	}
-
-	STDMETHOD(GetColorSet)(DWORD /* dwDrawAspect */,LONG /* lindex */, void* /* pvAspect */, DVTARGETDEVICE* /* ptd */, HDC /* hicTargetDev */, LOGPALETTE** /* ppColorSet */)
+	STDMETHOD(GetColorSet)(
+		_In_ DWORD /* dwDrawAspect */, 
+		_In_ LONG /* lindex */, 
+		_In_opt_ void* /* pvAspect */, 
+		_In_opt_ DVTARGETDEVICE* /* ptd */, 
+		_In_ HDC /* hicTargetDev */, 
+		_In_opt_ LOGPALETTE** /* ppColorSet */)
 	{
 		ATLTRACENOTIMPL(_T("IViewObjectExImpl::GetColorSet"));
 	}
-	STDMETHOD(Freeze)(DWORD /* dwDrawAspect */, LONG /* lindex */, void* /* pvAspect */,DWORD* /* pdwFreeze */)
+	STDMETHOD(Freeze)(
+		_In_ DWORD /* dwDrawAspect */, 
+		_In_ LONG /* lindex */, 
+		_In_opt_ void* /* pvAspect */, 
+		_In_ DWORD* /* pdwFreeze */)
 	{
 		ATLTRACENOTIMPL(_T("IViewObjectExImpl::Freeze"));
 	}
-	STDMETHOD(Unfreeze)(DWORD /* dwFreeze */)
+	STDMETHOD(Unfreeze)(_In_ DWORD /* dwFreeze */)
 	{
 		ATLTRACENOTIMPL(_T("IViewObjectExImpl::Unfreeze"));
 	}
-	STDMETHOD(SetAdvise)(DWORD /* aspects */, DWORD /* advf */, IAdviseSink* pAdvSink)
+	STDMETHOD(SetAdvise)(
+		_In_ DWORD /* aspects */, 
+		_In_ DWORD /* advf */, 
+		_Inout_ IAdviseSink* pAdvSink)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::SetAdvise\n"));
 		pT->m_spAdviseSink = pAdvSink;
 		return S_OK;
 	}
-	STDMETHOD(GetAdvise)(DWORD* /* pAspects */, DWORD* /* pAdvf */, IAdviseSink** ppAdvSink)
+	STDMETHOD(GetAdvise)(
+		_In_opt_  DWORD* /* pAspects */, 
+		_In_opt_  DWORD* /* pAdvf */, 
+		_Deref_out_opt_ IAdviseSink** ppAdvSink)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::GetAdvise\n"));
 		ATLASSERT(ppAdvSink != NULL);
@@ -2886,7 +3156,11 @@ public:
 
 	// IViewObject2
 	//
-	STDMETHOD(GetExtent)(DWORD /* dwDrawAspect */, LONG /* lindex */, DVTARGETDEVICE* /* ptd */, LPSIZEL lpsizel)
+	STDMETHOD(GetExtent)(
+		_In_ DWORD /* dwDrawAspect */, 
+		_In_ LONG /* lindex */, 
+		_In_ DVTARGETDEVICE* /* ptd */, 
+		_Out_ LPSIZEL lpsizel)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::GetExtent\n"));
 		ATLASSERT(lpsizel != NULL);
@@ -2900,12 +3174,14 @@ public:
 
 	// IViewObjectEx
 	//
-	STDMETHOD(GetRect)(DWORD /* dwAspect */, LPRECTL /* pRect */)
+	STDMETHOD(GetRect)(
+		_In_ DWORD /* dwAspect */, 
+		_In_opt_ LPRECTL /* pRect */)
 	{
 		ATLTRACENOTIMPL(_T("IViewObjectExImpl::GetRect"));
 	}
 
-	STDMETHOD(GetViewStatus)(DWORD* pdwStatus)
+	STDMETHOD(GetViewStatus)(_Out_ DWORD* pdwStatus)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::GetViewStatus\n"));
 		ATLASSERT(pdwStatus != NULL);
@@ -2916,7 +3192,12 @@ public:
 		*pdwStatus = pT->_GetViewStatus();
 		return S_OK;
 	}
-	STDMETHOD(QueryHitPoint)(DWORD dwAspect, LPCRECT pRectBounds, POINT ptlLoc, LONG /* lCloseHint */, DWORD *pHitResult)
+	STDMETHOD(QueryHitPoint)(
+		_In_ DWORD dwAspect, 
+		_In_ LPCRECT pRectBounds, 
+		_In_ POINT ptlLoc, 
+		_In_ LONG /* lCloseHint */, 
+		_Out_ DWORD *pHitResult)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::QueryHitPoint\n"));
 		ATLASSERT(pHitResult != NULL);
@@ -2932,7 +3213,12 @@ public:
 		ATLTRACE(atlTraceControls,2,_T("Wrong DVASPECT\n"));
 		return E_FAIL;
 	}
-	STDMETHOD(QueryHitRect)(DWORD dwAspect, LPCRECT pRectBounds, LPCRECT prcLoc, LONG /* lCloseHint */, DWORD* pHitResult)
+	STDMETHOD(QueryHitRect)(
+		_In_ DWORD dwAspect, 
+		_In_ LPCRECT pRectBounds, 
+		_In_ LPCRECT prcLoc, 
+		_In_ LONG /* lCloseHint */, 
+		_Out_ DWORD* pHitResult)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::QueryHitRect\n"));
 		ATLASSERT(pHitResult != NULL);
@@ -2949,7 +3235,13 @@ public:
 		ATLTRACE(atlTraceControls,2,_T("Wrong DVASPECT\n"));
 		return E_FAIL;
 	}
-	STDMETHOD(GetNaturalExtent)(DWORD dwAspect, LONG /* lindex */, DVTARGETDEVICE* /* ptd */, HDC /* hicTargetDev */, DVEXTENTINFO* pExtentInfo , LPSIZEL psizel)
+	STDMETHOD(GetNaturalExtent)(
+		_In_ DWORD dwAspect, 
+		_In_ LONG /* lindex */, 
+		_In_opt_ DVTARGETDEVICE* /* ptd */, 
+		_In_ HDC /* hicTargetDev */, 
+		_In_ DVEXTENTINFO* pExtentInfo , 
+		_Out_ LPSIZEL psizel)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::GetNaturalExtent\n"));
 		ATLASSERT(pExtentInfo != NULL);
@@ -2977,14 +3269,15 @@ public:
 // IOleInPlaceObjectWindowlessImpl
 //
 template <class T>
-class ATL_NO_VTABLE IOleInPlaceObjectWindowlessImpl : public IOleInPlaceObjectWindowless
+class ATL_NO_VTABLE IOleInPlaceObjectWindowlessImpl : 
+	public IOleInPlaceObjectWindowless
 {
 public:
 	// IOleWindow
 	//
 
 	// Change IOleInPlaceActiveObject::GetWindow as well
-	STDMETHOD(GetWindow)(HWND* phwnd)
+	STDMETHOD(GetWindow)(_Out_ HWND* phwnd)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceObjectWindowlessImpl::GetWindow\n"));
 		T* pT = static_cast<T*>(this);
@@ -3000,7 +3293,7 @@ public:
 		}
 		return hRes;
 	}
-	STDMETHOD(ContextSensitiveHelp)(BOOL /* fEnterMode */)
+	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /* fEnterMode */)
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceObjectWindowlessImpl::ContextSensitiveHelp"));
 	}
@@ -3019,7 +3312,9 @@ public:
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceObjectWindowlessImpl::UIDeactivate\n"));
 		return pT->IOleInPlaceObject_UIDeactivate();
 	}
-	STDMETHOD(SetObjectRects)(LPCRECT prcPos,LPCRECT prcClip)
+	STDMETHOD(SetObjectRects)(
+		_In_ LPCRECT prcPos,
+		_In_ LPCRECT prcClip)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceObjectWindowlessImpl::SetObjectRects\n"));
@@ -3032,7 +3327,11 @@ public:
 
 	// IOleInPlaceObjectWindowless
 	//
-	STDMETHOD(OnWindowMessage)(UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult)
+	STDMETHOD(OnWindowMessage)(
+		_In_ UINT msg, 
+		_In_ WPARAM wParam, 
+		_In_ LPARAM lParam, 
+		_Inout_ LRESULT *plResult)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceObjectWindowlessImpl::OnWindowMessage\n"));
 		T* pT = static_cast<T*>(this);
@@ -3046,7 +3345,7 @@ public:
 		return b ? S_OK : S_FALSE;
 	}
 
-	STDMETHOD(GetDropTarget)(IDropTarget** /* ppDropTarget */)
+	STDMETHOD(GetDropTarget)(_In_opt_ IDropTarget** /* ppDropTarget */)
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceObjectWindowlessImpl::GetDropTarget"));
 	}
@@ -3057,14 +3356,15 @@ public:
 // IOleInPlaceActiveObjectImpl
 //
 template <class T>
-class ATL_NO_VTABLE IOleInPlaceActiveObjectImpl : public IOleInPlaceActiveObject
+class ATL_NO_VTABLE IOleInPlaceActiveObjectImpl : 
+	public IOleInPlaceActiveObject
 {
 public:
 	// IOleWindow
 	//
 
 	// Change IOleInPlaceObjectWindowless::GetWindow as well
-	STDMETHOD(GetWindow)(HWND *phwnd)
+	STDMETHOD(GetWindow)(_Out_ HWND *phwnd)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceActiveObjectImpl::GetWindow\n"));
 		T* pT = static_cast<T*>(this);
@@ -3080,24 +3380,26 @@ public:
 		}
 		return hRes;
 	}
-	STDMETHOD(ContextSensitiveHelp)(BOOL /* fEnterMode */)
+	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /* fEnterMode */)
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceActiveObjectImpl::ContextSensitiveHelp"));
 	}
 
 	// IOleInPlaceActiveObject
 	//
-	STDMETHOD(TranslateAccelerator)(LPMSG pMsg)
+	STDMETHOD(TranslateAccelerator)(_In_ LPMSG pMsg)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceActiveObjectImpl::TranslateAccelerator\n"));
 		T* pT = static_cast<T*>(this);
 		HRESULT hRet = S_OK;
 		MSG msg = *pMsg; 
 		if (pT->PreTranslateAccelerator(&msg, hRet))
-		return hRet;
+		{
+			return hRet;
+		}
 
 		CComPtr<IOleControlSite> spCtlSite;
-			hRet = pT->InternalGetSite(__uuidof(IOleControlSite), (void**)&spCtlSite);
+		hRet = pT->InternalGetSite(__uuidof(IOleControlSite), (void**)&spCtlSite);
 		if (SUCCEEDED(hRet))
 		{
 			if (spCtlSite != NULL)
@@ -3116,12 +3418,12 @@ public:
 		}
 		return (hRet == S_OK) ? S_OK : S_FALSE;
 	}
-	STDMETHOD(OnFrameWindowActivate)(BOOL /* fActivate */)
+	STDMETHOD(OnFrameWindowActivate)(_In_ BOOL /* fActivate */)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceActiveObjectImpl::OnFrameWindowActivate\n"));
 		return S_OK;
 	}
-	STDMETHOD(OnDocWindowActivate)(BOOL fActivate)
+	STDMETHOD(OnDocWindowActivate)(_In_ BOOL fActivate)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceActiveObjectImpl::OnDocWindowActivate\n"));
 		T* pT = static_cast<T*>(this);
@@ -3129,12 +3431,15 @@ public:
 			pT->IOleInPlaceObject_UIDeactivate();
 		return S_OK;
 	}
-	STDMETHOD(ResizeBorder)(LPCRECT /* prcBorder */, IOleInPlaceUIWindow* /* pUIWindow */, BOOL /* fFrameWindow */)
+	STDMETHOD(ResizeBorder)(
+		_In_ LPCRECT /* prcBorder */, 
+		_In_opt_ IOleInPlaceUIWindow* /* pUIWindow */, 
+		_In_ BOOL /* fFrameWindow */)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceActiveObjectImpl::ResizeBorder\n"));
 		return S_OK;
 	}
-	STDMETHOD(EnableModeless)(BOOL /* fEnable */)
+	STDMETHOD(EnableModeless)(_In_ BOOL /* fEnable */)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleInPlaceActiveObjectImpl::EnableModeless\n"));
 		return S_OK;
@@ -3144,20 +3449,30 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // IPointerInactiveImpl
 template <class T>
-class ATL_NO_VTABLE IPointerInactiveImpl : public IPointerInactive
+class ATL_NO_VTABLE IPointerInactiveImpl : 
+	public IPointerInactive
 {
 public:
 	// IPointerInactive
 	//
-	STDMETHOD(GetActivationPolicy)(DWORD *pdwPolicy)
+	STDMETHOD(GetActivationPolicy)(_In_opt_ DWORD* /*pdwPolicy*/)
 	{
 		ATLTRACENOTIMPL(_T("IPointerInactiveImpl::GetActivationPolicy"));
 	}
-	STDMETHOD(OnInactiveMouseMove)(LPCRECT pRectBounds, long x, long y, DWORD dwMouseMsg)
+	STDMETHOD(OnInactiveMouseMove)(
+		_In_ LPCRECT /*pRectBounds*/, 
+		_In_ long /*x*/, 
+		_In_ long /*y*/, 
+		_In_ DWORD /*dwMouseMsg*/)
 	{
 		ATLTRACENOTIMPL(_T("IPointerInactiveImpl::OnInactiveMouseMove"));
 	}
-	STDMETHOD(OnInactiveSetCursor)(LPCRECT pRectBounds, long x, long y, DWORD dwMouseMsg, BOOL fSetAlways)
+	STDMETHOD(OnInactiveSetCursor)(
+		_In_ LPCRECT /*pRectBounds*/, 
+		_In_ long /*x*/, 
+		_In_ long /*y*/, 
+		_In_ DWORD /*dwMouseMsg*/, 
+		_In_ BOOL /*fSetAlways*/)
 	{
 		ATLTRACENOTIMPL(_T("IPointerInactiveImpl::OnInactiveSetCursor"));
 	}
@@ -3166,18 +3481,19 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // IRunnableObjectImpl
 template <class T>
-class ATL_NO_VTABLE IRunnableObjectImpl : public IRunnableObject
+class ATL_NO_VTABLE IRunnableObjectImpl : 
+	public IRunnableObject
 {
 public:
 	// IRunnableObject
 	//
-	STDMETHOD(GetRunningClass)(LPCLSID lpClsid)
+	STDMETHOD(GetRunningClass)(_Out_ LPCLSID lpClsid)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IRunnableObjectImpl::GetRunningClass\n"));
 		*lpClsid = GUID_NULL;
 		return E_UNEXPECTED;
 	}
-	STDMETHOD(Run)(LPBINDCTX)
+	STDMETHOD(Run)(_In_opt_ LPBINDCTX)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IRunnableObjectImpl::Run\n"));
 		return S_OK;
@@ -3187,12 +3503,14 @@ public:
 		ATLTRACE(atlTraceControls,2,_T("IRunnableObjectImpl::IsRunning\n"));
 		return TRUE;
 	}
-	STDMETHOD(LockRunning)(BOOL /*fLock*/, BOOL /*fLastUnlockCloses*/)
+	STDMETHOD(LockRunning)(
+		_In_ BOOL /*fLock*/, 
+		_In_ BOOL /*fLastUnlockCloses*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IRunnableObjectImpl::LockRunning\n"));
 		return S_OK;
 	}
-	STDMETHOD(SetContainedObject)(BOOL /*fContained*/)
+	STDMETHOD(SetContainedObject)(_In_ BOOL /*fContained*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IRunnableObjectImpl::SetContainedObject\n"));
 		return S_OK;
@@ -3202,38 +3520,54 @@ public:
 
 //////////////////////////////////////////////////////////////////////////////
 // IDataObjectImpl
+ATLPREFAST_SUPPRESS(6387)
 template <class T>
-class ATL_NO_VTABLE IDataObjectImpl : public IDataObject
+class ATL_NO_VTABLE IDataObjectImpl : 
+	public IDataObject
 {
 public:
-	STDMETHOD(GetData)(FORMATETC *pformatetcIn, STGMEDIUM *pmedium)
+	STDMETHOD(GetData)(
+		_In_ FORMATETC *pformatetcIn, 
+		_Out_ STGMEDIUM *pmedium)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IDataObjectImpl::GetData\n"));
 		T* pT = (T*) this;
 		return pT->IDataObject_GetData(pformatetcIn, pmedium);
 	}
-	STDMETHOD(GetDataHere)(FORMATETC* /* pformatetc */, STGMEDIUM* /* pmedium */)
+	STDMETHOD(GetDataHere)(
+		_In_opt_ FORMATETC* /* pformatetc */, 
+		_In_opt_ /* _Inout_ */ STGMEDIUM* /* pmedium */)
 	{
 		ATLTRACENOTIMPL(_T("IDataObjectImpl::GetDataHere"));
 	}
-	STDMETHOD(QueryGetData)(FORMATETC* /* pformatetc */)
+	STDMETHOD(QueryGetData)(_In_opt_ FORMATETC* /* pformatetc */)
 	{
 		ATLTRACENOTIMPL(_T("IDataObjectImpl::QueryGetData"));
 	}
-	STDMETHOD(GetCanonicalFormatEtc)(FORMATETC* /* pformatectIn */,FORMATETC* /* pformatetcOut */)
+	STDMETHOD(GetCanonicalFormatEtc)(
+		_In_opt_ FORMATETC* /* pformatectIn */, 
+		_In_opt_ FORMATETC* /* pformatetcOut */)
 	{
 		ATLTRACENOTIMPL(_T("IDataObjectImpl::GetCanonicalFormatEtc"));
 	}
-	STDMETHOD(SetData)(FORMATETC* /* pformatetc */, STGMEDIUM* /* pmedium */, BOOL /* fRelease */)
+	STDMETHOD(SetData)(
+		_In_opt_ FORMATETC* /* pformatetc */, 
+		_In_opt_ STGMEDIUM* /* pmedium */, 
+		_In_ BOOL /* fRelease */)
 	{
 		ATLTRACENOTIMPL(_T("IDataObjectImpl::SetData"));
 	}
-	STDMETHOD(EnumFormatEtc)(DWORD /* dwDirection */, IEnumFORMATETC** /* ppenumFormatEtc */)
+	STDMETHOD(EnumFormatEtc)(
+		_In_ DWORD /* dwDirection */, 
+		_In_opt_ IEnumFORMATETC** /* ppenumFormatEtc */)
 	{
 		ATLTRACENOTIMPL(_T("IDataObjectImpl::EnumFormatEtc"));
 	}
-	STDMETHOD(DAdvise)(FORMATETC *pformatetc, DWORD advf, IAdviseSink *pAdvSink,
-		DWORD *pdwConnection)
+	STDMETHOD(DAdvise)(
+		_In_ FORMATETC *pformatetc, 
+		_In_ DWORD advf, 
+		_Inout_ IAdviseSink *pAdvSink,
+		_Out_ DWORD *pdwConnection)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IDataObjectImpl::DAdvise\n"));
 		T* pT = static_cast<T*>(this);
@@ -3246,7 +3580,7 @@ public:
 
 		return hr;
 	}
-	STDMETHOD(DUnadvise)(DWORD dwConnection)
+	STDMETHOD(DUnadvise)(_In_ DWORD dwConnection)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IDataObjectImpl::DUnadvise\n"));
 		T* pT = static_cast<T*>(this);
@@ -3257,7 +3591,8 @@ public:
 			hr = pT->m_spDataAdviseHolder->Unadvise(dwConnection);
 		return hr;
 	}
-	STDMETHOD(EnumDAdvise)(IEnumSTATDATA **ppenumAdvise)
+	
+	STDMETHOD(EnumDAdvise)(_Deref_out_ IEnumSTATDATA **ppenumAdvise)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IDataObjectImpl::EnumDAdvise\n"));
 		ATLASSERT(ppenumAdvise != NULL);
@@ -3271,6 +3606,7 @@ public:
 		return E_FAIL;
 	}
 };
+ATLPREFAST_UNSUPPRESS()
 
 //////////////////////////////////////////////////////////////////////////////
 // IPropertyNotifySinkCP
@@ -3289,17 +3625,27 @@ public:
 // 2nd template parameter is the supported safety e.g.
 // INTERFACESAFE_FOR_UNTRUSTED_CALLER - safe for scripting
 // INTERFACESAFE_FOR_UNTRUSTED_DATA   - safe for initialization from data
-
 template <class T, DWORD dwSupportedSafety>
-class ATL_NO_VTABLE IObjectSafetyImpl : public IObjectSafety
+class ATL_NO_VTABLE IObjectSafetyImpl : 
+	public IObjectSafety
 {
-public:
-	IObjectSafetyImpl()
+protected:
+	virtual BOOL FAccessAllowed()
 	{
-		m_dwCurrentSafety = 0;
+		return TRUE;
+	}
+public:
+	IObjectSafetyImpl() : m_dwCurrentSafety(0)
+	{
+		ATLSTATIC_ASSERT((dwSupportedSafety != 0 && 
+				(~(INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA) & dwSupportedSafety) == 0), 				
+					"Only INTERFACESAFE_FOR_UNTRUSTED_CALLER and/or INTERFACESAFE_FOR_UNTRUSTED_DATA are supported for dwSupportedSafety parameter.");		
 	}
 
-	STDMETHOD(GetInterfaceSafetyOptions)(REFIID riid, DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
+	STDMETHOD(GetInterfaceSafetyOptions)(
+		_In_ REFIID riid, 
+		_Out_ DWORD *pdwSupportedOptions, 
+		_Out_ DWORD *pdwEnabledOptions)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IObjectSafetyImpl::GetInterfaceSafetyOptions\n"));
 		T* pT = static_cast<T*>(this);
@@ -3315,7 +3661,15 @@ public:
 			// We support this interface so set the safety options accordingly
 			pUnk->Release();	// Release the interface we just acquired
 			*pdwSupportedOptions = dwSupportedSafety;
-			*pdwEnabledOptions   = m_dwCurrentSafety;
+			
+			if (FAccessAllowed())
+			{
+				*pdwEnabledOptions   = m_dwCurrentSafety;
+			}
+			else 
+			{
+				*pdwEnabledOptions   = 0;
+			}
 		}
 		else
 		{
@@ -3325,7 +3679,10 @@ public:
 		}
 		return hr;
 	}
-	STDMETHOD(SetInterfaceSafetyOptions)(REFIID riid, DWORD dwOptionSetMask, DWORD dwEnabledOptions)
+	STDMETHOD(SetInterfaceSafetyOptions)(
+		_In_ REFIID riid, 
+		_In_ DWORD dwOptionSetMask, 
+		_In_ DWORD dwEnabledOptions)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IObjectSafetyImpl::SetInterfaceSafetyOptions\n"));
 		T* pT = static_cast<T*>(this);
@@ -3340,49 +3697,67 @@ public:
 		if (dwOptionSetMask & ~dwSupportedSafety)
 			return E_FAIL;
 
+		DWORD dwNewSafety = (m_dwCurrentSafety & ~dwOptionSetMask) | (dwOptionSetMask & dwEnabledOptions);
+			
+		if (m_dwCurrentSafety == dwNewSafety)
+		{
+			return S_OK;
+		}
+		
+		if (!FAccessAllowed())
+		{
+			return E_ACCESSDENIED;
+		}
 		// Set the safety options we have been asked to
-		m_dwCurrentSafety = (m_dwCurrentSafety  & ~dwOptionSetMask)  |  (dwOptionSetMask & dwEnabledOptions);		
+		m_dwCurrentSafety = dwNewSafety;	
+		
 		return S_OK;
 	}
 	DWORD m_dwCurrentSafety;
 };
 
 template <class T>
-class ATL_NO_VTABLE IOleLinkImpl : public IOleLink
+class ATL_NO_VTABLE IOleLinkImpl : 
+	public IOleLink
 {
-	STDMETHOD(SetUpdateOptions)(DWORD /* dwUpdateOpt */)
+	STDMETHOD(SetUpdateOptions)(_In_ DWORD /* dwUpdateOpt */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::SetUpdateOptions"));
 	}
 
-	STDMETHOD(GetUpdateOptions)(DWORD* /* pdwUpdateOpt */)
+	STDMETHOD(GetUpdateOptions)(_In_ DWORD* /* pdwUpdateOpt */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::GetUpdateOptions"));
 	}
 
-	STDMETHOD(SetSourceMoniker)(IMoniker* /* pmk */, REFCLSID /* rclsid */)
+	STDMETHOD(SetSourceMoniker)(
+		_Inout_opt_ IMoniker* /* pmk */, 
+		_In_ REFCLSID /* rclsid */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::SetSourceMoniker"));
 	}
 
-	STDMETHOD(GetSourceMoniker)(IMoniker** /* ppmk */)
+	STDMETHOD(GetSourceMoniker)(_In_opt_ IMoniker** /* ppmk */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::GetSourceMoniker"));
 	};
 
-	STDMETHOD(SetSourceDisplayName)(LPCOLESTR /* pszStatusText */)
+	STDMETHOD(SetSourceDisplayName)(_In_opt_z_ LPCOLESTR /* pszStatusText */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::SetSourceDisplayName"));
 	}
 
-	STDMETHOD(GetSourceDisplayName)(LPOLESTR *ppszDisplayName)
+	STDMETHOD(GetSourceDisplayName)(
+		_Deref_out_opt_z_ LPOLESTR *ppszDisplayName)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleLink::GetSourceDisplayName\n"));
 		*ppszDisplayName = NULL;
 		return E_FAIL;
 	}
 
-	STDMETHOD(BindToSource)(DWORD /* bindflags */, IBindCtx* /* pbc */)
+	STDMETHOD(BindToSource)(
+		_In_ DWORD /* bindflags */,
+		_In_opt_ IBindCtx* /* pbc */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::BindToSource\n"));
 	};
@@ -3393,7 +3768,7 @@ class ATL_NO_VTABLE IOleLinkImpl : public IOleLink
 		return S_OK;
 	};
 
-	STDMETHOD(GetBoundSource)(IUnknown** /* ppunk */)
+	STDMETHOD(GetBoundSource)(_In_opt_ IUnknown** /* ppunk */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::GetBoundSource"));
 	};
@@ -3403,13 +3778,13 @@ class ATL_NO_VTABLE IOleLinkImpl : public IOleLink
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::UnbindSource"));
 	};
 
-	STDMETHOD(Update)(IBindCtx* /* pbc */)
+	STDMETHOD(Update)(_In_opt_ IBindCtx* /* pbc */)
 	{
 		ATLTRACENOTIMPL(_T("IOleLinkImpl::Update"));
 	};
 };
 
-template <class T, int nBindFlags = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE |	BINDF_GETNEWESTVERSION | BINDF_NOWRITECACHE>
+template <class T, int nBindFlags = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_GETNEWESTVERSION | BINDF_NOWRITECACHE>
 class ATL_NO_VTABLE CBindStatusCallback :
 	public CComObjectRootEx<typename T::_ThreadModel::ThreadModelNoCS>,
 	public IBindStatusCallback
@@ -3432,14 +3807,16 @@ END_COM_MAP()
 		ATLTRACE(atlTraceControls,2,_T("~CBindStatusCallback\n"));
 	}
 
-	STDMETHOD(OnStartBinding)(DWORD /*dwReserved*/, IBinding *pBinding)
+	STDMETHOD(OnStartBinding)(
+		_In_ DWORD /*dwReserved*/, 
+		_In_opt_ IBinding *pBinding)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnStartBinding\n"));
 		m_spBinding = pBinding;
 		return S_OK;
 	}
 
-	STDMETHOD(GetPriority)(LONG *pnPriority)
+	STDMETHOD(GetPriority)(_Out_ LONG *pnPriority)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::GetPriority"));
 		HRESULT hr = S_OK;
@@ -3450,19 +3827,25 @@ END_COM_MAP()
 		return S_OK;
 	}
 
-	STDMETHOD(OnLowResource)(DWORD /*reserved*/)
+	STDMETHOD(OnLowResource)(_In_ DWORD /*reserved*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnLowResource"));
 		return S_OK;
 	}
 
-	STDMETHOD(OnProgress)(ULONG /*ulProgress*/, ULONG /*ulProgressMax*/, ULONG /*ulStatusCode*/, LPCWSTR /*szStatusText*/)
+	STDMETHOD(OnProgress)(
+		_In_ ULONG /*ulProgress*/, 
+		_In_ ULONG /*ulProgressMax*/, 
+		_In_ ULONG /*ulStatusCode*/, 
+		_In_opt_z_ LPCWSTR /*szStatusText*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnProgress"));
 		return S_OK;
 	}
 
-	STDMETHOD(OnStopBinding)(HRESULT hresult, LPCWSTR /*szError*/)
+	STDMETHOD(OnStopBinding)(
+		_In_ HRESULT hresult, 
+		_In_opt_z_ LPCWSTR /*szError*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnStopBinding\n"));
 		// Pass NULL as the array of bytes to signify the end.
@@ -3474,7 +3857,9 @@ END_COM_MAP()
 		return S_OK;
 	}
 
-	STDMETHOD(GetBindInfo)(DWORD *pgrfBINDF, BINDINFO *pbindInfo)
+	STDMETHOD(GetBindInfo)(
+		_Out_ DWORD *pgrfBINDF, 
+		_Inout_ BINDINFO *pbindInfo)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::GetBindInfo\n"));
 
@@ -3483,14 +3868,19 @@ END_COM_MAP()
 
 		*pgrfBINDF = nBindFlags;
 
-		ULONG cbSize = pbindInfo->cbSize;		// remember incoming cbSize
-		memset(pbindInfo, 0, cbSize);			// zero out structure
-		pbindInfo->cbSize = cbSize;				// restore cbSize
-		pbindInfo->dwBindVerb = BINDVERB_GET;	// set verb
+		ULONG cbSize = pbindInfo->cbSize;		  // remember incoming cbSize		
+		memset(pbindInfo, 0, sizeof(*pbindInfo)); // zero out structure
+		pbindInfo->cbSize = cbSize;				  // restore cbSize
+		pbindInfo->dwBindVerb = BINDVERB_GET;	  // set verb
+		
 		return S_OK;
 	}
 
-	STDMETHOD(OnDataAvailable)(DWORD grfBSCF, DWORD dwSize, FORMATETC * /*pformatetc*/, STGMEDIUM *pstgmed)
+	STDMETHOD(OnDataAvailable)(
+		_In_ DWORD grfBSCF, 
+		_In_ DWORD dwSize, 
+		_In_opt_ FORMATETC * /*pformatetc*/, 
+		_In_ STGMEDIUM *pstgmed)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnDataAvailable\n"));
 		HRESULT hr = S_OK;
@@ -3539,13 +3929,18 @@ END_COM_MAP()
 		return hr;
 	}
 
-	STDMETHOD(OnObjectAvailable)(REFIID /*riid*/, IUnknown * /*punk*/)
+	STDMETHOD(OnObjectAvailable)(
+		_In_ REFIID /*riid*/, 
+		_In_opt_ IUnknown * /*punk*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnObjectAvailable"));
 		return S_OK;
 	}
 
-	HRESULT _StartAsyncDownload(BSTR bstrURL, IUnknown* pUnkContainer, BOOL bRelative)
+	HRESULT _StartAsyncDownload(
+		_In_z_ BSTR bstrURL, 
+		_Inout_opt_ IUnknown* pUnkContainer, 
+		_In_ BOOL bRelative)
 	{
 		m_dwTotalRead = 0;
 		m_dwAvailableToRead = 0;
@@ -3595,19 +3990,30 @@ END_COM_MAP()
 		return hr;
 	}
 
-	HRESULT StartAsyncDownload(T* pT, ATL_PDATAAVAILABLE pFunc, BSTR bstrURL, IUnknown* pUnkContainer = NULL, BOOL bRelative = FALSE)
+	HRESULT StartAsyncDownload(
+		_In_ T* pT, 
+		_In_ ATL_PDATAAVAILABLE pFunc, 
+		_In_z_ BSTR bstrURL, 
+		_Inout_opt_ IUnknown* pUnkContainer = NULL, 
+		_In_ BOOL bRelative = FALSE)
 	{
 		m_pT = pT;
 		m_pFunc = pFunc;
 		return  _StartAsyncDownload(bstrURL, pUnkContainer, bRelative);
 	}
 
-	static HRESULT Download(T* pT, ATL_PDATAAVAILABLE pFunc, BSTR bstrURL, IUnknown* pUnkContainer = NULL, BOOL bRelative = FALSE)
+	static HRESULT Download(
+		_In_ T* pT, 
+		_In_ ATL_PDATAAVAILABLE pFunc, 
+		_In_z_ BSTR bstrURL, 
+		_Inout_opt_ IUnknown* pUnkContainer = NULL, 
+		_In_ BOOL bRelative = FALSE)
 	{
 		CComObject<CBindStatusCallback<T, nBindFlags> > *pbsc;
 		HRESULT hRes = CComObject<CBindStatusCallback<T, nBindFlags> >::CreateInstance(&pbsc);
 		if (FAILED(hRes))
 			return hRes;
+
 		return pbsc->StartAsyncDownload(pT, pFunc, bstrURL, pUnkContainer, bRelative);
 	}
 
@@ -3622,7 +4028,7 @@ END_COM_MAP()
 };
 
 #define IMPLEMENT_STOCKPROP(type, fname, pname, dispid) \
-	HRESULT STDMETHODCALLTYPE put_##fname(type pname) \
+	HRESULT STDMETHODCALLTYPE put_##fname(_In_ type pname) \
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
@@ -3643,7 +4049,7 @@ END_COM_MAP()
 		} \
 		return S_OK; \
 	} \
-	HRESULT STDMETHODCALLTYPE get_##fname(type* p##pname) \
+	HRESULT STDMETHODCALLTYPE get_##fname(_Out_ type* p##pname) \
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
@@ -3658,7 +4064,7 @@ END_COM_MAP()
 	}
 
 #define IMPLEMENT_BOOL_STOCKPROP(fname, pname, dispid) \
-	HRESULT STDMETHODCALLTYPE put_##fname(VARIANT_BOOL pname) \
+	HRESULT STDMETHODCALLTYPE put_##fname(_In_ VARIANT_BOOL pname) \
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
@@ -3679,7 +4085,7 @@ END_COM_MAP()
 		} \
 		return S_OK; \
 	} \
-	HRESULT STDMETHODCALLTYPE get_##fname(VARIANT_BOOL* p##pname) \
+	HRESULT STDMETHODCALLTYPE get_##fname(_Out_ VARIANT_BOOL* p##pname) \
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
@@ -3694,7 +4100,7 @@ END_COM_MAP()
 	}
 
 #define IMPLEMENT_BSTR_STOCKPROP(fname, pname, dispid) \
-	HRESULT STDMETHODCALLTYPE put_##fname(BSTR pname) \
+	HRESULT STDMETHODCALLTYPE put_##fname(_In_z_ BSTR pname) \
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
@@ -3718,7 +4124,7 @@ END_COM_MAP()
 		} \
 		return S_OK; \
 	} \
-	HRESULT STDMETHODCALLTYPE get_##fname(BSTR* p##pname) \
+	HRESULT STDMETHODCALLTYPE get_##fname(_Out_ BSTR* p##pname) \
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
@@ -3737,11 +4143,12 @@ END_COM_MAP()
 
 template < class T, class InterfaceName, const IID* piid = &_ATL_IIDOF(InterfaceName), const GUID* plibid = &CAtlModule::m_libid, WORD wMajor = 1,
 WORD wMinor = 0, class tihclass = CComTypeInfoHolder>
-class ATL_NO_VTABLE CStockPropImpl : public IDispatchImpl< InterfaceName, piid, plibid, wMajor, wMinor, tihclass >
+class ATL_NO_VTABLE CStockPropImpl : 
+	public IDispatchImpl< InterfaceName, piid, plibid, wMajor, wMinor, tihclass >
 {
 public:
 	// Font
-	HRESULT STDMETHODCALLTYPE put_Font(IFontDisp* pFontDisp)
+	HRESULT STDMETHODCALLTYPE put_Font(_In_ IFontDisp* pFontDisp)
 	{
 		__if_exists(T::m_pFont) 
 		{ 
@@ -3775,7 +4182,7 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE putref_Font(IFontDisp* pFont)
+	HRESULT STDMETHODCALLTYPE putref_Font(_In_ IFontDisp* pFont)
 	{
 		__if_exists(T::m_pFont) 
 		{ 
@@ -3796,7 +4203,8 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE get_Font(IFontDisp** ppFont)
+	HRESULT STDMETHODCALLTYPE get_Font(
+		_Deref_out_opt_ IFontDisp** ppFont)
 	{
 		__if_exists(T::m_pFont) 
 		{ 
@@ -3813,7 +4221,7 @@ public:
 		return S_OK;
 	}
 	// Picture
-	HRESULT STDMETHODCALLTYPE put_Picture(IPictureDisp* pPicture)
+	HRESULT STDMETHODCALLTYPE put_Picture(_In_ IPictureDisp* pPicture)
 	{
 		__if_exists(T::m_pPicture) 
 		{ 
@@ -3861,7 +4269,7 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE putref_Picture(IPictureDisp* pPicture)
+	HRESULT STDMETHODCALLTYPE putref_Picture(_In_ IPictureDisp* pPicture)
 	{
 		__if_exists(T::m_pPicture) 
 		{ 
@@ -3882,7 +4290,8 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE get_Picture(IPictureDisp** ppPicture)
+	HRESULT STDMETHODCALLTYPE get_Picture(
+		_Deref_out_opt_ IPictureDisp** ppPicture)
 	{
 		__if_exists(T::m_pPicture) 
 		{ 
@@ -3899,7 +4308,7 @@ public:
 		return S_OK;
 	}
 	// MouseIcon
-	HRESULT STDMETHODCALLTYPE put_MouseIcon(IPictureDisp* pPicture)
+	HRESULT STDMETHODCALLTYPE put_MouseIcon(_In_ IPictureDisp* pPicture)
 	{
 		__if_exists(T::m_pMouseIcon) 
 		{ 
@@ -3947,7 +4356,7 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE putref_MouseIcon(IPictureDisp* pPicture)
+	HRESULT STDMETHODCALLTYPE putref_MouseIcon(_In_ IPictureDisp* pPicture)
 	{
 		__if_exists(T::m_pMouseIcon) 
 		{ 
@@ -3968,7 +4377,8 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE get_MouseIcon(IPictureDisp** ppPicture)
+	HRESULT STDMETHODCALLTYPE get_MouseIcon(
+		_Deref_out_opt_ IPictureDisp** ppPicture)
 	{
 		__if_exists(T::m_pMouseIcon) 
 		{ 
@@ -3995,20 +4405,20 @@ public:
 	IMPLEMENT_BOOL_STOCKPROP(BorderVisible, bBorderVisible, DISPID_BORDERVISIBLE)
 	IMPLEMENT_BSTR_STOCKPROP(Text, bstrText, DISPID_TEXT)
 	IMPLEMENT_BSTR_STOCKPROP(Caption, bstrCaption, DISPID_CAPTION)
-	HRESULT STDMETHODCALLTYPE put_Window(LONG_PTR hWnd)
+	HRESULT STDMETHODCALLTYPE put_Window(_In_ LONG_PTR hWnd)
 	{
 		return put_HWND(hWnd);
 	}
-	HRESULT STDMETHODCALLTYPE get_Window(LONG_PTR* phWnd)
+	HRESULT STDMETHODCALLTYPE get_Window(_Out_ LONG_PTR* phWnd)
 	{
 		return get_HWND(phWnd);
 	}
-	HRESULT STDMETHODCALLTYPE put_HWND(LONG_PTR /*hWnd*/)
+	HRESULT STDMETHODCALLTYPE put_HWND(_In_ LONG_PTR /*hWnd*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CStockPropImpl::put_HWND\n"));
 		return E_FAIL;
 	}
-	HRESULT STDMETHODCALLTYPE get_HWND(LONG_PTR* phWnd)
+	HRESULT STDMETHODCALLTYPE get_HWND(_Out_ LONG_PTR* phWnd)
 	{
 		__if_exists(T::m_hWnd) 
 		{ 

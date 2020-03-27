@@ -15,6 +15,7 @@
 #include "afxglobals.h"
 #include "afxdockingmanager.h"
 #include "afxvisualmanager.h"
+#include "afxdrawmanager.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -29,6 +30,24 @@ IMPLEMENT_DYNCREATE(CSmartDockingStandaloneGuide, CObject)
 IMPLEMENT_DYNCREATE(CSmartDockingGroupGuidesManager, CObject)
 
 #define COLOR_HIGHLIGHT_FRAME RGB(65, 112, 202)
+#define ALPHA_TRANSPARENT 192
+
+static AFX_SMARTDOCK_THEME __stdcall GetVMTheme()
+{
+	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
+	if (params.m_uiMarkerBmpResID [0] != 0)
+	{
+		return AFX_SDT_DEFAULT;
+	}
+
+	AFX_SMARTDOCK_THEME theme = CDockingManager::GetSmartDockingTheme();
+	if (theme == AFX_SDT_DEFAULT)
+	{
+		theme = CMFCVisualManager::GetInstance()->GetSmartDockingTheme();
+	}
+
+	return theme;
+}
 
 static void __stdcall ShadeRect(CDC* pDC, CRect rect, BOOL bIsVert)
 {
@@ -80,6 +99,7 @@ void CSmartDockingStandaloneGuide::Create(SDMarkerPlace nSideNo, CWnd* pwndOwner
 	m_nSideNo = nSideNo;
 
 	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
+	const BOOL bAlphaMarkers = params.m_bIsAlphaMarkers || GetVMTheme() == AFX_SDT_VS2008;
 
 	InitImages(params);
 
@@ -99,18 +119,15 @@ void CSmartDockingStandaloneGuide::Create(SDMarkerPlace nSideNo, CWnd* pwndOwner
 
 	BOOL bIsVert = m_nSideNo == sdTOP || m_nSideNo == sdBOTTOM;
 
-	if (afxGlobalData.IsWindowsLayerSupportAvailable())
+	m_wndBmp.Create(&rect, hBmp, NULL, pwndOwner, m_bIsDefaultImage, bIsVert);
+	m_wndBmp.ModifyStyleEx(0, WS_EX_LAYERED);
+
+	if (!bAlphaMarkers)
 	{
-		m_wndBmp.Create(&rect, hBmp, NULL, pwndOwner, m_bIsDefaultImage, bIsVert);
-		m_wndBmp.ModifyStyleEx(0, WS_EX_LAYERED);
 		afxGlobalData.SetLayeredAttrib(m_wndBmp.GetSafeHwnd(), params.m_clrTransparent, 0, LWA_COLORKEY);
-		m_bLayered = TRUE;
 	}
-	else
-	{
-		m_wndBmp.Create(&rect, hBmp, m_Rgn, pwndOwner, m_bIsDefaultImage, bIsVert);
-		m_bLayered = FALSE;
-	}
+
+	m_bLayered = TRUE;
 
 	m_wndBmp.ModifyStyleEx(0, WS_EX_TOPMOST);
 }
@@ -173,13 +190,14 @@ void CSmartDockingStandaloneGuide::Highlight(BOOL bHiLite)
 {
 	if (m_bHiLited == bHiLite)
 	{
+		m_wndBmp.UpdateLayered();
 		return;
 	}
 
 	m_bHiLited = bHiLite;
 	m_wndBmp.Highlight(m_bHiLited);
 
-	if (!m_bIsDefaultImage)
+	if (!m_bIsDefaultImage || GetVMTheme() == AFX_SDT_VS2008)
 	{
 		HBITMAP hBmpLight = m_Image.GetImageWellLight();
 		if (hBmpLight == NULL)
@@ -187,7 +205,7 @@ void CSmartDockingStandaloneGuide::Highlight(BOOL bHiLite)
 			hBmpLight = m_Image.GetImageWell();
 		}
 
-		m_wndBmp.Assign(bHiLite ? m_Image.GetImageWell() : hBmpLight, TRUE);
+		m_wndBmp.Assign(bHiLite ? (m_ImageHot.IsValid() ? m_ImageHot.GetImageWell() : m_Image.GetImageWell()) : hBmpLight, TRUE);
 	}
 }
 
@@ -216,7 +234,7 @@ BOOL CSmartDockingStandaloneGuide::IsPtIn(CPoint point) const
 
 void CSmartDockingStandaloneGuide::InitImages(CSmartDockingInfo& params)
 {
-	static UINT uiDefaultMarkerIDs [] =
+	static UINT uiDefaultMarkerIDs2005 [] =
 	{
 		IDB_AFXBARRES_SD_LEFT,
 		IDB_AFXBARRES_SD_RIGHT,
@@ -225,8 +243,27 @@ void CSmartDockingStandaloneGuide::InitImages(CSmartDockingInfo& params)
 		IDB_AFXBARRES_SD_MIDDLE
 	};
 
+	static UINT uiDefaultMarkerIDs2008 [] =
+	{
+		IDB_AFXBARRES_SD2008_LEFT,
+		IDB_AFXBARRES_SD2008_RIGHT,
+		IDB_AFXBARRES_SD2008_TOP,
+		IDB_AFXBARRES_SD2008_BOTTOM,
+		IDB_AFXBARRES_SD2008_MIDDLE
+	};
+
+	static UINT uiDefaultMarkerHotIDs2008 [] =
+	{
+		IDB_AFXBARRES_SD2008_LEFT_HOT,
+		IDB_AFXBARRES_SD2008_RIGHT_HOT,
+		IDB_AFXBARRES_SD2008_TOP_HOT,
+		IDB_AFXBARRES_SD2008_BOTTOM_HOT,
+		IDB_AFXBARRES_SD2008_MIDDLE_HOT
+	};
+
 	m_Image.Clear();
 	m_Image.SetLightPercentage(-1);
+	m_ImageHot.Clear();
 
 	int nIndex = -1;
 
@@ -262,20 +299,42 @@ void CSmartDockingStandaloneGuide::InitImages(CSmartDockingInfo& params)
 	}
 
 	UINT uiResID = params.m_uiMarkerBmpResID [nIndex];
+	UINT uiResHotID = params.m_uiMarkerLightBmpResID [nIndex];
 	m_bIsDefaultImage = uiResID == 0;
 
 	if (m_bIsDefaultImage)
 	{
 		// Use default marker:
-		uiResID = uiDefaultMarkerIDs [nIndex];
+		AFX_SMARTDOCK_THEME theme = GetVMTheme();
+
+		switch (theme)
+		{
+		case AFX_SDT_VS2005:
+			uiResID = uiDefaultMarkerIDs2005 [nIndex];
+			break;
+
+		case AFX_SDT_VS2008:
+			uiResID = uiDefaultMarkerIDs2008 [nIndex];
+			uiResHotID = uiDefaultMarkerHotIDs2008 [nIndex];
+			break;
+		}
 	}
 
 	m_Image.SetMapTo3DColors(FALSE);
-	m_Image.SetAlwaysLight();
+	m_Image.SetAlwaysLight(uiResHotID == 0);
 	m_Image.Load(uiResID);
 	m_Image.SetSingleImage();
 
 	m_Image.SetTransparentColor(params.m_clrTransparent);
+
+	if (uiResHotID != 0)
+	{
+		m_ImageHot.SetMapTo3DColors(FALSE);
+		m_ImageHot.Load(uiResHotID);
+		m_ImageHot.SetSingleImage();
+
+		m_ImageHot.SetTransparentColor(params.m_clrTransparent);
+	}
 
 	COLORREF clrToneSrc = m_bIsDefaultImage ?(COLORREF)-1 : params.m_clrToneSrc;
 	COLORREF clrToneDst = m_bIsDefaultImage && params.m_clrToneDest == -1 ? CMFCVisualManager::GetInstance()->GetSmartDockingHighlightToneColor() : params.m_clrToneDest;
@@ -295,7 +354,11 @@ void CSmartDockingStandaloneGuide::InitImages(CSmartDockingInfo& params)
 		}
 
 		m_wndBmp.Assign(hBmpLight, FALSE);
-		afxGlobalData.SetLayeredAttrib(hwndBmp, params.m_clrTransparent, 0, LWA_COLORKEY);
+
+		if (!params.m_bIsAlphaMarkers && GetVMTheme() != AFX_SDT_VS2008)
+		{
+			::SetLayeredWindowAttributes(hwndBmp, params.m_clrTransparent, 0, LWA_COLORKEY);
+		}
 	}
 }
 
@@ -320,6 +383,52 @@ BEGIN_MESSAGE_MAP(CSmartDockingGroupGuidesWnd, CWnd)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
+void CSmartDockingGroupGuidesWnd::Update()
+{
+	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
+	if (!params.m_bIsAlphaMarkers && GetVMTheme() != AFX_SDT_VS2008)
+	{
+		RedrawWindow();
+		return;
+	}
+
+	CRect rect;
+	GetClientRect(rect);
+
+	CPoint point(0, 0);
+	CSize size(rect.Size());
+
+	LPBYTE pBits = NULL;
+	HBITMAP hBitmap = CDrawingManager::CreateBitmap_32(size, (void**)&pBits);
+	if (hBitmap == NULL)
+	{
+		return;
+	}
+
+	CBitmap bitmap;
+	bitmap.Attach(hBitmap);
+
+	CClientDC clientDC(this);
+	CDC dc;
+	dc.CreateCompatibleDC(&clientDC);
+
+	CBitmap* pBitmapOld = (CBitmap*)dc.SelectObject(&bitmap);
+
+	ASSERT_VALID(m_pCentralGroup);
+
+	m_pCentralGroup->DrawCentralGroupGuides(dc, m_brBaseBackground, m_brBaseBorder, rect);
+
+	BLENDFUNCTION bf;
+	bf.BlendOp             = AC_SRC_OVER;
+	bf.BlendFlags          = 0;
+	bf.SourceConstantAlpha = 255;
+	bf.AlphaFormat         = LWA_COLORKEY;
+
+	UpdateLayeredWindow(NULL, 0, &size, &dc, &point, 0, &bf, 0x02);
+
+	dc.SelectObject(pBitmapOld);
+}
+
 void CSmartDockingGroupGuidesWnd::OnPaint()
 {
 	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
@@ -332,17 +441,14 @@ void CSmartDockingGroupGuidesWnd::OnPaint()
 	CRect rectClient;
 	GetClientRect(rectClient);
 
-	if (afxGlobalData.IsWindowsLayerSupportAvailable())
-	{
-		CBrush brBack;
-		brBack.CreateSolidBrush(params.m_clrTransparent);
+	CBrush brBack;
+	brBack.CreateSolidBrush(params.m_clrTransparent);
 
-		pDC->FillRect(rectClient, &brBack);
-	}
+	pDC->FillRect(rectClient, &brBack);
 
 	ASSERT_VALID(m_pCentralGroup);
 
-	m_pCentralGroup->DrawCentralGroupGuides(*pDC, m_brBaseBackground, m_brBaseBorder);
+	m_pCentralGroup->DrawCentralGroupGuides(*pDC, m_brBaseBackground, m_brBaseBorder, rectClient);
 }
 
 void CSmartDockingGroupGuidesWnd::OnClose()
@@ -399,7 +505,7 @@ void CSmartDockingGroupGuide::Highlight(BOOL bHiLite)
 	ASSERT_VALID(m_pCentralGroup);
 
 	m_bHiLited = bHiLite;
-	m_pCentralGroup->m_Wnd.RedrawWindow();
+	m_pCentralGroup->m_Wnd.Update();
 }
 
 void CSmartDockingGroupGuide::SetVisible(BOOL bVisible/* = TRUE*/, BOOL bRedraw/* = TRUE*/)
@@ -409,7 +515,7 @@ void CSmartDockingGroupGuide::SetVisible(BOOL bVisible/* = TRUE*/, BOOL bRedraw/
 	if (bRedraw && m_pCentralGroup != NULL)
 	{
 		ASSERT_VALID(m_pCentralGroup);
-		m_pCentralGroup->m_Wnd.RedrawWindow();
+		m_pCentralGroup->m_Wnd.Update();
 	}
 }
 
@@ -437,8 +543,20 @@ void CSmartDockingGroupGuide::Create(SDMarkerPlace nSideNo, CSmartDockingGroupGu
 
 	if (m_bIsDefaultImage)
 	{
-		params.m_nCentralGroupOffset = 9;
-		params.m_sizeTotal = CSize(88, 88);
+		AFX_SMARTDOCK_THEME theme = GetVMTheme();
+
+		switch (theme)
+		{
+		case AFX_SDT_VS2005:
+			params.m_nCentralGroupOffset = 9;
+			params.m_sizeTotal = CSize(88, 88);
+			break;
+
+		case AFX_SDT_VS2008:
+			params.m_nCentralGroupOffset = 5;
+			params.m_sizeTotal = CSize(110, 110);
+			break;
+		}
 	}
 
 	COLORREF clrBaseGroupBackground;
@@ -487,17 +605,33 @@ void CSmartDockingGroupGuide::DestroyImages()
 	m_Rgn.DeleteObject();
 }
 
-void CSmartDockingGroupGuide::Draw(CDC& dc)
+void CSmartDockingGroupGuide::Draw(CDC& dc, BOOL bAlpha)
 {
-	const BOOL bFadeImage = !m_bHiLited && !m_bIsDefaultImage;
+	const BOOL bFadeImage = !m_bHiLited && !m_bIsDefaultImage && !m_ImageHot.IsValid();
 
 	CAfxDrawState ds;
-	m_Image.PrepareDrawImage(ds, CSize(0, 0), bFadeImage);
+	CMFCToolBarImages& image = m_bHiLited && m_ImageHot.IsValid() ? m_ImageHot : m_Image;
 
-	m_Image.Draw(&dc, m_nOffsetX, m_nOffsetY, 0, FALSE, FALSE, FALSE, FALSE, bFadeImage);
-	m_Image.EndDrawImage(ds);
+	if (bAlpha && !m_bHiLited)
+	{
+		image.DrawEx(&dc, CRect(CPoint(m_nOffsetX, m_nOffsetY), image.GetImageSize()), 0, 
+			CMFCToolBarImages::ImageAlignHorzLeft,
+			CMFCToolBarImages::ImageAlignVertTop,
+			CRect(0, 0, 0, 0), ALPHA_TRANSPARENT);
+		return;
+	}
+
+	image.PrepareDrawImage(ds, CSize(0, 0), bFadeImage);
+
+	image.Draw(&dc, m_nOffsetX, m_nOffsetY, 0, FALSE, FALSE, FALSE, FALSE, bFadeImage);
+	image.EndDrawImage(ds);
 
 	if (!m_bIsDefaultImage)
+	{
+		return;
+	}
+
+	if (GetVMTheme() == AFX_SDT_VS2008)
 	{
 		return;
 	}
@@ -583,6 +717,29 @@ void CSmartDockingGroupGuidesManager::Create(CWnd* pwndOwner)
 
 	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
 
+	UINT uiBaseResID = params.m_uiBaseBmpResID;
+
+	if (uiBaseResID == 0)
+	{
+		AFX_SMARTDOCK_THEME theme = GetVMTheme();
+
+		switch (theme)
+		{
+		case AFX_SDT_VS2008:
+			uiBaseResID = IDB_AFXBARRES_SD2008_BASE;
+			break;
+		}
+	}
+
+	if (uiBaseResID != 0)
+	{
+		m_Image.SetMapTo3DColors(FALSE);
+		m_Image.SetAlwaysLight();
+		m_Image.Load(uiBaseResID);
+		m_Image.SetSingleImage();
+		m_Image.SetTransparentColor(params.m_clrTransparent);
+	}
+
 	CRect rectBase;
 	rgnAll.GetRgnBox(rectBase);
 	rectBase.DeflateRect(params.m_nCentralGroupOffset, params.m_nCentralGroupOffset);
@@ -614,18 +771,18 @@ void CSmartDockingGroupGuidesManager::Create(CWnd* pwndOwner)
 	{
 		m_Wnd.m_pCentralGroup = this;
 
-		if (afxGlobalData.IsWindowsLayerSupportAvailable())
-		{
-			m_Wnd.ModifyStyleEx(0, WS_EX_LAYERED);
-			afxGlobalData.SetLayeredAttrib(m_Wnd.GetSafeHwnd(), params.m_clrTransparent, 0, LWA_COLORKEY);
+		m_Wnd.ModifyStyleEx(0, WS_EX_LAYERED);
 
-			m_bLayered = TRUE;
+		if (!params.m_bIsAlphaMarkers && GetVMTheme() != AFX_SDT_VS2008)
+		{
+			afxGlobalData.SetLayeredAttrib(m_Wnd.GetSafeHwnd(), params.m_clrTransparent, 0, LWA_COLORKEY);
 		}
 		else
 		{
-			m_Wnd.SetWindowRgn(rgnAll, FALSE);
-			m_bLayered = FALSE;
+			m_Wnd.Update();
 		}
+
+		m_bLayered = TRUE;
 
 		m_bCreated = TRUE;
 	}
@@ -676,13 +833,13 @@ BOOL CSmartDockingGroupGuidesManager::AdjustPos(CRect rcHost, int nMiddleIsOn)
 			if (nMiddleIsOn == 0 && m_bMiddleIsOn)
 			{
 				m_bMiddleIsOn = FALSE;
-				m_Wnd.RedrawWindow();
+				m_Wnd.Update();
 			}
 			else
 				if (nMiddleIsOn == 1 && !m_bMiddleIsOn)
 				{
 					m_bMiddleIsOn = TRUE;
-					m_Wnd.RedrawWindow();
+					m_Wnd.Update();
 				}
 		}
 
@@ -719,41 +876,53 @@ void CSmartDockingGroupGuidesManager::ShowGuide( CSmartDockingStandaloneGuide::S
 	}
 }
 
-void CSmartDockingGroupGuidesManager::DrawCentralGroupGuides(CDC& dc, CBrush& brBaseBackground, CBrush& brBaseBorder)
+void CSmartDockingGroupGuidesManager::DrawCentralGroupGuides(CDC& dc, CBrush& brBaseBackground, CBrush& brBaseBorder, CRect rectClient)
 {
 	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
+	const BOOL bAlphaMarkers = params.m_bIsAlphaMarkers || GetVMTheme() == AFX_SDT_VS2008;
 
 	CDC cmpdc;
 	cmpdc.CreateCompatibleDC(&dc);
 
-	// fill with the transparent color
-	CRect rect;
-	dc.GetBoundsRect(rect, 0);
+	if (!bAlphaMarkers)
 	{
+		// fill with the transparent color
+		CRect rect;
+		dc.GetBoundsRect(rect, 0);
+
 		CBrush brBack;
 		brBack.CreateSolidBrush(params.m_clrTransparent);
 		dc.FillRect(rect, &brBack);
 	}
 
-	dc.FillRgn(&m_rgnBase, &brBaseBackground);
-
-	if (m_bMiddleIsOn && params.m_uiMarkerBmpResID [0] == 0) // Default images
+	if (m_Image.IsValid())
 	{
-		CSmartDockingGroupGuide& centerMarker = m_arMarkers [CSmartDockingStandaloneGuide::sdCMIDDLE - CSmartDockingStandaloneGuide::sdCLEFT];
+		m_Image.DrawEx(&dc, rectClient, 0, 
+			CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter,
+			CRect(0, 0, 0, 0), (BYTE)(bAlphaMarkers ? ALPHA_TRANSPARENT : 255));
+	}
+	else
+	{
+		dc.FillRgn(&m_rgnBase, &brBaseBackground);
 
-		if (centerMarker.IsVisible() && centerMarker.m_bHiLited)
+		if (m_bMiddleIsOn && params.m_uiMarkerBmpResID [0] == 0) // Default images
 		{
-			CBrush br(COLOR_HIGHLIGHT_FRAME);
-			dc.FrameRgn(&m_rgnBase, &br, 1, 1);
+			CSmartDockingGroupGuide& centerMarker = m_arMarkers [CSmartDockingStandaloneGuide::sdCMIDDLE - CSmartDockingStandaloneGuide::sdCLEFT];
+
+			if (centerMarker.IsVisible() && centerMarker.m_bHiLited)
+			{
+				CBrush br(COLOR_HIGHLIGHT_FRAME);
+				dc.FrameRgn(&m_rgnBase, &br, 1, 1);
+			}
+			else
+			{
+				dc.FrameRgn(&m_rgnBase, &brBaseBorder, 1, 1);
+			}
 		}
 		else
 		{
 			dc.FrameRgn(&m_rgnBase, &brBaseBorder, 1, 1);
 		}
-	}
-	else
-	{
-		dc.FrameRgn(&m_rgnBase, &brBaseBorder, 1, 1);
 	}
 
 	CSmartDockingStandaloneGuide::SDMarkerPlace i;
@@ -765,7 +934,7 @@ void CSmartDockingGroupGuidesManager::DrawCentralGroupGuides(CDC& dc, CBrush& br
 
 		if (marker.IsVisible())
 		{
-			marker.Draw(dc);
+			marker.Draw(dc, bAlphaMarkers);
 		}
 	}
 }
@@ -823,7 +992,53 @@ void CSmartDockingStandaloneGuideWnd::Highlight(BOOL bSet)
 	if (GetSafeHwnd() != NULL)
 	{
 		RedrawWindow();
+		UpdateLayered();
 	}
+}
+
+void CSmartDockingStandaloneGuideWnd::UpdateLayered()
+{
+	CSmartDockingInfo& params = CDockingManager::GetSmartDockingParams();
+	const BOOL bAlphaMarkers = params.m_bIsAlphaMarkers || GetVMTheme() == AFX_SDT_VS2008;
+
+	if (!bAlphaMarkers)
+	{
+		return;
+	}
+
+	CRect rect;
+	GetClientRect(rect);
+
+	CPoint point(0, 0);
+	CSize size(rect.Size());
+
+	LPBYTE pBits = NULL;
+	HBITMAP hBitmap = CDrawingManager::CreateBitmap_32(size, (void**)&pBits);
+	if (hBitmap == NULL)
+	{
+		return;
+	}
+
+	CBitmap bitmap;
+	bitmap.Attach(hBitmap);
+
+	CClientDC clientDC(this);
+	CDC dc;
+	dc.CreateCompatibleDC(&clientDC);
+
+	CBitmap* pBitmapOld = (CBitmap*)dc.SelectObject(&bitmap);
+
+	dc.DrawState(point, size, m_hbmpFace, DSS_NORMAL);
+
+	BLENDFUNCTION bf;
+	bf.BlendOp             = AC_SRC_OVER;
+	bf.BlendFlags          = 0;
+	bf.SourceConstantAlpha = (BYTE)(m_bIsHighlighted ? 255 : ALPHA_TRANSPARENT);
+	bf.AlphaFormat         = LWA_COLORKEY;
+
+	UpdateLayeredWindow(NULL, 0, &size, &dc,  &point, 0, &bf, 0x02);
+
+	dc.SelectObject(pBitmapOld);
 }
 
 BOOL CSmartDockingStandaloneGuideWnd::Assign(HBITMAP hbmpFace, BOOL bRedraw)
@@ -850,7 +1065,7 @@ void CSmartDockingStandaloneGuideWnd::OnPaint()
 
 	dc.DrawState(CPoint(0, 0), rectClient.Size(), m_hbmpFace, DSS_NORMAL);
 
-	if (!m_bIsDefaultImage)
+	if (!m_bIsDefaultImage || GetVMTheme() == AFX_SDT_VS2008)
 	{
 		return;
 	}
@@ -870,6 +1085,3 @@ BOOL CSmartDockingStandaloneGuideWnd::OnEraseBkgnd(CDC* /*pDC*/)
 {
 	return TRUE;
 }
-
-
-

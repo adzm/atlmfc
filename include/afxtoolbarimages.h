@@ -43,6 +43,7 @@ class CMFCToolBarImages : public CObject
 	friend class CMFCImageEditorDialog;
 	friend class CMenuImages;
 	friend class CPngImage;
+	friend class CMFCRibbonCollector;
 
 public:
 	CMFCToolBarImages();
@@ -138,6 +139,13 @@ public:
 	BOOL UpdateImage(int iImage, HBITMAP hbmp);
 	BOOL DeleteImage(int iImage);
 
+	/// <summary> Returns current resolution of underlined images.</summary>
+	/// <returns> An integer value representing the current resolution of underlined images, in bits per pixel (bpp).</returns>
+	int GetBitsPerPixel() const
+	{
+		return m_nBitsPerPixel;
+	}
+
 	HICON ExtractIcon(int nIndex);
 
 	BOOL CreateFromImageList(const CImageList& imageList);
@@ -204,6 +212,36 @@ public:
 
 	CRect GetLastImageRect() const { return m_rectLastDraw; }
 
+	static HBITMAP __stdcall Copy(HBITMAP hbmpSrc);
+
+	/// <summary> 
+	/// Smoothly resizes underlined images.</summary>
+	/// <param name="dblScale"> Scale ratio.</param>
+	/// <retruns> TRUE if resize succeeds; otherwise FALSE.</returns>
+	BOOL SmoothResize(double dblImageScale);
+
+	/// <summary>
+	/// Returns current scale ratio of underlined images.</summary>
+	/// <returns> A value representing current scale ratio.</returns>
+	double GetScale() const
+	{
+		return m_dblScale;
+	}
+
+	/// <summary>
+	/// Tells whether the underlined images are scaled or not.</summary>
+	/// <returns> TRUE if underlined images are scaled; otherwise FALSE.</returns>
+	BOOL IsScaled () const
+	{
+		return GetScale() != 1.0;
+	}
+
+	/// <summary>
+	/// Converts underlined bitmaps to 32 bpp images.</summary> 
+	/// <returns> TRUE if succeeds; otherwise FALSE.</returns>
+	/// <param name="clrTransparent">Specifies transparent color of underlined bitmaps.</param>
+	BOOL ConvertTo32Bits(COLORREF clrTransparent = (COLORREF)-1);
+
 protected:
 	static void __stdcall TransparentBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, CDC* pDcSrc,
 		int nXSrc, int nYSrc, COLORREF colorTransparent, int nWidthDest = -1, int nHeightDest = -1);
@@ -250,6 +288,7 @@ protected:
 
 	CDC      m_dcMem;          // DC for the drawing in memory
 	CSize    m_sizeImage;      // size of glyph
+	CSize    m_sizeImageOriginal;
 	CSize    m_sizeImageDest;  // destination size glyph
 	CRect    m_rectLastDraw;   // Last drawn image location
 	CRect    m_rectSubImage;   // The part of drawn image
@@ -260,7 +299,9 @@ protected:
 	CBitmap  m_bmpMem;         // bitmap for the drawing in memory
 	CBitmap* m_pBmpOriginal;
 	COLORREF m_clrTransparent; // Transparent color
+	COLORREF m_clrTransparentOriginal;
 	COLORREF m_clrImageShadow; // Color of the shadow
+	double   m_dblScale;
 
 	CList<UINT, UINT>           m_lstOrigResIds;       // original resource ids
 	CList<HINSTANCE, HINSTANCE> m_lstOrigResInstances; // original resource instances

@@ -17,6 +17,8 @@
 #include "afxmenuimages.h"
 #include "afxvisualmanager.h"
 #include "afxtoolbarcomboboxbutton.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -57,6 +59,7 @@ BEGIN_MESSAGE_MAP(CMFCColorButton, CMFCButton)
 	ON_WM_GETDLGCODE()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_MOUSEMOVE()
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCColorButton::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -418,5 +421,56 @@ BOOL CMFCColorButton::IsDrawXPTheme() const
 	return m_bWinXPTheme && CMFCVisualManager::GetInstance()->IsWindowsThemingSupported();
 }
 
+LRESULT CMFCColorButton::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
+
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	BOOL bEnableOtherButton = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCColorButton_EnableOtherButton, bEnableOtherButton))
+	{
+		if (bEnableOtherButton)
+		{
+			EnableOtherButton(_T("Other"), TRUE, bEnableOtherButton);
+		}
+		else
+		{
+			EnableOtherButton(NULL, TRUE, bEnableOtherButton);
+		}
+	}
+
+	BOOL bEnableAutomaticButton = FALSE;
+	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCColorButton_EnableAutomaticButton, bEnableAutomaticButton))
+	{
+		if (bEnableAutomaticButton)
+		{
+			EnableAutomaticButton(_T("Automatic"), RGB(0, 0, 0), bEnableAutomaticButton);
+		}
+		else
+		{
+			EnableAutomaticButton(NULL, RGB(0, 0, 0), bEnableAutomaticButton);
+		}
+	}
+
+	CString strColumnsCount;
+	if (tagManager.ExcludeTag(PS_MFCColorButton_ColumnsCount, strColumnsCount))
+	{
+		if (!strColumnsCount.IsEmpty())
+		{
+			int nColumnsCount = _ttoi((LPCTSTR)strColumnsCount);
+			if (nColumnsCount > 0)
+			{
+				SetColumnsNumber(nColumnsCount);
+			}
+		}
+	}
+
+	return 0;
+}
 
 

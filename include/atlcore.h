@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #ifndef __ATLCORE_H__
@@ -31,27 +31,37 @@
 #include <atlchecked.h>
 #include <atlsimpcoll.h>
 
+#if _WIN32_WINNT < 0x0403
+#error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
+#endif
+
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
 /////////////////////////////////////////////////////////////////////////////
 // Verify that a null-terminated string points to valid memory
-inline BOOL AtlIsValidString(LPCWSTR psz, size_t nMaxLength = INT_MAX)
+inline BOOL AtlIsValidString(
+	_In_z_count_(nMaxLength) LPCWSTR psz,
+	_In_ size_t nMaxLength = INT_MAX)
 {
 	(nMaxLength);
 	return (psz != NULL);
 }
 
 // Verify that a null-terminated string points to valid memory
-inline BOOL AtlIsValidString(LPCSTR psz, size_t nMaxLength = UINT_MAX)
+inline BOOL AtlIsValidString(
+	_In_z_count_(nMaxLength) LPCSTR psz,
+	_In_ size_t nMaxLength = UINT_MAX)
 {
 	(nMaxLength);
 	return (psz != NULL);
 }
 
 // Verify that a pointer points to valid memory
-inline BOOL AtlIsValidAddress(const void* p, size_t nBytes,
-	BOOL bReadWrite = TRUE)
+inline BOOL AtlIsValidAddress(
+	_In_opt_bytecount_(nBytes) const void* p,
+	_In_ size_t nBytes,
+	_In_ BOOL bReadWrite = TRUE)
 {
 	(bReadWrite);
 	(nBytes);
@@ -59,7 +69,8 @@ inline BOOL AtlIsValidAddress(const void* p, size_t nBytes,
 }
 
 template<typename T>
-inline void AtlAssertValidObject(const T *pOb)
+inline void AtlAssertValidObject(
+	_In_opt_ _Prepost_opt_bytecount_x_(sizeof(T)) const T *pOb)
 {
 	ATLASSERT(pOb);
 	ATLASSERT(AtlIsValidAddress(pOb, sizeof(T)));
@@ -95,17 +106,13 @@ public:
 	}
 	HRESULT Init() throw()
 	{
-		HRESULT hRes = E_FAIL;
-		__try
+		HRESULT hRes = S_OK;
+
+		if (!InitializeCriticalSectionAndSpinCount(&m_sec, 0))
 		{
-			InitializeCriticalSection(&m_sec);
-			hRes = S_OK;
+			hRes = HRESULT_FROM_WIN32(GetLastError());
 		}
-		// structured exception may be raised in low memory situations
-		__except(STATUS_NO_MEMORY == GetExceptionCode())
-		{			
-			hRes = E_OUTOFMEMORY;		
-		}
+
 		return hRes;
 	}
 
@@ -113,11 +120,12 @@ public:
 	{
 		DeleteCriticalSection(&m_sec);
 		return S_OK;
-	}	
+	}
 	CRITICAL_SECTION m_sec;
 };
 
-class CComAutoCriticalSection : public CComCriticalSection
+class CComAutoCriticalSection : 
+	public CComCriticalSection
 {
 public:
 	CComAutoCriticalSection()
@@ -135,10 +143,11 @@ private :
 	HRESULT Term(); // Not implemented. CComAutoCriticalSection::Term should never be called
 };
 
-class CComSafeDeleteCriticalSection : public CComCriticalSection
+class CComSafeDeleteCriticalSection : 
+	public CComCriticalSection
 {
 public:
-	CComSafeDeleteCriticalSection(): m_bInitialized(false) 
+	CComSafeDeleteCriticalSection(): m_bInitialized(false)
 	{
 	}
 
@@ -177,7 +186,7 @@ public:
 	{
 		// CComSafeDeleteCriticalSection::Init or CComAutoDeleteCriticalSection::Init
 		// not called or failed.
-		// m_critsec member of CComObjectRootEx is now of type 
+		// m_critsec member of CComObjectRootEx is now of type
 		// CComAutoDeleteCriticalSection. It has to be initialized
 		// by calling CComObjectRootEx::_AtlInitialConstruct
 		ATLASSUME(m_bInitialized);
@@ -188,7 +197,8 @@ private:
 	bool m_bInitialized;
 };
 
-class CComAutoDeleteCriticalSection : public CComSafeDeleteCriticalSection
+class CComAutoDeleteCriticalSection : 
+	public CComSafeDeleteCriticalSection
 {
 private:
 	// CComAutoDeleteCriticalSection::Term should never be called
@@ -198,14 +208,26 @@ private:
 class CComFakeCriticalSection
 {
 public:
-	HRESULT Lock() throw() { return S_OK; }
-	HRESULT Unlock() throw() { return S_OK; }
-	HRESULT Init() throw() { return S_OK; }
-	HRESULT Term() throw() { return S_OK; }
+	HRESULT Lock() throw()
+	{
+		return S_OK;
+	}
+	HRESULT Unlock() throw()
+	{
+		return S_OK;
+	}
+	HRESULT Init() throw()
+	{
+		return S_OK;
+	}
+	HRESULT Term() throw()
+	{
+		return S_OK;
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////
-// Module 
+// Module
 
 // Used by any project that uses ATL
 struct _ATL_BASE_MODULE70
@@ -220,7 +242,8 @@ struct _ATL_BASE_MODULE70
 };
 typedef _ATL_BASE_MODULE70 _ATL_BASE_MODULE;
 
-class CAtlBaseModule : public _ATL_BASE_MODULE
+class CAtlBaseModule : 
+	public _ATL_BASE_MODULE
 {
 public :
 	static bool m_bInitFailed;
@@ -235,14 +258,14 @@ public :
 	{
 		return m_hInstResource;
 	}
-	HINSTANCE SetResourceInstance(HINSTANCE hInst) throw()
+	HINSTANCE SetResourceInstance(_In_ HINSTANCE hInst) throw()
 	{
 		return static_cast< HINSTANCE >(InterlockedExchangePointer((void**)&m_hInstResource, hInst));
 	}
 
-	bool AddResourceInstance(HINSTANCE hInst) throw();
-	bool RemoveResourceInstance(HINSTANCE hInst) throw();
-	HINSTANCE GetHInstanceAt(int i) throw();
+	bool AddResourceInstance(_In_ HINSTANCE hInst) throw();
+	bool RemoveResourceInstance(_In_ HINSTANCE hInst) throw();
+	HINSTANCE GetHInstanceAt(_In_ int i) throw();
 };
 
 __declspec(selectany) bool CAtlBaseModule::m_bInitFailed = false;
@@ -260,7 +283,10 @@ extern CAtlBaseModule _AtlBaseModule;
 	};
 #pragma warning(pop)	// C4200
 
-inline const ATLSTRINGRESOURCEIMAGE* _AtlGetStringResourceImage( HINSTANCE hInstance, HRSRC hResource, UINT id ) throw()
+inline const ATLSTRINGRESOURCEIMAGE* _AtlGetStringResourceImage(
+	_In_ HINSTANCE hInstance,
+	_In_ HRSRC hResource,
+	_In_ UINT id) throw()
 {
 	const ATLSTRINGRESOURCEIMAGE* pImage;
 	const ATLSTRINGRESOURCEIMAGE* pImageEnd;
@@ -301,11 +327,16 @@ inline const ATLSTRINGRESOURCEIMAGE* _AtlGetStringResourceImage( HINSTANCE hInst
 	return( pImage );
 }
 
-inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( HINSTANCE hInstance, UINT id ) throw()
+inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage(
+	_In_ HINSTANCE hInstance,
+	_In_ UINT id) throw()
 {
 	HRSRC hResource;
-
-	hResource = ::FindResource( hInstance, MAKEINTRESOURCE( ((id>>4)+1) ), RT_STRING );
+	/*
+		The and operation (& static_cast<WORD>(~0)) protects the expression from being greater
+		than WORD - this would cause a runtime error when the application is compiled with /RTCc flag.
+	*/
+	hResource = ::FindResourceW(hInstance, MAKEINTRESOURCEW( (((id>>4)+1) & static_cast<WORD>(~0)) ), (LPWSTR) RT_STRING);
 	if( hResource == NULL )
 	{
 		return( NULL );
@@ -314,11 +345,17 @@ inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( HINSTANCE hInsta
 	return _AtlGetStringResourceImage( hInstance, hResource, id );
 }
 
-inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( HINSTANCE hInstance, UINT id, WORD wLanguage ) throw()
+inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage(
+	_In_ HINSTANCE hInstance,
+	_In_ UINT id,
+	_In_ WORD wLanguage) throw()
 {
 	HRSRC hResource;
-
-	hResource = ::FindResourceEx( hInstance, RT_STRING, MAKEINTRESOURCE( ((id>>4)+1) ), wLanguage );
+	/*
+		The and operation (& static_cast<WORD>(~0)) protects the expression from being greater
+		than WORD - this would cause a runtime error when the application is compiled with /RTCc flag.
+	*/
+	hResource = ::FindResourceExW(hInstance, (LPWSTR) RT_STRING, MAKEINTRESOURCEW( (((id>>4)+1) & static_cast<WORD>(~0)) ), wLanguage);
 	if( hResource == NULL )
 	{
 		return( NULL );
@@ -327,7 +364,7 @@ inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( HINSTANCE hInsta
 	return _AtlGetStringResourceImage( hInstance, hResource, id );
 }
 
-inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( UINT id ) throw()
+inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage(_In_ UINT id) throw()
 {
 	const ATLSTRINGRESOURCEIMAGE* p = NULL;
 	HINSTANCE hInst = _AtlBaseModule.GetHInstanceAt(0);
@@ -339,7 +376,9 @@ inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( UINT id ) throw(
 	return p;
 }
 
-inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( UINT id, WORD wLanguage ) throw()
+inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage(
+	_In_ UINT id,
+	_In_ WORD wLanguage) throw()
 {
 	const ATLSTRINGRESOURCEIMAGE* p = NULL;
 	HINSTANCE hInst = _AtlBaseModule.GetHInstanceAt(0);
@@ -351,7 +390,10 @@ inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage( UINT id, WORD wL
 	return p;
 }
 
-inline int AtlLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nBufferMax, return + 1) LPTSTR lpBuffer, _In_ int nBufferMax) throw()
+inline int AtlLoadString(
+	_In_ UINT nID,
+	_Out_z_cap_post_count_(nBufferMax, return + 1) LPTSTR lpBuffer,
+	_In_ int nBufferMax) throw()
 {
 	HINSTANCE hInst = _AtlBaseModule.GetHInstanceAt(0);
 	int nRet = 0;
@@ -363,7 +405,10 @@ inline int AtlLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nBufferMax, retur
 	return nRet;
 }
 
-inline HINSTANCE AtlFindResourceInstance(LPCTSTR lpName, LPCTSTR lpType, WORD wLanguage = 0) throw()
+inline HINSTANCE AtlFindResourceInstance(
+	_In_z_ LPCTSTR lpName,
+	_In_z_ LPCTSTR lpType,
+	_In_ WORD wLanguage = 0) throw()
 {
 	ATLASSERT(lpType != RT_STRING);	// Call AtlFindStringResourceInstance to find the string
 	if (lpType == RT_STRING)
@@ -397,12 +442,21 @@ inline HINSTANCE AtlFindResourceInstance(LPCTSTR lpName, LPCTSTR lpType, WORD wL
 	return NULL;
 }
 
-inline HINSTANCE AtlFindResourceInstance(UINT nID, LPCTSTR lpType, WORD wLanguage = 0) throw()
+inline HINSTANCE AtlFindResourceInstance(
+	_In_ UINT nID,
+	_In_z_ LPCTSTR lpType,
+	_In_ WORD wLanguage = 0) throw()
 {
-	return AtlFindResourceInstance(MAKEINTRESOURCE(nID), lpType, wLanguage);
+	/*
+		The and operation (& static_cast<WORD>(~0)) protects the expression from being greater
+		than WORD - this would cause a runtime error when the application is compiled with /RTCc flag.
+	*/
+	return AtlFindResourceInstance(MAKEINTRESOURCE(nID & static_cast<WORD>(~0)), lpType, wLanguage);
 }
 
-inline HINSTANCE AtlFindStringResourceInstance(UINT nID, WORD wLanguage = 0) throw()
+inline HINSTANCE AtlFindStringResourceInstance(
+	_In_ UINT nID,
+	_In_ WORD wLanguage = 0) throw()
 {
 	const ATLSTRINGRESOURCEIMAGE* p = NULL;
 	HINSTANCE hInst = _AtlBaseModule.GetHInstanceAt(0);
@@ -417,14 +471,12 @@ inline HINSTANCE AtlFindStringResourceInstance(UINT nID, WORD wLanguage = 0) thr
 	return NULL;
 }
 
-/* 
-Needed by both atlcomcli and atlsafe, so needs to be in here 
+/*
+Needed by both atlcomcli and atlsafe, so needs to be in here
 */
-inline HRESULT AtlSafeArrayGetActualVartype
-(
-    SAFEARRAY *psaArray,
-    VARTYPE *pvtType
-)
+inline HRESULT AtlSafeArrayGetActualVartype(
+    _In_ SAFEARRAY *psaArray,
+    _Out_ VARTYPE *pvtType)
 {
     HRESULT hrSystem=::SafeArrayGetVartype(psaArray, pvtType);
 
@@ -433,7 +485,7 @@ inline HRESULT AtlSafeArrayGetActualVartype
         return hrSystem;
     }
 
-    /* 
+    /*
     When Windows has a SAFEARRAY of type VT_DISPATCH with FADF_HAVEIID,
     it returns VT_UNKNOWN instead of VT_DISPATCH. We patch the value to be correct
     */
@@ -451,9 +503,9 @@ inline HRESULT AtlSafeArrayGetActualVartype
     return hrSystem;
 }
 template <typename _CharType>
-inline _CharType* AtlCharNext(const _CharType* p) throw()
+inline _CharType* AtlCharNext(_In_ const _CharType* p) throw()
 {
-	ATLASSUME(p != NULL);	// Too expensive to check separately here 
+	ATLASSUME(p != NULL);	// Too expensive to check separately here
 	if (*p == '\0')  // ::CharNextA won't increment if we're at a \0 already
 		return const_cast<_CharType*>(p+1);
 	else
@@ -461,14 +513,16 @@ inline _CharType* AtlCharNext(const _CharType* p) throw()
 }
 
 template <>
-inline wchar_t* AtlCharNext<wchar_t>(const wchar_t* p) throw()
+inline wchar_t* AtlCharNext<wchar_t>(_In_ const wchar_t* p) throw()
 {
 	return const_cast< wchar_t* >( p+1 );
 }
 template<typename CharType>
-inline const CharType* AtlstrchrT(const CharType* p, CharType ch) throw()
+inline const CharType* AtlstrchrT(
+	_In_z_ const CharType* p,
+	_In_ CharType ch) throw()
 {
-	ATLASSERT(p != NULL);	
+	ATLASSERT(p != NULL);
 	if(p==NULL)
 	{
 		return NULL;
@@ -481,7 +535,7 @@ inline const CharType* AtlstrchrT(const CharType* p, CharType ch) throw()
 		}
 		p = AtlCharNext(p);
 	}
-	//strchr for '\0' should succeed - the while loop terminates 
+	//strchr for '\0' should succeed - the while loop terminates
 	//*p == 0, but ch also == 0, so NULL terminator address is returned
 	return (*p == ch) ? p : NULL;
 }
@@ -489,7 +543,7 @@ inline const CharType* AtlstrchrT(const CharType* p, CharType ch) throw()
 #pragma warning(push)
 #pragma warning(disable : 4793)
 template<typename CharType>
-inline int AtlprintfT(const CharType* pszFormat,... ) throw()
+inline int AtlprintfT(_In_z_ _Printf_format_string_ const CharType* pszFormat,...) throw()
 {
 	int retval=0;
 	va_list argList;
@@ -503,7 +557,7 @@ inline int AtlprintfT(const CharType* pszFormat,... ) throw()
 #pragma warning(push)
 #pragma warning(disable : 4793)
 template<>
-inline int AtlprintfT(const wchar_t* pszFormat,... ) throw()
+inline int AtlprintfT(_In_z_ _Printf_format_string_ const wchar_t* pszFormat,... ) throw()
 {
 	int retval=0;
 	va_list argList;
@@ -514,11 +568,13 @@ inline int AtlprintfT(const wchar_t* pszFormat,... ) throw()
 }
 #pragma warning(pop)
 
-inline BOOL AtlConvertSystemTimeToVariantTime(const SYSTEMTIME& systimeSrc,double* pVarDtTm)
+inline BOOL AtlConvertSystemTimeToVariantTime(
+	_In_ const SYSTEMTIME& systimeSrc,
+	_Out_ double* pVarDtTm)
 {
 	ATLENSURE(pVarDtTm!=NULL);
 	//Convert using ::SystemTimeToVariantTime and store the result in pVarDtTm then
-	//convert variant time back to system time and compare to original system time.	
+	//convert variant time back to system time and compare to original system time.
 	BOOL ok = ::SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&systimeSrc), pVarDtTm);
 	SYSTEMTIME sysTime;
 	::ZeroMemory(&sysTime, sizeof(SYSTEMTIME));
@@ -528,12 +584,40 @@ inline BOOL AtlConvertSystemTimeToVariantTime(const SYSTEMTIME& systimeSrc,doubl
 			systimeSrc.wMonth == sysTime.wMonth &&
 			systimeSrc.wDay == sysTime.wDay &&
 			systimeSrc.wHour == sysTime.wHour &&
-			systimeSrc.wMinute == sysTime.wMinute && 
+			systimeSrc.wMinute == sysTime.wMinute &&
 			systimeSrc.wSecond == sysTime.wSecond);
 
 	return ok;
 }
-/////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+// DLL Load Helper
+
+inline HMODULE AtlLoadSystemLibraryUsingFullPath(_In_z_ const WCHAR *pszLibrary)
+{
+	WCHAR wszLoadPath[MAX_PATH+1];
+	if (::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath)) == 0)
+	{
+		return NULL;
+	}
+
+	if (wszLoadPath[wcslen(wszLoadPath)-1] != L'\\')
+	{
+		if (wcscat_s(wszLoadPath, _countof(wszLoadPath), L"\\") != 0)
+		{
+			return NULL;
+		}
+	}
+
+	if (wcscat_s(wszLoadPath, _countof(wszLoadPath), pszLibrary) != 0)
+	{
+		return NULL;
+	}
+
+	return(::LoadLibraryW(wszLoadPath));
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 }	// namespace ATL
 #pragma pack(pop)

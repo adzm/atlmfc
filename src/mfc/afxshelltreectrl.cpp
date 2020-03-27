@@ -12,6 +12,8 @@
 #include "afxshelltreectrl.h"
 #include "afxshelllistctrl.h"
 #include "afxshellmanager.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -44,6 +46,7 @@ BEGIN_MESSAGE_MAP(CMFCShellTreeCtrl, CTreeCtrl)
 	ON_WM_DESTROY()
 	ON_NOTIFY_REFLECT(TVN_ITEMEXPANDING, &CMFCShellTreeCtrl::OnItemexpanding)
 	ON_NOTIFY_REFLECT(TVN_DELETEITEM, &CMFCShellTreeCtrl::OnDeleteitem)
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCShellTreeCtrl::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -227,10 +230,10 @@ HRESULT CMFCShellTreeCtrl::EnumObjects(HTREEITEM hParentItem, LPSHELLFOLDER pPar
 	ASSERT_VALID(this);
 	ASSERT_VALID(afxShellManager);
 
-	LPENUMIDLIST pEnum;
+	LPENUMIDLIST pEnum = NULL;
 
 	HRESULT hr = pParentFolder->EnumObjects(NULL, m_dwFlags, &pEnum);
-	if (FAILED(hr))
+	if (FAILED(hr) || pEnum == NULL)
 	{
 		return hr;
 	}
@@ -266,10 +269,10 @@ HRESULT CMFCShellTreeCtrl::EnumObjects(HTREEITEM hParentItem, LPSHELLFOLDER pPar
 		tvItem.iSelectedImage = OnGetItemIcon(pItem, TRUE);
 
 		// Determine if the item has children:
-		DWORD dwAttribs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DISPLAYATTRMASK | SFGAO_CANRENAME;
+		DWORD dwAttribs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DISPLAYATTRMASK | SFGAO_CANRENAME | SFGAO_FILESYSANCESTOR;
 
 		pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*) &pidlTemp, &dwAttribs);
-		tvItem.cChildren = (dwAttribs & SFGAO_HASSUBFOLDER);
+		tvItem.cChildren = (dwAttribs & (SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR));
 
 		// Determine if the item is shared:
 		if (dwAttribs & SFGAO_SHARE)
@@ -862,4 +865,25 @@ void CMFCShellTreeCtrl::SetFlags(DWORD dwFlags, BOOL bRefresh)
 	}
 }
 
+LRESULT CMFCShellTreeCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
 
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	CString strEnableShellContextMenu;
+	if (tagManager.ExcludeTag(PS_MFCShellTreeCtrl_EnableShellContextMenu, strEnableShellContextMenu))
+	{
+		if (!strEnableShellContextMenu.IsEmpty())
+		{
+			strEnableShellContextMenu.MakeUpper();
+			EnableShellContextMenu(strEnableShellContextMenu == PS_True);
+		}
+	}
+
+	return 0;
+}

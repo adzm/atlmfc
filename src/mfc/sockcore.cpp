@@ -589,7 +589,7 @@ void PASCAL CAsyncSocket::DoCallBack(WPARAM wParam, LPARAM lParam)
 	{
 		// Must be in the middle of an Accept call
 		pSocket = CAsyncSocket::LookupHandle(INVALID_SOCKET, FALSE);
-		ENSURE(pSocket != NULL);
+		ASSERT(pSocket != NULL);
 
 		if(pSocket == NULL)
 			return;

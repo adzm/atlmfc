@@ -122,7 +122,7 @@ void CMFCRibbonStatusBarPane::OnCalcTextSize(CDC* pDC)
 	}
 }
 
-int CMFCRibbonStatusBarPane::DrawPaneText(CDC* pDC, const CString& strText, CRect rectText, UINT /*uiDTFlags*/)
+int CMFCRibbonStatusBarPane::DrawRibbonText(CDC* pDC, const CString& strText, CRect rectText, UINT /*uiDTFlags*/, COLORREF /*clrText*/)
 {
 	ASSERT_VALID(this);
 	ASSERT_VALID(pDC);

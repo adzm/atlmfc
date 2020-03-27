@@ -147,16 +147,16 @@ void CRectTracker::Construct()
 			ATL_MAKEINTRESOURCE(AFX_IDC_TRACK4WAY), ATL_RT_GROUP_CURSOR);
 
 		// initialize the cursor array
-		_afxCursors[0] = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(AFX_IDC_TRACKNWSE));
-		_afxCursors[1] = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(AFX_IDC_TRACKNESW));
+		_afxCursors[0] = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(AFX_IDC_TRACKNWSE));
+		_afxCursors[1] = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(AFX_IDC_TRACKNESW));
 		_afxCursors[2] = _afxCursors[0];
 		_afxCursors[3] = _afxCursors[1];
-		_afxCursors[4] = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(AFX_IDC_TRACKNS));
-		_afxCursors[5] = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(AFX_IDC_TRACKWE));
+		_afxCursors[4] = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(AFX_IDC_TRACKNS));
+		_afxCursors[5] = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(AFX_IDC_TRACKWE));
 		_afxCursors[6] = _afxCursors[4];
 		_afxCursors[7] = _afxCursors[5];
-		_afxCursors[8] = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(AFX_IDC_TRACK4WAY));
-		_afxCursors[9] = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(AFX_IDC_MOVE4WAY));
+		_afxCursors[8] = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(AFX_IDC_TRACK4WAY));
+		_afxCursors[9] = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(AFX_IDC_MOVE4WAY));
 
 		// get default handle size from Windows profile setting
 		static const TCHAR szWindows[] = _T("windows");

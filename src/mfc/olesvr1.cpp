@@ -676,6 +676,12 @@ void COleServerDoc::OnCloseDocument()
 {
 	ASSERT_VALID(this);
 
+	// SO handler (rich preview) can be destroyed only from FinalRelease 
+	if (IsSearchAndOrganizeHandler() && !m_bFinalRelease)
+	{
+		return;
+	}
+
 	// don't allow in-place active documents to be closed without first
 	//  deactivating them!
 	if (m_pInPlaceFrame != NULL)

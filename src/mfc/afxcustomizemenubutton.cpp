@@ -408,7 +408,7 @@ CString CMFCCustomizeMenuButton::SearchCommandText(CMenu* pMenu, UINT in_uiCmd)
 {
 	ENSURE(pMenu != NULL);
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 
 	for (int i = 0; i < iCount; i ++)
 	{
@@ -455,7 +455,7 @@ void CMFCCustomizeMenuButton::DrawCheckBox(CDC* pDC, const CRect& rect, BOOL bHi
 		UINT nStyle = m_nStyle;
 		m_nStyle |= TBBS_CHECKED;
 
-		FillInterior(pDC, rectCheck, bHighlight);
+		FillInterior(pDC, rectCheck, bHighlight, TRUE);
 
 		if (bHighlight && CMFCVisualManager::GetInstance()->IsFrameMenuCheckedItems())
 		{

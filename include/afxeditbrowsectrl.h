@@ -74,6 +74,13 @@ public:
 	virtual void OnDrawBrowseButton(CDC* pDC, CRect rect, BOOL bIsButtonPressed, BOOL bIsButtonHot);
 	virtual void OnChangeLayout();
 	virtual void OnAfterUpdate();
+	/// <summary>
+	/// Called by the framework when an illegal file name was entered in the edit control.</summary>
+	/// <param name="strFileName">Specifies the illegal file name.</param>
+	/// <returns> Should return FALSE if this file name can't be passed further to the file dialog. In this case a focus set back to the edit control
+	/// and the user should continue editing. The default implementation displays a message box telling the user about illegal file name and returns FALSE.
+	/// You can override this method, correct the file name and return TRUE for further processing.</returns>
+	virtual BOOL OnIllegalFileName(CString& strFileName);
 
 // Implementation
 public:
@@ -92,7 +99,9 @@ protected:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void SetInternalImage();

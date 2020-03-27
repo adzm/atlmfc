@@ -31,24 +31,8 @@
 #define AFX_FILE_MARGIN 4
 #define AFX_LABEL_MARGIN 4
 
-class CMFCRibbonRecentFilesList : public CMFCRibbonButtonsGroup
-{
-	DECLARE_DYNCREATE(CMFCRibbonRecentFilesList)
-
-public:
-	CMFCRibbonRecentFilesList(LPCTSTR lpszLabel = NULL)
-	{
-		SetText(lpszLabel == NULL ? _T("") : lpszLabel);
-	}
-
-	void FillList();
-
-protected:
-	virtual void OnAfterChangeRect(CDC* pDC);
-	virtual CSize GetRegularSize(CDC* pDC);
-	virtual void OnDraw(CDC* pDC);
-	virtual BOOL OnMenuKey(UINT nUpperChar);
-};
+//////////////////////////////////////////////////////////////////////////////////
+// CMFCRibbonRecentFilesList
 
 IMPLEMENT_DYNCREATE(CMFCRibbonRecentFilesList, CMFCRibbonButtonsGroup)
 

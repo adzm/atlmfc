@@ -1096,11 +1096,7 @@ CArchive& AFXAPI operator>>(CArchive& ar, CComBSTR& string)
 
 /////////////////////////////////////////////////////////////////////////////
 // COleVariant Helpers
-#if _MSC_VER >= 1100
 template <> void AFXAPI CopyElements<COleVariant> (COleVariant* pDest, const COleVariant* pSrc, INT_PTR nCount)
-#else
-void AFXAPI CopyElements(COleVariant* pDest, const COleVariant* pSrc, INT_PTR nCount)
-#endif
 {
 	ENSURE_ARG(nCount == 0 || pDest != NULL && pSrc != NULL);
 	ASSERT(nCount == 0 ||
@@ -1112,11 +1108,7 @@ void AFXAPI CopyElements(COleVariant* pDest, const COleVariant* pSrc, INT_PTR nC
 		*pDest = *pSrc;
 }
 
-#if _MSC_VER >= 1100
 template <> void AFXAPI SerializeElements<COleVariant> (CArchive& ar, COleVariant* pElements, INT_PTR nCount)
-#else
-void AFXAPI SerializeElements(CArchive& ar, COleVariant* pElements, INT_PTR nCount)
-#endif
 {
 	ENSURE_ARG(nCount == 0 || pElements != NULL);
 	ASSERT(nCount == 0 ||
@@ -1135,11 +1127,7 @@ void AFXAPI SerializeElements(CArchive& ar, COleVariant* pElements, INT_PTR nCou
 }
 
 #ifdef _DEBUG
-#if _MSC_VER >= 1100
 template <> void AFXAPI DumpElements<COleVariant> (CDumpContext& dc, const COleVariant* pElements, INT_PTR nCount)
-#else
-void AFXAPI DumpElements(CDumpContext& dc, const COleVariant* pElements, INT_PTR nCount)
-#endif
 {
 	ENSURE_ARG(nCount == 0 || pElements != NULL);
 	for (; nCount--; ++pElements)
@@ -1147,11 +1135,7 @@ void AFXAPI DumpElements(CDumpContext& dc, const COleVariant* pElements, INT_PTR
 }
 #endif // _DEBUG
 
-#if _MSC_VER >= 1100
 template<> UINT AFXAPI HashKey<const struct tagVARIANT&> (const struct tagVARIANT& var)
-#else
-UINT AFXAPI HashKey(const struct tagVARIANT& var)
-#endif
 {
 	switch (var.vt)
 	{
@@ -1159,54 +1143,29 @@ UINT AFXAPI HashKey(const struct tagVARIANT& var)
 	case VT_NULL:
 		return 0;
 	case VT_I2:
-#if _MSC_VER >= 1100
 		return HashKey<DWORD>((DWORD)var.iVal);
-#else
-		return HashKey((DWORD)var.iVal);
-#endif
 	case VT_I4:
-#if _MSC_VER >= 1100
 		return HashKey<DWORD>((DWORD)var.lVal);
-#else
-		return HashKey((DWORD)var.lVal);
-#endif
 	case VT_R4:
 		return (UINT)(var.fltVal / 16);
 	case VT_R8:
 	case VT_CY:
 		return (UINT)(var.dblVal / 16);
 	case VT_BOOL:
-#if _MSC_VER >= 1100
 		return HashKey<DWORD>((DWORD)V_BOOL(&var));
-#else
-		return HashKey((DWORD)V_BOOL(&var));
-#endif
 	case VT_ERROR:
-#if _MSC_VER >= 1100
 		return HashKey<DWORD>((DWORD)var.scode);
-#else
-		return HashKey((DWORD)var.scode);
-#endif
 	case VT_DATE:
 		return (UINT)(var.date / 16);
 	case VT_BSTR:
-#if _MSC_VER >= 1100
 		return HashKey<LPCOLESTR>(var.bstrVal);
-#else
-		return HashKey((LPCOLESTR)var.bstrVal);
-#endif
 	case VT_DISPATCH:
 	case VT_UNKNOWN:
-#if _MSC_VER >= 1100
 #ifdef _WIN64
 		return HashKey<DWORD_PTR>((DWORD_PTR)var.punkVal);
 #else
 		return HashKey<DWORD>((DWORD)(DWORD_PTR)var.punkVal);
 #endif
-#else
-		return HashKey((DWORD_PTR)var.punkVal);
-#endif
-
 	default:
 		// No support for VT_BYREF, VT_ARRAY, VT_VARIANT, VT_DECIMAL, & VT_UI1
 		ASSERT(FALSE);

@@ -70,11 +70,13 @@ class COleUILinkInfo : public IOleUILinkInfo
 {
 public:
 	COleUILinkInfo(COleDocument* pDocument);
+	COleUILinkInfo(COleClientItem *pItem);
 
 // Implementation
 	COleDocument* m_pDocument;          // document being manipulated
 	COleClientItem* m_pSelectedItem;    // primary selected item in m_pDocument
 	POSITION m_pos;						// used during link enumeration
+	COleClientItem *m_pItem;
 
 	BOOL m_bUpdateLinks;                // update links?
 	BOOL m_bUpdateEmbeddings;           // update embeddings?

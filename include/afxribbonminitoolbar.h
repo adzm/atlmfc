@@ -45,6 +45,7 @@ protected:
 	BOOL m_bContextMenuMode;
 	BYTE m_nTransparency;
 	BOOL m_bWasHovered;
+	BOOL m_bWasDroppedDown;
 
 // Operations
 public:

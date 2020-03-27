@@ -47,9 +47,7 @@
 #ifndef __atliface_h__
 #define __atliface_h__
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 /* Forward Declarations */ 
 
@@ -2616,18 +2614,14 @@ EXTERN_C const IID IID_IInternalConnection;
 
 #endif 	/* C style interface */
 
-
-
 HRESULT STDMETHODCALLTYPE IInternalConnection_AddConnection_Proxy( 
 	IInternalConnection * This);
-
 
 void __RPC_STUB IInternalConnection_AddConnection_Stub(
 	IRpcStubBuffer *This,
 	IRpcChannelBuffer *_pRpcChannelBuffer,
 	PRPC_MESSAGE _pRpcMessage,
 	DWORD *_pdwStubPhase);
-
 
 HRESULT STDMETHODCALLTYPE IInternalConnection_ReleaseConnection_Proxy( 
 	IInternalConnection * This);
@@ -2638,8 +2632,6 @@ void __RPC_STUB IInternalConnection_ReleaseConnection_Stub(
 	IRpcChannelBuffer *_pRpcChannelBuffer,
 	PRPC_MESSAGE _pRpcMessage,
 	DWORD *_pdwStubPhase);
-
-
 
 #endif 	/* __IInternalConnection_INTERFACE_DEFINED__ */
 
@@ -2659,45 +2651,124 @@ namespace ATL
 #define ATLINLINE
 #endif	// __cplusplus
 
-ATLAPI_(INT_PTR) AtlAxDialogBoxW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam);
-ATLAPI_(INT_PTR) AtlAxDialogBoxA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam);
+ATLAPI_(INT_PTR) AtlAxDialogBoxW(
+	_In_ HINSTANCE hInstance, 
+	_In_z_ LPCWSTR lpTemplateName,
+	_In_ HWND hWndParent, 
+	_In_ DLGPROC lpDialogProc, 
+	_In_ LPARAM dwInitParam);
+
+ATLAPI_(INT_PTR) AtlAxDialogBoxA(
+	_In_ HINSTANCE hInstance, 
+	_In_z_ LPCSTR lpTemplateName, 
+	_In_ HWND hWndParent, 
+	_In_ DLGPROC lpDialogProc, 
+	_In_ LPARAM dwInitParam);
+
 #ifdef UNICODE
 #define AtlAxDialogBox AtlAxDialogBoxW
 #else
 #define AtlAxDialogBox AtlAxDialogBoxA
 #endif
 
-ATLAPI_(HWND) AtlAxCreateDialogW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam);
-ATLAPI_(HWND) AtlAxCreateDialogA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc, LPARAM dwInitParam);
+ATLAPI_(HWND) AtlAxCreateDialogW(
+	_In_ HINSTANCE hInstance,
+	_In_z_ LPCWSTR lpTemplateName, 
+	_In_ HWND hWndParent, 
+	_In_ DLGPROC lpDialogProc, 
+	_In_ LPARAM dwInitParam);
+
+ATLAPI_(HWND) AtlAxCreateDialogA(
+	_In_ HINSTANCE hInstance, 
+	_In_z_ LPCSTR lpTemplateName,
+	_In_ HWND hWndParent, 
+	_In_ DLGPROC lpDialogProc, 
+	_In_ LPARAM dwInitParam);
+
 #ifdef UNICODE
 #define AtlAxCreateDialog AtlAxCreateDialogW
 #else
 #define AtlAxCreateDialog AtlAxCreateDialogA
 #endif
 
-ATLAPI AtlAxCreateControl(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, IUnknown** ppUnkContainer);
+ATLAPI AtlAxCreateControl(
+	_In_z_ LPCOLESTR lpszName, 
+	_In_ HWND hWnd, 
+	_Inout_opt_ IStream* pStream, 
+	_Deref_out_ IUnknown** ppUnkContainer);
+
 #ifdef __cplusplus
-ATLAPI AtlAxCreateControlEx(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, 
-		IUnknown** ppUnkContainer, IUnknown** ppUnkControl, 
-		REFIID iidSink=IID_NULL, IUnknown* punkSink=NULL);
-ATLAPI AtlAxCreateControlLic(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, IUnknown** ppUnkContainer, BSTR bstrLic = NULL);
-ATLAPI AtlAxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, 
-		IUnknown** ppUnkContainer, IUnknown** ppUnkControl, 
-		REFIID iidSink=IID_NULL, IUnknown* punkSink=NULL, BSTR bstrLic = NULL);
+
+ATLAPI AtlAxCreateControlEx(
+	_In_z_ LPCOLESTR lpszName, 
+	_In_ HWND hWnd, 
+	_Inout_opt_ IStream* pStream,
+	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_In_ REFIID iidSink=IID_NULL, 
+	_Inout_opt_ IUnknown* punkSink=NULL);
+
+ATLAPI AtlAxCreateControlLic(
+	_In_z_ LPCOLESTR lpszName,
+	_In_ HWND hWnd,
+	_Inout_opt_ IStream* pStream, 
+	_Deref_opt_out_ IUnknown** ppUnkContainer, 
+	_In_opt_z_ BSTR bstrLic = NULL);
+
+ATLAPI AtlAxCreateControlLicEx(
+	_In_z_ LPCOLESTR lpszName,
+	_In_ HWND hWnd, 
+	_Inout_opt_ IStream* pStream, 
+	_Deref_opt_out_ IUnknown** ppUnkContainer, 
+	_Deref_opt_out_ IUnknown** ppUnkControl, 
+	_In_ REFIID iidSink=IID_NULL, 
+	_Inout_opt_ IUnknown* punkSink=NULL, 
+	_In_opt_z_ BSTR bstrLic = NULL);
+
 #else
-ATLAPI AtlAxCreateControlEx(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, 
-		IUnknown** ppUnkContainer, IUnknown** ppUnkControl, 
-		REFIID iidSink, IUnknown* punkSink);
-ATLAPI AtlAxCreateControlLic(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, IUnknown** ppUnkContainer, BSTR bstrLic);
-ATLAPI AtlAxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd, IStream* pStream, 
-		IUnknown** ppUnkContainer, IUnknown** ppUnkControl, 
-		REFIID iidSink, IUnknown* punkSink, BSTR bstrLic);
+
+ATLAPI AtlAxCreateControlEx(
+	_In_z_ LPCOLESTR lpszName, 
+	_In_ HWND hWnd, 
+	_Inout_opt_ IStream* pStream, 
+	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_In_ REFIID iidSink, 
+	_Inout_opt_ IUnknown* punkSink);
+
+ATLAPI AtlAxCreateControlLic(
+	_In_z_ LPCOLESTR lpszName,
+	_In_ HWND hWnd, 
+	_Inout_opt_ IStream* pStream, 
+	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_In_opt_z_ BSTR bstrLic);
+
+ATLAPI AtlAxCreateControlLicEx(
+	_In_z_ LPCOLESTR lpszName, 
+	_Inout_ HWND hWnd, 
+	_In_opt_ IStream* pStream, 
+	_Deref_opt_out_ IUnknown** ppUnkContainer, 
+	_Deref_opt_out_ IUnknown** ppUnkControl, 
+	_In_ REFIID iidSink,
+	_Inout_opt_ IUnknown* punkSink,
+	_In_opt_z_ BSTR bstrLic);
+	
 #endif	// __cplusplus
-ATLAPI AtlAxAttachControl(IUnknown* pControl, HWND hWnd, IUnknown** ppUnkContainer);
+	
+ATLAPI AtlAxAttachControl(
+	_Inout_ IUnknown* pControl,
+	_In_ HWND hWnd, 
+	_Deref_opt_out_ IUnknown** ppUnkContainer);
+
 ATLAPI_(BOOL) AtlAxWinInit();
 
-ATLAPI AtlAxGetHost(HWND h, IUnknown** pp);
-ATLAPI AtlAxGetControl(HWND h, IUnknown** pp);
+ATLAPI AtlAxGetHost(
+	_In_ HWND h, 
+	_Deref_out_ IUnknown** pp);
+
+ATLAPI AtlAxGetControl(
+	_In_ HWND h, 
+	_Deref_out_ IUnknown** pp);
 
 }; //namespace ATL
 #pragma pack(pop)

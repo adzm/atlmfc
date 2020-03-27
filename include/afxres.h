@@ -23,7 +23,7 @@
 #endif
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "90"
+#define _MFC_FILENAME_VER "100"
 #endif
 
 #ifdef RC_INVOKED
@@ -44,6 +44,8 @@
 #define RT_DLGINIT  MAKEINTRESOURCE(240)
 #define RT_TOOLBAR  MAKEINTRESOURCE(241)
 #endif
+
+#define RT_RIBBON_XML   28
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -92,10 +94,6 @@
 #define CBRS_TOP            (CBRS_ALIGN_TOP|CBRS_BORDER_BOTTOM)
 #define CBRS_RIGHT          (CBRS_ALIGN_RIGHT|CBRS_BORDER_LEFT)
 #define CBRS_BOTTOM         (CBRS_ALIGN_BOTTOM|CBRS_BORDER_TOP)
-
-/////////////////////////////////////////////////////////////////////////////
-// Manifest Resource ID of manifest containing Localized DLL information
-#define ID_MFCLOC_MANIFEST             1000
 
 /////////////////////////////////////////////////////////////////////////////
 // Standard window components
@@ -170,6 +168,8 @@
 #define AFX_IDS_COMPANY_NAME            0xE004
 // object name when server is inplace
 #define AFX_IDS_OBJ_TITLE_INPLACE       0xE005
+// Application User Model ID
+#define AFX_IDS_APP_ID                  0xE006
 
 /////////////////////////////////////////////////////////////////////////////
 // Standard Commands
@@ -562,6 +562,16 @@
 #define AFX_IDS_CHECKLISTBOX_MIXED		0xF2E3
 
 /////////////////////////////////////////////////////////////////////////////
+// Strings for auto-save recovery prompts
+#define AFX_IDS_AUTOSAVE_RECOVERY_ASK_1	0xF2E4
+#define AFX_IDS_AUTOSAVE_RECOVERY_ASK_2	0xF2E5
+#define AFX_IDS_AUTOSAVE_RECOVERY_ASK_3	0xF2E6
+#define AFX_IDS_AUTOSAVE_RECOVERY_ASK_4	0xF2E7
+#define AFX_IDS_AUTOSAVE_RECOVERY_ASK_5	0xF2E8
+#define AFX_IDS_AUTOSAVE_RECOVERY_ASK_6	0xF2E9
+#define AFX_IDS_AUTOSAVE_RECOVERED		0xF2EA
+
+/////////////////////////////////////////////////////////////////////////////
 // AFX implementation - control IDs (AFX_IDC)
 
 // Parts of dialogs
@@ -711,8 +721,6 @@
 #define AFX_IDD_PROPPAGE_COLOR         32257
 #define AFX_IDD_PROPPAGE_FONT          32258
 #define AFX_IDD_PROPPAGE_PICTURE       32259
-
-#define AFX_IDB_TRUETYPE               32384
 
 /////////////////////////////////////////////////////////////////////////////
 // Standard OLE control strings

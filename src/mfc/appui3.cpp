@@ -9,7 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-
+#include "afxglobals.h"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -39,10 +39,39 @@ void CWinApp::SetRegistryKey(UINT nIDRegistryKey)
 	SetRegistryKey(szRegistryKey);
 }
 
+typedef HRESULT (STDAPICALLTYPE *PFNSETCURRENTPROCESSEXPLICITAPPUSERMODELID)(PCWSTR);
+void CWinApp::SetAppID(LPCTSTR lpcszAppID)
+{
+	HMODULE hShell = GetModuleHandleW(L"Shell32");
+	if (hShell == NULL)
+	{
+		return;
+	}
+
+	PFNSETCURRENTPROCESSEXPLICITAPPUSERMODELID pfnSetAppUserModelID = 
+		(PFNSETCURRENTPROCESSEXPLICITAPPUSERMODELID)GetProcAddress(hShell, "SetCurrentProcessExplicitAppUserModelID");
+	if (pfnSetAppUserModelID == NULL)
+	{
+		return;
+	}
+
+	m_pszAppID = lpcszAppID;
+
+#if(WINVER >= 0x0601)
+#ifdef UNICODE
+	pfnSetAppUserModelID(lpcszAppID);
+#else
+	USES_CONVERSION;
+	LPCWSTR lpID = A2W(lpcszAppID);
+	pfnSetAppUserModelID(lpID);
+#endif
+#endif
+}
+
 // returns key for HKEY_CURRENT_USER\"Software"\RegistryKey\ProfileName
 // creating it if it doesn't exist
 // responsibility of the caller to call RegCloseKey() on the returned HKEY
-HKEY CWinApp::GetAppRegistryKey()
+HKEY CWinApp::GetAppRegistryKey(CAtlTransactionManager* pTM)
 {
 	ASSERT(m_pszRegistryKey != NULL);
 	ASSERT(m_pszProfileName != NULL);
@@ -50,17 +79,24 @@ HKEY CWinApp::GetAppRegistryKey()
 	HKEY hAppKey = NULL;
 	HKEY hSoftKey = NULL;
 	HKEY hCompanyKey = NULL;
-	if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("software"), 0, KEY_WRITE|KEY_READ,
-		&hSoftKey) == ERROR_SUCCESS)
+	
+	LSTATUS lStatus = pTM != NULL ? 
+		pTM->RegOpenKeyEx(HKEY_CURRENT_USER, _T("software"), 0, KEY_WRITE|KEY_READ, &hSoftKey) :
+		::RegOpenKeyEx(HKEY_CURRENT_USER, _T("software"), 0, KEY_WRITE|KEY_READ, &hSoftKey);
+
+	if (lStatus == ERROR_SUCCESS)
 	{
 		DWORD dw;
-		if (RegCreateKeyEx(hSoftKey, m_pszRegistryKey, 0, REG_NONE,
-			REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL,
-			&hCompanyKey, &dw) == ERROR_SUCCESS)
+
+		lStatus = pTM != NULL ? 
+			pTM->RegCreateKeyEx(hSoftKey, m_pszRegistryKey, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL, &hCompanyKey, &dw) :
+			::RegCreateKeyEx(hSoftKey, m_pszRegistryKey, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL, &hCompanyKey, &dw);
+
+		if (lStatus == ERROR_SUCCESS)
 		{
-			RegCreateKeyEx(hCompanyKey, m_pszProfileName, 0, REG_NONE,
-				REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL,
-				&hAppKey, &dw);
+			lStatus = pTM != NULL ? 
+				pTM->RegCreateKeyEx(hCompanyKey, m_pszProfileName, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL, &hAppKey, &dw) :
+				::RegCreateKeyEx(hCompanyKey, m_pszProfileName, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL, &hAppKey, &dw);
 		}
 	}
 	if (hSoftKey != NULL)
@@ -75,19 +111,26 @@ HKEY CWinApp::GetAppRegistryKey()
 //      HKEY_CURRENT_USER\"Software"\RegistryKey\AppName\lpszSection
 // creating it if it doesn't exist.
 // responsibility of the caller to call RegCloseKey() on the returned HKEY
-HKEY CWinApp::GetSectionKey(LPCTSTR lpszSection)
+HKEY CWinApp::GetSectionKey(LPCTSTR lpszSection, CAtlTransactionManager* pTM)
 {
 	ASSERT(lpszSection != NULL);
 
 	HKEY hSectionKey = NULL;
-	HKEY hAppKey = GetAppRegistryKey();
+	HKEY hAppKey = GetAppRegistryKey(pTM);
 	if (hAppKey == NULL)
 		return NULL;
 
 	DWORD dw;
-	RegCreateKeyEx(hAppKey, lpszSection, 0, REG_NONE,
-		REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL,
-		&hSectionKey, &dw);
+
+	if (pTM != NULL)
+	{
+		pTM->RegCreateKeyEx(hAppKey, lpszSection, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL, &hSectionKey, &dw);
+	}
+	else
+	{
+		::RegCreateKeyEx(hAppKey, lpszSection, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE|KEY_READ, NULL, &hSectionKey, &dw);
+	}
+
 	RegCloseKey(hAppKey);
 	return hSectionKey;
 }
@@ -333,6 +376,36 @@ BOOL CWinApp::WriteProfileBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry,
 	BOOL bResult = WriteProfileString(lpszSection, lpszEntry, lpsz);
 	delete[] lpsz;
 	return bResult;
+}
+
+BOOL CWinApp::EnableTaskbarInteraction(BOOL bEnable) 
+{
+	if(AfxGetMainWnd() != NULL)
+	{
+		ASSERT(FALSE);
+		TRACE0("Windows 7 taskbar interacrion must be called before creation of main window.\n");
+		return FALSE;
+	}
+
+	m_bTaskbarInteractionEnabled = bEnable;
+	return TRUE;
+}
+
+BOOL CWinApp::IsTaskbarInteractionEnabled() 
+{ 
+	return afxGlobalData.bIsWindows7 && m_bTaskbarInteractionEnabled; 
+}
+
+BOOL CWinApp::EnableD2DSupport(D2D1_FACTORY_TYPE d2dFactoryType, DWRITE_FACTORY_TYPE writeFactoryType)
+{
+	if (afxGlobalData.IsD2DInitialized())
+	{
+		ASSERT(FALSE);
+		TRACE0("D2D is already initialized. Please call this method before creation of main window\n");
+		return FALSE;
+	}
+
+	return afxGlobalData.InitD2D(d2dFactoryType, writeFactoryType);
 }
 
 /////////////////////////////////////////////////////////////////////////////

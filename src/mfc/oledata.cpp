@@ -19,9 +19,6 @@
 #pragma comment(lib, "oleaut32.lib")
 #pragma comment(lib, "oledlg.lib")
 #pragma comment(lib, "urlmon.lib")
-#pragma comment(lib, "shell32.lib")
-#pragma comment(lib, "comctl32.lib")
-#pragma comment(lib, "advapi32.lib")
 
 /////////////////////////////////////////////////////////////////////////////
 // _AFX_OLE_STATE implementation

@@ -198,6 +198,8 @@ CMFCRibbonBaseElement::CMFCRibbonBaseElement()
 	m_bDrawDefaultIcon = TRUE;
 	m_bIsOnPaletteTop = FALSE;
 	m_bOnBeforeShowItemMenuIsSent = FALSE;
+	m_bEnableUpdateTooltipInfo   = TRUE;
+	m_bEnableTooltipInfoShortcut = TRUE;
 }
 
 CMFCRibbonBaseElement::~CMFCRibbonBaseElement()
@@ -441,6 +443,13 @@ CMFCRibbonBaseElement* CMFCRibbonBaseElement::GetHighlighted()
 	return IsHighlighted() ? this : NULL;
 }
 
+CMFCRibbonBaseElement* CMFCRibbonBaseElement::GetFocused()
+{
+	ASSERT_VALID(this);
+
+	return IsFocused() ? this : NULL;
+}
+
 BOOL CMFCRibbonBaseElement::ReplaceByID(UINT uiCmdID, CMFCRibbonBaseElement* pElem)
 {
 	ASSERT_VALID(this);
@@ -476,6 +485,8 @@ void CMFCRibbonBaseElement::CopyFrom(const CMFCRibbonBaseElement& src)
 	m_bIsRadio = src.m_bIsRadio;
 	m_bIsAlwaysLarge = src.m_bIsAlwaysLarge;
 	m_bIsOnPaletteTop = src.m_bIsOnPaletteTop;
+	m_bEnableUpdateTooltipInfo = src.m_bEnableUpdateTooltipInfo;
+	m_bEnableTooltipInfoShortcut = src.m_bEnableTooltipInfoShortcut;
 }
 
 void CMFCRibbonBaseElement::SetParentMenu(CMFCRibbonPanelMenuBar* pMenuBar)
@@ -637,15 +648,18 @@ CString CMFCRibbonBaseElement::GetToolTipText() const
 		pWndParent = m_pParent->GetParentRibbonBar();
 	}
 
-	CString strLabel;
-	CFrameWnd* pParentFrame = AFXGetParentFrame(pWndParent) == NULL ? NULL : AFXGetTopLevelFrame(AFXGetParentFrame(pWndParent));
-
-	if (pParentFrame != NULL && (CKeyboardManager::FindDefaultAccelerator(m_nID, strLabel, pParentFrame, TRUE) ||
-		CKeyboardManager::FindDefaultAccelerator(m_nID, strLabel, pParentFrame->GetActiveFrame(), FALSE)))
+	if (m_bEnableTooltipInfoShortcut)
 	{
-		strTipText += _T(" (");
-		strTipText += strLabel;
-		strTipText += _T(')');
+		CString strLabel;
+		CFrameWnd* pParentFrame = AFXGetParentFrame(pWndParent) == NULL ? NULL : AFXGetTopLevelFrame(AFXGetParentFrame(pWndParent));
+
+		if (pParentFrame != NULL && (CKeyboardManager::FindDefaultAccelerator(m_nID, strLabel, pParentFrame, TRUE) ||
+			CKeyboardManager::FindDefaultAccelerator(m_nID, strLabel, pParentFrame->GetActiveFrame(), FALSE)))
+		{
+			strTipText += _T(" (");
+			strTipText += strLabel;
+			strTipText += _T(')');
+		}
 	}
 
 	return strTipText;
@@ -669,11 +683,29 @@ void CMFCRibbonBaseElement::SetDescription(LPCTSTR lpszText)
 	m_strDescription = lpszText == NULL ? _T("") : lpszText;
 }
 
+void CMFCRibbonBaseElement::EnableUpdateTooltipInfo(BOOL bEnable)
+{
+	if (m_bEnableUpdateTooltipInfo != bEnable)
+	{
+		m_bEnableUpdateTooltipInfo = bEnable;
+
+		if (m_bEnableUpdateTooltipInfo)
+		{
+			UpdateTooltipInfo();
+		}
+	}
+}
+
+void CMFCRibbonBaseElement::EnableTooltipInfoShortcut(BOOL bEnable)
+{
+	m_bEnableTooltipInfoShortcut = bEnable;
+}
+
 void CMFCRibbonBaseElement::UpdateTooltipInfo()
 {
 	ASSERT_VALID(this);
 
-	if (m_nID == 0 || m_nID == (UINT)-1)
+	if (!m_bEnableUpdateTooltipInfo || m_nID == 0 || m_nID == (UINT)-1)
 	{
 		return;
 	}
@@ -862,7 +894,7 @@ int CMFCRibbonBaseElement::AddToListBox(CMFCRibbonCommandsListBox* pWndListBox, 
 			continue;
 		}
 
-		ASSERT_VALID (pItem);
+		ASSERT_VALID(pItem);
 
 		if (pItem->m_nID == m_nID && !pItem->HasMenu ())
 		{
@@ -1165,14 +1197,7 @@ int CMFCRibbonBaseElement::GetDropDownImageWidth() const
 {
 	ASSERT_VALID(this);
 
-	int cxImage = CMenuImages::Size().cx;
-
-	if (afxGlobalData.GetRibbonImageScale() > 1.)
-	{
-		cxImage = (int)(.5 + afxGlobalData.GetRibbonImageScale() * cxImage);
-	}
-
-	return cxImage;
+	return CMenuImages::Size().cx;
 }
 
 void CMFCRibbonBaseElement::NotifyHighlightListItem(int nIndex)
@@ -1218,6 +1243,16 @@ void CMFCRibbonBaseElement::OnShowPopupMenu()
 	{
 		m_bOnBeforeShowItemMenuIsSent = TRUE;
 		pWndParent->SendMessage(AFX_WM_ON_BEFORE_SHOW_RIBBON_ITEM_MENU, (WPARAM)0, (LPARAM)this);
+	}
+}
+
+void CMFCRibbonBaseElement::GetVisibleElements(CArray <CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements)
+{
+	ASSERT_VALID(this);
+
+	if (!m_rect.IsRectEmpty())
+	{
+		arElements.Add(this);
 	}
 }
 

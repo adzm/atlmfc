@@ -26,7 +26,7 @@ BEGIN
 #endif
 
 #ifndef _ATL_NO_MODULE_RESOURCES_
-	ATL_SERVICE_MANAGER_OPEN_ERROR	"Service Managerを開けませんでした。"
+	ATL_SERVICE_MANAGER_OPEN_ERROR	"サービス マネージャーを開けませんでした。"
 	ATL_SERVICE_START_ERROR			"サービスを開始できませんでした。"
 	ATL_SERVICE_OPEN_ERROR			"サービスを開けませんでした。"
 	ATL_SERVICE_STOP_ERROR			"サービスを中止できませんでした。"

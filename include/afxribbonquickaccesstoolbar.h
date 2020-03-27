@@ -32,6 +32,7 @@ class CMFCRibbonQuickAccessToolBarDefaultState
 {
 	friend class CMFCRibbonQuickAccessToolBar;
 	friend class CMFCRibbonBar;
+	friend class CMFCRibbonCollector;
 
 public:
 	CMFCRibbonQuickAccessToolBarDefaultState();
@@ -53,6 +54,7 @@ class CMFCRibbonQuickAccessToolBar : public CMFCRibbonButtonsGroup
 	friend class CMFCRibbonBar;
 	friend class CMFCRibbonBaseElement;
 	friend class CMFCRibbonCustomizePropertyPage;
+	friend class CMFCRibbonCollector;
 
 public:
 	CMFCRibbonQuickAccessToolBar();

@@ -166,7 +166,9 @@ AFX_STATIC BOOL AFXAPI _AfxParseURLWorker(LPCTSTR pstrURL,
 		}
 	}
 	else
+	{
 		pstrCanonicalizedURL = szCanonicalizedURL;
+	}
 
 	// now that it's safely canonicalized, crack it
 
@@ -175,7 +177,9 @@ AFX_STATIC BOOL AFXAPI _AfxParseURLWorker(LPCTSTR pstrURL,
 
 	if(bUnescape)
 	{
-		if(FAILED(UrlUnescape(lpComponents->lpszUrlPath,NULL,NULL,URL_UNESCAPE_INPLACE | URL_DONT_UNESCAPE_EXTRA_INFO)))
+		// Length of buffer passed to UrlUnescape cannot be larger than INTERNET_MAX_URL_LENGTH characters.
+		if (_tcslen(lpComponents->lpszUrlPath) >= INTERNET_MAX_URL_LENGTH || 
+			FAILED(UrlUnescape(lpComponents->lpszUrlPath,NULL,NULL,URL_UNESCAPE_INPLACE | URL_DONT_UNESCAPE_EXTRA_INFO)))
 		{
 			if (bMustFree)
 				delete [] pstrCanonicalizedURL;
@@ -187,12 +191,16 @@ AFX_STATIC BOOL AFXAPI _AfxParseURLWorker(LPCTSTR pstrURL,
 	}
 	
 	if (bMustFree)
+	{
 		delete [] pstrCanonicalizedURL;
+	}
 
 	// convert to MFC-style service ID
 
 	if (!bRetVal)
+	{
 		dwServiceType = AFX_INET_SERVICE_UNK;
+	}
 	else
 	{
 		nPort = lpComponents->nPort;
@@ -1931,6 +1939,8 @@ CHttpConnection::CHttpConnection(CInternetSession* pSession,
 	ASSERT(pSession != NULL);
 	ASSERT(AfxIsValidString(pstrServer));
 
+	m_strServerName = pstrServer;
+
 	BOOL bBadType = FALSE;
 	if (AfxGetInternetHandleType(hConnected) != INTERNET_HANDLE_TYPE_CONNECT_HTTP)
 	{
@@ -1956,6 +1966,8 @@ CHttpConnection::CHttpConnection(CInternetSession* pSession,
 	ASSERT_KINDOF(CInternetSession, pSession);
 	ASSERT(AfxIsValidString(pstrServer));
 
+	m_strServerName = pstrServer;
+
 	m_hConnection = InternetConnect((HINTERNET) *pSession, pstrServer,
 		nPort, pstrUserName, pstrPassword, INTERNET_SERVICE_HTTP,
 		0, m_dwContext);
@@ -1978,6 +1990,8 @@ CHttpConnection::CHttpConnection(CInternetSession* pSession,
 	ASSERT_KINDOF(CInternetSession, pSession);
 	ASSERT((dwFlags & INTERNET_FLAG_ASYNC) == 0);
 	ASSERT(AfxIsValidString(pstrServer));
+
+	m_strServerName = pstrServer;
 
 	m_hConnection = InternetConnect((HINTERNET) *pSession, pstrServer,
 		nPort, pstrUserName, pstrPassword, INTERNET_SERVICE_HTTP,
@@ -2840,7 +2854,7 @@ BOOL CInternetException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR pstrError
 	BOOL bRet = TRUE;
 
 	HINSTANCE hWinINetLibrary;
-	hWinINetLibrary = ::AfxCtxLoadLibrary(_T("WININET.DLL"));
+	hWinINetLibrary = ::AfxCtxLoadLibraryW(L"WININET.DLL");
 
 	if (hWinINetLibrary == NULL ||
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,

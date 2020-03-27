@@ -12,11 +12,15 @@
 #include "Common.h"
 #include "Allocate.h"
 
+//disable compiler reserved initialization area warning
 #pragma warning(disable : 4074)
 #pragma init_seg(compiler)
 
-const char *g_pszUpdateEventName	= "AtlTraceModuleManager_ProcessAddedStatic3";
-const char *g_pszAllocFileMapName	= "AtlDebugAllocator_FileMappingNameStatic3";
+// if you change data size or data placement in CAtlTraceProcess or CAtlTraceModule 
+// you should also change file mappings name because atltrace uses shared memory to store
+// data and it will be not compatible with previous version
+const char *g_pszUpdateEventName	= "AtlTraceModuleManager_ProcessAddedStatic_100";
+const char *g_pszAllocFileMapName	= "AtlDebugAllocator_FileMappingNameStatic_100";
 
 const char *g_pszKernelObjFmt = "%s_%0x";
 
@@ -34,11 +38,9 @@ static bool WINAPI Init()
 	{
 		throw CAtlException( E_FAIL );
 	}
+
 	// surely four megs is enough?
-	if( !g_Allocator.Init(szFileMappingName, 4*1024*1024 ) )
-	{
-		throw CAtlException( E_OUTOFMEMORY );
-	}
+	g_Allocator.Init(szFileMappingName, 4*1024*1024);
 
 	return true;
 }

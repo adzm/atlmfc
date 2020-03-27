@@ -28,10 +28,6 @@ BOOL CImageList::DrawIndirect(IMAGELISTDRAWPARAMS* pimldp)
 	{
 		pimldp->cbSize = IMAGELISTDRAWPARAMS_V3_SIZE;
 	}
-	else
-	{
-		pimldp->cbSize = sizeof(IMAGELISTDRAWPARAMS);
-	}
 	pimldp->himl = m_hImageList;
 	return AfxImageList_DrawIndirect(pimldp);
 }
@@ -47,6 +43,7 @@ BOOL CImageList::DrawIndirect(CDC* pDC, int nImage, POINT pt,
 
 	IMAGELISTDRAWPARAMS drawing;
 
+	drawing.cbSize = sizeof(IMAGELISTDRAWPARAMS);
 	drawing.i = nImage;
 	drawing.hdcDst = pDC->m_hDC;
 	drawing.x = pt.x;

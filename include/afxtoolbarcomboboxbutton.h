@@ -126,7 +126,7 @@ public:
 
 	virtual BOOL OnUpdateToolTip(CWnd* pWndParent, int iButtonIndex, CToolTipCtrl& wndToolTip, CString& str);
 
-	virtual CString GetPrompt() const { return _T(""); }
+	virtual CString GetPrompt() const { return CString(); }
 
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
 

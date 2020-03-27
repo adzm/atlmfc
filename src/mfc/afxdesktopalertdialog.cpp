@@ -9,7 +9,6 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "afxdesktopalertdialog.h"
 
 #include "afxdesktopalertwnd.h"
@@ -426,6 +425,3 @@ BOOL CMFCDesktopAlertDialog::PreTranslateMessage(MSG* pMsg)
 
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
-
-
-

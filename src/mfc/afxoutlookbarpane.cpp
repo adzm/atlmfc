@@ -460,11 +460,8 @@ void CMFCOutlookBarPane::SetBackImage(UINT uiImageID)
 	m_uiBackImageId = 0;
 	if (uiImageID != 0)
 	{
-		LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiImageID);
-		ENSURE(lpszResourceName != NULL);
-
-		HBITMAP hbmp = (HBITMAP) ::LoadImage(AfxFindResourceHandle(lpszResourceName, RT_BITMAP), 
-			lpszResourceName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADMAP3DCOLORS);
+		HBITMAP hbmp = (HBITMAP) ::LoadImageW(AfxFindResourceHandle(MAKEINTRESOURCE(uiImageID), RT_BITMAP),
+			MAKEINTRESOURCEW(uiImageID), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADMAP3DCOLORS);
 		if (hbmp != NULL)
 		{
 			BITMAP bitmap;
@@ -1198,6 +1195,3 @@ void CMFCOutlookBarPane::ScrollPageDown()
 		ScrollDown();
 	}
 }
-
-
-

@@ -31,9 +31,12 @@ BEGIN_MESSAGE_MAP(CView, CWnd)
 	ON_COMMAND_EX(ID_NEXT_PANE, &CView::OnNextPaneCmd)
 	ON_UPDATE_COMMAND_UI(ID_PREV_PANE, &CView::OnUpdateNextPaneMenu)
 	ON_COMMAND_EX(ID_PREV_PANE, &CView::OnNextPaneCmd)
-	//}}AFX_MSG_MAP
+
 	// special command for Initial Update
 	ON_MESSAGE_VOID(WM_INITIALUPDATE, CView::OnInitialUpdate)
+
+	ON_MESSAGE(WM_PRINTCLIENT, &CView::OnPrintClient)
+	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -42,6 +45,7 @@ END_MESSAGE_MAP()
 CView::CView()
 {
 	m_pDocument = NULL;
+	m_bInitialRedraw = FALSE;
 }
 
 CView::~CView()
@@ -208,6 +212,26 @@ void CView::OnPrint(CDC* pDC, CPrintInfo*)
 
 void CView::OnDraw(CDC*)
 {
+}
+
+LRESULT CView::OnPrintClient(WPARAM wp, LPARAM lp)
+{
+	DWORD dwFlags = (DWORD)lp;
+
+	if (dwFlags & PRF_ERASEBKGND)
+	{
+		SendMessage(WM_ERASEBKGND, wp);
+	}
+
+	if (dwFlags & PRF_CLIENT)
+	{
+		CDC* pDC = CDC::FromHandle((HDC)wp);
+		ASSERT_VALID(pDC);
+
+		OnDraw(pDC);
+	}
+
+	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -509,6 +533,7 @@ void CView::AssertValid() const
 
 BEGIN_MESSAGE_MAP(CCtrlView, CView)
 	ON_WM_PAINT()
+	ON_MESSAGE(WM_PRINTCLIENT, &CCtrlView::OnPrintClient)
 END_MESSAGE_MAP()
 
 CCtrlView::~CCtrlView()
@@ -547,6 +572,11 @@ void CCtrlView::OnPaint()
 {
 	// this is done to avoid CView::OnPaint
 	Default();
+}
+
+LRESULT CCtrlView::OnPrintClient(WPARAM /*wp*/, LPARAM /*lp*/)
+{
+	return Default();
 }
 
 /////////////////////////////////////////////////////////////////////////////

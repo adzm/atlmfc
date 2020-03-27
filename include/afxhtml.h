@@ -164,7 +164,7 @@ public:
 	COleVariant GetProperty(LPCTSTR lpszProperty);
 	void ExecWB(OLECMDID cmdID, OLECMDEXECOPT cmdexecopt, VARIANT* pvaIn,
 		VARIANT* pvaOut);
-	BOOL GetSource(CString& strRef);
+	virtual BOOL GetSource(CString& strRef);
 	BOOL LoadFromResource(LPCTSTR lpszResource);
 	BOOL LoadFromResource(UINT nRes);
 
@@ -235,6 +235,19 @@ public:
 	virtual void OnFullScreen(BOOL bFullScreen);
 	virtual void OnTheaterMode(BOOL bTheaterMode);
 	virtual void OnNavigateError(LPCTSTR lpszURL, LPCTSTR lpszFrame, DWORD dwError, BOOL *pbCancel);
+
+	/// <summary>
+	/// Called by the framework when it needs to obtain a bitmap to be displayed on Windows 7 tab thumbnail, 
+	/// or on the client for application peek. </summary>
+	/// <description>
+	/// Calls OleDraw to display HTML elements.</description>
+	/// <param name="dc"> Specifies the device context.</param>
+	/// <param name="rect"> Specifies the bounding rectangle of area to render.</param>
+	/// <param name="szRequiredThumbnailSize"> Specifies the size of target thumbnail. Should be ignored if bIsThumbnail is FALSE.</param>
+	/// <param name="bIsThumbnail"> Specifies whether this method is called for iconic thumbnail or live preview (peek).</param>
+	/// <param name="bAlphaChannelSet"> Output parameter. Set it to TRUE if your implementation initializes alpha channel of a bitmap
+	/// selected in dc.</param> 
+	virtual void OnDrawIconicThumbnailOrLivePreview(CDC& dc, CRect rect, CSize szRequiredThumbnailSize, BOOL bIsThumbnail, BOOL& bAlphaChannelSet);
 
 // Implementation
 public:
@@ -808,8 +821,8 @@ public:
 						bItalic ? 1 : 0,
 						bUnderline ? 1 : 0,
 						nFontSize,
-						szFontColor[0] ? szFontColor : _T(""),
-						szBgColor[0] ? szBgColor : _T(""),
+						szFontColor,
+						szBgColor,
 						szFontName);
 		}
 		_ATLCATCHALL()

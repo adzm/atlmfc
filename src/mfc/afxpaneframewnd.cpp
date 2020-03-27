@@ -334,12 +334,8 @@ void CPaneFrameWnd::OnLButtonUp(UINT nFlags, CPoint point)
 			switch (nHit)
 			{
 			case HTCLOSE:
-				if (OnCloseMiniFrame())
-				{
-					CloseMiniFrame();
-					return;
-				}
-				break;
+				CloseMiniFrame();
+				return;
 
 			case HTMAXBUTTON:
 				m_bPinned = !m_bPinned;
@@ -2142,14 +2138,17 @@ void CPaneFrameWnd::RedrawCaptionButton(CMFCCaptionButton* pBtn)
 
 void CPaneFrameWnd::CloseMiniFrame()
 {
-	ShowWindow(SW_HIDE);
-
-	if (m_hEmbeddedBar != NULL)
+	if (OnCloseMiniFrame())
 	{
-		CWnd* pEmbeddedWnd = CWnd::FromHandlePermanent(m_hEmbeddedBar);
-		if (pEmbeddedWnd != NULL)
+		ShowWindow(SW_HIDE);
+
+		if (m_hEmbeddedBar != NULL)
 		{
-			pEmbeddedWnd->ShowWindow(SW_HIDE);
+			CWnd* pEmbeddedWnd = CWnd::FromHandlePermanent(m_hEmbeddedBar);
+			if (pEmbeddedWnd != NULL)
+			{
+				pEmbeddedWnd->ShowWindow(SW_HIDE);
+			}
 		}
 	}
 }
@@ -2830,20 +2829,15 @@ void CPaneFrameWnd::SetDockState(CDockingManager* pDockManager)
 
 				SetWindowPos(NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED  | SWP_NOACTIVATE);
 
-				BOOL bShow = TRUE;
-				if (pBar->IsKindOf(RUNTIME_CLASS(CPane)))
-				{
-					bShow = !(((CPane *)pBar)->m_bRecentFloatingState);
-				}
+				BOOL bShow = pBar->GetRecentVisibleState();
 
 				if (bShow)
 				{
-					pBar->ShowPane(pBar->GetRecentVisibleState(), FALSE, FALSE);
-				}
-				else
-				{
 					SetDelayShow(TRUE);
 				}
+				
+				// Show with delay
+				pBar->ShowPane(bShow, TRUE, FALSE);
 
 				SetCaptionButtons(m_dwCaptionButtons);
 				return;
@@ -3151,10 +3145,7 @@ void CPaneFrameWnd::RemoveNonValidPanes()
 
 void CPaneFrameWnd::OnClose()
 {
-	if (OnCloseMiniFrame())
-	{
-		CloseMiniFrame();
-	}
+	CloseMiniFrame();
 }
 
 void __stdcall CPaneFrameWnd::GetPaneList(CObList& lstBars, CRuntimeClass* pRTCFilter, BOOL bIncludeTabs)

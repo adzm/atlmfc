@@ -9,7 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-
+#include <atlimage.h>
 
 
 #define AFX_CX_ANCHOR_BITMAP	32
@@ -34,6 +34,7 @@ BEGIN_MESSAGE_MAP(CScrollView, CView)
 	ON_WM_MOUSEWHEEL()
 	//}}AFX_MSG_MAP
 	ON_MESSAGE(WM_MBUTTONDOWN, &CScrollView::HandleMButtonDown)
+	ON_MESSAGE(WM_PRINTCLIENT, &CScrollView::OnPrintClient)
 END_MESSAGE_MAP()
 
 // Special mapping modes just for CScrollView implementation
@@ -226,7 +227,7 @@ void _AFX_MOUSEANCHORWND::OnTimer(UINT_PTR nIDEvent)
 
 		HINSTANCE hInst = AfxFindResourceHandle(ATL_MAKEINTRESOURCE(nCursor),
 			ATL_RT_GROUP_CURSOR);
-		HICON hCursor = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(nCursor));
+		HICON hCursor = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(nCursor));
 		ASSERT(hCursor != NULL);
 		SetCursor(hCursor);
 
@@ -287,7 +288,7 @@ void _AFX_MOUSEANCHORWND::SetBitmap(UINT nID)
 {
 	HINSTANCE hInst = AfxFindResourceHandle(ATL_MAKEINTRESOURCE(nID), ATL_RT_GROUP_CURSOR);
 	ASSERT(hInst != NULL);
-	m_hAnchorCursor = ::LoadCursor(hInst, ATL_MAKEINTRESOURCE(nID));
+	m_hAnchorCursor = ::LoadCursorW(hInst, ATL_MAKEINTRESOURCEW(nID));
 	m_nAnchorID = nID;
 }
 
@@ -356,11 +357,16 @@ void _AFX_MOUSEANCHORWND::OnPaint()
 
 CScrollView::CScrollView()
 {
-	// Init everything to zero
-	AFX_ZERO_INIT_OBJECT(CView);
-
 	m_pAnchorWindow = NULL;
 	m_nMapMode = MM_NONE;
+
+	m_totalLog.cx = m_totalLog.cy = 0;
+	m_totalDev.cx = m_totalDev.cy = 0;
+	m_pageDev.cx  = m_pageDev.cy  = 0;
+	m_lineDev.cx  = m_lineDev.cy  = 0;
+
+	m_bCenter = FALSE;
+	m_bInsideUpdate = FALSE;
 }
 
 CScrollView::~CScrollView()
@@ -376,6 +382,11 @@ CScrollView::~CScrollView()
 void CScrollView::OnPrepareDC(CDC* pDC, CPrintInfo* pInfo)
 {
 	ASSERT_VALID(pDC);
+
+	if (m_bInitialRedraw)
+	{
+		return;
+	}
 
 #ifdef _DEBUG
 	if (m_nMapMode == MM_NONE)
@@ -791,6 +802,47 @@ LRESULT CScrollView::HandleMButtonDown(WPARAM wParam, LPARAM lParam)
 	}
 
 	return TRUE;
+}
+
+LRESULT CScrollView::OnPrintClient(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+
+	HDC hdc = (HDC) wParam;
+	if (hdc == NULL)
+	{
+		return 0L;
+	}
+
+	CDC dc;
+	dc.Attach(hdc);
+
+	CDC dcView;
+	dcView.CreateCompatibleDC(&dc);
+
+	CRect rect;
+	GetClientRect(rect);
+
+	CImage bmpSrc;
+	bmpSrc.CreateEx(rect.Width(), rect.Height(), 32, BI_RGB, NULL, CImage::createAlphaChannel);
+
+	HBITMAP hBmpOld = (HBITMAP)dcView.SelectObject((HBITMAP)bmpSrc);
+
+	dcView.BitBlt(0, 0, rect.Width(), rect.Height(), &dc, 0, 0, SRCCOPY);
+
+	dcView.SetViewportOrg(0, 0);
+	dcView.SetWindowOrg(0, 0);
+	dcView.SetMapMode(MM_TEXT);
+
+	OnPrepareDC(&dcView, NULL);
+	OnDraw(&dcView);
+
+	dc.BitBlt(0, 0, rect.Width(), rect.Height(), &dcView, 0, 0, SRCCOPY);
+
+	dcView.SelectObject(hBmpOld);
+	dc.Detach();
+
+	return 0L;
 }
 
 /////////////////////////////////////////////////////////////////////////////

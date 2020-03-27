@@ -159,7 +159,9 @@ BOOL COleLinkingDoc::OnNewDocument()
 	if (!COleDocument::OnNewDocument())
 		return FALSE;
 
-	AfxOleSetUserCtrl(TRUE);
+	// user is not "in control" of the application in case of Search and Organize handler
+	if (!IsSearchAndOrganizeHandler())
+		AfxOleSetUserCtrl(TRUE);
 
 	return TRUE;
 }
@@ -215,6 +217,11 @@ BOOL COleLinkingDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 void COleLinkingDoc::OnCloseDocument()
 {
+	// SO handler (rich preview) can be destroyed only from FinalRelease 
+	if (IsSearchAndOrganizeHandler() && !m_bFinalRelease)
+	{
+		return;
+	}
 	InternalAddRef();   // protect document during shutdown
 
 	// update lock count before sending notifications
@@ -281,6 +288,13 @@ BOOL COleLinkingDoc::RegisterIfServerAttached(LPCTSTR lpszPathName, BOOL bMessag
 	ASSERT(lpszPathName == NULL || AfxIsValidString(lpszPathName));
 
 	CDocTemplate* pTemplate = GetDocTemplate();
+
+	if (IsSearchAndOrganizeHandler() && pTemplate == NULL)
+	{
+		// a document template can be missing in case of S&O handler implemented in DLL
+		return TRUE;
+	}
+
 	ASSERT_VALID(pTemplate);
 
 	COleObjectFactory* pFactory =

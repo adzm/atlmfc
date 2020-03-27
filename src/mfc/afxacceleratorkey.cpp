@@ -81,9 +81,9 @@ void CMFCAcceleratorKey::AddVirtKeyStr(CString& str, UINT uiVirtKey, BOOL bLast)
 
 		ZeroMemory(szBuffer, sizeof(szBuffer));
 
-		UINT nScanCode = ::MapVirtualKeyEx(uiVirtKey, 0, ::GetKeyboardLayout(0)) <<16 | 0x1;
+		UINT nScanCode = ::MapVirtualKeyEx(uiVirtKey, 0, ::GetKeyboardLayout(0)) << 16 | 0x1;
 
-		if (uiVirtKey >= VK_PRIOR && uiVirtKey <= VK_HELP)
+		if ((uiVirtKey >= VK_PRIOR && uiVirtKey <= VK_HELP) || (uiVirtKey == VK_DIVIDE))
 		{
 			nScanCode |= 0x01000000;
 		}

@@ -141,6 +141,7 @@ IMPLEMENT_DYNCREATE(CMFCControlRenderer, CObject)
 CMFCControlRenderer::CMFCControlRenderer()
 {
 	m_bMirror = FALSE;
+	m_bIsScaled = FALSE;
 }
 
 CMFCControlRenderer::~CMFCControlRenderer()
@@ -481,6 +482,32 @@ void CMFCControlRenderer::OnSysColorChange()
 	}
 }
 
+
+static void ResizeRect(CRect& rect, double dblScale)
+{
+	int nWidth = rect.Width();
+	int nHeight = rect.Height();
+
+	rect.left = (int)(.5 + dblScale * rect.left);
+	rect.top = (int)(.5 + dblScale * rect.top);
+
+	rect.right = rect.left + (int)(.5 + dblScale * nWidth);
+	rect.bottom = rect.top + (int)(.5 + dblScale * nHeight);
+}
+
+BOOL CMFCControlRenderer::SmoothResize(double dblScale)
+{
+	if (dblScale <= 1. || !m_Bitmap.SmoothResize(dblScale))
+	{
+		return FALSE;
+	}
+
+	ResizeRect(m_Params.m_rectImage, dblScale);
+	ResizeRect(m_Params.m_rectInter, dblScale);
+
+	m_bIsScaled = TRUE;
+	return TRUE;
+}
 
 IMPLEMENT_DYNCREATE(CMFCShadowRenderer, CMFCControlRenderer)
 

@@ -363,7 +363,7 @@ void CMFCRibbonComboBox::OnDraw(CDC* pDC)
 	CMFCToolBarComboBoxButton buttonDummy;
 	buttonDummy.m_bIsRibbon = TRUE;
 
-	BOOL bIsDropDownHighlighted = IsMenuAreaHighlighted() || m_bIsFocused || (bIsHighlighted && !m_bHasEditBox);
+	BOOL bIsDropDownHighlighted = IsMenuAreaHighlighted() || m_bIsFocused || m_bIsEditFocused || (bIsHighlighted && !m_bHasEditBox);
 
 	CMFCVisualManager::GetInstance()->OnDrawComboDropButton(pDC, m_rectMenu, IsDisabled(), IsDroppedDown(), bIsDropDownHighlighted, &buttonDummy);
 
@@ -526,6 +526,7 @@ void CMFCRibbonComboBox::OnSelectItem(int nItem)
 	{
 		if (m_pWndEdit->GetSafeHwnd() != NULL && m_pWndEdit->GetTopLevelFrame() != NULL)
 		{
+			m_bNotifyCommand = FALSE;
 			m_pWndEdit->GetTopLevelFrame()->SetFocus();
 		}
 

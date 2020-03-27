@@ -20,10 +20,10 @@
 namespace ATL
 {
 
-/* 
+/*
 This is	more than a	little unsatisfying. /Wp64 warns when we convert a size_t to an	int
-because	it knows such a	conversion won't port. 
-But, when we have overloaded templates,	there may well exist both conversions and we need 
+because	it knows such a	conversion won't port.
+But, when we have overloaded templates,	there may well exist both conversions and we need
 to fool	the	warning	into not firing	on 32 bit builds
 */
 #if !defined(_ATL_W64)
@@ -34,7 +34,7 @@ to fool	the	warning	into not firing	on 32 bit builds
 #endif
 #endif
 
-/* Can't use ::std::numeric_limits<T> here because we don't want to introduce a new	
+/* Can't use ::std::numeric_limits<T> here because we don't want to introduce a new
    deprendency of this code on SCL
 */
 
@@ -91,11 +91,14 @@ public:
 
 /* generic version */
 template<typename T>
-inline HRESULT AtlAdd(T* ptResult, T tLeft, T tRight)
+inline HRESULT AtlAdd(
+	_Out_ T* ptResult,
+	_In_ T tLeft,
+	_In_ T tRight)
 {
 	if(::ATL::AtlLimits<T>::_Max-tLeft < tRight)
 	{
-		return E_INVALIDARG;
+		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
 	*ptResult= tLeft + tRight;
 	return S_OK;
@@ -103,7 +106,10 @@ inline HRESULT AtlAdd(T* ptResult, T tLeft, T tRight)
 
 /* generic but compariatively slow version */
 template<typename T>
-inline HRESULT AtlMultiply(T* ptResult,	T tLeft, T tRight)
+inline HRESULT AtlMultiply(
+	_Out_ T* ptResult,
+	_In_ T tLeft,
+	_In_ T tRight)
 {
 	/* avoid divide 0 */
 	if(tLeft==0)
@@ -113,7 +119,7 @@ inline HRESULT AtlMultiply(T* ptResult,	T tLeft, T tRight)
 	}
 	if(::ATL::AtlLimits<T>::_Max/tLeft < tRight)
 	{
-		return E_INVALIDARG;
+		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
 	*ptResult= tLeft * tRight;
 	return S_OK;
@@ -121,55 +127,69 @@ inline HRESULT AtlMultiply(T* ptResult,	T tLeft, T tRight)
 
 /* fast	version	for	32 bit integers	*/
 template<>
-inline HRESULT AtlMultiply(int _ATL_W64	*piResult, int _ATL_W64	iLeft, int _ATL_W64 iRight)
+inline HRESULT AtlMultiply(
+	_Out_ int _ATL_W64 *piResult,
+	_In_ int _ATL_W64 iLeft,
+	_In_ int _ATL_W64 iRight)
 {
 	__int64 i64Result=static_cast<__int64>(iLeft) * static_cast<__int64>(iRight);
 	if(i64Result>INT_MAX || i64Result < INT_MIN)
 	{
-		return E_INVALIDARG;
+		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
 	*piResult=static_cast<int _ATL_W64>(i64Result);
 	return S_OK;
 }
 
 template<>
-inline HRESULT AtlMultiply(unsigned int	_ATL_W64 *piResult, unsigned int _ATL_W64 iLeft, unsigned int _ATL_W64 iRight)
+inline HRESULT AtlMultiply(
+	_Out_ unsigned int _ATL_W64 *piResult,
+	_In_ unsigned int _ATL_W64 iLeft,
+	_In_ unsigned int _ATL_W64 iRight)
 {
 	unsigned __int64 i64Result=static_cast<unsigned __int64>(iLeft) * static_cast<unsigned __int64>(iRight);
 	if(i64Result>UINT_MAX)
 	{
-		return E_INVALIDARG;
+		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
 	*piResult=static_cast<unsigned int _ATL_W64>(i64Result);
 	return S_OK;
 }
 
 template<>
-inline HRESULT AtlMultiply(long	_ATL_W64 *piResult, long _ATL_W64 iLeft, long _ATL_W64 iRight)
+inline HRESULT AtlMultiply(
+	_Out_ long _ATL_W64 *piResult,
+	_In_ long _ATL_W64 iLeft,
+	_In_ long _ATL_W64 iRight)
 {
 	__int64 i64Result=static_cast<__int64>(iLeft) * static_cast<__int64>(iRight);
 	if(i64Result>LONG_MAX || i64Result < LONG_MIN)
 	{
-		return E_INVALIDARG;
+		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
 	*piResult=static_cast<long _ATL_W64>(i64Result);
 	return S_OK;
 }
 
 template<>
-inline HRESULT AtlMultiply(unsigned long _ATL_W64 *piResult, unsigned long _ATL_W64 iLeft, unsigned long _ATL_W64 iRight)
+inline HRESULT AtlMultiply(
+	_Out_ unsigned long _ATL_W64 *piResult,
+	_In_ unsigned long _ATL_W64 iLeft,
+	_In_ unsigned long _ATL_W64 iRight)
 {
 	unsigned __int64 i64Result=static_cast<unsigned __int64>(iLeft) * static_cast<unsigned __int64>(iRight);
 	if(i64Result>ULONG_MAX)
 	{
-		return E_INVALIDARG;
+		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
 	*piResult=static_cast<unsigned long _ATL_W64>(i64Result);
 	return S_OK;
 }
 
 template <typename T>
-inline T AtlMultiplyThrow(T tLeft, T tRight)
+inline T AtlMultiplyThrow(
+	_In_ T tLeft,
+	_In_ T tRight)
 {
 	T tResult;
 	HRESULT hr=AtlMultiply(&tResult, tLeft, tRight);
@@ -181,7 +201,9 @@ inline T AtlMultiplyThrow(T tLeft, T tRight)
 }
 
 template <typename T>
-inline T AtlAddThrow(T tLeft, T	tRight)
+inline T AtlAddThrow(
+	_In_ T tLeft,
+	_In_ T tRight)
 {
 	T tResult;
 	HRESULT hr=AtlAdd(&tResult, tLeft, tRight);
@@ -192,7 +214,9 @@ inline T AtlAddThrow(T tLeft, T	tRight)
 	return tResult;
 }
 
-inline LPVOID AtlCoTaskMemCAlloc(ULONG nCount, ULONG nSize)
+_Ret_opt_bytecount_x_(nCount * nSize) inline LPVOID AtlCoTaskMemCAlloc(
+	_In_ ULONG nCount,
+	_In_ ULONG nSize)
 {
 	HRESULT hr;
 	ULONG nBytes=0;
@@ -203,7 +227,10 @@ inline LPVOID AtlCoTaskMemCAlloc(ULONG nCount, ULONG nSize)
 	return ::CoTaskMemAlloc(nBytes);
 }
 
-inline LPVOID AtlCoTaskMemRecalloc(void	*pvMemory, ULONG nCount, ULONG nSize)
+_Ret_opt_bytecount_x_(nCount * nSize) inline LPVOID AtlCoTaskMemRecalloc(
+	_In_opt_ void *pvMemory,
+	_In_ ULONG nCount,
+	_In_ ULONG nSize)
 {
 	HRESULT hr;
 	ULONG nBytes=0;
@@ -224,26 +251,32 @@ namespace ATL
 
 namespace Checked
 {
-    void __cdecl memcpy_s(_Out_bytecap_post_bytecount_(_S1max,_N) void *s1, _In_ size_t _S1max, _In_bytecount_(_N) const void *s2, _In_ size_t _N);
+    void __cdecl memcpy_s(
+		_Out_bytecap_post_bytecount_(_S1max,_N) void *s1,
+		_In_ size_t _S1max,
+		_In_bytecount_(_N) const void *s2,
+		_In_ size_t _N);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // Allocation helpers
 
-class CCRTAllocator 
+class CCRTAllocator
 {
 public:
-	static void* Reallocate(void* p, size_t nBytes) throw()
+	_Ret_opt_bytecap_(nBytes) static void* Reallocate(
+		_In_ void* p,
+		_In_ size_t nBytes) throw()
 	{
 		return realloc(p, nBytes);
 	}
 
-	static void* Allocate(size_t nBytes) throw()
+	_Ret_opt_bytecap_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return malloc(nBytes);
 	}
 
-	static void Free(void* p) throw()
+	static void Free(_In_ void* p) throw()
 	{
 		free(p);
 	}
@@ -252,24 +285,25 @@ public:
 class CLocalAllocator
 {
 public:
-	static void* Allocate(size_t nBytes) throw()
+	_Ret_opt_bytecap_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return ::LocalAlloc(LMEM_FIXED, nBytes);
 	}
-	static void* Reallocate(void* p, size_t nBytes) throw()
+	_Ret_opt_bytecap_(nBytes) static void* Reallocate(
+		_In_ void* p,
+		_In_ size_t nBytes) throw()
 	{
 		if (p==NULL){
 			return ( Allocate(nBytes) );
-		
+
 		}
 		if (nBytes==0){
 			Free(p);
 			return NULL;
 		}
-			return ::LocalReAlloc(p, nBytes, 0);
-		 
+		return SAL_Assume_bytecap_for_opt_(::LocalReAlloc(p, nBytes, 0), nBytes);
 	}
-	static void Free(void* p) throw()
+	static void Free(_In_ void* p) throw()
 	{
 		::LocalFree(p);
 	}
@@ -278,23 +312,25 @@ public:
 class CGlobalAllocator
 {
 public:
-	static void* Allocate(size_t nBytes) throw()
+	_Ret_opt_bytecap_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return ::GlobalAlloc(GMEM_FIXED, nBytes);
 	}
-	static void* Reallocate(void* p, size_t nBytes) throw()
+	_Ret_opt_bytecap_(nBytes) static void* Reallocate(
+		_In_ void* p,
+		_In_ size_t nBytes) throw()
 	{
 		if (p==NULL){
 			return ( Allocate(nBytes) );
-		
+
 		}
 		if (nBytes==0){
 			Free(p);
 			return NULL;
 		}
-		return ( ::GlobalReAlloc(p, nBytes, 0) );
+		return SAL_Assume_bytecap_for_opt_(::GlobalReAlloc(p, nBytes, 0), nBytes);
 	}
-	static void Free(void* p) throw()
+	static void Free(_In_ void* p) throw()
 	{
 		::GlobalFree(p);
 	}
@@ -308,11 +344,11 @@ protected:
 		m_pData(NULL)
 	{
 	}
-	CHeapPtrBase(CHeapPtrBase<T, Allocator>& p) throw()
+	CHeapPtrBase(_Inout_ CHeapPtrBase<T, Allocator>& p) throw()
 	{
 		m_pData = p.Detach();  // Transfer ownership
 	}
-	explicit CHeapPtrBase(T* pData) throw() :
+	explicit CHeapPtrBase(_In_ T* pData) throw() :
 		m_pData(pData)
 	{
 	}
@@ -324,7 +360,7 @@ public:
 	}
 
 protected:
-	CHeapPtrBase<T, Allocator>& operator=(CHeapPtrBase<T, Allocator>& p) throw()
+	CHeapPtrBase<T, Allocator>& operator=(_Inout_ CHeapPtrBase<T, Allocator>& p) throw()
 	{
 		if(m_pData != p.m_pData)
 			Attach(p.Detach());  // Transfer ownership
@@ -350,7 +386,7 @@ public:
 	}
 
 	// Allocate a buffer with the given number of bytes
-	bool AllocateBytes(size_t nBytes) throw()
+	bool AllocateBytes(_In_ size_t nBytes) throw()
 	{
 		ATLASSERT(m_pData == NULL);
 		m_pData = static_cast<T*>(Allocator::Allocate(nBytes));
@@ -361,14 +397,14 @@ public:
 	}
 
 	// Attach to an existing pointer (takes ownership)
-	void Attach(T* pData) throw()
+	void Attach(_In_ T* pData) throw()
 	{
 		Allocator::Free(m_pData);
 		m_pData = pData;
 	}
 
 	// Detach the pointer (releases ownership)
-	T* Detach() throw() 
+	T* Detach() throw()
 	{
 		T* pTemp = m_pData;
 		m_pData = NULL;
@@ -383,7 +419,7 @@ public:
 	}
 
 	// Reallocate the buffer to hold a given number of bytes
-	bool ReallocateBytes(size_t nBytes) throw()
+	bool ReallocateBytes(_In_ size_t nBytes) throw()
 	{
 		T* pNew;
 
@@ -407,16 +443,16 @@ public:
 	CHeapPtr() throw()
 	{
 	}
-	CHeapPtr(CHeapPtr<T, Allocator>& p) throw() :
+	CHeapPtr(_Inout_ CHeapPtr<T, Allocator>& p) throw() :
 		CHeapPtrBase<T, Allocator>(p)
 	{
 	}
-	explicit CHeapPtr(T* p) throw() :
+	explicit CHeapPtr(_In_ T* p) throw() :
 		CHeapPtrBase<T, Allocator>(p)
 	{
 	}
 
-	CHeapPtr<T, Allocator>& operator=(CHeapPtr<T, Allocator>& p) throw()
+	CHeapPtr<T, Allocator>& operator=(_Inout_ CHeapPtr<T, Allocator>& p) throw()
 	{
 		CHeapPtrBase<T, Allocator>::operator=(p);
 
@@ -424,7 +460,7 @@ public:
 	}
 
 	// Allocate a buffer with the given number of elements
-	bool Allocate(size_t nElements = 1) throw()
+	bool Allocate(_In_ size_t nElements = 1) throw()
 	{
 		size_t nBytes=0;
 		if(FAILED(::ATL::AtlMultiply(&nBytes, nElements, sizeof(T))))
@@ -435,7 +471,7 @@ public:
 	}
 
 	// Reallocate the buffer to hold a given number of elements
-	bool Reallocate(size_t nElements) throw()
+	bool Reallocate(_In_ size_t nElements) throw()
 	{
 		size_t nBytes=0;
 		if(FAILED(::ATL::AtlMultiply(&nBytes, nElements, sizeof(T))))
@@ -454,7 +490,7 @@ public:
 		m_p( NULL )
 	{
 	}
-	CTempBuffer( size_t nElements ) throw( ... ) :
+	CTempBuffer(_In_ size_t nElements) throw( ... ) :
 		m_p( NULL )
 	{
 		Allocate( nElements );
@@ -478,16 +514,16 @@ public:
 		return( m_p );
 	}
 
-	T* Allocate( size_t nElements ) throw( ... )
+	_Ret_opt_bytecap_x_(nElements * sizeof(T)) T* Allocate(_In_ size_t nElements) throw( ... )
 	{
 		return( AllocateBytes( ::ATL::AtlMultiplyThrow(nElements,sizeof( T )) ) );
 	}
 
-	T* Reallocate( size_t nElements ) throw( ... )
+	_Ret_opt_bytecap_x_(nElements * sizeof(T)) T* Reallocate(_In_ size_t nElements) throw( ... )
 	{
-		ATLENSURE(nElements < size_t(-1)/sizeof(T) );		
+		ATLENSURE(nElements < size_t(-1)/sizeof(T) );
 		size_t nNewSize = nElements*sizeof( T ) ;
-				
+
 		if (m_p == NULL)
 			return AllocateBytes(nNewSize);
 
@@ -517,7 +553,7 @@ public:
 		return m_p;
 	}
 
-	T* AllocateBytes( size_t nBytes )
+	_Ret_opt_bytecap_(nBytes) T* AllocateBytes(_In_ size_t nBytes)
 	{
 		ATLASSERT( m_p == NULL );
 		if( nBytes > t_nFixedBytes )
@@ -533,7 +569,7 @@ public:
 	}
 
 private:
-	ATL_NOINLINE void AllocateHeap( size_t nBytes )
+	ATL_NOINLINE void AllocateHeap(_In_ size_t nBytes)
 	{
 		T* p = static_cast< T* >( Allocator::Allocate( nBytes ) );
 		if( p == NULL )
@@ -542,8 +578,8 @@ private:
 		}
 		m_p = p;
 	}
- 
-	ATL_NOINLINE void ReAllocateHeap( size_t nNewSize)
+
+	ATL_NOINLINE void ReAllocateHeap(_In_ size_t nNewSize)
 	{
 		T* p = static_cast< T* >( Allocator::Reallocate(m_p, nNewSize) );
 		if ( p == NULL )
@@ -580,8 +616,7 @@ namespace _ATL_SAFE_ALLOCA_IMPL
 //Verifies if sufficient space is available on the stack.
 //Note: This function should never be inlined, because the stack allocation
 //may not be freed until the end of the calling function (instead of the end of _AtlVerifyStackAvailable).
-//The use of __try/__except preverts inlining in this case.
-inline bool _AtlVerifyStackAvailable(SIZE_T Size)
+__declspec(noinline) inline bool _AtlVerifyStackAvailable(_In_ SIZE_T Size)
 {
     bool bStackAvailable = true;
 
@@ -636,18 +671,20 @@ private :
 
 	CAtlSafeAllocBufferNode* m_pHead;
 public :
-	
-	CAtlSafeAllocBufferManager() : m_pHead(NULL) {};
-	void* Allocate(SIZE_T nRequestedSize)
+
+	CAtlSafeAllocBufferManager() : m_pHead(NULL)
+	{
+	}
+	_Ret_opt_bytecap_(nRequestedSize) void* Allocate(_In_ SIZE_T nRequestedSize)
 	{
 		CAtlSafeAllocBufferNode *p = (CAtlSafeAllocBufferNode*)Allocator::Allocate(::ATL::AtlAddThrow(nRequestedSize, static_cast<SIZE_T>(sizeof(CAtlSafeAllocBufferNode))));
 		if (p == NULL)
 			return NULL;
-		
+
 		// Add buffer to the list
 		p->m_pNext = m_pHead;
 		m_pHead = p;
-		
+
 		return p->GetData();
 	}
 	~CAtlSafeAllocBufferManager()
@@ -675,7 +712,7 @@ public :
 #define USES_ATL_SAFE_ALLOCA		USES_ATL_SAFE_ALLOCA_EX(ATL::CCRTAllocator)
 #endif
 
-// nRequestedSize - requested size in bytes 
+// nRequestedSize - requested size in bytes
 // nThreshold - size in bytes beyond which memory is allocated from the heap.
 
 // Defining _ATL_SAFE_ALLOCA_ALWAYS_ALLOCATE_THRESHOLD_SIZE always allocates the size specified

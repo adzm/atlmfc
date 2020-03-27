@@ -77,7 +77,7 @@ BOOL COleTemplateServer::Unregister()
 }
 
 void COleTemplateServer::ConnectTemplate(
-	REFCLSID clsid, CDocTemplate* pDocTemplate, BOOL bMultiInstance)
+	REFCLSID clsid, CDocTemplate* pDocTemplate, BOOL bMultiInstance, BOOL bRegisterRichPreviewHandler)
 {
 	ASSERT_VALID(this);
 	ASSERT_VALID(pDocTemplate);
@@ -91,6 +91,27 @@ void COleTemplateServer::ConnectTemplate(
 	// attach the doc template to the factory
 	m_pDocTemplate = pDocTemplate;
 	m_pDocTemplate->m_pAttachedFactory = this;
+
+	if (bRegisterRichPreviewHandler)
+	{
+		LPTSTR lpszClassID;
+		LPOLESTR lpOleStr;
+		::StringFromCLSID(clsid, &lpOleStr);
+		lpszClassID = TASKSTRINGOLE2T(lpOleStr);
+		if (lpszClassID == NULL)
+		{
+			TRACE(traceOle, 0, "Warning: StringFromCLSID failed in COleTemplateServer::ConnectTemplate --\n");
+			TRACE(traceOle, 0, "\tperhaps AfxOleInit() has not been called.\n");
+			return;
+		}
+
+		m_pDocTemplate->m_strCLSID = lpszClassID;
+		m_pDocTemplate->m_clsid = clsid;
+
+		// free memory for class ID
+		ASSERT(lpszClassID != NULL);
+		CoTaskMemFree(lpszClassID);
+	}
 }
 
 void COleTemplateServer::UpdateRegistry(OLE_APPTYPE nAppType, 
@@ -165,7 +186,7 @@ CCmdTarget* COleTemplateServer::OnCreateObject()
 	BOOL bUserCtrl = AfxOleGetUserCtrl();
 
 	// create invisible doc/view/frame set
-	CDocument* pDoc = m_pDocTemplate->OpenDocumentFile(NULL, FALSE);
+	CDocument* pDoc = m_pDocTemplate->OpenDocumentFile(NULL, FALSE, FALSE);
 
 	// restore application's user control status
 	AfxOleSetUserCtrl(bUserCtrl);

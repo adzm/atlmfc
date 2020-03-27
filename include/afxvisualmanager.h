@@ -56,7 +56,9 @@ class CMFCRibbonButton;
 class CMFCRibbonTab;
 class CMFCRibbonCaptionButton;
 class CMFCRibbonButtonsGroup;
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 class CMFCRibbonLaunchButton;
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 class CMFCRibbonRichEditCtrl;
 class CMFCRibbonMainPanel;
 class CMFCRibbonLabel;
@@ -154,6 +156,7 @@ protected:
 	HTHEME m_hThemeSpin;
 	HTHEME m_hThemeTab;
 	HTHEME m_hThemeTrack;
+	HTHEME m_hThemeMenu;
 
 	HINSTANCE           m_hinstUXDLL;
 	OPENTHEMEDATA       m_pfOpenThemeData;
@@ -238,6 +241,8 @@ public:
 	virtual void OnDrawMenuCheck(CDC* pDC, CMFCToolBarMenuButton* pButton, CRect rect, BOOL bHighlight, BOOL bIsRadio);
 	virtual void OnDrawMenuItemButton(CDC* pDC, CMFCToolBarMenuButton* pButton, CRect rectButton, BOOL bHighlight, BOOL bDisabled);
 
+	virtual void OnFillMenuImageRect(CDC* pDC, CMFCToolBarButton* pButton, CRect rect, CMFCVisualManager::AFX_BUTTON_STATE state) { OnFillButtonInterior(pDC, pButton, rect, state); }
+
 	virtual BOOL IsOwnerDrawMenuCheck() { return FALSE; }
 
 	virtual COLORREF GetToolbarButtonTextColor(CMFCToolBarButton* pButton, CMFCVisualManager::AFX_BUTTON_STATE state);
@@ -280,6 +285,7 @@ public:
 	virtual BOOL AlwaysHighlight3DTabs() const { return FALSE; }
 	virtual COLORREF GetTabTextColor(const CMFCBaseTabCtrl* /*pTabWnd*/, int /*iTab*/, BOOL /*bIsActive*/) { return (COLORREF)-1; }
 	virtual int GetTabHorzMargin(const CMFCBaseTabCtrl* /*pTabWnd*/) { return 0; }
+	virtual void OnDrawTabResizeBar(CDC* pDC, CMFCBaseTabCtrl* pWndTab, BOOL bIsVert, CRect rect, CBrush* pbrFace, CPen* pPen);
 
 	virtual int GetMDITabsBordersSize() { return -1; /* Default */ }
 	virtual int GetDockingTabsBordersSize() { return -1; /* Default */ }
@@ -355,6 +361,7 @@ public:
 	// Smart docking marker colors:
 	virtual void GetSmartDockingBaseGuideColors(COLORREF& clrBaseGroupBackground, COLORREF& clrBaseGroupBorder);
 	virtual COLORREF GetSmartDockingHighlightToneColor();
+	virtual AFX_SMARTDOCK_THEME GetSmartDockingTheme() { return AFX_SDT_VS2005; }
 
 	// Popup window:
 	virtual void OnFillPopupWindowBackground(CDC* pDC, CRect rect);
@@ -380,7 +387,9 @@ public:
 	virtual void OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScroll* pScroll);
 	virtual COLORREF OnDrawRibbonPanel(CDC* pDC,CMFCRibbonPanel* pPanel, CRect rectPanel, CRect rectCaption);
 	virtual void OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectCaption);
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	virtual void OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel);
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	virtual void OnDrawRibbonDefaultPaneButton(CDC* pDC, CMFCRibbonButton* pButton);
 	virtual void OnDrawRibbonDefaultPaneButtonContext(CDC* pDC, CMFCRibbonButton* pButton);
 	virtual void OnDrawRibbonDefaultPaneButtonIndicator(CDC* pDC, CMFCRibbonButton* pButton, CRect rect, BOOL bIsSelected, BOOL bHighlighted);
@@ -440,8 +449,12 @@ public:
 	virtual COLORREF GetRibbonHyperlinkTextColor(CMFCRibbonLinkCtrl* pHyperLink);
 	virtual COLORREF GetRibbonStatusBarTextColor(CMFCRibbonStatusBar* pStatusBar);
 
+	virtual COLORREF GetRibbonEditBackgroundColor(CMFCRibbonRichEditCtrl* pEdit, BOOL bIsHighlighted, BOOL bIsPaneHighlighted, BOOL bIsDisabled);
+
 	virtual void OnDrawRibbonColorPaletteBox(CDC* pDC, CMFCRibbonColorButton* pColorButton, CMFCRibbonGalleryIcon* pIcon,
 		COLORREF color, CRect rect, BOOL bDrawTopEdge, BOOL bDrawBottomEdge, BOOL bIsHighlighted, BOOL bIsChecked, BOOL bIsDisabled);
+
+	const CPoint& GetRibbonMainImageOffset() const { return m_ptRibbonMainImageOffset; }
 
 	// Vista support:
 	virtual BOOL DrawTextOnGlass(CDC* pDC, CString strText, CRect rect, DWORD dwFlags, int nGlowSize = 0, COLORREF clrText = (COLORREF)-1);
@@ -505,6 +518,7 @@ public:
 
 	virtual int GetMenuImageMargin() const { return 2; }
 	virtual int GetPopupMenuGap() const { return 1; }
+	virtual CRect GetMenuImageFrameOffset() const { return CRect (2, 1, 0, 2); }
 
 	// TasksPane:
 	int GetTasksPaneVertMargin() const { return m_nVertMargin; }
@@ -564,6 +578,8 @@ protected:
 	int m_nMenuBorderSize;
 
 	COLORREF m_clrMenuShadowBase;
+
+	CPoint m_ptRibbonMainImageOffset;
 
 private:
 	BOOL m_bAutoDestroy;

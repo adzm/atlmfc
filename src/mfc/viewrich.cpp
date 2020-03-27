@@ -125,6 +125,8 @@ CRichEditView::CRichEditView() : CCtrlView(RICHEDIT_CLASS,
 	SetMargins(CRect(0,0,0,0));
 	m_charformat.cbSize = sizeof(CHARFORMAT2);
 	m_paraformat.cbSize = sizeof(PARAFORMAT2);
+	m_bFirstSearch = FALSE;
+	m_bChangeFindRange = FALSE;
 }
 
 BOOL CRichEditView::PreCreateWindow(CREATESTRUCT& cs)
@@ -1649,6 +1651,7 @@ BOOL CRichEditView::FindTextSimple(LPCTSTR lpszFind, BOOL bCase, BOOL bWord, BOO
 		else
 			m_lInitialSearchPos = ft.chrg.cpMax;
 		m_bFirstSearch = FALSE;
+		m_bChangeFindRange = FALSE;
 	}
 
 	// lpstrText should be const
@@ -1657,31 +1660,30 @@ BOOL CRichEditView::FindTextSimple(LPCTSTR lpszFind, BOOL bCase, BOOL bWord, BOO
 	if (ft.chrg.cpMin != ft.chrg.cpMax) // i.e. there is a selection
 	{
 		if (bNext)
-			ft.chrg.cpMin++;
+		{
+			// won't wraparound backwards
+			ft.chrg.cpMin = min(ft.chrg.cpMin + 1, GetTextLength());
+		}
 		else
 		{
 			// won't wraparound backwards
-			ft.chrg.cpMin = max(ft.chrg.cpMin, 0);
+			ft.chrg.cpMin = max(ft.chrg.cpMin - 1, 0);
 		}
 	}
 
 	DWORD dwFlags = bCase ? FR_MATCHCASE : 0;
 	dwFlags |= bWord ? FR_WHOLEWORD : 0;
 
-	ft.chrg.cpMax = GetTextLength() + m_lInitialSearchPos;
-
 	if (bNext)
 	{
-		if (m_lInitialSearchPos >= 0)
-			ft.chrg.cpMax = GetTextLength();
+		ft.chrg.cpMax = GetTextLength();
 
 		dwFlags |= FR_DOWN;
 		ASSERT(ft.chrg.cpMax >= ft.chrg.cpMin);
 	}
 	else
 	{
-		if (m_lInitialSearchPos >= 0)
-			ft.chrg.cpMax = 0;
+		ft.chrg.cpMax = 0;
 
 		dwFlags &= ~FR_DOWN;
 		ASSERT(ft.chrg.cpMax <= ft.chrg.cpMin);
@@ -1689,22 +1691,27 @@ BOOL CRichEditView::FindTextSimple(LPCTSTR lpszFind, BOOL bCase, BOOL bWord, BOO
 
 	// if we find the text return TRUE
 	if (FindAndSelect(dwFlags, ft) != -1)
+	{
+		m_bChangeFindRange = TRUE;
 		return TRUE;
+	}
 	// if the original starting point was not the beginning of the buffer
 	// and we haven't already been here
-	else if (m_lInitialSearchPos > 0)
+	else if (!m_bChangeFindRange)
 	{
+		m_bChangeFindRange = TRUE;
 		if (bNext)
 		{
 			ft.chrg.cpMin = 0;
-			ft.chrg.cpMax = m_lInitialSearchPos;
+			ft.chrg.cpMax = min(m_lInitialSearchPos + CString(lpszFind).GetLength(), GetTextLength());
+			m_lInitialSearchPos = 0;
 		}
 		else
 		{
 			ft.chrg.cpMin = GetTextLength();
-			ft.chrg.cpMax = m_lInitialSearchPos;
+			ft.chrg.cpMax = max(m_lInitialSearchPos - CString(lpszFind).GetLength(), 0);
+			m_lInitialSearchPos = GetTextLength();
 		}
-		m_lInitialSearchPos = m_lInitialSearchPos - GetTextLength();
 		return FindAndSelect(dwFlags, ft) != -1;
 	}
 	// not found
@@ -1820,20 +1827,36 @@ CRichEditView* CRichEditDoc::GetView() const
 
 BOOL CRichEditDoc::IsModified()
 {
-	return GetView()->GetRichEditCtrl().GetModify();
+	CRichEditView* pView = GetView();
+	if (pView == NULL)
+	{
+		return FALSE;
+	}
+
+	return pView->GetRichEditCtrl().GetModify();
 }
 
 void CRichEditDoc::SetModifiedFlag(BOOL bModified)
 {
-	GetView()->GetRichEditCtrl().SetModify(bModified);
-	ASSERT(!!GetView()->GetRichEditCtrl().GetModify() == !!bModified);
+	CRichEditView* pView = GetView();
+	if (pView == NULL)
+	{
+		return;
+	}
+
+	pView->GetRichEditCtrl().SetModify(bModified);
+	ASSERT(!!pView->GetRichEditCtrl().GetModify() == !!bModified);
 }
 
 COleClientItem* CRichEditDoc::GetInPlaceActiveItem(CWnd* pWnd)
 {
-	ASSERT_KINDOF(CRichEditView, pWnd);
-	CRichEditView* pView = (CRichEditView*)pWnd;
-	return pView->GetInPlaceActiveItem();
+	if (pWnd->IsKindOf(RUNTIME_CLASS(CRichEditView)))
+	{
+		CRichEditView* pView = (CRichEditView*)pWnd;
+		return pView->GetInPlaceActiveItem();
+	}
+
+	return NULL;
 }
 
 void CRichEditDoc::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
@@ -2015,8 +2038,12 @@ void CRichEditDoc::PreCloseFrame(CFrameWnd* pFrameArg)
 		bSetRedraw = TRUE;
 	}
 
-	// deactivate any inplace active items on this frame
-	GetView()->m_lpRichEditOle->InPlaceDeactivate();
+	CRichEditView* pView = GetView();
+	if (pView != NULL)
+	{
+		// deactivate any inplace active items on this frame
+		pView->m_lpRichEditOle->InPlaceDeactivate();
+	}
 
 	POSITION pos = GetStartPosition();
 	CRichEditCntrItem* pItem;

@@ -33,6 +33,8 @@ class CMFCRibbonGallery : public CMFCRibbonButton
 	friend class CMFCRibbonPanelMenuBar;
 	friend class CMFCRibbonPanel;
 	friend class CMFCRibbonGalleryMenuButton;
+	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonConstructor;
 
 	DECLARE_DYNCREATE(CMFCRibbonGallery)
 
@@ -60,10 +62,10 @@ public:
 	void SelectItem(int nItemIndex);
 	int GetSelectedItem() const { return m_nSelected; }
 
-	void EnableMenuResize(BOOL bEnable = TRUE, BOOL bVertcalOnly = FALSE)
+	void EnableMenuResize(BOOL bEnable = TRUE, BOOL bVerticalOnly = FALSE)
 	{
 		m_bEnableMenuResize = bEnable;
-		m_bMenuResizeVertical = bVertcalOnly;
+		m_bMenuResizeVertical = bVerticalOnly;
 	}
 
 	BOOL IsMenuResizeEnabled() const { return m_bEnableMenuResize; }
@@ -198,6 +200,8 @@ public:
 	virtual void OnRTLChanged(BOOL bIsRTL);
 
 	virtual int GetGroupOffset() const { return 0; }
+
+	virtual void OnSetFocus(BOOL bSet);
 
 protected:
 	virtual void OnDrawPaletteIcon(CDC* pDC, CRect rectIcon, int nIconIndex, CMFCRibbonGalleryIcon* pIcon, COLORREF clrText);

@@ -2801,7 +2801,6 @@ BOOL CRecordset::IsSelectQueryUpdatable(LPCTSTR lpszSQL)
 
 	if (lpchTokenNext != NULL)
 	{
-	  //IA64: Assume max query length < 2G chars
 		int nFromLength = int(lpchTokenNext - lpchTokenFrom);
 		Checked::memmove_s(lpszSQLStart, strSQL.GetLength()*sizeof(TCHAR), 
 			lpchTokenFrom, nFromLength*sizeof(TCHAR));
@@ -3473,10 +3472,32 @@ void CRecordset::BuildUpdateSQL()
 			SWORD nLength = _countof(szCursorName)-1;
 			AFX_SQL_SYNC(::SQLGetCursorName(m_hstmt, 
 				reinterpret_cast<SQLTCHAR *>(szCursorName), _countof(szCursorName), &nLength));
-			if (!Check(nRetCode))
+			if ((nRetCode == SQL_SUCCESS_WITH_INFO) && (nLength > MAX_CURSOR_NAME))
+			{
+				TCHAR *pszCursorNameBuff = new TCHAR[nLength+1];
+				AFX_SQL_SYNC(::SQLGetCursorName(m_hstmt,
+					reinterpret_cast<SQLTCHAR *>(pszCursorNameBuff), nLength+1, &nLength));
+				if (!Check(nRetCode))
+				{
+					delete [] pszCursorNameBuff;
+					ThrowDBException(nRetCode);
+				}
+				else
+				{
+					m_strCursorName = pszCursorNameBuff;
+					delete [] pszCursorNameBuff;
+				}
+			}
+			else if (!Check(nRetCode))
+			{
 				ThrowDBException(nRetCode);
-			m_strCursorName = szCursorName;
+			}
+			else
+			{
+				m_strCursorName = szCursorName;
+			}
 		}
+
 		m_strUpdateSQL += m_strCursorName;
 	}
 
@@ -4489,15 +4510,13 @@ SQLLEN PASCAL CRecordset::GetData(CDatabase* pdb, HSTMT hstmt,
 	}
 	else if (nRetCode == SQL_NO_DATA_FOUND)
 	{
-		TRACE(traceDatabase, 0, _T("Error: GetFieldValue operation failed on field %d.\n"));
-		TRACE(traceDatabase, 0, _T("\tData already fetched for this field.\n"),
-			nFieldIndex - 1);
+		TRACE(traceDatabase, 0, _T("Error: GetFieldValue operation failed on field %d.\n"), nFieldIndex - 1);
+		TRACE(traceDatabase, 0, _T("\tData already fetched for this field.\n"));
 		AfxThrowDBException(nRetCode, pdb, hstmt);
 	}
 	else if (nRetCode != SQL_SUCCESS)
 	{
-		TRACE(traceDatabase, 0, _T("Error: GetFieldValue operation failed on field %d.\n"),
-			nFieldIndex - 1);
+		TRACE(traceDatabase, 0, _T("Error: GetFieldValue operation failed on field %d.\n"), nFieldIndex - 1);
 		AfxThrowDBException(nRetCode, pdb, hstmt);
 	}
 
@@ -4530,9 +4549,11 @@ inline static void PASCAL GetLongCharDataAndCleanup(CDatabase* pdb,
 		*ppvData = (BYTE*)*ppvData + nOldLen * sizeof(TCHAR);
 		nLen = (nActualSize + 1 - nOldLen) * sizeof(TCHAR);
 
+		SQLLEN nActualSizeRetrieved = 0;  // length in bytes
+
 		// Retrieve the column in question
 		AFX_ODBC_CALL(::SQLGetData(hstmt, nFieldIndex,
-			nSQLCType, *ppvData, nLen, &nActualSize));
+			nSQLCType, *ppvData, nLen, &nActualSizeRetrieved));
 		if (nRetCode == SQL_SUCCESS_WITH_INFO)
 		{
 #ifdef _DEBUG
@@ -4550,7 +4571,7 @@ inline static void PASCAL GetLongCharDataAndCleanup(CDatabase* pdb,
 		}
 
 		// Release the buffer now that data has been fetched
-		strValue.ReleaseBuffer((int)((nActualSize + nOldLen) / sizeof(TCHAR)));
+		strValue.ReleaseBuffer((int)((nActualSizeRetrieved / sizeof(TCHAR)) + nOldLen));
 	}
 }
 

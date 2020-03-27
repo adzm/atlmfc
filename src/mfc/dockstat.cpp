@@ -161,18 +161,10 @@ BOOL CControlBarInfo::LoadState(LPCTSTR lpszProfileName, int nIndex, CDockState*
 		if (m_pointPos.y + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYSMCAPTION) > GetSystemMetrics(SM_CYVIRTUALSCREEN))
 			m_pointPos.y = - GetSystemMetrics(SM_CYFRAME) - GetSystemMetrics(SM_CYSMCAPTION) + GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-		HMODULE hUser = ::GetModuleHandle(_T("user32.dll"));
-		ASSERT(hUser);
-		if (hUser != NULL)
+		if (!MonitorFromPoint(m_pointPos, MONITOR_DEFAULTTONULL))
 		{
-			// in case of multiple monitors check if point is in one of monitors
-			HMONITOR (WINAPI* pfnMonitorFromPoint)(POINT, DWORD) = NULL;
-			(FARPROC&)pfnMonitorFromPoint = ::GetProcAddress(hUser, "MonitorFromPoint");
-			if (pfnMonitorFromPoint && !(pfnMonitorFromPoint)(m_pointPos, MONITOR_DEFAULTTONULL))
-			{
-				m_pointPos.x = GetSystemMetrics(SM_CXFRAME);
-				m_pointPos.y = GetSystemMetrics(SM_CYSMCAPTION) + GetSystemMetrics(SM_CYFRAME);
-			}
+			m_pointPos.x = GetSystemMetrics(SM_CXFRAME);
+			m_pointPos.y = GetSystemMetrics(SM_CYSMCAPTION) + GetSystemMetrics(SM_CYFRAME);
 		}
 	}
 	

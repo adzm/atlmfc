@@ -27,6 +27,7 @@ class CMFCRibbonMainPanelButton;
 class CMFCRibbonMainPanel : public CMFCRibbonPanel
 {
 	friend class CMFCRibbonApplicationButton;
+	friend class CMFCRibbonCollector;
 
 	DECLARE_DYNCREATE(CMFCRibbonMainPanel)
 
@@ -95,6 +96,25 @@ public:
 protected:
 	virtual COLORREF OnFillBackground(CDC* pDC);
 	virtual void OnDrawBorder(CDC* pDC);
+};
+
+class CMFCRibbonRecentFilesList : public CMFCRibbonButtonsGroup
+{
+	DECLARE_DYNCREATE(CMFCRibbonRecentFilesList)
+
+public:
+	CMFCRibbonRecentFilesList(LPCTSTR lpszLabel = NULL)
+	{
+		SetText(lpszLabel == NULL ? _T("") : lpszLabel);
+	}
+
+	void FillList();
+
+protected:
+	virtual void OnAfterChangeRect(CDC* pDC);
+	virtual CSize GetRegularSize(CDC* pDC);
+	virtual void OnDraw(CDC* pDC);
+	virtual BOOL OnMenuKey(UINT nUpperChar);
 };
 
 #ifdef _AFX_MINREBUILD

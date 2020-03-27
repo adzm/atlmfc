@@ -19,6 +19,9 @@
 #include "afxregpath.h"
 #include "afxsettingsstore.h"
 #include "afxribbonres.h"
+#include "afxribbonbar.h"
+#include "afxglobalutils.h"
+#include "afxdatarecovery.h"
 
 #define AFX_REG_SECTION_FMT _T("%sMDIClientArea-%d")
 #define AFX_REG_ENTRY_MDITABS_STATE _T("MDITabsState")
@@ -340,6 +343,7 @@ BEGIN_MESSAGE_MAP(CMDIClientAreaWnd, CWnd)
 	ON_REGISTERED_MESSAGE(AFX_WM_ON_TABGROUPMOUSEMOVE, &CMDIClientAreaWnd::OnTabGroupMouseMove)
 	ON_REGISTERED_MESSAGE(AFX_WM_ON_CANCELTABMOVE, &CMDIClientAreaWnd::OnCancelTabMove)
 	ON_REGISTERED_MESSAGE(AFX_WM_ON_MOVETABCOMPLETE, &CMDIClientAreaWnd::OnMoveTabComplete)
+	ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, &CMDIClientAreaWnd::OnActiveTabChanged)
 END_MESSAGE_MAP()
 //}}AFX_MSG_MAP
 
@@ -369,9 +373,17 @@ LRESULT CMDIClientAreaWnd::OnMDIRefreshMenu(WPARAM /*wp*/, LPARAM /*lp*/)
 	LRESULT lRes = Default();
 
 	CMDIFrameWndEx* pMainFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetParentFrame());
-	if (pMainFrame != NULL && pMainFrame->GetMenuBar() != NULL)
+	if (pMainFrame != NULL)
 	{
-		pMainFrame->m_hmenuWindow = pMainFrame->GetWindowMenuPopup(pMainFrame->GetMenuBar()->GetHMenu());
+		if (pMainFrame->GetMenuBar() != NULL)
+		{
+			pMainFrame->m_hmenuWindow = pMainFrame->GetWindowMenuPopup(pMainFrame->GetMenuBar()->GetHMenu());
+		}
+
+		if (pMainFrame->m_Impl.m_pRibbonBar != NULL)
+		{
+			pMainFrame->m_Impl.m_pRibbonBar->SetActiveMDIChild(pMainFrame->MDIGetActive());
+		}
 	}
 
 	return lRes;
@@ -423,7 +435,14 @@ LRESULT CMDIClientAreaWnd::OnMDIDestroy(WPARAM wParam, LPARAM)
 			{
 				pMDIChild->m_bToBeDestroyed = TRUE;
 			}
-			pTabWnd->RemoveTab(iTab);
+
+			CWinApp* pApp = AfxGetApp();
+			CDataRecoveryHandler *pHandler = pApp->GetDataRecoveryHandler();
+			BOOL bRecalcLayout = (pHandler == NULL || !pHandler->GetShutdownByRestartManager());
+
+			// no need to activate another tab or re-layout the remaining tabs
+			// if the application is being shut down by the restart manager.
+			pTabWnd->RemoveTab(iTab, bRecalcLayout);
 
 			if (pTabWnd->GetTabsNum() == 0)
 			{
@@ -777,8 +796,145 @@ void CMDIClientAreaWnd::AdjustMDIChildren(CMFCTabCtrl* pTabWnd)
 		if (pWnd != NULL)
 		{
 			pWnd->SetWindowPos(&wndTop, rectTabWnd.left, rectTabWnd.top, rectTabWnd.Width(), rectTabWnd.Height(), dwFlags);
+
+			CMDIChildWndEx* pChildWnd = DYNAMIC_DOWNCAST(CMDIChildWndEx, pWnd);
+			if (pChildWnd != NULL && pChildWnd->IsTaskbarTabsSupportEnabled() && pChildWnd->IsRegisteredWithTaskbarTabs())
+			{
+				CWinApp* pApp = AfxGetApp();
+				if (pApp != NULL)
+				{
+					CDataRecoveryHandler *pHandler = pApp->GetDataRecoveryHandler();
+					if ((pHandler == NULL) || (!pHandler->GetShutdownByRestartManager()))
+					{
+						pChildWnd->InvalidateIconicBitmaps();
+						pChildWnd->SetTaskbarTabOrder(NULL);
+					}
+				}
+			}
 		}
 	}
+}
+
+void CMDIClientAreaWnd::SetTaskbarTabOrder()
+{
+	for (POSITION pos = m_lstTabbedGroups.GetHeadPosition(); pos != NULL;)
+	{
+		CMFCTabCtrl* pNextTab = DYNAMIC_DOWNCAST(CMFCTabCtrl, m_lstTabbedGroups.GetNext(pos));
+		ASSERT_VALID(pNextTab);
+		
+		for (int i = 0; i < pNextTab->GetTabsNum(); i++)
+		{
+			CMDIChildWndEx* pChildWnd = DYNAMIC_DOWNCAST(CMDIChildWndEx, pNextTab->GetTabWnd(i));
+			ASSERT_VALID(pChildWnd);
+
+			if (pChildWnd->GetSafeHwnd() == NULL)
+			{
+				continue;
+			}
+			if (pChildWnd->IsTaskbarTabsSupportEnabled() && pChildWnd->IsRegisteredWithTaskbarTabs())
+			{
+				pChildWnd->SetTaskbarTabOrder(NULL);
+			}
+		}
+	}
+}
+
+LRESULT CMDIClientAreaWnd::OnActiveTabChanged(WPARAM wp, LPARAM lp)
+{
+	CWinApp* pApp = AfxGetApp();
+	if(pApp == NULL)
+	{
+		return 0;
+	}
+
+	ASSERT_VALID(pApp);
+	if (!afxGlobalData.bIsWindows7 || !m_bIsMDITabbedGroup || !pApp->IsTaskbarInteractionEnabled())
+	{
+		return 0;
+	}
+
+	CMFCTabCtrl* pTabWnd = (CMFCTabCtrl*)lp;
+	if (pTabWnd == NULL)
+	{
+		return 0;
+	}
+
+	ASSERT_VALID(pTabWnd);
+	int iTab = (int) wp;
+	CMDIChildWndEx* pActiveMDIChild = DYNAMIC_DOWNCAST(CMDIChildWndEx, pTabWnd->GetTabWnd(iTab));
+	if (pActiveMDIChild == NULL)
+	{
+		return 0;
+	}
+
+	ASSERT_VALID(pActiveMDIChild);
+	if (!pActiveMDIChild->IsRegisteredWithTaskbarTabs())
+	{
+		return 0;
+	}
+
+	CMDIChildWndEx* pNextMDIChild = FindNextRegisteredWithTaskbarMDIChild(pActiveMDIChild);
+	// if pNextMDIChild is NULL we insert at the end, because GetSafeHwnd() will return NULL
+	pActiveMDIChild->SetTaskbarTabOrder(pNextMDIChild);
+
+	return 1;
+}
+
+CMDIChildWndEx* CMDIClientAreaWnd::FindNextRegisteredWithTaskbarMDIChild(CMDIChildWndEx* pOrgWnd)
+{
+	ASSERT_VALID(pOrgWnd);
+
+	int iIndex = -1;
+	CMFCTabCtrl* pTabCtrl = FindTabWndByChild(pOrgWnd->GetSafeHwnd(), iIndex);
+
+	if (pTabCtrl == NULL)
+		return NULL;
+
+	ASSERT_VALID(pTabCtrl);
+
+	// find next registered child within this tabbed group
+	CMDIChildWndEx* pNextMDIChild = FindNextRegisteredWithTaskbarMDIChild(pTabCtrl, iIndex + 1);
+	if (pNextMDIChild == NULL)
+	{
+		// maybe in next tabbed group
+		while ((pTabCtrl = GetNextTabWnd(pTabCtrl, TRUE)) != NULL && pNextMDIChild == NULL)
+		{
+			ASSERT_VALID(pTabCtrl);
+			pNextMDIChild = FindNextRegisteredWithTaskbarMDIChild(pTabCtrl, 0);
+		}
+	}
+
+	return pNextMDIChild;
+}
+
+CMDIChildWndEx* CMDIClientAreaWnd::FindNextRegisteredWithTaskbarMDIChild(CMFCTabCtrl* pTabCtrl, int iStartFrom)
+{
+	ASSERT_VALID(pTabCtrl);
+
+	if (pTabCtrl == NULL)
+	{
+		return NULL;
+	}
+
+	if (iStartFrom < 0)
+		iStartFrom = 0;
+
+	for (int i = iStartFrom; i < pTabCtrl->GetTabsNum(); i++)
+	{
+		CMDIChildWndEx* pMDIChild = DYNAMIC_DOWNCAST(CMDIChildWndEx, pTabCtrl->GetTabWnd(i));
+		if (pMDIChild == NULL || pMDIChild->GetSafeHwnd() == NULL)
+		{
+			continue;
+		}
+
+		ASSERT_VALID(pMDIChild);
+		if (pMDIChild->IsRegisteredWithTaskbarTabs())
+		{
+			return pMDIChild;
+		}
+	}
+
+	return NULL;
 }
 
 void CMDIClientAreaWnd::SetActiveTab(HWND hwnd)
@@ -977,6 +1133,8 @@ void CMDIClientAreaWnd::UpdateTabs(BOOL bSetActiveTabVisible/* = FALSE*/)
 						m_wndTab.SetImageList(m_TabIcons.GetSafeHandle());
 					}
 				}
+
+				pMDIChild->UpdateTaskbarTabIcon(hIcon);
 			}
 		}
 		else
@@ -987,6 +1145,26 @@ void CMDIClientAreaWnd::UpdateTabs(BOOL bSetActiveTabVisible/* = FALSE*/)
 			while (m_TabIcons.GetImageCount() > 0)
 			{
 				m_TabIcons.Remove(0);
+			}
+
+			// set tab icons for taskbar tabs
+			if (pMDIChild != NULL && pMDIChild->IsTaskbarTabsSupportEnabled() && pMDIChild->IsRegisteredWithTaskbarTabs())
+			{
+				HICON hIcon = pMDIChild->GetFrameIcon();
+				if (hIcon == NULL)
+				{
+					CWnd* pTopLevel = GetTopLevelFrame();
+
+					if (pTopLevel != NULL)
+					{
+						hIcon = afxGlobalUtils.GetWndIcon(pTopLevel);
+					}
+				}
+
+				if (hIcon != NULL)
+				{
+					pMDIChild->UpdateTaskbarTabIcon(hIcon);
+				}
 			}
 		}
 
@@ -1194,6 +1372,11 @@ void CMDIClientAreaWnd::UpdateMDITabbedGroups(BOOL bSetActiveTabVisible)
 						// Icon was changed, update it:
 						pRelatedTabWnd->SetTabIcon(iTabIndex, iIcon);
 					}
+
+					if (pMDIChild->IsTaskbarTabsSupportEnabled() && pMDIChild->IsRegisteredWithTaskbarTabs())
+					{
+						pMDIChild->UpdateTaskbarTabIcon(hIcon);
+					}
 				}
 			}
 			else
@@ -1206,6 +1389,26 @@ void CMDIClientAreaWnd::UpdateMDITabbedGroups(BOOL bSetActiveTabVisible)
 				while (pImageList->GetImageCount() > 0)
 				{
 					pImageList->Remove(0);
+				}
+
+				// set tab icons for taskbar tabs
+				if (pMDIChild != NULL && pMDIChild->IsTaskbarTabsSupportEnabled() && pMDIChild->IsRegisteredWithTaskbarTabs())
+				{
+					HICON hIcon = pMDIChild->GetFrameIcon();
+					if (hIcon == NULL)
+					{
+						CWnd* pTopLevel = GetTopLevelFrame();
+
+						if (pTopLevel != NULL)
+						{
+							hIcon = afxGlobalUtils.GetWndIcon(pTopLevel);
+						}
+					}
+
+					if (hIcon != NULL)
+					{
+						pMDIChild->UpdateTaskbarTabIcon(hIcon);
+					}
 				}
 
 				bRecalcLayout = TRUE;
@@ -1796,25 +1999,28 @@ DWORD CMDIClientAreaWnd::GetMDITabsContextMenuAllowedItems()
 
 	return dwAllowedItems;
 }
-
-CMFCTabCtrl* CMDIClientAreaWnd::FindActiveTabWndByActiveChild()
+CMFCTabCtrl* CMDIClientAreaWnd::FindTabWndByChild(HWND hWndChild, int& iIndex)
 {
-	HWND hwndActive = (HWND) SendMessage(WM_MDIGETACTIVE, 0, 0);
-	if (hwndActive == NULL)
-	{
+	if (hWndChild == NULL)
 		return NULL;
-	}
 
 	for (POSITION pos = m_lstTabbedGroups.GetHeadPosition(); pos != NULL;)
 	{
 		CMFCTabCtrl* pNextTabWnd = DYNAMIC_DOWNCAST(CMFCTabCtrl, m_lstTabbedGroups.GetNext(pos));
 		ASSERT_VALID(pNextTabWnd);
-		if (pNextTabWnd->GetTabFromHwnd(hwndActive) >= 0)
+		iIndex = pNextTabWnd->GetTabFromHwnd(hWndChild);
+		if (iIndex >= 0)
 		{
 			return pNextTabWnd;
 		}
 	}
 	return NULL;
+}
+CMFCTabCtrl* CMDIClientAreaWnd::FindActiveTabWndByActiveChild()
+{
+	HWND hwndActive = (HWND) SendMessage(WM_MDIGETACTIVE, 0, 0);
+	int iIndex = -1;
+	return FindTabWndByChild(hwndActive, iIndex);
 }
 
 CMFCTabCtrl* CMDIClientAreaWnd::FindActiveTabWnd()
@@ -1850,22 +2056,28 @@ BOOL CMDIClientAreaWnd::IsMemberOfMDITabGroup(CWnd* pWnd)
 	return(m_lstTabbedGroups.Find(pWnd) != NULL);
 }
 
-CMFCTabCtrl* CMDIClientAreaWnd::GetNextTabWnd(CMFCTabCtrl* pOrgTabWnd, BOOL /*bWithoutAsserts*/)
+CMFCTabCtrl* CMDIClientAreaWnd::GetNextTabWnd(CMFCTabCtrl* pOrgTabWnd, BOOL bWithoutAsserts)
 {
 	POSITION pos = m_lstTabbedGroups.Find(pOrgTabWnd);
 
 	if (pos == NULL)
 	{
-		ASSERT(FALSE);
-		TRACE0("Trying to resize a member of tabbed group which is not in the list of groups.\n");
+		if (!bWithoutAsserts)
+		{
+			ASSERT(FALSE);
+			TRACE0("Trying to resize a member of tabbed group which is not in the list of groups.\n");
+		}
 		return NULL;
 	}
 
 	m_lstTabbedGroups.GetNext(pos);
 	if (pos == NULL)
 	{
-		ASSERT(FALSE);
-		TRACE0("Trying to resize a last member of tabbed group, which should not be resizable.\n");
+		if (!bWithoutAsserts)
+		{
+			ASSERT(FALSE);
+			TRACE0("Trying to resize a last member of tabbed group, which should not be resizable.\n");
+		}
 		return NULL;
 	}
 
@@ -1873,8 +2085,11 @@ CMFCTabCtrl* CMDIClientAreaWnd::GetNextTabWnd(CMFCTabCtrl* pOrgTabWnd, BOOL /*bW
 
 	if (pNextTabWnd == NULL)
 	{
-		ASSERT(FALSE);
-		TRACE0("Next member of tabbed group is NULL, or not a tab window.\n");
+		if (!bWithoutAsserts)
+		{
+			ASSERT(FALSE);
+			TRACE0("Next member of tabbed group is NULL, or not a tab window.\n");
+		}
 		return NULL;
 	}
 
@@ -1939,6 +2154,17 @@ void CMDIClientAreaWnd::MDITabMoveToNextGroup(BOOL bNext)
 
 void CMDIClientAreaWnd::MDITabNewGroup(BOOL bVert)
 {
+	// if m_groupAlignment has already been set (e.g. it's not GROUP_NO_ALIGN) the bVert parameter should be ignored and
+	// the new group should be created according to the existing alignment (because we do not support nested tabbed groups)
+	if (m_groupAlignment == GROUP_VERT_ALIGN)
+	{
+		bVert = TRUE;
+	}
+	else if (m_groupAlignment == GROUP_HORZ_ALIGN)
+	{
+		bVert = FALSE;
+	}
+
 	CMFCTabCtrl* pActiveWnd = FindActiveTabWndByActiveChild();
 	if (pActiveWnd == NULL)
 	{

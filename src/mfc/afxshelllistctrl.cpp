@@ -11,6 +11,8 @@
 #include "stdafx.h"
 #include "afxshelllistctrl.h"
 #include "afxshelltreectrl.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -48,6 +50,7 @@ BEGIN_MESSAGE_MAP(CMFCShellListCtrl, CMFCListCtrl)
 	ON_NOTIFY_REFLECT(LVN_DELETEITEM, &CMFCShellListCtrl::OnDeleteitem)
 	ON_NOTIFY_REFLECT(NM_DBLCLK, &CMFCShellListCtrl::OnDblClk)
 	ON_NOTIFY_REFLECT(NM_RETURN, &CMFCShellListCtrl::OnReturn)
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCShellListCtrl::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -265,10 +268,10 @@ HRESULT CMFCShellListCtrl::EnumObjects(LPSHELLFOLDER pParentFolder, LPITEMIDLIST
 	ASSERT_VALID(this);
 	ASSERT_VALID(afxShellManager);
 
-	LPENUMIDLIST pEnum;
+	LPENUMIDLIST pEnum = NULL;
 	HRESULT hRes = pParentFolder->EnumObjects(NULL, m_nTypes, &pEnum);
 
-	if (SUCCEEDED(hRes))
+	if (SUCCEEDED(hRes) && pEnum != NULL)
 	{
 		LPITEMIDLIST pidlTemp;
 		DWORD dwFetched = 1;
@@ -706,6 +709,13 @@ int CMFCShellListCtrl::OnCompareItems(LPARAM lParam1, LPARAM lParam2, int iColum
 
 void CMFCShellListCtrl::OnSetColumns()
 {
+	// Delete all columns
+	int nColumnCount = GetHeaderCtrl().GetItemCount();
+	for (int i = 0; i < nColumnCount; i++)
+	{
+		DeleteColumn(0);
+	}
+
 	const TCHAR* szName [] = {
 		_T("Name"), _T("Size"), _T("Type"), _T("Modified"), };
 
@@ -1065,5 +1075,25 @@ LRESULT CMFCShellListCtrl::WindowProc(UINT message, WPARAM wParam, LPARAM lParam
 	return CMFCListCtrl::WindowProc(message, wParam, lParam);
 }
 
+LRESULT CMFCShellListCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
 
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
 
+	CTagManager tagManager(strDst);
+
+	CString strEnableShellContextMenu;
+	if (tagManager.ExcludeTag(PS_MFCShellListCtrl_EnableShellContextMenu, strEnableShellContextMenu))
+	{
+		if (!strEnableShellContextMenu.IsEmpty())
+		{
+			strEnableShellContextMenu.MakeUpper();
+			EnableShellContextMenu(strEnableShellContextMenu == PS_True);
+		}
+	}
+
+	return 0;
+}

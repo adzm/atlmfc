@@ -54,7 +54,7 @@ class CImage;
 class CImageDC
 {
 public:
-	CImageDC( const CImage& image ) throw( ... );
+	CImageDC(_In_ const CImage& image) throw( ... );
 	~CImageDC() throw();
 
 	operator HDC() const throw();
@@ -74,7 +74,7 @@ private:
 		~CDCCache() throw();
 
 		HDC GetDC() throw();
-		void ReleaseDC( HDC ) throw();
+		void ReleaseDC(_In_ HDC) throw();
 
 	private:
 		HDC m_ahDCs[CIMAGE_DC_CACHE_SIZE];
@@ -95,6 +95,7 @@ private:
 		ULONG_PTR m_dwToken;
 		CRITICAL_SECTION m_sect;
 		LONG m_nCImageObjects;
+		DWORD m_dwLastError;
 	};
 
 public:
@@ -126,104 +127,288 @@ public:
 
 	operator HBITMAP() const throw();
 #if WINVER >= 0x0500
-	BOOL AlphaBlend( HDC hDestDC, int xDest, int yDest, BYTE bSrcAlpha = 0xff, 
-		BYTE bBlendOp = AC_SRC_OVER ) const throw();
-	BOOL AlphaBlend( HDC hDestDC, const POINT& pointDest, BYTE bSrcAlpha = 0xff, 
-		BYTE bBlendOp = AC_SRC_OVER ) const throw();
-	BOOL AlphaBlend( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight, 
-		BYTE bSrcAlpha = 0xff, BYTE bBlendOp = AC_SRC_OVER ) const throw();
-	BOOL AlphaBlend( HDC hDestDC, const RECT& rectDest, const RECT& rectSrc, 
-		BYTE bSrcAlpha = 0xff, BYTE bBlendOp = AC_SRC_OVER ) const throw();
+	BOOL AlphaBlend(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ BYTE bSrcAlpha = 0xff,
+		_In_ BYTE bBlendOp = AC_SRC_OVER) const throw();
+	BOOL AlphaBlend(
+		_In_ HDC hDestDC,
+		_In_ const POINT& pointDest,
+		_In_ BYTE bSrcAlpha = 0xff,
+		_In_ BYTE bBlendOp = AC_SRC_OVER) const throw();
+	BOOL AlphaBlend(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ int xSrc,
+		_In_ int ySrc,
+		_In_ int nSrcWidth,
+		_In_ int nSrcHeight,
+		_In_ BYTE bSrcAlpha = 0xff,
+		_In_ BYTE bBlendOp = AC_SRC_OVER) const throw();
+	BOOL AlphaBlend(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ const RECT& rectSrc,
+		_In_ BYTE bSrcAlpha = 0xff,
+		_In_ BYTE bBlendOp = AC_SRC_OVER) const throw();
 #endif  // WINVER >= 0x0500
-	void Attach( HBITMAP hBitmap, DIBOrientation eOrientation = DIBOR_DEFAULT ) throw();
-	BOOL BitBlt( HDC hDestDC, int xDest, int yDest, DWORD dwROP = SRCCOPY ) const throw();
-	BOOL BitBlt( HDC hDestDC, const POINT& pointDest, DWORD dwROP = SRCCOPY ) const throw();
-	BOOL BitBlt( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight, int xSrc, int ySrc, DWORD dwROP = SRCCOPY ) const throw();
-	BOOL BitBlt( HDC hDestDC, const RECT& rectDest, const POINT& pointSrc, 
-		DWORD dwROP = SRCCOPY ) const throw();
-	BOOL Create( int nWidth, int nHeight, int nBPP, DWORD dwFlags = 0 ) throw();
-	BOOL CreateEx( int nWidth, int nHeight, int nBPP, DWORD eCompression, 
-		const DWORD* pdwBitmasks = NULL, DWORD dwFlags = 0 ) throw();
+	void Attach(
+		_In_ HBITMAP hBitmap,
+		_In_ DIBOrientation eOrientation = DIBOR_DEFAULT) throw();
+	BOOL BitBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL BitBlt(
+		_In_ HDC hDestDC,
+		_In_ const POINT& pointDest,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL BitBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ int xSrc,
+		_In_ int ySrc,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL BitBlt(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ const POINT& pointSrc,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL Create(
+		_In_ int nWidth,
+		_In_ int nHeight,
+		_In_ int nBPP,
+		_In_ DWORD dwFlags = 0) throw();
+	BOOL CreateEx(
+		_In_ int nWidth,
+		_In_ int nHeight,
+		_In_ int nBPP,
+		_In_ DWORD eCompression,
+		_In_opt_count_c_(3) const DWORD* pdwBitmasks = NULL,
+		_In_ DWORD dwFlags = 0) throw();
 	void Destroy() throw();
 	HBITMAP Detach() throw();
-	BOOL Draw( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight ) const throw();
-	BOOL Draw( HDC hDestDC, const RECT& rectDest, const RECT& rectSrc ) const throw();
-	BOOL Draw( HDC hDestDC, int xDest, int yDest ) const throw();
-	BOOL Draw( HDC hDestDC, const POINT& pointDest ) const throw();
-	BOOL Draw( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight ) const throw();
-	BOOL Draw( HDC hDestDC, const RECT& rectDest ) const throw();
+	BOOL Draw(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ int xSrc,
+		_In_ int ySrc,
+		_In_ int nSrcWidth,
+		_In_ int nSrcHeight) const throw();
+	BOOL Draw(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ const RECT& rectSrc) const throw();
+	BOOL Draw(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest) const throw();
+	BOOL Draw(
+		_In_ HDC hDestDC,
+		_In_ const POINT& pointDest) const throw();
+	BOOL Draw(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight ) const throw();
+	BOOL Draw(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest) const throw();
+	BOOL Draw(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ Gdiplus::InterpolationMode interpolationMode) const throw();
 	const void* GetBits() const throw();
 	void* GetBits() throw();
 	int GetBPP() const throw();
-	void GetColorTable( UINT iFirstColor, UINT nColors, RGBQUAD* prgbColors ) const throw();
+	void GetColorTable(
+		_In_ UINT iFirstColor,
+		_In_ UINT nColors,
+		_In_ RGBQUAD* prgbColors) const throw();
 	HDC GetDC() const throw();
-	static HRESULT GetExporterFilterString( CSimpleString& strExporters, 
-		CSimpleArray< GUID >& aguidFileTypes, LPCTSTR pszAllFilesDescription = NULL, 
-		DWORD dwExclude = excludeDefaultSave, TCHAR chSeparator = _T( '|' ) );
-	static HRESULT GetImporterFilterString( CSimpleString& strImporters, 
-		CSimpleArray< GUID >& aguidFileTypes, LPCTSTR pszAllFilesDescription = NULL, 
-		DWORD dwExclude = excludeDefaultLoad, TCHAR chSeparator = _T( '|' ) );
+	static HRESULT GetExporterFilterString(
+		_Inout_ CSimpleString& strExporters,
+		_Inout_ CSimpleArray< GUID >& aguidFileTypes,
+		_In_opt_z_ LPCTSTR pszAllFilesDescription = NULL,
+		_In_ DWORD dwExclude = excludeDefaultSave,
+		_In_ TCHAR chSeparator = _T( '|' ) );
+	static HRESULT GetImporterFilterString(
+		_Inout_ CSimpleString& strImporters,
+		_Inout_ CSimpleArray< GUID >& aguidFileTypes,
+		_In_opt_z_ LPCTSTR pszAllFilesDescription = NULL,
+		_In_ DWORD dwExclude = excludeDefaultLoad,
+		_In_ TCHAR chSeparator = _T( '|' ) );
 	int GetHeight() const throw();
 	int GetMaxColorTableEntries() const throw();
 	int GetPitch() const throw();
-	const void* GetPixelAddress( int x, int y ) const throw();
-	void* GetPixelAddress( int x, int y ) throw();
-	COLORREF GetPixel( int x, int y ) const throw();
+	const void* GetPixelAddress(
+		_In_ int x,
+		_In_ int y) const throw();
+	void* GetPixelAddress(
+		_In_ int x,
+		_In_ int y) throw();
+	COLORREF GetPixel(
+		_In_ int x,
+		_In_ int y) const throw();
 	LONG GetTransparentColor() const throw();
 	int GetWidth() const throw();
 	bool IsDIBSection() const throw();
 	bool IsIndexed() const throw();
 	bool IsNull() const throw();
-	HRESULT Load( LPCTSTR pszFileName ) throw();
-	HRESULT Load( IStream* pStream ) throw();
-	void LoadFromResource( HINSTANCE hInstance, LPCTSTR pszResourceName ) throw();
-	void LoadFromResource( HINSTANCE hInstance, UINT nIDResource ) throw();
-	BOOL MaskBlt( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight, int xSrc, int ySrc, HBITMAP hbmMask, int xMask, 
-		int yMask, DWORD dwROP = SRCCOPY ) const throw();
-	BOOL MaskBlt( HDC hDestDC, const RECT& rectDest, const POINT& pointSrc, 
-		HBITMAP hbmMask, const POINT& pointMask, DWORD dwROP = SRCCOPY ) const throw();
-	BOOL MaskBlt( HDC hDestDC, int xDest, int yDest, HBITMAP hbmMask, 
-		DWORD dwROP = SRCCOPY ) const throw();
-	BOOL MaskBlt( HDC hDestDC, const POINT& pointDest, HBITMAP hbmMask, 
-		DWORD dwROP = SRCCOPY ) const throw();
-	BOOL PlgBlt( HDC hDestDC, const POINT* pPoints, HBITMAP hbmMask = NULL ) const throw();
-	BOOL PlgBlt( HDC hDestDC, const POINT* pPoints, int xSrc, int ySrc, 
-		int nSrcWidth, int nSrcHeight, HBITMAP hbmMask = NULL, int xMask = 0, 
-		int yMask = 0 ) const throw();
-	BOOL PlgBlt( HDC hDestDC, const POINT* pPoints, const RECT& rectSrc, 
-		HBITMAP hbmMask = NULL, const POINT& pointMask = CPoint( 0, 0 ) ) const throw();
+	HRESULT Load(_In_z_ LPCTSTR pszFileName) throw();
+	HRESULT Load(_Inout_ IStream* pStream) throw();
+	void LoadFromResource(
+		_In_opt_ HINSTANCE hInstance,
+		_In_z_ LPCTSTR pszResourceName) throw();
+	void LoadFromResource(
+		_In_opt_ HINSTANCE hInstance,
+		_In_ UINT nIDResource) throw();
+	BOOL MaskBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ int xSrc,
+		_In_ int ySrc,
+		_In_ HBITMAP hbmMask,
+		_In_ int xMask,
+		_In_ int yMask,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL MaskBlt(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ const POINT& pointSrc,
+		_In_ HBITMAP hbmMask,
+		_In_ const POINT& pointMask,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL MaskBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ HBITMAP hbmMask,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL MaskBlt(
+		_In_ HDC hDestDC,
+		_In_ const POINT& pointDest,
+		_In_ HBITMAP hbmMask,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL PlgBlt(
+		_In_ HDC hDestDC,
+		_In_count_c_(3) const POINT* pPoints,
+		_In_opt_ HBITMAP hbmMask = NULL) const throw();
+	BOOL PlgBlt(
+		_In_ HDC hDestDC,
+		_In_count_c_(3) const POINT* pPoints,
+		_In_ int xSrc,
+		_In_ int ySrc,
+		_In_ int nSrcWidth,
+		_In_ int nSrcHeight,
+		_In_opt_ HBITMAP hbmMask = NULL,
+		_In_ int xMask = 0,
+		_In_ int yMask = 0) const throw();
+	BOOL PlgBlt(
+		_In_ HDC hDestDC,
+		_In_count_c_(3) const POINT* pPoints,
+		_In_ const RECT& rectSrc,
+		_In_opt_ HBITMAP hbmMask = NULL,
+		_In_ const POINT& pointMask = CPoint( 0, 0 )) const throw();
 	void ReleaseDC() const throw();
-	HRESULT Save( IStream* pStream, REFGUID guidFileType ) const throw();
-	HRESULT Save( LPCTSTR pszFileName, REFGUID guidFileType = GUID_NULL ) const throw();
-	void SetColorTable( UINT iFirstColor, UINT nColors, 
-		const RGBQUAD* prgbColors ) throw();
-	void SetPixel( int x, int y, COLORREF color ) throw();
-	void SetPixelIndexed( int x, int y, int iIndex ) throw();
-	void SetPixelRGB( int x, int y, BYTE r, BYTE g, BYTE b ) throw();
-	LONG SetTransparentColor( LONG iTransparentColor ) throw();
-	BOOL StretchBlt( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight, DWORD dwROP = SRCCOPY ) const throw();
-	BOOL StretchBlt( HDC hDestDC, const RECT& rectDest, DWORD dwROP = SRCCOPY ) const throw();
-	BOOL StretchBlt( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight,
-		DWORD dwROP = SRCCOPY ) const throw();
-	BOOL StretchBlt( HDC hDestDC, const RECT& rectDest, const RECT& rectSrc,
-		DWORD dwROP = SRCCOPY ) const throw();
+	HRESULT Save(
+		_Inout_ IStream* pStream,
+		_In_ REFGUID guidFileType) const throw();
+	HRESULT Save(
+		_In_z_ LPCTSTR pszFileName,
+		_In_ REFGUID guidFileType = GUID_NULL) const throw();
+	void SetColorTable(
+		_In_ UINT iFirstColor,
+		_In_ UINT nColors,
+		_In_ const RGBQUAD* prgbColors) throw();
+	void SetPixel(
+		_In_ int x,
+		_In_ int y,
+		_In_ COLORREF color) throw();
+	void SetPixelIndexed(
+		_In_ int x,
+		_In_ int y,
+		_In_ int iIndex) throw();
+	void SetPixelRGB(
+		_In_ int x,
+		_In_ int y,
+		_In_ BYTE r,
+		_In_ BYTE g,
+		_In_ BYTE b) throw();
+	void SetHasAlphaChannel(_In_ bool bHasAlphaChannel) throw();
+	LONG SetTransparentColor(_In_ LONG iTransparentColor) throw();
+	COLORREF SetTransparentColor(_In_ COLORREF clrTransparentColor) throw();
+	BOOL StretchBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL StretchBlt(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL StretchBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ int xSrc,
+		_In_ int ySrc,
+		_In_ int nSrcWidth,
+		_In_ int nSrcHeight,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
+	BOOL StretchBlt(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ const RECT& rectSrc,
+		_In_ DWORD dwROP = SRCCOPY) const throw();
 #if WINVER >= 0x0500
-	BOOL TransparentBlt( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-		int nDestHeight, UINT crTransparent = CLR_INVALID ) const throw();
-	BOOL TransparentBlt( HDC hDestDC, const RECT& rectDest, 
-		UINT crTransparent = CLR_INVALID ) const throw();
-	BOOL TransparentBlt( HDC hDestDC, int xDest, int yDest, int nDestWidth,
-		int nDestHeight, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight,
-		UINT crTransparent = CLR_INVALID ) const throw();
-	BOOL TransparentBlt( HDC hDestDC, const RECT& rectDest, const RECT& rectSrc,
-		UINT crTransparent = CLR_INVALID ) const throw();
+	BOOL TransparentBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ UINT crTransparent = CLR_INVALID) const throw();
+	BOOL TransparentBlt(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ UINT crTransparent = CLR_INVALID) const throw();
+	BOOL TransparentBlt(
+		_In_ HDC hDestDC,
+		_In_ int xDest,
+		_In_ int yDest,
+		_In_ int nDestWidth,
+		_In_ int nDestHeight,
+		_In_ int xSrc,
+		_In_ int ySrc,
+		_In_ int nSrcWidth,
+		_In_ int nSrcHeight,
+		_In_ UINT crTransparent = CLR_INVALID) const throw();
+	BOOL TransparentBlt(
+		_In_ HDC hDestDC,
+		_In_ const RECT& rectDest,
+		_In_ const RECT& rectSrc,
+		_In_ UINT crTransparent = CLR_INVALID) const throw();
 #endif  // WINVER >= 0x0500
 
 	static BOOL IsTransparencySupported() throw();
@@ -238,30 +423,50 @@ private:
 	bool m_bIsDIBSection;
 	bool m_bHasAlphaChannel;
 	LONG m_iTransparentColor;
+	COLORREF m_clrTransparentColor;
 
 	static CInitGDIPlus s_initGDIPlus;
 
 public:
-	inline static void ReleaseGDIPlus() { s_initGDIPlus.ReleaseGDIPlus(); }
+	inline static void ReleaseGDIPlus()
+	{
+		s_initGDIPlus.ReleaseGDIPlus();
+	}
 
 
 // Implementation
 private:
-	static CLSID FindCodecForExtension( LPCTSTR pszExtension, const Gdiplus::ImageCodecInfo* pCodecs, UINT nCodecs );
-	static CLSID FindCodecForFileType( REFGUID guidFileType, const Gdiplus::ImageCodecInfo* pCodecs, UINT nCodecs );
-	static void BuildCodecFilterString( const Gdiplus::ImageCodecInfo* pCodecs, UINT nCodecs, 
-		CSimpleString& strFilter, CSimpleArray< GUID >& aguidFileTypes, LPCTSTR pszAllFilesDescription, DWORD dwExclude, TCHAR chSeparator );
-	static bool ShouldExcludeFormat( REFGUID guidFileType, DWORD dwExclude ) throw();
-	void UpdateBitmapInfo( DIBOrientation eOrientation );
-	HRESULT CreateFromGdiplusBitmap( Gdiplus::Bitmap& bmSrc ) throw();
+	static CLSID FindCodecForExtension(
+		_In_z_ LPCTSTR pszExtension,
+		_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+		_In_ UINT nCodecs);
+	static CLSID FindCodecForFileType(
+		_In_ REFGUID guidFileType,
+		_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+		_In_ UINT nCodecs);
+	static void BuildCodecFilterString(
+		_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+		_In_ UINT nCodecs,
+		_Inout_ CSimpleString& strFilter,
+		_Inout_ CSimpleArray< GUID >& aguidFileTypes,
+		_In_opt_z_ LPCTSTR pszAllFilesDescription,
+		_In_ DWORD dwExclude,
+		_In_ TCHAR chSeparator);
+
+	static bool ShouldExcludeFormat(
+		_In_ REFGUID guidFileType,
+		_In_ DWORD dwExclude) throw();
+	void UpdateBitmapInfo(_In_ DIBOrientation eOrientation);
+	HRESULT CreateFromGdiplusBitmap(_Inout_ Gdiplus::Bitmap& bmSrc) throw();
 
 	static bool InitGDIPlus() throw();
 
-	static int ComputePitch( int nWidth, int nBPP )
+	static int ComputePitch(
+		_In_ int nWidth,
+		_In_ int nBPP)
 	{
 		return( (((nWidth*nBPP)+31)/32)*4 );
 	}
-	static void GenerateHalftonePalette( LPRGBQUAD prgbPalette );
 	COLORREF GetTransparentRGB() const;
 
 private:
@@ -272,7 +477,7 @@ private:
 	static CDCCache s_cache;
 };
 
-inline CImageDC::CImageDC( const CImage& image ) throw( ... ) :
+inline CImageDC::CImageDC(_In_ const CImage& image) throw( ... ) :
 	m_image( image ),
 	m_hDC( image.GetDC() )
 {
@@ -293,15 +498,11 @@ inline CImageDC::operator HDC() const throw()
 }
 
 inline CImage::CInitGDIPlus::CInitGDIPlus() throw() :
-	m_dwToken( 0 ), m_nCImageObjects( 0 )
+	m_dwToken( 0 ), m_nCImageObjects( 0 ), m_dwLastError(S_OK)
 {
-	__try
+	if (!InitializeCriticalSectionAndSpinCount(&m_sect, 0))
 	{
-		InitializeCriticalSection(&m_sect);
-	}
-	__except( STATUS_NO_MEMORY == GetExceptionCode() )
-	{
-		AtlThrow( E_OUTOFMEMORY );
+		m_dwLastError = HRESULT_FROM_WIN32(GetLastError());
 	}
 }
 
@@ -313,8 +514,14 @@ inline CImage::CInitGDIPlus::~CInitGDIPlus() throw()
 
 inline bool CImage::CInitGDIPlus::Init() throw()
 {
+	if (m_dwLastError != S_OK)
+	{
+		return false;
+	}
+
 	EnterCriticalSection(&m_sect);
 	bool fRet = true;
+
 	if( m_dwToken == 0 )
 	{
 		Gdiplus::GdiplusStartupInput input;
@@ -394,7 +601,7 @@ inline HDC CImage::CDCCache::GetDC() throw()
 	return( hDC );
 }
 
-inline void CImage::CDCCache::ReleaseDC( HDC hDC ) throw()
+inline void CImage::CDCCache::ReleaseDC(_In_ HDC hDC) throw()
 {
 	for( int iDC = 0; iDC < CIMAGE_DC_CACHE_SIZE; iDC++ )
 	{
@@ -427,6 +634,7 @@ inline CImage::CImage() throw() :
 	m_nPitch( 0 ),
 	m_nBPP( 0 ),
 	m_iTransparentColor( -1 ),
+	m_clrTransparentColor( (COLORREF)-1 ),
 	m_bHasAlphaChannel( false ),
 	m_bIsDIBSection( false )
 {
@@ -445,23 +653,39 @@ inline CImage::operator HBITMAP() const throw()
 }
 
 #if WINVER >= 0x0500
-inline BOOL CImage::AlphaBlend( HDC hDestDC, int xDest, int yDest, 
-	BYTE bSrcAlpha, BYTE bBlendOp ) const throw()
+inline BOOL CImage::AlphaBlend(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ BYTE bSrcAlpha,
+	_In_ BYTE bBlendOp) const throw()
 {
-	return( AlphaBlend( hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0, 
-		m_nWidth, m_nHeight, bSrcAlpha, bBlendOp ) );
+	return AlphaBlend( hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0,
+		m_nWidth, m_nHeight, bSrcAlpha, bBlendOp );
 }
 
-inline BOOL CImage::AlphaBlend( HDC hDestDC, const POINT& pointDest, 
-   BYTE bSrcAlpha, BYTE bBlendOp ) const throw()
+inline BOOL CImage::AlphaBlend(
+	_In_ HDC hDestDC,
+	_In_ const POINT& pointDest,
+    _In_ BYTE bSrcAlpha,
+	_In_ BYTE bBlendOp) const throw()
 {
-	return( AlphaBlend( hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight, 
-		0, 0, m_nWidth, m_nHeight, bSrcAlpha, bBlendOp ) );
+	return AlphaBlend( hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight,
+		0, 0, m_nWidth, m_nHeight, bSrcAlpha, bBlendOp );
 }
 
-inline BOOL CImage::AlphaBlend( HDC hDestDC, int xDest, int yDest, 
-	int nDestWidth, int nDestHeight, int xSrc, int ySrc, int nSrcWidth, 
-	int nSrcHeight, BYTE bSrcAlpha, BYTE bBlendOp ) const throw()
+inline BOOL CImage::AlphaBlend(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight,
+	_In_ int xSrc,
+	_In_ int ySrc,
+	_In_ int nSrcWidth,
+	_In_ int nSrcHeight,
+	_In_ BYTE bSrcAlpha,
+	_In_ BYTE bBlendOp) const throw()
 {
 	BLENDFUNCTION blend;
 	BOOL bResult;
@@ -480,7 +704,7 @@ inline BOOL CImage::AlphaBlend( HDC hDestDC, int xDest, int yDest,
 
 	GetDC();
 
-	bResult = ::AlphaBlend( hDestDC, xDest, yDest, nDestWidth, nDestHeight, m_hDC, 
+	bResult = ::AlphaBlend( hDestDC, xDest, yDest, nDestWidth, nDestHeight, m_hDC,
 		xSrc, ySrc, nSrcWidth, nSrcHeight, blend );
 
 	ReleaseDC();
@@ -488,70 +712,99 @@ inline BOOL CImage::AlphaBlend( HDC hDestDC, int xDest, int yDest,
 	return( bResult );
 }
 
-inline BOOL CImage::AlphaBlend( HDC hDestDC, const RECT& rectDest, 
-	const RECT& rectSrc, BYTE bSrcAlpha, BYTE bBlendOp ) const throw()
+inline BOOL CImage::AlphaBlend(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ const RECT& rectSrc,
+	_In_ BYTE bSrcAlpha,
+	_In_ BYTE bBlendOp) const throw()
 {
-	return( AlphaBlend( hDestDC, rectDest.left, rectDest.top, rectDest.right-
-		rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left, rectSrc.top, 
-		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top, bSrcAlpha, 
-		bBlendOp ) );
+	return AlphaBlend(hDestDC, rectDest.left, rectDest.top, rectDest.right-
+		rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left, rectSrc.top,
+		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top, bSrcAlpha,
+		bBlendOp);
 }
 #endif  // WINVER >= 0x0500
 
-inline void CImage::Attach( HBITMAP hBitmap, DIBOrientation eOrientation ) throw()
+inline void CImage::Attach(
+	_In_ HBITMAP hBitmap,
+	_In_ DIBOrientation eOrientation) throw()
 {
 	ATLASSUME( m_hBitmap == NULL );
 	ATLASSERT( hBitmap != NULL );
 
 	m_hBitmap = hBitmap;
 
-	UpdateBitmapInfo( eOrientation );
+	UpdateBitmapInfo(eOrientation);
 }
 
-inline BOOL CImage::BitBlt( HDC hDestDC, int xDest, int yDest, DWORD dwROP ) const throw()
+inline BOOL CImage::BitBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ DWORD dwROP) const throw()
 {
-	return( BitBlt( hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0, dwROP ) );
+	return BitBlt(hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0, dwROP);
 }
 
-inline BOOL CImage::BitBlt( HDC hDestDC, const POINT& pointDest, DWORD dwROP ) const throw()
+inline BOOL CImage::BitBlt(
+	_In_ HDC hDestDC,
+	_In_ const POINT& pointDest,
+	_In_ DWORD dwROP) const throw()
 {
-	return( BitBlt( hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight,
-		0, 0, dwROP ) );
+	return BitBlt(hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight, 0, 0, dwROP);
 }
 
-inline BOOL CImage::BitBlt( HDC hDestDC, int xDest, int yDest, int nDestWidth, 
-	int nDestHeight, int xSrc, int ySrc, DWORD dwROP ) const throw()
+inline BOOL CImage::BitBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight,
+	_In_ int xSrc,
+	_In_ int ySrc,
+	_In_ DWORD dwROP) const throw()
 {
-	BOOL bResult;
-
 	ATLASSUME( m_hBitmap != NULL );
 	ATLENSURE_RETURN_VAL( hDestDC != NULL, FALSE );
 
 	GetDC();
 
-	bResult = ::BitBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, m_hDC, 
+	BOOL bResult = ::BitBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, m_hDC,
 		xSrc, ySrc, dwROP );
 
 	ReleaseDC();
 
-	return( bResult );
+	return bResult;
 }
 
-inline BOOL CImage::BitBlt( HDC hDestDC, const RECT& rectDest, 
-	const POINT& pointSrc, DWORD dwROP ) const throw()
+inline BOOL CImage::BitBlt(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ const POINT& pointSrc,
+	_In_ DWORD dwROP) const throw()
 {
-	return( BitBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
-		rectDest.left, rectDest.bottom-rectDest.top, pointSrc.x, pointSrc.y, 
-		dwROP ) );
+	return BitBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
+		rectDest.left, rectDest.bottom-rectDest.top, pointSrc.x, pointSrc.y,
+		dwROP );
 }
 
-inline BOOL CImage::Create( int nWidth, int nHeight, int nBPP, DWORD dwFlags ) throw()
+inline BOOL CImage::Create(
+	_In_ int nWidth,
+	_In_ int nHeight,
+	_In_ int nBPP,
+	_In_ DWORD dwFlags) throw()
 {
 	return( CreateEx( nWidth, nHeight, nBPP, BI_RGB, NULL, dwFlags ) );
 }
 
-inline BOOL CImage::CreateEx( int nWidth, int nHeight, int nBPP, DWORD eCompression, 
-	const DWORD* pdwBitfields, DWORD dwFlags ) throw()
+inline BOOL CImage::CreateEx(
+	_In_ int nWidth,
+	_In_ int nHeight,
+	_In_ int nBPP,
+	_In_ DWORD eCompression,
+	_In_opt_count_c_(3) const DWORD* pdwBitfields,
+	_In_ DWORD dwFlags) throw()
 {
 	USES_ATL_SAFE_ALLOCA;
 	LPBITMAPINFO pbmi;
@@ -562,7 +815,7 @@ inline BOOL CImage::CreateEx( int nWidth, int nHeight, int nBPP, DWORD eCompress
 	{
 		ATLASSERT( (nBPP == 32) && (eCompression == BI_RGB) );
 	}
-	
+
 	pbmi = (LPBITMAPINFO)_ATL_SAFE_ALLOCA(sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*256, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
 	if( pbmi == NULL )
 		return FALSE;
@@ -580,17 +833,17 @@ inline BOOL CImage::CreateEx( int nWidth, int nHeight, int nBPP, DWORD eCompress
 #pragma warning(push)
 #pragma warning(disable:4068) //Disable unknown pragma warning that prefast pragma causes.
 #pragma prefast(push)
-#pragma prefast(disable:203, "no buffer overrun here, buffer was alocated properly")	
+#pragma prefast(disable:203, "no buffer overrun here, buffer was alocated properly")
 		memset( pbmi->bmiColors, 0, 256*sizeof( RGBQUAD ) );
 #pragma prefast(pop)
 #pragma warning(pop)
 	}
-	
-	else 
+
+	else
 	{
 		if( eCompression == BI_BITFIELDS )
 		{
-			ATLASSERT( pdwBitfields != NULL );
+			ATLASSUME( pdwBitfields != NULL );
 			Checked::memcpy_s(pbmi->bmiColors, 3*sizeof( DWORD ), pdwBitfields, 3*sizeof( DWORD ));
 		}
 	}
@@ -638,43 +891,67 @@ inline HBITMAP CImage::Detach() throw()
 	m_nBPP = 0;
 	m_nPitch = 0;
 	m_iTransparentColor = -1;
+	m_clrTransparentColor = (COLORREF)-1;
 	m_bHasAlphaChannel = false;
 	m_bIsDIBSection = false;
 
 	return( hBitmap );
 }
 
-inline BOOL CImage::Draw( HDC hDestDC, const RECT& rectDest ) const throw()
+inline BOOL CImage::Draw(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest) const throw()
 {
-	return( Draw( hDestDC, rectDest.left, rectDest.top, rectDest.right-
-		rectDest.left, rectDest.bottom-rectDest.top, 0, 0, m_nWidth, 
-		m_nHeight ) );
+	return Draw( hDestDC, rectDest.left, rectDest.top, rectDest.right-
+		rectDest.left, rectDest.bottom-rectDest.top, 0, 0, m_nWidth,
+		m_nHeight );
 }
 
-inline BOOL CImage::Draw( HDC hDestDC, int xDest, int yDest, int nDestWidth, int nDestHeight ) const throw()
+inline BOOL CImage::Draw(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight) const throw()
 {
-	return( Draw( hDestDC, xDest, yDest, nDestWidth, nDestHeight, 0, 0, m_nWidth, m_nHeight ) );
+	return Draw(hDestDC, xDest, yDest, nDestWidth, nDestHeight, 0, 0, m_nWidth, m_nHeight);
 }
 
-inline BOOL CImage::Draw( HDC hDestDC, const POINT& pointDest ) const throw()
+inline BOOL CImage::Draw(
+	_In_ HDC hDestDC,
+	_In_ const POINT& pointDest) const throw()
 {
-	return( Draw( hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight, 0, 0, m_nWidth, m_nHeight ) );
+	return Draw( hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight, 0, 0, m_nWidth, m_nHeight );
 }
 
-inline BOOL CImage::Draw( HDC hDestDC, int xDest, int yDest ) const throw()
+inline BOOL CImage::Draw(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest) const throw()
 {
-	return( Draw( hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0, m_nWidth, m_nHeight ) );
+	return Draw( hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0, m_nWidth, m_nHeight );
 }
 
-inline BOOL CImage::Draw( HDC hDestDC, const RECT& rectDest, const RECT& rectSrc ) const throw()
+inline BOOL CImage::Draw(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ const RECT& rectSrc) const throw()
 {
-	return( Draw( hDestDC, rectDest.left, rectDest.top, rectDest.right-
-		rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left, rectSrc.top, 
-		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top ) );
+	return Draw( hDestDC, rectDest.left, rectDest.top, rectDest.right-
+		rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left, rectSrc.top,
+		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top );
 }
 
-inline BOOL CImage::Draw( HDC hDestDC, int xDest, int yDest, int nDestWidth,
-	int nDestHeight, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight ) const throw()
+inline BOOL CImage::Draw(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight,
+	_In_ int xSrc,
+	_In_ int ySrc,
+	_In_ int nSrcWidth,
+	_In_ int nSrcHeight) const throw()
 {
 	BOOL bResult;
 
@@ -688,7 +965,7 @@ inline BOOL CImage::Draw( HDC hDestDC, int xDest, int yDest, int nDestWidth,
 	GetDC();
 
 #if WINVER >= 0x0500
-	if( (m_iTransparentColor != -1) && IsTransparencySupported() )
+	if( ((m_iTransparentColor != -1) || (m_clrTransparentColor != (COLORREF)-1)) && IsTransparencySupported() )
 	{
 		bResult = ::TransparentBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight,
 			m_hDC, xSrc, ySrc, nSrcWidth, nSrcHeight, GetTransparentRGB() );
@@ -701,19 +978,43 @@ inline BOOL CImage::Draw( HDC hDestDC, int xDest, int yDest, int nDestWidth,
 		bf.BlendFlags = 0;
 		bf.SourceConstantAlpha = 0xff;
 		bf.AlphaFormat = AC_SRC_ALPHA;
-		bResult = ::AlphaBlend( hDestDC, xDest, yDest, nDestWidth, nDestHeight, 
+		bResult = ::AlphaBlend( hDestDC, xDest, yDest, nDestWidth, nDestHeight,
 			m_hDC, xSrc, ySrc, nSrcWidth, nSrcHeight, bf );
 	}
 	else
 #endif  // WINVER >= 0x0500
 	{
-		bResult = ::StretchBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, 
+		bResult = ::StretchBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight,
 			m_hDC, xSrc, ySrc, nSrcWidth, nSrcHeight, SRCCOPY );
 	}
 
 	ReleaseDC();
 
 	return( bResult );
+}
+
+inline BOOL CImage::Draw(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ Gdiplus::InterpolationMode interpolationMode) const throw()
+{
+	if (!InitGDIPlus())
+	{
+		return FALSE;
+	}
+
+	Gdiplus::Bitmap bm(m_hBitmap, NULL);
+	if (bm.GetLastStatus() != Gdiplus::Ok)
+	{
+		return FALSE;
+	}
+
+	Gdiplus::Graphics dcDst(hDestDC);
+	dcDst.SetInterpolationMode(interpolationMode);
+
+	Gdiplus::Status status = dcDst.DrawImage(&bm, rectDest.left, rectDest.top, rectDest.right - rectDest.left, rectDest.bottom - rectDest.top);
+
+	return status == Gdiplus::Ok;
 }
 
 inline const void* CImage::GetBits() const throw()
@@ -739,8 +1040,10 @@ inline int CImage::GetBPP() const throw()
 	return( m_nBPP );
 }
 
-inline void CImage::GetColorTable( UINT iFirstColor, UINT nColors, 
-	RGBQUAD* prgbColors ) const throw()
+inline void CImage::GetColorTable(
+	_In_ UINT iFirstColor,
+	_In_ UINT nColors,
+	_In_ RGBQUAD* prgbColors) const throw()
 {
 	ATLASSUME( m_hBitmap != NULL );
 	ATLASSUME( m_pBits != NULL );
@@ -767,7 +1070,9 @@ inline HDC CImage::GetDC() const throw()
 	return( m_hDC );
 }
 
-inline bool CImage::ShouldExcludeFormat( REFGUID guidFileType, DWORD dwExclude ) throw()
+inline bool CImage::ShouldExcludeFormat(
+	_In_ REFGUID guidFileType,
+	_In_ DWORD dwExclude) throw()
 {
 	static const GUID* apguidFormats[] =
 	{
@@ -794,9 +1099,14 @@ inline bool CImage::ShouldExcludeFormat( REFGUID guidFileType, DWORD dwExclude )
 	return( (dwExclude&excludeOther) != 0 );
 }
 
-inline void CImage::BuildCodecFilterString( const Gdiplus::ImageCodecInfo* pCodecs, UINT nCodecs,
-	CSimpleString& strFilter, CSimpleArray< GUID >& aguidFileTypes, LPCTSTR pszAllFilesDescription, 
-	DWORD dwExclude, TCHAR chSeparator )
+inline void CImage::BuildCodecFilterString(
+	_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+	_In_ UINT nCodecs,
+	_Inout_ CSimpleString& strFilter,
+	_Inout_ CSimpleArray< GUID >& aguidFileTypes,
+	_In_opt_z_ LPCTSTR pszAllFilesDescription,
+	_In_ DWORD dwExclude,
+	_In_ TCHAR chSeparator)
 {
 	if( pszAllFilesDescription != NULL )
 	{
@@ -846,9 +1156,12 @@ inline void CImage::BuildCodecFilterString( const Gdiplus::ImageCodecInfo* pCode
 	}
 }
 
-inline HRESULT CImage::GetImporterFilterString( CSimpleString& strImporters, 
-	CSimpleArray< GUID >& aguidFileTypes, LPCTSTR pszAllFilesDescription /* = NULL */,
-	DWORD dwExclude /* = excludeDefaultLoad */, TCHAR chSeparator /* = '|' */ )
+inline HRESULT CImage::GetImporterFilterString(
+	_Inout_ CSimpleString& strImporters,
+	_Inout_ CSimpleArray< GUID >& aguidFileTypes,
+	_In_opt_z_ LPCTSTR pszAllFilesDescription /* = NULL */,
+	_In_ DWORD dwExclude /* = excludeDefaultLoad */,
+	_In_ TCHAR chSeparator /* = '|' */)
 {
 	if( !InitGDIPlus() )
 	{
@@ -873,9 +1186,12 @@ inline HRESULT CImage::GetImporterFilterString( CSimpleString& strImporters,
 	return( S_OK );
 }
 
-inline HRESULT CImage::GetExporterFilterString( CSimpleString& strExporters, 
-	CSimpleArray< GUID >& aguidFileTypes, LPCTSTR pszAllFilesDescription /* = NULL */,
-	DWORD dwExclude /* = excludeDefaultSave */, TCHAR chSeparator /* = '|' */ )
+inline HRESULT CImage::GetExporterFilterString(
+	_Inout_ CSimpleString& strExporters,
+	_Inout_ CSimpleArray< GUID >& aguidFileTypes,
+	_In_opt_z_ LPCTSTR pszAllFilesDescription /* = NULL */,
+	_In_ DWORD dwExclude /* = excludeDefaultSave */,
+	_In_ TCHAR chSeparator /* = '|' */)
 {
 	if( !InitGDIPlus() )
 	{
@@ -930,7 +1246,9 @@ inline int CImage::GetPitch() const throw()
 	return( m_nPitch );
 }
 
-inline COLORREF CImage::GetPixel( int x, int y ) const throw()
+inline COLORREF CImage::GetPixel(
+	_In_ int x,
+	_In_ int y) const throw()
 {
 	ATLASSUME( m_hBitmap != NULL );
 	ATLASSERT( (x >= 0) && (x < m_nWidth) );
@@ -945,7 +1263,9 @@ inline COLORREF CImage::GetPixel( int x, int y ) const throw()
 	return( clr );
 }
 
-inline const void* CImage::GetPixelAddress( int x, int y ) const throw()
+inline const void* CImage::GetPixelAddress(
+	_In_ int x,
+	_In_ int y) const throw()
 {
 	ATLASSUME( m_hBitmap != NULL );
 	ATLASSERT( IsDIBSection() );
@@ -955,7 +1275,9 @@ inline const void* CImage::GetPixelAddress( int x, int y ) const throw()
 	return( LPBYTE( m_pBits )+(y*m_nPitch)+((x*m_nBPP)/8) );
 }
 
-inline void* CImage::GetPixelAddress( int x, int y ) throw()
+inline void* CImage::GetPixelAddress(
+	_In_ int x,
+	_In_ int y) throw()
 {
 	ATLASSUME( m_hBitmap != NULL );
 	ATLASSERT( IsDIBSection() );
@@ -998,7 +1320,7 @@ inline bool CImage::IsNull() const throw()
 	return( m_hBitmap == NULL );
 }
 
-inline HRESULT CImage::Load( IStream* pStream ) throw()
+inline HRESULT CImage::Load(_Inout_ IStream* pStream) throw()
 {
 	if( !InitGDIPlus() )
 	{
@@ -1014,7 +1336,7 @@ inline HRESULT CImage::Load( IStream* pStream ) throw()
 	return( CreateFromGdiplusBitmap( bmSrc ) );
 }
 
-inline HRESULT CImage::Load( LPCTSTR pszFileName ) throw()
+inline HRESULT CImage::Load(_In_z_ LPCTSTR pszFileName) throw()
 {
 	if( !InitGDIPlus() )
 	{
@@ -1030,7 +1352,7 @@ inline HRESULT CImage::Load( LPCTSTR pszFileName ) throw()
 	return( CreateFromGdiplusBitmap( bmSrc ) );
 }
 
-inline HRESULT CImage::CreateFromGdiplusBitmap( Gdiplus::Bitmap& bmSrc ) throw()
+inline HRESULT CImage::CreateFromGdiplusBitmap(_Inout_ Gdiplus::Bitmap& bmSrc) throw()
 {
 	Gdiplus::PixelFormat eSrcPixelFormat = bmSrc.GetPixelFormat();
 	UINT nBPP = 32;
@@ -1113,24 +1435,37 @@ inline HRESULT CImage::CreateFromGdiplusBitmap( Gdiplus::Bitmap& bmSrc ) throw()
 	return( S_OK );
 }
 
-inline void CImage::LoadFromResource( HINSTANCE hInstance, LPCTSTR pszResourceName ) throw()
+inline void CImage::LoadFromResource(
+	_In_opt_ HINSTANCE hInstance,
+	_In_z_ LPCTSTR pszResourceName) throw()
 {
 	HBITMAP hBitmap;
 
-	hBitmap = HBITMAP( ::LoadImage( hInstance, pszResourceName, IMAGE_BITMAP, 0, 
+	hBitmap = HBITMAP( ::LoadImage( hInstance, pszResourceName, IMAGE_BITMAP, 0,
 		0, LR_CREATEDIBSECTION ) );
 
 	Attach( hBitmap );
 }
 
-inline void CImage::LoadFromResource( HINSTANCE hInstance, UINT nIDResource ) throw()
+inline void CImage::LoadFromResource(
+	_In_opt_ HINSTANCE hInstance,
+	_In_ UINT nIDResource) throw()
 {
 	LoadFromResource( hInstance, MAKEINTRESOURCE( nIDResource ) );
 }
 
-inline BOOL CImage::MaskBlt( HDC hDestDC, int xDest, int yDest, int nWidth, 
-	int nHeight, int xSrc, int ySrc, HBITMAP hbmMask, int xMask, int yMask,
-	DWORD dwROP ) const throw()
+inline BOOL CImage::MaskBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nWidth,
+	_In_ int nHeight,
+	_In_ int xSrc,
+	_In_ int ySrc,
+	_In_ HBITMAP hbmMask,
+	_In_ int xMask,
+	_In_ int yMask,
+	_In_ DWORD dwROP) const throw()
 {
 	BOOL bResult;
 
@@ -1139,7 +1474,7 @@ inline BOOL CImage::MaskBlt( HDC hDestDC, int xDest, int yDest, int nWidth,
 
 	GetDC();
 
-	bResult = ::MaskBlt( hDestDC, xDest, yDest, nWidth, nHeight, m_hDC, xSrc, 
+	bResult = ::MaskBlt( hDestDC, xDest, yDest, nWidth, nHeight, m_hDC, xSrc,
 		ySrc, hbmMask, xMask, yMask, dwROP );
 
 	ReleaseDC();
@@ -1147,41 +1482,57 @@ inline BOOL CImage::MaskBlt( HDC hDestDC, int xDest, int yDest, int nWidth,
 	return( bResult );
 }
 
-inline BOOL CImage::MaskBlt( HDC hDestDC, const RECT& rectDest, 
-	const POINT& pointSrc, HBITMAP hbmMask, const POINT& pointMask, 
-	DWORD dwROP ) const throw()
+inline BOOL CImage::MaskBlt(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ const POINT& pointSrc,
+	_In_ HBITMAP hbmMask,
+	_In_ const POINT& pointMask,
+	_In_ DWORD dwROP) const throw()
 {
-	return( MaskBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
-		rectDest.left, rectDest.bottom-rectDest.top, pointSrc.x, pointSrc.y, 
-		hbmMask, pointMask.x, pointMask.y, dwROP ) );
+	return MaskBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
+		rectDest.left, rectDest.bottom-rectDest.top, pointSrc.x, pointSrc.y,
+		hbmMask, pointMask.x, pointMask.y, dwROP );
 }
 
-inline BOOL CImage::MaskBlt( HDC hDestDC, int xDest, int yDest, HBITMAP hbmMask, 
-	DWORD dwROP ) const throw()
+inline BOOL CImage::MaskBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ HBITMAP hbmMask,
+	_In_ DWORD dwROP) const throw()
 {
-	return( MaskBlt( hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0, hbmMask, 
-		0, 0, dwROP ) );
+	return MaskBlt( hDestDC, xDest, yDest, m_nWidth, m_nHeight, 0, 0, hbmMask,
+		0, 0, dwROP );
 }
 
-inline BOOL CImage::MaskBlt( HDC hDestDC, const POINT& pointDest, HBITMAP hbmMask,
-	DWORD dwROP ) const throw()
+inline BOOL CImage::MaskBlt(
+	_In_ HDC hDestDC,
+	_In_ const POINT& pointDest,
+	_In_ HBITMAP hbmMask,
+	_In_ DWORD dwROP) const throw()
 {
-	return( MaskBlt( hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight, 0, 
-		0, hbmMask, 0, 0, dwROP ) );
+	return MaskBlt( hDestDC, pointDest.x, pointDest.y, m_nWidth, m_nHeight, 0,
+		0, hbmMask, 0, 0, dwROP );
 }
 
-inline BOOL CImage::PlgBlt( HDC hDestDC, const POINT* pPoints, int xSrc, 
-	int ySrc, int nSrcWidth, int nSrcHeight, HBITMAP hbmMask, int xMask, 
-	int yMask ) const throw()
+inline BOOL CImage::PlgBlt(
+	_In_ HDC hDestDC,
+	_In_count_c_(3) const POINT* pPoints,
+	_In_ int xSrc,
+	_In_ int ySrc,
+	_In_ int nSrcWidth,
+	_In_ int nSrcHeight,
+	_In_opt_ HBITMAP hbmMask,
+	_In_ int xMask,
+	_In_ int yMask) const throw()
 {
-	BOOL bResult;
-
 	ATLASSUME( m_hBitmap != NULL );
 	ATLENSURE_RETURN_VAL( hDestDC != NULL, FALSE );
 
 	GetDC();
 
-	bResult = ::PlgBlt( hDestDC, pPoints, m_hDC, xSrc, ySrc, nSrcWidth, 
+	BOOL bResult = ::PlgBlt( hDestDC, pPoints, m_hDC, xSrc, ySrc, nSrcWidth,
 		nSrcHeight, hbmMask, xMask, yMask );
 
 	ReleaseDC();
@@ -1189,19 +1540,24 @@ inline BOOL CImage::PlgBlt( HDC hDestDC, const POINT* pPoints, int xSrc,
 	return( bResult );
 }
 
-inline BOOL CImage::PlgBlt( HDC hDestDC, const POINT* pPoints, 
-	const RECT& rectSrc, HBITMAP hbmMask, const POINT& pointMask ) const throw()
+inline BOOL CImage::PlgBlt(
+	_In_ HDC hDestDC,
+	_In_count_c_(3) const POINT* pPoints,
+	_In_ const RECT& rectSrc,
+	_In_opt_ HBITMAP hbmMask,
+	_In_ const POINT& pointMask) const throw()
 {
-	return( PlgBlt( hDestDC, pPoints, rectSrc.left, rectSrc.top, rectSrc.right-
-		rectSrc.left, rectSrc.bottom-rectSrc.top, hbmMask, pointMask.x, 
-		pointMask.y ) );
+	return PlgBlt( hDestDC, pPoints, rectSrc.left, rectSrc.top, rectSrc.right-
+		rectSrc.left, rectSrc.bottom-rectSrc.top, hbmMask, pointMask.x,
+		pointMask.y );
 }
 
-inline BOOL CImage::PlgBlt( HDC hDestDC, const POINT* pPoints, 
-	HBITMAP hbmMask ) const throw()
+inline BOOL CImage::PlgBlt(
+	_In_ HDC hDestDC,
+	_In_count_c_(3) const POINT* pPoints,
+	_In_opt_ HBITMAP hbmMask) const throw()
 {
-	return( PlgBlt( hDestDC, pPoints, 0, 0, m_nWidth, m_nHeight, hbmMask, 0, 
-		0 ) );
+	return PlgBlt( hDestDC, pPoints, 0, 0, m_nWidth, m_nHeight, hbmMask, 0, 0 );
 }
 
 inline void CImage::ReleaseDC() const throw()
@@ -1220,7 +1576,10 @@ inline void CImage::ReleaseDC() const throw()
 	}
 }
 
-inline CLSID CImage::FindCodecForExtension( LPCTSTR pszExtension, const Gdiplus::ImageCodecInfo* pCodecs, UINT nCodecs )
+inline CLSID CImage::FindCodecForExtension(
+	_In_z_ LPCTSTR pszExtension,
+	_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+	_In_ UINT nCodecs)
 {
 	CT2CW pszExtensionW( pszExtension );
 
@@ -1245,7 +1604,10 @@ inline CLSID CImage::FindCodecForExtension( LPCTSTR pszExtension, const Gdiplus:
 	return( CLSID_NULL );
 }
 
-inline CLSID CImage::FindCodecForFileType( REFGUID guidFileType, const Gdiplus::ImageCodecInfo* pCodecs, UINT nCodecs )
+inline CLSID CImage::FindCodecForFileType(
+	_In_ REFGUID guidFileType,
+	_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+	_In_ UINT nCodecs)
 {
 	for( UINT iCodec = 0; iCodec < nCodecs; iCodec++ )
 	{
@@ -1258,7 +1620,9 @@ inline CLSID CImage::FindCodecForFileType( REFGUID guidFileType, const Gdiplus::
 	return( CLSID_NULL );
 }
 
-inline HRESULT CImage::Save( IStream* pStream, REFGUID guidFileType ) const throw()
+inline HRESULT CImage::Save(
+	_Inout_ IStream* pStream,
+	_In_ REFGUID guidFileType) const throw()
 {
 	if( !InitGDIPlus() )
 	{
@@ -1316,7 +1680,9 @@ inline HRESULT CImage::Save( IStream* pStream, REFGUID guidFileType ) const thro
 	return( S_OK );
 }
 
-inline HRESULT CImage::Save( LPCTSTR pszFileName, REFGUID guidFileType ) const throw()
+inline HRESULT CImage::Save(
+	_In_z_ LPCTSTR pszFileName,
+	_In_ REFGUID guidFileType) const throw()
 {
 	if( !InitGDIPlus() )
 	{
@@ -1389,8 +1755,10 @@ inline HRESULT CImage::Save( LPCTSTR pszFileName, REFGUID guidFileType ) const t
 	return( S_OK );
 }
 
-inline void CImage::SetColorTable( UINT iFirstColor, UINT nColors, 
-	const RGBQUAD* prgbColors ) throw()
+inline void CImage::SetColorTable(
+	_In_ UINT iFirstColor,
+	_In_ UINT nColors,
+	_In_ const RGBQUAD* prgbColors) throw()
 {
 	ATLASSUME( m_hBitmap != NULL );
 	ATLASSERT( IsDIBSection() );
@@ -1403,7 +1771,10 @@ inline void CImage::SetColorTable( UINT iFirstColor, UINT nColors,
 	ReleaseDC();
 }
 
-inline void CImage::SetPixel( int x, int y, COLORREF color ) throw()
+inline void CImage::SetPixel(
+	_In_ int x,
+	_In_ int y,
+	_In_ COLORREF color) throw()
 {
 	ATLASSUME( m_hBitmap != NULL );
 	ATLASSERT( (x >= 0) && (x < m_nWidth) );
@@ -1416,17 +1787,30 @@ inline void CImage::SetPixel( int x, int y, COLORREF color ) throw()
 	ReleaseDC();
 }
 
-inline void CImage::SetPixelIndexed( int x, int y, int iIndex ) throw()
+inline void CImage::SetPixelIndexed(
+	_In_ int x,
+	_In_ int y,
+	_In_ int iIndex) throw()
 {
 	SetPixel( x, y, PALETTEINDEX( iIndex ) );
 }
 
-inline void CImage::SetPixelRGB( int x, int y, BYTE r, BYTE g, BYTE b ) throw()
+inline void CImage::SetPixelRGB(
+	_In_ int x,
+	_In_ int y,
+	_In_ BYTE r,
+	_In_ BYTE g,
+	_In_ BYTE b) throw()
 {
 	SetPixel( x, y, RGB( r, g, b ) );
 }
 
-inline LONG CImage::SetTransparentColor( LONG iTransparentColor ) throw()
+inline void CImage::SetHasAlphaChannel(_In_ bool bHasAlphaChannel) throw()
+{
+	m_bHasAlphaChannel = bHasAlphaChannel;
+}
+
+inline LONG CImage::SetTransparentColor(_In_ LONG iTransparentColor) throw()
 {
 	LONG iOldTransparentColor;
 
@@ -1441,33 +1825,56 @@ inline LONG CImage::SetTransparentColor( LONG iTransparentColor ) throw()
 	return( iOldTransparentColor );
 }
 
-inline BOOL CImage::StretchBlt( HDC hDestDC, int xDest, int yDest, 
-	int nDestWidth, int nDestHeight, DWORD dwROP ) const throw()
+inline COLORREF CImage::SetTransparentColor(_In_ COLORREF clrTransparentColor) throw()
 {
-	return( StretchBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, 0, 0, 
-		m_nWidth, m_nHeight, dwROP ) );
+	COLORREF clrOldTransparentColor;
+
+	clrOldTransparentColor = m_clrTransparentColor;
+	m_clrTransparentColor = clrTransparentColor;
+
+	return( clrOldTransparentColor );
 }
 
-inline BOOL CImage::StretchBlt( HDC hDestDC, const RECT& rectDest, 
-	DWORD dwROP ) const throw()
+inline BOOL CImage::StretchBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight,
+	_In_ DWORD dwROP) const throw()
 {
-	return( StretchBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
-		rectDest.left, rectDest.bottom-rectDest.top, 0, 0, m_nWidth, m_nHeight, 
-		dwROP ) );
+	return StretchBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, 0, 0,
+		m_nWidth, m_nHeight, dwROP );
 }
 
-inline BOOL CImage::StretchBlt( HDC hDestDC, int xDest, int yDest, 
-	int nDestWidth, int nDestHeight, int xSrc, int ySrc, int nSrcWidth, 
-	int nSrcHeight, DWORD dwROP ) const throw()
+inline BOOL CImage::StretchBlt(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ DWORD dwROP) const throw()
 {
-	BOOL bResult;
+	return StretchBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
+		rectDest.left, rectDest.bottom-rectDest.top, 0, 0, m_nWidth, m_nHeight,
+		dwROP );
+}
 
+inline BOOL CImage::StretchBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight,
+	_In_ int xSrc,
+	_In_ int ySrc,
+	_In_ int nSrcWidth,
+	_In_ int nSrcHeight,
+	_In_ DWORD dwROP) const throw()
+{
 	ATLASSUME( m_hBitmap != NULL );
 	ATLENSURE_RETURN_VAL( hDestDC != NULL, FALSE );
 
 	GetDC();
 
-	bResult = ::StretchBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, m_hDC,
+	BOOL bResult = ::StretchBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, m_hDC,
 		xSrc, ySrc, nSrcWidth, nSrcHeight, dwROP );
 
 	ReleaseDC();
@@ -1475,36 +1882,52 @@ inline BOOL CImage::StretchBlt( HDC hDestDC, int xDest, int yDest,
 	return( bResult );
 }
 
-inline BOOL CImage::StretchBlt( HDC hDestDC, const RECT& rectDest, 
-	const RECT& rectSrc, DWORD dwROP ) const throw()
+inline BOOL CImage::StretchBlt(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ const RECT& rectSrc,
+	_In_ DWORD dwROP) const throw()
 {
-	return( StretchBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
-		rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left, rectSrc.top, 
-		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top, dwROP ) );
+	return StretchBlt( hDestDC, rectDest.left, rectDest.top, rectDest.right-
+		rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left, rectSrc.top,
+		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top, dwROP );
 }
 
 #if WINVER >= 0x0500
-inline BOOL CImage::TransparentBlt( HDC hDestDC, int xDest, int yDest, 
-	int nDestWidth, int nDestHeight, UINT crTransparent ) const throw()
+inline BOOL CImage::TransparentBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight,
+	_In_ UINT crTransparent) const throw()
 {
-	return( TransparentBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, 0, 
-		0, m_nWidth, m_nHeight, crTransparent ) );
+	return TransparentBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight, 0,
+		0, m_nWidth, m_nHeight, crTransparent );
 }
 
-inline BOOL CImage::TransparentBlt( HDC hDestDC, const RECT& rectDest, 
-	UINT crTransparent ) const throw()
+inline BOOL CImage::TransparentBlt(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ UINT crTransparent) const throw()
 {
-	return( TransparentBlt( hDestDC, rectDest.left, rectDest.top, 
-		rectDest.right-rectDest.left, rectDest.bottom-rectDest.top, 
-		crTransparent ) );
+	return TransparentBlt( hDestDC, rectDest.left, rectDest.top,
+		rectDest.right-rectDest.left, rectDest.bottom-rectDest.top,
+		crTransparent );
 }
 
-inline BOOL CImage::TransparentBlt( HDC hDestDC, int xDest, int yDest, 
-	int nDestWidth, int nDestHeight, int xSrc, int ySrc, int nSrcWidth, 
-	int nSrcHeight, UINT crTransparent ) const throw()
+inline BOOL CImage::TransparentBlt(
+	_In_ HDC hDestDC,
+	_In_ int xDest,
+	_In_ int yDest,
+	_In_ int nDestWidth,
+	_In_ int nDestHeight,
+	_In_ int xSrc,
+	_In_ int ySrc,
+	_In_ int nSrcWidth,
+	_In_ int nSrcHeight,
+	_In_ UINT crTransparent) const throw()
 {
-	BOOL bResult;
-
 	ATLASSUME( m_hBitmap != NULL );
 	ATLENSURE_RETURN_VAL( hDestDC != NULL, FALSE );
 
@@ -1515,7 +1938,7 @@ inline BOOL CImage::TransparentBlt( HDC hDestDC, int xDest, int yDest,
 		crTransparent = GetTransparentRGB();
 	}
 
-	bResult = ::TransparentBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight,
+	BOOL bResult = ::TransparentBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight,
 		m_hDC, xSrc, ySrc, nSrcWidth, nSrcHeight, crTransparent );
 
 	ReleaseDC();
@@ -1523,13 +1946,16 @@ inline BOOL CImage::TransparentBlt( HDC hDestDC, int xDest, int yDest,
 	return( bResult );
 }
 
-inline BOOL CImage::TransparentBlt( HDC hDestDC, const RECT& rectDest, 
-	const RECT& rectSrc, UINT crTransparent ) const throw()
+inline BOOL CImage::TransparentBlt(
+	_In_ HDC hDestDC,
+	_In_ const RECT& rectDest,
+	_In_ const RECT& rectSrc,
+	_In_ UINT crTransparent) const throw()
 {
-	return( TransparentBlt( hDestDC, rectDest.left, rectDest.top, 
-		rectDest.right-rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left, 
-		rectSrc.top, rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top, 
-		crTransparent ) );
+	return TransparentBlt( hDestDC, rectDest.left, rectDest.top,
+		rectDest.right-rectDest.left, rectDest.bottom-rectDest.top, rectSrc.left,
+		rectSrc.top, rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top,
+		crTransparent );
 }
 #endif  // WINVER >= 0x0500
 
@@ -1538,7 +1964,7 @@ inline BOOL CImage::IsTransparencySupported() throw()
 	return( TRUE );
 }
 
-inline void CImage::UpdateBitmapInfo( DIBOrientation eOrientation )
+inline void CImage::UpdateBitmapInfo(_In_ DIBOrientation eOrientation)
 {
 	DIBSECTION dibsection;
 	int nBytes;
@@ -1577,52 +2003,22 @@ inline void CImage::UpdateBitmapInfo( DIBOrientation eOrientation )
 	m_bHasAlphaChannel = false;
 }
 
-inline void CImage::GenerateHalftonePalette( LPRGBQUAD prgbPalette )
-{
-	int r;
-	int g;
-	int b;
-	int gray;
-	LPRGBQUAD prgbEntry;
-
-	prgbEntry = prgbPalette;
-	for( r = 0; r < 6; r++ )
-	{
-		for( g = 0; g < 6; g++ )
-		{
-			for( b = 0; b < 6; b++ )
-			{
-				prgbEntry->rgbBlue = BYTE( b*255/5 );
-				prgbEntry->rgbGreen = BYTE( g*255/5 );
-				prgbEntry->rgbRed = BYTE( r*255/5 );
-				prgbEntry->rgbReserved = 0;
-
-				prgbEntry++;
-			}
-		}
-	}
-
-	for( gray = 0; gray < 20; gray++ )
-	{
-		prgbEntry->rgbBlue = BYTE( gray*255/20 );
-		prgbEntry->rgbGreen = BYTE( gray*255/20 );
-		prgbEntry->rgbRed = BYTE( gray*255/20 );
-		prgbEntry->rgbReserved = 0;
-
-		prgbEntry++;
-	}
-}
-
 inline COLORREF CImage::GetTransparentRGB() const
 {
 	RGBQUAD rgb;
 
 	ATLASSUME( m_hDC != NULL );  // Must have a DC
-	ATLASSUME( m_iTransparentColor != -1 );
+	ATLASSUME( m_iTransparentColor != -1 || m_clrTransparentColor != (COLORREF)-1 );
 
-	::GetDIBColorTable( m_hDC, m_iTransparentColor, 1, &rgb );
-
-	return( RGB( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue ) );
+	if (m_iTransparentColor != -1)
+	{
+		::GetDIBColorTable( m_hDC, m_iTransparentColor, 1, &rgb );
+		return( RGB( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue ) );
+	}
+	else
+	{
+		return m_clrTransparentColor;
+	}
 }
 
 inline bool CImage::InitGDIPlus() throw()

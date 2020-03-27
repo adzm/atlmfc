@@ -23,7 +23,6 @@
 #include "afxribbonres.h"
 #include "afxstatusbar.h"
 #include "afxrebar.h"
-#include "multimon.h"
 #include "afxribbonbar.h"
 
 #ifdef _DEBUG
@@ -563,6 +562,3 @@ void CFullScreenImpl::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 		lpMMI->ptMaxSize.y = lpMMI->ptMaxTrackSize.y = m_rectFullScreenWindow.Height();
 	}
 }
-
-
-

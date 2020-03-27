@@ -461,7 +461,6 @@ protected:
 	// save/restore state support
 	CList<CMFCRestoredTabInfo, CMFCRestoredTabInfo> m_lstRestoredTabInfo;
 	int      m_nRestoredActiveTabID;
-	Location m_locationRestored;
 
 	CRuntimeClass* m_pDockingBarWrapperRTC;
 

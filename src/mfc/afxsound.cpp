@@ -16,6 +16,8 @@
 #include "afxsound.h"
 #include "afxpopupmenu.h"
 
+#pragma comment (lib,"winmm") // PlaySound
+
 static int g_nSoundState = AFX_SOUND_NOT_STARTED;
 static HANDLE g_hThreadSound = NULL;
 static const int nThreadDelay = 5;

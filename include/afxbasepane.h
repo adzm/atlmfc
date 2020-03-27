@@ -254,6 +254,7 @@ protected:
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
 	afx_msg LRESULT OnSetIcon(WPARAM,LPARAM);
 	afx_msg LRESULT OnGetObject(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

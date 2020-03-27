@@ -17,11 +17,11 @@
 
 #define _AFX     1      // Microsoft Application Framework Classes
 #ifndef _MFC_VER
-#define _MFC_VER 0x0900 // Microsoft Foundation Classes version 9.00
+#define _MFC_VER 0x0A00 // Microsoft Foundation Classes version 10.00
 #endif
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "90"
+#define _MFC_FILENAME_VER "100"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -81,10 +81,6 @@
 	#error Please use the /MD switch for _AFXDLL builds
 #endif
 
-#if defined(_AFXDLL) && !defined(_MT)
-	#error Please use the /MD switch (multithreaded DLL C-runtime)
-#endif
-
 /////////////////////////////////////////////////////////////////////////////
 // special include files
 
@@ -95,11 +91,11 @@
 #include <afxv_w32.h>
 
 // Include any non-Intel platform specific items
-#ifndef _X86_
+#ifndef _M_IX86
 	#include <afxv_cpu.h>
 #endif
 
-#ifdef _X86_
+#ifdef _M_IX86
 	#define _AFX_MINREBUILD
 #endif
 
@@ -126,16 +122,7 @@
 // Special AfxDebugBreak: used to break into debugger at critical times
 
 #ifndef AfxDebugBreak
-#ifdef _AFX_NO_DEBUG_CRT
-// by default, debug break is asm int 3, or a call to DebugBreak, or nothing
-#if defined(_M_IX86) && !defined(_AFX_PORTABLE)
-#define AfxDebugBreak() _asm { int 3 }
-#else
-#define AfxDebugBreak() DebugBreak()
-#endif
-#else
-#define AfxDebugBreak() _CrtDbgBreak()
-#endif
+#define AfxDebugBreak() __debugbreak()
 #endif
 
 #ifndef _DEBUG
@@ -175,7 +162,7 @@
 
 // UNALIGNED is used for unaligned data access (in CArchive mostly)
 #if !defined(UNALIGNED)
-#if defined(_M_IA64) || defined(_M_AMD64)
+#if defined(_M_AMD64)
 #define UNALIGNED __unaligned
 #else
 #define UNALIGNED
@@ -335,7 +322,7 @@
 // This macro is used to reduce size requirements of some classes
 #ifndef AFX_ALWAYS_VTABLE
 #ifndef AFX_NOVTABLE
-#if _MSC_VER >= 1100 && !defined(_DEBUG)
+#if !defined(_DEBUG)
 #define AFX_NOVTABLE __declspec(novtable)
 #else
 #define AFX_NOVTABLE

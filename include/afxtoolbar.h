@@ -113,7 +113,12 @@ public:
 	static CSize __stdcall GetMenuImageSize();
 	static CSize __stdcall GetMenuButtonSize();
 
-	void SetLockedSizes(SIZE sizeButton, SIZE sizeImage);
+	/// <summary>
+	/// Sets the sizes of locked buttons and locked images on the toolbar. </summary>
+	/// <param name="sizeButton">Specifies the size of locked toolbar buttons. </param>
+	/// <param name="sizeImage">Specifies the size of locked toolbar images. </param>
+	/// <param name="bDontScale">Specifies whether to scale or not locked toolbar images in high DPI mode.</param>
+	void SetLockedSizes(SIZE sizeButton, SIZE sizeImage, BOOL bDontScale = FALSE);
 	void SetHeight(int cyHeight);
 
 	//-----------------
@@ -424,6 +429,7 @@ public:
 	virtual void OnReset() {}
 
 	static void __stdcall ResetAll();
+	static void __stdcall RedrawUnderlines();
 
 	virtual void AdjustLayout();
 	virtual int HitTest(CPoint point);
@@ -446,6 +452,8 @@ public:
 
 	AFX_IMPORT_DATA static BOOL   m_bExtCharTranslation;
 	AFX_IMPORT_DATA static double m_dblLargeImageRatio;  // large image stretch ratio (default: * 2)
+	/// <summary> Specifies whether to scale or not toolbar images in high DPI mode.</summary>
+	AFX_IMPORT_DATA static BOOL   m_bDontScaleImages;    // don't scale shared images in high DPI mode
 
 	static void __stdcall CMFCToolBar::CleanUpImages();
 	void CleanUpLockedImages();
@@ -594,6 +602,8 @@ protected:
 	CSize m_sizeImageLocked;     // original size of glyph of the locked toolbars
 	CSize m_sizeCurButtonLocked; // size of button
 	CSize m_sizeCurImageLocked;  // size of glyph
+
+	BOOL m_bDontScaleLocked;     // don't scale locked images in high DPI mode
 	CSize m_sizeLast;
 
 	CObList m_Buttons;

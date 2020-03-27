@@ -66,10 +66,11 @@ enum RDXOperations
 	eDeleteFromReg
 };
 
-class CVMExpansionVector : public CSimpleMap<LPTSTR, LPTSTR>
+class CVMExpansionVector :
+	public CSimpleMap<LPTSTR, LPTSTR>
 {
 public:
-	int FindKey(_In_ LPTSTR& key) const
+	int FindKey(_In_ _Deref_prepost_z_ LPTSTR& key) const
 	{
 		for(int i = 0; i < m_nSize; i++)
 		{
@@ -78,7 +79,7 @@ public:
 		}
 		return -1;  // not found
 	}
-	int FindVal(_In_ LPTSTR& val) const
+	int FindVal(_In_ _Deref_prepost_z_ LPTSTR& val) const
 	{
 		for(int i = 0; i < m_nSize; i++)
 		{
@@ -88,7 +89,7 @@ public:
 		return -1;  // not found
 	}
 
-	LPTSTR Lookup(_In_ LPTSTR key) const
+	LPTSTR Lookup(_In_z_ LPTSTR key) const
 	{
 		int nIndex = FindKey(key);
 		if(nIndex == -1)
@@ -98,11 +99,14 @@ public:
 };
 
 
-class CRegistryVirtualMachine : public IRegistrarBase
+class CRegistryVirtualMachine :
+	public IRegistrarBase
 {
 public:
-
-	HRESULT STDMETHODCALLTYPE QueryInterface(const IID &riid,void ** ppv)
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT STDMETHODCALLTYPE QueryInterface(
+		_In_ const IID &riid,
+		_Deref_out_ void** ppv)
 	{
 		if (ppv == NULL)
 			return E_POINTER;
@@ -114,12 +118,22 @@ public:
 		}
 		return E_NOINTERFACE;
 	}
-	ULONG STDMETHODCALLTYPE AddRef(void) { return 1L; }
-
-	ULONG STDMETHODCALLTYPE Release(void) {	return 1L; }
+ATLPREFAST_UNSUPPRESS()
 	
+	ULONG STDMETHODCALLTYPE AddRef(void)
+	{
+		return 1L;
+	}
+
+	ULONG STDMETHODCALLTYPE Release(void)
+	{
+		return 1L;
+	}
+
 #ifndef _UNICODE
-	virtual HRESULT STDMETHODCALLTYPE AddReplacement(LPCOLESTR key, LPCOLESTR item)
+	virtual HRESULT STDMETHODCALLTYPE AddReplacement(
+		_In_z_ LPCOLESTR key,
+		_In_z_ LPCOLESTR item)
 	{
 		HRESULT hr = E_OUTOFMEMORY;
 		_ATLTRY
@@ -140,7 +154,7 @@ public:
 	}
 
 	// Operations
-	HRESULT  AddStandardReplacements() throw()
+	HRESULT AddStandardReplacements() throw()
 	{
 		USES_CONVERSION_EX;
 
@@ -151,7 +165,7 @@ public:
 			return AtlHresultFromLastError();
 		else if( dwFLen == MAX_PATH )
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-		
+
 		HRESULT hr;
 		if ((hInst == NULL) || (hInst == GetModuleHandle(NULL))) // register as EXE
 		{
@@ -169,7 +183,7 @@ public:
 		else
 		{
 			hr= AddReplacement(_T("Module"), szModule);
-		}	
+		}
 
 		if(FAILED(hr))
 			return hr;
@@ -178,12 +192,14 @@ public:
 		if(FAILED(hr))
 			return hr;
 
-
 		OLECHAR* sz;
 		hr = StringFromCLSID(CAtlModule::m_libid, &sz);
 		if (FAILED(hr))
 			return hr;
-		hr = AddReplacement(_T("MODULEGUID"), OLE2T_EX_DEF(sz));
+		
+		LPCTSTR pszModuleGUID = OLE2T_EX_DEF(sz);
+		ATLASSUME(pszModuleGUID != NULL);
+		hr = AddReplacement(_T("MODULEGUID"), pszModuleGUID);
 		CoTaskMemFree(sz);
 		if (FAILED(hr))
 			return hr;
@@ -198,7 +214,9 @@ public:
 		return hr;
 	}
 
-	virtual HRESULT STDMETHODCALLTYPE AddReplacement(LPCTSTR lpszKey, LPCTSTR lpszItem) throw()
+	virtual HRESULT STDMETHODCALLTYPE AddReplacement(
+		_In_z_ LPCTSTR lpszKey,
+		_In_z_ LPCTSTR lpszItem) throw()
 	{
 		ATLASSERT(lpszKey != NULL && lpszItem != NULL);
 		if (lpszKey == NULL || lpszItem == NULL)
@@ -210,7 +228,7 @@ public:
 		DWORD cch = lstrlen(lpszKey) + 1;
 		CAutoVectorPtr<TCHAR> szNewKey;
 		if (szNewKey.Allocate(cch))
-		{			
+		{
 			Checked::tcscpy_s(szNewKey, cch, lpszKey);
 			cch = lstrlen(lpszItem) + 1;
 			CAutoVectorPtr<TCHAR> szNewItem;
@@ -243,13 +261,18 @@ public:
 		return hr;
 	}
 
-	HRESULT VMUpdateRegistry(RGSOps* pOps, RGSStrings* rgStrings, RGSDWORD* rgDWORDS, RGSBinary *rgBinary, BOOL bRegister) throw()
+	HRESULT VMUpdateRegistry(
+		_In_ RGSOps* pOps,
+		_In_opt_ RGSStrings* rgStrings,
+		_In_opt_ RGSDWORD* rgDWORDS,
+		_In_opt_ RGSBinary *rgBinary,
+		_In_ BOOL bRegister) throw()
 	{
         ATLASSERT(pOps != NULL && rgStrings != NULL);
         if (pOps == NULL || rgStrings == NULL)
             return E_INVALIDARG;
         HRESULT hr = S_OK;
-        
+
         // Handle multiple ROOT keys in the RGS file.
         while ( SUCCEEDED(hr) && *pOps != 0 )
         {
@@ -269,7 +292,7 @@ public:
 	}
 
 	// Implementation
-	inline BYTE ChToByte(const TCHAR ch)
+	inline BYTE ChToByte(_In_ const TCHAR ch)
 	{
 		switch (ch)
 		{
@@ -305,7 +328,11 @@ public:
 		}
 	}
 
-	HRESULT GetStringAtLoc(RGSStrings* rgStrings, DWORD iLoc, CSimpleArray<TCHAR>& rgBytes, LPTSTR* pszCur) throw()
+	HRESULT GetStringAtLoc(
+		_In_ RGSStrings* rgStrings,
+		_In_ DWORD iLoc,
+		_Inout_ CSimpleArray<TCHAR>& rgBytes,
+		_In_ _Deref_prepost_opt_z_ LPTSTR* pszCur) throw()
 	{
 		if (pszCur == NULL)
 			return E_INVALIDARG;
@@ -328,7 +355,7 @@ public:
 					if (*szTemp == _T('%'))
 						rgBytes.Add(*szTemp);
 					else
-					{						
+					{
 						LPCTSTR lpszNext = AtlstrchrT(szTemp, _T('%'));
 						if (lpszNext == NULL)
 						{
@@ -356,20 +383,30 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT GetDWORDAtLoc(RGSDWORD* rgDWORDS, DWORD iLoc, DWORD& dwValueOrIndex) throw()
+	HRESULT GetDWORDAtLoc(
+		_In_ RGSDWORD* rgDWORDS,
+		_In_ DWORD iLoc,
+		_Out_ DWORD& dwValueOrIndex) throw()
 	{
 		dwValueOrIndex = rgDWORDS[iLoc].dwValueOrIndex;
 		return rgDWORDS[iLoc].bHasReplacement == TRUE ? S_FALSE : S_OK;
 	}
 
-	HRESULT GetBinaryAtLoc(RGSBinary* rgBinary, DWORD iLoc, BYTE** ppValue, DWORD* pdwLen) throw()
+	HRESULT GetBinaryAtLoc(
+		_In_ RGSBinary* rgBinary,
+		_In_ DWORD iLoc,
+		_Deref_out_ BYTE** ppValue,
+		_Out_ DWORD* pdwLen) throw()
 	{
 		*ppValue = rgBinary[iLoc].pBytes;
 		*pdwLen = rgBinary[iLoc].dwLenOrIndex;
 		return rgBinary[iLoc].bHasReplacement == TRUE ? S_FALSE : S_OK;
 	}
 
-	HRESULT DeleteKeyWithReplacement(HKEY hKeyParent, DWORD iString, RGSStrings* rgStrings) throw()
+	HRESULT DeleteKeyWithReplacement(
+		_In_ HKEY hKeyParent,
+		_In_ DWORD iString,
+		_In_ RGSStrings* rgStrings) throw()
 	{
 		CRegKey rkForceRemove;
 		CSimpleArray<TCHAR> rgBytes;
@@ -391,7 +428,11 @@ public:
 		return hr;
 	}
 
-	HRESULT AddKeyWithReplacement(HKEY hKeyParent, CRegKey& rkCur, DWORD iString, RGSStrings* rgStrings) throw()
+	HRESULT AddKeyWithReplacement(
+		_In_ HKEY hKeyParent,
+		_Inout_ CRegKey& rkCur,
+		_In_ DWORD iString,
+		_In_ RGSStrings* rgStrings) throw()
 	{
 		LPTSTR szReplacement = NULL;
 		CSimpleArray<TCHAR> rgBytes;
@@ -399,17 +440,23 @@ public:
 		if (FAILED(hr))
 			return hr;
 
-		if (rkCur.Open(hKeyParent, (szReplacement) ? szReplacement : rgBytes.m_aT, 
+		if (rkCur.Open(hKeyParent, (szReplacement) ? szReplacement : rgBytes.m_aT,
 					   KEY_READ | KEY_WRITE) != ERROR_SUCCESS)
 		{
-			LONG lRes = rkCur.Create(hKeyParent, (szReplacement) ? szReplacement : rgBytes.m_aT, REG_NONE, REG_OPTION_NON_VOLATILE , KEY_READ | KEY_WRITE); 
+			LONG lRes = rkCur.Create(hKeyParent, (szReplacement) ? szReplacement : rgBytes.m_aT, REG_NONE, REG_OPTION_NON_VOLATILE , KEY_READ | KEY_WRITE);
 			if (lRes != ERROR_SUCCESS)
 				return AtlHresultFromWin32(lRes);
 		}
 		return S_OK;
 	}
 
-	HRESULT VMUpdateRegistryRecurse(HKEY hKeyParent, RGSOps*& pOps, RGSStrings* rgStrings, RGSDWORD* rgDWORDS, RGSBinary *rgBinary, BOOL bRegister) throw()
+	HRESULT VMUpdateRegistryRecurse(
+		_In_ HKEY hKeyParent,
+		_In_ RGSOps*& pOps,
+		_In_opt_ RGSStrings* rgStrings,
+		_In_opt_ RGSDWORD* rgDWORDS,
+		_In_opt_ RGSBinary *rgBinary,
+		_In_ BOOL bRegister) throw()
 	{
 		CRegKey  rkCur;
 		LONG     lRes = ERROR_SUCCESS;
@@ -438,7 +485,7 @@ public:
 				GetOpsFromDWORD(*pOps, code, p1, p2);
 				break;
 			case rgsopAddKeyForceRemove:
-				if (bRegister) 
+				if (bRegister)
 				{
 					hr = DeleteKeyWithReplacement(hKeyParent, p1, rgStrings);
 					if (FAILED(hr))
@@ -527,8 +574,8 @@ public:
 						key.m_hKey = rkCur.m_hKey;
 					else
 						key.m_hKey = hKeyParent;
-					lRes = key.SetStringValue((p1 != 0) ? ((szReplacement2) ? szReplacement2 : rgBytes2.m_aT) : NULL, 
-						(szReplacement) ? szReplacement : rgBytes.m_aT); 
+					lRes = key.SetStringValue((p1 != 0) ? ((szReplacement2) ? szReplacement2 : rgBytes2.m_aT) : NULL,
+						(szReplacement) ? szReplacement : rgBytes.m_aT);
 					key.m_hKey = NULL;
 					if (ERROR_SUCCESS != lRes)
 						return AtlHresultFromWin32(lRes);
@@ -599,15 +646,15 @@ public:
 					    *p = NULL;
 						p++;
 						*p = NULL;
- 
+
 
 						CRegKey key;
 						if (p1 == 0)
 							key.m_hKey = rkCur.m_hKey;
 						else
-						key.m_hKey = hKeyParent;						
-						lRes = key.SetMultiStringValue((p1 != 0) ? ((szReplacement2) ? szReplacement2 : rgBytes2.m_aT) : NULL, 
-							pszDestValue); 
+						key.m_hKey = hKeyParent;
+						lRes = key.SetMultiStringValue((p1 != 0) ? ((szReplacement2) ? szReplacement2 : rgBytes2.m_aT) : NULL,
+							pszDestValue);
 						key.m_hKey = NULL;
 						if (ERROR_SUCCESS != lRes)
 							return AtlHresultFromWin32(lRes);
@@ -658,10 +705,10 @@ public:
 					if (p1 == 0)
 						key.m_hKey = rkCur.m_hKey;
 					else
-						key.m_hKey = hKeyParent;						
-					lRes = key.SetDWORDValue((szReplacement2) ? szReplacement2 : rgBytes2.m_aT, 
+						key.m_hKey = hKeyParent;
+					lRes = key.SetDWORDValue((szReplacement2) ? szReplacement2 : rgBytes2.m_aT,
 						dwValue);
-					key.m_hKey = NULL; 
+					key.m_hKey = NULL;
 					if (ERROR_SUCCESS != lRes)
 						return AtlHresultFromWin32(lRes);
 					if (bRestoreRK)
@@ -686,7 +733,7 @@ public:
 					LPTSTR szReplacement = NULL;
 					LPTSTR szReplacement2 = NULL;
 					BYTE* pByte;
-					CTempBuffer <BYTE, 1024> pByteTemp;					
+					CTempBuffer <BYTE, 1024> pByteTemp;
 					DWORD dwLen;
 					hr = GetBinaryAtLoc(rgBinary, p2, &pByte, &dwLen);
 					if (hr == S_FALSE)
@@ -707,8 +754,8 @@ public:
 						if (pByteTemp == NULL)
 						{
 							return E_OUTOFMEMORY;
-						}						
-						pByte = pByteTemp;						
+						}
+						pByte = pByteTemp;
 						memset(pByte, 0, dwLen);
 						for (int irg = 0; irg < cbValue; irg++)
 							pByte[(irg/2)] |= (ChToByte(szReplacement[irg])) << (4*(1 - (irg & 0x00000001)));
@@ -721,10 +768,10 @@ public:
 					if (p1 == 0)
 						key.m_hKey = rkCur.m_hKey;
 					else
-						key.m_hKey = hKeyParent;	
-					lRes = key.SetBinaryValue((szReplacement2) ? szReplacement2 : rgBytes2.m_aT, 
+						key.m_hKey = hKeyParent;
+					lRes = key.SetBinaryValue((szReplacement2) ? szReplacement2 : rgBytes2.m_aT,
 						pByte, dwLen);
-					key.m_hKey = NULL; 
+					key.m_hKey = NULL;
 					if (ERROR_SUCCESS != lRes)
 						return AtlHresultFromWin32(lRes);
 					if (bRestoreRK)
@@ -747,13 +794,16 @@ public:
 		return hr;
 	}
 
-	void GetOpsFromDWORD(RGSOps op, DWORD& rcode, DWORD& rp1, DWORD& rp2) throw()
+	void GetOpsFromDWORD(
+		_In_ RGSOps op,
+		_Out_ DWORD& rcode,
+		_Out_ DWORD& rp1,
+		_Out_ DWORD& rp2) throw()
 	{
 		rcode = (op & 0xF0000000) >> 28;
 		rp1 = (op & 0x0FFFC000) >> 14;
 		rp2 = (op & 0x00003FFF);
 	}
-
 
 	CVMExpansionVector								m_RepMap;
 	CComObjectThreadModel::AutoCriticalSection      m_csMap;
@@ -784,7 +834,7 @@ struct _RDXEntries
 #define BEGIN_RDX_MAP() \
 	ATL::_RDXEntries* _GetRDXEntries() \
 	{ \
-		static ATL::_RDXEntries rgEntries [] = { 
+		static ATL::_RDXEntries rgEntries [] = {
 
 #define RDX_TEXT(rootkey, subkey, valuename, member, member_size) \
 { rootkey, subkey, valuename, ATL::_RDXEntries::keyTypeString, RDX_MEMBER_OFFSET(member), member_size },
@@ -807,11 +857,11 @@ struct _RDXEntries
 		return ::RegistryDataExchange(this, rdxOp, pItem); \
 	}
 
-class CByteFilter 
+class CByteFilter
 {
 public:
 
-	static BYTE ChToByte(const TCHAR ch)
+	static BYTE ChToByte(_In_ const TCHAR ch)
 	{
 		switch (ch)
 		{
@@ -849,7 +899,10 @@ public:
 };
 
 template <class T>
-HRESULT RegistryDataExchange(T* pT, enum RDXOperations rdxOp, void* pItem = NULL)
+HRESULT RegistryDataExchange(
+	_Inout_ T* pT,
+	_In_ enum RDXOperations rdxOp,
+	_In_opt_ void* pItem = NULL)
 {
 	_RDXEntries* pEntries = pT->_GetRDXEntries();
 	ATLASSERT(pEntries != NULL);
@@ -858,9 +911,9 @@ HRESULT RegistryDataExchange(T* pT, enum RDXOperations rdxOp, void* pItem = NULL
 	while (pEntries->nKey != _RDXEntries::keyTypeNoEntry)
 	{
 		void *pMember = (char*)pT + pEntries->nMemberOffset;
-		ATLASSERT(pMember != NULL); 
-		if (pItem == NULL || pItem == pMember) 
-		{ 
+		ATLASSERT(pMember != NULL);
+		if (pItem == NULL || pItem == pMember)
+		{
 			if (rdxOp == eDeleteFromReg)
 			{
 				if (pEntries->szSubKey != NULL)
@@ -907,36 +960,36 @@ HRESULT RegistryDataExchange(T* pT, enum RDXOperations rdxOp, void* pItem = NULL
 				continue;
 			}
 
-			CRegKey rk; 
+			CRegKey rk;
 			REGSAM samDesired = KEY_READ;
 			if (rdxOp == eWriteToReg)
 				samDesired |= KEY_WRITE;
-			lRes = rk.Open(pEntries->iRootKey, pEntries->szSubKey, samDesired); 
-			if (lRes != ERROR_SUCCESS && rdxOp == eReadFromReg) 
+			lRes = rk.Open(pEntries->iRootKey, pEntries->szSubKey, samDesired);
+			if (lRes != ERROR_SUCCESS && rdxOp == eReadFromReg)
 				return AtlHresultFromWin32(lRes);
-			else 
+			else
 			{
-				if (lRes != ERROR_SUCCESS) 
-				{ 
-					lRes = rk.Create(pEntries->iRootKey, pEntries->szSubKey, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ); 
-					if (lRes != ERROR_SUCCESS) 
+				if (lRes != ERROR_SUCCESS)
+				{
+					lRes = rk.Create(pEntries->iRootKey, pEntries->szSubKey, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ);
+					if (lRes != ERROR_SUCCESS)
 						return AtlHresultFromWin32(lRes);
-				} 
-			} 
+				}
+			}
 			DWORD dwRet = pEntries->cb;
 			switch(pEntries->nKey)
 			{
 			case _RDXEntries::keyTypeString:
-				if (rdxOp == eWriteToReg) 
-					lRes = rk.SetStringValue(pEntries->szValue, (LPCTSTR)pMember); 
-				else 
-					lRes= rk.QueryStringValue(pEntries->szValue, (LPTSTR)pMember, &dwRet); 
+				if (rdxOp == eWriteToReg)
+					lRes = rk.SetStringValue(pEntries->szValue, (LPCTSTR)pMember);
+				else
+					lRes= rk.QueryStringValue(pEntries->szValue, (LPTSTR)pMember, &dwRet);
 				break;
 			case _RDXEntries::keyTypeCString:
 				{
 					CString& rStr = *((CString*)pMember);
 					if (rdxOp == eWriteToReg)
-						lRes = rk.SetStringValue(pEntries->szValue, rStr); 
+						lRes = rk.SetStringValue(pEntries->szValue, rStr);
 					else
 					{
 						lRes = rk.QueryStringValue(pEntries->szValue, NULL, &dwRet);
@@ -946,7 +999,7 @@ HRESULT RegistryDataExchange(T* pT, enum RDXOperations rdxOp, void* pItem = NULL
 							return AtlHresultFromWin32(lRes);
 						}
 
-						lRes= rk.QueryStringValue(pEntries->szValue, rStr.GetBuffer(dwRet), &dwRet); 
+						lRes= rk.QueryStringValue(pEntries->szValue, rStr.GetBuffer(dwRet), &dwRet);
 						rStr.ReleaseBuffer();
 						if (lRes != ERROR_SUCCESS)
 						{
@@ -959,10 +1012,10 @@ HRESULT RegistryDataExchange(T* pT, enum RDXOperations rdxOp, void* pItem = NULL
 			case _RDXEntries::keyTypeDWORD:
 				{
 					DWORD& rdw = *((DWORD*)pMember);
-					if (rdxOp == eWriteToReg) 
-						lRes = rk.SetDWORDValue(pEntries->szValue, rdw); 
-					else 
-						lRes= rk.QueryDWORDValue(pEntries->szValue, rdw); 
+					if (rdxOp == eWriteToReg)
+						lRes = rk.SetDWORDValue(pEntries->szValue, rdw);
+					else
+						lRes= rk.QueryDWORDValue(pEntries->szValue, rdw);
 					break;
 				}
 			case _RDXEntries::keyTypeBinary:
@@ -989,11 +1042,11 @@ HRESULT RegistryDataExchange(T* pT, enum RDXOperations rdxOp, void* pItem = NULL
 				break;
 			};
 			if (pItem != NULL)
-				return AtlHresultFromWin32(lRes); 
+				return AtlHresultFromWin32(lRes);
 		}
 		pEntries++;
 	}
-	return AtlHresultFromWin32(lRes); 
+	return AtlHresultFromWin32(lRes);
 }
 }; // namespace ATL
 #pragma pack(pop)

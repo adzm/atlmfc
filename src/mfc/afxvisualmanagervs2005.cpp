@@ -9,7 +9,6 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "afxcontrolbarutil.h"
 #include "afxglobals.h"
 #include "afxdrawmanager.h"
@@ -678,6 +677,3 @@ void CMFCVisualManagerVS2005::OnDrawToolBoxFrame(CDC* pDC, const CRect& rect)
 	ASSERT_VALID(pDC);
 	pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
 }
-
-
-

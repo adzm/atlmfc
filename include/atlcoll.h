@@ -13,6 +13,14 @@
 
 #pragma once
 
+#include <atlbase.h>
+#include <new.h>
+
+// setup default packing value
+#ifndef _X86_
+#include <afxv_cpu.h>
+#endif
+
 #pragma warning(push)
 #pragma warning(disable: 4702)  // Unreachable code.  This file will have lots of it, especially without EH enabled.
 #pragma warning(disable: 4512)  // assignment operator could not be generated
@@ -27,9 +35,6 @@ struct __POSITION
 };
 #endif
 typedef __POSITION* POSITION;
-
-#include <atlbase.h>
-#include <new.h>
 
 #ifndef _AFX_PACKING
 #define _AFX_PACKING 4
@@ -46,16 +51,25 @@ struct CAtlPlex     // warning variable length structure
 #endif
 	// BYTE data[maxNum*elementSize];
 
-	void* data() { return this+1; }
+	void* data()
+	{
+		return this+1;
+	}
 
-	static CAtlPlex* Create(CAtlPlex*& head, size_t nMax, size_t cbElement);
+	static CAtlPlex* Create(
+		_Inout_ CAtlPlex*& head,
+		_In_ size_t nMax,
+		_In_ size_t cbElement);
 			// like 'calloc' but no zero fill
 			// may throw memory exceptions
 
 	void FreeDataChain();       // free this one and links
 };
 
-inline CAtlPlex* CAtlPlex::Create( CAtlPlex*& pHead, size_t nMax, size_t nElementSize )
+inline CAtlPlex* CAtlPlex::Create(
+	_Inout_ CAtlPlex*& pHead,
+	_In_ size_t nMax,
+	_In_ size_t nElementSize)
 {
 	CAtlPlex* pPlex;
 
@@ -102,15 +116,21 @@ public:
 	typedef const T& INARGTYPE;
 	typedef T& OUTARGTYPE;
 
-	static void CopyElements( T* pDest, const T* pSrc, size_t nElements )
-	{
+	static void CopyElements(
+		_Out_bytecap_x_(nElements * sizeof(T)) T* pDest,
+		_In_bytecount_x_(nElements * sizeof(T)) const T* pSrc,
+		_In_ size_t nElements)
+	{		
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
 		{
 			pDest[iElement] = pSrc[iElement];
 		}
 	}
-
-	static void RelocateElements( T* pDest, T* pSrc, size_t nElements )
+	
+	static void RelocateElements(
+		_Out_bytecap_x_(nElements * sizeof(T)) T* pDest,
+		_In_bytecount_x_(nElements * sizeof(T)) T* pSrc,
+		_In_ size_t nElements)
 	{
 		// A simple memmove works for nearly all types.
 		// You'll have to override this for types that have pointers to their
@@ -123,7 +143,7 @@ template< typename T >
 class CDefaultHashTraits
 {
 public:
-	static ULONG Hash( const T& element ) throw()
+	static ULONG Hash(_In_ const T& element) throw()
 	{
 		return( ULONG( ULONG_PTR( element ) ) );
 	}
@@ -133,12 +153,16 @@ template< typename T >
 class CDefaultCompareTraits
 {
 public:
-	static bool CompareElements( const T& element1, const T& element2 )
+	static bool CompareElements(
+		_In_ const T& element1,
+		_In_ const T& element2)
 	{
 		return( (element1 == element2) != 0 );  // != 0 to handle overloads of operator== that return BOOL instead of bool
 	}
 
-	static int CompareElementsOrdered( const T& element1, const T& element2 )
+	static int CompareElementsOrdered(
+		_In_ const T& element1,
+		_In_ const T& element2)
 	{
 		if( element1 < element2 )
 		{
@@ -175,19 +199,23 @@ class CElementTraits< GUID > :
 	public CElementTraitsBase< GUID >
 {
 public:
-	static ULONG Hash( INARGTYPE guid )
+	static ULONG Hash(_In_ INARGTYPE guid)
 	{
 		const DWORD* pdwData = reinterpret_cast< const DWORD* >( &guid );
 
 		return( pdwData[0]^pdwData[1]^pdwData[2]^pdwData[3] );
 	}
 
-	static bool CompareElements( INARGTYPE element1, INARGTYPE element2 )
+	static bool CompareElements(
+		_In_ INARGTYPE element1,
+		_In_ INARGTYPE element2)
 	{
 		return( (element1 == element2) != 0 );  // != 0 to handle overloads of operator== that return BOOL instead of bool
 	}
 
-	static int CompareElementsOrdered( INARGTYPE element1, INARGTYPE element2 )
+	static int CompareElementsOrdered(
+		_In_ INARGTYPE element1,
+		_In_ INARGTYPE element2)
 	{
 		const DWORD* pdwData1 = reinterpret_cast< const DWORD* >( &element1 );
 		const DWORD* pdwData2 = reinterpret_cast< const DWORD* >( &element2 );
@@ -217,12 +245,16 @@ public:
 
 //	static ULONG Hash( INARGTYPE t );  // variant hashing is problematic
 
-	static bool CompareElements( INARGTYPE element1, INARGTYPE element2 )
+	static bool CompareElements(
+		_In_ INARGTYPE element1,
+		_In_ INARGTYPE element2)
 	{
 		return VarCmp(const_cast<VARIANT*>(&element1), const_cast<VARIANT*>(&element2), LOCALE_USER_DEFAULT, 0)==static_cast<HRESULT>(VARCMP_EQ);
 	}
 
-	static int CompareElementsOrdered( INARGTYPE element1, INARGTYPE element2 )
+	static int CompareElementsOrdered(
+		_In_ INARGTYPE element1,
+		_In_ INARGTYPE element2)
 	{
 		HRESULT hr = VarCmp(const_cast<VARIANT*>(&element1), const_cast<VARIANT*>(&element2), LOCALE_USER_DEFAULT, 0);
 		if( hr == static_cast<HRESULT>(VARCMP_LT) )
@@ -246,7 +278,7 @@ class CElementTraits< CComBSTR > :
 	public CElementTraitsBase< CComBSTR >
 {
 public:
-	static ULONG Hash( INARGTYPE bstr ) throw()
+	static ULONG Hash(_In_ INARGTYPE bstr) throw()
 	{
 		ULONG nHash = 0;
 		const OLECHAR* pch = bstr;
@@ -259,12 +291,16 @@ public:
 		return( nHash );
 	}
 
-	static bool CompareElements( INARGTYPE bstr1, INARGTYPE bstr2 ) throw()
+	static bool CompareElements(
+		_In_ INARGTYPE bstr1,
+		_In_ INARGTYPE bstr2) throw()
 	{
 		return( bstr1 == bstr2 );
 	}
 
-	static int CompareElementsOrdered( INARGTYPE bstr1, INARGTYPE bstr2 ) throw()
+	static int CompareElementsOrdered(
+		_In_ INARGTYPE bstr1,
+		_In_ INARGTYPE bstr2) throw()
 	{
 		HRESULT hr = VarBstrCmp( bstr1, bstr2, LOCALE_SYSTEM_DEFAULT, 0 );
 		switch( hr )
@@ -306,7 +342,10 @@ public:
 	typedef T*& OUTARGTYPE;
 
     // Specialise copy elements to allow non-const since we transfer ownership on assignment
-    static void CopyElements( ::ATL::CAutoPtr< T >* pDest, ::ATL::CAutoPtr< T >* pSrc, size_t nElements )
+    static void CopyElements(
+		_Out_cap_(nElements) ::ATL::CAutoPtr< T >* pDest,
+		_In_count_(nElements) ::ATL::CAutoPtr< T >* pSrc,
+		_In_ size_t nElements)
 	{
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
 		{
@@ -324,7 +363,10 @@ public:
 	typedef T*& OUTARGTYPE;
 
     // Specialise copy elements to allow non-const since we transfer ownership on assignment
-    static void CopyElements( ::ATL::CAutoVectorPtr< T >* pDest, ::ATL::CAutoVectorPtr< T >* pSrc, size_t nElements )
+    static void CopyElements(
+		_Out_cap_(nElements) ::ATL::CAutoVectorPtr< T >* pDest,
+		_In_count_(nElements) ::ATL::CAutoVectorPtr< T >* pSrc,
+		_In_ size_t nElements)
 	{
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
 		{
@@ -351,12 +393,12 @@ template <>
 class CDefaultCharTraits<char>
 {
 public:
-	static char CharToUpper(char x)
+	static char CharToUpper(_In_ char x)
 	{
 		return (char)toupper(x);
 	}
 
-	static char CharToLower(char x)
+	static char CharToLower(_In_ char x)
 	{
 		return (char)tolower(x);
 	}
@@ -366,12 +408,12 @@ template <>
 class CDefaultCharTraits<wchar_t>
 {
 public:
-	static wchar_t CharToUpper(wchar_t x)
+	static wchar_t CharToUpper(_In_ wchar_t x)
 	{
 		return (wchar_t)towupper(x);
 	}
 
-	static wchar_t CharToLower(wchar_t x)
+	static wchar_t CharToLower(_In_ wchar_t x)
 	{
 		return (wchar_t)towlower(x);
 	}
@@ -385,7 +427,7 @@ public:
 	typedef typename T::PCXSTR INARGTYPE;
 	typedef T& OUTARGTYPE;
 
-	static ULONG Hash( INARGTYPE str ) 
+	static ULONG Hash(_In_ INARGTYPE str)
 	{
 		ULONG nHash = 0;
 
@@ -402,12 +444,16 @@ public:
 		return( nHash );
 	}
 
-	static bool CompareElements( INARGTYPE str1, INARGTYPE str2 ) throw()
+	static bool CompareElements(
+		_In_ INARGTYPE str1,
+		_In_ INARGTYPE str2) throw()
 	{
 		return( T::StrTraits::StringCompareIgnore( str1, str2 ) == 0 );
 	}
 
-	static int CompareElementsOrdered( INARGTYPE str1, INARGTYPE str2 ) throw()
+	static int CompareElementsOrdered(
+		_In_ INARGTYPE str1,
+		_In_ INARGTYPE str2) throw()
 	{
 		return( T::StrTraits::StringCompareIgnore( str1, str2 ) );
 	}
@@ -418,7 +464,7 @@ class CStringRefElementTraits :
 	public CElementTraitsBase< T >
 {
 public:
-	static ULONG Hash( INARGTYPE str )
+	static ULONG Hash(_In_ INARGTYPE str)
 	{
 		ULONG nHash = 0;
 
@@ -435,12 +481,16 @@ public:
 		return( nHash );
 	}
 
-	static bool CompareElements( INARGTYPE element1, INARGTYPE element2 ) throw()
+	static bool CompareElements(
+		_In_ INARGTYPE element1,
+		_In_ INARGTYPE element2) throw()
 	{
 		return( element1 == element2 );
 	}
 
-	static int CompareElementsOrdered( INARGTYPE str1, INARGTYPE str2 ) throw()
+	static int CompareElementsOrdered(
+		_In_ INARGTYPE str1,
+		_In_ INARGTYPE str2) throw()
 	{
 		return( str1.Compare( str2 ) );
 	}
@@ -493,39 +543,50 @@ public:
 
 	size_t GetCount() const throw();
 	bool IsEmpty() const throw();
-	bool SetCount( size_t nNewSize, int nGrowBy = -1 );
+	bool SetCount(_In_ size_t nNewSize, _In_ int nGrowBy = -1);
 
 	void FreeExtra() throw();
 	void RemoveAll() throw();
 
-	const E& GetAt( size_t iElement ) const;
-	void SetAt( size_t iElement, INARGTYPE element );
-	E& GetAt( size_t iElement );
+	const E& GetAt(_In_ size_t iElement) const;
+	void SetAt(
+		_In_ size_t iElement,
+		/* _In_ */ INARGTYPE element);
+	E& GetAt(_In_ size_t iElement);
 
 	const E* GetData() const throw();
 	E* GetData() throw();
 
-	void SetAtGrow( size_t iElement, INARGTYPE element );
+	void SetAtGrow(
+		_In_ size_t iElement,
+		/* _In_ */ INARGTYPE element);
 	// Add an empty element to the end of the array
 	size_t Add();
 	// Add an element to the end of the array
-	size_t Add( INARGTYPE element );
-	size_t Append( const CAtlArray< E, ETraits >& aSrc );
-	void Copy( const CAtlArray< E, ETraits >& aSrc );
+	size_t Add(/* _In_ */ INARGTYPE element);
+	size_t Append(_In_ const CAtlArray< E, ETraits >& aSrc);
+	void Copy(_In_ const CAtlArray< E, ETraits >& aSrc);
 
-	const E& operator[]( size_t iElement ) const;
-	E& operator[]( size_t iElement );
+	const E& operator[](_In_ size_t iElement) const;
+	E& operator[](_In_ size_t iElement);
 
-	void InsertAt( size_t iElement, INARGTYPE element, size_t nCount = 1 );
-	void InsertArrayAt( size_t iStart, const CAtlArray< E, ETraits >* paNew );
-	void RemoveAt( size_t iElement, size_t nCount = 1 );
+	void InsertAt(
+		_In_ size_t iElement,
+		/* _In_ */ INARGTYPE element,
+		_In_ size_t nCount = 1);
+	void InsertArrayAt(
+		_In_ size_t iStart,
+		_In_ const CAtlArray< E, ETraits >* paNew);
+	void RemoveAt(
+		_In_ size_t iElement,
+		_In_ size_t nCount = 1);
 
 #ifdef _DEBUG
 	void AssertValid() const;
 #endif  // _DEBUG
 
 private:
-	bool GrowBuffer( size_t nNewSize );
+	bool GrowBuffer(_In_ size_t nNewSize);
 
 // Implementation
 private:
@@ -535,16 +596,20 @@ private:
 	int m_nGrowBy;
 
 private:
-	static void CallConstructors( E* pElements, size_t nElements );
-	static void CallDestructors( E* pElements, size_t nElements ) throw();
+	static void CallConstructors(
+		_Inout_cap_(nElements) E* pElements,
+		_In_ size_t nElements);
+	static void CallDestructors(
+		_Inout_ _Prepost_bytecount_x_(sizeof(E) * nElements) E* pElements,
+		_In_ size_t nElements) throw();
 
 public:
 	~CAtlArray() throw();
 
 private:
 	// Private to prevent use
-	CAtlArray( const CAtlArray& ) throw();
-	CAtlArray& operator=( const CAtlArray& ) throw();
+	CAtlArray(_In_ const CAtlArray&) throw();
+	CAtlArray& operator=(_In_ const CAtlArray&) throw();
 };
 
 template< class I, const IID* piid = &__uuidof( I ) >
@@ -558,8 +623,8 @@ public:
 
 private:
 	// Private to prevent use
-	CInterfaceArray( const CInterfaceArray& ) throw();
-	CInterfaceArray& operator=( const CInterfaceArray& ) throw();
+	CInterfaceArray(_In_ const CInterfaceArray&) throw();
+	CInterfaceArray& operator=(_In_ const CInterfaceArray&) throw();
 };
 
 template< typename E >
@@ -573,8 +638,8 @@ public:
 
 private:
 	// Private to prevent use
-	CAutoPtrArray( const CAutoPtrArray& ) throw();
-	CAutoPtrArray& operator=( const CAutoPtrArray& ) throw();
+	CAutoPtrArray(_In_ const CAutoPtrArray&) throw();
+	CAutoPtrArray& operator=(_In_ const CAutoPtrArray&) throw();
 };
 
 template< typename E, class Allocator = ATL::CCRTAllocator >
@@ -588,8 +653,8 @@ public:
 
 private:
 	// Private to prevent use
-	CHeapPtrArray( const CHeapPtrArray& ) throw();
-	CHeapPtrArray& operator=( const CHeapPtrArray& ) throw();
+	CHeapPtrArray(_In_ const CHeapPtrArray&) throw();
+	CHeapPtrArray& operator=(_In_ const CHeapPtrArray&) throw();
 };
 
 template< typename E, class ETraits >
@@ -611,7 +676,7 @@ inline void CAtlArray< E, ETraits >::RemoveAll() throw()
 }
 
 template< typename E, class ETraits >
-inline const E& CAtlArray< E, ETraits >::GetAt( size_t iElement ) const
+inline const E& CAtlArray< E, ETraits >::GetAt(_In_ size_t iElement) const
 {
 	ATLASSERT( iElement < m_nSize );
 	if(iElement >= m_nSize)
@@ -621,7 +686,9 @@ inline const E& CAtlArray< E, ETraits >::GetAt( size_t iElement ) const
 }
 
 template< typename E, class ETraits >
-inline void CAtlArray< E, ETraits >::SetAt( size_t iElement, INARGTYPE element )
+inline void CAtlArray< E, ETraits >::SetAt(
+	_In_ size_t iElement,
+	/* _In_ */ INARGTYPE element)
 {
 	ATLASSERT( iElement < m_nSize );
 	if(iElement >= m_nSize)
@@ -631,7 +698,7 @@ inline void CAtlArray< E, ETraits >::SetAt( size_t iElement, INARGTYPE element )
 }
 
 template< typename E, class ETraits >
-inline E& CAtlArray< E, ETraits >::GetAt( size_t iElement )
+inline E& CAtlArray< E, ETraits >::GetAt(_In_ size_t iElement)
 {
 	ATLASSERT( iElement < m_nSize );
 	if(iElement >= m_nSize)
@@ -658,7 +725,7 @@ inline size_t CAtlArray< E, ETraits >::Add()
 	size_t iElement;
 
 	iElement = m_nSize;
-	bool bSuccess=SetCount( m_nSize+1 );
+	bool bSuccess = SetCount(AtlAddThrow<size_t>(m_nSize, 1));
 	if( !bSuccess )
 	{
 		AtlThrow( E_OUTOFMEMORY );
@@ -671,7 +738,7 @@ inline size_t CAtlArray< E, ETraits >::Add()
 #undef new
 
 template< typename E, class ETraits >
-inline size_t CAtlArray< E, ETraits >::Add( INARGTYPE element )
+inline size_t CAtlArray< E, ETraits >::Add(/* _In_ */ INARGTYPE element)
 {
 	size_t iElement;
 
@@ -693,7 +760,7 @@ inline size_t CAtlArray< E, ETraits >::Add( INARGTYPE element )
 #pragma pop_macro("new")
 
 template< typename E, class ETraits >
-inline const E& CAtlArray< E, ETraits >::operator[]( size_t iElement ) const
+inline const E& CAtlArray< E, ETraits >::operator[](_In_ size_t iElement) const
 {
 	ATLASSERT( iElement < m_nSize );
 	if(iElement >= m_nSize)
@@ -703,7 +770,7 @@ inline const E& CAtlArray< E, ETraits >::operator[]( size_t iElement ) const
 }
 
 template< typename E, class ETraits >
-inline E& CAtlArray< E, ETraits >::operator[]( size_t iElement ) 
+inline E& CAtlArray< E, ETraits >::operator[](_In_ size_t iElement)
 {
 	ATLASSERT( iElement < m_nSize );
 	if(iElement >= m_nSize)
@@ -732,7 +799,7 @@ CAtlArray< E, ETraits >::~CAtlArray() throw()
 }
 
 template< typename E, class ETraits >
-bool CAtlArray< E, ETraits >::GrowBuffer( size_t nNewSize )
+bool CAtlArray< E, ETraits >::GrowBuffer(_In_ size_t nNewSize)
 {
 	if( nNewSize > m_nMaxSize )
 	{
@@ -784,10 +851,12 @@ bool CAtlArray< E, ETraits >::GrowBuffer( size_t nNewSize )
 	}
 
 	return true;
-}	
+}
 
 template< typename E, class ETraits >
-bool CAtlArray< E, ETraits >::SetCount( size_t nNewSize, int nGrowBy )
+bool CAtlArray< E, ETraits >::SetCount(
+	_In_ size_t nNewSize,
+	_In_ int nGrowBy)
 {
 	ATLASSERT_VALID(this);
 
@@ -844,13 +913,13 @@ bool CAtlArray< E, ETraits >::SetCount( size_t nNewSize, int nGrowBy )
 }
 
 template< typename E, class ETraits >
-size_t CAtlArray< E, ETraits >::Append( const CAtlArray< E, ETraits >& aSrc )
+size_t CAtlArray< E, ETraits >::Append(_In_ const CAtlArray< E, ETraits >& aSrc)
 {
 	ATLASSERT_VALID(this);
 	ATLASSERT( this != &aSrc );   // cannot append to itself
 
 	size_t nOldSize = m_nSize;
-	bool bSuccess=SetCount( m_nSize+aSrc.m_nSize );
+	bool bSuccess = SetCount(AtlAddThrow<size_t>(m_nSize, aSrc.m_nSize));
 	if( !bSuccess )
 	{
 		AtlThrow( E_OUTOFMEMORY );
@@ -862,7 +931,7 @@ size_t CAtlArray< E, ETraits >::Append( const CAtlArray< E, ETraits >& aSrc )
 }
 
 template< typename E, class ETraits >
-void CAtlArray< E, ETraits >::Copy( const CAtlArray< E, ETraits >& aSrc )
+void CAtlArray< E, ETraits >::Copy(_In_ const CAtlArray< E, ETraits >& aSrc)
 {
 	ATLASSERT_VALID(this);
 	ATLASSERT( this != &aSrc );   // cannot append to itself
@@ -908,7 +977,9 @@ void CAtlArray< E, ETraits >::FreeExtra() throw()
 }
 
 template< typename E, class ETraits >
-void CAtlArray< E, ETraits >::SetAtGrow( size_t iElement, INARGTYPE element )
+void CAtlArray< E, ETraits >::SetAtGrow(
+	_In_ size_t iElement,
+	/* _In_ */ INARGTYPE element)
 {
 	ATLASSERT_VALID(this);
 	size_t nOldSize;
@@ -916,7 +987,7 @@ void CAtlArray< E, ETraits >::SetAtGrow( size_t iElement, INARGTYPE element )
 	nOldSize = m_nSize;
 	if( iElement >= m_nSize )
 	{
-		bool bSuccess=SetCount( iElement+1, -1 );
+		bool bSuccess = SetCount(AtlAddThrow<size_t>(iElement, 1), -1 );
 		if( !bSuccess )
 		{
 			AtlThrow( E_OUTOFMEMORY );
@@ -938,7 +1009,10 @@ void CAtlArray< E, ETraits >::SetAtGrow( size_t iElement, INARGTYPE element )
 }
 
 template< typename E, class ETraits >
-void CAtlArray< E, ETraits >::InsertAt( size_t iElement, INARGTYPE element, size_t nElements /*=1*/)
+void CAtlArray< E, ETraits >::InsertAt(
+	_In_ size_t iElement,
+	/* _In_ */ INARGTYPE element,
+	_In_ size_t nElements /*=1*/)
 {
 	ATLASSERT_VALID(this);
 	ATLASSERT( nElements > 0 );     // zero size not allowed
@@ -946,7 +1020,7 @@ void CAtlArray< E, ETraits >::InsertAt( size_t iElement, INARGTYPE element, size
 	if( iElement >= m_nSize )
 	{
 		// adding after the end of the array
-		bool bSuccess=SetCount( iElement+nElements, -1 );   // grow so nIndex is valid
+		bool bSuccess = SetCount(AtlAddThrow<size_t>(iElement, nElements), -1 );   // grow so nIndex is valid
 		if( !bSuccess )
 		{
 			AtlThrow( E_OUTOFMEMORY );
@@ -956,7 +1030,7 @@ void CAtlArray< E, ETraits >::InsertAt( size_t iElement, INARGTYPE element, size
 	{
 		// inserting in the middle of the array
 		size_t nOldSize = m_nSize;
-		bool bSuccess=SetCount( m_nSize+nElements, -1 );  // grow it to new size
+		bool bSuccess = SetCount(AtlAddThrow<size_t>(m_nSize, nElements), -1 );  // grow it to new size
 		if( !bSuccess )
 		{
 			AtlThrow( E_OUTOFMEMORY );
@@ -990,15 +1064,17 @@ void CAtlArray< E, ETraits >::InsertAt( size_t iElement, INARGTYPE element, size
 }
 
 template< typename E, class ETraits >
-void CAtlArray< E, ETraits >::RemoveAt( size_t iElement, size_t nElements )
+void CAtlArray< E, ETraits >::RemoveAt(
+	_In_ size_t iElement,
+	_In_ size_t nElements)
 {
 	ATLASSERT_VALID(this);
 	ATLASSERT( (iElement+nElements) <= m_nSize );
 
 	size_t newCount = iElement+nElements;
 	if ((newCount < iElement) || (newCount < nElements) || (newCount > m_nSize))
-		AtlThrow(E_INVALIDARG);		
-		
+		AtlThrow(E_INVALIDARG);
+
 	// just remove a range
 	size_t nMoveCount = m_nSize-(newCount);
 	CallDestructors( m_pData+iElement, nElements );
@@ -1011,8 +1087,9 @@ void CAtlArray< E, ETraits >::RemoveAt( size_t iElement, size_t nElements )
 }
 
 template< typename E, class ETraits >
-void CAtlArray< E, ETraits >::InsertArrayAt( size_t iStartElement, 
-	const CAtlArray< E, ETraits >* paNew )
+void CAtlArray< E, ETraits >::InsertArrayAt(
+	_In_ size_t iStartElement,
+	_In_ const CAtlArray< E, ETraits >* paNew)
 {
 	ATLASSERT_VALID( this );
 	ATLENSURE( paNew != NULL );
@@ -1049,7 +1126,9 @@ void CAtlArray< E, ETraits >::AssertValid() const
 #undef new
 
 template< typename E, class ETraits >
-void CAtlArray< E, ETraits >::CallConstructors( E* pElements, size_t nElements )
+void CAtlArray< E, ETraits >::CallConstructors(
+	_Inout_cap_(nElements) E* pElements,
+	_In_ size_t nElements)
 {
 	size_t iElement = 0;
 
@@ -1075,10 +1154,12 @@ void CAtlArray< E, ETraits >::CallConstructors( E* pElements, size_t nElements )
 #pragma pop_macro("new")
 
 template< typename E, class ETraits >
-void CAtlArray< E, ETraits >::CallDestructors( E* pElements, size_t nElements ) throw()
+void CAtlArray< E, ETraits >::CallDestructors(
+	_Inout_ _Prepost_bytecount_x_(sizeof(E) * nElements) E* pElements,
+	_In_ size_t nElements) throw()
 {
-	(void)pElements;
-
+	(pElements);
+	
 	for( size_t iElement = 0; iElement < nElements; iElement++ )
 	{
 		pElements[iElement].~E();
@@ -1100,7 +1181,7 @@ private:
 		CNode()
 		{
 		}
-		CNode( INARGTYPE element ) :
+		CNode(/* _In_ */ INARGTYPE element) :
 			m_element( element )
 		{
 		}
@@ -1114,11 +1195,11 @@ private:
 		E m_element;
 
 	private:
-		CNode( const CNode& ) throw();
+		CNode(_In_ const CNode&) throw();
 	};
 
 public:
-	CAtlList( UINT nBlockSize = 10 ) throw();
+	CAtlList(_In_ UINT nBlockSize = 10) throw();
 
 	size_t GetCount() const throw();
 	bool IsEmpty() const throw();
@@ -1134,35 +1215,45 @@ public:
 	void RemoveTailNoReturn() throw();
 
 	POSITION AddHead();
-	POSITION AddHead( INARGTYPE element );
-	void AddHeadList( const CAtlList< E, ETraits >* plNew );
+	POSITION AddHead(/* _In_ */ INARGTYPE element);
+	void AddHeadList(_In_ const CAtlList< E, ETraits >* plNew);
 	POSITION AddTail();
-	POSITION AddTail( INARGTYPE element );
-	void AddTailList( const CAtlList< E, ETraits >* plNew );
+	POSITION AddTail(/* _In_ */ INARGTYPE element);
+	void AddTailList(_In_ const CAtlList< E, ETraits >* plNew);
 
 	void RemoveAll() throw();
 
 	POSITION GetHeadPosition() const throw();
 	POSITION GetTailPosition() const throw();
-	E& GetNext( POSITION& pos );
-	const E& GetNext( POSITION& pos ) const;
-	E& GetPrev( POSITION& pos );
-	const E& GetPrev( POSITION& pos ) const throw();
+	E& GetNext(_Inout_ POSITION& pos);
+	const E& GetNext(_Inout_ POSITION& pos) const;
+	E& GetPrev(_Inout_ POSITION& pos);
+	const E& GetPrev(_Inout_ POSITION& pos) const throw();
 
-	E& GetAt( POSITION pos );
-	const E& GetAt( POSITION pos ) const;
-	void SetAt( POSITION pos, INARGTYPE element );
-	void RemoveAt( POSITION pos ) throw();
+	E& GetAt(_In_ POSITION pos);
+	const E& GetAt(_In_ POSITION pos) const;
+	void SetAt(
+		_In_ POSITION pos,
+		/* _In_ */ INARGTYPE element);
+	void RemoveAt(_In_ POSITION pos) throw();
 
-	POSITION InsertBefore( POSITION pos, INARGTYPE element );
-	POSITION InsertAfter( POSITION pos, INARGTYPE element );
+	POSITION InsertBefore(
+		_In_ POSITION pos,
+		/* _In_ */ INARGTYPE element);
+	POSITION InsertAfter(
+		_In_ POSITION pos,
+		/* _In_ */ INARGTYPE element);
 
-	POSITION Find( INARGTYPE element, POSITION posStartAfter = NULL ) const throw();
-	POSITION FindIndex( size_t iElement ) const throw();
+	POSITION Find(
+		/* _In_ */ INARGTYPE element,
+		_In_opt_ POSITION posStartAfter = NULL) const throw();
+	POSITION FindIndex(_In_ size_t iElement) const throw();
 
-	void MoveToHead( POSITION pos );
-	void MoveToTail( POSITION pos );
-	void SwapElements( POSITION pos1, POSITION pos2 ) throw();
+	void MoveToHead(_In_ POSITION pos);
+	void MoveToTail(_In_ POSITION pos);
+	void SwapElements(
+		_In_ POSITION pos1,
+		_In_ POSITION pos2) throw();
 
 #ifdef _DEBUG
 	void AssertValid() const;
@@ -1179,17 +1270,22 @@ private:
 
 private:
 	void GetFreeNode();
-	CNode* NewNode( CNode* pPrev, CNode* pNext );
-	CNode* NewNode( INARGTYPE element, CNode* pPrev, CNode* pNext );
-	void FreeNode( CNode* pNode ) throw();
+	CNode* NewNode(
+		_In_opt_ CNode* pPrev,
+		_In_opt_ CNode* pNext);
+	CNode* NewNode(
+		/* _In_ */ INARGTYPE element,
+		_In_opt_ CNode* pPrev,
+		_In_opt_ CNode* pNext);
+	void FreeNode(_Inout_ CNode* pNode) throw();
 
 public:
 	~CAtlList() throw();
 
 private:
 	// Private to prevent use
-	CAtlList( const CAtlList& ) throw();
-	CAtlList& operator=( const CAtlList& ) throw();
+	CAtlList(_In_ const CAtlList&) throw();
+	CAtlList& operator=(_In_ const CAtlList&) throw();
 };
 
 template< class I, const IID* piid = &__uuidof( I ) >
@@ -1197,15 +1293,15 @@ class CInterfaceList :
 	public CAtlList< ATL::CComQIPtr< I, piid >, CComQIPtrElementTraits< I, piid > >
 {
 public:
-	CInterfaceList( UINT nBlockSize = 10 ) throw() :
+	CInterfaceList(_In_ UINT nBlockSize = 10) throw() :
 		CAtlList< ATL::CComQIPtr< I, piid >, CComQIPtrElementTraits< I, piid > >( nBlockSize )
 	{
 	}
 
 private:
 	// Private to prevent use
-	CInterfaceList( const CInterfaceList& ) throw();
-	CInterfaceList& operator=( const CInterfaceList& ) throw();
+	CInterfaceList(_In_ const CInterfaceList&) throw();
+	CInterfaceList& operator=(_In_ const CInterfaceList&) throw();
 };
 
 template< typename E >
@@ -1213,15 +1309,15 @@ class CAutoPtrList :
 	public CAtlList< ATL::CAutoPtr< E >, CAutoPtrElementTraits< E > >
 {
 public:
-	CAutoPtrList( UINT nBlockSize = 10 ) throw() :
+	CAutoPtrList(_In_ UINT nBlockSize = 10) throw() :
 		CAtlList< ATL::CAutoPtr< E >, CAutoPtrElementTraits< E > >( nBlockSize )
 	{
 	}
 
 private:
 	// Private to prevent use
-	CAutoPtrList( const CAutoPtrList& ) throw();
-	CAutoPtrList& operator=( const CAutoPtrList& ) throw();
+	CAutoPtrList(_In_ const CAutoPtrList&) throw();
+	CAutoPtrList& operator=(_In_ const CAutoPtrList&) throw();
 };
 
 template< typename E, class Allocator = ATL::CCRTAllocator >
@@ -1229,15 +1325,15 @@ class CHeapPtrList :
 	public CAtlList< ATL::CHeapPtr< E, Allocator >, CHeapPtrElementTraits< E, Allocator > >
 {
 public:
-	CHeapPtrList( UINT nBlockSize = 10 ) throw() :
+	CHeapPtrList(_In_ UINT nBlockSize = 10) throw() :
 		CAtlList< ATL::CHeapPtr< E, Allocator >, CHeapPtrElementTraits< E, Allocator > >( nBlockSize )
 	{
 	}
 
 private:
 	// Private to prevent use
-	CHeapPtrList( const CHeapPtrList& ) throw();
-	CHeapPtrList& operator=( const CHeapPtrList& ) throw();
+	CHeapPtrList(_In_ const CHeapPtrList&) throw();
+	CHeapPtrList& operator=(_In_ const CHeapPtrList&) throw();
 };
 
 template< typename E, class ETraits >
@@ -1293,7 +1389,7 @@ inline POSITION CAtlList< E, ETraits >::GetTailPosition() const throw()
 }
 
 template< typename E, class ETraits >
-inline E& CAtlList< E, ETraits >::GetNext( POSITION& pos )
+inline E& CAtlList< E, ETraits >::GetNext(_Inout_ POSITION& pos)
 {
 	CNode* pNode;
 
@@ -1305,7 +1401,7 @@ inline E& CAtlList< E, ETraits >::GetNext( POSITION& pos )
 }
 
 template< typename E, class ETraits >
-inline const E& CAtlList< E, ETraits >::GetNext( POSITION& pos ) const
+inline const E& CAtlList< E, ETraits >::GetNext(_Inout_ POSITION& pos) const
 {
 	CNode* pNode;
 
@@ -1317,7 +1413,7 @@ inline const E& CAtlList< E, ETraits >::GetNext( POSITION& pos ) const
 }
 
 template< typename E, class ETraits >
-inline E& CAtlList< E, ETraits >::GetPrev( POSITION& pos )
+inline E& CAtlList< E, ETraits >::GetPrev(_Inout_ POSITION& pos)
 {
 	CNode* pNode;
 
@@ -1329,11 +1425,11 @@ inline E& CAtlList< E, ETraits >::GetPrev( POSITION& pos )
 }
 
 template< typename E, class ETraits >
-inline const E& CAtlList< E, ETraits >::GetPrev( POSITION& pos ) const throw()
+inline const E& CAtlList< E, ETraits >::GetPrev(_Inout_ POSITION& pos) const throw()
 {
 	CNode* pNode;
 
-	ATLASSERT( pos != NULL );
+	ATLASSUME( pos != NULL );
 	pNode = (CNode*)pos;
 	pos = POSITION( pNode->m_pPrev );
 
@@ -1341,7 +1437,7 @@ inline const E& CAtlList< E, ETraits >::GetPrev( POSITION& pos ) const throw()
 }
 
 template< typename E, class ETraits >
-inline E& CAtlList< E, ETraits >::GetAt( POSITION pos )
+inline E& CAtlList< E, ETraits >::GetAt(_In_ POSITION pos)
 {
 	ATLENSURE( pos != NULL );
 	CNode* pNode = (CNode*)pos;
@@ -1349,7 +1445,7 @@ inline E& CAtlList< E, ETraits >::GetAt( POSITION pos )
 }
 
 template< typename E, class ETraits >
-inline const E& CAtlList< E, ETraits >::GetAt( POSITION pos ) const 
+inline const E& CAtlList< E, ETraits >::GetAt(_In_ POSITION pos) const
 {
 	ATLENSURE( pos != NULL );
 	CNode* pNode = (CNode*)pos;
@@ -1357,7 +1453,9 @@ inline const E& CAtlList< E, ETraits >::GetAt( POSITION pos ) const
 }
 
 template< typename E, class ETraits >
-inline void CAtlList< E, ETraits >::SetAt( POSITION pos, INARGTYPE element )
+inline void CAtlList< E, ETraits >::SetAt(
+	_In_ POSITION pos,
+	/* _In_ */ INARGTYPE element)
 {
 	ATLENSURE( pos != NULL );
 	CNode* pNode = (CNode*)pos;
@@ -1365,7 +1463,7 @@ inline void CAtlList< E, ETraits >::SetAt( POSITION pos, INARGTYPE element )
 }
 
 template< typename E, class ETraits >
-CAtlList< E, ETraits >::CAtlList( UINT nBlockSize ) throw() :
+CAtlList< E, ETraits >::CAtlList(_In_ UINT nBlockSize) throw() :
 	m_nElements( 0 ),
 	m_pHead( NULL ),
 	m_pTail( NULL ),
@@ -1377,7 +1475,7 @@ CAtlList< E, ETraits >::CAtlList( UINT nBlockSize ) throw() :
 }
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::RemoveAll() 
+void CAtlList< E, ETraits >::RemoveAll()
 {
 	while( m_nElements > 0 )
 	{
@@ -1436,7 +1534,9 @@ void CAtlList< E, ETraits >::GetFreeNode()
 }
 
 template< typename E, class ETraits >
-typename CAtlList< E, ETraits >::CNode* CAtlList< E, ETraits >::NewNode( CNode* pPrev, CNode* pNext )
+typename CAtlList< E, ETraits >::CNode* CAtlList< E, ETraits >::NewNode(
+	_In_opt_ CNode* pPrev,
+	_In_opt_ CNode* pNext )
 {
 	GetFreeNode();
 
@@ -1455,8 +1555,10 @@ typename CAtlList< E, ETraits >::CNode* CAtlList< E, ETraits >::NewNode( CNode* 
 }
 
 template< typename E, class ETraits >
-typename CAtlList< E, ETraits >::CNode* CAtlList< E, ETraits >::NewNode( INARGTYPE element, CNode* pPrev, 
-	CNode* pNext )
+typename CAtlList< E, ETraits >::CNode* CAtlList< E, ETraits >::NewNode(
+	/* _In_ */ INARGTYPE element,
+	_In_opt_ CNode* pPrev,
+	_In_opt_ CNode* pNext)
 {
 	GetFreeNode();
 
@@ -1477,7 +1579,7 @@ typename CAtlList< E, ETraits >::CNode* CAtlList< E, ETraits >::NewNode( INARGTY
 #pragma pop_macro("new")
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::FreeNode( CNode* pNode ) throw()
+void CAtlList< E, ETraits >::FreeNode(_Inout_ CNode* pNode) throw()
 {
 	pNode->~CNode();
 	pNode->m_pNext = m_pFree;
@@ -1508,7 +1610,7 @@ POSITION CAtlList< E, ETraits >::AddHead()
 }
 
 template< typename E, class ETraits >
-POSITION CAtlList< E, ETraits >::AddHead( INARGTYPE element )
+POSITION CAtlList< E, ETraits >::AddHead(/* _In_ */ INARGTYPE element)
 {
 	CNode* pNode;
 
@@ -1545,7 +1647,7 @@ POSITION CAtlList< E, ETraits >::AddTail()
 }
 
 template< typename E, class ETraits >
-POSITION CAtlList< E, ETraits >::AddTail( INARGTYPE element )
+POSITION CAtlList< E, ETraits >::AddTail(/* _In_ */ INARGTYPE element)
 {
 	CNode* pNode;
 
@@ -1565,7 +1667,7 @@ POSITION CAtlList< E, ETraits >::AddTail( INARGTYPE element )
 }
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::AddHeadList( const CAtlList< E, ETraits >* plNew )
+void CAtlList< E, ETraits >::AddHeadList(_In_ const CAtlList< E, ETraits >* plNew)
 {
 	ATLENSURE( plNew != NULL );
 
@@ -1578,7 +1680,7 @@ void CAtlList< E, ETraits >::AddHeadList( const CAtlList< E, ETraits >* plNew )
 }
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::AddTailList( const CAtlList< E, ETraits >* plNew )
+void CAtlList< E, ETraits >::AddTailList(_In_ const CAtlList< E, ETraits >* plNew)
 {
 	ATLENSURE( plNew != NULL );
 
@@ -1594,7 +1696,7 @@ template< typename E, class ETraits >
 E CAtlList< E, ETraits >::RemoveHead()
 {
 	ATLENSURE( m_pHead != NULL );
-	
+
 	CNode* pNode = m_pHead;
 	E element( pNode->m_element );
 
@@ -1616,7 +1718,7 @@ template< typename E, class ETraits >
 void CAtlList< E, ETraits >::RemoveHeadNoReturn()
 {
 	ATLENSURE( m_pHead != NULL );
-	
+
 	CNode* pNode = m_pHead;
 
 	m_pHead = pNode->m_pNext;
@@ -1674,7 +1776,9 @@ void CAtlList< E, ETraits >::RemoveTailNoReturn()
 }
 
 template< typename E, class ETraits >
-POSITION CAtlList< E, ETraits >::InsertBefore( POSITION pos, INARGTYPE element )
+POSITION CAtlList< E, ETraits >::InsertBefore(
+	_In_ POSITION pos,
+	/* _In_ */ INARGTYPE element)
 {
 	ATLASSERT_VALID(this);
 
@@ -1701,7 +1805,9 @@ POSITION CAtlList< E, ETraits >::InsertBefore( POSITION pos, INARGTYPE element )
 }
 
 template< typename E, class ETraits >
-POSITION CAtlList< E, ETraits >::InsertAfter( POSITION pos, INARGTYPE element )
+POSITION CAtlList< E, ETraits >::InsertAfter(
+	_In_ POSITION pos,
+	/* _In_ */ INARGTYPE element)
 {
 	ATLASSERT_VALID(this);
 
@@ -1728,7 +1834,7 @@ POSITION CAtlList< E, ETraits >::InsertAfter( POSITION pos, INARGTYPE element )
 }
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::RemoveAt( POSITION pos )
+void CAtlList< E, ETraits >::RemoveAt(_In_ POSITION pos)
 {
 	ATLASSERT_VALID(this);
 	ATLENSURE( pos != NULL );
@@ -1758,7 +1864,7 @@ void CAtlList< E, ETraits >::RemoveAt( POSITION pos )
 }
 
 template< typename E, class ETraits >
-POSITION CAtlList< E, ETraits >::FindIndex( size_t iElement ) const throw()
+POSITION CAtlList< E, ETraits >::FindIndex(_In_ size_t iElement) const throw()
 {
 	ATLASSERT_VALID(this);
 
@@ -1767,7 +1873,7 @@ POSITION CAtlList< E, ETraits >::FindIndex( size_t iElement ) const throw()
 
 	if(m_pHead == NULL)
 		return NULL;
-		
+
 	CNode* pNode = m_pHead;
 	for( size_t iSearch = 0; iSearch < iElement; iSearch++ )
 	{
@@ -1778,12 +1884,12 @@ POSITION CAtlList< E, ETraits >::FindIndex( size_t iElement ) const throw()
 }
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::MoveToHead( POSITION pos )
+void CAtlList< E, ETraits >::MoveToHead(_In_ POSITION pos)
 {
 	ATLENSURE( pos != NULL );
 
 	CNode* pNode = static_cast< CNode* >( pos );
-	
+
 	if( pNode == m_pHead )
 	{
 		// Already at the head
@@ -1799,8 +1905,8 @@ void CAtlList< E, ETraits >::MoveToHead( POSITION pos )
 	{
 		pNode->m_pNext->m_pPrev = pNode->m_pPrev;
 	}
-	
-	ATLASSERT( pNode->m_pPrev != NULL );  // This node can't be the head, since we already checked that case
+
+	ATLASSUME( pNode->m_pPrev != NULL );  // This node can't be the head, since we already checked that case
 	pNode->m_pPrev->m_pNext = pNode->m_pNext;
 
 	m_pHead->m_pPrev = pNode;
@@ -1810,7 +1916,7 @@ void CAtlList< E, ETraits >::MoveToHead( POSITION pos )
 }
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::MoveToTail( POSITION pos )
+void CAtlList< E, ETraits >::MoveToTail(_In_ POSITION pos)
 {
 	ATLENSURE( pos != NULL );
 	CNode* pNode = static_cast< CNode* >( pos );
@@ -1840,10 +1946,12 @@ void CAtlList< E, ETraits >::MoveToTail( POSITION pos )
 }
 
 template< typename E, class ETraits >
-void CAtlList< E, ETraits >::SwapElements( POSITION pos1, POSITION pos2 ) throw()
+void CAtlList< E, ETraits >::SwapElements(
+	_In_ POSITION pos1,
+	_In_ POSITION pos2) throw()
 {
-	ATLASSERT( pos1 != NULL );
-	ATLASSERT( pos2 != NULL );
+	ATLASSUME( pos1 != NULL );
+	ATLASSUME( pos2 != NULL );
 
 	if( pos1 == pos2 )
 	{
@@ -1939,7 +2047,9 @@ void CAtlList< E, ETraits >::SwapElements( POSITION pos1, POSITION pos2 ) throw(
 }
 
 template< typename E, class ETraits >
-POSITION CAtlList< E, ETraits >::Find( INARGTYPE element, POSITION posStartAfter ) const throw()
+POSITION CAtlList< E, ETraits >::Find(
+	/* _In_ */ INARGTYPE element,
+	_In_opt_ POSITION posStartAfter) const throw()
 {
 	ATLASSERT_VALID(this);
 
@@ -1950,7 +2060,10 @@ POSITION CAtlList< E, ETraits >::Find( INARGTYPE element, POSITION posStartAfter
 	}
 	else
 	{
+		pNode = SAL_Assume_bytecap_for_opt_(pNode, sizeof(CNode));
 		ATLASSERT(AtlIsValidAddress(pNode, sizeof(CNode)));
+		ATLASSUME(pNode != NULL);
+
 		pNode = pNode->m_pNext;  // start after the one specified
 	}
 
@@ -1995,7 +2108,7 @@ public:
 		public __POSITION
 	{
 	protected:
-		CPair( KINARGTYPE key ) :
+		CPair(/* _In_ */ KINARGTYPE key) :
 			m_key( key )
 		{
 		}
@@ -2010,7 +2123,9 @@ private:
 		public CPair
 	{
 	public:
-		CNode( KINARGTYPE key, UINT nHash ) :
+		CNode(
+				/* _In_ */ KINARGTYPE key,
+				_In_ UINT nHash) :
 			CPair( key ),
 			m_nHash( nHash )
 		{
@@ -2028,45 +2143,66 @@ private:
 	};
 
 public:
-	CAtlMap( UINT nBins = 17, float fOptimalLoad = 0.75f, 
-		float fLoThreshold = 0.25f, float fHiThreshold = 2.25f, UINT nBlockSize = 10 ) throw();
+	CAtlMap(
+		_In_ UINT nBins = 17,
+		_In_ float fOptimalLoad = 0.75f,
+		_In_ float fLoThreshold = 0.25f,
+		_In_ float fHiThreshold = 2.25f,
+		_In_ UINT nBlockSize = 10) throw();
 
 	size_t GetCount() const throw();
 	bool IsEmpty() const throw();
 
-	bool Lookup( KINARGTYPE key, VOUTARGTYPE value ) const;
-	const CPair* Lookup( KINARGTYPE key ) const throw();
-	CPair* Lookup( KINARGTYPE key ) throw();
-	V& operator[]( KINARGTYPE key ) throw(...);
+	bool Lookup(
+		/* _In_ */ KINARGTYPE key,
+		_Out_ VOUTARGTYPE value) const;
+	const CPair* Lookup(/* _In_ */ KINARGTYPE key) const throw();
+	CPair* Lookup(/* _In_ */ KINARGTYPE key) throw();
+	V& operator[](/* _In_ */ KINARGTYPE key) throw(...);
 
-	POSITION SetAt( KINARGTYPE key, VINARGTYPE value );
-	void SetValueAt( POSITION pos, VINARGTYPE value );
+	POSITION SetAt(
+		/* _In_ */ KINARGTYPE key,
+		/* _In_ */ VINARGTYPE value);
+	void SetValueAt(
+		_In_ POSITION pos,
+		/* _In_ */ VINARGTYPE value);
 
-	bool RemoveKey( KINARGTYPE key ) throw();
+	bool RemoveKey(/* _In_ */ KINARGTYPE key) throw();
 	void RemoveAll();
-	void RemoveAtPos( POSITION pos ) throw();
+	void RemoveAtPos(_In_ POSITION pos) throw();
 
 	POSITION GetStartPosition() const throw();
-	void GetNextAssoc( POSITION& pos, KOUTARGTYPE key, VOUTARGTYPE value ) const;
-	const CPair* GetNext( POSITION& pos ) const throw();
-	CPair* GetNext( POSITION& pos ) throw();
-	const K& GetNextKey( POSITION& pos ) const;
-	const V& GetNextValue( POSITION& pos ) const;
-	V& GetNextValue( POSITION& pos );
-	void GetAt( POSITION pos, KOUTARGTYPE key, VOUTARGTYPE value ) const;
-	CPair* GetAt( POSITION pos ) throw();
-	const CPair* GetAt( POSITION pos ) const throw();
-	const K& GetKeyAt( POSITION pos ) const;
-	const V& GetValueAt( POSITION pos ) const;
-	V& GetValueAt( POSITION pos );
+	void GetNextAssoc(
+		_Inout_ POSITION& pos,
+		_Out_ KOUTARGTYPE key,
+		_Out_ VOUTARGTYPE value) const;
+	const CPair* GetNext(_Inout_ POSITION& pos) const throw();
+	CPair* GetNext(_Inout_ POSITION& pos) throw();
+	const K& GetNextKey(_Inout_ POSITION& pos) const;
+	const V& GetNextValue(_Inout_ POSITION& pos) const;
+	V& GetNextValue(_Inout_ POSITION& pos);
+	void GetAt(
+		_In_ POSITION pos,
+		_Out_ KOUTARGTYPE key,
+		_Out_ VOUTARGTYPE value) const;
+	CPair* GetAt(_In_ POSITION pos) throw();
+	const CPair* GetAt(_In_ POSITION pos) const throw();
+	const K& GetKeyAt(_In_ POSITION pos) const;
+	const V& GetValueAt(_In_ POSITION pos) const;
+	V& GetValueAt(_In_ POSITION pos);
 
 	UINT GetHashTableSize() const throw();
-	bool InitHashTable( UINT nBins, bool bAllocNow = true );
+	bool InitHashTable(
+		_In_ UINT nBins,
+		_In_ bool bAllocNow = true);
 	void EnableAutoRehash() throw();
 	void DisableAutoRehash() throw();
-	void Rehash( UINT nBins = 0 );
-	void SetOptimalLoad( float fOptimalLoad, float fLoThreshold, float fHiThreshold, 
-		bool bRehashNow = false );
+	void Rehash(_In_ UINT nBins = 0);
+	void SetOptimalLoad(
+		_In_ float fOptimalLoad,
+		_In_ float fLoThreshold,
+		_In_ float fHiThreshold,
+		_In_ bool bRehashNow = false);
 
 #ifdef _DEBUG
 	void AssertValid() const;
@@ -2089,14 +2225,26 @@ private:
 
 private:
 	bool IsLocked() const throw();
-	UINT PickSize( size_t nElements ) const throw();
-	CNode* NewNode( KINARGTYPE key, UINT iBin, UINT nHash );
-	void FreeNode( CNode* pNode );
+	UINT PickSize(_In_ size_t nElements) const throw();
+	CNode* NewNode(
+		/* _In_ */ KINARGTYPE key,
+		_In_ UINT iBin,
+		_In_ UINT nHash);
+	void FreeNode(_Inout_ CNode* pNode);
 	void FreePlexes() throw();
-	CNode* GetNode( KINARGTYPE key, UINT& iBin, UINT& nHash, CNode*& pPrev ) const throw();
-	CNode* CreateNode( KINARGTYPE key, UINT iBin, UINT nHash ) throw(...);
-	void RemoveNode( CNode* pNode, CNode* pPrev ) throw();
-	CNode* FindNextNode( CNode* pNode ) const throw();
+	CNode* GetNode(
+		/* _In_ */ KINARGTYPE key,
+		_Out_ UINT& iBin,
+		_Out_ UINT& nHash,
+		_Deref_out_opt_ CNode*& pPrev) const throw();
+	CNode* CreateNode(
+		/* _In_ */ KINARGTYPE key,
+		_In_ UINT iBin,
+		_In_ UINT nHash) throw(...);
+	void RemoveNode(
+		_In_ CNode* pNode,
+		_In_opt_ CNode* pPrev) throw();
+	CNode* FindNextNode(_In_ CNode* pNode) const throw();
 	void UpdateRehashThresholds() throw();
 
 public:
@@ -2104,8 +2252,8 @@ public:
 
 private:
 	// Private to prevent use
-	CAtlMap( const CAtlMap& ) throw();
-	CAtlMap& operator=( const CAtlMap& ) throw();
+	CAtlMap(_In_ const CAtlMap&) throw();
+	CAtlMap& operator=(_In_ const CAtlMap&) throw();
 };
 
 template< typename K, typename I, class KTraits = CElementTraits< K > >
@@ -2113,16 +2261,16 @@ class CMapToInterface :
 	public CAtlMap< K, ATL::CComQIPtr< I >, KTraits, CComQIPtrElementTraits< I > >
 {
 public:
-	CMapToInterface( UINT nBins = 17 ) throw();
+	CMapToInterface(_In_ UINT nBins = 17) throw();
 
 private:
 	// Private to prevent use
-	CMapToInterface( const CMapToInterface& ) throw();
-	CMapToInterface& operator=( const CMapToInterface& ) throw();
+	CMapToInterface(_In_ const CMapToInterface&) throw();
+	CMapToInterface& operator=(_In_ const CMapToInterface&) throw();
 };
 
 template< typename K, typename I, class KTraits >
-inline CMapToInterface< K, I, KTraits >::CMapToInterface( UINT nBins ) throw() :
+inline CMapToInterface< K, I, KTraits >::CMapToInterface(_In_ UINT nBins) throw() :
 	CAtlMap< K, ATL::CComQIPtr< I >, KTraits, CComQIPtrElementTraits< I > >( nBins )
 {
 }
@@ -2132,16 +2280,16 @@ class CMapToAutoPtr :
 	public CAtlMap< K, ATL::CAutoPtr< V >, KTraits, CAutoPtrElementTraits< V > >
 {
 public:
-	CMapToAutoPtr( UINT nBins = 17 ) throw();
+	CMapToAutoPtr(_In_ UINT nBins = 17) throw();
 
 private:
 	// Private to prevent use
-	CMapToAutoPtr( const CMapToAutoPtr& ) throw();
-	CMapToAutoPtr& operator=( const CMapToAutoPtr& ) throw();
+	CMapToAutoPtr(_In_ const CMapToAutoPtr&) throw();
+	CMapToAutoPtr& operator=(_In_ const CMapToAutoPtr&) throw();
 };
 
 template< typename K, typename V, class KTraits >
-inline CMapToAutoPtr< K, V, KTraits >::CMapToAutoPtr( UINT nBins ) throw() :
+inline CMapToAutoPtr< K, V, KTraits >::CMapToAutoPtr(_In_ UINT nBins) throw() :
 	CAtlMap< K, ATL::CAutoPtr< V >, KTraits, CAutoPtrElementTraits< V > >( nBins )
 {
 }
@@ -2159,7 +2307,7 @@ inline bool CAtlMap< K, V, KTraits, VTraits >::IsEmpty() const throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline V& CAtlMap< K, V, KTraits, VTraits >::operator[]( KINARGTYPE key ) throw(...)
+inline V& CAtlMap< K, V, KTraits, VTraits >::operator[](/* _In_ */ KINARGTYPE key) throw(...)
 {
 	CNode* pNode;
 	UINT iBin;
@@ -2182,7 +2330,10 @@ inline UINT CAtlMap< K, V, KTraits, VTraits >::GetHashTableSize() const throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline void CAtlMap< K, V, KTraits, VTraits >::GetAt( POSITION pos, KOUTARGTYPE key, VOUTARGTYPE value ) const
+inline void CAtlMap< K, V, KTraits, VTraits >::GetAt(
+	_In_ POSITION pos,
+	_Out_ KOUTARGTYPE key,
+	_Out_ VOUTARGTYPE value) const
 {
 	ATLENSURE( pos != NULL );
 
@@ -2193,7 +2344,8 @@ inline void CAtlMap< K, V, KTraits, VTraits >::GetAt( POSITION pos, KOUTARGTYPE 
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetAt( POSITION pos ) throw()
+inline typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetAt(
+	_In_ POSITION pos) throw()
 {
 	ATLASSERT( pos != NULL );
 
@@ -2201,7 +2353,8 @@ inline typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetAt( POSITION pos ) const throw()
+inline const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetAt(
+	_In_ POSITION pos) const throw()
 {
 	ATLASSERT( pos != NULL );
 
@@ -2209,7 +2362,7 @@ inline const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, K
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline const K& CAtlMap< K, V, KTraits, VTraits >::GetKeyAt( POSITION pos ) const
+inline const K& CAtlMap< K, V, KTraits, VTraits >::GetKeyAt(_In_ POSITION pos) const
 {
 	ATLENSURE( pos != NULL );
 
@@ -2219,7 +2372,7 @@ inline const K& CAtlMap< K, V, KTraits, VTraits >::GetKeyAt( POSITION pos ) cons
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline const V& CAtlMap< K, V, KTraits, VTraits >::GetValueAt( POSITION pos ) const
+inline const V& CAtlMap< K, V, KTraits, VTraits >::GetValueAt(_In_ POSITION pos) const
 {
 	ATLENSURE( pos != NULL );
 
@@ -2229,7 +2382,7 @@ inline const V& CAtlMap< K, V, KTraits, VTraits >::GetValueAt( POSITION pos ) co
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline V& CAtlMap< K, V, KTraits, VTraits >::GetValueAt( POSITION pos )
+inline V& CAtlMap< K, V, KTraits, VTraits >::GetValueAt(_In_ POSITION pos)
 {
 	ATLENSURE( pos != NULL );
 
@@ -2258,16 +2411,16 @@ inline bool CAtlMap< K, V, KTraits, VTraits >::IsLocked() const throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-UINT CAtlMap< K, V, KTraits, VTraits >::PickSize( size_t nElements ) const throw()
+UINT CAtlMap< K, V, KTraits, VTraits >::PickSize(_In_ size_t nElements) const throw()
 {
 	// List of primes such that s_anPrimes[i] is the smallest prime greater than 2^(5+i/3)
 	static const UINT s_anPrimes[] =
 	{
-		17, 23, 29, 37, 41, 53, 67, 83, 103, 131, 163, 211, 257, 331, 409, 521, 647, 821, 
-		1031, 1291, 1627, 2053, 2591, 3251, 4099, 5167, 6521, 8209, 10331, 
-		13007, 16411, 20663, 26017, 32771, 41299, 52021, 65537, 82571, 104033, 
-		131101, 165161, 208067, 262147, 330287, 416147, 524309, 660563, 
-		832291, 1048583, 1321139, 1664543, 2097169, 2642257, 3329023, 4194319, 
+		17, 23, 29, 37, 41, 53, 67, 83, 103, 131, 163, 211, 257, 331, 409, 521, 647, 821,
+		1031, 1291, 1627, 2053, 2591, 3251, 4099, 5167, 6521, 8209, 10331,
+		13007, 16411, 20663, 26017, 32771, 41299, 52021, 65537, 82571, 104033,
+		131101, 165161, 208067, 262147, 330287, 416147, 524309, 660563,
+		832291, 1048583, 1321139, 1664543, 2097169, 2642257, 3329023, 4194319,
 		5284493, 6658049, 8388617, 10568993, 13316089, UINT_MAX
 	};
 
@@ -2292,8 +2445,10 @@ UINT CAtlMap< K, V, KTraits, VTraits >::PickSize( size_t nElements ) const throw
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::CreateNode( 
-	KINARGTYPE key, UINT iBin, UINT nHash ) throw(...)
+typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::CreateNode(
+	/* _In_ */ KINARGTYPE key,
+	_In_ UINT iBin,
+	_In_ UINT nHash) throw(...)
 {
 	CNode* pNode;
 
@@ -2334,7 +2489,9 @@ POSITION CAtlMap< K, V, KTraits, VTraits >::GetStartPosition() const throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-POSITION CAtlMap< K, V, KTraits, VTraits >::SetAt( KINARGTYPE key, VINARGTYPE value )
+POSITION CAtlMap< K, V, KTraits, VTraits >::SetAt(
+	/* _In_ */ KINARGTYPE key,
+	/* _In_ */ VINARGTYPE value)
 {
 	CNode* pNode;
 	UINT iBin;
@@ -2364,9 +2521,11 @@ POSITION CAtlMap< K, V, KTraits, VTraits >::SetAt( KINARGTYPE key, VINARGTYPE va
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CAtlMap< K, V, KTraits, VTraits >::SetValueAt( POSITION pos, VINARGTYPE value )
+void CAtlMap< K, V, KTraits, VTraits >::SetValueAt(
+	_In_ POSITION pos,
+	/* _In_ */ VINARGTYPE value)
 {
-	ATLASSERT( pos != NULL );
+	ATLASSUME( pos != NULL );
 
 	CNode* pNode = static_cast< CNode* >( pos );
 
@@ -2374,8 +2533,12 @@ void CAtlMap< K, V, KTraits, VTraits >::SetValueAt( POSITION pos, VINARGTYPE val
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-CAtlMap< K, V, KTraits, VTraits >::CAtlMap( UINT nBins, float fOptimalLoad, 
-	float fLoThreshold, float fHiThreshold, UINT nBlockSize ) throw() :
+CAtlMap< K, V, KTraits, VTraits >::CAtlMap(
+		_In_ UINT nBins,
+		_In_ float fOptimalLoad,
+		_In_ float fLoThreshold,
+		_In_ float fHiThreshold,
+		_In_ UINT nBlockSize) throw() :
 	m_ppBins( NULL ),
 	m_nBins( nBins ),
 	m_nElements( 0 ),
@@ -2396,8 +2559,11 @@ CAtlMap< K, V, KTraits, VTraits >::CAtlMap( UINT nBins, float fOptimalLoad,
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CAtlMap< K, V, KTraits, VTraits >::SetOptimalLoad( float fOptimalLoad, float fLoThreshold,
-	float fHiThreshold, bool bRehashNow )
+void CAtlMap< K, V, KTraits, VTraits >::SetOptimalLoad(
+	_In_ float fOptimalLoad,
+	_In_ float fLoThreshold,
+	_In_ float fHiThreshold,
+	_In_ bool bRehashNow)
 {
 	ATLASSERT( fOptimalLoad > 0 );
 	ATLASSERT( (fLoThreshold >= 0) && (fLoThreshold < fOptimalLoad) );
@@ -2409,7 +2575,7 @@ void CAtlMap< K, V, KTraits, VTraits >::SetOptimalLoad( float fOptimalLoad, floa
 
 	UpdateRehashThresholds();
 
-	if( bRehashNow && ((m_nElements > m_nHiRehashThreshold) || 
+	if( bRehashNow && ((m_nElements > m_nHiRehashThreshold) ||
 		(m_nElements < m_nLoRehashThreshold)) )
 	{
 		Rehash( PickSize( m_nElements ) );
@@ -2428,7 +2594,7 @@ void CAtlMap< K, V, KTraits, VTraits >::UpdateRehashThresholds() throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CAtlMap< K, V, KTraits, VTraits >::InitHashTable( UINT nBins, bool bAllocNow )
+bool CAtlMap< K, V, KTraits, VTraits >::InitHashTable(_In_ UINT nBins, _In_ bool bAllocNow)
 {
 	ATLASSUME( m_nElements == 0 );
 	ATLASSERT( nBins > 0 );
@@ -2501,7 +2667,7 @@ CAtlMap< K, V, KTraits, VTraits >::~CAtlMap() throw()
 	}
 	_ATLCATCHALL()
 	{
-		ATLASSERT(false);		
+		ATLASSERT(false);
 	}
 }
 
@@ -2509,8 +2675,10 @@ CAtlMap< K, V, KTraits, VTraits >::~CAtlMap() throw()
 #undef new
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::NewNode( 
-	KINARGTYPE key, UINT iBin, UINT nHash )
+typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::NewNode(
+	/* _In_ */ KINARGTYPE key,
+	_In_ UINT iBin,
+	_In_ UINT nHash)
 {
 	CNode* pNewNode;
 
@@ -2564,7 +2732,7 @@ typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTrai
 #pragma pop_macro("new")
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CAtlMap< K, V, KTraits, VTraits >::FreeNode( CNode* pNode )
+void CAtlMap< K, V, KTraits, VTraits >::FreeNode(_Inout_ CNode* pNode)
 {
 	ATLENSURE( pNode != NULL );
 
@@ -2599,7 +2767,10 @@ void CAtlMap< K, V, KTraits, VTraits >::FreePlexes() throw()
 
 template< typename K, typename V, class KTraits, class VTraits >
 typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::GetNode(
-	KINARGTYPE key, UINT& iBin, UINT& nHash, CNode*& pPrev ) const throw()
+	/* _In_ */ KINARGTYPE key,
+	_Out_ UINT& iBin,
+	_Out_ UINT& nHash,
+	_Deref_out_opt_ CNode*& pPrev) const throw()
 {
 	CNode* pFollow;
 
@@ -2627,7 +2798,9 @@ typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CAtlMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key, VOUTARGTYPE value ) const
+bool CAtlMap< K, V, KTraits, VTraits >::Lookup(
+	/* _In_ */ KINARGTYPE key,
+	_Out_ VOUTARGTYPE value) const
 {
 	UINT iBin;
 	UINT nHash;
@@ -2646,7 +2819,8 @@ bool CAtlMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key, VOUTARGTYPE valu
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key ) const throw()
+const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::Lookup(
+	/* _In_ */ KINARGTYPE key) const throw()
 {
 	UINT iBin;
 	UINT nHash;
@@ -2659,7 +2833,8 @@ const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits,
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key ) throw()
+typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::Lookup(
+	/* _In_ */ KINARGTYPE key) throw()
 {
 	UINT iBin;
 	UINT nHash;
@@ -2672,7 +2847,7 @@ typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CAtlMap< K, V, KTraits, VTraits >::RemoveKey( KINARGTYPE key ) throw()
+bool CAtlMap< K, V, KTraits, VTraits >::RemoveKey(/* _In_ */ KINARGTYPE key) throw()
 {
 	CNode* pNode;
 	UINT iBin;
@@ -2692,7 +2867,9 @@ bool CAtlMap< K, V, KTraits, VTraits >::RemoveKey( KINARGTYPE key ) throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CAtlMap< K, V, KTraits, VTraits >::RemoveNode( CNode* pNode, CNode* pPrev )
+void CAtlMap< K, V, KTraits, VTraits >::RemoveNode(
+	_In_ CNode* pNode,
+	_In_opt_ CNode* pPrev)
 {
 	ATLENSURE( pNode != NULL );
 
@@ -2712,7 +2889,7 @@ void CAtlMap< K, V, KTraits, VTraits >::RemoveNode( CNode* pNode, CNode* pPrev )
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CAtlMap< K, V, KTraits, VTraits >::RemoveAtPos( POSITION pos )
+void CAtlMap< K, V, KTraits, VTraits >::RemoveAtPos(_In_ POSITION pos)
 {
 	ATLENSURE( pos != NULL );
 
@@ -2738,7 +2915,7 @@ void CAtlMap< K, V, KTraits, VTraits >::RemoveAtPos( POSITION pos )
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CAtlMap< K, V, KTraits, VTraits >::Rehash( UINT nBins )
+void CAtlMap< K, V, KTraits, VTraits >::Rehash(_In_ UINT nBins)
 {
 	CNode** ppBins = NULL;
 
@@ -2799,8 +2976,10 @@ void CAtlMap< K, V, KTraits, VTraits >::Rehash( UINT nBins )
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CAtlMap< K, V, KTraits, VTraits >::GetNextAssoc( POSITION& pos, KOUTARGTYPE key,
-	VOUTARGTYPE value ) const
+void CAtlMap< K, V, KTraits, VTraits >::GetNextAssoc(
+	_Inout_ POSITION& pos,
+	_Out_ KOUTARGTYPE key,
+	_Out_ VOUTARGTYPE value) const
 {
 	CNode* pNode;
 	CNode* pNext;
@@ -2817,7 +2996,8 @@ void CAtlMap< K, V, KTraits, VTraits >::GetNextAssoc( POSITION& pos, KOUTARGTYPE
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetNext( POSITION& pos ) const throw()
+const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetNext(
+	_Inout_ POSITION& pos) const throw()
 {
 	CNode* pNode;
 	CNode* pNext;
@@ -2834,8 +3014,8 @@ const typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits,
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetNext( 
-	POSITION& pos ) throw()
+typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTraits >::GetNext(
+	_Inout_ POSITION& pos) throw()
 {
 	ATLASSUME( m_ppBins != NULL );
 	ATLASSERT( pos != NULL );
@@ -2849,7 +3029,8 @@ typename CAtlMap< K, V, KTraits, VTraits >::CPair* CAtlMap< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const K& CAtlMap< K, V, KTraits, VTraits >::GetNextKey( POSITION& pos ) const
+const K& CAtlMap< K, V, KTraits, VTraits >::GetNextKey(
+	_Inout_ POSITION& pos) const
 {
 	CNode* pNode;
 	CNode* pNext;
@@ -2866,7 +3047,8 @@ const K& CAtlMap< K, V, KTraits, VTraits >::GetNextKey( POSITION& pos ) const
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const V& CAtlMap< K, V, KTraits, VTraits >::GetNextValue( POSITION& pos ) const
+const V& CAtlMap< K, V, KTraits, VTraits >::GetNextValue(
+	_Inout_ POSITION& pos) const
 {
 	CNode* pNode;
 	CNode* pNext;
@@ -2883,7 +3065,8 @@ const V& CAtlMap< K, V, KTraits, VTraits >::GetNextValue( POSITION& pos ) const
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-V& CAtlMap< K, V, KTraits, VTraits >::GetNextValue( POSITION& pos )
+V& CAtlMap< K, V, KTraits, VTraits >::GetNextValue(
+	_Inout_ POSITION& pos)
 {
 	CNode* pNode;
 	CNode* pNext;
@@ -2900,16 +3083,17 @@ V& CAtlMap< K, V, KTraits, VTraits >::GetNextValue( POSITION& pos )
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::FindNextNode( CNode* pNode ) const throw()
+typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::FindNextNode(
+	_In_ CNode* pNode) const throw()
 {
 	CNode* pNext;
-	
+
 	if(pNode == NULL)
 	{
 		ATLASSERT(FALSE);
 		return NULL;
 	}
-	
+
 	if( pNode->m_pNext != NULL )
 	{
 		pNext = pNode->m_pNext;
@@ -2961,12 +3145,14 @@ public:
 	typedef typename VTraits::OUTARGTYPE VOUTARGTYPE;
 
 public:
-	class CPair : 
+	class CPair :
 		public __POSITION
 	{
 	protected:
 
-		CPair( KINARGTYPE key, VINARGTYPE value ) : 
+		CPair(
+				/* _In_ */ KINARGTYPE key,
+				/* _In_ */ VINARGTYPE value) :
 			m_key( key ),
 			m_value( value )
 		{
@@ -2982,13 +3168,13 @@ public:
 
 private:
 
-	class CNode : 
+	class CNode :
 		public CPair
 	{
 	public:
 		enum RB_COLOR
 		{
-			RB_RED, 
+			RB_RED,
 			RB_BLACK
 		};
 
@@ -2998,7 +3184,9 @@ private:
 		CNode* m_pRight;
 		CNode* m_pParent;
 
-		CNode( KINARGTYPE key, VINARGTYPE value ) : 
+		CNode(
+				/* _In_ */ KINARGTYPE key,
+				/* _In_ */ VINARGTYPE value) :
 			CPair( key, value ),
 			m_pParent( NULL ),
 			m_eColor( RB_BLACK )
@@ -3020,18 +3208,24 @@ private:
 	CNode *m_pNil;
 
 	// methods
-	bool IsNil(CNode *p) const throw();
-	void SetNil(CNode **p) throw();
+	bool IsNil(_In_ CNode *p) const throw();
+	void SetNil(_Deref_out_ CNode **p) throw();
 
-	CNode* NewNode( KINARGTYPE key, VINARGTYPE value ) throw( ... );
-	void FreeNode(CNode* pNode) throw();
-	void RemovePostOrder(CNode* pNode) throw();
-	CNode* LeftRotate(CNode* pNode) throw();
-	CNode* RightRotate(CNode* pNode) throw();
-	void SwapNode(CNode* pDest, CNode* pSrc) throw();
-	CNode* InsertImpl( KINARGTYPE key, VINARGTYPE value ) throw( ... );
-	void RBDeleteFixup(CNode* pNode) throw();
-	bool RBDelete(CNode* pZ) throw();
+	CNode* NewNode(
+		/* _In_ */ KINARGTYPE key,
+		/* _In_ */ VINARGTYPE value) throw( ... );
+	void FreeNode(_Inout_ CNode* pNode) throw();
+	void RemovePostOrder(_In_ CNode* pNode) throw();
+	CNode* LeftRotate(_In_ CNode* pNode) throw();
+	CNode* RightRotate(_In_ CNode* pNode) throw();
+	void SwapNode(
+		_Out_ CNode* pDest,
+		_Inout_ CNode* pSrc) throw();
+	CNode* InsertImpl(
+		/* _In_ */ KINARGTYPE key,
+		/* _In_ */ VINARGTYPE value) throw( ... );
+	void RBDeleteFixup(_In_ CNode* pNode) throw();
+	bool RBDelete(_In_opt_ CNode* pZ) throw();
 
 #ifdef _DEBUG
 
@@ -3039,10 +3233,13 @@ private:
 	// 1) Every node is either red or black
 	// 2) Every leaf (NIL) is black
 	// 3) If a node is red, both its children are black
-	// 4) Every simple path from a node to a descendant leaf node contains 
+	// 4) Every simple path from a node to a descendant leaf node contains
 	//    the same number of black nodes
 private:
-	void VerifyIntegrity(const CNode *pNode, int nCurrBlackDepth, int &nBlackDepth) const throw();
+	void VerifyIntegrity(
+		_In_ const CNode *pNode,
+		_In_ int nCurrBlackDepth,
+		_Out_ int &nBlackDepth) const throw();
 
 public:
 	void VerifyIntegrity() const throw();
@@ -3050,68 +3247,78 @@ public:
 #endif // _DEBUG
 
 protected:
-	CNode* Minimum(CNode* pNode) const throw();
-	CNode* Maximum(CNode* pNode) const throw();
-	CNode* Predecessor( CNode* pNode ) const throw();
-	CNode* Successor(CNode* pNode) const throw();
-	CNode* RBInsert( KINARGTYPE key, VINARGTYPE value ) throw( ... );
-	CNode* Find(KINARGTYPE key) const throw();
-	CNode* FindPrefix( KINARGTYPE key ) const throw();
+	CNode* Minimum(_In_opt_ CNode* pNode) const throw();
+	CNode* Maximum(_In_opt_ CNode* pNode) const throw();
+	CNode* Predecessor(_In_opt_ CNode* pNode) const throw();
+	CNode* Successor(_In_opt_ CNode* pNode) const throw();
+	CNode* RBInsert(
+		/* _In_ */ KINARGTYPE key,
+		/* _In_ */ VINARGTYPE value) throw( ... );
+	CNode* Find(/* _In_ */ KINARGTYPE key) const throw();
+	CNode* FindPrefix(/* _In_ */ KINARGTYPE key) const throw();
 
 protected:
-	explicit CRBTree( size_t nBlockSize = 10 ) throw();  // protected to prevent instantiation
+	explicit CRBTree(_In_ size_t nBlockSize = 10) throw();  // protected to prevent instantiation
 
 public:
 	~CRBTree() throw();
 
 	void RemoveAll() throw();
-	void RemoveAt(POSITION pos) throw();
+	void RemoveAt(_In_ POSITION pos) throw();
 
 	size_t GetCount() const throw();
 	bool IsEmpty() const throw();
 
-	POSITION FindFirstKeyAfter( KINARGTYPE key ) const throw();
+	POSITION FindFirstKeyAfter(/* _In_ */ KINARGTYPE key) const throw();
 
 	POSITION GetHeadPosition() const throw();
 	POSITION GetTailPosition() const throw();
-	void GetNextAssoc( POSITION& pos, KOUTARGTYPE key, VOUTARGTYPE value ) const;
-	const CPair* GetNext(POSITION& pos) const throw();
-	CPair* GetNext(POSITION& pos) throw();
-	const CPair* GetPrev(POSITION& pos) const throw();
-	CPair* GetPrev(POSITION& pos) throw();
-	const K& GetNextKey(POSITION& pos) const throw();
-	const V& GetNextValue(POSITION& pos) const throw();
-	V& GetNextValue(POSITION& pos) throw();
+	void GetNextAssoc(
+		_Inout_ POSITION& pos,
+		_Out_ KOUTARGTYPE key,
+		_Out_ VOUTARGTYPE value) const;
+	const CPair* GetNext(_Inout_ POSITION& pos) const throw();
+	CPair* GetNext(_Inout_ POSITION& pos) throw();
+	const CPair* GetPrev(_Inout_ POSITION& pos) const throw();
+	CPair* GetPrev(_Inout_ POSITION& pos) throw();
+	const K& GetNextKey(_Inout_ POSITION& pos) const throw();
+	const V& GetNextValue(_Inout_ POSITION& pos) const throw();
+	V& GetNextValue(_Inout_ POSITION& pos) throw();
 
-	CPair* GetAt( POSITION pos ) throw();
-	const CPair* GetAt( POSITION pos ) const throw();
-	void GetAt(POSITION pos, KOUTARGTYPE key, VOUTARGTYPE value) const;
-	const K& GetKeyAt(POSITION pos) const;
-	const V& GetValueAt(POSITION pos) const;
-	V& GetValueAt(POSITION pos);
-	void SetValueAt(POSITION pos, VINARGTYPE value);
+	CPair* GetAt(_In_ POSITION pos) throw();
+	const CPair* GetAt(_In_ POSITION pos) const throw();
+	void GetAt(
+		_In_ POSITION pos,
+		_Out_ KOUTARGTYPE key,
+		_Out_ VOUTARGTYPE value) const;
+	const K& GetKeyAt(_In_ POSITION pos) const;
+	const V& GetValueAt(_In_ POSITION pos) const;
+	V& GetValueAt(_In_ POSITION pos);
+	void SetValueAt(
+		_In_ POSITION pos,
+		/* _In_ */ VINARGTYPE value);
 
 private:
 	// Private to prevent use
-	CRBTree( const CRBTree& ) throw();
-	CRBTree& operator=( const CRBTree& ) throw();
+	CRBTree(_In_ const CRBTree&) throw();
+	CRBTree& operator=(_In_ const CRBTree&) throw();
 };
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline bool CRBTree< K, V, KTraits, VTraits >::IsNil(CNode *p) const throw()
+inline bool CRBTree< K, V, KTraits, VTraits >::IsNil(_In_ CNode *p) const throw()
 {
 	return ( p == m_pNil );
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline void CRBTree< K, V, KTraits, VTraits >::SetNil(CNode **p)
+inline void CRBTree< K, V, KTraits, VTraits >::SetNil(_Deref_out_ CNode **p)
 {
 	ATLENSURE( p != NULL );
 	*p = m_pNil;
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-CRBTree< K, V, KTraits, VTraits >::CRBTree( size_t nBlockSize ) throw() :
+CRBTree< K, V, KTraits, VTraits >::CRBTree(_In_ size_t nBlockSize) throw() :
 	m_pRoot( NULL ),
 	m_nCount( 0 ),
 	m_nBlockSize( nBlockSize ),
@@ -3157,13 +3364,13 @@ bool CRBTree< K, V, KTraits, VTraits >::IsEmpty() const throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-POSITION CRBTree< K, V, KTraits, VTraits >::FindFirstKeyAfter( KINARGTYPE key ) const throw()
+POSITION CRBTree< K, V, KTraits, VTraits >::FindFirstKeyAfter(/* _In_ */ KINARGTYPE key) const throw()
 {
 	return( FindPrefix( key ) );
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::RemoveAt(POSITION pos) throw()
+void CRBTree< K, V, KTraits, VTraits >::RemoveAt(_In_ POSITION pos) throw()
 {
 	ATLASSERT(pos != NULL);
 	RBDelete(static_cast<CNode*>(pos));
@@ -3182,7 +3389,10 @@ POSITION CRBTree< K, V, KTraits, VTraits >::GetTailPosition() const throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::GetNextAssoc( POSITION& pos, KOUTARGTYPE key, VOUTARGTYPE value ) const
+void CRBTree< K, V, KTraits, VTraits >::GetNextAssoc(
+	_Inout_ POSITION& pos,
+	_Out_ KOUTARGTYPE key,
+	_Out_ VOUTARGTYPE value) const
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast< CNode* >(pos);
@@ -3194,7 +3404,8 @@ void CRBTree< K, V, KTraits, VTraits >::GetNextAssoc( POSITION& pos, KOUTARGTYPE
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetNext(POSITION& pos) const throw()
+const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetNext(
+	_Inout_ POSITION& pos) const throw()
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast< CNode* >(pos);
@@ -3203,7 +3414,8 @@ const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits,
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetNext(POSITION& pos) throw()
+typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetNext(
+	_Inout_ POSITION& pos) throw()
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast< CNode* >(pos);
@@ -3212,7 +3424,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetPrev(POSITION& pos) const throw()
+const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetPrev(
+	_Inout_ POSITION& pos) const throw()
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast< CNode* >(pos);
@@ -3222,7 +3435,8 @@ const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits,
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetPrev(POSITION& pos) throw()
+typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetPrev(
+	_Inout_ POSITION& pos) throw()
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast< CNode* >(pos);
@@ -3232,7 +3446,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const K& CRBTree< K, V, KTraits, VTraits >::GetNextKey(POSITION& pos) const throw()
+const K& CRBTree< K, V, KTraits, VTraits >::GetNextKey(
+	_Inout_ POSITION& pos) const throw()
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast<CNode*>(pos);
@@ -3242,7 +3457,8 @@ const K& CRBTree< K, V, KTraits, VTraits >::GetNextKey(POSITION& pos) const thro
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const V& CRBTree< K, V, KTraits, VTraits >::GetNextValue(POSITION& pos) const throw()
+const V& CRBTree< K, V, KTraits, VTraits >::GetNextValue(
+	_Inout_ POSITION& pos) const throw()
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast<CNode*>(pos);
@@ -3252,7 +3468,8 @@ const V& CRBTree< K, V, KTraits, VTraits >::GetNextValue(POSITION& pos) const th
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-V& CRBTree< K, V, KTraits, VTraits >::GetNextValue(POSITION& pos) throw()
+V& CRBTree< K, V, KTraits, VTraits >::GetNextValue(
+	_Inout_ POSITION& pos) throw()
 {
 	ATLASSERT(pos != NULL);
 	CNode* pNode = static_cast<CNode*>(pos);
@@ -3262,7 +3479,8 @@ V& CRBTree< K, V, KTraits, VTraits >::GetNextValue(POSITION& pos) throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetAt( POSITION pos ) throw()
+typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetAt(
+	_In_ POSITION pos) throw()
 {
 	ATLASSERT( pos != NULL );
 
@@ -3270,7 +3488,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetAt( POSITION pos ) const throw()
+const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits, VTraits >::GetAt(
+	_In_ POSITION pos) const throw()
 {
 	ATLASSERT( pos != NULL );
 
@@ -3278,7 +3497,10 @@ const typename CRBTree< K, V, KTraits, VTraits >::CPair* CRBTree< K, V, KTraits,
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::GetAt(POSITION pos, KOUTARGTYPE key, VOUTARGTYPE value) const
+void CRBTree< K, V, KTraits, VTraits >::GetAt(
+	_In_ POSITION pos,
+	_Out_ KOUTARGTYPE key,
+	_Out_ VOUTARGTYPE value) const
 {
 	ATLENSURE( pos != NULL );
 	key = static_cast<CNode*>(pos)->m_key;
@@ -3286,35 +3508,39 @@ void CRBTree< K, V, KTraits, VTraits >::GetAt(POSITION pos, KOUTARGTYPE key, VOU
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const K& CRBTree< K, V, KTraits, VTraits >::GetKeyAt(POSITION pos) const
+const K& CRBTree< K, V, KTraits, VTraits >::GetKeyAt(_In_ POSITION pos) const
 {
 	ATLENSURE( pos != NULL );
 	return static_cast<CNode*>(pos)->m_key;
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const V& CRBTree< K, V, KTraits, VTraits >::GetValueAt(POSITION pos) const
+const V& CRBTree< K, V, KTraits, VTraits >::GetValueAt(_In_ POSITION pos) const
 {
 	ATLENSURE( pos != NULL );
 	return static_cast<CNode*>(pos)->m_value;
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-V& CRBTree< K, V, KTraits, VTraits >::GetValueAt(POSITION pos)
+V& CRBTree< K, V, KTraits, VTraits >::GetValueAt(_In_ POSITION pos)
 {
 	ATLENSURE( pos != NULL );
 	return static_cast<CNode*>(pos)->m_value;
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::SetValueAt(POSITION pos, VINARGTYPE value)
+void CRBTree< K, V, KTraits, VTraits >::SetValueAt(
+	_In_ POSITION pos,
+	/* _In_ */ VINARGTYPE value)
 {
 	ATLENSURE( pos != NULL );
 	static_cast<CNode*>(pos)->m_value = value;
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::NewNode( KINARGTYPE key, VINARGTYPE value ) throw( ... )
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::NewNode(
+	/* _In_ */ KINARGTYPE key,
+	/* _In_ */ VINARGTYPE value) throw( ... )
 {
 	if( m_pFree == NULL )
 	{
@@ -3363,7 +3589,7 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::FreeNode(CNode* pNode)
+void CRBTree< K, V, KTraits, VTraits >::FreeNode(_Inout_ CNode* pNode)
 {
 	ATLENSURE( pNode != NULL );
 	pNode->~CNode();
@@ -3374,7 +3600,7 @@ void CRBTree< K, V, KTraits, VTraits >::FreeNode(CNode* pNode)
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::RemovePostOrder(CNode* pNode) throw()
+void CRBTree< K, V, KTraits, VTraits >::RemovePostOrder(_In_ CNode* pNode) throw()
 {
 	if (IsNil(pNode))
 		return;
@@ -3384,12 +3610,13 @@ void CRBTree< K, V, KTraits, VTraits >::RemovePostOrder(CNode* pNode) throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::LeftRotate(CNode* pNode) throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::LeftRotate(
+	_In_ CNode* pNode) throw()
 {
 	ATLASSERT(pNode != NULL);
 	if(pNode == NULL)
 		return NULL;
-		
+
 	CNode* pRight = pNode->m_pRight;
 	pNode->m_pRight = pRight->m_pLeft;
 	if (!IsNil(pRight->m_pLeft))
@@ -3400,7 +3627,7 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 		m_pRoot = pRight;
 	else if (pNode == pNode->m_pParent->m_pLeft)
 		pNode->m_pParent->m_pLeft = pRight;
-	else 
+	else
 		pNode->m_pParent->m_pRight = pRight;
 
 	pRight->m_pLeft = pNode;
@@ -3410,12 +3637,13 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::RightRotate(CNode* pNode) throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::RightRotate(
+	_In_ CNode* pNode) throw()
 {
 	ATLASSERT(pNode != NULL);
 	if(pNode == NULL)
 		return NULL;
-		
+
 	CNode* pLeft = pNode->m_pLeft;
 	pNode->m_pLeft = pLeft->m_pRight;
 	if (!IsNil(pLeft->m_pRight))
@@ -3435,7 +3663,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Find(KINARGTYPE key) const throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Find(
+	/* _In_ */ KINARGTYPE key) const throw()
 {
 	CNode* pKey = NULL;
 	CNode* pNode = m_pRoot;
@@ -3484,7 +3713,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::FindPrefix( KINARGTYPE key ) const throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::FindPrefix(
+	/* _In_ */ KINARGTYPE key) const throw()
 {
 	// First, attempt to find a node that matches the key exactly
 	CNode* pParent = NULL;
@@ -3510,8 +3740,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 
 	if( pKey != NULL )
 	{
-		// We found a node with the exact key, so find the first node after 
-		// this one with a different key 
+		// We found a node with the exact key, so find the first node after
+		// this one with a different key
 		while( true )
 		{
 			CNode* pNext = Successor( pKey );
@@ -3527,7 +3757,7 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 	}
 	else if (pParent != NULL)
 	{
-		// No node matched the key exactly, so pick the first node with 
+		// No node matched the key exactly, so pick the first node with
 		// a key greater than the given key
 		int nCompare = KTraits::CompareElementsOrdered( key, pParent->m_key );
 		if( nCompare < 0 )
@@ -3545,7 +3775,7 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::SwapNode(CNode* pDest, CNode* pSrc)
+void CRBTree< K, V, KTraits, VTraits >::SwapNode(_Out_ CNode* pDest, _Inout_ CNode* pSrc)
 {
 	ATLENSURE( pDest != NULL );
 	ATLENSURE( pSrc != NULL );
@@ -3573,7 +3803,9 @@ void CRBTree< K, V, KTraits, VTraits >::SwapNode(CNode* pDest, CNode* pSrc)
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::InsertImpl( KINARGTYPE key, VINARGTYPE value ) throw( ... )
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::InsertImpl(
+	/* _In_ */ KINARGTYPE key,
+	/* _In_ */ VINARGTYPE value) throw( ... )
 {
 	CNode* pNew = NewNode( key, value );
 
@@ -3603,7 +3835,7 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::RBDeleteFixup(CNode* pNode)
+void CRBTree< K, V, KTraits, VTraits >::RBDeleteFixup(_In_ CNode* pNode)
 {
 	ATLENSURE( pNode != NULL );
 
@@ -3681,7 +3913,7 @@ void CRBTree< K, V, KTraits, VTraits >::RBDeleteFixup(CNode* pNode)
 
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CRBTree< K, V, KTraits, VTraits >::RBDelete(CNode* pZ) throw()
+bool CRBTree< K, V, KTraits, VTraits >::RBDelete(_In_opt_ CNode* pZ) throw()
 {
 	if (pZ == NULL)
 		return false;
@@ -3722,7 +3954,8 @@ bool CRBTree< K, V, KTraits, VTraits >::RBDelete(CNode* pZ) throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Minimum(CNode* pNode) const throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Minimum(
+	_In_opt_ CNode* pNode) const throw()
 {
 	if (pNode == NULL || IsNil(pNode))
 	{
@@ -3739,7 +3972,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Maximum(CNode* pNode) const throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Maximum(
+	_In_opt_ CNode* pNode) const throw()
 {
 	if (pNode == NULL || IsNil(pNode))
 	{
@@ -3756,7 +3990,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Predecessor( CNode* pNode ) const throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Predecessor(
+	_In_opt_ CNode* pNode ) const throw()
 {
 	if( pNode == NULL )
 	{
@@ -3783,7 +4018,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Successor(CNode* pNode) const throw()
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Successor(
+	_In_opt_ CNode* pNode) const throw()
 {
 	if ( pNode == NULL )
 	{
@@ -3810,7 +4046,9 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::RBInsert( KINARGTYPE key, VINARGTYPE value ) throw( ... )
+typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::RBInsert(
+	/* _In_ */ KINARGTYPE key,
+	/* _In_ */ VINARGTYPE value) throw( ... )
 {
 	CNode* pNewNode = InsertImpl( key, value );
 
@@ -3874,12 +4112,15 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 #ifdef _DEBUG
 
 template< typename K, typename V, class KTraits, class VTraits >
-void CRBTree< K, V, KTraits, VTraits >::VerifyIntegrity(const CNode *pNode, int nCurrBlackDepth, int &nBlackDepth) const throw()
+void CRBTree< K, V, KTraits, VTraits >::VerifyIntegrity(
+	_In_ const CNode *pNode,
+	_In_ int nCurrBlackDepth,
+	_Out_ int &nBlackDepth) const throw()
 {
 	bool bCheckForBlack = false;
 	bool bLeaf = true;
 
-	if (pNode->m_eColor == CNode::RB_RED) 
+	if (pNode->m_eColor == CNode::RB_RED)
 		bCheckForBlack = true;
 	else
 		nCurrBlackDepth++;
@@ -3913,13 +4154,13 @@ void CRBTree< K, V, KTraits, VTraits >::VerifyIntegrity(const CNode *pNode, int 
 			( pNode->m_pParent->m_pLeft == pNode ) ||
 			( pNode->m_pParent->m_pRight == pNode ) );
 
-	if (bLeaf) 
+	if (bLeaf)
 	{
 		if (nBlackDepth == 0)
 		{
 			nBlackDepth = nCurrBlackDepth;
 		}
-		else 
+		else
 		{
 			ATLASSERT(nBlackDepth == nCurrBlackDepth);
 		}
@@ -3944,18 +4185,22 @@ class CRBMap :
 	public CRBTree< K, V, KTraits, VTraits >
 {
 public:
-	explicit CRBMap( size_t nBlockSize = 10 ) throw();
+	explicit CRBMap(_In_ size_t nBlockSize = 10) throw();
 	~CRBMap() throw();
 
-	bool Lookup( KINARGTYPE key, VOUTARGTYPE value ) const throw( ... );
-	const CPair* Lookup( KINARGTYPE key ) const throw();
-	CPair* Lookup( KINARGTYPE key ) throw();
-	POSITION SetAt( KINARGTYPE key, VINARGTYPE value ) throw( ... );
-	bool RemoveKey( KINARGTYPE key ) throw();
+	bool Lookup(
+		/* _In_ */ KINARGTYPE key,
+		_Out_ VOUTARGTYPE value) const throw( ... );
+	const CPair* Lookup(/* _In_ */ KINARGTYPE key) const throw();
+	CPair* Lookup(/* _In_ */ KINARGTYPE key) throw();
+	POSITION SetAt(
+		/* _In_ */ KINARGTYPE key,
+		/* _In_ */ VINARGTYPE value) throw( ... );
+	bool RemoveKey(/* _In_ */ KINARGTYPE key) throw();
 };
 
 template< typename K, typename V, class KTraits, class VTraits >
-CRBMap< K, V, KTraits, VTraits >::CRBMap( size_t nBlockSize ) throw() :
+CRBMap< K, V, KTraits, VTraits >::CRBMap(_In_ size_t nBlockSize) throw() :
 	CRBTree< K, V, KTraits, VTraits >( nBlockSize )
 {
 }
@@ -3966,19 +4211,23 @@ CRBMap< K, V, KTraits, VTraits >::~CRBMap() throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const typename CRBMap< K, V, KTraits, VTraits >::CPair* CRBMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key ) const throw()
+const typename CRBMap< K, V, KTraits, VTraits >::CPair* CRBMap< K, V, KTraits, VTraits >::Lookup(
+	/* _In_ */ KINARGTYPE key) const throw()
 {
 	return Find(key);
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBMap< K, V, KTraits, VTraits >::CPair* CRBMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key ) throw()
+typename CRBMap< K, V, KTraits, VTraits >::CPair* CRBMap< K, V, KTraits, VTraits >::Lookup(
+	/* _In_ */ KINARGTYPE key) throw()
 {
 	return Find(key);
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CRBMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key, VOUTARGTYPE value ) const throw( ... )
+bool CRBMap< K, V, KTraits, VTraits >::Lookup(
+	/* _In_ */ KINARGTYPE key,
+	_Out_ VOUTARGTYPE value) const throw( ... )
 {
 	const CPair* pLookup = Find( key );
 	if( pLookup == NULL )
@@ -3989,7 +4238,9 @@ bool CRBMap< K, V, KTraits, VTraits >::Lookup( KINARGTYPE key, VOUTARGTYPE value
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-POSITION CRBMap< K, V, KTraits, VTraits >::SetAt( KINARGTYPE key, VINARGTYPE value ) throw( ... )
+POSITION CRBMap< K, V, KTraits, VTraits >::SetAt(
+	/* _In_ */ KINARGTYPE key,
+	/* _In_ */ VINARGTYPE value) throw( ... )
 {
 	CPair* pNode = Find( key );
 	if( pNode == NULL )
@@ -4005,7 +4256,7 @@ POSITION CRBMap< K, V, KTraits, VTraits >::SetAt( KINARGTYPE key, VINARGTYPE val
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CRBMap< K, V, KTraits, VTraits >::RemoveKey( KINARGTYPE key ) throw()
+bool CRBMap< K, V, KTraits, VTraits >::RemoveKey(/* _In_ */ KINARGTYPE key) throw()
 {
 	POSITION pos = Lookup( key );
 	if( pos != NULL )
@@ -4025,21 +4276,31 @@ class CRBMultiMap :
 	public CRBTree< K, V, KTraits, VTraits >
 {
 public:
-	explicit CRBMultiMap( size_t nBlockSize = 10 ) throw();
+	explicit CRBMultiMap(_In_ size_t nBlockSize = 10) throw();
 	~CRBMultiMap() throw();
 
-	POSITION Insert( KINARGTYPE key, VINARGTYPE value ) throw( ... );
-	size_t RemoveKey( KINARGTYPE key ) throw();
+	POSITION Insert(
+		/* _In_ */ KINARGTYPE key,
+		/* _In_ */ VINARGTYPE value) throw( ... );
+	size_t RemoveKey(/* _In_ */ KINARGTYPE key) throw();
 
-	POSITION FindFirstWithKey( KINARGTYPE key ) const throw();
-	const CPair* GetNextWithKey( POSITION& pos, KINARGTYPE key ) const throw();
-	CPair* GetNextWithKey( POSITION& pos, KINARGTYPE key ) throw();
-	const V& GetNextValueWithKey( POSITION& pos, KINARGTYPE key ) const throw();
-	V& GetNextValueWithKey( POSITION& pos, KINARGTYPE key ) throw();
+	POSITION FindFirstWithKey(/* _In_ */ KINARGTYPE key) const throw();
+	const CPair* GetNextWithKey(
+		_Inout_ POSITION& pos,
+		/* _In_ */ KINARGTYPE key) const throw();
+	CPair* GetNextWithKey(
+		_Inout_ POSITION& pos,
+		/* _In_ */ KINARGTYPE key) throw();
+	const V& GetNextValueWithKey(
+		_Inout_ POSITION& pos,
+		/* _In_ */ KINARGTYPE key) const throw();
+	V& GetNextValueWithKey(
+		_Inout_ POSITION& pos,
+		/* _In_ */ KINARGTYPE key) throw();
 };
 
 template< typename K, typename V, class KTraits, class VTraits >
-CRBMultiMap< K, V, KTraits, VTraits >::CRBMultiMap( size_t nBlockSize ) throw() :
+CRBMultiMap< K, V, KTraits, VTraits >::CRBMultiMap(_In_ size_t nBlockSize) throw() :
 	CRBTree< K, V, KTraits, VTraits >( nBlockSize )
 {
 }
@@ -4050,13 +4311,16 @@ CRBMultiMap< K, V, KTraits, VTraits >::~CRBMultiMap() throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-POSITION CRBMultiMap< K, V, KTraits, VTraits >::Insert( KINARGTYPE key, VINARGTYPE value ) throw( ... )
+POSITION CRBMultiMap< K, V, KTraits, VTraits >::Insert(
+	/* _In_ */ KINARGTYPE key,
+	/* _In_ */ VINARGTYPE value) throw( ... )
 {
 	return( RBInsert( key, value ) );
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-size_t CRBMultiMap< K, V, KTraits, VTraits >::RemoveKey( KINARGTYPE key ) throw()
+size_t CRBMultiMap< K, V, KTraits, VTraits >::RemoveKey(
+	/* _In_ */ KINARGTYPE key) throw()
 {
 	size_t nElementsDeleted = 0;
 
@@ -4073,13 +4337,16 @@ size_t CRBMultiMap< K, V, KTraits, VTraits >::RemoveKey( KINARGTYPE key ) throw(
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-POSITION CRBMultiMap< K, V, KTraits, VTraits >::FindFirstWithKey( KINARGTYPE key ) const throw()
+POSITION CRBMultiMap< K, V, KTraits, VTraits >::FindFirstWithKey(
+	/* _In_ */ KINARGTYPE key) const throw()
 {
 	return( Find( key ) );
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const typename CRBMultiMap< K, V, KTraits, VTraits >::CPair* CRBMultiMap< K, V, KTraits, VTraits >::GetNextWithKey( POSITION& pos, KINARGTYPE key ) const throw()
+const typename CRBMultiMap< K, V, KTraits, VTraits >::CPair* CRBMultiMap< K, V, KTraits, VTraits >::GetNextWithKey(
+	_Inout_ POSITION& pos,
+	/* _In_ */ KINARGTYPE key) const throw()
 {
 	ATLASSERT( pos != NULL );
 	const CPair* pNode = GetNext( pos );
@@ -4092,7 +4359,9 @@ const typename CRBMultiMap< K, V, KTraits, VTraits >::CPair* CRBMultiMap< K, V, 
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CRBMultiMap< K, V, KTraits, VTraits >::CPair* CRBMultiMap< K, V, KTraits, VTraits >::GetNextWithKey( POSITION& pos, KINARGTYPE key ) throw()
+typename CRBMultiMap< K, V, KTraits, VTraits >::CPair* CRBMultiMap< K, V, KTraits, VTraits >::GetNextWithKey(
+	_Inout_ POSITION& pos,
+	/* _In_ */ KINARGTYPE key) throw()
 {
 	ATLASSERT( pos != NULL );
 	CPair* pNode = GetNext( pos );
@@ -4105,7 +4374,9 @@ typename CRBMultiMap< K, V, KTraits, VTraits >::CPair* CRBMultiMap< K, V, KTrait
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-const V& CRBMultiMap< K, V, KTraits, VTraits >::GetNextValueWithKey( POSITION& pos, KINARGTYPE key ) const throw()
+const V& CRBMultiMap< K, V, KTraits, VTraits >::GetNextValueWithKey(
+	_Inout_ POSITION& pos,
+	/* _In_ */ KINARGTYPE key) const throw()
 {
 	const CPair* pPair = GetNextWithKey( pos, key );
 
@@ -4113,7 +4384,9 @@ const V& CRBMultiMap< K, V, KTraits, VTraits >::GetNextValueWithKey( POSITION& p
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-V& CRBMultiMap< K, V, KTraits, VTraits >::GetNextValueWithKey( POSITION& pos, KINARGTYPE key ) throw()
+V& CRBMultiMap< K, V, KTraits, VTraits >::GetNextValueWithKey(
+	_Inout_ POSITION& pos,
+	/* _In_ */ KINARGTYPE key) throw()
 {
 	CPair* pPair = GetNextWithKey( pos, key );
 

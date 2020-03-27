@@ -20,6 +20,7 @@
 #include "afxtooltipctrl.h"
 #include "afxribbonpalettegallery.h"
 #include "afxribbonminitoolbar.h"
+#include "afxribbonedit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,7 +52,9 @@ CMFCRibbonPanelMenuBar::CMFCRibbonPanelMenuBar(CMFCRibbonPanel* pPanel)
 	m_pPanelOrigin = pPanel;
 
 	m_pPanel->m_pParentMenuBar = this;
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_pPanel->m_btnLaunch.SetParentMenu(this);
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	for (int i = 0; i < m_pPanel->m_arElements.GetSize(); i++)
 	{
@@ -107,7 +110,9 @@ CMFCRibbonPanelMenuBar::CMFCRibbonPanelMenuBar(CMFCRibbonCategory* pCategory, CS
 		ASSERT_VALID(pPanel);
 
 		pPanel->m_pParentMenuBar = this;
+#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 		pPanel->m_btnLaunch.SetParentMenu(this);
+#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 		pPanel->m_btnDefault.SetParentMenu(this);
 
 		for (int i = 0; i < pPanel->m_arElements.GetSize(); i++)
@@ -308,6 +313,12 @@ void CMFCRibbonPanelMenuBar::AdjustLocations()
 
 		m_pPanel->Reposition(&dc, rectClient);
 		m_pPanel->OnAfterChangeRect(&dc);
+
+		CMFCRibbonBar* pRibbonBar = GetTopLevelRibbonBar();
+		if (pRibbonBar != NULL && pRibbonBar->GetKeyboardNavLevelCurrent() == m_pPanel)
+		{
+			pRibbonBar->ShowKeyTips(TRUE);
+		}
 
 		m_pPanel->m_bSizeIsLocked = FALSE;
 	}
@@ -674,6 +685,11 @@ void CMFCRibbonPanelMenuBar::OnLButtonUp(UINT nFlags, CPoint point)
 	HWND hwndThis = GetSafeHwnd();
 
 	CMFCPopupMenuBar::OnLButtonUp(nFlags, point);
+
+	if (!::IsWindow(hwndThis))
+	{
+		return;
+	}
 
 	if (m_pCategory != NULL)
 	{
@@ -1413,6 +1429,12 @@ BOOL CMFCRibbonPanelMenuBar::OnKey(UINT nChar)
 {
 	ASSERT_VALID(this);
 
+	if (nChar == VK_F10 && (0x8000 & GetKeyState(VK_SHIFT)) != 0 || nChar == VK_APPS)
+	{
+		OnContextMenu(this, CPoint(-1, -1));
+		return TRUE;
+	}
+
 	if (m_pRibbonBar->ProcessKey(nChar))
 	{
 		return TRUE;
@@ -1424,6 +1446,14 @@ BOOL CMFCRibbonPanelMenuBar::OnKey(UINT nChar)
 
 		CMFCDisableMenuAnimation disableMenuAnimation;
 		return m_pPanel->OnKey(nChar);
+	}
+
+	if (m_pCategory != NULL)
+	{
+		ASSERT_VALID(m_pCategory);
+
+		CMFCDisableMenuAnimation disableMenuAnimation;
+		return m_pCategory->OnKey(nChar);
 	}
 
 	return FALSE;
@@ -1452,6 +1482,18 @@ void CMFCRibbonPanelMenuBar::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 {
 	ASSERT_VALID(this);
 	ASSERT_VALID(m_pRibbonBar);
+
+	CMFCPopupMenu* pParentMenu = DYNAMIC_DOWNCAST(CMFCPopupMenu, GetParent());
+
+	if (pParentMenu != NULL && pParentMenu->GetParentRibbonElement() != NULL)
+	{
+		ASSERT_VALID(pParentMenu->GetParentRibbonElement());
+
+		if (pParentMenu->GetParentRibbonElement()->m_bFloatyMode)
+		{
+			return;
+		}
+	}
 
 	if (m_bAutoCommandTimer)
 	{
@@ -1485,6 +1527,21 @@ void CMFCRibbonPanelMenuBar::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 		if (m_pDelayedButton != NULL)
 		{
 			KillTimer(nPopupTimerEvent);
+		}
+
+		if (point == CPoint(-1, -1))
+		{
+			CMFCRibbonBaseElement* pFocused = GetFocused();
+			if (pFocused != NULL)
+			{
+				ASSERT_VALID(pFocused);
+
+				CRect rectFocus = pFocused->GetRect();
+				ClientToScreen(&rectFocus);
+
+				m_pRibbonBar->OnShowRibbonContextMenu(this, rectFocus.left, rectFocus.top, pFocused);
+				return;
+			}
 		}
 
 		m_pRibbonBar->OnShowRibbonContextMenu(this, point.x, point.y, HitTest(ptClient));
@@ -1619,6 +1676,46 @@ int CMFCRibbonPanelMenuBar::HitTestEx(CPoint point) const
 	}
 }
 
+CMFCRibbonBaseElement* CMFCRibbonPanelMenuBar::GetFocused() const
+{
+	if (m_pCategory != NULL)
+	{
+		ASSERT_VALID(m_pCategory);
+		return m_pCategory->GetFocused();
+	}
+	else
+	{
+		ASSERT_VALID(m_pPanel);
+		return m_pPanel->GetFocused();
+	}
+}
+
+BOOL CMFCRibbonPanelMenuBar::PreTranslateMessage(MSG* pMsg) 
+{
+	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_TAB && OnKey(VK_TAB))
+	{
+		return TRUE;
+	}
+
+	if (pMsg->message == WM_LBUTTONDOWN)
+	{
+		CMFCRibbonRichEditCtrl* pEdit = DYNAMIC_DOWNCAST(CMFCRibbonRichEditCtrl, GetFocus());
+		if (pEdit != NULL)
+		{
+			ASSERT_VALID(pEdit);
+
+			CPoint point;
+			
+			::GetCursorPos(&point);
+			ScreenToClient(&point);
+
+			pEdit->GetOwnerRibbonEdit().PreLMouseDown(point);
+		}
+	}
+
+	return CMFCPopupMenuBar::PreTranslateMessage(pMsg);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonPanelMenu
 
@@ -1687,6 +1784,7 @@ BEGIN_MESSAGE_MAP(CMFCRibbonPanelMenu, CMFCPopupMenu)
 	ON_WM_KEYDOWN()
 	ON_WM_MOUSEWHEEL()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_DESTROY()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -1790,4 +1888,14 @@ BOOL CMFCRibbonPanelMenu::IsScrollUpAvailable()
 BOOL CMFCRibbonPanelMenu::IsScrollDnAvailable()
 {
 	return m_wndRibbonBar.m_pPanel == NULL || m_wndRibbonBar.m_pPanel->m_bScrollDnAvailable;
+}
+
+void CMFCRibbonPanelMenu::OnDestroy() 
+{
+	if (m_bEscClose && m_wndRibbonBar.GetCategory() != NULL && AFXGetTopLevelFrame(&m_wndRibbonBar) != NULL)
+	{
+		AFXGetTopLevelFrame(&m_wndRibbonBar)->SetFocus();
+	}
+
+	CMFCPopupMenu::OnDestroy();
 }

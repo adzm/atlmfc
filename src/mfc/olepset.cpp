@@ -196,7 +196,7 @@ BOOL CProperty::Set(const  LPVOID pVal)
 	LPBYTE          pCur;
 	LPVOID          pValue = pVal;
 	DWORD           dwType = m_dwType;
-	BOOL			bShouldFreeValue = FALSE;
+	BOOL            bShouldFreeValue = FALSE;
 
 	if (m_pValue != NULL)
 	{
@@ -211,6 +211,7 @@ BOOL CProperty::Set(const  LPVOID pVal)
 	nReps = 1;
 	cbValue = 0;
 	pCur = (LPBYTE)pValue;
+
 	if (m_dwType & VT_VECTOR)
 	{
 		// The next DWORD is a count of the elements
@@ -347,7 +348,7 @@ BOOL CProperty::Set(const  LPVOID pVal)
 				if (bShouldFreeValue && pValue)
 				{
 					free(pValue);
-				}				
+				}
 				return FALSE;
 		}
 
@@ -382,27 +383,50 @@ LPVOID CProperty::Get()
 
 LPVOID CProperty::Get(DWORD* pcb)
 {
-	DWORD   cb;
-	LPBYTE  p = NULL;
+	ULONG   cbValue;
+	ULONG   cbItem;
+	ULONG   nReps;
+	LPBYTE  pCur;
+	LPBYTE  pValue = NULL;
+	DWORD   dwType = m_dwType;
 
-	p = (LPBYTE)m_pValue;
+	pValue = (LPBYTE)m_pValue;
 
-	// m_pValue points to a Property "Value" which may
-	// have size information included...
-	switch (m_dwType)
+	nReps = 1;
+	cbValue = 0;
+	pCur = (LPBYTE)pValue;
+
+	if (m_dwType & VT_VECTOR)
 	{
+		// Value is a DWORD count of elements followed by
+		// that many repetitions of the value.
+		nReps = *(LPDWORD)m_pValue;
+		cbValue += sizeof(nReps);
+		dwType &= ~VT_VECTOR;
+		pCur += sizeof(DWORD);
+	}
+
+	// Since a value can be made up of a vector (VT_VECTOR) of
+	// items, we first seek through the value, picking out
+	// each item, getting it's size.
+	//
+	cbItem = 0;        // Size of the current item
+	while (nReps--)
+	{
+		switch (dwType)
+		{
 		case VT_EMPTY:          // nothing
-			cb = 0;
+			cbItem = 0;
 			break;
 
 		case VT_I2:             // 2 byte signed int
 		case VT_BOOL:           // True=-1, False=0
-			cb = 2;
+			cbItem = 2;
 			break;
 
 		case VT_I4:             // 4 byte signed int
 		case VT_R4:             // 4 byte real
-			cb = 4;
+			cbItem = 4;
 			break;
 
 		case VT_R8:             // 8 byte real
@@ -410,7 +434,11 @@ LPVOID CProperty::Get(DWORD* pcb)
 		case VT_DATE:           // date
 		case VT_I8:             // signed 64-bit int
 		case VT_FILETIME:       // FILETIME
-			cb = 8;
+			cbItem = 8;
+			break;
+
+		case VT_CLSID:          // A Class ID
+			cbItem = sizeof(CLSID);
 			break;
 
 #ifndef _UNICODE
@@ -423,18 +451,22 @@ LPVOID CProperty::Get(DWORD* pcb)
 		case VT_STORED_PROPSET: // Storage contains a propset
 #endif // UNICODE
 		case VT_LPSTR:          // null terminated string
-		case VT_CF:             // Clipboard format
-			// Read the DWORD that gives us the size, making
-			// sure we increment cbValue.
-			cb = *(LPDWORD)p;
-			p += sizeof(DWORD);
-			break;
-
 		case VT_BLOB:           // Length prefixed bytes
 		case VT_BLOB_OBJECT:    // Blob contains an object
 		case VT_BLOB_PROPSET:   // Blob contains a propset
-			// Read the DWORD that gives us the size.
-			cb = *(LPDWORD)p;
+		case VT_CF:             // Clipboard format
+			// Read the DWORD that gives us the size, making
+			// sure we increment cbValue.
+			cbItem = *(LPDWORD)pCur;
+			pCur += sizeof(DWORD);
+			if (m_dwType & VT_VECTOR)
+			{
+				cbValue += sizeof(DWORD);
+			}
+			if ((dwType == VT_LPSTR) && ((m_dwType & VT_VECTOR) == 0))
+			{
+				pValue = pCur;
+			}
 			break;
 
 #ifdef _UNICODE
@@ -447,21 +479,31 @@ LPVOID CProperty::Get(DWORD* pcb)
 		case VT_STORED_PROPSET: // Storage contains a propset
 #endif // _UNICODE
 		case VT_LPWSTR:         // UNICODE string
-			cb = *(LPDWORD)p * ULONG(sizeof(WCHAR));
-			p += sizeof(DWORD);
-			break;
-
-		case VT_CLSID:          // A Class ID
-			cb = sizeof(CLSID);
+			cbItem = *(LPDWORD)pCur * ULONG(sizeof(WCHAR));
+			pCur += sizeof(DWORD);
+			if (m_dwType & VT_VECTOR)
+			{
+				cbValue += sizeof(DWORD);
+			}
+			if ((dwType == VT_LPWSTR) && ((m_dwType & VT_VECTOR) == 0))
+			{
+				pValue = pCur;
+			}
 			break;
 
 		default:
 			return NULL;
-	}
-	if (pcb != NULL)
-		*pcb = cb;
+		}
 
-	return p;
+		// Seek to the next item
+		pCur += cbItem;
+		cbValue += cbItem;
+	}
+
+	if (pcb != NULL)
+		*pcb = cbValue;
+
+	return pValue;
 }
 
 DWORD  CProperty::GetType()
@@ -619,7 +661,6 @@ BOOL CProperty::ReadFromStream(IStream* pIStream)
 	LPSTREAM        pIStrItem;
 	LARGE_INTEGER	li;
 
-  
 	// All properties are made up of a type/value pair.
 	// The obvious first thing to do is to get the type...
 	pIStream->Read((LPVOID)&m_dwType, sizeof(m_dwType), &cb);
@@ -639,20 +680,16 @@ BOOL CProperty::ReadFromStream(IStream* pIStream)
 			return FALSE;
 		cbValue += cb;
 		dwType &= ~VT_VECTOR;
- 
 	}
 
 	// Since a value can be made up of a vector (VT_VECTOR) of
 	// items, we first seek through the value, picking out
 	// each item, getting it's size.  We use a cloned
-
-
-
 	// stream for this (pIStrItem).
 	// We then use our pIStream to read the entire 'blob' into
 	// the allocated buffer.
 	//
-	cb=0;                  
+	cb=0;
 	cbItem = 0;        // Size of the current item
 	ASSERT(pIStrItem != NULL);
 	iReps = nReps;
@@ -702,7 +739,6 @@ BOOL CProperty::ReadFromStream(IStream* pIStream)
 				li.QuadPart = -(LONG)cb;
 				pIStrItem->Seek(li, STREAM_SEEK_CUR, NULL);
 				cbValue += cb;
-				 
 				break;
 
 			case VT_LPWSTR:         // UNICODE string
@@ -710,7 +746,7 @@ BOOL CProperty::ReadFromStream(IStream* pIStream)
 				if (cb != sizeof(cbItem))
 					return FALSE;
 				li.QuadPart = -(LONG)cb;
-				pIStream->Seek(li, STREAM_SEEK_CUR, NULL);
+				pIStrItem->Seek(li, STREAM_SEEK_CUR, NULL);
 				cbValue += cb;
 				cbItem *= sizeof(WCHAR);
 				break;
@@ -750,7 +786,7 @@ BOOL CProperty::ReadFromStream(IStream* pIStream)
 			free(pTmp);
 			break;
 
-	   default:
+		default:
 #endif // _UNICODE
 			// Allocate cbValue bytes
 			if (NULL == AllocValue(cbValue))

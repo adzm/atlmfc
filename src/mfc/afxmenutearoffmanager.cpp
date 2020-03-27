@@ -86,7 +86,7 @@ void CMenuTearOffManager::Reset(HMENU hMenu)
 		return;
 	}
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		CString str;
@@ -139,7 +139,7 @@ void CMenuTearOffManager::SetupTearOffMenus(HMENU hMenu)
 		return;
 	}
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		UINT uiID = pMenu->GetMenuItemID(i);

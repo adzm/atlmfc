@@ -195,7 +195,7 @@ void CMFCMenuBar::CreateFromMenu(HMENU hMenu, BOOL bDefaultMenu, BOOL bForceUpda
 
 			RemoveAllButtons();
 
-			int iCount = (int) pMenu->GetMenuItemCount();
+			int iCount = pMenu->GetMenuItemCount();
 			for (int i = 0; i < iCount; i ++)
 			{
 				UINT uiID = pMenu->GetMenuItemID(i);
@@ -1032,7 +1032,7 @@ BOOL CMFCMenuBar::RestoreOriginalstate()
 			BOOL bCurr = (pActiveTemplate == pTemplate);
 
 			HMENU hmenuSharedOld = pTemplate->m_hMenuShared;
-			pTemplate->m_hMenuShared = ::LoadMenu(hInst, MAKEINTRESOURCE(uiMenuResId));
+			pTemplate->m_hMenuShared = ::LoadMenuW(hInst, MAKEINTRESOURCEW(uiMenuResId));
 
 			CreateFromMenu(pTemplate->m_hMenuShared, FALSE);
 			afxMenuHash.SaveMenuBar(pTemplate->m_hMenuShared, this);
@@ -1062,7 +1062,7 @@ BOOL CMFCMenuBar::RestoreOriginalstate()
 
 		HMENU hOldDefaultMenu = m_hDefaultMenu;
 
-		m_hDefaultMenu = ::LoadMenu(hInst, MAKEINTRESOURCE(m_uiDefMenuResId));
+		m_hDefaultMenu = ::LoadMenuW(hInst, MAKEINTRESOURCEW(m_uiDefMenuResId));
 
 		OnDefaultMenuLoaded(m_hDefaultMenu);
 
@@ -1327,7 +1327,7 @@ BOOL __stdcall CMFCMenuBar::FindMenuItemText(HMENU hMenu, const UINT nItemID, CS
 		return FALSE;
 	}
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		UINT uiID = pMenu->GetMenuItemID(i);
@@ -1655,7 +1655,7 @@ BOOL CMFCMenuBar::BuildOrigItems(UINT uiMenuResID)
 		return FALSE;
 	}
 
-	int iCount = (int) menu.GetMenuItemCount();
+	int iCount = menu.GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		UINT uiID = menu.GetMenuItemID(i);
@@ -1870,6 +1870,3 @@ void CMFCMenuBar::OnKillFocus(CWnd* pNewWnd)
 
 	CMFCToolBar::OnKillFocus(pNewWnd);
 }
-
-
-

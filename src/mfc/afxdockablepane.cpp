@@ -183,14 +183,15 @@ BOOL CDockablePane::CreateEx(DWORD dwStyleEx, LPCTSTR lpszCaption, CWnd* pParent
 
 	m_rectRestored = rect;
 
+	SetPaneAlignment(dwStyle & CBRS_ALIGN_ANY);
+	EnableGripper(bHasGripper);
+
 	if (m_sizeDialog != CSize(0, 0))
 	{
+		m_sizeDialog.cy += GetCaptionHeight();
 		m_rectRestored.right = m_rectRestored.left + m_sizeDialog.cx;
 		m_rectRestored.bottom = m_rectRestored.top + m_sizeDialog.cy;
 	}
-
-	SetPaneAlignment(dwStyle & CBRS_ALIGN_ANY);
-	EnableGripper(bHasGripper);
 
 	if (lpszCaption != NULL)
 	{

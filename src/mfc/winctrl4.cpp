@@ -37,7 +37,7 @@ BOOL PASCAL AfxInitRichEdit()
 {
 	_AFX_RICHEDIT_STATE* pState = _afxRichEditState;
 	if (pState->m_hInstRichEdit == NULL)
-		pState->m_hInstRichEdit = AfxCtxLoadLibraryA("RICHED32.DLL");
+		pState->m_hInstRichEdit = AfxCtxLoadLibraryW(L"RICHED32.DLL");
 	return pState->m_hInstRichEdit != NULL;
 }
 
@@ -45,7 +45,7 @@ BOOL PASCAL AfxInitRichEdit2()
 {
 	_AFX_RICHEDIT_STATE* pState = _afxRichEditState;
 	if (pState->m_hInstRichEdit2 == NULL)
-		pState->m_hInstRichEdit2 = AfxCtxLoadLibraryA("RICHED20.DLL");
+		pState->m_hInstRichEdit2 = AfxCtxLoadLibraryW(L"RICHED20.DLL");
 	return pState->m_hInstRichEdit2 != NULL;
 }
 

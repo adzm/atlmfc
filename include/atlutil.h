@@ -67,9 +67,9 @@ inline BOOL AtlIsFullPathT(_In_count_c_(3) const CharType* szPath)
 	{
 		return TRUE;
 	}
-	if (szPath[0]=='\\' && szPath[1]=='\\' && 
+	if (szPath[0]=='\\' && szPath[1]=='\\' &&
 		szPath[2] != '\0' ) // unc path name
-	{		
+	{
 		return TRUE;
 	}
 	return FALSE;
@@ -90,9 +90,12 @@ inline BOOL IsFullPathA(_In_count_c_(3) LPCSTR szPath) throw()
 #pragma warning(push)
 #pragma warning(disable : 4706)
 
-// this function is different from the the CRT 
+// this function is different from the the CRT
 // strncpy in that it does not pad out the whole string with zeroes
-inline char * __cdecl _strncpy(_Out_cap_(count) char * dest, _In_ const char * source, _In_ size_t count) throw()
+inline char * __cdecl _strncpy(
+	_Out_z_cap_(count) char * dest,
+	_In_z_count_(count) const char * source,
+	_In_ size_t count) throw()
 {
 	ATLASSERT( dest != NULL );
 	ATLASSERT( source != NULL );
@@ -120,7 +123,10 @@ inline char * __cdecl _strncpy(_Out_cap_(count) char * dest, _In_ const char * s
 }
 #pragma warning(pop)
 
-inline bool _SafeStringCopy(_Out_cap_(nLen) char *szDest, _In_ const char *szSrc, _In_ size_t nLen) throw()
+inline bool _SafeStringCopy(
+	_Out_z_cap_(nLen) char *szDest,
+	_In_z_count_(nLen) const char *szSrc,
+	_In_ size_t nLen) throw()
 {
 	ATLASSERT( szDest != NULL );
 	ATLASSERT( szSrc != NULL );
@@ -139,11 +145,10 @@ inline bool _SafeStringCopy(_Out_cap_(nLen) char *szDest, _In_ const char *szSrc
 }
 
 template <class T>
-inline bool SafeStringCopy(_Out_ T& Destination, _In_ const char* Source) throw()
+inline bool SafeStringCopy(
+	_Inout_ T& Destination,
+	_In_z_ const char* Source) throw()
 {
-	// Use cast to ensure that we only allow character arrays
-	(static_cast<char[sizeof(Destination)]>(Destination));
-
 	// Copy up to the size of the buffer
 	return _SafeStringCopy(Destination, Source, sizeof(Destination));
 }
@@ -229,9 +234,9 @@ public:
 //typedefs and defines for CUrl (essentially the same as the ones from wininet, but with an ATL_ prepended)
 typedef WORD ATL_URL_PORT;
 
-enum ATL_URL_SCHEME 
+enum ATL_URL_SCHEME
 {
-	ATL_URL_SCHEME_UNKNOWN = -1, 
+	ATL_URL_SCHEME_UNKNOWN = -1,
 	ATL_URL_SCHEME_FTP     = 0,
 	ATL_URL_SCHEME_GOPHER  = 1,
 	ATL_URL_SCHEME_HTTP    = 2,
@@ -266,8 +271,11 @@ __interface IStackDumpHandler
 {
 public:
 	void __stdcall OnBegin();
-	void __stdcall OnEntry(void *pvAddress, LPCSTR szModule, LPCSTR szSymbol);
-	void __stdcall OnError(LPCSTR szError);
+	void __stdcall OnEntry(
+		_In_ void *pvAddress,
+		_In_opt_z_ LPCSTR szModule,
+		_In_opt_z_ LPCSTR szSymbol);
+	void __stdcall OnError(_In_z_ LPCSTR szError);
 	void __stdcall OnEnd();
 };
 
@@ -287,56 +295,65 @@ public:
 		CHAR	szSymbol[ATL_SYMBOL_NAME_LEN];
 	};
 
-	static LPVOID __stdcall FunctionTableAccess(_In_ HANDLE hProcess, _In_ ULONG_PTR dwPCAddress)
+	static LPVOID __stdcall FunctionTableAccess(
+		_In_ HANDLE hProcess,
+		_In_ ULONG_PTR dwPCAddress)
 	{
-#ifdef _WIN64
 		return SymFunctionTableAccess(hProcess, dwPCAddress);
-#else
-		return SymFunctionTableAccess(hProcess, (ULONG)dwPCAddress);
-#endif
 	}
 
-	static ULONG_PTR __stdcall GetModuleBase(_In_ HANDLE hProcess, _In_ ULONG_PTR dwReturnAddress)
+	static ULONG_PTR __stdcall GetModuleBase(
+		_In_ HANDLE hProcess,
+		_In_ ULONG_PTR dwReturnAddress)
 	{
 		IMAGEHLP_MODULE moduleInfo;
 		moduleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
 
-#ifdef _WIN64
 		if (SymGetModuleInfo(hProcess, dwReturnAddress, &moduleInfo))
-#else
-		if (SymGetModuleInfo(hProcess, (ULONG)dwReturnAddress, &moduleInfo))
-#endif
-	   		return moduleInfo.BaseOfImage;
+		{
+			return moduleInfo.BaseOfImage;
+		}
 		else
 		{
 			MEMORY_BASIC_INFORMATION memoryBasicInfo;
 
-			if (::VirtualQueryEx(hProcess, (LPVOID) dwReturnAddress,
-				&memoryBasicInfo, sizeof(memoryBasicInfo)))
+			if (::VirtualQueryEx(hProcess, (LPVOID) dwReturnAddress, &memoryBasicInfo, sizeof(memoryBasicInfo)))
 			{
 				DWORD cch = 0;
+
+				typedef DWORD64 (__stdcall * PFNSYMLOADMODULEEXW)(HANDLE, HANDLE, PCWSTR, PCWSTR, DWORD64, DWORD, PMODLOAD_DATA, DWORD);
+				PFNSYMLOADMODULEEXW pfnSymLoadModuleExW = NULL;
+				HMODULE hDbgHelp = GetModuleHandleW(L"dbghelp.dll");
+				if (hDbgHelp != NULL)
+				{
+					pfnSymLoadModuleExW = (PFNSYMLOADMODULEEXW)GetProcAddress(hDbgHelp, "SymLoadModuleExW");
+					if (pfnSymLoadModuleExW != NULL)
+					{
+						WCHAR szFile[MAX_PATH] = { 0 };
+						cch = GetModuleFileNameW((HINSTANCE)memoryBasicInfo.AllocationBase, szFile, MAX_PATH);
+
+						// Ignore the return code since we can't do anything with it.
+						pfnSymLoadModuleExW(hProcess, NULL, ((cch) ? szFile : NULL), NULL, (DWORD_PTR) memoryBasicInfo.AllocationBase, 0, NULL, 0);
+						return (DWORD_PTR) memoryBasicInfo.AllocationBase;
+					}
+				}
+
 				char szFile[MAX_PATH] = { 0 };
 
-				cch = GetModuleFileNameA((HINSTANCE)memoryBasicInfo.AllocationBase,
-											 szFile, MAX_PATH);
+				cch = GetModuleFileNameA((HINSTANCE)memoryBasicInfo.AllocationBase, szFile, MAX_PATH);
 
 				// Ignore the return code since we can't do anything with it.
-				SymLoadModule(hProcess,
-					NULL, ((cch) ? szFile : NULL),
-#ifdef _WIN64
-					NULL, (DWORD_PTR) memoryBasicInfo.AllocationBase, 0);
-#else
-					NULL, (DWORD)(DWORD_PTR)memoryBasicInfo.AllocationBase, 0);
-#endif
+				SymLoadModule(hProcess, NULL, ((cch) ? szFile : NULL), NULL, (DWORD_PTR) memoryBasicInfo.AllocationBase, 0);
 				return (DWORD_PTR) memoryBasicInfo.AllocationBase;
 			}
 		}
-
 		return 0;
 	}
 
-	static BOOL ResolveSymbol(_In_ HANDLE hProcess, _In_ UINT_PTR dwAddress,
-		_ATL_SYMBOL_INFO &siSymbol)
+	static BOOL ResolveSymbol(
+		_In_ HANDLE hProcess,
+		_In_ UINT_PTR dwAddress,
+		_Out_ _ATL_SYMBOL_INFO &siSymbol)
 	{
 		BOOL fRetval = TRUE;
 
@@ -350,11 +367,7 @@ public:
 		memset(&siSymbol, 0, sizeof(_ATL_SYMBOL_INFO));
 		mi.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
 
-#ifdef _WIN64
 		if (!SymGetModuleInfo(hProcess, dwAddress, &mi))
-#else
-		if (!SymGetModuleInfo(hProcess, (UINT)dwAddress, &mi))
-#endif
 		{
 			Checked::strcpy_s(siSymbol.szModule, _countof(siSymbol.szModule), "<no module>");
 		}
@@ -371,40 +384,36 @@ public:
 
 		__try
 		{
-			union 
+			union
 			{
 				CHAR rgchSymbol[sizeof(IMAGEHLP_SYMBOL) + ATL_SYMBOL_NAME_LEN];
 				IMAGEHLP_SYMBOL  sym;
 			} sym;
 			memset(&sym.sym, 0x00, sizeof(sym.sym));
 			sym.sym.SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
-#ifdef _WIN64
 			sym.sym.Address = dwAddress;
-#else
-			sym.sym.Address = (DWORD)dwAddress;
-#endif
 			sym.sym.MaxNameLength = ATL_SYMBOL_NAME_LEN;
 
-#ifdef _WIN64
 			if (SymGetSymFromAddr(hProcess, dwAddress, &(siSymbol.dwOffset), &sym.sym))
-#else
-			if (SymGetSymFromAddr(hProcess, (DWORD)dwAddress, &(siSymbol.dwOffset), &sym.sym))
-#endif
 			{
 				pszSymbol = sym.sym.Name;
 
-				if (UnDecorateSymbolName(sym.sym.Name, szUndec, sizeof(szUndec)/sizeof(szUndec[0]), 
+				if (UnDecorateSymbolName(sym.sym.Name, szUndec, _countof(szUndec),
 					UNDNAME_NO_MS_KEYWORDS | UNDNAME_NO_ACCESS_SPECIFIERS))
 				{
 					pszSymbol = szUndec;
 				}
-				else if (SymUnDName(&sym.sym, szUndec, sizeof(szUndec)/sizeof(szUndec[0])))
+				else if (SymUnDName(&sym.sym, szUndec, _countof(szUndec)))
 				{
 					pszSymbol = szUndec;
 				}
 				if (siSymbol.dwOffset != 0)
 				{
-					sprintf_s(szWithOffset, ATL_SYMBOL_NAME_LEN, "%s + %d bytes", pszSymbol, siSymbol.dwOffset);
+#ifdef _WIN64
+					sprintf_s(szWithOffset, ATL_SYMBOL_NAME_LEN, "%s + %I64d bytes", pszSymbol, siSymbol.dwOffset);
+#else
+					sprintf_s(szWithOffset, ATL_SYMBOL_NAME_LEN, "%s + %d bytes", pszSymbol, siSymbol.dwOffset);						
+#endif
 
 					// ensure null-terminated
 					szWithOffset[ATL_SYMBOL_NAME_LEN-1] = '\0';
@@ -436,7 +445,7 @@ public:
 	HANDLE             hThread; //Thread to get context for
 	CONTEXT            context; //Where to put context
 	IStackDumpHandler* pHandler;
-	_AtlThreadContextInfo(IStackDumpHandler* p) throw()
+	_AtlThreadContextInfo(_In_ IStackDumpHandler* p) throw()
 	{
 		hThread = NULL;
 		memset(&context, 0, sizeof(context));
@@ -478,8 +487,8 @@ public:
 	}
 	static DWORD WINAPI ContextThreadProc(_In_ LPVOID pv) throw()
 	{
-		_AtlThreadContextInfo* pThis = 
-			reinterpret_cast< _AtlThreadContextInfo* >(pv); 
+		_AtlThreadContextInfo* pThis =
+			reinterpret_cast< _AtlThreadContextInfo* >(pv);
 		return pThis->DoDumpStack();
 	}
 	DWORD DoDumpStack() throw()
@@ -523,22 +532,10 @@ public:
 			// only program counter
 			dwMachType                   = IMAGE_FILE_MACHINE_R4000;
 			stackFrame.AddrPC.Offset     = context.Fir;
-#elif defined(_M_ALPHA)
-			// only program counter
-			dwMachType                   = IMAGE_FILE_MACHINE_ALPHA;
-			stackFrame.AddrPC.Offset     = (unsigned long) context.Fir;
-#elif defined(_M_PPC)
-			// only program counter
-			dwMachType                   = IMAGE_FILE_MACHINE_POWERPC;
-			stackFrame.AddrPC.Offset     = context.Iar;
 #elif defined(_M_IA64)
 			// only program counter
 			dwMachType                   = IMAGE_FILE_MACHINE_IA64;
 			stackFrame.AddrPC.Offset     = context.StIIP;
-#elif defined(_M_ALPHA64)
-			// only program counter
-			dwMachType                   = IMAGE_FILE_MACHINE_ALPHA64;
-			stackFrame.AddrPC.Offset     = context.Fir;
 #else
 #error("Unknown Target Machine");
 #endif
@@ -557,31 +554,34 @@ public:
 				if (stackFrame.AddrPC.Offset != 0)
 					adwAddress.Add((void*)(DWORD_PTR)stackFrame.AddrPC.Offset);
 			}
-		}
 
-		// dump it out now
-		INT_PTR nAddress;
-		INT_PTR cAddresses = adwAddress.GetCount();
-		for (nAddress = 0; nAddress < cAddresses; nAddress++)
-		{
-			CStackDumper::_ATL_SYMBOL_INFO info;
-			UINT_PTR dwAddress = (UINT_PTR)adwAddress[nAddress];
-
-			LPCSTR szModule = NULL;
-			LPCSTR szSymbol = NULL;
-
-			if (CStackDumper::ResolveSymbol(hProcess, dwAddress, info))
+			// dump it out now
+			INT_PTR nAddress;
+			INT_PTR cAddresses = adwAddress.GetCount();
+			for (nAddress = 0; nAddress < cAddresses; nAddress++)
 			{
-				szModule = info.szModule;
-				szSymbol = info.szSymbol;
+				CStackDumper::_ATL_SYMBOL_INFO info;
+				UINT_PTR dwAddress = (UINT_PTR)adwAddress[nAddress];
+
+				LPCSTR szModule = NULL;
+				LPCSTR szSymbol = NULL;
+
+				if (CStackDumper::ResolveSymbol(hProcess, dwAddress, info))
+				{
+					szModule = info.szModule;
+					szSymbol = info.szSymbol;
+				}
+				pHandler->OnEntry((void *) dwAddress, szModule, szSymbol);
 			}
-			pHandler->OnEntry((void *) dwAddress, szModule, szSymbol);
+
+			SymCleanup(hProcess);
 		}
+
 		pHandler->OnEnd();
 		ResumeThread(hThread);
 
 		return 0;
-	} 
+	}
 };
 
 // Helper function to produce a stack dump
@@ -599,7 +599,8 @@ ATL_NOINLINE inline void AtlDumpStack(_In_ IStackDumpHandler *pHandler)
 // CReportHookDumpHandler is a stack dump handler
 // that gathers the stack dump into the format
 // used by CDebugReportHook
-class CReportHookDumpHandler : public IStackDumpHandler
+class CReportHookDumpHandler : 
+	public IStackDumpHandler
 {
 public:
 	CReportHookDumpHandler()
@@ -626,7 +627,10 @@ public:
 	{
 	}
 
-	void __stdcall OnEntry(_In_ void *pvAddress, _In_ LPCSTR szModule, _In_ LPCSTR szSymbol)
+	void __stdcall OnEntry(
+		_In_ void *pvAddress,
+		_In_opt_z_ LPCSTR szModule,
+		_In_opt_z_ LPCSTR szSymbol)
 	{
 		// make sure SetString was called before
 		// trying to get a stack dump
@@ -652,7 +656,7 @@ public:
 		*m_pstr += STACK_TRACE_LINE_DELIMITER;
 	}
 
-	void __stdcall OnError(LPCSTR /*szError*/)
+	void __stdcall OnError(_In_opt_z_ LPCSTR /*szError*/)
 	{
 	}
 	void __stdcall OnEnd()
@@ -667,7 +671,12 @@ protected:
 #define PIPE_INPUT_BUFFER_SIZE  4096
 #define PIPE_OUTPUT_BUFFER_SIZE 2048
 
-enum { DEBUG_SERVER_MESSAGE_TRACE, DEBUG_SERVER_MESSAGE_ASSERT, DEBUG_SERVER_MESSAGE_QUIT };
+enum
+{
+	DEBUG_SERVER_MESSAGE_TRACE,
+	DEBUG_SERVER_MESSAGE_ASSERT,
+	DEBUG_SERVER_MESSAGE_QUIT
+};
 
 struct DEBUG_SERVER_MESSAGE
 {
@@ -690,7 +699,10 @@ protected:
 	static char m_szClientName[MAX_COMPUTERNAME_LENGTH+1];
 
 public:
-	CDebugReportHook(_In_ LPCSTR szMachineName = ".", _In_ LPCSTR szPipeName = "AtlsDbgPipe", _In_ DWORD dwTimeout = 20000) throw()
+	CDebugReportHook(
+		_In_z_ LPCSTR szMachineName = ".",
+		_In_z_ LPCSTR szPipeName = "AtlsDbgPipe",
+		_In_ DWORD dwTimeout = 20000) throw()
 	{
 		if (SetPipeName(szMachineName, szPipeName))
 		{
@@ -706,7 +718,9 @@ public:
 		RemoveHook();
 	}
 
-	BOOL SetPipeName(_In_ LPCSTR szMachineName = ".", _In_ LPCSTR szPipeName = "AtlsDbgPipe") throw()
+	BOOL SetPipeName(
+		_In_z_ LPCSTR szMachineName = ".",
+		_In_z_ LPCSTR szPipeName = "AtlsDbgPipe") throw()
 	{
 		if (sprintf_s(m_szPipeName, MAX_PATH, "\\\\%s\\pipe\\%s", szMachineName, szPipeName) != -1)
 		{
@@ -738,7 +752,10 @@ public:
 #endif
 	}
 
-	static int __cdecl CDebugReportHookProc(_In_ int reportType, _In_z_ char *message, _Out_ int *returnValue) throw()
+	static int __cdecl CDebugReportHookProc(
+		_In_ int reportType,
+		_In_z_ char *message,
+		_Inout_ int *returnValue) throw()
 	{
 		//Cannot ensure since it may recurse - throw directly.
 		if (message == NULL)
@@ -782,7 +799,7 @@ public:
 			}
 
 			//If the pipe is busy, we wait for up to m_dwTimeout
-			if (!WaitNamedPipeA(m_szPipeName, m_dwTimeout)) 
+			if (!WaitNamedPipeA(m_szPipeName, m_dwTimeout))
 			{
 				if (revert.Restore())
 				{
@@ -916,13 +933,13 @@ __declspec(selectany) char CDebugReportHook::m_szClientName[MAX_COMPUTERNAME_LEN
 // IThreadPoolConfig
 // Used to configure the worker thread pool. This can be used by any
 // client of the CThreadPool class.
-__interface __declspec(uuid("B1F64757-6E88-4fa2-8886-7848B0D7E660")) 
+__interface __declspec(uuid("B1F64757-6E88-4fa2-8886-7848B0D7E660"))
 	IThreadPoolConfig : public IUnknown
 {
-	STDMETHOD(SetSize)(int nNumThreads);
-	STDMETHOD(GetSize)(int *pnNumThreads);
-	STDMETHOD(SetTimeout)(DWORD dwMaxWait);
-	STDMETHOD(GetTimeout)(DWORD *pdwMaxWait);
+	STDMETHOD(SetSize)(_In_ int nNumThreads);
+	STDMETHOD(GetSize)(_Out_ int *pnNumThreads);
+	STDMETHOD(SetTimeout)(_In_ DWORD dwMaxWait);
+	STDMETHOD(GetTimeout)(_Out_ DWORD *pdwMaxWait);
 };
 
 //
@@ -941,8 +958,10 @@ __interface __declspec(uuid("B1F64757-6E88-4fa2-8886-7848B0D7E660"))
 //		is a class that implements a static CreateThread function
 //		This allows for overriding how the threads are created
 #define ATLS_POOL_SHUTDOWN ((OVERLAPPED*) ((__int64) -1))
+ATLPREFAST_SUPPRESS(6387)
 template <class Worker, class ThreadTraits=DefaultThreadTraits, class WaitTraits=DefaultWaitTraits>
-class CThreadPool : public IThreadPoolConfig
+class CThreadPool : 
+	public IThreadPoolConfig
 {
 protected:
 
@@ -985,7 +1004,11 @@ public:
 	// pvWorkerParam is a parameter that will be passed to Worker::Execute
 	//	dwStackSize:
 	//		The stack size to use when creating the threads
-	_Check_return_ HRESULT Initialize(_In_opt_ void *pvWorkerParam=NULL, _In_ int nNumThreads=0, _In_ DWORD dwStackSize=0, _In_ HANDLE hCompletion=INVALID_HANDLE_VALUE) throw()
+	_Check_return_ HRESULT Initialize(
+		_In_opt_ void *pvWorkerParam=NULL,
+		_In_ int nNumThreads=0,
+		_In_ DWORD dwStackSize=0,
+		_In_ HANDLE hCompletion=INVALID_HANDLE_VALUE) throw()
 	{
 		ATLASSUME( m_hRequestQueue == NULL );
 
@@ -1009,7 +1032,7 @@ public:
 			// failed creating the Io completion port
 			m_critSec.Term();
 			CloseHandle(m_hThreadEvent);
-			return AtlHresultFromLastError();		
+			return AtlHresultFromLastError();
 		}
 		m_pvWorkerParam = pvWorkerParam;
 		m_dwStackSize = dwStackSize;
@@ -1068,12 +1091,11 @@ public:
 			GetExitCodeThread(hThread, &dwExitCode);
 			if (dwExitCode == STILL_ACTIVE)
 			{
-#pragma warning(push)
-#pragma warning(disable: 6258)
+ATLPREFAST_SUPPRESS(6258)
 				/* deliberate design choice to use TerminateThread here in extremis */
 				ATLTRACE(atlTraceUtil, 0, _T("Terminating thread"));
 				TerminateThread(hThread, 0);
-#pragma warning(pop)
+ATLPREFAST_UNSUPPRESS()
 			}
 			CloseHandle(hThread);
 		}
@@ -1136,7 +1158,9 @@ public:
 	}
 
 	// IUnknown methods
-	_Check_return_ HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _Out_ void **ppv) throw()
+	_Check_return_ HRESULT STDMETHODCALLTYPE QueryInterface(
+		_In_ REFIID riid,
+		_Deref_out_ void** ppv) throw()
 	{
 		if (!ppv)
 			return E_POINTER;
@@ -1163,7 +1187,6 @@ public:
 		return 1;
 	}
 
-
 	HANDLE GetQueueHandle() throw()
 	{
 		return m_hRequestQueue;
@@ -1186,7 +1209,6 @@ public:
 		return TRUE;
 	}
 
-
 protected:
 
 	DWORD ThreadProc() throw()
@@ -1196,7 +1218,7 @@ protected:
 
 		OVERLAPPED* pOverlapped;
 
-		// this block is to ensure theWorker gets destructed before the 
+		// this block is to ensure theWorker gets destructed before the
 		// thread handle is closed
 		{
 			// We instantiate an instance of the worker class on the stack
@@ -1239,18 +1261,20 @@ protected:
 		m_dwThreadEventId = GetCurrentThreadId();
 		SetEvent(m_hThreadEvent);
 
-		return 0; 
+		return 0;
 	}
 
 	static DWORD WINAPI WorkerThreadProc(_In_ LPVOID pv) throw()
 	{
-		CThreadPool* pThis = 
-			reinterpret_cast< CThreadPool* >(pv); 
+		CThreadPool* pThis =
+			reinterpret_cast< CThreadPool* >(pv);
 
 		return pThis->ThreadProc();
-	} 
+	}
 
-	_Check_return_ HRESULT InternalResizePool(_In_ int nNumThreads, _In_ int dwMaxWait) throw()
+	_Check_return_ HRESULT InternalResizePool(
+		_In_ int nNumThreads,
+		_In_ int dwMaxWait) throw()
 	{
 		if (!m_hRequestQueue)   // Not initialized
 			return E_FAIL;
@@ -1297,7 +1321,7 @@ protected:
 				{
 					HANDLE hThread = m_threadMap.GetValueAt(nIndex);
 					// Wait for the thread to shutdown
-					if (WaitTraits::WaitForSingleObject(hThread, 60000) == WAIT_OBJECT_0) 
+					if (WaitTraits::WaitForSingleObject(hThread, 60000) == WAIT_OBJECT_0)
 					{
 						CloseHandle(hThread);
 						m_threadMap.RemoveAt(nIndex);
@@ -1349,8 +1373,8 @@ protected:
 		}
 		return S_OK;
 	}
-
 }; // class CThreadPool
+ATLPREFAST_UNSUPPRESS()
 
 //
 // CNonStatelessWorker
@@ -1367,12 +1391,15 @@ class CNonStatelessWorker
 public:
 	typedef typename Worker::RequestType RequestType;
 
-	BOOL Initialize(void * /*pvParam*/) throw()
+	BOOL Initialize(_In_opt_ void * /*pvParam*/) throw()
 	{
 		return TRUE;
 	}
 
-	void Execute(_In_ typename Worker::RequestType request, _In_ void *pvWorkerParam, _In_ OVERLAPPED *pOverlapped)
+	void Execute(
+		_In_ typename Worker::RequestType request,
+		_In_ void *pvWorkerParam,
+		_In_ OVERLAPPED *pOverlapped)
 	{
 		Worker worker;
 		if (worker.Initialize(pvWorkerParam))
@@ -1381,7 +1408,7 @@ public:
 			worker.Terminate(pvWorkerParam);
 		}
 	}
-	void Terminate(void* /*pvParam*/) throw()
+	void Terminate(_In_opt_ void* /*pvParam*/) throw()
 	{
 	}
 }; // class CNonStatelessWorker
@@ -1457,13 +1484,13 @@ inline ATL_URL_PORT AtlGetDefaultUrlPort(_In_ ATL_URL_SCHEME m_nScheme) throw()
 //Escape a meta sequence with lpszOutUrl as the base url and lpszInUrl as the relative url
 //i.e. lpszInUrl = ./* or ../*
 ATL_NOINLINE inline BOOL AtlEscapeUrlMetaHelper(
-	_Inout_ _Deref_prepost_valid_ LPSTR* ppszOutUrl,
-	_In_ LPCSTR szPrev,
+	_Deref_inout_z_ LPSTR* ppszOutUrl,
+	_In_z_ LPCSTR szPrev,
 	_In_ DWORD dwOutLen,
-	_Inout_ _Deref_prepost_valid_ LPSTR* ppszInUrl,
-	_Out_ DWORD* pdwLen, 
+	_Deref_inout_z_ LPSTR* ppszInUrl,
+	_Out_ DWORD* pdwLen,
 	_In_ DWORD dwFlags = 0,
-	_In_ DWORD dwColonPos = ATL_URL_MAX_URL_LENGTH) 
+	_In_ DWORD dwColonPos = ATL_URL_MAX_URL_LENGTH)
 {
 	ATLENSURE( ppszOutUrl != NULL );
 	ATLENSURE( szPrev != NULL );
@@ -1488,7 +1515,7 @@ ATL_NOINLINE inline BOOL AtlEscapeUrlMetaHelper(
 			szIn++;
 			bRet = TRUE;
 		}
-		else if (chNext == '.' && ((chNext = *(szIn+1)) == '/' || 
+		else if (chNext == '.' && ((chNext = *(szIn+1)) == '/' ||
 			chNext == '\\' || chNext == '\0'))
 		{
 			//otherwise if the meta sequence is of the form "/../"
@@ -1514,7 +1541,7 @@ ATL_NOINLINE inline BOOL AtlEscapeUrlMetaHelper(
 					if ((dwFlags & ATL_URL_CANONICALIZE) && ((dwFlags & ATL_URL_COMBINE) == 0) &&
 						(dwColonPos && (dwOutPos <= dwColonPos+1)))
 					{
-						//NOTE: this is to match the way that InternetCanonicalizeUrl and 
+						//NOTE: this is to match the way that InternetCanonicalizeUrl and
 						//      InternetCombineUrl handle this case
 						break;
 					}
@@ -1552,8 +1579,8 @@ ATL_NOINLINE inline BOOL AtlEscapeUrlMetaHelper(
 //Convert all unsafe characters in szStringIn to escape sequences
 //lpszStringIn and lpszStringOut should be different strings
 inline BOOL AtlEscapeUrl(
-	_In_ LPCSTR szStringIn,
-	_Out_cap_post_count_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
+	_In_z_ LPCSTR szStringIn,
+	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
 	_Out_opt_ DWORD* pdwStrLen,
 	_In_ DWORD dwMaxLength,
 	_In_ DWORD dwFlags = 0)
@@ -1593,7 +1620,7 @@ inline BOOL AtlEscapeUrl(
 				LPSTR pszStrToLower=szStringOut-dwLen;
 				ATLENSURE(pszStrToLower >= szOrigStringOut &&  pszStrToLower <= szStringOutEnd);
 				Checked::strlwr_s(pszStrToLower,szStringOutEnd-pszStrToLower+1);
- 
+
 				if (dwLen == 4 && !strncmp("file", (szStringOut-4), 4))
 				{
 					bSchemeFile = TRUE;
@@ -1608,7 +1635,7 @@ inline BOOL AtlEscapeUrl(
 			if (*szStringIn != '\0')
 			{
 				short nFirstDigit = AtlHexValue(*szStringIn++);
-				
+
 				if( nFirstDigit < 0 )
 				{
 					bRet = FALSE;
@@ -1626,14 +1653,14 @@ inline BOOL AtlEscapeUrl(
 					}
 					ch = static_cast<char>(ch+nSecondDigit);
 				}
-				else 
+				else
 				{
-					break; 
+					break;
 				}
 			}
-			else 
+			else
 			{
-				break; 
+				break;
 			}
 		}
 		else if ((ch == '?' || ch == '#') && (dwFlagsInternal & ATL_URL_BROWSER_MODE))
@@ -1676,7 +1703,7 @@ inline BOOL AtlEscapeUrl(
 				if (bRet)
 					*szStringOut++ = ch;
 			}
-			else 
+			else
 			{
 				//if there is not enough space for the escape sequence
 				if (dwLen >= (dwMaxLength-3))
@@ -1719,14 +1746,14 @@ inline BOOL AtlEscapeUrl(
 }
 
 inline BOOL AtlEscapeUrl(
-	_In_ LPCWSTR szStringIn,
-	_Out_cap_post_count_(dwMaxLength, *pdwStrLen) LPWSTR szStringOut,
+	_In_z_ LPCWSTR szStringIn,
+	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPWSTR szStringOut,
 	_Out_opt_ DWORD* pdwStrLen,
 	_In_ DWORD dwMaxLength,
 	_In_ DWORD dwFlags = 0)
 {
 	ATLENSURE( szStringIn != NULL );
-	ATLENSURE( szStringOut != NULL );	
+	ATLENSURE( szStringOut != NULL );
 	// convert to UTF8
 	BOOL bRet = FALSE;
 
@@ -1737,7 +1764,7 @@ inline BOOL AtlEscapeUrl(
 		{
 			*pdwStrLen = 1; //one for null
 	    }
-        *szStringOut = '\0';			
+        *szStringOut = '\0';
 		return TRUE;
 	}
 	int nCnt = AtlUnicodeToUTF8(szStringIn, nSrcLen, NULL, 0);
@@ -1810,10 +1837,10 @@ inline BOOL AtlEscapeUrl(
 }
 
 //Convert all escaped characters in szString to their real values
-//lpszStringIn and lpszStringOut can be the same string	
+//lpszStringIn and lpszStringOut can be the same string
 inline BOOL AtlUnescapeUrl(
-	_In_ LPCSTR szStringIn,
-	_Out_cap_post_count_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
+	_In_z_ LPCSTR szStringIn,
+	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
 	_Out_opt_ LPDWORD pdwStrLen,
 	_In_ DWORD dwMaxLength)
 {
@@ -1876,7 +1903,7 @@ inline BOOL AtlUnescapeUrl(
 }
 
 inline BOOL AtlUnescapeUrl(
-	_In_ LPCWSTR szStringIn,
+	_In_z_ LPCWSTR szStringIn,
 	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPWSTR szStringOut,
 	_Out_opt_ LPDWORD pdwStrLen,
 	_In_ DWORD dwMaxLength)
@@ -1958,10 +1985,10 @@ inline BOOL AtlUnescapeUrl(
 
 //Canonicalize a URL (same as InternetCanonicalizeUrl)
 inline BOOL AtlCanonicalizeUrl(
-	_In_ LPCTSTR szUrl,
-	_Out_capcount_(*pdwMaxLength) LPTSTR szCanonicalized,
+	_In_z_ LPCTSTR szUrl,
+	_Out_z_capcount_(*pdwMaxLength) LPTSTR szCanonicalized,
 	_Inout_ DWORD* pdwMaxLength,
-	_In_ DWORD dwFlags = 0) 
+	_In_ DWORD dwFlags = 0)
 {
 	ATLENSURE( szUrl != NULL );
 	ATLENSURE( szCanonicalized != NULL );
@@ -1972,11 +1999,11 @@ inline BOOL AtlCanonicalizeUrl(
 
 //Combine a base and relative URL (same as InternetCombineUrl)
 inline BOOL AtlCombineUrl(
-	_In_ LPCTSTR szBaseUrl,
-	_In_ LPCTSTR szRelativeUrl,
-	_Out_cap_(*pdwMaxLength) LPTSTR szBuffer,
+	_In_z_ LPCTSTR szBaseUrl,
+	_In_z_ LPCTSTR szRelativeUrl,
+	_Out_z_capcount_(*pdwMaxLength) LPTSTR szBuffer,
 	_Inout_ DWORD* pdwMaxLength,
-	_In_ DWORD dwFlags = 0) 
+	_In_ DWORD dwFlags = 0)
 {
 	ATLENSURE(szBaseUrl != NULL);
 	ATLENSURE(szRelativeUrl != NULL);
@@ -1984,7 +2011,7 @@ inline BOOL AtlCombineUrl(
 	ATLENSURE(pdwMaxLength != NULL);
 
 	size_t nLen1 = _tcslen(szBaseUrl);
-	TCHAR szCombined[2*ATL_URL_MAX_URL_LENGTH];  
+	TCHAR szCombined[2*ATL_URL_MAX_URL_LENGTH];
 	if (nLen1 >= _countof(szCombined))
 	{
 		return FALSE;
@@ -1994,7 +2021,7 @@ inline BOOL AtlCombineUrl(
 
 	// if last char of szBaseUrl is not a slash, add it.
 	if (nLen1 > 0 && szCombined[nLen1-1] != _T('/'))
-	{		
+	{
 		if (nLen1 >= _countof(szCombined) - 1)
 		{
 			return FALSE;
@@ -2009,7 +2036,7 @@ inline BOOL AtlCombineUrl(
 	if (nLen2 >= _countof(szCombined))
 	{
 		return FALSE;
-	}	
+	}
 	if (nLen2+nLen1+1 >= _countof(szCombined) || nLen2+nLen1+1 <= nLen1)
 	{
 		return FALSE;
@@ -2075,7 +2102,9 @@ public:
 	}
 
 	//Set the url
-	BOOL CrackUrl(_In_z_ LPCTSTR lpszUrl, _In_ DWORD dwFlags = 0) throw()
+	BOOL CrackUrl(
+		_In_z_ LPCTSTR lpszUrl,
+		_In_ DWORD dwFlags = 0) throw()
 	{
 		ATLASSERT(lpszUrl != NULL);
 		ATLASSERT((dwFlags == 0) || (dwFlags == ATL_URL_ESCAPE) ||
@@ -2089,7 +2118,7 @@ public:
 		{
 			if (bRet && (m_dwUserNameLength > 0))
 			{
-				bRet = AtlUnescapeUrl(m_szUserName, m_szUserName, 
+				bRet = AtlUnescapeUrl(m_szUserName, m_szUserName,
 					&m_dwUserNameLength, ATL_URL_MAX_USER_NAME_LENGTH+1);
 				if (bRet)
 				{
@@ -2099,7 +2128,7 @@ public:
 
 			if (bRet && (m_dwPasswordLength > 0))
 			{
-				bRet = AtlUnescapeUrl(m_szPassword, m_szPassword, 
+				bRet = AtlUnescapeUrl(m_szPassword, m_szPassword,
 					&m_dwPasswordLength, ATL_URL_MAX_PASSWORD_LENGTH+1);
 				if (bRet)
 				{
@@ -2109,7 +2138,7 @@ public:
 
 			if (bRet && (m_dwHostNameLength > 0))
 			{
-				bRet = AtlUnescapeUrl(m_szHostName, m_szHostName, 
+				bRet = AtlUnescapeUrl(m_szHostName, m_szHostName,
 					&m_dwHostNameLength, ATL_URL_MAX_HOST_NAME_LENGTH+1);
 				if (bRet)
 				{
@@ -2119,7 +2148,7 @@ public:
 
 			if (bRet && (m_dwUrlPathLength > 0))
 			{
-				bRet = AtlUnescapeUrl(m_szUrlPath, m_szUrlPath, 
+				bRet = AtlUnescapeUrl(m_szUrlPath, m_szUrlPath,
 					&m_dwUrlPathLength, ATL_URL_MAX_PATH_LENGTH+1);
 				if (bRet)
 				{
@@ -2129,7 +2158,7 @@ public:
 
 			if (bRet && (m_dwExtraInfoLength > 0))
 			{
-				bRet = AtlUnescapeUrl(m_szExtraInfo, m_szExtraInfo, 
+				bRet = AtlUnescapeUrl(m_szExtraInfo, m_szExtraInfo,
 					&m_dwExtraInfoLength, ATL_URL_MAX_PATH_LENGTH+1);
 				if (bRet)
 				{
@@ -2140,7 +2169,10 @@ public:
 		return bRet;
 	}
 
-	inline BOOL CreateUrl(_Out_cap_post_count_(*pdwMaxLength,*pdwMaxLength) LPTSTR lpszUrl, _Inout_ DWORD* pdwMaxLength, _In_ DWORD dwFlags = 0) const throw()
+	inline BOOL CreateUrl(
+		_Out_z_cap_post_count_(*pdwMaxLength,*pdwMaxLength) LPTSTR lpszUrl,
+		_Inout_ DWORD* pdwMaxLength,
+		_In_ DWORD dwFlags = 0) const throw()
 	{
 		ATLASSERT(lpszUrl != NULL);
 		ATLASSERT(pdwMaxLength != NULL);
@@ -2174,7 +2206,7 @@ public:
 		LPTSTR lpszEndUrl = lpszUrl + dwLength;
 		if (*m_szScheme)
 		{
-			Checked::tcsncpy_s(lpszUrl,lpszEndUrl - lpszUrl,m_szScheme, m_dwSchemeNameLength);			
+			Checked::tcsncpy_s(lpszUrl,lpszEndUrl - lpszUrl,m_szScheme, m_dwSchemeNameLength);
 			lpszUrl += m_dwSchemeNameLength;
 			if( lpszUrl >= lpszEndUrl )
 				return FALSE;
@@ -2207,7 +2239,7 @@ public:
 
 		if (*m_szHostName)
 		{
-			Checked::tcsncpy_s(lpszUrl, lpszEndUrl - lpszUrl,m_szHostName, m_dwHostNameLength);			
+			Checked::tcsncpy_s(lpszUrl, lpszEndUrl - lpszUrl,m_szHostName, m_dwHostNameLength);
 			lpszUrl += m_dwHostNameLength;
 			if (m_nPortNumber != AtlGetDefaultUrlPort(m_nScheme))
 			{
@@ -2250,7 +2282,7 @@ public:
 		if (dwFlags & ATL_URL_ESCAPE)
 		{
 			TCHAR szUrl[ATL_URL_MAX_URL_LENGTH];
-			Checked::tcsncpy_s(szUrl, _countof(szUrl),lpszOutUrl, *pdwMaxLength);			
+			Checked::tcsncpy_s(szUrl, _countof(szUrl),lpszOutUrl, *pdwMaxLength);
 			if (AtlUnescapeUrl(szUrl, lpszOutUrl, pdwMaxLength, dwLength))
 			{
 				(*pdwMaxLength)--;
@@ -2278,7 +2310,7 @@ public:
 
 		//i.e. "//"
 		if (m_nScheme != ATL_URL_SCHEME_MAILTO)
-			dwUrlLength += 2;  
+			dwUrlLength += 2;
 
 		//i.e. "username@"
 		if (m_dwUserNameLength > 0)
@@ -2317,9 +2349,9 @@ public:
 		return m_dwSchemeNameLength;
 	}
 
-	//This method will incur the cost of 
+	//This method will incur the cost of
 	//validating the scheme and updating the scheme name
-	inline BOOL SetSchemeName(_In_z_ LPCTSTR lpszSchm) 
+	inline BOOL SetSchemeName(_In_z_ LPCTSTR lpszSchm)
 	{
 		ATLENSURE(lpszSchm != NULL);
 
@@ -2357,14 +2389,14 @@ public:
 
 			m_nPortNumber = ATL_URL_INVALID_PORT_NUMBER;
 		}
-		
+
 		Checked::tcsncpy_s(m_szScheme, _countof(m_szScheme),lpszSchm, m_dwSchemeNameLength);
 		m_szScheme[m_dwSchemeNameLength] = '\0';
 
 		return TRUE;
 	}
 
-	inline BOOL SetScheme(_In_ ATL_URL_SCHEME nScheme) 
+	inline BOOL SetScheme(_In_ ATL_URL_SCHEME nScheme)
 	{
 		if ((nScheme < 0) || (nScheme >= s_nSchemes))
 		{
@@ -2402,7 +2434,7 @@ public:
 	}
 
 	//Set the Host name
-	inline BOOL SetHostName(_In_count_c_(ATL_URL_MAX_HOST_NAME_LENGTH+1) LPCTSTR lpszHost) throw()
+	inline BOOL SetHostName(_In_z_count_c_(ATL_URL_MAX_HOST_NAME_LENGTH+1) LPCTSTR lpszHost) throw()
 	{
 		ATLASSERT(lpszHost != NULL);
 
@@ -2423,7 +2455,7 @@ public:
 	}
 
 	//Set the port number in terms of ATL_URL_PORT
-	inline BOOL SetPortNumber(ATL_URL_PORT nPrt) throw()
+	inline BOOL SetPortNumber(_In_ ATL_URL_PORT nPrt) throw()
 	{
 		m_nPortNumber = nPrt;
 		return TRUE;
@@ -2442,7 +2474,7 @@ public:
 	}
 
 	//Set the user name
-	inline BOOL SetUserName(_In_count_c_(ATL_URL_MAX_USER_NAME_LENGTH+1) LPCTSTR lpszUser) throw()
+	inline BOOL SetUserName(_In_z_count_c_(ATL_URL_MAX_USER_NAME_LENGTH+1) LPCTSTR lpszUser) throw()
 	{
 		ATLASSERT(lpszUser != NULL);
 
@@ -2469,7 +2501,7 @@ public:
 	}
 
 	//Set the password
-	inline BOOL SetPassword(_In_opt_count_c_(ATL_URL_MAX_PASSWORD_LENGTH+1) LPCTSTR lpszPass) 
+	inline BOOL SetPassword(_In_z_count_c_(ATL_URL_MAX_PASSWORD_LENGTH+1) LPCTSTR lpszPass)
 	{
 		ATLENSURE(lpszPass != NULL);
 
@@ -2500,7 +2532,7 @@ public:
 	}
 
 	//Set the url path
-	inline BOOL SetUrlPath(_In_count_c_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszPath) throw()
+	inline BOOL SetUrlPath(_In_z_count_c_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszPath) throw()
 	{
 		ATLASSERT(lpszPath != NULL);
 
@@ -2527,7 +2559,7 @@ public:
 	}
 
 	//Set extra info
-	inline BOOL SetExtraInfo(_In_count_c_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszInfo) throw()
+	inline BOOL SetExtraInfo(_In_z_count_c_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszInfo) throw()
 	{
 		ATLASSERT(lpszInfo != NULL);
 
@@ -2548,7 +2580,7 @@ public:
 		TCHAR szTmp[ATL_URL_MAX_URL_LENGTH];
 		Checked::tcscpy_s(szTmp,_countof(szTmp), m_szUserName);
 		// AtlEscapeUrl returns the size of the buffer required to hold the data
-		// including the NULL terminator. However, CUrl stores the lengths of the 
+		// including the NULL terminator. However, CUrl stores the lengths of the
 		// URL components as length - NULL terminator, similar to what you'd get
 		// if you did a strlen on the URL component so we have to adjust the lengths
 		// that come back from AtlEscapeUrl
@@ -2556,7 +2588,7 @@ public:
 		if (bRet)
 		{
 			m_dwUserNameLength--;
-			Checked::tcscpy_s(szTmp,_countof(szTmp), m_szPassword);			
+			Checked::tcscpy_s(szTmp,_countof(szTmp), m_szPassword);
 			bRet = AtlEscapeUrl(szTmp, m_szPassword, &m_dwPasswordLength, ATL_URL_MAX_PASSWORD_LENGTH, dwFlags);
 		}
 		if (bRet)
@@ -2613,7 +2645,7 @@ private:
 		return s_schemes;
 	}
 
-	inline BOOL Parse(_In_ LPCTSTR lpszUrl) 
+	inline BOOL Parse(_In_z_ LPCTSTR lpszUrl)
 	{
 		ATLENSURE(lpszUrl != NULL);
 
@@ -2626,7 +2658,7 @@ private:
 		TCHAR* szCurrentUrl = strCurrentUrl.GetBuffer(ATL_URL_MAX_URL_LENGTH+6);
 		TCHAR* pszCurrentUrl = szCurrentUrl;
 		size_t nUrlSize = 0;
-		
+
 		BOOL bInsideSquareBrackets = FALSE;
 
 		//parse lpszUrl using szCurrentUrl to store temporary data
@@ -2639,7 +2671,7 @@ private:
 				goto error;
 
 			if (ch == ':' && !bInsideSquareBrackets)
-			{							
+			{
 				//3 cases:
 				//(1) Just encountered a scheme
 				//(2) Port number follows
@@ -2667,7 +2699,7 @@ private:
 							//Skip these characters and continue
 							lpszUrl+= 2;
 						}
-						else 
+						else
 						{
 							//it is an absolute path
 							//no domain name, port, username, or password is allowed in this case
@@ -2783,8 +2815,8 @@ private:
 			else
 			{
 				if (ch == '[' && bGotScheme && !bGotHostName)
-					bInsideSquareBrackets = TRUE;								
-				else if (ch == ']')				
+					bInsideSquareBrackets = TRUE;
+				else if (ch == ']')
 					bInsideSquareBrackets = FALSE;
 
 				*pszCurrentUrl++ = ch;
@@ -2911,8 +2943,10 @@ typedef const CUrl * LPCURL;
 // Interface to be used with CWorkerThread
 __interface IWorkerThreadClient
 {
-	HRESULT Execute(DWORD_PTR dwParam, HANDLE hObject);
-	HRESULT CloseHandle(HANDLE hHandle);
+	HRESULT Execute(
+		_In_ DWORD_PTR dwParam,
+		_In_ HANDLE hObject);
+	HRESULT CloseHandle(_In_ HANDLE hHandle);
 };
 
 //
@@ -3086,7 +3120,7 @@ public:
 			return hr;
 		}
 
-		m_hThread = ThreadTraits::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) _WorkerThreadProc, 
+		m_hThread = ThreadTraits::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) _WorkerThreadProc,
 			this, 0, &m_dwThreadId);
 		if (!m_hThread)
 		{
@@ -3123,7 +3157,10 @@ public:
 		return S_OK;
 	}
 
-	_Check_return_ HRESULT AddHandle(_In_ HANDLE hObject, _In_ IWorkerThreadClient *pClient, DWORD_PTR dwParam) throw()
+	_Check_return_ HRESULT AddHandle(
+		_In_ HANDLE hObject,
+		_In_opt_ IWorkerThreadClient *pClient,
+		_In_ DWORD_PTR dwParam) throw()
 	{
 		if (m_pThread)
 			return m_pThread->AddHandle(hObject, pClient, dwParam);
@@ -3168,7 +3205,11 @@ public:
 	}
 
 #if (_WIN32_WINNT >= 0x0400) || (_WIN32_WINDOWS > 0x0400)
-	_Check_return_ HRESULT AddTimer(_In_ DWORD dwInterval, _In_ IWorkerThreadClient *pClient, DWORD_PTR dwParam, _Out_ HANDLE *phTimer) throw()
+	_Check_return_ HRESULT AddTimer(
+		_In_ DWORD dwInterval,
+		_In_ IWorkerThreadClient *pClient,
+		_In_ DWORD_PTR dwParam,
+		_Out_ HANDLE *phTimer) throw()
 	{
 		if (m_pThread)
 			return m_pThread->AddTimer(dwInterval, pClient, dwParam, phTimer);
@@ -3209,7 +3250,7 @@ public:
 	}
 #endif
 
-	_Check_return_ HRESULT RemoveHandle(HANDLE hObject) throw()
+	_Check_return_ HRESULT RemoveHandle(_In_ HANDLE hObject) throw()
 	{
 		if (m_pThread)
 			return m_pThread->RemoveHandle(hObject);
@@ -3234,7 +3275,7 @@ public:
 			m_hWaitHandles.RemoveAt(nIndex);
 			m_ClientEntries.RemoveAt(nIndex);
 
-			// refresh 
+			// refresh
 			hr = Refresh();
 
 			ATLTRACE( "Refresh result: 0x%08X", hr );
@@ -3292,7 +3333,7 @@ public:
 
 private:
 
-	int CopyHandles(_In_count_(MAXIMUM_WAIT_OBJECTS) HANDLE handles[MAXIMUM_WAIT_OBJECTS]) throw()
+	int CopyHandles(_Out_cap_c_(MAXIMUM_WAIT_OBJECTS) HANDLE handles[MAXIMUM_WAIT_OBJECTS]) throw()
 	{
 		ATLENSURE_RETURN_VAL( MAXIMUM_WAIT_OBJECTS >= m_hWaitHandles.GetSize(), 0 );
 
@@ -3309,7 +3350,8 @@ private:
 		return m_hWaitHandles.GetSize();
 	}
 
-	int CopyClientEntries(_In_count_(MAXIMUM_WAIT_OBJECTS) WorkerClientEntry clientEntries[MAXIMUM_WAIT_OBJECTS]) throw()
+	int CopyClientEntries(
+		_Out_bytecap_x_(MAXIMUM_WAIT_OBJECTS * sizeof(WorkerClientEntry)) WorkerClientEntry clientEntries[MAXIMUM_WAIT_OBJECTS]) throw()
 	{
 		ATLENSURE_RETURN_VAL( MAXIMUM_WAIT_OBJECTS >= m_ClientEntries.GetSize(), 0 );
 
@@ -3396,7 +3438,7 @@ protected:
 #pragma warning(push)
 #pragma warning(disable: 4702) // Unreachable code.
 
-	static DWORD WINAPI _WorkerThreadProc(_In_ CWorkerThread *pThis) throw()
+	static DWORD WINAPI _WorkerThreadProc(_Inout_ CWorkerThread *pThis) throw()
 	{
 		_ATLTRY
 		{
@@ -3440,23 +3482,30 @@ public:
 		return S_OK;
 	}
 
-	HRESULT AddHandle(HANDLE /*hObject*/, IWorkerThreadClient * /*pClient*/, DWORD_PTR /*dwParam*/) throw()
+	HRESULT AddHandle(
+		_In_ HANDLE /*hObject*/,
+		_In_opt_ IWorkerThreadClient * /*pClient*/,
+		_In_ DWORD_PTR /*dwParam*/) throw()
 	{
 		return S_OK;
 	}
 
 
-	HRESULT AddTimer(DWORD /*dwInterval*/, IWorkerThreadClient * /*pClient*/, DWORD_PTR /*dwParam*/, HANDLE * /*phTimer*/) throw()
+	HRESULT AddTimer(
+		_In_ DWORD /*dwInterval*/,
+		_In_opt_ IWorkerThreadClient * /*pClient*/,
+		_In_ DWORD_PTR /*dwParam*/,
+		_In_opt_ HANDLE * /*phTimer*/) throw()
 	{
 		return S_OK;
 	}
 
-	HRESULT RemoveHandle(HANDLE /*hObject*/) throw()
+	HRESULT RemoveHandle(_In_ HANDLE /*hObject*/) throw()
 	{
 		return S_OK;
 	}
 
-	HRESULT Shutdown(DWORD dwWait=ATL_WORKER_THREAD_WAIT) throw()
+	HRESULT Shutdown(_In_ DWORD dwWait=ATL_WORKER_THREAD_WAIT) throw()
 	{
 		(dwWait);
 		return S_OK;
@@ -3468,7 +3517,10 @@ public:
 // On success, pdwDestLen contains the length of the string in characters (not including the null)
 // On failure, pdwDestLen contains the length of the string including the null.
 template <class StringType>
-inline BOOL CopyCString(_In_ const StringType& str, _Out_capcount_(*pdwDestLen) typename StringType::PXSTR szDest, _Inout_ DWORD *pdwDestLen) throw()
+inline BOOL CopyCString(
+	_In_ const StringType& str,
+	_Out_z_capcount_(*pdwDestLen) typename StringType::PXSTR szDest,
+	_Inout_ DWORD *pdwDestLen) throw()
 {
 	if (!pdwDestLen)
 		return FALSE;
@@ -3483,7 +3535,7 @@ inline BOOL CopyCString(_In_ const StringType& str, _Out_capcount_(*pdwDestLen) 
 	StringType::PCXSTR szBuffer = str;
 	if (szBuffer)
 	{
-		Checked::memcpy_s(szDest, *pdwDestLen * sizeof(StringType::XCHAR), 
+		Checked::memcpy_s(szDest, *pdwDestLen * sizeof(StringType::XCHAR),
 			szBuffer, (dwLen+1) * sizeof(StringType::XCHAR));
 		*pdwDestLen = dwLen;
 		return TRUE;
@@ -3494,7 +3546,9 @@ inline BOOL CopyCString(_In_ const StringType& str, _Out_capcount_(*pdwDestLen) 
 
 // Call this function to convert from a SYSTEMTIME
 // structure to an Http-date as defined in rfc2616
-inline void SystemTimeToHttpDate(_In_ const SYSTEMTIME& st, _Inout_ CStringA &strTime)
+inline void SystemTimeToHttpDate(
+	_In_ const SYSTEMTIME& st,
+	_Inout_ CStringA &strTime)
 {
 	double varDtTime;
 	BOOL bValidSystemTime=AtlConvertSystemTimeToVariantTime(st,&varDtTime);
@@ -3504,7 +3558,7 @@ inline void SystemTimeToHttpDate(_In_ const SYSTEMTIME& st, _Inout_ CStringA &st
 	static LPCSTR szDays[] = { "Sun", "Mon", "Tue",
 		"Wed", "Thu", "Fri", "Sat" };
 	static LPCSTR szMonth[] = { "Jan", "Feb", "Mar", "Apr",
-		"May", "Jun", "Jul", "Aug", "Sep", 
+		"May", "Jun", "Jul", "Aug", "Sep",
 		"Oct", "Nov", "Dec" };
 
 	strTime.Format("%s, %02d %s %d %02d:%02d:%02d GMT",
@@ -3518,10 +3572,13 @@ inline void SystemTimeToHttpDate(_In_ const SYSTEMTIME& st, _Inout_ CStringA &st
 // pbOut:    The output buffer that will hold the resulting color.
 //           The buffer must have space for at least 8 characters including space for the null terminator.
 // nBuffer:	 Specifies the number of bytes in pbOut.
-bool inline RGBToHtml(_In_ COLORREF color, _Out_bytecap_(nBuffer) _Post_bytecount_c_(9 * sizeof(TCHAR)) LPTSTR pbOut, _In_ long nBuffer)
+bool inline RGBToHtml(
+	_In_ COLORREF color,
+	_Out_bytecap_(nBuffer) _Post_bytecount_c_(9 * sizeof(TCHAR)) LPTSTR pbOut,
+	_In_ long nBuffer)
 {
 	ATLENSURE (nBuffer >= 9 * sizeof(TCHAR));
-	if (_stprintf_s(pbOut, nBuffer/sizeof(TCHAR), _T("#%0.2x%0.2x%0.2x"), GetRValue(color), 
+	if (_stprintf_s(pbOut, nBuffer/sizeof(TCHAR), _T("#%0.2x%0.2x%0.2x"), GetRValue(color),
 		GetGValue(color), GetBValue(color)) == -1)
 	{
 		return false;
@@ -3530,9 +3587,8 @@ bool inline RGBToHtml(_In_ COLORREF color, _Out_bytecap_(nBuffer) _Post_bytecoun
 }
 
 inline int AsciiStricmp (
-		_In_ const char * dst,
-		_In_ const char * src
-		) 
+		_In_z_ const char* dst,
+		_In_z_ const char* src)
 {
 	ATLENSURE( dst != NULL );
 	ATLENSURE( src != NULL );
@@ -3552,10 +3608,9 @@ inline int AsciiStricmp (
 }
 
 inline int AsciiStrnicmp (
-		_In_ const char * first,
-		_In_ const char * last,
-		_In_ size_t count
-		) 
+		_In_z_ const char* first,
+		_In_z_ const char* last,
+		_In_ size_t count)
 {
 	ATLENSURE( first != NULL );
 	ATLENSURE( last != NULL );
@@ -3577,11 +3632,13 @@ inline int AsciiStrnicmp (
 	return ( f - l );
 }
 
-inline CString AtlGetErrorDescription(_In_ HRESULT hr, _In_ DWORD dwLangId = 0) throw(...)
+inline CString AtlGetErrorDescription(
+	_In_ HRESULT hr,
+	_In_ DWORD dwLangId = 0) throw(...)
 {
 	LPTSTR szMessage = NULL;
 	CString str;
-	
+
 	if (FormatMessage(
 			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 			NULL,
@@ -3611,97 +3668,146 @@ inline CString AtlGetErrorDescription(_In_ HRESULT hr, _In_ DWORD dwLangId = 0) 
 }
 
 template <class NumType, class CharType>
-NumType AtlStrToNumHelper(_In_z_ const CharType *szVal, _Out_opt_ _Deref_post_z_ CharType **pEnd, _In_ int nRadix);
+NumType AtlStrToNumHelper(
+	_In_z_ const CharType *szVal,
+	_Deref_opt_out_z_ CharType **pEnd,
+	_In_ int nRadix);
 
 template <>
-inline __int64 AtlStrToNumHelper<__int64, char>(_In_z_ const char *szVal, _Out_opt_ _Deref_post_z_ char **pEnd, _In_ int nRadix)
+inline __int64 AtlStrToNumHelper<__int64, char>(
+	_In_z_ const char *szVal,
+	_Deref_opt_out_z_ char **pEnd,
+	_In_ int nRadix)
 {
 	return _strtoi64(szVal, pEnd, nRadix);
 }
 
 template <>
-inline unsigned __int64 AtlStrToNumHelper<unsigned __int64, char>(_In_z_ const char *szVal, _Out_opt_ _Deref_post_z_ char **pEnd, _In_ int nRadix)
+inline unsigned __int64 AtlStrToNumHelper<unsigned __int64, char>(
+	_In_z_ const char *szVal,
+	_Deref_opt_out_z_ char **pEnd,
+	_In_ int nRadix)
 {
 	return _strtoui64(szVal, pEnd, nRadix);
 }
 
 template <>
-inline long AtlStrToNumHelper<long, char>(_In_z_ const char *szVal, _Out_opt_ _Deref_post_z_ char **pEnd, _In_ int nRadix)
+inline long AtlStrToNumHelper<long, char>(
+	_In_z_ const char *szVal,
+	_Deref_opt_out_z_ char **pEnd,
+	_In_ int nRadix)
 {
 	return strtol(szVal, pEnd, nRadix);
 }
 
 template <>
-inline unsigned long AtlStrToNumHelper<unsigned long, char>(_In_z_ const char *szVal, _Out_opt_ _Deref_post_z_ char **pEnd, _In_ int nRadix)
+inline unsigned long AtlStrToNumHelper<unsigned long, char>(
+	_In_z_ const char *szVal,
+	_Deref_opt_out_z_ char **pEnd,
+	_In_ int nRadix)
 {
 	return strtoul(szVal, pEnd, nRadix);
 }
 
 template <>
-inline int AtlStrToNumHelper<int, char>(_In_z_ const char *szVal, _Out_opt_ _Deref_post_z_ char **pEnd, _In_ int nRadix)
+inline int AtlStrToNumHelper<int, char>(
+	_In_z_ const char *szVal,
+	_Deref_opt_out_z_ char **pEnd,
+	_In_ int nRadix)
 {
 	return strtol(szVal, pEnd, nRadix);
 }
 
 template <>
-inline unsigned int AtlStrToNumHelper<unsigned int, char>(_In_z_ const char *szVal, _Out_opt_ _Deref_post_z_ char **pEnd, _In_ int nRadix)
+inline unsigned int AtlStrToNumHelper<unsigned int, char>(
+	_In_z_ const char *szVal,
+	_Deref_opt_out_z_ char **pEnd,
+	_In_ int nRadix)
 {
 	return strtoul(szVal, pEnd, nRadix);
 }
 
 template <>
-inline __int64 AtlStrToNumHelper<__int64, wchar_t>(_In_z_ const wchar_t *szVal, _Out_opt_ _Deref_post_z_ wchar_t **pEnd, _In_ int nRadix)
+inline __int64 AtlStrToNumHelper<__int64, wchar_t>(
+	_In_z_ const wchar_t *szVal,
+	_Deref_opt_out_z_ wchar_t **pEnd,
+	_In_ int nRadix)
 {
 	return _wcstoi64(szVal, pEnd, nRadix);
 }
 
 template <>
-inline unsigned __int64 AtlStrToNumHelper<unsigned __int64, wchar_t>(_In_z_ const wchar_t *szVal, _Out_opt_ _Deref_post_z_ wchar_t **pEnd, _In_ int nRadix)
+inline unsigned __int64 AtlStrToNumHelper<unsigned __int64, wchar_t>(
+	_In_z_ const wchar_t *szVal,
+	_Deref_opt_out_z_ wchar_t **pEnd,
+	_In_ int nRadix)
 {
 	return _wcstoui64(szVal, pEnd, nRadix);
 }
 
 template <>
-inline long AtlStrToNumHelper<long, wchar_t>(_In_z_ const wchar_t *szVal, _Out_opt_ _Deref_post_z_ wchar_t **pEnd, _In_ int nRadix)
+inline long AtlStrToNumHelper<long, wchar_t>(
+	_In_z_ const wchar_t *szVal,
+	_Deref_opt_out_z_ wchar_t **pEnd,
+	_In_ int nRadix)
 {
 	return wcstol(szVal, pEnd, nRadix);
 }
 
 template <>
-inline unsigned long AtlStrToNumHelper<unsigned long, wchar_t>(_In_z_ const wchar_t *szVal, _Out_opt_ _Deref_post_z_ wchar_t **pEnd, _In_ int nRadix)
+inline unsigned long AtlStrToNumHelper<unsigned long, wchar_t>(
+	_In_z_ const wchar_t *szVal,
+	_Deref_opt_out_z_ wchar_t **pEnd,
+	_In_ int nRadix)
 {
 	return wcstoul(szVal, pEnd, nRadix);
 }
 
 template <>
-inline int AtlStrToNumHelper<int, wchar_t>(_In_z_ const wchar_t *szVal, _Out_opt_ _Deref_post_z_ wchar_t **pEnd, _In_ int nRadix)
+inline int AtlStrToNumHelper<int, wchar_t>(
+	_In_z_ const wchar_t *szVal,
+	_Deref_opt_out_z_ wchar_t **pEnd,
+	_In_ int nRadix)
 {
 	return wcstol(szVal, pEnd, nRadix);
 }
 
 template <>
-inline unsigned int AtlStrToNumHelper<unsigned int, wchar_t>(_In_z_ const wchar_t *szVal, _Out_opt_ _Deref_post_z_ wchar_t **pEnd, _In_ int nRadix)
+inline unsigned int AtlStrToNumHelper<unsigned int, wchar_t>(
+	_In_z_ const wchar_t *szVal,
+	_Deref_opt_out_z_ wchar_t **pEnd,
+	_In_ int nRadix)
 {
 	return wcstoul(szVal, pEnd, nRadix);
 }
 
 template <class NumType, class CharType>
-NumType AtlStrToNumHelper(_In_z_ const CharType *szVal, _Out_opt_ _Deref_post_z_ CharType **pEnd);
+NumType AtlStrToNumHelper(
+	_In_z_ const CharType *szVal,
+	_Deref_opt_out_z_ CharType **pEnd);
 
 template <>
-inline double AtlStrToNumHelper<double, char>(_In_z_ const char *szVal, _Out_opt_ _Deref_post_z_ char **pEnd)
+inline double AtlStrToNumHelper<double, char>(
+	_In_z_ const char *szVal,
+	_Deref_opt_out_z_ char **pEnd)
 {
 	return strtod(szVal, pEnd);
 }
 
 template <>
-inline double AtlStrToNumHelper<double, wchar_t>(_In_z_ const wchar_t *szVal, _Out_opt_ _Deref_post_z_ wchar_t **pEnd)
+inline double AtlStrToNumHelper<double, wchar_t>(
+	_In_z_ const wchar_t *szVal,
+	_Deref_opt_out_z_ wchar_t **pEnd)
 {
 	return wcstod(szVal, pEnd);
 }
 
 template <class NumType, class CharType>
-inline errno_t AtlStrToNum(_Out_ NumType *retValue, _In_z_ const CharType *szVal, _Out_opt_ _Deref_post_z_ CharType **pEnd, _In_ int nRadix)
+inline errno_t AtlStrToNum(
+	_Out_ NumType *retValue,
+	_In_z_ const CharType *szVal,
+	_Deref_opt_out_z_ CharType **pEnd,
+	_In_ int nRadix)
 {
 	ATLENSURE(retValue != NULL);
 	errno_t saveErrno = Checked::get_errno();
@@ -3715,7 +3821,10 @@ inline errno_t AtlStrToNum(_Out_ NumType *retValue, _In_z_ const CharType *szVal
 }
 
 template <class NumType, class CharType>
-inline errno_t AtlStrToNum(_Out_ NumType *retValue, _In_z_ const CharType *szVal, _Out_opt_ _Deref_post_z_ CharType **pEnd)
+inline errno_t AtlStrToNum(
+	_Out_ NumType *retValue,
+	_In_z_ const CharType *szVal,
+	_Deref_opt_out_z_ CharType **pEnd)
 {
 	ATLENSURE(retValue != NULL);
 	errno_t saveErrno = Checked::get_errno();

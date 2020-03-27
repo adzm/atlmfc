@@ -17,7 +17,6 @@
 	#error atltime.inl requires atltime.h to be included first
 #endif
 
-
 namespace ATL
 {
 /////////////////////////////////////////////////////////////////////////////
@@ -29,12 +28,16 @@ ATLTIME_INLINE CTimeSpan::CTimeSpan() throw() :
 {
 }
 
-ATLTIME_INLINE CTimeSpan::CTimeSpan( __time64_t time ) throw() :
+ATLTIME_INLINE CTimeSpan::CTimeSpan(_In_ __time64_t time) throw() :
 	m_timeSpan( time )
 {
 }
 
-ATLTIME_INLINE CTimeSpan::CTimeSpan(LONG lDays, int nHours, int nMins, int nSecs) throw()
+ATLTIME_INLINE CTimeSpan::CTimeSpan(
+	_In_ LONG lDays,
+	_In_ int nHours,
+	_In_ int nMins,
+	_In_ int nSecs) throw()
 {
  	m_timeSpan = nSecs + 60* (nMins + 60* (nHours + __int64(24) * lDays));
 }
@@ -79,54 +82,54 @@ ATLTIME_INLINE __time64_t CTimeSpan::GetTimeSpan() const throw()
 	return( m_timeSpan );
 }
 
-ATLTIME_INLINE CTimeSpan CTimeSpan::operator+( CTimeSpan span ) const throw()
+ATLTIME_INLINE CTimeSpan CTimeSpan::operator+(_In_ CTimeSpan span) const throw()
 {
 	return( CTimeSpan( m_timeSpan+span.m_timeSpan ) );
 }
 
-ATLTIME_INLINE CTimeSpan CTimeSpan::operator-( CTimeSpan span ) const throw()
+ATLTIME_INLINE CTimeSpan CTimeSpan::operator-(_In_ CTimeSpan span) const throw()
 {
 	return( CTimeSpan( m_timeSpan-span.m_timeSpan ) );
 }
 
-ATLTIME_INLINE CTimeSpan& CTimeSpan::operator+=( CTimeSpan span ) throw()
+ATLTIME_INLINE CTimeSpan& CTimeSpan::operator+=(_In_ CTimeSpan span) throw()
 {
 	m_timeSpan += span.m_timeSpan;
 	return( *this );
 }
 
-ATLTIME_INLINE CTimeSpan& CTimeSpan::operator-=( CTimeSpan span ) throw()
+ATLTIME_INLINE CTimeSpan& CTimeSpan::operator-=(_In_ CTimeSpan span) throw()
 {
 	m_timeSpan -= span.m_timeSpan;
 	return( *this );
 }
 
-ATLTIME_INLINE bool CTimeSpan::operator==( CTimeSpan span ) const throw()
+ATLTIME_INLINE bool CTimeSpan::operator==(_In_ CTimeSpan span) const throw()
 {
 	return( m_timeSpan == span.m_timeSpan );
 }
 
-ATLTIME_INLINE bool CTimeSpan::operator!=( CTimeSpan span ) const throw()
+ATLTIME_INLINE bool CTimeSpan::operator!=(_In_ CTimeSpan span) const throw()
 {
 	return( m_timeSpan != span.m_timeSpan );
 }
 
-ATLTIME_INLINE bool CTimeSpan::operator<( CTimeSpan span ) const throw()
+ATLTIME_INLINE bool CTimeSpan::operator<(_In_ CTimeSpan span) const throw()
 {
 	return( m_timeSpan < span.m_timeSpan );
 }
 
-ATLTIME_INLINE bool CTimeSpan::operator>( CTimeSpan span ) const throw()
+ATLTIME_INLINE bool CTimeSpan::operator>(_In_ CTimeSpan span) const throw()
 {
 	return( m_timeSpan > span.m_timeSpan );
 }
 
-ATLTIME_INLINE bool CTimeSpan::operator<=( CTimeSpan span ) const throw()
+ATLTIME_INLINE bool CTimeSpan::operator<=(_In_ CTimeSpan span) const throw()
 {
 	return( m_timeSpan <= span.m_timeSpan );
 }
 
-ATLTIME_INLINE bool CTimeSpan::operator>=( CTimeSpan span ) const throw()
+ATLTIME_INLINE bool CTimeSpan::operator>=(_In_ CTimeSpan span) const throw()
 {
 	return( m_timeSpan >= span.m_timeSpan );
 }
@@ -140,7 +143,7 @@ ATLTIME_INLINE CTime WINAPI CTime::GetCurrentTime() throw()
 	return( CTime( ::_time64( NULL ) ) );
 }
 
-ATLTIME_INLINE BOOL WINAPI CTime::IsValidFILETIME(const FILETIME& fileTime) throw()
+ATLTIME_INLINE BOOL WINAPI CTime::IsValidFILETIME(_In_ const FILETIME& fileTime) throw()
 {
 	FILETIME localTime;
 	if (!FileTimeToLocalFileTime(&fileTime, &localTime))
@@ -163,13 +166,19 @@ ATLTIME_INLINE CTime::CTime() throw() :
 {
 }
 
-ATLTIME_INLINE CTime::CTime( __time64_t time )  throw():
+ATLTIME_INLINE CTime::CTime(_In_ __time64_t time)  throw():
 	m_time( time )
 {
 }
 
-ATLTIME_INLINE CTime::CTime(int nYear, int nMonth, int nDay, int nHour, int nMin, int nSec,
-	int nDST)
+ATLTIME_INLINE CTime::CTime(
+	_In_ int nYear,
+	_In_ int nMonth,
+	_In_ int nDay,
+	_In_ int nHour,
+	_In_ int nMin,
+	_In_ int nSec,
+	_In_ int nDST)
 {
 #pragma warning (push)
 #pragma warning (disable: 4127)  // conditional expression constant
@@ -201,7 +210,10 @@ ATLTIME_INLINE CTime::CTime(int nYear, int nMonth, int nDay, int nHour, int nMin
 	}
 }
 
-ATLTIME_INLINE CTime::CTime(WORD wDosDate, WORD wDosTime, int nDST)
+ATLTIME_INLINE CTime::CTime(
+	_In_ WORD wDosDate,
+	_In_ WORD wDosTime,
+	_In_ int nDST)
 {
 	struct tm atm;
 	atm.tm_sec = (wDosTime & ~0xFFE0) << 1;
@@ -220,7 +232,9 @@ ATLTIME_INLINE CTime::CTime(WORD wDosDate, WORD wDosTime, int nDST)
 
 }
 
-ATLTIME_INLINE CTime::CTime(const SYSTEMTIME& sysTime, int nDST)
+ATLTIME_INLINE CTime::CTime(
+	_In_ const SYSTEMTIME& sysTime,
+	_In_ int nDST)
 {
 	if (sysTime.wYear < 1900)
 	{
@@ -238,7 +252,9 @@ ATLTIME_INLINE CTime::CTime(const SYSTEMTIME& sysTime, int nDST)
 	}
 }
 
-ATLTIME_INLINE CTime::CTime(const FILETIME& fileTime, int nDST)
+ATLTIME_INLINE CTime::CTime(
+	_In_ const FILETIME& fileTime,
+	_In_ int nDST)
 {
 	// first convert file time (UTC time) to local time
 	FILETIME localTime;
@@ -254,7 +270,7 @@ ATLTIME_INLINE CTime::CTime(const FILETIME& fileTime, int nDST)
 	if (!FileTimeToSystemTime(&localTime, &sysTime))
 	{
 		m_time = 0;
-		AtlThrow(E_INVALIDARG);		
+		AtlThrow(E_INVALIDARG);
 		return;
 	}
 
@@ -263,73 +279,73 @@ ATLTIME_INLINE CTime::CTime(const FILETIME& fileTime, int nDST)
 	*this = timeT;
 }
 
-ATLTIME_INLINE CTime& CTime::operator=( __time64_t time ) throw()
+ATLTIME_INLINE CTime& CTime::operator=(_In_ __time64_t time) throw()
 {
 	m_time = time;
 
 	return( *this );
 }
 
-ATLTIME_INLINE CTime& CTime::operator+=( CTimeSpan span ) throw()
+ATLTIME_INLINE CTime& CTime::operator+=(_In_ CTimeSpan span) throw()
 {
 	m_time += span.GetTimeSpan();
 
 	return( *this );
 }
 
-ATLTIME_INLINE CTime& CTime::operator-=( CTimeSpan span ) throw()
+ATLTIME_INLINE CTime& CTime::operator-=(_In_ CTimeSpan span) throw()
 {
 	m_time -= span.GetTimeSpan();
 
 	return( *this );
 }
 
-ATLTIME_INLINE CTimeSpan CTime::operator-( CTime time ) const throw()
+ATLTIME_INLINE CTimeSpan CTime::operator-(_In_ CTime time) const throw()
 {
 	return( CTimeSpan( m_time-time.m_time ) );
 }
 
-ATLTIME_INLINE CTime CTime::operator-( CTimeSpan span ) const throw()
+ATLTIME_INLINE CTime CTime::operator-(_In_ CTimeSpan span) const throw()
 {
 	return( CTime( m_time-span.GetTimeSpan() ) );
 }
 
-ATLTIME_INLINE CTime CTime::operator+( CTimeSpan span ) const throw()
+ATLTIME_INLINE CTime CTime::operator+(_In_ CTimeSpan span) const throw()
 {
 	return( CTime( m_time+span.GetTimeSpan() ) );
 }
 
-ATLTIME_INLINE bool CTime::operator==( CTime time ) const throw()
+ATLTIME_INLINE bool CTime::operator==(_In_ CTime time) const throw()
 {
 	return( m_time == time.m_time );
 }
 
-ATLTIME_INLINE bool CTime::operator!=( CTime time ) const throw()
+ATLTIME_INLINE bool CTime::operator!=(_In_ CTime time) const throw()
 {
 	return( m_time != time.m_time );
 }
 
-ATLTIME_INLINE bool CTime::operator<( CTime time ) const throw()
+ATLTIME_INLINE bool CTime::operator<(_In_ CTime time) const throw()
 {
 	return( m_time < time.m_time );
 }
 
-ATLTIME_INLINE bool CTime::operator>( CTime time ) const throw()
+ATLTIME_INLINE bool CTime::operator>(_In_ CTime time) const throw()
 {
 	return( m_time > time.m_time );
 }
 
-ATLTIME_INLINE bool CTime::operator<=( CTime time ) const throw()
+ATLTIME_INLINE bool CTime::operator<=(_In_ CTime time) const throw()
 {
 	return( m_time <= time.m_time );
 }
 
-ATLTIME_INLINE bool CTime::operator>=( CTime time ) const throw()
+ATLTIME_INLINE bool CTime::operator>=(_In_ CTime time) const throw()
 {
 	return( m_time >= time.m_time );
 }
 
-ATLTIME_INLINE struct tm* CTime::GetGmtTm(struct tm* ptm) const
+ATLTIME_INLINE struct tm* CTime::GetGmtTm(_Out_ struct tm* ptm) const
 {
 	// Ensure ptm is valid
 	ATLENSURE( ptm != NULL );
@@ -349,7 +365,7 @@ ATLTIME_INLINE struct tm* CTime::GetGmtTm(struct tm* ptm) const
 	return NULL;
 }
 
-ATLTIME_INLINE struct tm* CTime::GetLocalTm(struct tm* ptm) const
+ATLTIME_INLINE struct tm* CTime::GetLocalTm(_Out_ struct tm* ptm) const
 {
 	// Ensure ptm is valid
 	ATLENSURE( ptm != NULL );
@@ -371,14 +387,16 @@ ATLTIME_INLINE struct tm* CTime::GetLocalTm(struct tm* ptm) const
 	return NULL;
 }
 
-ATLTIME_INLINE bool CTime::GetAsSystemTime(SYSTEMTIME& timeDest) const throw()
+ATLTIME_INLINE bool CTime::GetAsSystemTime(_Out_ SYSTEMTIME& timeDest) const throw()
 {
 	struct tm ttm;
 	struct tm* ptm;
 
 	ptm = GetLocalTm(&ttm);
-
-	if(!ptm) { return false; }
+	if(!ptm) 
+	{ 
+		return false; 
+	}
 
 	timeDest.wYear = (WORD) (1900 + ptm->tm_year);
 	timeDest.wMonth = (WORD) (1 + ptm->tm_mon);
@@ -398,16 +416,16 @@ ATLTIME_INLINE __time64_t CTime::GetTime() const throw()
 }
 
 ATLTIME_INLINE int CTime::GetYear() const
-{ 
+{
 	struct tm ttm;
 	struct tm * ptm;
 
 	ptm = GetLocalTm(&ttm);
-	return ptm ? (ptm->tm_year) + 1900 : 0 ; 
+	return ptm ? (ptm->tm_year) + 1900 : 0 ;
 }
 
 ATLTIME_INLINE int CTime::GetMonth() const
-{ 
+{
 	struct tm ttm;
 	struct tm * ptm;
 
@@ -421,7 +439,7 @@ ATLTIME_INLINE int CTime::GetDay() const
 	struct tm * ptm;
 
 	ptm = GetLocalTm(&ttm);
-	return ptm ? ptm->tm_mday : 0 ; 
+	return ptm ? ptm->tm_mday : 0 ;
 }
 
 ATLTIME_INLINE int CTime::GetHour() const
@@ -430,7 +448,7 @@ ATLTIME_INLINE int CTime::GetHour() const
 	struct tm * ptm;
 
 	ptm = GetLocalTm(&ttm);
-	return ptm ? ptm->tm_hour : -1 ; 
+	return ptm ? ptm->tm_hour : -1 ;
 }
 
 ATLTIME_INLINE int CTime::GetMinute() const
@@ -439,11 +457,11 @@ ATLTIME_INLINE int CTime::GetMinute() const
 	struct tm * ptm;
 
 	ptm = GetLocalTm(&ttm);
-	return ptm ? ptm->tm_min : -1 ; 
+	return ptm ? ptm->tm_min : -1 ;
 }
 
 ATLTIME_INLINE int CTime::GetSecond() const
-{ 
+{
 	struct tm ttm;
 	struct tm * ptm;
 
@@ -452,7 +470,7 @@ ATLTIME_INLINE int CTime::GetSecond() const
 }
 
 ATLTIME_INLINE int CTime::GetDayOfWeek() const
-{ 
+{
 	struct tm ttm;
 	struct tm * ptm;
 
@@ -469,73 +487,73 @@ ATLTIME_INLINE CFileTimeSpan::CFileTimeSpan() throw() :
 {
 }
 
-ATLTIME_INLINE CFileTimeSpan::CFileTimeSpan( const CFileTimeSpan& span ) throw() :
+ATLTIME_INLINE CFileTimeSpan::CFileTimeSpan(_In_ const CFileTimeSpan& span) throw() :
 	m_nSpan( span.m_nSpan )
 {
 }
 
-ATLTIME_INLINE CFileTimeSpan::CFileTimeSpan( LONGLONG nSpan ) throw() :
+ATLTIME_INLINE CFileTimeSpan::CFileTimeSpan(_In_ LONGLONG nSpan) throw() :
 	m_nSpan( nSpan )
 {
 }
 
-ATLTIME_INLINE CFileTimeSpan& CFileTimeSpan::operator=( const CFileTimeSpan& span ) throw()
+ATLTIME_INLINE CFileTimeSpan& CFileTimeSpan::operator=(_In_ const CFileTimeSpan& span) throw()
 {
 	m_nSpan = span.m_nSpan;
 
 	return( *this );
 }
 
-ATLTIME_INLINE CFileTimeSpan& CFileTimeSpan::operator+=( CFileTimeSpan span ) throw()
+ATLTIME_INLINE CFileTimeSpan& CFileTimeSpan::operator+=(_In_ CFileTimeSpan span) throw()
 {
 	m_nSpan += span.m_nSpan;
 
 	return( *this );
 }
 
-ATLTIME_INLINE CFileTimeSpan& CFileTimeSpan::operator-=( CFileTimeSpan span ) throw()
+ATLTIME_INLINE CFileTimeSpan& CFileTimeSpan::operator-=(_In_ CFileTimeSpan span) throw()
 {
 	m_nSpan -= span.m_nSpan;
 
 	return( *this );
 }
 
-ATLTIME_INLINE CFileTimeSpan CFileTimeSpan::operator+( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE CFileTimeSpan CFileTimeSpan::operator+(_In_ CFileTimeSpan span) const throw()
 {
 	return( CFileTimeSpan( m_nSpan+span.m_nSpan ) );
 }
 
-ATLTIME_INLINE CFileTimeSpan CFileTimeSpan::operator-( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE CFileTimeSpan CFileTimeSpan::operator-(_In_ CFileTimeSpan span) const throw()
 {
 	return( CFileTimeSpan( m_nSpan-span.m_nSpan ) );
 }
 
-ATLTIME_INLINE bool CFileTimeSpan::operator==( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE bool CFileTimeSpan::operator==(_In_ CFileTimeSpan span) const throw()
 {
 	return( m_nSpan == span.m_nSpan );
 }
 
-ATLTIME_INLINE bool CFileTimeSpan::operator!=( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE bool CFileTimeSpan::operator!=(_In_ CFileTimeSpan span) const throw()
 {
 	return( m_nSpan != span.m_nSpan );
 }
 
-ATLTIME_INLINE bool CFileTimeSpan::operator<( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE bool CFileTimeSpan::operator<(_In_ CFileTimeSpan span) const throw()
 {
 	return( m_nSpan < span.m_nSpan );
 }
 
-ATLTIME_INLINE bool CFileTimeSpan::operator>( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE bool CFileTimeSpan::operator>(_In_ CFileTimeSpan span) const throw()
 {
 	return( m_nSpan > span.m_nSpan );
 }
 
-ATLTIME_INLINE bool CFileTimeSpan::operator<=( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE bool CFileTimeSpan::operator<=(_In_ CFileTimeSpan span) const throw()
 {
 	return( m_nSpan <= span.m_nSpan );
 }
 
-ATLTIME_INLINE bool CFileTimeSpan::operator>=( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE bool CFileTimeSpan::operator>=(_In_ CFileTimeSpan span) const throw()
 {
 	return( m_nSpan >= span.m_nSpan );
 }
@@ -545,7 +563,7 @@ ATLTIME_INLINE LONGLONG CFileTimeSpan::GetTimeSpan() const throw()
 	return( m_nSpan );
 }
 
-ATLTIME_INLINE void CFileTimeSpan::SetTimeSpan( LONGLONG nSpan ) throw()
+ATLTIME_INLINE void CFileTimeSpan::SetTimeSpan(_In_ LONGLONG nSpan) throw()
 {
 	m_nSpan = nSpan;
 }
@@ -561,19 +579,19 @@ ATLTIME_INLINE CFileTime::CFileTime() throw()
 	dwHighDateTime = 0;
 }
 
-ATLTIME_INLINE CFileTime::CFileTime( const FILETIME& ft ) throw()
+ATLTIME_INLINE CFileTime::CFileTime(_In_ const FILETIME& ft) throw()
 {
 	dwLowDateTime = ft.dwLowDateTime;
 	dwHighDateTime = ft.dwHighDateTime;
 }
 
-ATLTIME_INLINE CFileTime::CFileTime( ULONGLONG nTime ) throw()
+ATLTIME_INLINE CFileTime::CFileTime(_In_ ULONGLONG nTime) throw()
 {
 	dwLowDateTime = DWORD( nTime );
 	dwHighDateTime = DWORD( nTime>>32 );
 }
 
-ATLTIME_INLINE CFileTime& CFileTime::operator=( const FILETIME& ft ) throw()
+ATLTIME_INLINE CFileTime& CFileTime::operator=(_In_ const FILETIME& ft) throw()
 {
 	dwLowDateTime = ft.dwLowDateTime;
 	dwHighDateTime = ft.dwHighDateTime;
@@ -588,61 +606,61 @@ ATLTIME_INLINE CFileTime WINAPI CFileTime::GetCurrentTime() throw()
 	return ft;
 }
 
-ATLTIME_INLINE CFileTime& CFileTime::operator+=( CFileTimeSpan span ) throw()
+ATLTIME_INLINE CFileTime& CFileTime::operator+=(_In_ CFileTimeSpan span) throw()
 {
 	SetTime( GetTime()+span.GetTimeSpan() );
 
 	return( *this );
 }
 
-ATLTIME_INLINE CFileTime& CFileTime::operator-=( CFileTimeSpan span ) throw()
+ATLTIME_INLINE CFileTime& CFileTime::operator-=(_In_ CFileTimeSpan span) throw()
 {
 	SetTime( GetTime()-span.GetTimeSpan() );
 
 	return( *this );
 }
 
-ATLTIME_INLINE CFileTime CFileTime::operator+( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE CFileTime CFileTime::operator+(_In_ CFileTimeSpan span) const throw()
 {
 	return( CFileTime( GetTime()+span.GetTimeSpan() ) );
 }
 
-ATLTIME_INLINE CFileTime CFileTime::operator-( CFileTimeSpan span ) const throw()
+ATLTIME_INLINE CFileTime CFileTime::operator-(_In_ CFileTimeSpan span) const throw()
 {
 	return( CFileTime( GetTime()-span.GetTimeSpan() ) );
 }
 
-ATLTIME_INLINE CFileTimeSpan CFileTime::operator-( CFileTime ft ) const throw()
+ATLTIME_INLINE CFileTimeSpan CFileTime::operator-(_In_ CFileTime ft) const throw()
 {
 	return( CFileTimeSpan( GetTime()-ft.GetTime() ) );
 }
 
-ATLTIME_INLINE bool CFileTime::operator==( CFileTime ft ) const throw()
+ATLTIME_INLINE bool CFileTime::operator==(_In_ CFileTime ft) const throw()
 {
 	return( GetTime() == ft.GetTime() );
 }
 
-ATLTIME_INLINE bool CFileTime::operator!=( CFileTime ft ) const throw()
+ATLTIME_INLINE bool CFileTime::operator!=(_In_ CFileTime ft) const throw()
 {
 	return( GetTime() != ft.GetTime() );
 }
 
-ATLTIME_INLINE bool CFileTime::operator<( CFileTime ft ) const throw()
+ATLTIME_INLINE bool CFileTime::operator<(_In_ CFileTime ft) const throw()
 {
 	return( GetTime() < ft.GetTime() );
 }
 
-ATLTIME_INLINE bool CFileTime::operator>( CFileTime ft ) const throw()
+ATLTIME_INLINE bool CFileTime::operator>(_In_ CFileTime ft) const throw()
 {
 	return( GetTime() > ft.GetTime() );
 }
 
-ATLTIME_INLINE bool CFileTime::operator<=( CFileTime ft ) const throw()
+ATLTIME_INLINE bool CFileTime::operator<=(_In_ CFileTime ft) const throw()
 {
 	return( GetTime() <= ft.GetTime() );
 }
 
-ATLTIME_INLINE bool CFileTime::operator>=( CFileTime ft ) const throw()
+ATLTIME_INLINE bool CFileTime::operator>=(_In_ CFileTime ft) const throw()
 {
 	return( GetTime() >= ft.GetTime() );
 }
@@ -652,7 +670,7 @@ ATLTIME_INLINE ULONGLONG CFileTime::GetTime() const throw()
 	return( (ULONGLONG( dwHighDateTime )<<32)|dwLowDateTime );
 }
 
-ATLTIME_INLINE void CFileTime::SetTime( ULONGLONG nTime ) throw()
+ATLTIME_INLINE void CFileTime::SetTime(_In_ ULONGLONG nTime) throw()
 {
 	dwLowDateTime = DWORD( nTime );
 	dwHighDateTime = DWORD( nTime>>32 );

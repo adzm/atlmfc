@@ -22,13 +22,17 @@ namespace ATL
 {
 
 template< typename N >
-inline N WINAPI AtlAlignUp( N n, ULONG nAlign ) throw()
+inline N WINAPI AtlAlignUp(
+	_In_ N n,
+	_In_ ULONG nAlign) throw()
 {
 	return( N( (n+(nAlign-1))&~(N( nAlign )-1) ) );
 }
 
 template< typename N >
-inline N WINAPI AtlAlignDown( N n, ULONG nAlign ) throw()
+inline N WINAPI AtlAlignDown(
+	_In_ N n,
+	_In_ ULONG nAlign) throw()
 {
 	return( N( n&~(N( nAlign )-1) ) );
 }
@@ -36,29 +40,33 @@ inline N WINAPI AtlAlignDown( N n, ULONG nAlign ) throw()
 __interface __declspec(uuid("654F7EF5-CFDF-4df9-A450-6C6A13C622C0")) IAtlMemMgr
 {
 public:
-	void* Allocate( size_t nBytes ) throw();
-	void Free( void* p ) throw();
-	void* Reallocate( void* p, size_t nBytes ) throw();
-	size_t GetSize( void* p ) throw();
+	void* Allocate(_In_ size_t nBytes) throw();
+	void Free(_Inout_opt_ void* p) throw();
+	void* Reallocate(
+		_Inout_opt_bytecap_(nBytes) void* p,
+		_In_ size_t nBytes) throw();
+	size_t GetSize(_In_ void* p) throw();
 };
 
 class CCRTHeap :
 	public IAtlMemMgr
 {
 public:
-	virtual void* Allocate( size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( malloc( nBytes ) );
 	}
-	virtual void Free( void* p ) throw()
+	virtual void Free(_In_opt_ void* p) throw()
 	{
 		free( p );
 	}
-	virtual void* Reallocate( void* p, size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+		_In_opt_ void* p,
+		_In_ size_t nBytes) throw()
 	{
 		return( realloc( p, nBytes ) );
 	}
-	virtual size_t GetSize( void* p ) throw()
+	virtual size_t GetSize(_In_ void* p) throw()
 	{
 		return( _msize( p ) );
 	}
@@ -75,13 +83,16 @@ public:
 		m_bOwnHeap( false )
 	{
 	}
-	CWin32Heap( HANDLE hHeap ) throw() :
+	CWin32Heap(_In_ HANDLE hHeap) throw() :
 		m_hHeap( hHeap ),
 		m_bOwnHeap( false )
 	{
 		ATLASSERT( hHeap != NULL );
 	}
-	CWin32Heap( DWORD dwFlags, size_t nInitialSize, size_t nMaxSize = 0 ) :
+	CWin32Heap(
+			_In_ DWORD dwFlags,
+			_In_ size_t nInitialSize,
+			_In_ size_t nMaxSize = 0 ) :
 		m_hHeap( NULL ),
 		m_bOwnHeap( true )
 	{
@@ -103,7 +114,9 @@ public:
 		}
 	}
 
-	void Attach( HANDLE hHeap, bool bTakeOwnership ) throw()
+	void Attach(
+		_In_ HANDLE hHeap,
+		_In_ bool bTakeOwnership) throw()
 	{
 		ATLASSERT( hHeap != NULL );
 		ATLASSUME( m_hHeap == NULL );
@@ -123,11 +136,11 @@ public:
 	}
 
 // IAtlMemMgr
-	virtual void* Allocate( size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::HeapAlloc( m_hHeap, 0, nBytes ) );
 	}
-	virtual void Free( void* p ) throw()
+	virtual void Free(_In_opt_ void* p) throw()
 	{
 		if( p != NULL )
 		{
@@ -137,27 +150,24 @@ public:
 			ATLASSERT( bSuccess );
 		}
 	}
-	virtual void* Reallocate( void* p, size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+		_In_opt_ void* p,
+		_In_ size_t nBytes) throw()
 	{
 		if( p == NULL )
 		{
 			return( Allocate( nBytes ) );
 		}
-		
+
 		if (nBytes==0)
 		{
 			  Free(p);
 			  return NULL;
-         
-	 
-		
-		}	  
-	 return( ::HeapReAlloc( m_hHeap, 0, p, nBytes ) );
-		 
-	
-		
+		}
+
+		return( ::HeapReAlloc( m_hHeap, 0, p, nBytes ) );
 	}
-	virtual size_t GetSize( void* p ) throw()
+	virtual size_t GetSize(_Inout_ void* p) throw()
 	{
 		return( ::HeapSize( m_hHeap, 0, p ) );
 	}
@@ -172,21 +182,21 @@ class CLocalHeap :
 {
 // IAtlMemMgr
 public:
-	virtual void* Allocate( size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::LocalAlloc( LMEM_FIXED, nBytes ) );
 	}
-	virtual void Free( void* p ) throw()
+	virtual void Free(_In_opt_ void* p) throw()
 	{
 		::LocalFree( p );
 	}
-	virtual void* Reallocate( void* p, size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+		_In_opt_ void* p,
+		_In_ size_t nBytes) throw()
 	{
-
 		if (p==NULL)
 		{
 			return ( Allocate(nBytes) );
-		
 		}
 		if (nBytes==0)
 		{
@@ -194,9 +204,9 @@ public:
 			return NULL;
 		}
 
-		return( ::LocalReAlloc( p, nBytes, 0 ) );
+		return SAL_Assume_bytecap_for_opt_(::LocalReAlloc(p, nBytes, 0), nBytes);
 	}
-	virtual size_t GetSize( void* p ) throw()
+	virtual size_t GetSize(_In_ void* p) throw()
 	{
 		return( ::LocalSize( p ) );
 	}
@@ -207,29 +217,29 @@ class CGlobalHeap :
 {
 // IAtlMemMgr
 public:
-	virtual void* Allocate( size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::GlobalAlloc( LMEM_FIXED, nBytes ) );
 	}
-	virtual void Free( void* p ) throw()
+	virtual void Free(_In_opt_ void* p) throw()
 	{
 		::GlobalFree( p );
 	}
-	virtual void* Reallocate( void* p, size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+		_In_opt_ void* p,
+		_In_ size_t nBytes) throw()
 	{
-
 		if (p==NULL)
 		{
 			return ( Allocate(nBytes) );
-		
 		}
 		if (nBytes==0){
 			Free(p);
 			return NULL;
 		}
-		return( ::GlobalReAlloc( p, nBytes, 0 ) );
+		return SAL_Assume_bytecap_for_opt_(::GlobalReAlloc( p, nBytes, 0 ), nBytes);
 	}
-	virtual size_t GetSize( void* p ) throw()
+	virtual size_t GetSize(_In_ void* p) throw()
 	{
 		return( ::GlobalSize( p ) );
 	}
@@ -243,5 +253,3 @@ public:
 #endif	// _OBJBASE_H_
 
 #endif  //__ATLMEM_H__
-
-

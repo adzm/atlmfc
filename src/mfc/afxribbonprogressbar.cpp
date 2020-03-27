@@ -63,7 +63,7 @@ void CMFCRibbonProgressBar::OnDraw(CDC* pDC)
 	rectProgress.DeflateRect(5, 5);
 
 	CRect rectChunk = rectProgress;
-	rectChunk.right = rectChunk.left + m_nPos * rectChunk.Width() /(m_nMax - m_nMin);
+	rectChunk.right = rectChunk.left + (m_nPos - m_nMin) * rectChunk.Width() /(m_nMax - m_nMin);
 	rectChunk.DeflateRect(1, 1);
 
 	CMFCVisualManager::GetInstance()->OnDrawRibbonProgressBar(pDC, this, rectProgress, rectChunk, m_bInfiniteMode);

@@ -54,7 +54,12 @@ BOOL CPaneDialog::Create(LPCTSTR lpszWindowName, CWnd* pParentWnd, BOOL bHasGrip
 
 	m_lpszBarTemplateName = NULL;
 	SetOwner(AFXGetTopLevelFrame(this));
-	//m_ahSlideMode = AFX_AHSM_STRETCH;
+
+	if (m_sizeDialog != CSize(0, 0))
+	{
+		SetWindowPos(NULL, -1, -1, m_sizeDialog.cx, m_sizeDialog.cy, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+	}
+
 	return TRUE;
 }
 

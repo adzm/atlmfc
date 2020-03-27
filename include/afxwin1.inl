@@ -38,33 +38,6 @@ _AFXWIN_INLINE BOOL AFXAPI AfxGetAmbientActCtx()
 _AFXWIN_INLINE void AFXAPI AfxSetAmbientActCtx(BOOL bSet)
 	{  afxAmbientActCtx = bSet; }
 
-
-
-#ifdef _AFXDLL
-// AFX_MAINTAIN_STATE functions
-_AFXWIN_INLINE AFX_MAINTAIN_STATE::AFX_MAINTAIN_STATE(AFX_MODULE_STATE* pNewState)
-	{  m_pPrevModuleState = AfxSetModuleState(pNewState); }
-#endif
-
-// AFX_MAINTAIN_STATE2 functions
-_AFXWIN_INLINE AFX_MAINTAIN_STATE2::~AFX_MAINTAIN_STATE2()
-{
-#ifdef _AFXDLL
-	// Not a good place to report errors here, so just be safe
-	if(m_pThreadState)
-	{
-		m_pThreadState->m_pModuleState = m_pPrevModuleState;
-	}
-#endif
-
-	if (m_bValidActCtxCookie)
-	{
-		BOOL bRet;
-		bRet = AfxDeactivateActCtx(0, m_ulActCtxCookie);
-		ASSERT(bRet == TRUE);
-	}
-}
-
 // CArchive output helpers
 _AFXWIN_INLINE CArchive& AFXAPI operator<<(CArchive& ar, SIZE size)
 	{ ar.Write(&size, sizeof(SIZE)); return ar; }
@@ -243,10 +216,10 @@ _AFXWIN_INLINE CSize CBitmap::GetBitmapDimension() const
 	}
 
 _AFXWIN_INLINE BOOL CBitmap::LoadBitmap(UINT nIDResource)
-	{ return Attach(::LoadBitmap(AfxFindResourceHandle(
-		MAKEINTRESOURCE(nIDResource), RT_BITMAP), MAKEINTRESOURCE(nIDResource))); }
+	{ return Attach(::LoadBitmapW(AfxFindResourceHandle(
+		MAKEINTRESOURCE(nIDResource), RT_BITMAP), MAKEINTRESOURCEW(nIDResource))); }
 _AFXWIN_INLINE BOOL CBitmap::LoadOEMBitmap(UINT nIDBitmap)
-	{ return Attach(::LoadBitmap(NULL, MAKEINTRESOURCE(nIDBitmap))); }
+	{ return Attach(::LoadBitmapW(NULL, MAKEINTRESOURCEW(nIDBitmap))); }
 _AFXWIN_INLINE BOOL CBitmap::CreateCompatibleBitmap(CDC* pDC, int nWidth, int nHeight)
 	{ return Attach(::CreateCompatibleBitmap(pDC->m_hDC, nWidth, nHeight)); }
 _AFXWIN_INLINE BOOL CBitmap::CreateDiscardableBitmap(CDC* pDC, int nWidth, int nHeight)
@@ -967,7 +940,7 @@ _AFXWIN_INLINE BOOL CMenu::SetDefaultItem(UINT uItem, BOOL fByPos)
 	{ ASSERT(::IsMenu(m_hMenu)); return ::SetMenuDefaultItem(m_hMenu, uItem, fByPos); }
 _AFXWIN_INLINE UINT CMenu::GetDefaultItem(UINT gmdiFlags, BOOL fByPos)
 	{ ASSERT(::IsMenu(m_hMenu)); return ::GetMenuDefaultItem(m_hMenu, fByPos, gmdiFlags); }
-_AFXWIN_INLINE UINT CMenu::GetMenuItemCount() const
+_AFXWIN_INLINE int CMenu::GetMenuItemCount() const
 	{ ASSERT(::IsMenu(m_hMenu)); return ::GetMenuItemCount(m_hMenu); }
 _AFXWIN_INLINE UINT CMenu::GetMenuItemID(int nPos) const
 	{ ASSERT(::IsMenu(m_hMenu)); return ::GetMenuItemID(m_hMenu, nPos); }
@@ -1008,8 +981,8 @@ _AFXWIN_INLINE BOOL CMenu::LoadMenu(LPCTSTR lpszResourceName)
 	{ return Attach(::LoadMenu(AfxFindResourceHandle(lpszResourceName,
 		RT_MENU), lpszResourceName)); }
 _AFXWIN_INLINE BOOL CMenu::LoadMenu(UINT nIDResource)
-	{ return Attach(::LoadMenu(AfxFindResourceHandle(
-		MAKEINTRESOURCE(nIDResource), RT_MENU), MAKEINTRESOURCE(nIDResource))); }
+	{ return Attach(::LoadMenuW(AfxFindResourceHandle(
+		MAKEINTRESOURCE(nIDResource), RT_MENU), MAKEINTRESOURCEW(nIDResource))); }
 _AFXWIN_INLINE BOOL CMenu::LoadMenuIndirect(const void* lpMenuTemplate)
 	{ return Attach(::LoadMenuIndirect(lpMenuTemplate)); }
 // Win4

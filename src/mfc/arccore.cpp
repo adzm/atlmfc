@@ -561,25 +561,25 @@ void CArchive::Flush()
 	}
 }
 
-void CArchive::FillBuffer(UINT nBytesNeeded)
+void CArchive::FillBuffer(UINT nAdditionalBytesNeeded)
 {
 	ASSERT_VALID(m_pFile);
-	ASSERT(IsLoading());
 
-	if(!IsLoading())
+	ASSERT(IsLoading());
+	if (!IsLoading())
+	{
 		AfxThrowArchiveException(CArchiveException::writeOnly,m_strFileName);
+	}
 
 	ASSERT(m_bDirectBuffer || m_lpBufStart != NULL);
 	ASSERT(m_bDirectBuffer || m_lpBufCur != NULL);
-	ASSERT(nBytesNeeded > 0);
-	ASSERT(nBytesNeeded <= (UINT)m_nBufSize);
-	ASSERT(m_lpBufStart == NULL ||
-		AfxIsValidAddress(m_lpBufStart, UINT(m_lpBufMax - m_lpBufStart), FALSE));
-	ASSERT(m_lpBufCur == NULL ||
-		AfxIsValidAddress(m_lpBufCur, UINT(m_lpBufMax - m_lpBufCur), FALSE));
+	ASSERT(nAdditionalBytesNeeded > 0);
 
-	UINT nUnused = UINT(m_lpBufMax - m_lpBufCur);
-	ULONG nTotalNeeded = ((ULONG)nBytesNeeded) + nUnused;
+	ASSERT(m_lpBufStart == NULL || AfxIsValidAddress(m_lpBufStart, UINT(m_lpBufMax - m_lpBufStart), FALSE));
+	ASSERT(m_lpBufCur == NULL || AfxIsValidAddress(m_lpBufCur, UINT(m_lpBufMax - m_lpBufCur), FALSE));
+
+	UINT nPreviouslyFilled = UINT(m_lpBufMax - m_lpBufCur);
+	ULONG nTotalSizeWanted = ((ULONG)nAdditionalBytesNeeded) + nPreviouslyFilled;
 
 	// fill up the current buffer from file
 	if (!m_bDirectBuffer)
@@ -590,54 +590,67 @@ void CArchive::FillBuffer(UINT nBytesNeeded)
 
 		if (m_lpBufCur > m_lpBufStart)
 		{
-			// copy unused
-			if ((int)nUnused > 0)
+			// copy previously filled bytes to the start of the buffer
+			if ((int)nPreviouslyFilled > 0)
 			{
-				Checked::memmove_s(m_lpBufStart, (size_t)(m_lpBufMax - m_lpBufStart), 
-					m_lpBufCur, nUnused);
+				Checked::memmove_s(m_lpBufStart, (size_t)(m_lpBufMax - m_lpBufStart), m_lpBufCur, nPreviouslyFilled);
 				m_lpBufCur = m_lpBufStart;
-				m_lpBufMax = m_lpBufStart + nUnused;
+				m_lpBufMax = m_lpBufStart + nPreviouslyFilled;
 			}
 
-			// read to satisfy nBytesNeeded or nLeft if possible
-			UINT nRead = nUnused;
-			UINT nLeft;
-			UINT nBytes;
+			// read to satisfy nAdditionalBytesNeeded if possible, else fill the buffer and throw bufferFull exception
+			UINT nTotalInBuffer = nPreviouslyFilled;
+			UINT nLeftToRead;
+			UINT nBytesRead = 0;
 
-			// Only read what we have to, to avoid blocking waiting on data 
-			// we don't need
-			if (m_bBlocking)  
-				nLeft = nBytesNeeded-nUnused;
+			// Only read what we have to, to avoid blocking waiting on data we don't immediately need
+			if (m_bBlocking)
+			{
+				nLeftToRead = min(nAdditionalBytesNeeded, (UINT)m_nBufSize - nPreviouslyFilled);
+			}
 			else
-				nLeft = m_nBufSize-nUnused;
-			BYTE* lpTemp = m_lpBufStart + nUnused;
+			{
+				nLeftToRead = (UINT)m_nBufSize - nPreviouslyFilled;
+			}
+
+			BYTE* lpTemp = m_lpBufStart + nPreviouslyFilled;
 			do
 			{
-				nBytes = m_pFile->Read(lpTemp, nLeft);
-				lpTemp = lpTemp + nBytes;
-				nRead += nBytes;
-				nLeft -= nBytes;
+				nBytesRead = m_pFile->Read(lpTemp, nLeftToRead);
+				lpTemp = lpTemp + nBytesRead;
+				nTotalInBuffer += nBytesRead;
+				nLeftToRead -= nBytesRead;
 			}
-			while (nBytes > 0 && nLeft > 0 && nRead < nTotalNeeded);
+			while (nBytesRead > 0 && nLeftToRead > 0 && nTotalInBuffer < nTotalSizeWanted);
 
 			m_lpBufCur = m_lpBufStart;
-			m_lpBufMax = m_lpBufStart + nRead;
+			m_lpBufMax = m_lpBufStart + nTotalInBuffer;
 		}
 	}
 	else
 	{
-		// seek to unused portion and get the buffer starting there
-		if (nUnused != 0)
-			m_pFile->Seek(-(LONG)nUnused, CFile::current);
-		UINT nActual = m_pFile->GetBufferPtr(CFile::bufferRead, m_nBufSize,
-			(void**)&m_lpBufStart, (void**)&m_lpBufMax);
+		// seek to end of previously filled portion and get the buffer starting there
+		if (nPreviouslyFilled != 0)
+		{
+			m_pFile->Seek(-(LONG)nPreviouslyFilled, CFile::current);
+		}
+
+		UINT nActual = m_pFile->GetBufferPtr(CFile::bufferRead, m_nBufSize, (void**)&m_lpBufStart, (void**)&m_lpBufMax);
 		ASSERT(nActual == (UINT)(m_lpBufMax - m_lpBufStart));
 		m_lpBufCur = m_lpBufStart;
 	}
 
+	// buffer not large enough to hold all requested data?
+	if ((ULONG)m_nBufSize < nTotalSizeWanted)
+	{
+		AfxThrowArchiveException(CArchiveException::bufferFull);
+	}
+
 	// not enough data to fill request?
-	if ((ULONG)(m_lpBufMax - m_lpBufCur) < nTotalNeeded)
+	if ((ULONG)(m_lpBufMax - m_lpBufCur) < nTotalSizeWanted)
+	{
 		AfxThrowArchiveException(CArchiveException::endOfFile);
+	}
 }
 
 void CArchive::WriteCount(DWORD_PTR dwCount)

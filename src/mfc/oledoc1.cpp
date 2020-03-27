@@ -163,10 +163,20 @@ void COleDocument::DeleteContents()
 			pItem->InternalRelease();   // may 'delete pItem'
 		}
 	}
+
+	if (IsSearchAndOrganizeHandler())
+	{
+		// disconnect the storage
+		RELEASE(m_lpRootStg);
+		m_lpRootStg = NULL;
+	}
 }
 
 void COleDocument::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
 {
+	// if storage path changes, next save needs to create a new doc storage
+	m_bSameAsLoad = AfxComparePath(m_strStorageName, lpszPathName);
+
 	CDocument::SetPathName(lpszPathName, bAddToMRU);
 
 	// update all of the objects' host names
@@ -303,6 +313,15 @@ void COleDocument::PreCloseFrame(CFrameWnd* pFrameArg)
 	ASSERT(GetInPlaceActiveItem(pFrameArg) == NULL);
 }
 
+BOOL COleDocument::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
+{
+	BOOL bRemember = m_bRemember;
+	m_bRemember = bReplace;
+	BOOL bRet = CDocument::DoSave(lpszPathName, bReplace);
+	m_bRemember = bRemember;
+	return bRet;
+}
+
 BOOL COleDocument::SaveModified()
 {
 	// determine if necessary to discard changes
@@ -345,6 +364,16 @@ void COleDocument::OnShowViews(BOOL /*bVisible*/)
 void COleDocument::OnIdle()
 {
 	ASSERT_VALID(this);
+
+	if (IsSearchAndOrganizeHandler())
+	{
+		// do nothing for Search and Organize handlers
+		return;
+	}
+
+	// Call the base class.  If autosave is enabled for the
+	// application, the base class handles the autosaving.
+	CDocument::OnIdle();
 
 	// determine if any visible views are on this document
 	BOOL bVisible = FALSE;
@@ -490,12 +519,11 @@ BOOL COleDocument::OnOpenDocument(LPCTSTR lpszPathName)
 			else
 			{
 				// open new storage file
-				sc = StgOpenStorage(lpsz, NULL,
-					STGM_READWRITE|STGM_TRANSACTED|STGM_SHARE_DENY_WRITE,
-					0, 0, &lpStorage);
+				sc = StgOpenStorage(lpsz, NULL, STGM_READWRITE|STGM_TRANSACTED|STGM_SHARE_DENY_WRITE,0, 0, &lpStorage);
 				if (FAILED(sc) || lpStorage == NULL)
-					sc = StgOpenStorage(lpsz, NULL,
-						STGM_READ|STGM_TRANSACTED, 0, 0, &lpStorage);
+					sc = StgOpenStorage(lpsz, NULL, STGM_READ|STGM_TRANSACTED, 0, 0, &lpStorage);
+				if (FAILED(sc) || lpStorage == NULL)
+					sc = StgOpenStorage(lpsz, NULL, STGM_READ|STGM_PRIORITY, 0, 0, &lpStorage);
 			}
 			if (FAILED(sc))
 				AfxThrowOleException(sc);
@@ -531,6 +559,8 @@ BOOL COleDocument::OnOpenDocument(LPCTSTR lpszPathName)
 	}
 	END_CATCH_ALL
 
+	m_strPathName = lpszPathName;
+	m_strStorageName = lpszPathName;
 	return bResult;
 }
 
@@ -547,8 +577,11 @@ BOOL COleDocument::OnSaveDocument(LPCTSTR lpszPathName)
 	}
 
 	LPSTORAGE lpOrigStg = NULL;
+
 	if (lpszPathName != NULL)
+	{
 		m_bSameAsLoad = AfxComparePath(m_strPathName, lpszPathName);
+	}
 
 	BOOL bResult = FALSE;
 	TRY
@@ -583,7 +616,11 @@ BOOL COleDocument::OnSaveDocument(LPCTSTR lpszPathName)
 
 			// mark document as clean if remembering the storage
 			if (m_bRemember)
+			{
 				SetModifiedFlag(FALSE);
+				m_strPathName = lpszPathName;
+				m_strStorageName = lpszPathName;
+			}
 
 			// remember correct storage or release save copy as storage
 			if (!m_bSameAsLoad)
@@ -637,6 +674,11 @@ BOOL COleDocument::OnSaveDocument(LPCTSTR lpszPathName)
 
 void COleDocument::OnCloseDocument()
 {
+	// SO handler (rich preview) can be destroyed only from FinalRelease 
+	if (IsSearchAndOrganizeHandler() && !m_bFinalRelease)
+	{
+		return;
+	}
 	// close the document without deleting the memory
 	BOOL bAutoDelete = m_bAutoDelete;
 	m_bAutoDelete = FALSE;
@@ -740,6 +782,99 @@ void COleDocument::LoadFromStorage()
 	END_CATCH_ALL
 }
 
+HRESULT COleDocument::OnLoadDocumentFromStream(IStream* pStream, DWORD grfMode)
+{
+	UNREFERENCED_PARAMETER(grfMode);
+	ASSERT(pStream != NULL);
+
+	if (pStream == NULL)
+	{
+		TRACE0("Error: COleDocument::OnLoadDocumentFromStream failed with pStream = NULL.");
+		return E_INVALIDARG;
+	}
+
+	if (!m_bCompoundFile)
+	{
+		COleStreamFile file;
+		file.Attach(pStream);
+
+		CArchive ar(&file, CArchive::load);
+		Serialize(ar);
+
+		file.Detach();
+		return S_OK;
+	}
+
+	HRESULT hr = S_OK;
+
+	LPSTORAGE lpStorage     = NULL;
+	LPLOCKBYTES lpLockBytes = NULL;
+
+	TRY
+	{
+		SCODE sc;
+		{
+			COleStreamFile file;
+			file.Attach(pStream);
+			ULONGLONG length = file.GetLength();
+			if (length != 0)
+			{
+				HGLOBAL hGlobal = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD, (SIZE_T)length);
+				if (hGlobal != NULL)
+				{
+					LPVOID pBuffer = ::GlobalLock(hGlobal);
+					ASSERT(pBuffer != NULL);
+
+					file.Read(pBuffer, (UINT)length);
+					::GlobalUnlock(hGlobal);
+
+					sc = ::CreateILockBytesOnHGlobal(hGlobal, TRUE, &lpLockBytes);
+					if (FAILED(sc))
+					{
+						TRACE1("Error: CreateILockBytesOnHGlobal failed with code: %d", sc);
+						::GlobalFree(hGlobal);
+						AfxThrowOleException(sc);
+					}
+				}
+			}
+			file.Detach();
+		}
+
+		if (lpLockBytes != NULL)
+		{
+			sc = ::StgOpenStorageOnILockBytes(lpLockBytes, NULL,
+				STGM_READ | STGM_PRIORITY, NULL, 0, &lpStorage);
+
+			if (FAILED(sc))
+			{
+				TRACE1("Error: StgOpenStorageOnILockBytes failed with code: %d", sc);
+				lpLockBytes->Release();
+				lpLockBytes = NULL;
+				AfxThrowOleException(sc);
+			}
+		}
+
+		if (lpStorage != NULL)
+		{
+			m_lpRootStg = lpStorage;
+			LoadFromStorage();
+		}
+	}
+	CATCH_ALL(e)
+	{
+		DELETE_EXCEPTION(e);
+		hr = E_FAIL;
+	}
+	END_CATCH_ALL
+	
+	if (lpLockBytes != NULL)
+	{
+		lpLockBytes->Release();
+		lpLockBytes = NULL;
+	}
+
+	return hr;
+}
 /////////////////////////////////////////////////////////////////////////////
 // COleDocument diagnostics
 

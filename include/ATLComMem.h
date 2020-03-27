@@ -28,7 +28,7 @@ class CComHeap :
 {
 // IAtlMemMgr
 public:
-	virtual void* Allocate( size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 #ifdef _WIN64
 		if( nBytes > INT_MAX )
@@ -38,11 +38,13 @@ public:
 #endif
 		return( ::CoTaskMemAlloc( ULONG( nBytes ) ) );
 	}
-	virtual void Free( void* p ) throw()
+	virtual void Free(_In_opt_ void* p) throw()
 	{
 		::CoTaskMemFree( p );
 	}
-	virtual void* Reallocate( void* p, size_t nBytes ) throw()
+	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+		_In_opt_ void* p,
+		_In_ size_t nBytes) throw()
 	{
 #ifdef _WIN64
 		if( nBytes > INT_MAX )
@@ -52,7 +54,7 @@ public:
 #endif
 		return( ::CoTaskMemRealloc( p, ULONG( nBytes ) ) );
 	}
-	virtual size_t GetSize( void* p ) throw()
+	virtual size_t GetSize(_In_opt_ void* p) throw()
 	{
 		CComPtr< IMalloc > pMalloc;
 
@@ -67,7 +69,8 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 // OLE task memory allocation support
 
-inline LPWSTR AtlAllocTaskWideString(LPCWSTR lpszString) throw()
+inline LPWSTR AtlAllocTaskWideString(
+	_In_opt_z_ LPCWSTR lpszString) throw()
 {
 	if (lpszString == NULL)
 	{
@@ -89,7 +92,8 @@ inline LPWSTR AtlAllocTaskWideString(LPCWSTR lpszString) throw()
 	return lpszResult;
 }
 
-inline LPWSTR AtlAllocTaskWideString(LPCSTR lpszString) throw()
+inline LPWSTR AtlAllocTaskWideString(
+	_In_opt_z_ LPCSTR lpszString) throw()
 {
 	if (lpszString == NULL)
 		return NULL;
@@ -108,7 +112,8 @@ inline LPWSTR AtlAllocTaskWideString(LPCSTR lpszString) throw()
 	return lpszResult;
 }
 
-inline LPSTR AtlAllocTaskAnsiString(LPCWSTR lpszString) throw()
+inline LPSTR AtlAllocTaskAnsiString(
+	_In_opt_z_ LPCWSTR lpszString) throw()
 {
 	if (lpszString == NULL)
 		return NULL;
@@ -127,7 +132,8 @@ inline LPSTR AtlAllocTaskAnsiString(LPCWSTR lpszString) throw()
 	return lpszResult;
 }
 
-inline LPSTR AtlAllocTaskAnsiString(LPCSTR lpszString) throw()
+inline LPSTR AtlAllocTaskAnsiString(
+	_In_opt_z_ LPCSTR lpszString) throw()
 {
 	if (lpszString == NULL)
 	{

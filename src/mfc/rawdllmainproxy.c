@@ -22,13 +22,7 @@
 
 #ifndef _AFX_DLLMODULE_HELPER
 
-#if defined(_WIN64) && defined(_M_IA64)
-#pragma section(".base", long, read)
-__declspec(allocate(".base"))
 extern IMAGE_DOS_HEADER __ImageBase;
-#else
-extern IMAGE_DOS_HEADER __ImageBase;
-#endif
 
 /***
 *BOOL _ValidateImageBase

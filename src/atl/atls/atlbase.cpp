@@ -5,7 +5,7 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
 #include "StdAfx.H"
@@ -25,6 +25,11 @@ extern "C" const GUID GUID_ATLVer30 = { 0xb62f5910, 0x6528, 0x11d1, { 0x96, 0x11
 // {394C3DE0-3C6F-11d2-817B-00C04F797AB7}
 extern "C" const GUID GUID_ATLVer70 = { 0x394c3de0, 0x3c6f, 0x11d2, { 0x81, 0x7b, 0x0, 0xc0, 0x4f, 0x79, 0x7a, 0xb7 } };
 
+// ATLVer GUID for ATL10.0
+// {5DC0A9CA-92A2-4204-9003-E4CE5F11E1A8}
+extern "C" const GUID GUID_ATLVer100 = { 0x5dc0a9ca, 0x92a2, 0x4204, { 0x90, 0x3, 0xe4, 0xce, 0x5f, 0x11, 0xe1, 0xa8 } };
+
+
 CAtlBaseModule::CAtlBaseModule() throw()
 {
 	cbSize = sizeof(_ATL_BASE_MODULE);
@@ -32,7 +37,7 @@ CAtlBaseModule::CAtlBaseModule() throw()
 	m_hInst = m_hInstResource = reinterpret_cast<HINSTANCE>(&__ImageBase);
 
 	dwAtlBuildVer = _ATL_VER;
-	pguidVer = &GUID_ATLVer70;
+	pguidVer = &GUID_ATLVer100;
 
 	if (FAILED(m_csResource.Init()))
 	{
@@ -47,7 +52,7 @@ CAtlBaseModule::~CAtlBaseModule() throw ()
 	m_csResource.Term();
 }
 
-bool CAtlBaseModule::AddResourceInstance(HINSTANCE hInst) throw()
+bool CAtlBaseModule::AddResourceInstance(_In_ HINSTANCE hInst) throw()
 {
 	CComCritSecLock<CComCriticalSection> lock(m_csResource, false);
 	if (FAILED(lock.Lock()))
@@ -59,7 +64,7 @@ bool CAtlBaseModule::AddResourceInstance(HINSTANCE hInst) throw()
 	return m_rgResourceInstance.Add(hInst) != FALSE;
 }
 
-bool CAtlBaseModule::RemoveResourceInstance(HINSTANCE hInst) throw()
+bool CAtlBaseModule::RemoveResourceInstance(_In_ HINSTANCE hInst) throw()
 {
 	CComCritSecLock<CComCriticalSection> lock(m_csResource, false);
 	if (FAILED(lock.Lock()))
@@ -78,7 +83,7 @@ bool CAtlBaseModule::RemoveResourceInstance(HINSTANCE hInst) throw()
 	}
 	return false;
 }
-HINSTANCE CAtlBaseModule::GetHInstanceAt(int i) throw()
+HINSTANCE CAtlBaseModule::GetHInstanceAt(_In_ int i) throw()
 {
 	CComCritSecLock<CComCriticalSection> lock(m_csResource, false);
 	if (FAILED(lock.Lock()))

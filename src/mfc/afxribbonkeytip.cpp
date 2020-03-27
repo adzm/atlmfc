@@ -11,7 +11,6 @@
 
 #include "stdafx.h"
 #include "afxcontrolbarutil.h"
-#include "multimon.h"
 
 #include "afxglobals.h"
 #include "afxribbonkeytip.h"
@@ -80,12 +79,12 @@ BOOL CMFCRibbonKeyTip::OnEraseBkgnd(CDC* /*pDC*/)
 	return TRUE;
 }
 
-BOOL CMFCRibbonKeyTip::Show()
+BOOL CMFCRibbonKeyTip::Show(BOOL bRepos)
 {
 	ASSERT_VALID(this);
 	ASSERT_VALID(m_pElement);
 
-	if (GetSafeHwnd() != NULL)
+	if (GetSafeHwnd() != NULL && !bRepos)
 	{
 		ShowWindow(SW_SHOWNOACTIVATE);
 		return TRUE;
@@ -167,7 +166,7 @@ BOOL CMFCRibbonKeyTip::Show()
 
 	if (dwStyleEx & WS_EX_LAYERED)
 	{
-		afxGlobalData.SetLayeredAttrib(GetSafeHwnd(), 0, 128, LWA_ALPHA);
+		SetLayeredWindowAttributes(0, 128, LWA_ALPHA);
 	}
 
 	ShowWindow(SW_SHOWNOACTIVATE);
@@ -210,5 +209,3 @@ int CMFCRibbonKeyTip::OnMouseActivate(CWnd* /*pDesktopWnd*/, UINT /*nHitTest*/, 
 {
 	return MA_NOACTIVATE;
 }
-
-

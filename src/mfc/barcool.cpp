@@ -187,7 +187,6 @@ CSize CReBar::CalcFixedLayout(BOOL bStretch, BOOL bHorz)
 	ASSERT(::IsWindow(m_hWnd));
 
 	// the union of the band rectangles is the total bounding rect
-   //IA64: Assume max band count < 2G
 	int nCount = int(DefWindowProc(RB_GETBANDCOUNT, 0, 0));
 	REBARBANDINFO rbBand;
 	rbBand.cbSize = m_nReBarBandInfoSize;

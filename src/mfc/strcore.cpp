@@ -32,20 +32,23 @@ LPSTR AFXAPI AfxW2AHelper(_Out_z_cap_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, _In
 
 template<> UINT AFXAPI HashKey<CComBSTR> (CComBSTR key)
 {
-	UINT nHash = 0;
-	int iLength = key.Length();
-	BSTR str = key.m_str;
+	// hash key to UINT value by pseudorandomizing transform
+	// (algorithm copied from STL string hash in xfunctional)
+	UINT uHashVal = 2166136261U;
+	UINT uFirst = 0;
+	UINT uLast = (UINT)wcslen(key);
+	UINT uStride = 1 + uLast / 10;
 
-	for( int i = 0; i < iLength; i++ )
+	for(; uFirst < uLast; uFirst += uStride)
 	{
-		nHash = (nHash<<5) + nHash + *str;
-		str++;
+		uHashVal = 16777619U * uHashVal ^ (UINT)key[uFirst];
 	}
-	return nHash;
+
+	return(uHashVal);
 }
 
 template<>
-void AFXAPI SerializeElements< CComBSTR >(CArchive& ar, CComBSTR* pElements, INT_PTR nCount)
+void AFXAPI SerializeElements<CComBSTR> (CArchive& ar, CComBSTR* pElements, INT_PTR nCount)
 {
 	SerializeElementsInsertExtract(ar, pElements, nCount);
 }
@@ -53,30 +56,42 @@ void AFXAPI SerializeElements< CComBSTR >(CArchive& ar, CComBSTR* pElements, INT
 ///////////////////////////////////////////////////////////////////////////////
 // CString support for template collections
 
-#if _MSC_VER >= 1100
 template<> UINT AFXAPI HashKey<LPCWSTR> (LPCWSTR key)
-#else
-UINT AFXAPI HashKey(LPCWSTR key)
-#endif
 {
 	ENSURE_ARG(AfxIsValidString(key));
-	UINT nHash = 0;
-	while (*key)
-		nHash = (nHash<<5) + nHash + *key++;
-	return nHash;
+
+	// hash key to UINT value by pseudorandomizing transform
+	// (algorithm copied from STL string hash in xfunctional)
+	UINT uHashVal = 2166136261U;
+	UINT uFirst = 0;
+	UINT uLast = (UINT)wcslen(key);
+	UINT uStride = 1 + uLast / 10;
+
+	for(; uFirst < uLast; uFirst += uStride)
+	{
+		uHashVal = 16777619U * uHashVal ^ (UINT)key[uFirst];
+	}
+
+	return(uHashVal);
 }
 
-#if _MSC_VER >= 1100
 template<> UINT AFXAPI HashKey<LPCSTR> (LPCSTR key)
-#else
-UINT AFXAPI HashKey(LPCSTR key)
-#endif
 {
 	ENSURE_ARG(AfxIsValidString(key));
-	UINT nHash = 0;
-	while (*key)
-		nHash = (nHash<<5) + nHash + *key++;
-	return nHash;
+
+	// hash key to UINT value by pseudorandomizing transform
+	// (algorithm copied from STL string hash in xfunctional)
+	UINT uHashVal = 2166136261U;
+	UINT uFirst = 0;
+	UINT uLast = (UINT)strlen(key);
+	UINT uStride = 1 + uLast / 10;
+
+	for(; uFirst < uLast; uFirst += uStride)
+	{
+		uHashVal = 16777619U * uHashVal ^ (UINT)key[uFirst];
+	}
+
+	return(uHashVal);
 }
 
 template<>

@@ -159,9 +159,9 @@ enum AfxSig
 	AfxSig_u_u_u,				// UINT (UINT, UINT)
 	AfxSig_MOUSE_XBUTTON,			// void (UINT, UINT, CPoint)
 	AfxSig_MOUSE_NCXBUTTON,			// void (short, UINT, CPoint)
-	AfxSig_INPUTLANGCHANGE,			// void (BYTE, UINT)
+	AfxSig_INPUTLANGCHANGE,			// void (UINT, UINT)
 	AfxSig_v_u_hkl,					// void (UINT, HKL)
-	AfxSig_INPUTDEVICECHANGE,		// void (unsigned short)
+	AfxSig_INPUTDEVICECHANGE,		// void (unsigned short, HANDLE)
 // Old
 	AfxSig_bD = AfxSig_b_D_v,      // BOOL (CDC*)
 	AfxSig_bb = AfxSig_b_b_v,      // BOOL (BOOL)
@@ -818,12 +818,12 @@ enum AfxSig
 #define ON_WM_INPUTLANGCHANGE() \
 	{ WM_INPUTLANGCHANGE, 0, 0, 0, AfxSig_INPUTLANGCHANGE, \
 		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(BYTE, UINT) > ( &ThisClass :: OnInputLangChange)) },
+		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnInputLangChange)) },
 
 #define ON_WM_INPUTLANGCHANGEREQUEST() \
-	{ WM_INPUTLANGCHANGEREQUEST, 0, 0, 0, AfxSig_v_u_hkl, \
+	{ WM_INPUTLANGCHANGEREQUEST, 0, 0, 0, AfxSig_vww, \
 		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, HKL) > ( &ThisClass :: OnInputLangChangeRequest)) },
+		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnInputLangChangeRequest)) },
 
 #if(_WIN32_WINNT >= 0x0500)
 
@@ -864,7 +864,7 @@ enum AfxSig
 #define ON_WM_INPUT_DEVICE_CHANGE() \
 	{ WM_INPUT_DEVICE_CHANGE, 0, 0, 0, AfxSig_INPUTDEVICECHANGE, \
 		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(unsigned short) > ( &ThisClass :: OnInputDeviceChange)) },
+		(static_cast< void (AFX_MSG_CALL CWnd::*)(unsigned short, HANDLE) > ( &ThisClass :: OnInputDeviceChange)) },
 
 #else
 
@@ -872,7 +872,7 @@ enum AfxSig
 	__pragma(message("WM_INPUT_DEVICE_CHANGE requires _WIN32_WINNT to be >= 0x600")) \
 	{ WM_INPUT_DEVICE_CHANGE, 0, 0, 0, AfxSig_INPUTDEVICECHANGE, \
 		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(unsigned short) > ( &ThisClass :: OnInputDeviceChange)) },
+		(static_cast< void (AFX_MSG_CALL CWnd::*)(unsigned short, HANDLE) > ( &ThisClass :: OnInputDeviceChange)) },
 
 #endif /* _WIN32_WINNT >= 0x0600 */
 
@@ -1341,7 +1341,7 @@ enum AfxSig
 #define ON_WM_DWMWINDOWMAXIMIZEDCHANGE() \
 	{ WM_DWMWINDOWMAXIMIZEDCHANGE, 0, 0, 0, AfxSig_vb, \
 		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnWindowMaximizedChanged)) },
+		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnWindowMaximizedChange)) },
 
 #else
 
@@ -1367,7 +1367,7 @@ enum AfxSig
 	__pragma(message("WM_DWMWINDOWMAXIMIZEDCHANGE requires _WIN32_WINNT >= 0x0600")) \
 	{ WM_DWMWINDOWMAXIMIZEDCHANGE, 0, 0, 0, AfxSig_vb, \
 		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnWindowMaximizedChanged)) },
+		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnWindowMaximizedChange)) },
 
 #endif
 

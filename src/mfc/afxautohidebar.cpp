@@ -17,6 +17,7 @@
 #include "afxdocksite.h"
 #include "afxdockablepane.h"
 #include "afxdockingpanesrow.h"
+#include "afxtrackmouse.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -38,6 +39,8 @@ CMFCAutoHideBar::CMFCAutoHideBar()
 	m_pLastActiveButton = NULL;
 	m_bReadyToDisplayAHWnd = FALSE;
 	m_nDisplayAHWndTimerID = 0;
+	m_pHighlightedButton = NULL;
+	m_bTracked = FALSE;
 }
 
 CMFCAutoHideBar::~CMFCAutoHideBar()
@@ -57,6 +60,7 @@ BEGIN_MESSAGE_MAP(CMFCAutoHideBar, CPane)
 	ON_WM_TIMER()
 	ON_WM_LBUTTONDOWN()
 	//}}AFX_MSG_MAP
+	ON_MESSAGE(WM_MOUSELEAVE, &CMFCAutoHideBar::OnMouseLeave)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -272,6 +276,18 @@ void CMFCAutoHideBar::OnMouseMove(UINT /*nFlags*/, CPoint /*point*/)
 	ScreenToClient(&pt);
 	CMFCAutoHideButton* pBtn = ButtonFromPoint(pt);
 
+	if (!m_bTracked)
+	{
+		m_bTracked = TRUE;
+		
+		TRACKMOUSEEVENT trackmouseevent;
+		trackmouseevent.cbSize = sizeof(trackmouseevent);
+		trackmouseevent.dwFlags = TME_LEAVE;
+		trackmouseevent.hwndTrack = GetSafeHwnd();
+		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
+		::AFXTrackMouse(&trackmouseevent);
+	}
+
 	if (pBtn != NULL && !m_bReadyToDisplayAHWnd)
 	{
 		CDockablePane* pAttachedBar = pBtn->GetAutoHideWindow();
@@ -287,7 +303,40 @@ void CMFCAutoHideBar::OnMouseMove(UINT /*nFlags*/, CPoint /*point*/)
 			}
 			m_nDisplayAHWndTimerID = SetTimer(AFX_DISPLAY_AHWND_EVENT, m_nShowAHWndDelay, NULL);
 		}
+
+		if (m_pHighlightedButton != NULL && m_pHighlightedButton != pBtn)
+		{
+			ASSERT_VALID(m_pHighlightedButton);
+
+			m_pHighlightedButton->HighlightButton(FALSE);
+		}
+
+		if (pBtn != m_pHighlightedButton)
+		{
+			pBtn->HighlightButton(TRUE);
+			m_pHighlightedButton = pBtn;
+
+			UpdateWindow();
+			Invalidate();
+		}
 	}
+}
+
+LRESULT CMFCAutoHideBar::OnMouseLeave(WPARAM, LPARAM)
+{
+	if (m_pHighlightedButton != NULL)
+	{
+		ASSERT_VALID(m_pHighlightedButton);
+
+		m_pHighlightedButton->HighlightButton(FALSE);
+		m_pHighlightedButton = NULL;
+
+		UpdateWindow ();
+		Invalidate ();
+	}
+
+	m_bTracked = FALSE;
+	return 0;
 }
 
 CMFCAutoHideButton* CMFCAutoHideBar::ButtonFromPoint(CPoint pt)

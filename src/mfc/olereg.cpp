@@ -243,7 +243,7 @@ AFX_STATIC BOOL AFXAPI _AfxOleMakeSymbolTable(_AFX_OLESYMBOLTABLE& refTable,
 
 	// get path name to server
 	CString strPathName;
-	AfxGetModuleShortFileName(AfxGetInstanceHandle(), strPathName);
+	AfxGetModuleFileName(AfxGetInstanceHandle(), strPathName);
 	refTable.SetAt(2, strPathName);
 
 	// fill in rest of symbols
@@ -376,6 +376,10 @@ BOOL AFXAPI AfxOleUnregisterServerClass(
 	LPCTSTR lpszLongTypeName, OLE_APPTYPE nAppType, LPCTSTR* rglpszRegister,
 	LPCTSTR* rglpszOverwrite)
 {
+	if (nAppType < 0 || nAppType >= _countof(rgStdEntries))
+	{
+		return FALSE;
+	}
 	// use standard registration entries if non given
 	if (rglpszRegister == NULL)
 		rglpszRegister = (LPCTSTR*)rgStdEntries[nAppType].rglpszRegister;
@@ -390,20 +394,17 @@ BOOL AFXAPI AfxOleUnregisterServerClass(
 
 	_AFX_OLESYMBOLTABLE table(NUM_REG_VARS);
 
-	if (!_AfxOleMakeSymbolTable(table, clsid, lpszClassName,
-				lpszShortTypeName, lpszLongTypeName, 0, NULL, NULL))
+	if (!_AfxOleMakeSymbolTable(table, clsid, lpszClassName, lpszShortTypeName, lpszLongTypeName, 0, NULL, NULL))
 	{
 		return FALSE;
 	}
 
 	// clean up the the registry with helper function
 	BOOL bResult;
-	bResult = AfxOleUnregisterHelper(rglpszRegister, table.GetArray(),
-		NUM_REG_VARS);
+	bResult = AfxOleUnregisterHelper(rglpszRegister, table.GetArray(), NUM_REG_VARS);
 	if (bResult && rglpszOverwrite != NULL)
 	{
-		bResult = AfxOleUnregisterHelper(rglpszOverwrite, table.GetArray(),
-			NUM_REG_VARS);
+		bResult = AfxOleUnregisterHelper(rglpszOverwrite, table.GetArray(), NUM_REG_VARS);
 	}
 
 	return bResult;
@@ -490,14 +491,12 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 		{
 			TCHAR szBuffer[256];
 			LONG lSize = sizeof(szBuffer);
-			if (AfxRegQueryValue(hKeyRoot, strKey, szBuffer, &lSize) ==
-				ERROR_SUCCESS)
+			if (AfxRegQueryValue(hKeyRoot, strKey, szBuffer, &lSize) == ERROR_SUCCESS)
 			{
 #ifdef _DEBUG
 				if (strValue != szBuffer)
 				{
-					TRACE(traceOle, 0, _T("Warning: Leaving value '%s' for key '%s' in registry\n"),
-						szBuffer, (LPCTSTR)strKey);
+					TRACE(traceOle, 0, _T("Warning: Leaving value '%s' for key '%s' in registry\n"), szBuffer, (LPCTSTR)strKey);
 					TRACE(traceOle, 0, _T("\tintended value was '%s'.\n"), (LPCTSTR)strValue);
 				}
 #endif
@@ -505,15 +504,15 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 			}
 		}
 
-		LONG lResult =
-			AfxRegSetValue(hKeyRoot, strKey, REG_SZ, strValue, lstrlen(strValue) * sizeof(TCHAR));
+		LONG lResult = AfxRegSetValue(hKeyRoot, strKey, REG_SZ, strValue, lstrlen(strValue) * sizeof(TCHAR));
 		if(lResult != ERROR_SUCCESS)
 		{
-			TRACE(traceOle, 0, _T("Error: failed setting key '%s' to value '%s'.\n"),
-				(LPCTSTR)strKey, (LPCTSTR)strValue);
+			TRACE(traceOle, 0, _T("Error: failed setting key '%s' to value '%s'.\n"), (LPCTSTR)strKey, (LPCTSTR)strValue);
 
 			if(lResult != ERROR_ACCESS_DENIED)
+			{
 				bResult = FALSE;
+			}
 			break;
 		}
 	}
@@ -521,6 +520,81 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 	return bResult;
 }
 
+AFX_STATIC_DATA const TCHAR _afxPreviewHostCLSID [] = _T("{8895b1c6-b41f-4c1c-a562-0d564250836f}");
+AFX_STATIC_DATA const TCHAR _afxThumbnailHostCLSID [] = _T("{E357FCCD-A995-4576-B01F-234630154E96}");
+AFX_STATIC_DATA const TCHAR _afxPreviewHandlersRegPath [] = _T("Software\\Microsoft\\Windows\\CurrentVersion\\PreviewHandlers");
+AFX_STATIC_DATA const TCHAR _afxShellExFormat [] = _T("%s\\ShellEx\\%s");
+AFX_STATIC_DATA const TCHAR _afxTreatmentValueName [] = _T("Treatment");
+
+BOOL AFXAPI AfxRegisterPreviewHandler(LPCTSTR lpszCLSID, LPCTSTR lpszShortTypeName, LPCTSTR lpszFilterExt)
+{
+	CString strData = lpszShortTypeName;
+	strData.Append(_T(" Preview Handler"));
+
+	CRegKey regPreviewHandlersKey(HKEY_LOCAL_MACHINE);
+	regPreviewHandlersKey.Create(HKEY_LOCAL_MACHINE, _afxPreviewHandlersRegPath);
+
+	if (regPreviewHandlersKey.SetStringValue(lpszCLSID, strData) != ERROR_SUCCESS)
+	{
+		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_LOCAL_MACHINE\\'%s'.\n"), lpszCLSID, _afxPreviewHandlersRegPath);
+		return FALSE;
+	}
+
+	CString strShellExKey;
+	strShellExKey.Format(_afxShellExFormat, lpszFilterExt, _afxPreviewHostCLSID);
+
+	CRegKey regKey(HKEY_CLASSES_ROOT);
+	regKey.Create(HKEY_CLASSES_ROOT, strShellExKey);
+
+	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID)lpszCLSID, (ULONG)(_tcslen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
+	{
+		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_CLASSES_ROOT\\'%s'.\n"), lpszCLSID, strShellExKey);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL AFXAPI AfxUnRegisterPreviewHandler(LPCTSTR lpszCLSID)
+{
+	CRegKey regKey(HKEY_LOCAL_MACHINE);
+	if (regKey.Open (HKEY_LOCAL_MACHINE, _afxPreviewHandlersRegPath) == ERROR_SUCCESS)
+	{
+		regKey.DeleteValue (lpszCLSID);
+		regKey.Close();
+	}
+	
+	if (regKey.Open(HKEY_CLASSES_ROOT, _T("CLSID")) == ERROR_SUCCESS)
+	{
+		regKey.RecurseDeleteKey(lpszCLSID);
+		regKey.Close();
+	}
+
+	return TRUE;
+}
+
+BOOL AFXAPI AfxRegisterThumbnailHandler(LPCTSTR lpszCLSID, LPCTSTR lpszFilterExt, DWORD nTreatment)
+{
+	CString strShellExKey;
+	strShellExKey.Format(_afxShellExFormat, lpszFilterExt, _afxThumbnailHostCLSID);
+
+	CRegKey regKey(HKEY_CLASSES_ROOT);
+	regKey.Create(HKEY_CLASSES_ROOT, strShellExKey);
+
+	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID) lpszCLSID, (ULONG)(_tcslen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
+	{
+		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_CLASSES_ROOT\\'%s'.\n"), lpszCLSID, strShellExKey);
+		return FALSE;
+	}
+	else
+	{
+		regKey.Close ();
+		regKey.Open(HKEY_CLASSES_ROOT, lpszFilterExt);
+		// set Treatment value - default to 1. Other possible values advanced users can set calling this method directly
+		regKey.SetValue(_T("Treatment"), REG_DWORD, (LPVOID)&nTreatment, sizeof(DWORD));
+	}
+
+	return TRUE;
+}
 
 static TCHAR szApartment[] = _T("Apartment");
 static TCHAR szBoth[] = _T("Both");
@@ -534,11 +608,11 @@ BOOL AFXAPI AfxOleInprocRegisterHelper(HKEY hkeyProgID,
 	if (nRegFlags & afxRegInsertable)
 	{
 		ASSERT(hkeyProgID != NULL);
+		::ATL::CRegKey hkeyProgIDInsertable;
+		::ATL::CRegKey hkeyClassIDInsertable;
 		bSuccess =
-			(::RegSetValue(hkeyProgID, _T("Insertable"), REG_SZ, _T(""), 0) ==
-				ERROR_SUCCESS) &&
-			(::RegSetValue(hkeyClassID, _T("Insertable"), REG_SZ, _T(""), 0) ==
-				ERROR_SUCCESS);
+			(hkeyProgIDInsertable.Create(hkeyProgID, _T("Insertable"), NULL, 0, KEY_READ | KEY_WRITE, NULL, NULL) == ERROR_SUCCESS) &&
+			(hkeyClassIDInsertable.Create(hkeyClassID, _T("Insertable"), NULL, 0, KEY_READ | KEY_WRITE, NULL, NULL) == ERROR_SUCCESS);
 	}
 	if (!bSuccess)
 		goto Error;
@@ -560,10 +634,10 @@ BOOL AFXAPI AfxOleInprocRegisterHelper(HKEY hkeyProgID,
 	if (pstrThreadingModel != NULL)
 	{
 		HKEY hkeyInprocServer32;
-		bSuccess = (::RegOpenKeyEx(hkeyClassID, _T("InprocServer32"), 0, KEY_WRITE,
-			&hkeyInprocServer32) == ERROR_SUCCESS);		
+		bSuccess = (::RegOpenKeyExW(hkeyClassID, L"InprocServer32", 0, KEY_WRITE,
+			&hkeyInprocServer32) == ERROR_SUCCESS);
 		if (bSuccess)
-		{		
+		{
 			ASSERT(hkeyInprocServer32 != NULL);
 			bSuccess = (::RegSetValueEx(hkeyInprocServer32, _T("ThreadingModel"), 0,
 				REG_SZ, (const BYTE*) pstrThreadingModel, 
@@ -574,9 +648,9 @@ BOOL AFXAPI AfxOleInprocRegisterHelper(HKEY hkeyProgID,
 		{
 			if (!afxContextIsDLL)
 			{
-				bSuccess = TRUE; //ignore failure to find InprocServer32 in exe context.	      
-			}			
-		}		
+				bSuccess = TRUE; //ignore failure to find InprocServer32 in exe context.
+			}
+		}
 	}
 	if (bSuccess)
 	{
@@ -585,9 +659,9 @@ BOOL AFXAPI AfxOleInprocRegisterHelper(HKEY hkeyProgID,
 Error:
 	// Cleanup any values set in the registry
 	if (nRegFlags & afxRegInsertable)
-	{	
-		RegDeleteValue(hkeyClassID, _T("Insertable"));
-		RegDeleteValue(hkeyProgID, _T("Insertable"));
+	{
+		RegDeleteKey(hkeyClassID, _T("Insertable"));
+		RegDeleteKey(hkeyProgID, _T("Insertable"));
 	}
 	return bSuccess;
 }

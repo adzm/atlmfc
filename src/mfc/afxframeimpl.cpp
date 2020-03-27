@@ -9,7 +9,6 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "multimon.h"
 
 #include "afxframeimpl.h"
 #include "afxtoolbar.h"
@@ -49,8 +48,6 @@ extern CObList afxAllToolBars;
 class CMFCCustomizeButton;
 
 static const CString strTearOffBarsRegEntry = _T("ControlBars-TearOff");
-
-extern BOOL g_bInSettingChange;
 
 BOOL CFrameImpl::m_bControlBarExtraPixel = TRUE;
 CList<CFrameWnd*, CFrameWnd*> CFrameImpl::m_lstFrames;
@@ -902,6 +899,37 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 		}
 	}
 
+	if (uiMsg == WM_NCRBUTTONUP && hwnd == m_pFrame->GetSafeHwnd() && IsOwnerDrawCaption())
+	{
+		UINT nHit = OnNcHitTest(pt);
+
+		if (nHit == HTCAPTION || nHit == HTSYSMENU || nHit == HTMINBUTTON || nHit == HTMAXBUTTON || nHit == HTCLOSE)
+		{
+			CMenu* pMenu = m_pFrame->GetSystemMenu(FALSE);
+			if (pMenu->GetSafeHmenu() != NULL && ::IsMenu(pMenu->GetSafeHmenu()))
+			{
+				pMenu->EnableMenuItem(SC_MAXIMIZE, MF_BYCOMMAND | MF_ENABLED);
+				pMenu->EnableMenuItem(SC_RESTORE, MF_BYCOMMAND | MF_ENABLED);
+
+				if (m_pFrame->IsZoomed())
+				{
+					pMenu->EnableMenuItem(SC_MAXIMIZE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+				}
+				else if (!m_pFrame->IsIconic())
+				{
+					pMenu->EnableMenuItem(SC_RESTORE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+				}
+
+				UINT uiRes = ::TrackPopupMenu (pMenu->GetSafeHmenu(), TPM_LEFTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, m_pFrame->GetSafeHwnd(), NULL);
+				if (uiRes != 0)
+				{
+					m_pFrame->SendMessage(WM_SYSCOMMAND, uiRes);
+					bStopProcessing = TRUE;
+				}
+			}
+		}
+	}
+
 	return bStopProcessing;
 }
 
@@ -1042,7 +1070,7 @@ BOOL CFrameImpl::OnShowPopupMenu(CMFCPopupMenu* pMenuPopup, CFrameWnd* /*pWndFra
 void CFrameImpl::SetupToolbarMenu(CMenu& menu, const UINT uiViewUserToolbarCmdFirst, const UINT uiViewUserToolbarCmdLast)
 {
 	// Replace toolbar dummy items to the user-defined toolbar names:
-	for (int i = 0; i <(int) menu.GetMenuItemCount();)
+	for (int i = 0; i < menu.GetMenuItemCount();)
 	{
 		UINT uiCmd = menu.GetMenuItemID(i);
 
@@ -1511,7 +1539,13 @@ BOOL CFrameImpl::OnNcPaint()
 {
 	ASSERT_VALID(m_pFrame);
 
-	if (!IsOwnerDrawCaption() || g_bInSettingChange)
+	BOOL bIsRibbonCaption = FALSE;
+	if (m_pRibbonBar->GetSafeHwnd() != NULL && (m_pRibbonBar->IsWindowVisible() || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
+	{
+		bIsRibbonCaption = !afxGlobalData.DwmIsCompositionEnabled();
+	}
+
+	if ((!IsOwnerDrawCaption() && !bIsRibbonCaption) || afxGlobalData.m_bInSettingChange)
 	{
 		return FALSE;
 	}
@@ -1576,6 +1610,12 @@ void CFrameImpl::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 		lpMMI->ptMaxPosition.y = rect.top;
 		lpMMI->ptMaxSize.x = rect.Width();
 		lpMMI->ptMaxSize.y = rect.Height();
+
+		if (m_pRibbonBar->GetSafeHwnd() != NULL && m_pRibbonBar->IsReplaceFrameCaption() && !afxGlobalData.DwmIsCompositionEnabled())
+		{
+			lpMMI->ptMinTrackSize.x = ::GetSystemMetrics(SM_CXMINTRACK);
+			lpMMI->ptMinTrackSize.y = ::GetSystemMetrics(SM_CYMINTRACK);
+		}
 	}
 }
 
@@ -1645,6 +1685,12 @@ void CFrameImpl::OnActivateApp(BOOL bActive)
 	{
 		m_pRibbonBar->HideKeyTips();
 		m_pRibbonBar->OnCancelMode();
+	}
+
+	if (!bActive && !afxGlobalData.m_bSysUnderlineKeyboardShortcuts && afxGlobalData.m_bUnderlineKeyboardShortcuts)
+	{
+		afxGlobalData.m_bUnderlineKeyboardShortcuts = FALSE;
+		CMFCToolBar::RedrawUnderlines();
 	}
 }
 
@@ -2215,6 +2261,3 @@ void CFrameImpl::OnDWMCompositionChanged()
 		m_pRibbonBar->DWMCompositionChanged();
 	}
 }
-
-
-

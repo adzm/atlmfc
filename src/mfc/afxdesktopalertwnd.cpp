@@ -9,7 +9,6 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "multimon.h"
 #include "afxvisualmanager.h"
 #include "afxdesktopalertwnd.h"
 
@@ -156,7 +155,7 @@ BOOL CMFCDesktopAlertWnd::CommonCreate(CPoint ptPos, CMFCDesktopAlertWndInfo* pP
 	CRect rectDummy(0, 0, 0, 0);
 	DWORD dwStyleEx = WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
 
-	if (afxGlobalData.IsWindowsLayerSupportAvailable() && afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+	if (afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
 	{
 		dwStyleEx |= WS_EX_LAYERED;
 	}
@@ -439,10 +438,10 @@ void CMFCDesktopAlertWnd::OnTimer(UINT_PTR nIDEvent)
 
 			m_bIsActive = rectWnd.PtInRect(ptCursor) || m_pWndDlg->HasFocus();
 
-			if (m_bIsActive != bWasActive && afxGlobalData.IsWindowsLayerSupportAvailable() && afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+			if (m_bIsActive != bWasActive && afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
 			{
 				BYTE nTransparency = m_bIsActive ?(BYTE) 255 : m_nTransparency;
-				afxGlobalData.SetLayeredAttrib(GetSafeHwnd(), 0, nTransparency, LWA_ALPHA);
+				SetLayeredWindowAttributes(0, nTransparency, LWA_ALPHA);
 			}
 		}
 	}
@@ -689,9 +688,9 @@ void CMFCDesktopAlertWnd::StartAnimation(BOOL bShow/* = TRUE*/)
 		m_pWndDlg->SetWindowPos(NULL,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOREDRAW|SWP_NOZORDER|SWP_SHOWWINDOW | SWP_NOACTIVATE);
 		m_pWndDlg->ValidateRect(NULL);
 
-		if (afxGlobalData.IsWindowsLayerSupportAvailable() && afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+		if (afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
 		{
-			afxGlobalData.SetLayeredAttrib(GetSafeHwnd(), 0, m_nTransparency, LWA_ALPHA);
+			SetLayeredWindowAttributes(0, m_nTransparency, LWA_ALPHA);
 		}
 
 		return;
@@ -852,9 +851,9 @@ void CMFCDesktopAlertWnd::DrawAnimation(CDC* pPaintDC)
 
 		dcMem.SelectObject(pBmpOld);
 
-		if (afxGlobalData.IsWindowsLayerSupportAvailable() && afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+		if (afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
 		{
-			afxGlobalData.SetLayeredAttrib(GetSafeHwnd(), 0, m_nTransparency, LWA_ALPHA);
+			SetLayeredWindowAttributes(0, m_nTransparency, LWA_ALPHA);
 		}
 	}
 
@@ -1029,5 +1028,3 @@ void CMFCDesktopAlertWnd::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
 {
 	StartWindowMove();
 }
-
-

@@ -37,13 +37,6 @@ protected:
 public:
 	virtual ~CCommandManager();
 
-	// Set toolbar buttons image resources.
-	// You should use SINGLE CMFCToolBarImages for ALL your toolbars!
-	BOOL SetUserImages(CMFCToolBarImages* pUserImages);
-
-	// Clear all images except user:
-	void ResetAllImages();
-	
 	void CleanUp(); // Final cleaning
 
 	// Image functions

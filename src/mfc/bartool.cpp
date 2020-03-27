@@ -685,7 +685,6 @@ CSize CToolBar::CalcSize(TBBUTTON* pData, int nCount)
 	CPoint cur(0,0);
 	CSize sizeResult(0,0);
 
-   //IA64: Assume retval of TB_GETEXTENDEDSTYLE is still 32-bit
 	DWORD dwExtendedStyle = DWORD(DefWindowProc(TB_GETEXTENDEDSTYLE, 0, 0));
 
 	for (int i = 0; i < nCount; i++)
@@ -911,7 +910,6 @@ CSize CToolBar::CalcLayout(DWORD dwMode, int nLength)
 
 	//BLOCK: Load Buttons
 	{
-	  //IA64: Assume max button count < 2G
 		nCount = int(DefWindowProc(TB_BUTTONCOUNT, 0, 0));
 		if (nCount != 0)
 		{
@@ -1338,7 +1336,7 @@ LRESULT CToolBar::OnSetSizeHelper(CSize& size, LPARAM lParam)
 	LRESULT lResult = Default();
 	if (lResult)
 	{
-		size = DWORD(lParam); // IA64: Assume size is packed in low-order DWORD
+		size = DWORD(lParam);
 	}
 
 	if (bModify)
@@ -1585,7 +1583,6 @@ void CToolBar::Dump(CDumpContext& dc) const
 	if (dc.GetDepth() > 0)
 	{
 		CToolBar* pBar = (CToolBar*)this;
-	  //IA64: Assume max button count < 2GB
 		int nCount = int(pBar->DefWindowProc(TB_BUTTONCOUNT, 0, 0));
 		for (int i = 0; i < nCount; i++)
 		{

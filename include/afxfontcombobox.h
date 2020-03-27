@@ -69,6 +69,7 @@ protected:
 	//{{AFX_MSG(CMFCFontComboBox)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDestroy();
+	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()

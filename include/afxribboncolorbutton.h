@@ -27,6 +27,8 @@ class CMFCRibbonColorButton : public CMFCRibbonGallery
 {
 	friend class CMFCColorBar;
 	friend class CMFCRibbonColorMenuButton;
+	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonConstructor;
 
 	DECLARE_DYNCREATE(CMFCRibbonColorButton)
 
@@ -63,6 +65,8 @@ public:
 	void SetColorBoxSize(CSize sizeBox);
 	CSize GetColorBoxSize() const { return m_sizeBox; }
 
+	virtual BOOL IsSimpleButtonLook() const { return m_bSimpleButtonLook; }
+
 protected:
 	virtual BOOL HasMenu() const { return TRUE; }
 
@@ -96,8 +100,8 @@ protected:
 	COLORREF m_ColorAutomatic;
 
 	CArray<COLORREF, COLORREF> m_Colors;
-	CArray<COLORREF,COLORREF>  m_DocumentColors;
-	CArray<LPARAM,LPARAM>      m_arContColumnsRanges;
+	CArray<COLORREF, COLORREF> m_DocumentColors;
+	CArray<LPARAM, LPARAM>     m_arContColumnsRanges;
 
 	BOOL m_bIsAutomaticButton;
 	BOOL m_bIsAutomaticButtonOnTop;

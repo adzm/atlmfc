@@ -47,6 +47,8 @@ class CMFCRibbonBaseElement : public CObject
 	friend class CMFCRibbonGallery;
 	friend class CMFCRibbonStatusBar;
 	friend class CMFCRibbonCommandsListBox;
+	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonConstructor;
 
 	DECLARE_DYNAMIC(CMFCRibbonBaseElement)
 
@@ -119,7 +121,7 @@ public:
 	BOOL IsVisible() const { return m_bIsVisible; }
 	void SetVisible(BOOL bIsVisible) { m_bIsVisible = bIsVisible; }
 
-	virtual BOOL IsAlwaysLargeImage () const { return m_bIsAlwaysLarge; }
+	virtual BOOL IsAlwaysLargeImage() const { return m_bIsAlwaysLarge; }
 
 	virtual void SetCompactMode(BOOL bCompactMode = TRUE)
 	{
@@ -242,6 +244,7 @@ public:
 
 	CMFCRibbonBar* GetParentRibbonBar() const { return m_pRibbonBar; }
 	virtual void SetParentRibbonBar(CMFCRibbonBar* pRibbonBar) { m_pRibbonBar = pRibbonBar; }
+	CMFCRibbonButtonsGroup* GetParentGroup() const { return m_pParentGroup; }
 
 	CMFCRibbonBar* GetTopLevelRibbonBar() const;
 
@@ -269,6 +272,12 @@ public:
 	CMFCRibbonBaseElement*	GetOriginal() const { return m_pOriginal; }
 
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+
+	/// <summary>
+	/// Indicates whether the parent element has keyboard focus</summary>
+	/// <returns> 
+	/// TRUE if the ribbon element is focused; otherwise FALSE.</returns>
+	virtual BOOL HasFocus() const {	return FALSE; }
 
 // Overrides
 public:
@@ -308,6 +317,7 @@ public:
 	virtual CMFCRibbonBaseElement* GetPressed();
 	virtual CMFCRibbonBaseElement* GetDroppedDown();
 	virtual CMFCRibbonBaseElement* GetHighlighted();
+	virtual CMFCRibbonBaseElement* GetFocused();
 
 	virtual void OnDrawKeyTip(CDC* pDC, const CRect& rect, BOOL bIsMenu);
 	virtual CSize GetKeyTipSize(CDC* pDC);
@@ -323,6 +333,8 @@ public:
 		arElements.Add(this);
 	}
 
+	virtual void GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements);
+
 	virtual void OnRTLChanged(BOOL /*bIsRTL*/) {}
 
 	virtual BOOL IsShowTooltipOnBottom() const { return m_pRibbonBar == NULL; }
@@ -331,6 +343,26 @@ public:
 	virtual void NotifyHighlightListItem(int nIndex);
 
 	virtual BOOL IsGalleryIcon() const { return FALSE; }
+
+	virtual CMFCRibbonBaseElement* GetFirstTabStop()
+	{
+		if (IsTabStop() && !m_rect.IsRectEmpty())
+		{
+			return this;
+		}
+
+		return NULL;
+	}
+
+	virtual CMFCRibbonBaseElement* GetLastTabStop()
+	{
+		if (IsTabStop() && !m_rect.IsRectEmpty())
+		{
+			return this;
+		}
+
+		return NULL;
+	}
 
 protected:
 	virtual void OnLButtonDown(CPoint point);
@@ -358,6 +390,8 @@ protected:
 public:
 	BOOL NotifyCommand(BOOL bWithDelay = FALSE);
 	void PostMenuCommand(UINT uiCmdId);
+	void EnableUpdateTooltipInfo(BOOL bEnable = TRUE);
+	void EnableTooltipInfoShortcut(BOOL bEnable = TRUE);
 
 protected:
 	void SetDroppedDown(CMFCPopupMenu* pPopupMenu);
@@ -406,6 +440,8 @@ protected:
 	BOOL m_bDrawDefaultIcon;
 	BOOL m_bIsOnPaletteTop;
 	BOOL m_bOnBeforeShowItemMenuIsSent;
+	BOOL m_bEnableUpdateTooltipInfo;
+	BOOL m_bEnableTooltipInfoShortcut;
 };
 
 class CMFCRibbonSeparator : public CMFCRibbonBaseElement
@@ -422,6 +458,7 @@ protected:
 
 public:
 	virtual int AddToListBox(CMFCRibbonCommandsListBox* pWndListBox, BOOL bDeep);
+	BOOL IsHorizontal() const { return m_bIsHoriz; }
 
 protected:
 	virtual void OnDraw(CDC* pDC);

@@ -11,12 +11,6 @@
 
 #include "stdafx.h"
 
-#pragma warning(disable : 4706)
-
-#include "multimon.h"
-
-#pragma warning(default : 4706)
-
 #include "afxwinappex.h"
 #include "afxpopupmenu.h"
 #include "afxmenubar.h"
@@ -106,7 +100,7 @@ BOOL CMFCShadowWnd::Create ()
 {
 	ASSERT_VALID (m_pOwner);
 
-	if (!afxGlobalData.IsWindowsLayerSupportAvailable () || afxGlobalData.m_nBitsPerPixel <= 8)
+	if (afxGlobalData.m_nBitsPerPixel <= 8)
 	{
 		ASSERT (FALSE);
 		return FALSE;
@@ -546,8 +540,7 @@ int CMFCPopupMenu::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	pMenuBar->m_iMinWidth = m_nMinWidth;
 	pMenuBar->SetOwner(GetParent());
 
-	if (m_iShadowSize > 0 && afxGlobalData.IsWindowsLayerSupportAvailable () &&
-		m_pParentRibbonElement != NULL)
+	if (m_iShadowSize > 0 && m_pParentRibbonElement != NULL)
 	{
 		m_pWndShadow = new CMFCShadowWnd (this, m_iShadowSize);
 		m_iShadowSize = 0;
@@ -921,6 +914,11 @@ void CMFCPopupMenu::RecalcLayout(BOOL /*bNotify*/)
 			pParentMenuBar->ClientToScreen(&rectParentBtn);
 
 			m_ptLocation.x = bRTL ? rectParentBtn.right + size.cx : rectParentBtn.left - size.cx;
+			if (m_ptLocation.x + size.cx >= rectScreen.right)
+			{
+				m_ptLocation.x = rectScreen.right - size.cx - 1;
+			}
+
 			m_DropDirection = DROP_DIRECTION_LEFT;
 		}
 		else
@@ -3075,7 +3073,7 @@ CPane* CMFCPopupMenu::CreateTearOffBar(CFrameWnd* pWndMain, UINT uiID, LPCTSTR l
 
 	pNewToolbar->SetWindowText(lpszName);
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		UINT uiCmd = pMenu->GetMenuItemID(i);

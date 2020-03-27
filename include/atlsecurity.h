@@ -41,21 +41,31 @@ class CSid
 public:
 	CSid() throw();
 
-	explicit CSid(LPCTSTR pszAccountName, LPCTSTR pszSystem = NULL) throw(...);
-	explicit CSid(const SID *pSid, LPCTSTR pszSystem = NULL) throw(...);
-	CSid(const SID_IDENTIFIER_AUTHORITY &IdentifierAuthority, BYTE nSubAuthorityCount, ...) throw(...);
+	explicit CSid(
+		_In_z_ LPCTSTR pszAccountName,
+		_In_opt_z_ LPCTSTR pszSystem = NULL) throw(...);
+	explicit CSid(
+		_In_ const SID *pSid,
+		_In_opt_z_ LPCTSTR pszSystem = NULL) throw(...);
+	CSid(
+		_In_ const SID_IDENTIFIER_AUTHORITY &IdentifierAuthority,
+		_In_ BYTE nSubAuthorityCount, ...) throw(...);
 	virtual ~CSid() throw();
 
-	CSid(const CSid &rhs) throw(...);
-	CSid &operator=(const CSid &rhs) throw(...);
+	CSid(_In_ const CSid &rhs) throw(...);
+	CSid &operator=(_In_ const CSid &rhs) throw(...);
 
-	CSid(const SID &rhs) throw(...);
-	CSid &operator=(const SID &rhs) throw(...);
+	CSid(_In_ const SID &rhs) throw(...);
+	CSid &operator=(_In_ const SID &rhs) throw(...);
 
 	typedef CAtlArray<CSid> CSidArray;
 
-	bool LoadAccount(LPCTSTR pszAccountName, LPCTSTR pszSystem = NULL) throw(...);
-	bool LoadAccount(const SID *pSid, LPCTSTR pszSystem = NULL) throw(...);
+	bool LoadAccount(
+		_In_z_ LPCTSTR pszAccountName,
+		_In_opt_z_ LPCTSTR pszSystem = NULL) throw(...);
+	bool LoadAccount(
+		_In_ const SID *pSid,
+		_In_opt_z_ LPCTSTR pszSystem = NULL) throw(...);
 
 	LPCTSTR AccountName() const throw(...);
 	LPCTSTR Domain() const throw(...);
@@ -68,16 +78,16 @@ public:
 	UINT GetLength() const throw();
 
 	// SID functions
-	bool EqualPrefix(const CSid &rhs) const throw();
-	bool EqualPrefix(const SID &rhs) const throw();
+	bool EqualPrefix(_In_ const CSid &rhs) const throw();
+	bool EqualPrefix(_In_ const SID &rhs) const throw();
 
 	const SID_IDENTIFIER_AUTHORITY *GetPSID_IDENTIFIER_AUTHORITY() const throw();
-	DWORD GetSubAuthority(DWORD nSubAuthority) const throw();
+	DWORD GetSubAuthority(_In_ DWORD nSubAuthority) const throw();
 	UCHAR GetSubAuthorityCount() const throw();
 	bool IsValid() const throw();
 
 private:
-	void Copy(const SID &rhs) throw(...);
+	void Copy(_In_ const SID &rhs) throw(...);
 	void Clear() throw();
 	void GetAccountNameAndDomain() const throw(...);
 	SID* _GetPSID() const throw();
@@ -93,15 +103,27 @@ private:
 	CString m_strSystem;
 };
 
-bool operator==(const CSid &lhs, const CSid &rhs) throw();
-bool operator!=(const CSid &lhs, const CSid &rhs) throw();
+bool operator==(
+	_In_ const CSid &lhs,
+	_In_ const CSid &rhs) throw();
+bool operator!=(
+	_In_ const CSid &lhs,
+	_In_ const CSid &rhs) throw();
 
 // sort operations are provided to allow CSids to be put into
 // sorted stl collections (stl::[multi]map, stl::[multi]set)
-bool operator<(const CSid &lhs, const CSid &rhs) throw();
-bool operator>(const CSid &lhs, const CSid &rhs) throw();
-bool operator<=(const CSid &lhs, const CSid &rhs) throw();
-bool operator>=(const CSid &lhs, const CSid &rhs) throw();
+bool operator<(
+	_In_ const CSid &lhs,
+	_In_ const CSid &rhs) throw();
+bool operator>(
+	_In_ const CSid &lhs,
+	_In_ const CSid &rhs) throw();
+bool operator<=(
+	_In_ const CSid &lhs,
+	_In_ const CSid &rhs) throw();
+bool operator>=(
+	_In_ const CSid &lhs,
+	_In_ const CSid &rhs) throw();
 
 // **************************************************************
 // Well-known sids
@@ -167,32 +189,32 @@ public:
 	CAcl() throw();
 	virtual ~CAcl() throw();
 
-	CAcl(const CAcl &rhs) throw(...);
-	CAcl &operator=(const CAcl &rhs) throw(...);
+	CAcl(_In_ const CAcl &rhs) throw(...);
+	CAcl &operator=(_In_ const CAcl &rhs) throw(...);
 
 	typedef CAtlArray<ACCESS_MASK> CAccessMaskArray;
 	typedef CAtlArray<BYTE> CAceTypeArray;
 	typedef CAtlArray<BYTE> CAceFlagArray;
 
 	void GetAclEntries(
-		CSid::CSidArray *pSids,
-		CAccessMaskArray *pAccessMasks = NULL,
-		CAceTypeArray *pAceTypes = NULL,
-		CAceFlagArray *pAceFlags = NULL) const throw(...);
+		_Out_ CSid::CSidArray *pSids,
+		_Out_opt_ CAccessMaskArray *pAccessMasks = NULL,
+		_Out_opt_ CAceTypeArray *pAceTypes = NULL,
+		_Out_opt_ CAceFlagArray *pAceFlags = NULL) const throw(...);
 	void GetAclEntry(
-		UINT nIndex,
-		CSid* pSid,
-		ACCESS_MASK* pMask = NULL,
-		BYTE* pType = NULL,
-		BYTE* pFlags = NULL,
-		GUID* pObjectType = NULL,
-		GUID* pInheritedObjectType = NULL) const throw(...);
+		_In_ UINT nIndex,
+		_Inout_opt_ CSid* pSid,
+		_Out_opt_ ACCESS_MASK* pMask = NULL,
+		_Out_opt_ BYTE* pType = NULL,
+		_Out_opt_ BYTE* pFlags = NULL,
+		_Out_opt_ GUID* pObjectType = NULL,
+		_Out_opt_ GUID* pInheritedObjectType = NULL) const throw(...);
 
-	bool RemoveAces(const CSid &rSid) throw(...);
+	bool RemoveAces(_In_ const CSid &rSid) throw(...);
 
 	virtual UINT GetAceCount() const throw() = 0;
 	virtual void RemoveAllAces() throw() = 0;
-	virtual void RemoveAce(UINT nIndex) = 0;
+	virtual void RemoveAce(_In_ UINT nIndex) = 0;
 
 	const ACL *GetPACL() const throw(...);
 	operator const ACL *() const throw(...);
@@ -213,11 +235,14 @@ protected:
 	class CAce
 	{
 	public:
-		CAce(const CSid &rSid, ACCESS_MASK accessmask, BYTE aceflags) throw(...);
+		CAce(
+			_In_ const CSid &rSid,
+			_In_ ACCESS_MASK accessmask,
+			_In_ BYTE aceflags) throw(...);
 		virtual ~CAce() throw();
 
-		CAce(const CAce &rhs) throw(...);
-		CAce &operator=(const CAce &rhs) throw(...);
+		CAce(_In_ const CAce &rhs) throw(...);
+		CAce &operator=(_In_ const CAce &rhs) throw(...);
 
 		virtual void *GetACE() const throw(...) = 0;
 		virtual UINT GetLength() const throw() = 0;
@@ -230,7 +255,7 @@ protected:
 		BYTE AceFlags() const throw();
 		const CSid &Sid() const throw();
 
-		void AddAccess(ACCESS_MASK accessmask) throw();
+		void AddAccess(_In_ ACCESS_MASK accessmask) throw();
 
 	protected:
 		CSid m_sid;
@@ -239,7 +264,7 @@ protected:
 		mutable void *m_pAce;
 	};
 
-	virtual const CAce *GetAce(UINT nIndex) const = 0;
+	virtual const CAce *GetAce(_In_ UINT nIndex) const = 0;
 	virtual void PrepareAcesForACL() const throw();
 
 	DWORD m_dwAclRevision;
@@ -248,47 +273,59 @@ protected:
 // ************************************************
 // CDacl
 
-class CDacl : public CAcl
+class CDacl :
+	public CAcl
 {
 public:
 	CDacl() throw();
 	virtual ~CDacl() throw();
 
-	CDacl(const CDacl &rhs) throw(...);
-	CDacl &operator=(const CDacl &rhs) throw(...);
+	CDacl(_In_ const CDacl &rhs) throw(...);
+	CDacl &operator=(_In_ const CDacl &rhs) throw(...);
 
-	CDacl(const ACL &rhs) throw(...);
-	CDacl &operator=(const ACL &rhs) throw(...);
+	CDacl(_In_ const ACL &rhs) throw(...);
+	CDacl &operator=(_In_ const ACL &rhs) throw(...);
 
-	bool AddAllowedAce(const CSid &rSid, ACCESS_MASK accessmask, BYTE aceflags = 0) throw(...);
-	bool AddDeniedAce(const CSid &rSid, ACCESS_MASK accessmask, BYTE aceflags = 0) throw(...);
+	bool AddAllowedAce(
+		_In_ const CSid &rSid,
+		_In_ ACCESS_MASK accessmask,
+		_In_ BYTE aceflags = 0) throw(...);
+	bool AddDeniedAce(
+		_In_ const CSid &rSid,
+		_In_ ACCESS_MASK accessmask,
+		_In_ BYTE aceflags = 0) throw(...);
 #if(_WIN32_WINNT >= 0x0500)
 	bool AddAllowedAce(
-		const CSid &rSid,
-		ACCESS_MASK accessmask,
-		BYTE aceflags,
-		const GUID *pObjectType,
-		const GUID *pInheritedObjectType) throw(...);
+		_In_ const CSid &rSid,
+		_In_ ACCESS_MASK accessmask,
+		_In_ BYTE aceflags,
+		_In_ const GUID *pObjectType,
+		_In_ const GUID *pInheritedObjectType) throw(...);
 	bool AddDeniedAce(
-		const CSid &rSid,
-		ACCESS_MASK accessmask,
-		BYTE aceflags,
-		const GUID *pObjectType,
-		const GUID *pInheritedObjectType) throw(...);
+		_In_ const CSid &rSid,
+		_In_ ACCESS_MASK accessmask,
+		_In_ BYTE aceflags,
+		_In_ const GUID *pObjectType,
+		_In_ const GUID *pInheritedObjectType) throw(...);
 #endif
 	void RemoveAllAces() throw();
-	void RemoveAce(UINT nIndex);
+	void RemoveAce(_In_ UINT nIndex);
 
 	UINT GetAceCount() const throw();
 
 private:
-	void Copy(const CDacl &rhs) throw(...);
-	void Copy(const ACL &rhs) throw(...);
+	void Copy(_In_ const CDacl &rhs) throw(...);
+	void Copy(_In_ const ACL &rhs) throw(...);
 
-	class CAccessAce : public CAcl::CAce
+	class CAccessAce : 
+		public CAcl::CAce
 	{
 	public:
-		CAccessAce(const CSid &rSid, ACCESS_MASK accessmask, BYTE aceflags, bool bAllowAccess) throw(...);
+		CAccessAce(
+			_In_ const CSid &rSid,
+			_In_ ACCESS_MASK accessmask,
+			_In_ BYTE aceflags,
+			_In_ bool bAllowAccess) throw(...);
 		virtual ~CAccessAce() throw();
 
 		void *GetACE() const throw(...);
@@ -298,27 +335,30 @@ private:
 		bool Allow() const throw();
 		bool Inherited() const throw();
 
-		static int Order(const CAccessAce &lhs, const CAccessAce &rhs) throw();
+		static int Order(
+			_In_ const CAccessAce &lhs,
+			_In_ const CAccessAce &rhs) throw();
 
 	protected:
 		bool m_bAllow;
 	};
 
 #if(_WIN32_WINNT >= 0x0500)
-	class CAccessObjectAce : public CAccessAce
+	class CAccessObjectAce : 
+		public CAccessAce
 	{
 	public:
 		CAccessObjectAce(
-			const CSid &rSid,
-			ACCESS_MASK accessmask,
-			BYTE aceflags,
-			bool bAllowAccess,
-			const GUID *pObjectType,
-			const GUID *pInheritedObjectType) throw(...);
+			_In_ const CSid &rSid,
+			_In_ ACCESS_MASK accessmask,
+			_In_ BYTE aceflags,
+			_In_ bool bAllowAccess,
+			_In_opt_ const GUID *pObjectType,
+			_In_opt_ const GUID *pInheritedObjectType) throw(...);
 		virtual ~CAccessObjectAce() throw();
 
-		CAccessObjectAce(const CAccessObjectAce &rhs) throw(...);
-		CAccessObjectAce &operator=(const CAccessObjectAce &rhs) throw(...);
+		CAccessObjectAce(_In_ const CAccessObjectAce &rhs) throw(...);
+		CAccessObjectAce &operator=(_In_ const CAccessObjectAce &rhs) throw(...);
 
 		void *GetACE() const throw(...);
 		UINT GetLength() const throw();
@@ -333,7 +373,7 @@ private:
 	};
 
 #endif
-	const CAcl::CAce *GetAce(UINT nIndex) const;
+	const CAcl::CAce *GetAce(_In_ UINT nIndex) const;
 
 	void PrepareAcesForACL() const throw();
 
@@ -343,52 +383,54 @@ private:
 //******************************************
 // CSacl
 
-class CSacl : public CAcl
+class CSacl : 
+	public CAcl
 {
 public:
 	CSacl() throw();
 	virtual ~CSacl() throw();
 
-	CSacl(const CSacl &rhs) throw(...);
-	CSacl &operator=(const CSacl &rhs) throw(...);
+	CSacl(_In_ const CSacl &rhs) throw(...);
+	CSacl &operator=(_In_ const CSacl &rhs) throw(...);
 
-	CSacl(const ACL &rhs) throw(...);
-	CSacl &operator=(const ACL &rhs) throw(...);
+	CSacl(_In_ const ACL &rhs) throw(...);
+	CSacl &operator=(_In_ const ACL &rhs) throw(...);
 
 	bool AddAuditAce(
-		const CSid &rSid,
-		ACCESS_MASK accessmask,
-		bool bSuccess,
-		bool bFailure,
-		BYTE aceflags = 0) throw(...);
+		_In_ const CSid &rSid,
+		_In_ ACCESS_MASK accessmask,
+		_In_ bool bSuccess,
+		_In_ bool bFailure,
+		_In_ BYTE aceflags = 0) throw(...);
 #if(_WIN32_WINNT >= 0x0500)
 	bool AddAuditAce(
-		const CSid &rSid,
-		ACCESS_MASK accessmask,
-		bool bSuccess,
-		bool bFailure,
-		BYTE aceflags,
-		const GUID *pObjectType,
-		const GUID *pInheritedObjectType) throw(...);
+		_In_ const CSid &rSid,
+		_In_ ACCESS_MASK accessmask,
+		_In_ bool bSuccess,
+		_In_ bool bFailure,
+		_In_ BYTE aceflags,
+		_In_ const GUID *pObjectType,
+		_In_ const GUID *pInheritedObjectType) throw(...);
 #endif
 	void RemoveAllAces() throw();
-	void RemoveAce(UINT nIndex);
+	void RemoveAce(_In_ UINT nIndex);
 
 	UINT GetAceCount() const throw();
 
 private:
-	void Copy(const CSacl &rhs) throw(...);
-	void Copy(const ACL &rhs) throw(...);
+	void Copy(_In_ const CSacl &rhs) throw(...);
+	void Copy(_In_ const ACL &rhs) throw(...);
 
-	class CAuditAce : public CAcl::CAce
+	class CAuditAce : 
+		public CAcl::CAce
 	{
 	public:
 		CAuditAce(
-			const CSid &rSid,
-			ACCESS_MASK accessmask,
-			BYTE aceflags,
-			bool bAuditSuccess,
-			bool bAuditFailure) throw(...);
+			_In_ const CSid &rSid,
+			_In_ ACCESS_MASK accessmask,
+			_In_ BYTE aceflags,
+			_In_ bool bAuditSuccess,
+			_In_ bool bAuditFailure) throw(...);
 		virtual ~CAuditAce() throw();
 
 		void *GetACE() const throw(...);
@@ -400,21 +442,22 @@ private:
 	};
 
 #if(_WIN32_WINNT >= 0x0500)
-	class CAuditObjectAce : public CAuditAce
+	class CAuditObjectAce :
+		public CAuditAce
 	{
 	public:
 		CAuditObjectAce(
-			const CSid &rSid,
-			ACCESS_MASK accessmask,
-			BYTE aceflags,
-			bool bAuditSuccess,
-			bool bAuditFailure,
-			const GUID *pObjectType,
-			const GUID *pInheritedObjectType) throw(...);
+			_In_ const CSid &rSid,
+			_In_ ACCESS_MASK accessmask,
+			_In_ BYTE aceflags,
+			_In_ bool bAuditSuccess,
+			_In_ bool bAuditFailure,
+			_In_opt_ const GUID *pObjectType,
+			_In_opt_ const GUID *pInheritedObjectType) throw(...);
 		virtual ~CAuditObjectAce() throw();
 
-		CAuditObjectAce(const CAuditObjectAce &rhs) throw(...);
-		CAuditObjectAce &operator=(const CAuditObjectAce &rhs) throw(...);
+		CAuditObjectAce(_In_ const CAuditObjectAce &rhs) throw(...);
+		CAuditObjectAce &operator=(_In_ const CAuditObjectAce &rhs) throw(...);
 
 		void *GetACE() const throw(...);
 		UINT GetLength() const throw();
@@ -428,7 +471,7 @@ private:
 		GUID *m_pInheritedObjectType;
 	};
 #endif
-	const CAce *GetAce(UINT nIndex) const;
+	const CAce *GetAce(_In_ UINT nIndex) const;
 
 	CAutoPtrArray<CAuditAce> m_acl;
 };
@@ -442,32 +485,52 @@ public:
 	CSecurityDesc() throw();
 	virtual ~CSecurityDesc() throw();
 
-	CSecurityDesc(const CSecurityDesc &rhs) throw(...);
-	CSecurityDesc &operator=(const CSecurityDesc &rhs) throw(...);
+	CSecurityDesc(_In_ const CSecurityDesc &rhs) throw(...);
+	CSecurityDesc &operator=(_In_ const CSecurityDesc &rhs) throw(...);
 
-	CSecurityDesc(const SECURITY_DESCRIPTOR &rhs) throw(...);
-	CSecurityDesc &operator=(const SECURITY_DESCRIPTOR &rhs) throw(...);
+	CSecurityDesc(_In_ const SECURITY_DESCRIPTOR &rhs) throw(...);
+	CSecurityDesc &operator=(_In_ const SECURITY_DESCRIPTOR &rhs) throw(...);
 
 #if(_WIN32_WINNT >= 0x0500)
-	bool FromString(LPCTSTR pstr) throw(...);
+	bool FromString(_In_z_ LPCTSTR pstr) throw(...);
 	bool ToString(
-		CString *pstr,
-		SECURITY_INFORMATION si =
+		_In_ CString *pstr,
+		_In_ SECURITY_INFORMATION si =
 			OWNER_SECURITY_INFORMATION |
 			GROUP_SECURITY_INFORMATION |
 			DACL_SECURITY_INFORMATION |
 			SACL_SECURITY_INFORMATION) const throw(...);
 #endif
 
-	void SetOwner(const CSid &sid, bool bDefaulted = false) throw(...);
-	void SetGroup(const CSid &sid, bool bDefaulted = false) throw(...);
-	void SetDacl(const CDacl &Dacl, bool bDefaulted = false) throw(...);
-	void SetDacl(bool bPresent, bool bDefaulted = false) throw(...);
-	void SetSacl(const CSacl &Sacl, bool bDefaulted = false) throw(...);
-	bool GetOwner(CSid *pSid, bool *pbDefaulted = NULL) const throw(...);
-	bool GetGroup(CSid *pSid, bool *pbDefaulted = NULL) const throw(...);
-	bool GetDacl(CDacl *pDacl, bool *pbPresent = NULL, bool *pbDefaulted = NULL) const throw(...);
-	bool GetSacl(CSacl *pSacl, bool *pbPresent = NULL, bool *pbDefaulted = NULL) const throw(...);
+	void SetOwner(
+		_In_ const CSid &sid,
+		_In_ bool bDefaulted = false) throw(...);
+	void SetGroup(
+		_In_ const CSid &sid,
+		_In_ bool bDefaulted = false) throw(...);
+	void SetDacl(
+		_In_ const CDacl &Dacl,
+		_In_ bool bDefaulted = false) throw(...);
+	void SetDacl(
+		_In_ bool bPresent,
+		_In_ bool bDefaulted = false) throw(...);
+	void SetSacl(
+		_In_ const CSacl &Sacl,
+		_In_ bool bDefaulted = false) throw(...);
+	bool GetOwner(
+		_Out_ CSid *pSid,
+		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
+	bool GetGroup(
+		_Out_ CSid *pSid,
+		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
+	bool GetDacl(
+		_Out_ CDacl *pDacl,
+		_Out_opt_ bool *pbPresent = NULL,
+		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
+	bool GetSacl(
+		_Out_ CSacl *pSacl,
+		_Out_opt_ bool *pbPresent = NULL,
+		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
 
 	bool IsDaclDefaulted() const throw();
 	bool IsDaclPresent() const throw();
@@ -486,15 +549,17 @@ public:
 	const SECURITY_DESCRIPTOR *GetPSECURITY_DESCRIPTOR() const throw();
 	operator const SECURITY_DESCRIPTOR *() const throw();
 
-	void GetSECURITY_DESCRIPTOR(SECURITY_DESCRIPTOR *pSD, LPDWORD lpdwBufferLength) throw(...);
+	void GetSECURITY_DESCRIPTOR(
+		_Out_ SECURITY_DESCRIPTOR *pSD,
+		_Inout_ LPDWORD lpdwBufferLength) throw(...);
 
 	UINT GetLength() throw();
 
-	bool GetControl(SECURITY_DESCRIPTOR_CONTROL *psdc) const throw();
+	bool GetControl(_Out_ SECURITY_DESCRIPTOR_CONTROL *psdc) const throw();
 #if(_WIN32_WINNT >= 0x0500)
 	bool SetControl(
-		SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
-		SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet) throw();
+		_In_ SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+		_In_ SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet) throw();
 #endif
 
 	void MakeSelfRelative() throw(...);
@@ -503,7 +568,7 @@ public:
 protected:
 	virtual void Clear() throw();
 	void AllocateAndInitializeSecurityDescriptor() throw(...);
-	void Init(const SECURITY_DESCRIPTOR &rhs) throw(...);
+	void Init(_In_ const SECURITY_DESCRIPTOR &rhs) throw(...);
 
 	SECURITY_DESCRIPTOR *m_pSecurityDescriptor;
 };
@@ -511,13 +576,18 @@ protected:
 // **************************************************************
 // CSecurityAttributes
 
-class CSecurityAttributes : public SECURITY_ATTRIBUTES
+class CSecurityAttributes :
+	public SECURITY_ATTRIBUTES
 {
 public:
 	CSecurityAttributes() throw();
-	explicit CSecurityAttributes(const CSecurityDesc &rSecurityDescriptor, bool bInheritHandle = false) throw(...);
+	explicit CSecurityAttributes(
+		_In_ const CSecurityDesc &rSecurityDescriptor,
+		_In_ bool bInheritHandle = false) throw(...);
 
-	void Set(const CSecurityDesc &rSecurityDescriptor, bool bInheritHandle = false) throw(...);
+	void Set(
+		_In_ const CSecurityDesc &rSecurityDescriptor,
+		_In_ bool bInheritHandle = false) throw(...);
 
 protected:
 	CSecurityDesc m_SecurityDescriptor;
@@ -531,17 +601,21 @@ public:
 	typedef const LUID& INARGTYPE;
 	typedef LUID& OUTARGTYPE;
 
-	static ULONG Hash( INARGTYPE luid ) throw()
+	static ULONG Hash(_In_ INARGTYPE luid) throw()
 	{
 		return luid.HighPart ^ luid.LowPart;
 	}
 
-	static BOOL CompareElements( INARGTYPE element1, INARGTYPE element2 ) throw()
+	static BOOL CompareElements(
+		_In_ INARGTYPE element1,
+		_In_ INARGTYPE element2) throw()
 	{
 		return element1.HighPart == element2.HighPart && element1.LowPart == element2.LowPart;
 	}
 
-	static int CompareElementsOrdered( INARGTYPE element1, INARGTYPE element2 ) throw()
+	static int CompareElementsOrdered(
+		_In_ INARGTYPE element1,
+		_In_ INARGTYPE element2 ) throw()
 	{
 		_LARGE_INTEGER li1, li2;
 		li1.LowPart = element1.LowPart;
@@ -569,24 +643,32 @@ public:
 	CTokenPrivileges() throw();
 	virtual ~CTokenPrivileges() throw();
 
-	CTokenPrivileges(const CTokenPrivileges &rhs) throw(...);
-	CTokenPrivileges &operator=(const CTokenPrivileges &rhs) throw(...);
+	CTokenPrivileges(_In_ const CTokenPrivileges &rhs) throw(...);
+	CTokenPrivileges &operator=(_In_ const CTokenPrivileges &rhs) throw(...);
 
-	CTokenPrivileges(const TOKEN_PRIVILEGES &rPrivileges) throw(...);
-	CTokenPrivileges &operator=(const TOKEN_PRIVILEGES &rPrivileges) throw(...);
+	CTokenPrivileges(_In_ const TOKEN_PRIVILEGES &rPrivileges) throw(...);
+	CTokenPrivileges &operator=(_In_ const TOKEN_PRIVILEGES &rPrivileges) throw(...);
 
-	void Add(const TOKEN_PRIVILEGES &rPrivileges) throw(...);
-	bool Add(LPCTSTR pszPrivilege, bool bEnable) throw(...);
+	void Add(_In_ const TOKEN_PRIVILEGES &rPrivileges) throw(...);
+	bool Add(
+		_In_z_ LPCTSTR pszPrivilege,
+		_In_ bool bEnable) throw(...);
 
 	typedef CAtlArray<CString> CNames;
 	typedef CAtlArray<DWORD> CAttributes;
 
-	bool LookupPrivilege(LPCTSTR pszPrivilege, DWORD *pdwAttributes = NULL) const throw(...);
-	void GetNamesAndAttributes(CNames *pNames, CAttributes *pAttributes = NULL) const throw(...);
-	void GetDisplayNames(CNames *pDisplayNames) const throw(...);
-	void GetLuidsAndAttributes(CLUIDArray *pPrivileges, CAttributes *pAttributes = NULL) const throw(...);
+	bool LookupPrivilege(
+		_In_z_ LPCTSTR pszPrivilege,
+		_Out_opt_ DWORD *pdwAttributes = NULL) const throw(...);
+	void GetNamesAndAttributes(
+		_Inout_ CNames *pNames,
+		_Inout_opt_ CAttributes *pAttributes = NULL) const throw(...);
+	void GetDisplayNames(_Inout_ CNames *pDisplayNames) const throw(...);
+	void GetLuidsAndAttributes(
+		_Inout_ CLUIDArray *pPrivileges,
+		_Inout_opt_ CAttributes *pAttributes = NULL) const throw(...);
 
-	bool Delete(LPCTSTR pszPrivilege) throw();
+	bool Delete(_In_z_ LPCTSTR pszPrivilege) throw();
 	void DeleteAll() throw();
 
 	UINT GetCount() const throw();
@@ -601,7 +683,7 @@ private:
 	mutable TOKEN_PRIVILEGES *m_pTokenPrivileges;
 	bool m_bDirty;
 
-	void AddPrivileges(const TOKEN_PRIVILEGES &rPrivileges) throw(...);
+	void AddPrivileges(_In_ const TOKEN_PRIVILEGES &rPrivileges) throw(...);
 };
 
 //******************************************************
@@ -613,21 +695,23 @@ public:
 	CTokenGroups() throw();
 	virtual ~CTokenGroups() throw();
 
-	CTokenGroups(const CTokenGroups &rhs) throw(...);
-	CTokenGroups &operator=(const CTokenGroups &rhs) throw(...);
+	CTokenGroups(_In_ const CTokenGroups &rhs) throw(...);
+	CTokenGroups &operator=(_In_ const CTokenGroups &rhs) throw(...);
 
-	CTokenGroups(const TOKEN_GROUPS &rhs) throw(...);
-	CTokenGroups &operator=(const TOKEN_GROUPS &rhs) throw(...);
+	CTokenGroups(_In_ const TOKEN_GROUPS &rhs) throw(...);
+	CTokenGroups &operator=(_In_ const TOKEN_GROUPS &rhs) throw(...);
 
-	void Add(const TOKEN_GROUPS &rTokenGroups) throw(...);
-	void Add(const CSid &rSid, DWORD dwAttributes) throw(...);
+	void Add(_In_ const TOKEN_GROUPS &rTokenGroups) throw(...);
+	void Add(_In_ const CSid &rSid, _In_ DWORD dwAttributes) throw(...);
 
-	bool LookupSid(const CSid &rSid, DWORD *pdwAttributes = NULL) const throw();
+	bool LookupSid(
+		_In_ const CSid &rSid,
+		_Out_opt_ DWORD *pdwAttributes = NULL) const throw();
 	void GetSidsAndAttributes(
-		CSid::CSidArray *pSids,
-		CAtlArray<DWORD> *pAttributes = NULL) const throw(...);
+		_Inout_ CSid::CSidArray *pSids,
+		_Inout_opt_ CAtlArray<DWORD> *pAttributes = NULL) const throw(...);
 
-	bool Delete(const CSid &rSid) throw();
+	bool Delete(_In_ const CSid &rSid) throw();
 	void DeleteAll() throw();
 
 	UINT GetCount() const throw();
@@ -637,16 +721,18 @@ public:
 	operator const TOKEN_GROUPS *() const throw(...);
 
 private:
-	class CTGElementTraits : 
+	class CTGElementTraits :
 		public CElementTraitsBase< CSid >
 	{
 	public:
-		static UINT Hash(const CSid &sid) throw()
+		static UINT Hash(_In_ const CSid &sid) throw()
 		{
 			return sid.GetSubAuthority(sid.GetSubAuthorityCount() - 1);
 		}
 
-		static bool CompareElements( INARGTYPE element1, INARGTYPE element2 ) throw()
+		static bool CompareElements(
+			_In_ INARGTYPE element1,
+			_In_ INARGTYPE element2 ) throw()
 		{
 			return( element1 == element2 );
 		}
@@ -657,7 +743,7 @@ private:
 	mutable TOKEN_GROUPS *m_pTokenGroups;
 	mutable bool m_bDirty;
 
-	void AddTokenGroups(const TOKEN_GROUPS &rTokenGroups) throw(...);
+	void AddTokenGroups(_In_ const TOKEN_GROUPS &rTokenGroups) throw(...);
 };
 
 // *************************************
@@ -669,74 +755,102 @@ public:
 	CAccessToken() throw();
 	virtual ~CAccessToken() throw();
 
-	void Attach(HANDLE hToken) throw();
+	void Attach(_In_ HANDLE hToken) throw();
 	HANDLE Detach() throw();
 	HANDLE GetHandle() const throw();
 	HKEY HKeyCurrentUser() const throw();
 
 	// Privileges
-	bool EnablePrivilege(LPCTSTR pszPrivilege, CTokenPrivileges *pPreviousState = NULL,bool* pbErrNotAllAssigned=NULL) throw(...);
+	bool EnablePrivilege(
+		_In_z_ LPCTSTR pszPrivilege,
+		_In_opt_ CTokenPrivileges *pPreviousState = NULL,
+		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
 	bool EnablePrivileges(
-		const CAtlArray<LPCTSTR> &rPrivileges,
-		CTokenPrivileges *pPreviousState = NULL,bool* pbErrNotAllAssigned=NULL) throw(...);
-	bool DisablePrivilege(LPCTSTR pszPrivilege, CTokenPrivileges *pPreviousState = NULL,bool* pbErrNotAllAssigned=NULL) throw(...);
+		_In_ const CAtlArray<LPCTSTR> &rPrivileges,
+		_Inout_opt_ CTokenPrivileges *pPreviousState = NULL,
+		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
+	bool DisablePrivilege(
+		_In_z_ LPCTSTR pszPrivilege,
+		_In_opt_ CTokenPrivileges *pPreviousState = NULL,
+		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
 	bool DisablePrivileges(
-		const CAtlArray<LPCTSTR> &rPrivileges,
-		CTokenPrivileges *pPreviousState = NULL,bool* pbErrNotAllAssigned=NULL) throw(...);
+		_In_ const CAtlArray<LPCTSTR> &rPrivileges,
+		_Inout_opt_ CTokenPrivileges *pPreviousState = NULL,
+		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
 	bool EnableDisablePrivileges(
-		const CTokenPrivileges &rPrivilenges,
-		CTokenPrivileges *pPreviousState = NULL,bool* pbErrNotAllAssigned=NULL) throw(...);
-	bool PrivilegeCheck(PPRIVILEGE_SET RequiredPrivileges, bool *pbResult) const throw();
+		_In_ const CTokenPrivileges &rPrivilenges,
+		_Inout_opt_ CTokenPrivileges *pPreviousState = NULL,
+		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
+	bool PrivilegeCheck(
+		_In_ PPRIVILEGE_SET RequiredPrivileges,
+		_Out_ bool *pbResult) const throw();
 
-	bool GetLogonSid(CSid *pSid) const throw(...);
-	bool GetTokenId(LUID *pluid) const throw(...);
-	bool GetLogonSessionId(LUID *pluid) const throw(...);
+	bool GetLogonSid(_Inout_ CSid *pSid) const throw(...);
+	bool GetTokenId(_Out_ LUID *pluid) const throw(...);
+	bool GetLogonSessionId(_Out_ LUID *pluid) const throw(...);
 
-	bool CheckTokenMembership(const CSid &rSid, bool *pbIsMember) const throw(...);
+	bool CheckTokenMembership(
+		_In_ const CSid &rSid,
+		_Inout_ bool *pbIsMember) const throw(...);
 #if(_WIN32_WINNT >= 0x0500)
 	bool IsTokenRestricted() const throw();
 #endif
 
 	// Token Information
 protected:
-	void InfoTypeToRetType(CSid *pRet, const TOKEN_USER &rWork) const throw(...)
+	void InfoTypeToRetType(
+		_Inout_ CSid *pRet,
+		_In_ const TOKEN_USER &rWork) const throw(...)
 	{
 		ATLENSURE(pRet);
 		*pRet = *static_cast<SID *>(rWork.User.Sid);
 	}
 
-	void InfoTypeToRetType(CTokenGroups *pRet, const TOKEN_GROUPS &rWork) const throw(...)
+	void InfoTypeToRetType(
+		_Inout_ CTokenGroups *pRet,
+		_In_ const TOKEN_GROUPS &rWork) const throw(...)
 	{
 		ATLENSURE(pRet);
 		*pRet = rWork;
 	}
 
-	void InfoTypeToRetType(CTokenPrivileges *pRet, const TOKEN_PRIVILEGES &rWork) const throw(...)
+	void InfoTypeToRetType(
+		_Inout_ CTokenPrivileges *pRet,
+		_In_ const TOKEN_PRIVILEGES &rWork) const throw(...)
 	{
 		ATLENSURE(pRet);
 		*pRet = rWork;
 	}
 
-	void InfoTypeToRetType(CSid *pRet, const TOKEN_OWNER &rWork) const throw(...)
+	void InfoTypeToRetType(
+		_Inout_ CSid *pRet,
+		_In_ const TOKEN_OWNER &rWork) const throw(...)
 	{
 		ATLENSURE(pRet);
 		*pRet = *static_cast<SID *>(rWork.Owner);
 	}
 
-	void InfoTypeToRetType(CSid *pRet, const TOKEN_PRIMARY_GROUP &rWork) const throw(...)
+	void InfoTypeToRetType(
+		_Inout_ CSid *pRet,
+		_In_ const TOKEN_PRIMARY_GROUP &rWork) const throw(...)
 	{
 		ATLENSURE(pRet);
 		*pRet = *static_cast<SID *>(rWork.PrimaryGroup);
 	}
 
-	void InfoTypeToRetType(CDacl *pRet, const TOKEN_DEFAULT_DACL &rWork) const throw(...)
+	void InfoTypeToRetType(
+		_Inout_ CDacl *pRet,
+		_In_ const TOKEN_DEFAULT_DACL &rWork) const throw(...)
 	{
 		ATLENSURE(pRet);
 		*pRet = *rWork.DefaultDacl;
 	}
 
 	template<typename RET_T, typename INFO_T>
-	bool GetInfoConvert(RET_T *pRet, TOKEN_INFORMATION_CLASS TokenClass, INFO_T *pWork = NULL) const throw(...)
+	bool GetInfoConvert(
+		_Inout_ RET_T *pRet,
+		_In_ TOKEN_INFORMATION_CLASS TokenClass,
+		_Out_opt_ INFO_T *pWork = NULL) const throw(...)
 	{
 		ATLASSERT(pRet);
 		if(!pRet)
@@ -759,7 +873,9 @@ protected:
 	}
 
 	template<typename RET_T>
-	bool GetInfo(RET_T *pRet, TOKEN_INFORMATION_CLASS TokenClass) const throw(...)
+	bool GetInfo(
+		_Inout_ RET_T *pRet,
+		_In_ TOKEN_INFORMATION_CLASS TokenClass) const throw(...)
 	{
 		ATLASSERT(pRet);
 		if(!pRet)
@@ -772,81 +888,86 @@ protected:
 	}
 
 public:
-	bool GetDefaultDacl(CDacl *pDacl) const throw(...);
-	bool GetGroups(CTokenGroups *pGroups) const throw(...);
-	bool GetImpersonationLevel(SECURITY_IMPERSONATION_LEVEL *pImpersonationLevel) const throw(...);
-	bool GetOwner(CSid *pSid) const throw(...);
-	bool GetPrimaryGroup(CSid *pSid) const throw(...);
-	bool GetPrivileges(CTokenPrivileges *pPrivileges) const throw(...);
-	bool GetTerminalServicesSessionId(DWORD *pdwSessionId) const throw(...);
-	bool GetSource(TOKEN_SOURCE *pSource) const throw(...);
-	bool GetStatistics(TOKEN_STATISTICS *pStatistics) const throw(...);
-	bool GetType(TOKEN_TYPE *pType) const throw(...);
-	bool GetUser(CSid *pSid) const throw(...);
+	bool GetDefaultDacl(_Inout_ CDacl *pDacl) const throw(...);
+	bool GetGroups(_Inout_ CTokenGroups *pGroups) const throw(...);
+	bool GetImpersonationLevel(_Inout_ SECURITY_IMPERSONATION_LEVEL *pImpersonationLevel) const throw(...);
+	bool GetOwner(_Inout_ CSid *pSid) const throw(...);
+	bool GetPrimaryGroup(_Inout_ CSid *pSid) const throw(...);
+	bool GetPrivileges(_Inout_ CTokenPrivileges *pPrivileges) const throw(...);
+	bool GetTerminalServicesSessionId(_Inout_ DWORD *pdwSessionId) const throw(...);
+	bool GetSource(_Inout_ TOKEN_SOURCE *pSource) const throw(...);
+	bool GetStatistics(_Inout_ TOKEN_STATISTICS *pStatistics) const throw(...);
+	bool GetType(_Inout_ TOKEN_TYPE *pType) const throw(...);
+	bool GetUser(_Inout_ CSid *pSid) const throw(...);
 
-	bool SetOwner(const CSid &rSid) throw(...);
-	bool SetPrimaryGroup(const CSid &rSid) throw(...);
-	bool SetDefaultDacl(const CDacl &rDacl) throw(...);
+	bool SetOwner(_In_ const CSid &rSid) throw(...);
+	bool SetPrimaryGroup(_In_ const CSid &rSid) throw(...);
+	bool SetDefaultDacl(_In_ const CDacl &rDacl) throw(...);
 
 	bool CreateImpersonationToken(
-		CAccessToken *pImp,
-		SECURITY_IMPERSONATION_LEVEL sil = SecurityImpersonation) const throw(...);
+		_Inout_ CAccessToken *pImp,
+		_In_ SECURITY_IMPERSONATION_LEVEL sil = SecurityImpersonation) const throw(...);
 	bool CreatePrimaryToken(
-		CAccessToken *pPri,
-		DWORD dwDesiredAccess = MAXIMUM_ALLOWED,
-		const CSecurityAttributes *pTokenAttributes = NULL) const throw(...);
+		_Inout_ CAccessToken *pPri,
+		_In_ DWORD dwDesiredAccess = MAXIMUM_ALLOWED,
+		_In_opt_ const CSecurityAttributes *pTokenAttributes = NULL) const throw(...);
 
 #if(_WIN32_WINNT >= 0x0500)
 	bool CreateRestrictedToken(
-		CAccessToken *pRestrictedToken,
-		const CTokenGroups &SidsToDisable,
-		const CTokenGroups &SidsToRestrict, 
-		const CTokenPrivileges &PrivilegesToDelete = CTokenPrivileges()) const throw(...);
+		_Inout_ CAccessToken *pRestrictedToken,
+		_In_ const CTokenGroups &SidsToDisable,
+		_In_ const CTokenGroups &SidsToRestrict,
+		_In_ const CTokenPrivileges &PrivilegesToDelete = CTokenPrivileges()) const throw(...);
 #endif
 
 	// Token API type functions
-	bool GetProcessToken(DWORD dwDesiredAccess, HANDLE hProcess = NULL) throw();
-	bool GetThreadToken(DWORD dwDesiredAccess, HANDLE hThread = NULL, bool bOpenAsSelf = true) throw();
-	bool GetEffectiveToken(DWORD dwDesiredAccess) throw();
+	bool GetProcessToken(
+		_In_ DWORD dwDesiredAccess,
+		_In_opt_ HANDLE hProcess = NULL) throw();
+	bool GetThreadToken(
+		_In_ DWORD dwDesiredAccess,
+		_In_opt_ HANDLE hThread = NULL,
+		_In_ bool bOpenAsSelf = true) throw();
+	bool GetEffectiveToken(_In_ DWORD dwDesiredAccess) throw();
 
 	bool OpenThreadToken(
-		DWORD dwDesiredAccess,
-		bool bImpersonate = false,
-		bool bOpenAsSelf = true,
-		SECURITY_IMPERSONATION_LEVEL sil = SecurityImpersonation) throw(...);
+		_In_ DWORD dwDesiredAccess,
+		_In_ bool bImpersonate = false,
+		_In_ bool bOpenAsSelf = true,
+		_In_ SECURITY_IMPERSONATION_LEVEL sil = SecurityImpersonation) throw(...);
 
-#if (_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM) 
+#if (_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM)
 	bool OpenCOMClientToken(
-		DWORD dwDesiredAccess,
-		bool bImpersonate = false,
-		bool bOpenAsSelf = true) throw(...);
-#endif //(_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM) 
+		_In_ DWORD dwDesiredAccess,
+		_In_ bool bImpersonate = false,
+		_In_ bool bOpenAsSelf = true) throw(...);
+#endif //(_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM)
 
 	bool OpenNamedPipeClientToken(
-		HANDLE hPipe,
-		DWORD dwDesiredAccess,
-		bool bImpersonate = false,
-		bool bOpenAsSelf = true) throw(...);
+		_In_ HANDLE hPipe,
+		_In_ DWORD dwDesiredAccess,
+		_In_ bool bImpersonate = false,
+		_In_ bool bOpenAsSelf = true) throw(...);
 	bool OpenRPCClientToken(
-		RPC_BINDING_HANDLE BindingHandle,
-		DWORD dwDesiredAccess,
-		bool bImpersonate = false,
-		bool bOpenAsSelf = true) throw(...);
+		_In_ RPC_BINDING_HANDLE BindingHandle,
+		_In_ DWORD dwDesiredAccess,
+		_In_ bool bImpersonate = false,
+		_In_ bool bOpenAsSelf = true) throw(...);
 
 	bool ImpersonateLoggedOnUser() const throw(...);
-	bool Impersonate(HANDLE hThread = NULL) const throw(...);
-	bool Revert(HANDLE hThread = NULL) const throw();
+	bool Impersonate(_In_opt_ HANDLE hThread = NULL) const throw(...);
+	bool Revert(_In_opt_ HANDLE hThread = NULL) const throw();
 
 	bool LoadUserProfile() throw(...);
 	HANDLE GetProfile() const throw();
 
 	// Must hold Tcb privilege
 	bool LogonUser(
-		LPCTSTR pszUserName,
-		LPCTSTR pszDomain,
-		LPCTSTR pszPassword,
-		DWORD dwLogonType = LOGON32_LOGON_INTERACTIVE,
-		DWORD dwLogonProvider = LOGON32_PROVIDER_DEFAULT) throw();
+		_In_z_ LPCTSTR pszUserName,
+		_In_z_ LPCTSTR pszDomain,
+		_In_z_ LPCTSTR pszPassword,
+		_In_ DWORD dwLogonType = LOGON32_LOGON_INTERACTIVE,
+		_In_ DWORD dwLogonProvider = LOGON32_PROVIDER_DEFAULT) throw();
 
 	// Must hold AssignPrimaryToken (unless restricted token) and
 	// IncreaseQuota privileges
@@ -864,20 +985,21 @@ public:
 
 protected:
 	bool EnableDisablePrivileges(
-		const CAtlArray<LPCTSTR> &rPrivileges,
-		bool bEnable,
-		CTokenPrivileges *pPreviousState,bool* pbErrNotAllAssigned=NULL) throw(...);
+		_In_ const CAtlArray<LPCTSTR> &rPrivileges,
+		_In_ bool bEnable,
+		_Inout_opt_ CTokenPrivileges *pPreviousState,
+		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
 	bool CheckImpersonation() const throw();
 
-	bool RevertToLevel(SECURITY_IMPERSONATION_LEVEL *pSil) const throw();
+	bool RevertToLevel(_In_opt_ SECURITY_IMPERSONATION_LEVEL *pSil) const throw();
 
 	virtual void Clear() throw();
 
 	HANDLE m_hToken, m_hProfile;
 
 private:
-	CAccessToken(const CAccessToken &rhs) throw(...);
-	CAccessToken &operator=(const CAccessToken &rhs) throw(...);
+	CAccessToken(_In_ const CAccessToken &rhs) throw(...);
+	CAccessToken &operator=(_In_ const CAccessToken &rhs) throw(...);
 
 	class CRevert
 	{
@@ -885,7 +1007,8 @@ private:
 		virtual bool Revert() throw() = 0;
 	};
 
-	class CRevertToSelf : public CRevert
+	class CRevertToSelf : 
+		public CRevert
 	{
 	public:
 		bool Revert() throw()
@@ -894,8 +1017,9 @@ private:
 		}
 	};
 
-#if (_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM) 
-	class CCoRevertToSelf : public CRevert
+#if (_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM)
+	class CCoRevertToSelf :
+		public CRevert
 	{
 	public:
 		bool Revert() throw()
@@ -903,12 +1027,13 @@ private:
 			return SUCCEEDED(::CoRevertToSelf());
 		}
 	};
-#endif //(_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM) 
+#endif //(_WIN32_WINNT >= 0x0400 ) || defined(_WIN32_DCOM)
 
-	class CRpcRevertToSelfEx : public CRevert
+	class CRpcRevertToSelfEx : 
+		public CRevert
 	{
 	public:
-		CRpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle) throw() :
+		CRpcRevertToSelfEx(_In_ RPC_BINDING_HANDLE BindingHandle) throw() :
 			m_hBinding(BindingHandle)
 		{
 		}
@@ -929,10 +1054,10 @@ private:
 class CAutoRevertImpersonation
 {
 public:
-	CAutoRevertImpersonation(const CAccessToken* pAT) throw();
+	CAutoRevertImpersonation(_In_ const CAccessToken* pAT) throw();
 	~CAutoRevertImpersonation() throw();
 
-	void Attach(const CAccessToken* pAT) throw();
+	void Attach(_In_ const CAccessToken* pAT) throw();
 	const CAccessToken* Detach() throw();
 
 	const CAccessToken* GetAccessToken() throw();
@@ -940,57 +1065,60 @@ public:
 private:
 	const CAccessToken* m_pAT;
 
-	CAutoRevertImpersonation(const CAutoRevertImpersonation &rhs) throw(...);
-	CAutoRevertImpersonation &operator=(const CAutoRevertImpersonation &rhs) throw(...);
+	CAutoRevertImpersonation(_In_ const CAutoRevertImpersonation &rhs) throw(...);
+	CAutoRevertImpersonation &operator=(_In_ const CAutoRevertImpersonation &rhs) throw(...);
 };
 
 //*******************************************
 // CPrivateObjectSecurityDesc
 
-class CPrivateObjectSecurityDesc : public CSecurityDesc
+class CPrivateObjectSecurityDesc : 
+	public CSecurityDesc
 {
 public:
 	CPrivateObjectSecurityDesc() throw();
 	~CPrivateObjectSecurityDesc() throw();
 
 	bool Create(
-		const CSecurityDesc *pParent,
-		const CSecurityDesc *pCreator,
-		bool bIsDirectoryObject,
-		const CAccessToken &Token,
-		PGENERIC_MAPPING GenericMapping) throw();
+		_In_opt_ const CSecurityDesc *pParent,
+		_In_opt_ const CSecurityDesc *pCreator,
+		_In_ bool bIsDirectoryObject,
+		_In_ const CAccessToken &Token,
+		_In_ PGENERIC_MAPPING GenericMapping) throw();
 
 #if(_WIN32_WINNT >= 0x0500)
 	bool Create(
-		const CSecurityDesc *pParent,
-		const CSecurityDesc *pCreator,
-		GUID *ObjectType,
-		bool bIsContainerObject,
-		ULONG AutoInheritFlags,
-		const CAccessToken &Token,
-		PGENERIC_MAPPING GenericMapping) throw();
+		_In_opt_ const CSecurityDesc *pParent,
+		_In_opt_ const CSecurityDesc *pCreator,
+		_In_opt_ GUID *ObjectType,
+		_In_ bool bIsContainerObject,
+		_In_ ULONG AutoInheritFlags,
+		_In_ const CAccessToken &Token,
+		_In_ PGENERIC_MAPPING GenericMapping) throw();
 #endif
 
-	bool Get(SECURITY_INFORMATION si, CSecurityDesc *pResult) const throw();
+	bool Get(
+		_In_ SECURITY_INFORMATION si,
+		_Inout_ CSecurityDesc *pResult) const throw();
 	bool Set(
-		SECURITY_INFORMATION si,
-		const CSecurityDesc &Modification,
-		PGENERIC_MAPPING GenericMapping,
-		const CAccessToken &Token) throw();
+		_In_ SECURITY_INFORMATION si,
+		_In_ const CSecurityDesc &Modification,
+		_In_ PGENERIC_MAPPING GenericMapping,
+		_In_ const CAccessToken &Token) throw();
 
 #if(_WIN32_WINNT >= 0x0500)
 	bool Set(
-		SECURITY_INFORMATION si,
-		const CSecurityDesc &Modification,
-		ULONG AutoInheritFlags,
-		PGENERIC_MAPPING GenericMapping,
-		const CAccessToken &Token) throw();
+		_In_ SECURITY_INFORMATION si,
+		_In_ const CSecurityDesc &Modification,
+		_In_ ULONG AutoInheritFlags,
+		_In_ PGENERIC_MAPPING GenericMapping,
+		_In_ const CAccessToken &Token) throw();
 
 	bool ConvertToAutoInherit(
-		const CSecurityDesc *pParent,
-		GUID *ObjectType,
-		bool bIsDirectoryObject,
-		PGENERIC_MAPPING GenericMapping) throw();
+		_In_opt_ const CSecurityDesc *pParent,
+		_In_opt_ GUID *ObjectType,
+		_In_ bool bIsDirectoryObject,
+		_In_ PGENERIC_MAPPING GenericMapping) throw();
 #endif
 
 protected:
@@ -999,125 +1127,125 @@ protected:
 private:
 	bool m_bPrivate;
 
-	CPrivateObjectSecurityDesc(const CPrivateObjectSecurityDesc &rhs) throw(...);
-	CPrivateObjectSecurityDesc &operator=(const CPrivateObjectSecurityDesc &rhs) throw(...);
+	CPrivateObjectSecurityDesc(_In_ const CPrivateObjectSecurityDesc &rhs) throw(...);
+	CPrivateObjectSecurityDesc &operator=(_In_ const CPrivateObjectSecurityDesc &rhs) throw(...);
 };
 
 //*******************************************
 // Global Functions
 
 inline bool AtlGetSecurityDescriptor(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	CSecurityDesc *pSecurityDescriptor,
-	SECURITY_INFORMATION requestedInfo =
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSecurityDesc *pSecurityDescriptor,
+	_In_ SECURITY_INFORMATION requestedInfo =
 		OWNER_SECURITY_INFORMATION |
 		GROUP_SECURITY_INFORMATION |
 		DACL_SECURITY_INFORMATION |
 		SACL_SECURITY_INFORMATION,
-	bool bRequestNeededPrivileges = true) throw(...);
+	_In_ bool bRequestNeededPrivileges = true) throw(...);
 
 inline bool AtlGetSecurityDescriptor(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	CSecurityDesc *pSecurityDescriptor,
-	SECURITY_INFORMATION requestedInfo =
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSecurityDesc *pSecurityDescriptor,
+	_In_ SECURITY_INFORMATION requestedInfo =
 		OWNER_SECURITY_INFORMATION |
 		GROUP_SECURITY_INFORMATION |
 		DACL_SECURITY_INFORMATION |
 		SACL_SECURITY_INFORMATION,
-	bool bRequestNeededPrivileges = true) throw(...);
+	_In_ bool bRequestNeededPrivileges = true) throw(...);
 
 inline bool AtlGetOwnerSid(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	CSid *pSid) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSid *pSid) throw(...);
 
 inline bool AtlSetOwnerSid(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	const CSid &rSid) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CSid &rSid) throw(...);
 
 inline bool AtlGetOwnerSid(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	CSid *pSid) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSid *pSid) throw(...);
 
 inline bool AtlSetOwnerSid(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	const CSid &rSid) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CSid &rSid) throw(...);
 
 inline bool AtlGetGroupSid(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	CSid *pSid) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSid *pSid) throw(...);
 
 inline bool AtlSetGroupSid(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	const CSid &rSid) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CSid &rSid) throw(...);
 
 inline bool AtlGetGroupSid(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	CSid *pSid) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSid *pSid) throw(...);
 
 inline bool AtlSetGroupSid(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	const CSid &rSid) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CSid &rSid) throw(...);
 
 inline bool AtlGetDacl(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	CDacl *pDacl) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CDacl *pDacl) throw(...);
 
 inline bool AtlSetDacl(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	const CDacl &rDacl,
-	DWORD dwInheritanceFlowControl = 0) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CDacl &rDacl,
+	_In_ DWORD dwInheritanceFlowControl = 0) throw(...);
 
 inline bool AtlGetDacl(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	CDacl *pDacl) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CDacl *pDacl) throw(...);
 
 inline bool AtlSetDacl(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	const CDacl &rDacl,
-	DWORD dwInheritanceFlowControl = 0) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CDacl &rDacl,
+	_In_ DWORD dwInheritanceFlowControl = 0) throw(...);
 
 inline bool AtlGetSacl(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	CSacl *pSacl,
-	bool bRequestNeededPrivileges = true) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSacl *pSacl,
+	_In_ bool bRequestNeededPrivileges = true) throw(...);
 
 inline bool AtlSetSacl(
-	HANDLE hObject,
-	SE_OBJECT_TYPE ObjectType,
-	const CSacl &rSacl,
-	DWORD dwInheritanceFlowControl = 0,
-	bool bRequestNeededPrivileges = true) throw(...);
+	_In_ HANDLE hObject,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CSacl &rSacl,
+	_In_ DWORD dwInheritanceFlowControl = 0,
+	_In_ bool bRequestNeededPrivileges = true) throw(...);
 
 inline bool AtlGetSacl(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	CSacl *pSacl,
-	bool bRequestNeededPrivileges = true) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_Inout_ CSacl *pSacl,
+	_In_ bool bRequestNeededPrivileges = true) throw(...);
 
 inline bool AtlSetSacl(
-	LPCTSTR pszObjectName,
-	SE_OBJECT_TYPE ObjectType,
-	const CSacl &rSacl,
-	DWORD dwInheritanceFlowControl = 0,
-	bool bRequestNeededPrivileges = true) throw(...);
+	_In_z_ LPCTSTR pszObjectName,
+	_In_ SE_OBJECT_TYPE ObjectType,
+	_In_ const CSacl &rSacl,
+	_In_ DWORD dwInheritanceFlowControl = 0,
+	_In_ bool bRequestNeededPrivileges = true) throw(...);
 
 } // namespace ATL
- 
+
 
 #pragma warning(pop)
 

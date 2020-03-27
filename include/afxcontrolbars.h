@@ -192,7 +192,9 @@
 #include "afxvisualmanagerwindows.h"
 #include "afxvisualmanageroffice2003.h"
 #include "afxvisualmanagervs2005.h"
+#include "afxvisualmanagervs2008.h"
 #include "afxvisualmanageroffice2007.h"
+#include "afxvisualmanagerwindows7.h"
 
 //-------------------------
 // OLE Full Server Support:

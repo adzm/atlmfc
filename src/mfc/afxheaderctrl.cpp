@@ -220,6 +220,12 @@ BOOL CMFCHeaderCtrl::OnEraseBkgnd(CDC* /*pDC*/)
 
 void CMFCHeaderCtrl::OnPaint()
 {
+	if (GetStyle() & HDS_FILTERBAR)
+	{
+		Default();
+		return;
+	}
+
 	CPaintDC dc(this); // device context for painting
 	CMemDC memDC(dc, this);
 	CDC* pDC = &memDC.GetDC();

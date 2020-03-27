@@ -13,6 +13,8 @@
 #include "afxlinkctrl.h"
 #include "afxglobals.h"
 #include "afxribbonres.h"
+#include "afxtagmanager.h"
+#include "afxctrlcontainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -44,6 +46,7 @@ CMFCLinkCtrl::~CMFCLinkCtrl()
 BEGIN_MESSAGE_MAP(CMFCLinkCtrl, CMFCButton)
 	//{{AFX_MSG_MAP(CMFCLinkCtrl)
 	ON_CONTROL_REFLECT_EX(BN_CLICKED, &CMFCLinkCtrl::OnClicked)
+	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCLinkCtrl::OnInitControl)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -108,7 +111,7 @@ BOOL CMFCLinkCtrl::OnClicked()
 		GetWindowText(strURL);
 	}
 
-	if (::ShellExecute(NULL, NULL, m_strPrefix + strURL, NULL, NULL, NULL) <(HINSTANCE) 32)
+	if (::ShellExecute(NULL, NULL, m_strPrefix + strURL, NULL, NULL, SW_SHOWNORMAL) <(HINSTANCE) 32)
 	{
 		TRACE(_T("Can't open URL: %s\n"), strURL);
 	}
@@ -220,4 +223,43 @@ BOOL CMFCLinkCtrl::PreTranslateMessage(MSG* pMsg)
 	return CMFCButton::PreTranslateMessage(pMsg);
 }
 
+LRESULT CMFCLinkCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
+{
+	DWORD dwSize = (DWORD)wParam;
+	BYTE* pbInitData = (BYTE*)lParam;
 
+	CString strDst;
+	CMFCControlContainer::UTF8ToString((LPSTR)pbInitData, strDst, dwSize);
+
+	CTagManager tagManager(strDst);
+
+	CString strUrl;
+	if (tagManager.ExcludeTag(PS_MFCLink_Url, strUrl))
+	{
+		SetURL(strUrl);
+	}
+
+	CString strUrlPrefix;
+	if (tagManager.ExcludeTag(PS_MFCLink_UrlPrefix, strUrlPrefix))
+	{
+		SetURLPrefix(strUrlPrefix);
+	}
+
+	CString strFullTextTooltip;
+	if (tagManager.ExcludeTag(PS_MFCLink_FullTextTooltip, strFullTextTooltip))
+	{
+		if (!strFullTextTooltip.IsEmpty())
+		{
+			strFullTextTooltip.MakeUpper();
+			EnableFullTextTooltip(strFullTextTooltip == PS_True);
+		}
+	}
+
+	CString strTooltip;
+	if (tagManager.ExcludeTag(PS_MFCLink_Tooltip, strTooltip))
+	{
+		SetTooltip(strTooltip);
+	}
+
+	return 0;
+}

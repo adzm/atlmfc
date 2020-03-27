@@ -700,7 +700,7 @@ BOOL CMFCPopupMenuBar::ImportFromMenu(HMENU hMenu, BOOL bShowAllCommands)
 		pMsgWindow->SendMessage(WM_INITMENUPOPUP, theMenu, theItem);
 	}
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 	BOOL bPrevWasSeparator = FALSE;
 	BOOL bFirstItem = TRUE;
 
@@ -2164,7 +2164,7 @@ BOOL CMFCPopupMenuBar::BuildOrigItems(UINT uiMenuResID)
 		return FALSE;
 	}
 
-	int iCount = (int) pMenu->GetMenuItemCount();
+	int iCount = pMenu->GetMenuItemCount();
 	for (int i = 0; i < iCount; i ++)
 	{
 		UINT uiID = pMenu->GetMenuItemID(i);
@@ -2225,5 +2225,45 @@ void CMFCPopupMenuBar::ShowCommandMessageString(UINT uiCmdId)
 	CMFCToolBar::ShowCommandMessageString(uiCmdId);
 }
 
+int CMFCPopupMenuBar::GetGutterWidth()
+{
+	ASSERT_VALID(this);
+
+	if (m_bDisableSideBarInXPMode)
+	{
+		return 0;
+	}
+
+	BOOL bQuickMode = FALSE;
+
+	CWnd* pWnd = GetParent();
+
+	if (pWnd != NULL && pWnd->IsKindOf(RUNTIME_CLASS(CMFCPopupMenu)))
+	{
+		CMFCPopupMenu* pMenu = DYNAMIC_DOWNCAST(CMFCPopupMenu, pWnd);
+
+		if (pMenu->IsCustomizePane())
+		{
+			bQuickMode = TRUE;
+		}
+	}
+
+	const int nImageMargin = CMFCVisualManager::GetInstance ()->GetMenuImageMargin();
+
+	int cx = 0;
+	int cxImage = CMFCToolBar::GetMenuImageSize().cx;
+
+	if (bQuickMode)
+	{
+		cx = 2 * cxImage + 4 * nImageMargin + 4;
+
+	}
+	else
+	{
+		cx = cxImage + 2 * nImageMargin + 2;
+	}
+
+	return cx;
+}
 
 

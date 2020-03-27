@@ -193,6 +193,8 @@ void CMFCRibbonButtonsGroup::OnAfterChangeRect(CDC* pDC)
 		rectGroup.right -= sizeButton.cx;
 	}
 
+	BOOL bHasHiddenItems = FALSE;
+
 	for (int i = 0; i < m_arButtons.GetSize(); i++)
 	{
 		CMFCRibbonBaseElement* pButton = m_arButtons [i];
@@ -223,9 +225,12 @@ void CMFCRibbonButtonsGroup::OnAfterChangeRect(CDC* pDC)
 
 		pButton->m_rect = CRect(CPoint(x, y), sizeButton);
 
-		if (pButton->m_rect.right > rectGroup.right && i != nCustomizeButtonIndex)
+		const BOOL bIsHiddenSeparator = bHasHiddenItems && pButton->IsSeparator();
+
+		if ((pButton->m_rect.right > rectGroup.right || bIsHiddenSeparator) && i != nCustomizeButtonIndex)
 		{
 			pButton->m_rect = CRect(0, 0, 0, 0);
+			bHasHiddenItems = TRUE;
 		}
 		else
 		{
@@ -473,6 +478,21 @@ void CMFCRibbonButtonsGroup::SetImages(CMFCToolBarImages* pImages, CMFCToolBarIm
 	{
 		pDisabledImages->CopyTo(m_DisabledImages);
 	}
+
+	const CSize sizeImage = m_Images.GetImageSize();
+
+	const double dblScale = afxGlobalData.GetRibbonImageScale();
+	if (dblScale != 1.0 && sizeImage == CSize(16, 16))
+	{
+		m_Images.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_Images.SmoothResize(dblScale);
+
+		m_HotImages.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_HotImages.SmoothResize(dblScale);
+
+		m_DisabledImages.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_DisabledImages.SmoothResize(dblScale);
+	}
 }
 
 void CMFCRibbonButtonsGroup::OnDrawImage(CDC* pDC, CRect rectImage,  CMFCRibbonBaseElement* pButton, int nImageIndex)
@@ -495,15 +515,7 @@ void CMFCRibbonButtonsGroup::OnDrawImage(CDC* pDC, CRect rectImage,  CMFCRibbonB
 	ptImage.x++;
 
 	image.SetTransparentColor(afxGlobalData.clrBtnFace);
-
-	if (afxGlobalData.GetRibbonImageScale() == 1.)
-	{
-		image.PrepareDrawImage(ds);
-	}
-	else
-	{
-		image.PrepareDrawImage(ds, GetImageSize());
-	}
+	image.PrepareDrawImage(ds);
 
 	image.SetTransparentColor(afxGlobalData.clrBtnFace);
 	image.Draw(pDC, ptImage.x, ptImage.y, nImageIndex, FALSE, pButton->IsDisabled() && m_DisabledImages.GetCount() == 0);
@@ -705,15 +717,77 @@ const CSize CMFCRibbonButtonsGroup::GetImageSize() const
 		return CSize(0, 0);
 	}
 
-	const CSize sizeImage = m_Images.GetImageSize();
+	return m_Images.GetImageSize();
+}
 
-	if (afxGlobalData.GetRibbonImageScale() == 1.)
+CMFCRibbonBaseElement* CMFCRibbonButtonsGroup::GetFocused()
+{
+	ASSERT_VALID(this);
+
+	for (int i = 0; i < m_arButtons.GetSize(); i++)
 	{
-		return sizeImage;
-	}
+		CMFCRibbonBaseElement* pButton = m_arButtons [i];
+		ASSERT_VALID(pButton);
 
-	return CSize( (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cx), (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cy));
+		CMFCRibbonBaseElement* pElem = pButton->GetFocused();
+		if (pElem != NULL)
+		{
+			ASSERT_VALID(pElem);
+			return pElem;
+		}
+	}
+	
+	return NULL;
+}
+
+void CMFCRibbonButtonsGroup::GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElements)
+{
+	ASSERT_VALID(this);
+
+	for (int i = 0; i < m_arButtons.GetSize(); i++)
+	{
+		CMFCRibbonBaseElement* pButton = m_arButtons [i];
+		ASSERT_VALID(pButton);
+
+		pButton->GetVisibleElements(arElements);
+	}
 }
 
 
+CMFCRibbonBaseElement* CMFCRibbonButtonsGroup::GetFirstTabStop()
+{
+	ASSERT_VALID(this);
 
+	for (int i = 0; i < (int)m_arButtons.GetSize(); i++)
+	{
+		CMFCRibbonBaseElement* pButton = m_arButtons [i];
+		ASSERT_VALID(pButton);
+
+		CMFCRibbonBaseElement* pTabStop = pButton->GetFirstTabStop();
+		if (pTabStop != NULL)
+		{
+			return pTabStop;
+		}
+	}
+
+	return NULL;
+}
+
+CMFCRibbonBaseElement* CMFCRibbonButtonsGroup::GetLastTabStop()
+{
+	ASSERT_VALID(this);
+
+	for (int i = (int)m_arButtons.GetSize() - 1; i >= 0; i--)
+	{
+		CMFCRibbonBaseElement* pButton = m_arButtons [i];
+		ASSERT_VALID(pButton);
+
+		CMFCRibbonBaseElement* pTabStop = pButton->GetLastTabStop();
+		if (pTabStop != NULL)
+		{
+			return pTabStop;
+		}
+	}
+
+	return NULL;
+}

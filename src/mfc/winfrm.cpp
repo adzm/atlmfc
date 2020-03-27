@@ -11,7 +11,9 @@
 #include "stdafx.h"
 #include <dde.h>        // for DDE execute shell requests
 
-
+#include "afxdatarecovery.h"
+#include "afxglobals.h"
+#include <AtlConv.h>
 
 #define new DEBUG_NEW
 
@@ -121,6 +123,9 @@ CFrameWnd::CFrameWnd()
 	m_hMenu = NULL;
 	m_bTempShowMenu = FALSE;
 	m_bMouseHitMenu = FALSE;
+
+	m_nProgressBarRangeMin = 0;
+	m_nProgressBarRangeMax = 100;
 
 	AddFrameWnd();
 }
@@ -695,7 +700,7 @@ LPCTSTR CFrameWnd::GetIconWndClass(DWORD dwDefaultStyle, UINT nIDResource)
 	ASSERT_VALID_IDR(nIDResource);
 	HINSTANCE hInst = AfxFindResourceHandle(
 		ATL_MAKEINTRESOURCE(nIDResource), ATL_RT_GROUP_ICON);
-	HICON hIcon = ::LoadIcon(hInst, ATL_MAKEINTRESOURCE(nIDResource));
+	HICON hIcon = ::LoadIconW(hInst, ATL_MAKEINTRESOURCEW(nIDResource));
 	if (hIcon != NULL)
 	{
 		CREATESTRUCT cs;
@@ -827,7 +832,12 @@ void CFrameWnd::InitialUpdateFrame(CDocument* pDoc, BOOL bMakeVisible)
 void CFrameWnd::OnClose()
 {
 	if (m_lpfnCloseProc != NULL)
+	{
+		// if there is a close proc, then defer to it, and return
+		// after calling it so the frame itself does not close.
 		(*m_lpfnCloseProc)(this);
+		return;
+	}
 
 	// Note: only queries the active document
 	CDocument* pDocument = GetActiveDocument();
@@ -839,9 +849,26 @@ void CFrameWnd::OnClose()
 	CWinApp* pApp = AfxGetApp();
 	if (pApp != NULL && pApp->m_pMainWnd == this)
 	{
+		CDataRecoveryHandler *pHandler = pApp->GetDataRecoveryHandler();
+		if ((pHandler != NULL) && (pHandler->GetShutdownByRestartManager()))
+		{
+			// If the application is being shut down by the Restart Manager, do
+			// a final autosave.  This will mark all the documents as not dirty,
+			// so the SaveAllModified call below won't prompt for save.
+			pHandler->AutosaveAllDocumentInfo();
+			pHandler->SaveOpenDocumentList();
+		}
+
 		// attempt to save all documents
 		if (pDocument == NULL && !pApp->SaveAllModified())
 			return;     // don't close it
+
+		if ((pHandler != NULL) && (!pHandler->GetShutdownByRestartManager()))
+		{
+			// If the application is not being shut down by the Restart Manager,
+			// delete any autosaved documents since everything is now fully saved.
+			pHandler->DeleteAllAutosavedFiles();
+		}
 
 		// hide the application's windows before closing all the documents
 		pApp->HideApplication();
@@ -1127,7 +1154,15 @@ BOOL CFrameWnd::OnQueryEndSession()
 {
 	CWinApp* pApp = AfxGetApp();
 	if (pApp != NULL && pApp->m_pMainWnd == this)
+	{
+		if (AfxGetThreadState()->m_lastSentMsg.lParam & ENDSESSION_CLOSEAPP)
+		{
+			// Restart Manager is querying about restarting the application
+			return pApp->SupportsRestartManager();
+		}
+
 		return pApp->SaveAllModified();
+	}
 
 	return TRUE;
 }
@@ -1141,6 +1176,22 @@ void CFrameWnd::OnEndSession(BOOL bEnding)
 	CWinApp* pApp = AfxGetApp();
 	if (pApp != NULL && pApp->m_pMainWnd == this)
 	{
+		if (AfxGetThreadState()->m_lastSentMsg.lParam & ENDSESSION_CLOSEAPP)
+		{
+			// Restart Manager is restarting the application
+			CDataRecoveryHandler *pHandler = pApp->GetDataRecoveryHandler();
+			if (pHandler)
+			{
+				pHandler->SetShutdownByRestartManager(TRUE);
+
+				// Just return here rather than doing more processing.
+				// The final autosave will be handled in the WM_CLOSE handler,
+				// because the Restart Manager allows 30 seconds for processing
+				// that message, and only 5 seconds for processing WM_ENDSESSION.
+				return;
+			}
+		}
+
 		AfxOleSetUserCtrl(TRUE);    // keeps from randomly shutting down
 		pApp->CloseAllDocuments(TRUE);
 
@@ -1182,7 +1233,6 @@ LRESULT CFrameWnd::OnDDEExecute(WPARAM wParam, LPARAM lParam)
 	// unpack the DDE message
    UINT_PTR unused;
 	HGLOBAL hData;
-   //IA64: Assume DDE LPARAMs are still 32-bit
 	VERIFY(UnpackDDElParam(WM_DDE_EXECUTE, lParam, &unused, (UINT_PTR*)&hData));
 
 	// get the command string
@@ -1202,7 +1252,6 @@ LRESULT CFrameWnd::OnDDEExecute(WPARAM wParam, LPARAM lParam)
 
 	// acknowledge now - before attempting to execute
 	::PostMessage((HWND)wParam, WM_DDE_ACK, (WPARAM)m_hWnd,
-	  //IA64: Assume DDE LPARAMs are still 32-bit
 		ReuseDDElParam(lParam, WM_DDE_EXECUTE, WM_DDE_ACK,
 		(UINT)0x8000, (UINT_PTR)hData));
 
@@ -1267,6 +1316,19 @@ void CFrameWnd::SetActiveView(CView* pViewNew, BOOL bNotify)
 	// activate
 	if (pViewNew != NULL && bNotify)
 		pViewNew->OnActivateView(TRUE, pViewNew, pViewOld);
+}
+
+void CFrameWnd::SetActivePreviewView(CView* pViewNew)
+{
+#ifdef _DEBUG
+	if (pViewNew != NULL)
+	{
+		ASSERT(IsChild(pViewNew));
+		ASSERT_KINDOF(CView, pViewNew);
+	}
+#endif //_DEBUG
+
+	m_pViewActive = pViewNew;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2552,3 +2614,84 @@ BOOL CFrameWnd::GetMenuBarInfo(LONG idObject, LONG idItem, PMENUBARINFO pmbi) co
 	return ::GetMenuBarInfo(m_hWnd, idObject, idItem, pmbi);
 }
 /////////////////////////////////////////////////////////////////////////////
+#if (WINVER >= 0x0601)
+void CFrameWnd::SetProgressBarRange(int nRangeMin, int nRangeMax)
+{
+	m_nProgressBarRangeMin = nRangeMin;
+	m_nProgressBarRangeMax = nRangeMax;
+}
+void CFrameWnd::SetProgressBarPosition(int nProgressPos)
+{
+	ASSERT_VALID(this);
+
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return;
+	}
+
+	ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+	ENSURE(pTaskbarList != NULL);
+
+	pTaskbarList->SetProgressValue(GetSafeHwnd(), nProgressPos - m_nProgressBarRangeMin, 
+		m_nProgressBarRangeMax - m_nProgressBarRangeMin);
+}
+void CFrameWnd::SetProgressBarState(TBPFLAG tbpFlags)
+{
+	ASSERT(::IsWindow(m_hWnd)); 
+
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return;
+	}
+
+	ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+	ENSURE(pTaskbarList != NULL);
+
+	pTaskbarList->SetProgressState(GetSafeHwnd(), tbpFlags);
+}
+BOOL CFrameWnd::SetTaskbarOverlayIcon(UINT nIDResource, LPCTSTR lpcszDescr)
+{
+	ASSERT(::IsWindow(m_hWnd));
+
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return FALSE;
+	}
+
+	HICON hIcon = (HICON) LoadImage(AfxGetResourceHandle(), MAKEINTRESOURCE(nIDResource), 
+		IMAGE_ICON, 16, 16, LR_LOADMAP3DCOLORS);
+
+	if (hIcon == NULL)
+	{
+		TRACE1("Can't load image from the resource with ID %d.", nIDResource);
+		return FALSE;
+	}
+
+	BOOL bResult = SetTaskbarOverlayIcon(hIcon, lpcszDescr);
+	DestroyIcon(hIcon);
+
+	return bResult;
+}
+BOOL CFrameWnd::SetTaskbarOverlayIcon(HICON hIcon, LPCTSTR lpcszDescr)
+{
+	ASSERT(::IsWindow(m_hWnd));
+
+	if (!afxGlobalData.bIsWindows7)
+	{
+		return FALSE;
+	}
+
+	ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+	ENSURE(pTaskbarList != NULL);
+
+	// TODO uncomment lpcszDescr for latest SDK
+
+#ifdef UNICODE
+	return SUCCEEDED(pTaskbarList->SetOverlayIcon(GetSafeHwnd(), hIcon, lpcszDescr));
+#else
+	USES_CONVERSION;
+	LPWSTR lpwszDescr = A2W(lpcszDescr);
+	return SUCCEEDED(pTaskbarList->SetOverlayIcon(GetSafeHwnd(), hIcon, lpwszDescr));
+#endif
+}
+#endif

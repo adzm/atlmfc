@@ -96,12 +96,9 @@ class CMFCRibbonColorMenuButton : public CMFCRibbonButton
 
 			if (afxGlobalData.m_hiconColors == NULL)
 			{
-				LPCTSTR lpszResourceName = MAKEINTRESOURCE(IDI_AFXRES_COLORS);
-				ENSURE(lpszResourceName != NULL);
-
-				afxGlobalData.m_hiconColors = (HICON) ::LoadImage(
-					AfxFindResourceHandle (lpszResourceName, RT_ICON), 
-					lpszResourceName, IMAGE_ICON, 16, 16, LR_SHARED);
+				afxGlobalData.m_hiconColors = (HICON) ::LoadImageW(
+					AfxFindResourceHandle(MAKEINTRESOURCE(IDI_AFXRES_COLORS), RT_GROUP_ICON),
+					MAKEINTRESOURCEW(IDI_AFXRES_COLORS), IMAGE_ICON, 16, 16, LR_SHARED);
 			}
 
 			::DrawIconEx(pDC->GetSafeHdc(), rectImage.left +(rectImage.Width() - nIconSize) / 2,
@@ -207,7 +204,7 @@ void CMFCRibbonColorButton::DrawImage(CDC* pDC, RibbonImageType type, CRect rect
 
 	if (afxGlobalData.GetRibbonImageScale() != 1.)
 	{
-		nColorHeight = (int)(.5 + afxGlobalData.GetRibbonImageScale() * nColorHeight);
+		nColorHeight = (int)(afxGlobalData.GetRibbonImageScale() * nColorHeight);
 	}
 
 	rectColor.top = rectColor.bottom - nColorHeight + 1;
@@ -603,11 +600,11 @@ BOOL CMFCRibbonColorButton::OnClickPaletteSubItem(CMFCRibbonButton* pButton, CMF
 
 		ClosePopupMenu();
 
-		CMFCColorDialog dlg(m_Color);
+		CMFCColorDialog dlg(m_Color, 0, GetTopLevelRibbonBar());
 		if (dlg.DoModal() == IDOK)
 		{
 			pColorButton->UpdateColor(dlg.GetColor());
-			NotifyCommand();
+			pColorButton->NotifyCommand();
 		}
 
 		return TRUE;
@@ -616,7 +613,7 @@ BOOL CMFCRibbonColorButton::OnClickPaletteSubItem(CMFCRibbonButton* pButton, CMF
 	if (pButton->GetOriginal() == m_pAutoButton && m_pAutoButton != NULL)
 	{
 		UpdateColor((COLORREF)-1);
-		NotifyCommand();
+		NotifyCommand(TRUE);
 	}
 
 	return CMFCRibbonGallery::OnClickPaletteSubItem(pButton, pMenuBar);
@@ -754,6 +751,3 @@ CString CMFCRibbonColorButton::GetIconToolTip(const CMFCRibbonGalleryIcon* pIcon
 
 	return CMFCRibbonGallery::GetIconToolTip(pIcon);
 }
-
-
-

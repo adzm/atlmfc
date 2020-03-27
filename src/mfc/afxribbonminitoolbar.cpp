@@ -42,6 +42,7 @@ CMFCRibbonMiniToolBar::CMFCRibbonMiniToolBar()
 	m_nTransparency = 0;
 	m_bWasHovered = FALSE;
 	m_bDisableAnimation = TRUE;
+	m_bWasDroppedDown = FALSE;
 }
 
 CMFCRibbonMiniToolBar::~CMFCRibbonMiniToolBar()
@@ -109,7 +110,7 @@ BOOL CMFCRibbonMiniToolBar::Show(int x, int y)
 
 	UpdateTransparency();
 
-	afxGlobalData.SetLayeredAttrib(GetSafeHwnd(), 0, m_nTransparency, LWA_ALPHA);
+	SetLayeredWindowAttributes(0, m_nTransparency, LWA_ALPHA);
 	return TRUE;
 }
 
@@ -193,9 +194,18 @@ void CMFCRibbonMiniToolBar::OnTimer(UINT_PTR nIDEvent)
 		return;
 	}
 
+	if (m_wndRibbonBar.GetPanel() != NULL)
+	{
+		if (m_wndRibbonBar.GetPanel()->GetDroppedDown() != NULL)
+		{
+			m_bWasDroppedDown = TRUE;
+			return;
+		}
+	}
+
 	if (UpdateTransparency())
 	{
-		afxGlobalData.SetLayeredAttrib(GetSafeHwnd(), 0, m_nTransparency, LWA_ALPHA);
+		SetLayeredWindowAttributes(0, m_nTransparency, LWA_ALPHA);
 	}
 }
 
@@ -219,23 +229,33 @@ int CMFCRibbonMiniToolBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 BOOL CMFCRibbonMiniToolBar::UpdateTransparency()
 {
+	CRect rect;
+	GetWindowRect(rect);
+
+	CPoint ptCursor;
+	::GetCursorPos(&ptCursor);
+
 	BYTE nTransparency = 0;
 
 	if (m_wndRibbonBar.GetPanel()->GetDroppedDown() != NULL || m_wndRibbonBar.GetPanel()->GetHighlighted() != NULL || m_wndRibbonBar.GetPanel()->GetPressed() != NULL)
 	{
 		nTransparency = 255;
+
+		if (m_bWasDroppedDown && rect.PtInRect(ptCursor))
+		{
+			m_bWasDroppedDown = FALSE;
+		}
 	}
 	else
 	{
-		CRect rect;
-		GetWindowRect(rect);
-
-		CPoint ptCursor;
-		::GetCursorPos(&ptCursor);
-
 		if (rect.PtInRect(ptCursor))
 		{
 			m_bWasHovered = TRUE;
+			m_bWasDroppedDown = FALSE;
+			nTransparency = 255;
+		}
+		else if (m_bWasDroppedDown)
+		{
 			nTransparency = 255;
 		}
 		else
@@ -293,5 +313,3 @@ BOOL CMFCRibbonMiniToolBar::UpdateTransparency()
 	m_nTransparency = nTransparency;
 	return TRUE;
 }
-
-

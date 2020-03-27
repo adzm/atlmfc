@@ -28,6 +28,10 @@
 #pragma component(minrebuild, off)
 #endif
 
+#ifndef RT_RIBBON
+#define RT_RIBBON MAKEINTRESOURCE(28)
+#endif
+
 class CMFCRibbonCategory;
 class CMFCRibbonBar;
 class CMFCRibbonApplicationButton;
@@ -90,6 +94,7 @@ class CMFCRibbonContextCaption : public CMFCRibbonButton
 public:
 	AFX_RibbonCategoryColor	GetColor() const { return m_Color; }
 	int GetRightTabX() const { return m_nRightTabX; }
+	UINT GetContextID() const { return m_uiID; }
 
 protected:
 	CMFCRibbonContextCaption(LPCTSTR lpszName, UINT uiID, AFX_RibbonCategoryColor clrContext);
@@ -117,6 +122,10 @@ class CMFCRibbonBar : public CPane
 	friend class CMFCRibbonApplicationButton;
 	friend class CMFCRibbonPanelMenuBar;
 	friend class CFrameImpl;
+	friend class CMFCRibbonEdit;
+	friend class CMFCRibbonPanel;
+	friend class CMFCRibbonConstructor;
+	friend class CMFCRibbonCollector;
 
 	DECLARE_DYNAMIC(CMFCRibbonBar)
 
@@ -127,8 +136,43 @@ public:
 	BOOL Create(CWnd* pParentWnd, DWORD dwStyle = WS_CHILD | WS_VISIBLE | CBRS_TOP, UINT nID = AFX_IDW_RIBBON_BAR);
 	BOOL CreateEx(CWnd* pParentWnd, DWORD dwCtrlStyle = 0, DWORD dwStyle = WS_CHILD | WS_VISIBLE | CBRS_TOP, UINT nID = AFX_IDW_RIBBON_BAR);
 
+	/// <summary>
+	/// Loads a Ribbon Bar from application resources.</summary>
+	/// <returns> TRUE if load succeeds; otherwise FALSE. </summary>
+	/// <param name="uiXMLResID">Specifies resource ID of XML string with Ribbon Bar information.</param>
+	/// <param name="lpszResType">Specifies type of the resource located at uiXMLResID.</param>
+	/// <param name="hInstance">Handle to the module whose executable file contains the resource. If hModule is NULL, the system loads the resource from the module that was used to create the current process.</param>
+	virtual BOOL LoadFromResource(UINT uiXMLResID, LPCTSTR lpszResType = RT_RIBBON, HINSTANCE hInstance = NULL);
+	/// <summary>
+	/// Loads a Ribbon Bar from application resources.</summary>
+	/// <returns> TRUE if load succeeds; otherwise FALSE. </summary>
+	/// <param name="lpszXMLResID">Specifies resource ID (in string form) with Ribbon Bar information.</param>
+	/// <param name="lpszResType">Specifies type of the resource located at uiXMLResID.</param>
+	/// <param name="hInstance">Handle to the module whose executable file contains the resource. If hModule is NULL, the system loads the resource from the module that was used to create the current process.</param>
+	virtual BOOL LoadFromResource(LPCTSTR lpszXMLResID, LPCTSTR lpszResType = RT_RIBBON, HINSTANCE hInstance = NULL);
+	/// <summary>
+	/// Loads a Ribbon Bar from application resources.</summary>
+	/// <returns> TRUE if load succeeds; otherwise FALSE. </summary>
+	/// <param name="lpszXMLBuffer">A buffer with XML string to load the Ribbon Bar from.</param>
+	virtual BOOL LoadFromBuffer(LPCTSTR lpszXMLBuffer);
+
 // Operations
 public:
+	/// <summary>
+	/// Enable/disable ribbon Windows 7-style look (small rectangular application button)</summary>
+	/// <param name="bWindows7Look">TRUE - set Windows 7-style look; FALSE - otherwise.</param>
+	/// <param name="bRecalc">TRUE - recalculate the ribbon layout; FALSE - otherwise.</param>
+	void SetWindows7Look(BOOL bWindows7Look, BOOL bRecalc = TRUE);
+
+	/// <summary>
+	/// Indicates whether the ribbon has Windows 7-style look (small rectangular application button)</summary>
+	/// <returns> 
+	/// TRUE if the ribbon has Windows 7-style look; otherwise FALSE.</returns>
+	BOOL IsWindows7Look() const
+	{
+		return m_bWindows7Look;
+	}
+
 	virtual void RecalcLayout();
 
 	//----------------------------------------------------------------------
@@ -140,7 +184,7 @@ public:
 	// Ribbon categories (tabs):
 	//--------------------------
 	CMFCRibbonMainPanel* AddMainCategory(LPCTSTR lpszName, UINT uiSmallImagesResID, UINT uiLargeImagesResID,
-		CSize sizeSmallImage = CSize(16, 16), CSize sizeLargeImage = CSize(32, 32));
+		CSize sizeSmallImage = CSize(16, 16), CSize sizeLargeImage = CSize(32, 32), CRuntimeClass* pRTI = NULL);
 	CMFCRibbonCategory* AddCategory(LPCTSTR lpszName, UINT uiSmallImagesResID, UINT uiLargeImagesResID,
 		CSize sizeSmallImage = CSize(16, 16), CSize sizeLargeImage = CSize(32, 32), int nInsertAt = -1, CRuntimeClass* pRTI = NULL);
 	CMFCRibbonCategory* AddContextCategory(LPCTSTR lpszName, LPCTSTR lpszContextName, UINT uiContextID, AFX_RibbonCategoryColor clrContext,
@@ -179,6 +223,7 @@ public:
 	BOOL SetElementKeys(UINT uiCmdID, LPCTSTR lpszKeys, LPCTSTR lpszMenuKeys = NULL);
 
 	void GetElementsByID(UINT uiCmdID, CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons);
+	void GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons);
 
 	void SetQuickAccessDefaultState(const CMFCRibbonQuickAccessToolBarDefaultState& state);
 	void SetQuickAccessCommands(const CList<UINT,UINT>& lstCommands, BOOL bRecalcLayout = TRUE);
@@ -217,6 +262,21 @@ public:
 	BOOL OnSysKeyDown(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM lParam);
 	BOOL OnSysKeyUp(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM lParam);
 
+	//--------------------
+	// Save ribbon to XML:
+	//--------------------
+	/// <summary> Saves the Ribbon Bar to XML file.
+	/// </summary>
+	/// <param name="lpszFilePath">Specifies the output file.</param>
+	/// <returns>TRUE if succeeds; othewise FALSE.</returns>
+	BOOL SaveToXMLFile(LPCTSTR lpszFilePath) const;
+	/// <summary> Saves the Ribbon Bar to a buffer.
+	/// </summary>
+	/// <param name="ppBuffer">When this function returns, ppBuffer points to a buffer allocated by this method and 
+	/// containing Ribbon Bar information in XML format.</param>
+	/// <returns>TRUE if succeeds; othewise FALSE.</returns>
+	UINT SaveToXMLBuffer(LPBYTE* ppBuffer) const;
+
 // Attributes
 public:
 	int GetCaptionHeight() const { return m_nCaptionHeight; }
@@ -240,12 +300,16 @@ public:
 	CMFCRibbonBaseElement* GetQATDroppedDown() { return m_QAToolbar.GetDroppedDown(); }
 
 	DWORD GetHideFlags() const { return m_dwHideFlags; }
-	int GetTabTrancateRatio() const { return m_nTabTrancateRatio; }
+	int GetTabTruncateRatio() const { return m_nTabTruncateRatio; }
 
 	void SetMaximizeMode(BOOL bMax, CWnd* pWnd = NULL);
 	void SetActiveMDIChild(CWnd* pWnd);
 
 	virtual CMFCRibbonBaseElement* GetDroppedDown();
+	/// <summary>
+	/// Returns a focused element. </summary>
+	/// <returns> A pointer to a focused element or NULL.</returns>
+	virtual CMFCRibbonBaseElement* GetFocused();
 
 	BOOL IsTransparentCaption() const { return m_bIsTransparentCaption; }
 	int GetKeyboardNavigationLevel() const { return m_nKeyboardNavLevel; }
@@ -263,10 +327,12 @@ protected:
 	int m_nCategoryMinWidth;
 	int m_nHighlightedTab;
 	int m_nCaptionHeight;
-	int m_nTabTrancateRatio;
+	int m_nTabTruncateRatio;
 	int m_nSystemButtonsNum;
 	int m_nKeyboardNavLevel;
 	int m_nCurrKeyChar;
+	int m_nTooltipWidthRegular;
+	int m_nTooltipWidthLargeImage;
 
 	BOOL m_bRecalcCategoryHeight;
 	BOOL m_bRecalcCategoryWidth;
@@ -280,11 +346,11 @@ protected:
 	BOOL m_bIsTransparentCaption;
 	BOOL m_bIsMaximized;
 	BOOL m_bToolTip;
-	int m_nTooltipWidthRegular;
-	int m_nTooltipWidthLargeImage;
 	BOOL m_bToolTipDescr;
 	BOOL m_bKeyTips;
 	BOOL m_bIsCustomizeMenu;
+	BOOL m_bDontSetKeyTips;
+	BOOL m_bAutoDestroyMainButton;
 
 	const BOOL m_bReplaceFrameCaption;
 
@@ -316,6 +382,8 @@ protected:
 
 	CMFCRibbonCaptionButton      m_CaptionButtons[AFX_RIBBON_CAPTION_BUTTONS];
 	CMFCRibbonQuickAccessToolBar m_QAToolbar;
+
+	BOOL m_bWindows7Look;
 
 // Overrides
 public:
@@ -356,6 +424,11 @@ protected:
 	virtual BOOL HideInPrintPreviewMode() const { return FALSE; }
 	virtual void OnBeforeProcessKey(int& nChar);
 
+	BOOL NavigateRibbon(int nChar);
+
+	static CMFCRibbonBaseElement* FindNextFocusedElement(int nChar, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElems, CRect rectElems, CMFCRibbonBaseElement* pFocused, BOOL bIsScrollLeftAvailable, BOOL bIsScrollRightAvailable, int& nScroll);
+	static CMFCRibbonBaseElement* FindNearest(CPoint pt, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons);
+
 // Implementation
 public:
 	virtual ~CMFCRibbonBar();
@@ -368,7 +441,7 @@ public:
 	void ForceRecalcLayout();
 	void DeactivateKeyboardFocus(BOOL bSetFocus = TRUE);
 
-	void ShowKeyTips();
+	void ShowKeyTips(BOOL bRepos = FALSE);
 	void HideKeyTips();
 
 protected:
@@ -435,6 +508,9 @@ public:
 
 class CMFCRibbonApplicationButton : public CMFCRibbonButton
 {
+	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonConstructor;
+
 	DECLARE_DYNCREATE(CMFCRibbonApplicationButton);
 
 public:
@@ -445,6 +521,8 @@ public:
 
 	void SetImage(UINT uiBmpResID);
 	void SetImage(HBITMAP hBmp);
+	void SetWindows7Image(UINT uiBmpResID);
+	void SetWindows7Image(HBITMAP hBmp);
 
 protected:
 	virtual BOOL IsShowTooltipOnBottom() const { return FALSE; }
@@ -458,13 +536,7 @@ protected:
 		return m_Image.GetImageSize();
 	}
 
-	virtual void DrawImage(CDC* pDC, RibbonImageType /*type*/, CRect rectImage)
-	{
-		ASSERT_VALID(this);
-		ASSERT_VALID(pDC);
-		m_Image.SetTransparentColor(afxGlobalData.clrBtnFace);
-		m_Image.DrawEx(pDC, rectImage, 0);
-	}
+	virtual void DrawImage(CDC* pDC, RibbonImageType /*type*/, CRect rectImage);
 
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data)
 	{
@@ -483,6 +555,7 @@ protected:
 	BOOL ShowMainMenu();
 
 	CMFCToolBarImages m_Image;
+	CMFCToolBarImages m_ImageWindows7;
 };
 
 extern AFX_IMPORT_DATA UINT AFX_WM_ON_CHANGE_RIBBON_CATEGORY;

@@ -35,20 +35,25 @@ public:
 	{
 		delete [] m_pvarRestrictions;
 	}
-	HRESULT GetRowset(const CSession& session, const GUID& guidSchema, IRowset** ppRowset)
+	
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetRowset(
+		_Inout_ const CSession& session,
+		_In_ const GUID& guidSchema,
+		_Deref_out_opt_ IRowset** ppRowset)
 	{
 		ATLENSURE_RETURN(session.m_spOpenRowset != NULL);
 		CComPtr<IDBSchemaRowset> spSchemaRowset;
-		HRESULT hr;
 
-		hr = session.m_spOpenRowset->QueryInterface(__uuidof(IDBSchemaRowset), (void**)&spSchemaRowset);
+		HRESULT hr = session.m_spOpenRowset->QueryInterface(__uuidof(IDBSchemaRowset), (void**)&spSchemaRowset);
 		if (FAILED(hr))
 			return hr;
 
 		return spSchemaRowset->GetRowset(NULL, guidSchema, nRestrictions,
 			m_pvarRestrictions, __uuidof(IRowset), 0, NULL, (IUnknown**)ppRowset);
 	}
-
+ATLPREFAST_UNSUPPRESS()
+	
 	CComVariant* m_pvarRestrictions;
 };
 
@@ -56,21 +61,25 @@ template <>
 class _CStoreRestrictions<0>
 {
 public:
-	HRESULT GetRowset(const CSession& session, const GUID& guidSchema, IRowset** ppRowset)
+ATLPREFAST_SUPPRESS(6387)
+	HRESULT GetRowset(
+		_Inout_ const CSession& session,
+		_In_ const GUID& guidSchema,
+		_Deref_out_ IRowset** ppRowset)
 	{
 		ATLENSURE_RETURN(session.m_spOpenRowset != NULL);
 		CComPtr<IDBSchemaRowset> spSchemaRowset;
-		HRESULT hr;
 
-		hr = session.m_spOpenRowset->QueryInterface(__uuidof(IDBSchemaRowset), (void**)&spSchemaRowset);
+		HRESULT hr = session.m_spOpenRowset->QueryInterface(__uuidof(IDBSchemaRowset), (void**)&spSchemaRowset);
 		if (FAILED(hr))
 			return hr;
-
+		
 		return spSchemaRowset->GetRowset(NULL, guidSchema, 0,
 			NULL, __uuidof(IRowset), 0, NULL, (IUnknown**)ppRowset);
 	}
+ATLPREFAST_UNSUPPRESS()
 };
-
+	
 ///////////////////////////////////////////////////////////////////////////
 // class CSchemaRowset
 template <class T, short nRestrictions, template <typename T> class TRowset = CRowset>
@@ -80,11 +89,12 @@ class CSchemaRowset :
 {
 public:
 // Operations
-	HRESULT Open(const CSession& session, const GUID& guidSchema, bool bBind = true )
+	HRESULT Open(
+		_Inout_ const CSession& session,
+		_In_ const GUID& guidSchema,
+		_In_ bool bBind = true)
 	{
-		HRESULT hr;
-
-		hr = GetRowset(session, guidSchema, &m_spRowset);
+		HRESULT hr = GetRowset(session, guidSchema, &m_spRowset);
 		if ( SUCCEEDED(hr) && bBind )
 			hr = Bind();
 
@@ -96,13 +106,20 @@ public:
 // class CRestrictions
 
 template <class T, short nRestrictions, const GUID* pguid>
-class CRestrictions : public CSchemaRowset<T, nRestrictions>
+class CRestrictions : 
+	public CSchemaRowset<T, nRestrictions>
 {
 public:
-	HRESULT Open(const CSession& session, LPCTSTR lpszParam1 = NULL, LPCTSTR lpszParam2 = NULL,
-			LPCTSTR lpszParam3 = NULL, LPCTSTR lpszParam4 = NULL,
-			LPCTSTR lpszParam5 = NULL, LPCTSTR lpszParam6 = NULL,
-			LPCTSTR lpszParam7 = NULL, bool bBind = true )
+	HRESULT Open(
+		_Inout_ const CSession& session,
+		_In_opt_z_ LPCTSTR lpszParam1 = NULL,
+		_In_opt_z_ LPCTSTR lpszParam2 = NULL,
+		_In_opt_z_ LPCTSTR lpszParam3 = NULL,
+		_In_opt_z_ LPCTSTR lpszParam4 = NULL,
+		_In_opt_z_ LPCTSTR lpszParam5 = NULL,
+		_In_opt_z_ LPCTSTR lpszParam6 = NULL,
+		_In_opt_z_ LPCTSTR lpszParam7 = NULL,
+		_In_ bool bBind = true)
 	{
 		USES_CONVERSION_EX;
 		CComVariant* pVariant;
@@ -198,7 +215,7 @@ public:
 	};
 
 // Operations
-	HRESULT GetSchemas(const CSession& session)
+	HRESULT GetSchemas(_Inout_ const CSession& session)
 	{
 		CComPtr<IDBSchemaRowset> spSchemaRowset;
 		HRESULT hr;

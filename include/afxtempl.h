@@ -138,9 +138,9 @@ void AFXAPI DumpElements(CDumpContext& dc, const TYPE* pElements, INT_PTR nCount
 	ENSURE(nCount == 0 || pElements != NULL);
 	ASSERT(nCount == 0 ||
 		AfxIsValidAddress(pElements, (size_t)nCount * sizeof(TYPE), FALSE));
-	&dc; // not used
-	pElements;  // not used
-	nCount; // not used
+	UNREFERENCED_PARAMETER(dc); // not used
+	UNREFERENCED_PARAMETER(pElements);  // not used
+	UNREFERENCED_PARAMETER(nCount); // not used
 
 	// default does nothing
 }
@@ -159,21 +159,25 @@ BOOL AFXAPI CompareElements(const TYPE* pElement1, const ARG_TYPE* pElement2)
 template<class ARG_KEY>
 AFX_INLINE UINT AFXAPI HashKey(ARG_KEY key)
 {
-	// default identity hash - works for most primitive values
-	return (DWORD)(((DWORD_PTR)key)>>4);
+	// (algorithm copied from STL hash in xfunctional)
+	ldiv_t HashVal = ldiv((long)(ARG_KEY)key, 127773);
+	HashVal.rem = 16807 * HashVal.rem - 2836 * HashVal.quot;
+	if (HashVal.rem < 0)
+		HashVal.rem += 2147483647;
+	return ((UINT)HashVal.rem);
+}
+
+template<> AFX_INLINE UINT AFXAPI HashKey<__int64>(__int64 key)
+{
+	// (algorithm copied from STL hash in xfunctional)
+	return (HashKey<DWORD>((DWORD)(key & 0xffffffffUL)) ^ HashKey<DWORD>((DWORD)(key >> 32)));
 }
 
 // special versions for CString
-#if _MSC_VER >= 1100
 template<> void AFXAPI SerializeElements<CStringA> (CArchive& ar, CStringA* pElements, INT_PTR nCount);
 template<> void AFXAPI SerializeElements<CStringW> (CArchive& ar, CStringW* pElements, INT_PTR nCount);
 template<> UINT AFXAPI HashKey<LPCWSTR> (LPCWSTR key);
 template<> UINT AFXAPI HashKey<LPCSTR> (LPCSTR key);
-#else // _MSC_VER >= 1100
-void AFXAPI SerializeElements(CArchive& ar, CString* pElements, INT_PTR nCount);
-UINT AFXAPI HashKey(LPCWSTR key);
-UINT AFXAPI HashKey(LPCSTR key);
-#endif // _MSC_VER >= 1100
 
 // special versions for CComBSTR
 template<> void AFXAPI SerializeElements<CComBSTR> (CArchive& ar, CComBSTR* pElements, INT_PTR nCount);
@@ -184,21 +188,12 @@ class COleVariant;
 struct tagVARIANT;
 
 // special versions for COleVariant
-#if _MSC_VER >= 1100
 template<> void AFXAPI CopyElements<COleVariant> (COleVariant* pDest, const COleVariant* pSrc, INT_PTR nCount);
 template<> void AFXAPI SerializeElements<COleVariant> (CArchive& ar, COleVariant* pElements, INT_PTR nCount);
 #ifdef _DEBUG
 template<> void AFXAPI DumpElements<COleVariant> (CDumpContext& dc, const COleVariant* pElements, INT_PTR nCount);
 #endif
 template<> UINT AFXAPI HashKey<const struct tagVARIANT&> (const struct tagVARIANT& var);
-#else // _MSC_VER >= 1100
-void AFXAPI CopyElements(COleVariant* pDest, const COleVariant* pSrc, INT_PTR nCount);
-void AFXAPI SerializeElements(CArchive& ar, COleVariant* pElements, INT_PTR nCount);
-#ifdef _DEBUG
-void AFXAPI DumpElements(CDumpContext& dc, const COleVariant* pElements, INT_PTR nCount);
-#endif
-UINT AFXAPI HashKey(const struct tagVARIANT& var);
-#endif // _MSC_VER >= 1100
 
 #define new DEBUG_NEW
 
@@ -1362,7 +1357,7 @@ const typename CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CPair* CMap<KEY, ARG_KEY, V
 	ASSERT_VALID(this);
 	if(m_nCount == 0) return NULL;
 
-	ASSERT(m_pHashTable != NULL);  // never call on empty map
+	AFXASSUME(m_pHashTable != NULL);  // never call on empty map
 
 	CAssoc* pAssocRet = (CAssoc*)BEFORE_START_POSITION;
 
@@ -1381,7 +1376,7 @@ typename CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CPair* CMap<KEY, ARG_KEY, VALUE, 
 	ASSERT_VALID(this);
 	if(m_nCount == 0) return NULL;
 
-	ASSERT(m_pHashTable != NULL);  // never call on empty map
+	AFXASSUME(m_pHashTable != NULL);  // never call on empty map
 
 	CAssoc* pAssocRet = (CAssoc*)BEFORE_START_POSITION;
 
@@ -1460,12 +1455,12 @@ void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::RemoveAll()
 				//DestructElements<KEY>((KEY*)&pAssoc->key, 1);
 			}
 		}
+		
+		// free hash table
+		delete[] m_pHashTable;
+		m_pHashTable = NULL;
 	}
-
-	// free hash table
-	delete[] m_pHashTable;
-	m_pHashTable = NULL;
-
+	
 	m_nCount = 0;
 	m_pFreeList = NULL;
 	m_pBlocks->FreeDataChain();

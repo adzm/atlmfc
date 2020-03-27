@@ -24,17 +24,27 @@ CMFCToolBarImages CMenuImages::m_ImagesLtGray;
 CMFCToolBarImages CMenuImages::m_ImagesWhite;
 CMFCToolBarImages CMenuImages::m_ImagesBlack2;
 
+BOOL CMenuImages::m_bInitializing = FALSE;
+
 BOOL __stdcall CMenuImages::Initialize()
 {
+	if (m_bInitializing)
+	{
+		return FALSE;
+	}
+
 	if (m_ImagesBlack.IsValid())
 	{
 		return TRUE;
 	}
 
+	m_bInitializing = TRUE;
+
 	m_ImagesBlack.SetImageSize(CSize(nImageWidth, nImageHeight));
 	if (!m_ImagesBlack.Load(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_MENU_IMAGES24 : IDB_AFXBARRES_MENU_IMAGES))
 	{
 		TRACE(_T("CMenuImages. Can't load menu images %x\n"), IDB_AFXBARRES_MENU_IMAGES);
+		m_bInitializing = FALSE;
 		return FALSE;
 	}
 
@@ -51,7 +61,42 @@ BOOL __stdcall CMenuImages::Initialize()
 	CreateCopy(m_ImagesWhite, RGB(255, 255, 255));
 	CreateCopy(m_ImagesBlack2, RGB(0, 0, 0));
 
+	if (m_ImagesBlack.IsValid())
+	{
+		double dblScale = afxGlobalData.GetRibbonImageScale();
+		if (dblScale != 1.0)
+		{
+			m_ImagesBlack.SmoothResize(dblScale);
+			m_ImagesGray.SmoothResize(dblScale);
+			m_ImagesDkGray.SmoothResize(dblScale);
+			m_ImagesLtGray.SmoothResize(dblScale);
+			m_ImagesWhite.SmoothResize(dblScale);
+			m_ImagesBlack2.SmoothResize(dblScale);
+		}
+	}
+
+	m_bInitializing = FALSE;
 	return TRUE;
+}
+
+CSize __stdcall CMenuImages::Size()
+{
+	if (m_bInitializing)
+	{
+		CSize size(nImageWidth, nImageHeight);
+
+		double dblScale = afxGlobalData.GetRibbonImageScale();
+		if (dblScale != 1.0)
+		{
+			size.cx = (int)(.5 + size.cx * dblScale);
+			size.cy = (int)(.5 + size.cy * dblScale);
+		}
+
+		return size;
+	}
+
+	Initialize ();
+	return m_ImagesBlack.GetImageSize();
 }
 
 void __stdcall CMenuImages::Draw(CDC* pDC, IMAGES_IDS id, const CPoint& ptImage, CMenuImages::IMAGE_STATE state, const CSize& sizeImage/* = CSize(0, 0)*/)
@@ -83,6 +128,11 @@ void __stdcall CMenuImages::Draw(CDC* pDC, IMAGES_IDS id, const CRect& rectImage
 
 void __stdcall CMenuImages::CleanUp()
 {
+	if (m_bInitializing)
+	{
+		return;
+	}
+
 	if (m_ImagesBlack.GetCount() > 0)
 	{
 		m_ImagesBlack.Clear();
@@ -106,7 +156,7 @@ void __stdcall CMenuImages::SetColor(CMenuImages::IMAGE_STATE state, COLORREF co
 
 	CMFCToolBarImages imagesTmp;
 
-	imagesTmp.SetImageSize(m_ImagesBlack.GetImageSize());
+	imagesTmp.SetImageSize (CSize (nImageWidth, nImageHeight));
 	imagesTmp.Load(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_MENU_IMAGES24 : IDB_AFXBARRES_MENU_IMAGES);
 	imagesTmp.SetTransparentColor(clrTransparent);
 
@@ -121,6 +171,11 @@ void __stdcall CMenuImages::SetColor(CMenuImages::IMAGE_STATE state, COLORREF co
 	if (color != (COLORREF)-1)
 	{
 		imagesTmp.MapTo3dColors(TRUE, RGB(0, 0, 0), color);
+	}
+
+	if (!m_bInitializing)
+	{
+		imagesTmp.SmoothResize(afxGlobalData.GetRibbonImageScale());
 	}
 
 	images.Clear();
