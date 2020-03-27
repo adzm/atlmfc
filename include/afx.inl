@@ -50,7 +50,12 @@ CArchive& CArchive::operator>>(ATL::CStringT<BaseType, StringTraits>& str)
 		UINT nBytesRead = Read(pszBufferA, nLength*sizeof(char));
 		if (nBytesRead != (nLength*sizeof(char)))
 			AfxThrowArchiveException(CArchiveException::endOfFile);
+#if !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION) || !defined(_UNICODE)
 		str = ATL::CStringT<BaseType, StringTraits>(pszBufferA, nLength);
+#else
+		// Implicit conversion is not allowed!
+		AfxThrowArchiveException(CArchiveException::genericException);
+#endif
 	}
 	else
 	{
@@ -61,7 +66,12 @@ CArchive& CArchive::operator>>(ATL::CStringT<BaseType, StringTraits>& str)
 		UINT nBytesRead = Read(pszBufferW, nLength*sizeof(wchar_t));
 		if (nBytesRead != (nLength*sizeof(wchar_t)))
 			AfxThrowArchiveException(CArchiveException::endOfFile);
+#if !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION) || defined(_UNICODE)
 		str = ATL::CStringT<BaseType, StringTraits>(pszBufferW, nLength);
+#else
+		// Implicit conversion is not allowed!
+		AfxThrowArchiveException(CArchiveException::genericException);
+#endif
 	}
 
 	return *this;

@@ -4504,8 +4504,9 @@ public:
 	/// </remarks>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* /*pLibrary*/, IUIAnimationTransitionFactory* pFactory)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		(void)pLibrary;
 		Clear();
 
 		if (pFactory != NULL && m_pInterpolator != NULL)

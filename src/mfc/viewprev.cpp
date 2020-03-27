@@ -159,7 +159,7 @@ BOOL CView::DoPrintPreview(UINT nIDResource, CView* pPrintView,
 				pInPlaceFrame->GetInPlaceFrame(&spIPUIWindow);
 				bFrame = TRUE;
 			}
-			ASSERT(spIPUIWindow);
+			ASSERT(static_cast<bool>(spIPUIWindow)); // NB: cast instead of != to silence C4800 without expanding surface area
 			if (spIPUIWindow)
 			{
 				spIPUIWindow->GetBorder(rcBorder);

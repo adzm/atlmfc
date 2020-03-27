@@ -1623,7 +1623,7 @@ BOOL CHtmlEditCtrl::GetDHtmlDocument(IHTMLDocument2 **ppDocument) const
 	{
 		CComPtr<IDispatch> spDispDocument;
 		HRESULT hr = pBrowserApp->get_Document(&spDispDocument);
-		if (SUCCEEDED(hr) && spDispDocument)
+		if (SUCCEEDED(hr) && static_cast<bool>(spDispDocument))
 		{
 			return S_OK == spDispDocument->QueryInterface(ppDocument) ? TRUE : FALSE;
 		}
@@ -1645,7 +1645,7 @@ BOOL CHtmlEditCtrl::Create(LPCTSTR lpszWindowName, DWORD /*dwStyle*/, const RECT
 		// first load a document into it. "about:blank" seems to
 		// be the safest thing to load for a good starting point.
 		CComQIPtr<IWebBrowser2> pBrowserApp = GetControlUnknown();
-		ASSERT(pBrowserApp);
+		ASSERT(static_cast<bool>(pBrowserApp)); // NB: cast instead of != to silence C4800 without expanding surface area
 		if (pBrowserApp)
 		{
 			CComVariant vEmpty;
@@ -1819,7 +1819,7 @@ BOOL CHtmlEditView::GetDHtmlDocument(IHTMLDocument2 **ppDocument) const
 	*ppDocument = NULL;
 
 	HRESULT hr = m_pBrowserApp->get_Document(&spDispDocument);
-	if (SUCCEEDED(hr) && spDispDocument)
+	if (SUCCEEDED(hr) && static_cast<bool>(spDispDocument))
 	{
 		return S_OK == spDispDocument->QueryInterface(ppDocument) ? TRUE : FALSE;
 	}

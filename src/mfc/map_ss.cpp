@@ -304,9 +304,10 @@ BOOL CMapStringToString::RemoveKey(LPCTSTR key)
 const CMapStringToString::CPair *CMapStringToString::PGetFirstAssoc() const
 {
 	ASSERT_VALID(this);
-	ASSERT(m_pHashTable != NULL);  // never call on empty map
 
-	if( m_nCount == 0 ) return NULL;
+	if (m_nCount == 0) return NULL;
+
+	ASSERT(m_pHashTable != NULL);  // never call on empty map
 
 	CAssoc* pAssocRet = NULL;
 
@@ -322,9 +323,10 @@ const CMapStringToString::CPair *CMapStringToString::PGetFirstAssoc() const
 CMapStringToString::CPair *CMapStringToString::PGetFirstAssoc()
 {
 	ASSERT_VALID(this);
-	ASSERT(m_pHashTable != NULL);  // never call on empty map
+	
+	if (m_nCount == 0) return NULL;
 
-	if( m_nCount == 0 ) return NULL;
+	ASSERT(m_pHashTable != NULL);  // never call on empty map
 
 	CAssoc* pAssocRet = NULL;
 

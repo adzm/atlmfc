@@ -4178,7 +4178,11 @@ BOOL CMFCToolBarImages::SmoothResize(double dblImageScale)
 	m_clrTransparentOriginal = m_clrTransparent;
 	m_clrTransparent = (COLORREF)-1;
 
-	AfxDeleteObject((HGDIOBJ*)&m_hbmImageWell);
+	if (!m_bIsTemporary)
+	{
+		AfxDeleteObject((HGDIOBJ*)&m_hbmImageWell);
+	}
+
 	m_hbmImageWell = hBmpDst;
 
 	m_iCount = nOldCount;

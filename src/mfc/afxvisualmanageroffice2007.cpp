@@ -4796,8 +4796,9 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* p
 		}
 	}
 
+	const BOOL bIsBlackCaption = !GetGlobalData()->bIsWindows7 && pWnd->IsZoomed();
 	DrawNcText(pDC, rectText, strTitle, strDocument, bPrefix, bActive, bIsRTL, m_bNcTextCenter, bGlass,
-		pWnd->IsZoomed() ? 0 : 10, pWnd->IsZoomed() ? RGB(255, 255, 255) :(COLORREF)-1);
+		bIsBlackCaption ? 0 : 10, bIsBlackCaption ? RGB(255, 255, 255) :(COLORREF)-1);
 
 	pDC->SelectObject(pOldFont);
 }

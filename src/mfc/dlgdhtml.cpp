@@ -196,9 +196,9 @@ int CDHtmlEventSink::FindDHtmlEventEntry(const DHtmlEventMapEntry *pEventMap, DI
 		{
 			if (pEventMap[i].nType == DHTMLEVENTMAPENTRY_NAME)
 			{
-				if (!bstrName && sphtmlElement)
+				if (!bstrName && static_cast<bool>(sphtmlElement))
 					sphtmlElement->get_id(&bstrName);
-				if (bstrName && pEventMap[i].szName && !wcscmp(bstrName, CComBSTR(pEventMap[i].szName)) ||
+				if (static_cast<bool>(bstrName) && pEventMap[i].szName && !wcscmp(bstrName, CComBSTR(pEventMap[i].szName)) ||
 					(!bstrName && !sphtmlElement))
 				{
 					nIndexFound = i;
@@ -207,9 +207,9 @@ int CDHtmlEventSink::FindDHtmlEventEntry(const DHtmlEventMapEntry *pEventMap, DI
 			}
 			else if (pEventMap[i].nType == DHTMLEVENTMAPENTRY_CLASS)
 			{
-				if (!bstrClass && sphtmlElement)
+				if (!bstrClass && static_cast<bool>(sphtmlElement))
 					sphtmlElement->get_className(&bstrClass);
-				if (bstrClass && !wcscmp(bstrClass, CComBSTR(pEventMap[i].szName)))
+				if (static_cast<bool>(bstrClass) && !wcscmp(bstrClass, CComBSTR(pEventMap[i].szName)))
 				{
 					nIndexFound = i;
 					break;
@@ -217,9 +217,9 @@ int CDHtmlEventSink::FindDHtmlEventEntry(const DHtmlEventMapEntry *pEventMap, DI
 			}
 			else if (pEventMap[i].nType == DHTMLEVENTMAPENTRY_TAG)
 			{
-				if (!bstrTagName && sphtmlElement)
+				if (!bstrTagName && static_cast<bool>(sphtmlElement))
 					sphtmlElement->get_tagName(&bstrTagName);
-				if (bstrTagName && !_wcsicmp(bstrTagName, CComBSTR(pEventMap[i].szName)))
+				if (static_cast<bool>(bstrTagName) && !_wcsicmp(bstrTagName, CComBSTR(pEventMap[i].szName)))
 				{
 					nIndexFound = i;
 					break;
@@ -1232,7 +1232,7 @@ void CDHtmlDialog::DDX_DHtml_Radio(LPCTSTR szId, long& value, BOOL bSave)
 
 	// get the radio buttons in the group
 	hr = GetElement(szId, &spdispCollection, &bIsCollection);
-	if (spdispCollection && bIsCollection)
+	if (static_cast<bool>(spdispCollection) && bIsCollection)
 	{
 		hr = spdispCollection->QueryInterface(__uuidof(IHTMLElementCollection), (void **) &spElementColl);
 		if (spElementColl == NULL)
@@ -1586,7 +1586,7 @@ long CDHtmlDialog::Select_FindString(IHTMLSelectElement *pSelect, BSTR bstr, BOO
 			{
 				CComBSTR bstrText;
 				spOption->get_text(&bstrText);
-				if (bstrText && !wcscmp(bstrText, bstr))
+				if (static_cast<bool>(bstrText) && !wcscmp(bstrText, bstr))
 				{
 					// we found it
 					lIndexFound = varIndex.lVal;

@@ -5515,7 +5515,7 @@ CComEnumImpl<Base, piid, T, Copy>::~CComEnumImpl()
 }
 
 template <class Base, const IID* piid, class T, class Copy>
-_Success_(return == S_OK) STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Next(
+_Success_(return == S_OK) COM_DECLSPEC_NOTHROW STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Next(
 	_In_ ULONG celt,
 	_Out_writes_to_(celt, *pceltFetched) T* rgelt,
 	_Out_opt_ ULONG* pceltFetched)
@@ -5552,7 +5552,7 @@ _Success_(return == S_OK) STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Next(
 }
 
 template <class Base, const IID* piid, class T, class Copy>
-STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Skip(ULONG celt)
+COM_DECLSPEC_NOTHROW STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Skip(ULONG celt)
 {
 	ULONG nRem = ULONG(m_end - m_iter);
 	ULONG nSkip = (celt > nRem) ? nRem : celt;
@@ -5561,7 +5561,7 @@ STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Skip(ULONG celt)
 }
 
 template <class Base, const IID* piid, class T, class Copy>
-STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Clone(
+COM_DECLSPEC_NOTHROW STDMETHODIMP CComEnumImpl<Base, piid, T, Copy>::Clone(
 	_COM_Outptr_ Base** ppEnum)
 {
 	typedef CComObject<CComEnum<Base, piid, T, Copy> > _class;
@@ -5677,7 +5677,7 @@ public:
 };
 
 template <class Base, const IID* piid, class T, class Copy, class CollType>
-STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Next(
+COM_DECLSPEC_NOTHROW STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Next(
 	_In_ ULONG celt,
 	_Out_writes_to_(celt, *pceltFetched) T* rgelt,
 	_Out_opt_ ULONG* pceltFetched)
@@ -5719,7 +5719,7 @@ STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Next(
 }
 
 template <class Base, const IID* piid, class T, class Copy, class CollType>
-STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Skip(_In_ ULONG celt)
+COM_DECLSPEC_NOTHROW STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Skip(_In_ ULONG celt)
 {
 	HRESULT hr = S_OK;
 	while (celt--)
@@ -5736,7 +5736,7 @@ STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Skip(_In_ ULONG celt
 }
 
 template <class Base, const IID* piid, class T, class Copy, class CollType>
-STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Clone(
+COM_DECLSPEC_NOTHROW STDMETHODIMP IEnumOnSTLImpl<Base, piid, T, Copy, CollType>::Clone(
 	_Outptr_ Base** ppEnum)
 {
 	typedef CComObject<CComEnumOnSTL<Base, piid, T, Copy, CollType> > _class;
@@ -6332,7 +6332,7 @@ IConnectionPointImpl<T, piid, CDV>::~IConnectionPointImpl()
 }
 
 template <class T, const IID* piid, class CDV>
-STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::Advise(
+COM_DECLSPEC_NOTHROW STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::Advise(
 	_Inout_ IUnknown* pUnkSink,
 	_Out_ DWORD* pdwCookie)
 {
@@ -6363,7 +6363,7 @@ STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::Advise(
 }
 
 template <class T, const IID* piid, class CDV>
-STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::Unadvise(_In_ DWORD dwCookie)
+COM_DECLSPEC_NOTHROW STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::Unadvise(_In_ DWORD dwCookie)
 {
 	T* pT = static_cast<T*>(this);
 	pT->Lock();
@@ -6377,7 +6377,7 @@ STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::Unadvise(_In_ DWORD dwCookie)
 
 ATLPREFAST_SUPPRESS(6014 6211)
 template <class T, const IID* piid, class CDV>
-STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::EnumConnections(
+COM_DECLSPEC_NOTHROW STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::EnumConnections(
 	_COM_Outptr_ IEnumConnections** ppEnum)
 {
 	if (ppEnum == NULL)

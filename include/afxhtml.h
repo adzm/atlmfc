@@ -544,7 +544,7 @@ public:
 		pT->GetDHtmlDocument(&spDoc);
 		if (spDoc)
 		{
-			CComQIPtr<IOleCommandTarget> spCmdTarg = spDoc;
+			CComQIPtr<IOleCommandTarget> spCmdTarg = (IUnknown*)spDoc;
 			if (spCmdTarg)
 			{
 				hr = spCmdTarg->Exec(pGuid, cmdID, cmdExecOpt, pInVar , pOutVar);
@@ -567,10 +567,10 @@ public:
 		pT->GetDHtmlDocument(&spDoc);
 		if (spDoc)
 		{
-			CComQIPtr<IOleCommandTarget> spCmdTarg = spDoc;
+			CComQIPtr<IOleCommandTarget> spCmdTarg = (IUnknown*)spDoc;
 			if (spCmdTarg)
 			{
-				OLECMD ocmd = {cmdID, 0};
+				OLECMD ocmd = {(ULONG)cmdID, 0};
 				if (S_OK == spCmdTarg->QueryStatus(&CGID_MSHTML, 1, &ocmd, NULL))
 					return ocmd.cmdf;
 			}

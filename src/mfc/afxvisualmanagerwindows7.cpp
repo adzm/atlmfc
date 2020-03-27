@@ -1054,7 +1054,8 @@ void CMFCVisualManagerWindows7::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* pBa
 	CFont* pOldFont = (CFont*)pDC->SelectObject(&m_AppCaptionFont);
 	ASSERT(pOldFont != NULL);
 
-	DrawNcText(pDC, rectText, strText, bActive, bIsRTL, FALSE, bGlass, pWnd->IsZoomed() ? 0 : 10, pWnd->IsZoomed() ? RGB(255, 255, 255) :(COLORREF)-1);
+	const BOOL bIsBlackCaption = !GetGlobalData()->bIsWindows7 && pWnd->IsZoomed();
+	DrawNcText(pDC, rectText, strText, bActive, bIsRTL, FALSE, bGlass, bIsBlackCaption ? 0 : 10, bIsBlackCaption ? RGB(255, 255, 255) :(COLORREF)-1);
 
 	pDC->SelectObject(pOldFont);
 }

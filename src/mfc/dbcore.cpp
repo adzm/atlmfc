@@ -3939,7 +3939,14 @@ UINT CRecordset::BindFieldsToColumns()
 	ASSERT(m_hstmt != SQL_NULL_HSTMT);
 
 	ASSERT(m_nFieldsBound == 0);
-	ASSERT(m_nFields != 0 && m_nFields <= 255);
+	ASSERT(m_nFields != 0);
+
+#ifdef _DEBUG
+	if (m_nFields > 255)
+	{
+		TRACE(traceDatabase, 0, _T("Warning: please note that number of fields in your record set exceeds 255 (% d) and some database providers may incorrectly read the data.\n"), m_nFields);
+	}
+#endif
 
 	CFieldExchange fx(CFieldExchange::BindFieldToColumn, this);
 	fx.m_hstmt = m_hstmt;

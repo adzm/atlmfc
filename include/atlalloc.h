@@ -637,9 +637,7 @@ __declspec(noinline) inline bool _AtlVerifyStackAvailable(_In_ SIZE_T Size)
                    EXCEPTION_CONTINUE_SEARCH)
     {
         bStackAvailable = false;
-#if defined( _ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
         _resetstkoflw();
-#endif
     }
     return bStackAvailable;
 }

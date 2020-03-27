@@ -27,7 +27,9 @@
 
 #pragma warning(pop)
 
+class CRenderTarget;
 class CBitmapRenderTarget;
+class CHwndRenderTarget;
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)

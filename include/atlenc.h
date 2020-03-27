@@ -723,9 +723,8 @@ inline BOOL QPDecode(
 				szBuf[0] = *pbSrcData++;
 				szBuf[1] = *pbSrcData++;
 				szBuf[2] = '\0';
-				char* tmp = '\0';
 				ATLENSURE(szDest < szDestEnd);
-				*szDest++ = (BYTE)strtoul(szBuf, &tmp, 16);
+				*szDest++ = (BYTE)strtoul(szBuf, nullptr, 16);
 				nWritten++;
 				nRead += 2;
 				continue;

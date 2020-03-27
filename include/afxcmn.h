@@ -2339,7 +2339,7 @@ public:
 #pragma pop_macro("FindTextA")
 #pragma pop_macro("FindTextW")
 	DWORD FindWordBreak(_In_ UINT nCode, _In_ DWORD nStart) const;
-	long FormatRange(_In_ FORMATRANGE* pfr, _In_ BOOL bDisplay = TRUE);
+	long FormatRange(_In_opt_ FORMATRANGE* pfr, _In_ BOOL bDisplay = TRUE);
 	void HideSelection(_In_ BOOL bHide, _In_ BOOL bPerm);
 	void PasteSpecial(_In_ UINT nClipFormat, _In_ DWORD dvAspect = 0, _In_ HMETAFILE hMF = 0);
 	void RequestResize();

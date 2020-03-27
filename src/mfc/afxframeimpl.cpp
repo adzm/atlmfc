@@ -1690,7 +1690,7 @@ BOOL CFrameImpl::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS FAR* l
 
 		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
-			if (GetGlobalData()->GetShellAutohideBars() == 0)
+			if (((m_pFrame->GetStyle() & WS_MAXIMIZE) == 0 && !IsFullScreeen()) || GetGlobalData()->GetShellAutohideBars() == 0 || !m_pFrame->IsWindowVisible())
 			{
 				lpncsp->rgrc[0].left += szSystemBorder.cx;
 				lpncsp->rgrc[0].right -= szSystemBorder.cx;

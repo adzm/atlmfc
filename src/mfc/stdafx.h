@@ -143,6 +143,13 @@
 	#include "afxtaskdialog.h"
 #endif
 
+#ifndef _AFX_MFCS
+// This header is included by about a third of the source files.
+// It takes about 30% of the total compile time of the MFC project if
+// not included in the PCH header.
+#include "afxtoolbarimages.h"
+#endif
+
 #include <winreg.h>
 #include <WinNls.h>
 #include <stddef.h>

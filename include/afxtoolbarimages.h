@@ -221,7 +221,7 @@ public:
 
 	/// <summary> 
 	/// Smoothly resizes underlined images.</summary>
-	/// <param name="dblScale"> Scale ratio.</param>
+	/// <param name="dblImageScale"> Scale ratio.</param>
 	/// <returns> TRUE if resize succeeds; otherwise FALSE.</returns>
 	BOOL SmoothResize(double dblImageScale);
 

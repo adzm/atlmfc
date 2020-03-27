@@ -972,7 +972,7 @@ HGLOBAL AFXAPI _AfxOleGetObjectDescriptorData(
 	sc = lpOleObj->GetUserType(USERCLASSTYPE_FULL, &sposzFullUserTypeName);
 
 	// if object is a link, then expand usertypename to be "Linked %Ts"
-	if (fIsLink && sposzFullUserTypeName)
+	if (fIsLink && static_cast<bool>(sposzFullUserTypeName))
 	{
 		// Note: If this LoadString call fails, it is likely that
 		//  _AFX_NO_OLE_RESOURCES is defined in your .RC file.
