@@ -638,7 +638,7 @@ BOOL CMFCToolBarsCustomizeDialog::SetUserCategory(LPCTSTR lpszCategory)
 	CObList* pCategoryButtonsList;
 	if (!m_ButtonsByCategory.Lookup(lpszCategory, pCategoryButtonsList))
 	{
-		TRACE(_T("CMFCToolBarsCustomizeDialog::SetUserCategory: Can't find category '%s'\n"), lpszCategory);
+		TRACE(_T("CMFCToolBarsCustomizeDialog::SetUserCategory: Can't find category '%Ts'\n"), lpszCategory);
 		return FALSE;
 	}
 

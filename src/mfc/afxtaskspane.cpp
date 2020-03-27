@@ -29,8 +29,8 @@
 #endif
 
 #define AFX_TASKS_PANE_PROFILE  _T("MFCTasksPanes")
-#define AFX_REG_SECTION_FMT _T("%sMFCTasksPane-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sMFCTasksPane-%d%x")
+#define AFX_REG_SECTION_FMT _T("%TsMFCTasksPane-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsMFCTasksPane-%d%x")
 #define AFX_REG_ENTRY_SETTINGS _T("Settings")
 
 #define AFX_ID_SCROLL_VERT 1

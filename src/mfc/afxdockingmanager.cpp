@@ -43,7 +43,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define AFX_REG_SECTION_FMT _T("%sDockingManager-%d")
+#define AFX_REG_SECTION_FMT _T("%TsDockingManager-%d")
 #define AFX_REG_ENTRY_DOCKING_PANE_AND_PANEDIVIDERS _T("DockingPaneAndPaneDividers")
 
 #define AFX_DOCKING_MANAGER_PROFILE  _T("DockingManagers")

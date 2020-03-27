@@ -803,10 +803,13 @@ public:
 		return GetAccessibilityHitTest(xLeft, yTop, pvarChild);
 	}
 
+	BOOL IsInitDlgCompleted() const { return m_bInitDlgCompleted; }
+
 protected:
 	LPCTSTR m_lpszTemplateName;
 	CCreateContext* m_pCreateContext;
 	HWND m_hWndFocus;   // last window to have focus
+	BOOL m_bInitDlgCompleted;
 
 	virtual void OnDraw(CDC* pDC);      // default does nothing
 	// special case override of child window creation

@@ -777,6 +777,8 @@ BOOL CDialog::OnInitDialog()
 		return FALSE;
 	}
 
+	LoadDynamicLayoutResource(m_lpszTemplateName);
+
 	// transfer data into the dialog from member variables
 	if (!UpdateData(FALSE))
 	{
@@ -921,7 +923,7 @@ BOOL AFXAPI _AfxCheckDialogTemplate(LPCTSTR lpszResource, BOOL bInvisibleChild)
 	if (hResource == NULL)
 	{
 		if (DWORD_PTR(lpszResource) > 0xffff)
-			TRACE(traceAppMsg, 0, _T("ERROR: Cannot find dialog template named '%s'.\n"),
+			TRACE(traceAppMsg, 0, _T("ERROR: Cannot find dialog template named '%Ts'.\n"),
 				lpszResource);
 		else
 			TRACE(traceAppMsg, 0, "ERROR: Cannot find dialog template with IDD 0x%04X.\n",
@@ -953,7 +955,7 @@ BOOL AFXAPI _AfxCheckDialogTemplate(LPCTSTR lpszResource, BOOL bInvisibleChild)
 	if (dwStyle & WS_VISIBLE)
 	{
 		if (DWORD_PTR(lpszResource) > 0xffff)
-			TRACE(traceAppMsg, 0, _T("ERROR: Dialog named '%s' must be invisible.\n"),
+			TRACE(traceAppMsg, 0, _T("ERROR: Dialog named '%Ts' must be invisible.\n"),
 				lpszResource);
 		else
 			TRACE(traceAppMsg, 0, "ERROR: Dialog with IDD 0x%04X must be invisible.\n",
@@ -963,7 +965,7 @@ BOOL AFXAPI _AfxCheckDialogTemplate(LPCTSTR lpszResource, BOOL bInvisibleChild)
 	if (!(dwStyle & WS_CHILD))
 	{
 		if (DWORD_PTR(lpszResource) > 0xffff)
-			TRACE(traceAppMsg, 0, _T("ERROR: Dialog named '%s' must have the child style.\n"),
+			TRACE(traceAppMsg, 0, _T("ERROR: Dialog named '%Ts' must have the child style.\n"),
 				lpszResource);
 		else
 			TRACE(traceAppMsg, 0, "ERROR: Dialog with IDD 0x%04X must have the child style.\n",

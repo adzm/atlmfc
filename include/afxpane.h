@@ -39,7 +39,7 @@ class CDockingManager;
 
 
 // CS - change state status
-typedef enum AFX_CS_STATUS
+enum AFX_CS_STATUS
 {
 	CS_NOTHING,
 	CS_DOCK_IMMEDIATELY,

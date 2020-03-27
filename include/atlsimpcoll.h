@@ -160,6 +160,8 @@ public:
 	{
 		return m_nSize;
 	}
+
+	_Success_(return != FALSE)
 	BOOL Add(_In_ const T& t)
 	{
 		if(m_nSize == m_nAllocSize)
@@ -187,6 +189,8 @@ public:
 		m_nSize++;
 		return TRUE;
 	}
+
+	_Success_(return != FALSE)
 	BOOL Remove(_In_ const T& t)
 	{
 		int nIndex = Find(t);
@@ -194,6 +198,8 @@ public:
 			return FALSE;
 		return RemoveAt(nIndex);
 	}
+
+	_Success_(return != FALSE)
 	BOOL RemoveAt(_In_ int nIndex)
 	{
 		ATLASSERT(nIndex >= 0 && nIndex < m_nSize);
@@ -250,6 +256,7 @@ public:
 		return -1;  // not found
 	}
 
+	_Success_(return != FALSE)
 	BOOL SetAtIndex(
 		_In_ int nIndex,
 		_In_ const T& t)

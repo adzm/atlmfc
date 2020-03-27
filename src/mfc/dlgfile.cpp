@@ -30,7 +30,7 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,
 
 // Fix for warnings when building against WinBlue build 9444.0.130614-1739
 // warning C4996: 'GetVersionExW': was declared deprecated
-// externalapis\windows\winblue\sdk\inc\sysinfoapi.h(442)
+// externalapis\windows\8.1\sdk\inc\sysinfoapi.h(442)
 // Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
 #pragma warning( disable : 4996 )
 	::GetVersionEx(&vi);

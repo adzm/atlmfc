@@ -215,7 +215,7 @@ inline T AtlAddThrow(
 	return tResult;
 }
 
-_Ret_opt_ _Post_writable_byte_size_(nCount * nSize) inline LPVOID AtlCoTaskMemCAlloc(
+_Ret_opt_ _Post_writable_byte_size_(nCount * nSize) _ATL_DECLSPEC_ALLOCATOR inline LPVOID AtlCoTaskMemCAlloc(
 	_In_ ULONG nCount,
 	_In_ ULONG nSize)
 {
@@ -228,7 +228,7 @@ _Ret_opt_ _Post_writable_byte_size_(nCount * nSize) inline LPVOID AtlCoTaskMemCA
 	return ::CoTaskMemAlloc(nBytes);
 }
 
-_Ret_writes_bytes_maybenull_(nCount * nSize) inline LPVOID AtlCoTaskMemRecalloc(
+_Ret_writes_bytes_maybenull_(nCount * nSize) _ATL_DECLSPEC_ALLOCATOR inline LPVOID AtlCoTaskMemRecalloc(
 	_In_opt_ void *pvMemory,
 	_In_ ULONG nCount,
 	_In_ ULONG nSize)
@@ -265,14 +265,14 @@ namespace Checked
 class CCRTAllocator
 {
 public:
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR static void* Reallocate(
 		_In_ void* p,
 		_In_ size_t nBytes) throw()
 	{
 		return realloc(p, nBytes);
 	}
 
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return malloc(nBytes);
 	}
@@ -289,11 +289,11 @@ public:
 class CLocalAllocator
 {
 public:
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return ::LocalAlloc(LMEM_FIXED, nBytes);
 	}
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR static void* Reallocate(
 		_In_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -316,11 +316,11 @@ public:
 class CGlobalAllocator
 {
 public:
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return ::GlobalAlloc(GMEM_FIXED, nBytes);
 	}
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR static void* Reallocate(
 		_In_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -618,7 +618,7 @@ namespace _ATL_SAFE_ALLOCA_IMPL
 #ifndef _ATL_STACK_MARGIN
 #if defined(_M_IX86)
 #define _ATL_STACK_MARGIN	0x2000	// Minimum stack available after call to _ATL_SAFE_ALLOCA
-#elif defined _M_AMD64 || defined _M_IA64
+#elif defined _M_AMD64 || defined _M_IA64 || defined _M_ARM64
 #define _ATL_STACK_MARGIN	0x4000
 #elif defined _M_ARM
 // ARMWORKITEM: Page size is the same as x86 so that should probably be the same value
@@ -679,6 +679,8 @@ private :
 		BYTE _pad[8];
 #elif defined(_M_ARM)
 		BYTE _pad[4];
+#elif defined(_M_ARM64)
+		BYTE _pad[8];
 #else
 	#error Only supported for X86, AMD64, IA64 and ARM
 #endif
@@ -740,23 +742,19 @@ public :
 // Disable _alloca not within try-except prefast warning since we verify stack space is available before.
 #ifdef _ATL_SAFE_ALLOCA_ALWAYS_ALLOCATE_THRESHOLD_SIZE
 #define _ATL_SAFE_ALLOCA(nRequestedSize, nThreshold)	\
-	__pragma(warning(push))\
-	__pragma(warning(disable:4616))\
-	__pragma(warning(disable:6255))\
+	__pragma(warning(suppress:4616))\
+	__pragma(warning(suppress:6255))\
 	((nRequestedSize <= nThreshold && ATL::_ATL_SAFE_ALLOCA_IMPL::_AtlVerifyStackAvailable(nThreshold) ) ?	\
 		_alloca(nThreshold) :	\
 		((ATL::_ATL_SAFE_ALLOCA_IMPL::_AtlVerifyStackAvailable(nThreshold)) ? _alloca(nThreshold) : 0),	\
-			_AtlSafeAllocaManager.Allocate(nRequestedSize))\
-	__pragma(warning(pop))
+			_AtlSafeAllocaManager.Allocate(nRequestedSize))
 #else
 #define _ATL_SAFE_ALLOCA(nRequestedSize, nThreshold)	\
-	__pragma(warning(push))\
-	__pragma(warning(disable:4616))\
-	__pragma(warning(disable:6255))\
+	__pragma(warning(suppress:4616))\
+	__pragma(warning(suppress:6255))\
 	((nRequestedSize <= nThreshold && ATL::_ATL_SAFE_ALLOCA_IMPL::_AtlVerifyStackAvailable(nRequestedSize) ) ?	\
 		_alloca(nRequestedSize) :	\
-		_AtlSafeAllocaManager.Allocate(nRequestedSize))\
-	__pragma(warning(pop))
+		_AtlSafeAllocaManager.Allocate(nRequestedSize))
 #endif
 
 // Use 1024 bytes as the default threshold in ATL

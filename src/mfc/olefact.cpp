@@ -139,7 +139,7 @@ BOOL COleObjectFactory::Register()
 		if (sc != S_OK)
 		{
 #ifdef _DEBUG
-			TRACE(traceOle, 0, _T("Warning: CoRegisterClassObject failed scode = %s.\n"),
+			TRACE(traceOle, 0, _T("Warning: CoRegisterClassObject failed scode = %Ts.\n"),
 				::AfxGetFullScodeString(sc));
 #endif
 			// registration failed.
@@ -369,7 +369,7 @@ BOOL COleObjectFactory::UpdateRegistry(BOOL bRegister)
 				CString strClassID(lpszClassID);
 
 				int nLen;
-				ATL_CRT_ERRORCHECK_SPRINTF(nLen = _sntprintf_s(szScratch, _countof(szScratch), _countof(szScratch) - 1, _T("CLSID\\%s"), strClassID.GetString()));
+				ATL_CRT_ERRORCHECK_SPRINTF(nLen = _sntprintf_s(szScratch, _countof(szScratch), _countof(szScratch) - 1, _T("CLSID\\%Ts"), strClassID.GetString()));
 				if (nLen >= 0 && nLen < _countof(szScratch))
 				{
 					if (AfxRegOpenKeyEx(HKEY_CLASSES_ROOT, szScratch, 0,

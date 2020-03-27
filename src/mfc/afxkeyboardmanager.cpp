@@ -23,7 +23,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define AFX_REG_SECTION_FMT _T("%sKeyboard-%d")
+#define AFX_REG_SECTION_FMT _T("%TsKeyboard-%d")
 #define AFX_REG_ENTRY_DATA _T("Accelerators")
 
 CKeyboardManager* afxKeyboardManager = NULL;
@@ -514,6 +514,7 @@ UINT __stdcall CKeyboardManager::TranslateCharToUpper(const UINT nChar)
 	ENSURE(::GetKeyboardState(lpKeyState));
 
 	::ToUnicodeEx(nChar, MapVirtualKey(nChar, 0), lpKeyState, szChar, 2, 1, ::GetKeyboardLayout(AfxGetThread()->m_nThreadID));
+	szChar[1] = _T('\0');
 #endif // _UNICODE
 
 	CharUpper(szChar);

@@ -374,6 +374,22 @@ inline CTime WINAPI CTime::GetCurrentTime() throw()
 	return( CTime( ::_time64( NULL ) ) );
 }
 
+_Success_(return != false) inline bool CTime::GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const throw()
+{
+	struct tm tmLocal;
+	if (GetLocalTm(&tmLocal) == nullptr) return false;
+
+	dbts.year = (SHORT) (1900 + tmLocal.tm_year);
+	dbts.month = (USHORT) (1 + tmLocal.tm_mon);
+	dbts.day = (USHORT) tmLocal.tm_mday;
+	dbts.hour = (USHORT) tmLocal.tm_hour;
+	dbts.minute = (USHORT) tmLocal.tm_min;
+	dbts.second = (USHORT) tmLocal.tm_sec;
+	dbts.fraction = 0;
+
+	return true;
+}
+
 inline BOOL WINAPI CTime::IsValidFILETIME(_In_ const FILETIME& fileTime) throw()
 {
 	FILETIME localTime;
@@ -487,26 +503,17 @@ inline CTime::CTime(
 	_In_ const FILETIME& fileTime,
 	_In_ int nDST)
 {
-	// first convert file time (UTC time) to local time
-	FILETIME localTime;
-	if (!FileTimeToLocalFileTime(&fileTime, &localTime))
-	{
-		m_time = 0;
-		AtlThrow(E_INVALIDARG);
-		return;
-	}
-
-	// then convert that time to system time
 	SYSTEMTIME sysTime;
-	if (!FileTimeToSystemTime(&localTime, &sysTime))
+	SYSTEMTIME localTime;
+	if (!FileTimeToSystemTime(&fileTime, &sysTime) || !SystemTimeToTzSpecificLocalTime(nullptr, &sysTime, &localTime))
 	{
 		m_time = 0;
 		AtlThrow(E_INVALIDARG);
 		return;
 	}
 
-	// then convert the system time to a time_t (C-runtime local time)
-	CTime timeT(sysTime, nDST);
+	// Convert the system time to a time_t (C-runtime local time)
+	CTime timeT(localTime, nDST);
 	*this = timeT;
 }
 
@@ -953,8 +960,8 @@ inline CString CTimeSpan::Format(_In_z_ LPCTSTR pFormat) const
 		AtlThrow( E_INVALIDARG );
 
 	CString strBuffer;
-	CString hmsFormats [_CTIMESPANFORMATS] = {_T("%c"),_T("%02ld"),_T("%d")};
-	CString dayFormats [_CTIMESPANFORMATS] = {_T("%c"),_T("%I64d"),_T("%I64d")};
+	CString hmsFormats [_CTIMESPANFORMATS] = {_T("%Tc"),_T("%02ld"),_T("%d")};
+	CString dayFormats [_CTIMESPANFORMATS] = {_T("%Tc"),_T("%I64d"),_T("%I64d")};
 	strBuffer.Preallocate(maxTimeBufferSize);
 	TCHAR ch;
 

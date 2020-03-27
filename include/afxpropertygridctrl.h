@@ -161,7 +161,7 @@ public:
 	virtual void SetValue(const COleVariant& varValue);
 
 	const COleVariant& GetOriginalValue() const { return m_varValueOrig; }
-	void SetOriginalValue(const COleVariant& varValue);
+	virtual void SetOriginalValue(const COleVariant& varValue);
 
 	const CString& GetDescription() const { return m_strDescr; }
 	void SetDescription(const CString& strDescr) { m_strDescr = strDescr; }
@@ -261,6 +261,7 @@ public:
 	virtual BOOL OnEdit(LPPOINT lptClick);
 	virtual BOOL OnUpdateValue();
 	virtual CString FormatProperty();
+	virtual void SetOriginalValue(const COleVariant& varValue);
 
 protected:
 	virtual BOOL OnKillFocus(CWnd* pNewWnd) { return pNewWnd->GetSafeHwnd() != m_pPopup->GetSafeHwnd(); }

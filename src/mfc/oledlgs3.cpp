@@ -178,7 +178,7 @@ STDMETHODIMP COlePropertiesDialog::XOleUIObjInfo::GetObjectInfo(
 	{
 		TCHAR szFormatLink[128];
 		AfxLoadString(AFX_IDS_PASTELINKEDTYPE, szFormatLink, _countof(szFormatLink));
-		TCHAR szFormatObj[] = _T("%s");
+		TCHAR szFormatObj[] = _T("%Ts");
 		LPTSTR lpszFormat = bIsLink ? szFormatLink : szFormatObj;
 		CString strType;
 		pItem->GetUserType(USERCLASSTYPE_FULL, strType);

@@ -2103,28 +2103,7 @@ void CMFCVisualManager::OnDrawTasksGroupCaption(CDC* pDC, CMFCTasksPaneTaskGroup
 				pDC->SelectObject(pBrushOld);
 			}
 
-			if (pGroup->m_bIsSpecial)
-			{
-				if (!pGroup->m_bIsCollapsed)
-				{
-					CMenuImages::Draw(pDC, CMenuImages::IdArrowUp, rectButton.TopLeft());
-				}
-				else
-				{
-					CMenuImages::Draw(pDC, CMenuImages::IdArrowDown, rectButton.TopLeft());
-				}
-			}
-			else
-			{
-				if (!pGroup->m_bIsCollapsed)
-				{
-					CMenuImages::Draw(pDC, CMenuImages::IdArrowUp, rectButton.TopLeft());
-				}
-				else
-				{
-					CMenuImages::Draw(pDC, CMenuImages::IdArrowDown, rectButton.TopLeft());
-				}
-			}
+			CMenuImages::Draw(pDC, pGroup->m_bIsCollapsed ? CMenuImages::IdArrowDown : CMenuImages::IdArrowUp, rectButton.TopLeft());
 		}
 	}
 }
@@ -2431,8 +2410,8 @@ void CMFCVisualManager::OnDrawSpinButtons(CDC* pDC, CRect rectSpin, int nState, 
 	}
 	else
 	{
-		rect[0].DeflateRect(0, 0, rect[0].Width() / 2, 0);
-		rect[1].left = rect[0].right + 1;
+		rect[1].DeflateRect(0, 0, rect[0].Width() / 2, 0);
+		rect[0].left = rect[1].right;
 	}
 
 	if (CMFCToolBarImages::m_bIsDrawOnGlass)
@@ -2446,7 +2425,7 @@ void CMFCVisualManager::OnDrawSpinButtons(CDC* pDC, CRect rectSpin, int nState, 
 		pDC->Draw3dRect(rectSpin, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarHilite);
 	}
 
-	CMenuImages::IMAGES_IDS id[2][2] = {{CMenuImages::IdArrowUp, CMenuImages::IdArrowDown}, {CMenuImages::IdArrowLeft, CMenuImages::IdArrowRight}};
+	CMenuImages::IMAGES_IDS id[2][2] = {{CMenuImages::IdArrowUp, CMenuImages::IdArrowDown}, {CMenuImages::IdArrowRight, CMenuImages::IdArrowLeft}};
 
 	int idxPressed = (nState &(AFX_SPIN_PRESSEDUP | AFX_SPIN_PRESSEDDOWN)) - 1;
 	BOOL bDisabled = nState & AFX_SPIN_DISABLED;

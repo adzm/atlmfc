@@ -431,6 +431,8 @@ CMFCRibbonBaseElement* CMFCRibbonConstructor::CreateElement(const CMFCRibbonInfo
 
 		CMFCRibbonLabel* pNewElement = new CMFCRibbonLabel(infoElement.m_strText, infoElement.m_bIsAlwaysLarge);
 		pElement = pNewElement;
+
+		SetID(*pElement, info.m_ID);
 	}
 	else if (info.GetElementType() == CMFCRibbonInfo::e_TypeComboBox_Font)
 	{

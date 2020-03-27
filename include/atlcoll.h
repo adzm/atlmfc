@@ -17,11 +17,6 @@
 #include <atlbase.h>
 #include <new.h>
 
-// setup default packing value
-#ifndef _X86_
-#include <afxv_cpu.h>
-#endif
-
 #pragma warning(push)
 #pragma warning(disable: 4702)  // Unreachable code.  This file will have lots of it, especially without EH enabled.
 #pragma warning(disable: 4512)  // assignment operator could not be generated
@@ -37,20 +32,14 @@ struct __POSITION
 #endif
 typedef __POSITION* POSITION;
 
-#ifndef _AFX_PACKING
-#define _AFX_PACKING 4
-#endif
-
 #pragma pack(push,_ATL_PACKING)
 namespace ATL {
 
-struct CAtlPlex     // warning variable length structure
+#pragma warning(push)
+#pragma warning(disable:4324)
+__declspec(align(8)) struct CAtlPlex
 {
 	CAtlPlex* pNext;
-#if (_AFX_PACKING >= 8)
-	DWORD dwReserved[1];    // align on 8 byte boundary
-#endif
-	// BYTE data[maxNum*elementSize];
 
 	void* data()
 	{
@@ -66,6 +55,7 @@ struct CAtlPlex     // warning variable length structure
 
 	void FreeDataChain();       // free this one and links
 };
+#pragma warning(pop)
 
 inline CAtlPlex* CAtlPlex::Create(
 	_Inout_ CAtlPlex*& pHead,
@@ -102,11 +92,11 @@ inline void CAtlPlex::FreeDataChain()
 	pPlex = this;
 	while( pPlex != NULL )
 	{
-		CAtlPlex* pNext;
+		CAtlPlex* pNextPlex;
 
-		pNext = pPlex->pNext;
+		pNextPlex = pPlex->pNext;
 		free( pPlex );
-		pPlex = pNext;
+		pPlex = pNextPlex;
 	}
 }
 

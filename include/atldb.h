@@ -227,7 +227,11 @@ inline void WINAPI AtlDumpProperty(
 		break;
 	}
 
-	_stprintf_s(szProperty, _countof(szProperty), _T("Property 0x%lxL -- %s\n"), dwPropertyID, szStatus);
+#pragma warning(push)
+#pragma warning(disable: 6271)
+	_stprintf_s(szProperty, _countof(szProperty), _T("Property 0x%lxL -- %Ts\n"), dwPropertyID, szStatus);
+#pragma warning(pop)
+
 	OutputDebugString(szProperty);
 }
 
@@ -3302,7 +3306,7 @@ EXIT:
 		return E_FAIL;
 	}
 
-	HRESULT InternalFInit(
+	_Success_(return == S_OK) HRESULT InternalFInit(
 		_In_ PGetPropSet pfnGetSet,
 		_In_opt_ CUtlPropsBase* pCopyMe = NULL)
 	{
@@ -3406,7 +3410,8 @@ EXIT:
 				else
 				{
 					// Clear Pointer Array
-					memset(rgpUPropInfo, 0, cPropIds * sizeof(UPROPINFO*));
+#pragma warning(suppress : 28313) // The C28313 warning associated with the following line is spurious.
+					memset(static_cast<void*>(rgpUPropInfo), 0, cPropIds * sizeof(UPROPINFO*));
 
 					// Set Pointer to correct property ids with a property set
 					pUPropInfo = m_pUPropSet[iPropSet].pUPropInfo;

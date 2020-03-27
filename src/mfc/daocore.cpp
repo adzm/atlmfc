@@ -505,9 +505,9 @@ void AFXAPI AfxThrowDaoException(int nAfxDaoError, SCODE scode)
 
 				TRACE(traceDatabase, 0, _T("\nError Code = %d\n"),
 					pException->m_pErrorInfo->m_lErrorCode);
-				TRACE(traceDatabase, 0, _T("Source = %s\n"),
+				TRACE(traceDatabase, 0, _T("Source = %Ts\n"),
 					(LPCTSTR)pException->m_pErrorInfo->m_strSource);
-				TRACE(traceDatabase, 0, _T("Description = %s\n"),
+				TRACE(traceDatabase, 0, _T("Description = %Ts\n"),
 					(LPCTSTR)pException->m_pErrorInfo->m_strDescription);
 			}
 		}
@@ -5637,9 +5637,9 @@ void AFX_CDECL ThrowGetRowsDaoException(SCODE scode)
 
 	TRACE(traceDatabase, 0, _T("\nError Code = %d\n"),
 		pException->m_pErrorInfo->m_lErrorCode);
-	TRACE(traceDatabase, 0, _T("Source = %s\n"),
+	TRACE(traceDatabase, 0, _T("Source = %Ts\n"),
 		(LPCTSTR)pException->m_pErrorInfo->m_strSource);
-	TRACE(traceDatabase, 0, _T("Description = %s\n"),
+	TRACE(traceDatabase, 0, _T("Description = %Ts\n"),
 		(LPCTSTR)pException->m_pErrorInfo->m_strDescription);
 
 	THROW(pException);

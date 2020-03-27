@@ -46,6 +46,16 @@ const LPCTSTR CHttpConnection::szHtmlVerbs[] = {
 };
 
 
+BOOL __internetSetOptionEx(HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, 
+	DWORD dwBufferLength, DWORD dwFlags)
+{
+	BOOL fResult = FALSE;
+	if (dwFlags)
+		SetLastError(ERROR_INVALID_PARAMETER);
+	else
+		fResult = InternetSetOption(hInternet, dwOption, lpBuffer, dwBufferLength);
+	return fResult;
+}
 /////////////////////////////////////////////////////////////////////////////
 // map of HINTERNETs to CInternetSessions* for callbacks
 
@@ -347,11 +357,11 @@ void AFXAPI AfxInternetStatusCallbackDebug(HINTERNET hInternet,
 	switch (dwInternetStatus)
 	{
 	case INTERNET_STATUS_RESOLVING_NAME:
-		TRACE(traceInternet, 1, _T("resolving name for %s\n"), lpvStatusInformation);
+		TRACE(traceInternet, 1, _T("resolving name for %Ts\n"), lpvStatusInformation);
 		break;
 
 	case INTERNET_STATUS_NAME_RESOLVED:
-		TRACE(traceInternet, 1, _T("resolved name for %s!\n"), lpvStatusInformation);
+		TRACE(traceInternet, 1, _T("resolved name for %Ts!\n"), lpvStatusInformation);
 		break;
 
 	case INTERNET_STATUS_HANDLE_CREATED:
@@ -361,7 +371,7 @@ void AFXAPI AfxInternetStatusCallbackDebug(HINTERNET hInternet,
 	case INTERNET_STATUS_CONNECTING_TO_SERVER:
 		{
 		sockaddr* pSockAddr = (sockaddr*) lpvStatusInformation;
-		TRACE(traceInternet, 1, _T("connecting to socket address '%s'\n"), pSockAddr->sa_data);
+		TRACE(traceInternet, 1, _T("connecting to socket address '%Ts'\n"), pSockAddr->sa_data);
 		}
 		break;
 
@@ -642,7 +652,7 @@ BOOL CInternetSession::SetOption(DWORD dwOption, LPVOID lpBuffer,
 	// bogus flag?
 	ASSERT(dwFlags == 0 || ((dwFlags & ISO_VALID_FLAGS) == dwFlags));
 
-	return InternetSetOptionEx(m_hSession, dwOption,
+	return __internetSetOptionEx(m_hSession, dwOption,
 		lpBuffer, dwBufferLength, dwFlags);
 }
 
@@ -861,7 +871,7 @@ BOOL CInternetFile::SetOption(DWORD dwOption, LPVOID lpBuffer,
 	// bogus flag?
 	ASSERT(dwFlags == 0 || ((dwFlags & ISO_VALID_FLAGS) == dwFlags));
 
-	return InternetSetOptionEx(m_hFile, dwOption,
+	return __internetSetOptionEx(m_hFile, dwOption,
 		lpBuffer, dwBufferLength, dwFlags);
 }
 
@@ -1006,7 +1016,7 @@ CInternetFile::~CInternetFile()
 	{
 #ifdef _DEBUG
 		const CString strName(GetRuntimeClass()->m_lpszClassName);		
-		TRACE(traceInternet, 0, _T("Warning: destroying an open %s with handle %8.8X\n"),
+		TRACE(traceInternet, 0, _T("Warning: destroying an open %Ts with handle %8.8X\n"),
 			strName.GetString(), m_hFile);
 #endif
 		Close();
@@ -1433,7 +1443,7 @@ CInternetConnection::~CInternetConnection()
 	{
 #ifdef _DEBUG
 		const CString strName(GetRuntimeClass()->m_lpszClassName);
-		TRACE(traceInternet, 0, _T("Warning: Disconnecting %s handle %8.8X in context %8.8X at destruction.\n"),
+		TRACE(traceInternet, 0, _T("Warning: Disconnecting %Ts handle %8.8X in context %8.8X at destruction.\n"),
 			strName.GetString(), m_hConnection, m_dwContext);
 #endif
 		Close();
@@ -1452,7 +1462,7 @@ BOOL CInternetConnection::SetOption(DWORD dwOption, LPVOID lpBuffer,
 	// bogus flag?
 	ASSERT(dwFlags == 0 || ((dwFlags & ISO_VALID_FLAGS) == dwFlags));
 
-	return InternetSetOptionEx(m_hConnection, dwOption,
+	return __internetSetOptionEx(m_hConnection, dwOption,
 		lpBuffer, dwBufferLength, dwFlags);
 }
 

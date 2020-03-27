@@ -582,7 +582,12 @@ UINT PASCAL CCmdTarget::GetStackSize(const BYTE* pbParams, VARTYPE vtResult)
 }
 
 // push arguments on stack appropriate for C++ call (compiler dependent)
-#ifndef _SHADOW_DOUBLES
+#if defined(_M_ARM64)
+SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
+                                void* pResult, VARTYPE vtResult, DISPPARAMS* pDispParams, UINT* puArgErr,
+                                VARIANT* rgTempVars, CVariantBoolConverter* pTempStackArgs, 
+                                PUNSUPPORTEDPLAT_PARAMS pUnsupportedplatParams)
+#elif !defined(_SHADOW_DOUBLES)
 SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 	void* pResult, VARTYPE vtResult, DISPPARAMS* pDispParams, UINT* puArgErr,
 	VARIANT* rgTempVars,CVariantBoolConverter* pTempStackArgs)
@@ -807,6 +812,11 @@ SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 				break;
 
 			case VT_R4:
+#ifdef _M_ARM64
+                if (UnsupportedplatParamsAddFloat(pUnsupportedplatParams, pArg->fltVal)) {
+                    break;
+                }
+#endif
 				*(_STACK_FLOAT*)pStack = (_STACK_FLOAT)pArg->fltVal;
 				pStack += sizeof(_STACK_FLOAT);
 	#ifdef _SHADOW_DOUBLES
@@ -816,6 +826,11 @@ SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 				break;
 
 			case VT_R8:
+#ifdef _M_ARM64
+                if (UnsupportedplatParamsAddDouble(pUnsupportedplatParams, pArg->dblVal)) {
+                    break;
+                }
+#endif
 	#ifdef _ALIGN_DOUBLES
 				// align doubles on 8 byte for some platforms
 				pStack = (BYTE*)(((DWORD_PTR)pStack + _ALIGN_DOUBLES-1) &
@@ -830,6 +845,11 @@ SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 				break;
 
 			case VT_DATE:
+#ifdef _M_ARM64
+                if (UnsupportedplatParamsAddDouble(pUnsupportedplatParams, pArg->date)) {
+                    break;
+                }
+#endif
 	#ifdef _ALIGN_DOUBLES
 				// align doubles on 8 byte for some platforms
 				pStack = (BYTE*)(((DWORD_PTR)pStack + _ALIGN_DOUBLES-1) &
@@ -903,10 +923,14 @@ SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 	return S_OK;    // success!
 }
 
+#if defined(_M_ARM64)
+extern "C" DWORD_PTR AFXAPI
+_AfxDispatchCall(AFX_PMSG pfn, void* pArgs, UINT nSizeArgs, double *pDoubles);
+#else
 // indirect call helper (see OLECALL.CPP for implementation)
-
 extern "C" DWORD_PTR AFXAPI
 _AfxDispatchCall(AFX_PMSG pfn, void* pArgs, UINT nSizeArgs);
+#endif
 
 // disable run-time checks (/RTC1) in debug builds because this method
 // intentionally messes with the stack in order to call the OLE method.
@@ -933,6 +957,11 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 		DWORD nVal;
 		ULONGLONG ullVal;
 	};
+
+#ifdef _M_ARM64
+    UNSUPPORTEDPLAT_PARAMS UnsupportedplatParams;
+    UnsupportedplatParamsReset(&UnsupportedplatParams);
+#endif
 
 	// get default function and parameters
 	BYTE bNoParams = 0;
@@ -1021,7 +1050,10 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 	// push all the args on to the stack allocated memory
 	AFX_RESULT result;
 	CVariantBoolConverter tempArgs;	
-#ifndef _SHADOW_DOUBLES
+#if defined(_M_ARM64)
+    SCODE sc = PushStackArgs(pStack, pbParams, &result, vtResult,
+                             pDispParams, puArgErr, rgTempVars, &tempArgs, &UnsupportedplatParams);
+#elif !defined(_SHADOW_DOUBLES)
 	SCODE sc = PushStackArgs(pStack, pbParams, &result, vtResult,
 		pDispParams, puArgErr, rgTempVars,&tempArgs);
 #else
@@ -1035,26 +1067,45 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 	{
 		TRY
 		{
-			// PushStackArgs will fail on argument mismatches
+            // PushStackArgs will fail on argument mismatches
+#if defined(_M_ARM64)
+            DWORD_PTR(AFXAPI *pfnDispatch)(AFX_PMSG, void*, UINT, double *) =
+                &_AfxDispatchCall;
+#else
 			DWORD_PTR (AFXAPI *pfnDispatch)(AFX_PMSG, void*, UINT) =
-				&_AfxDispatchCall;
+                &_AfxDispatchCall;
+#endif
 
 			// floating point return values are a special case
 			switch (vtResult)
 			{
 			case VT_R4:
-				result.fltVal = ((float (AFXAPI*)(AFX_PMSG, void*, UINT))
-					pfnDispatch)(pfn, pStack, nSizeArgs);
+#if defined(_M_ARM64)
+                result.fltVal = ((float (AFXAPI*)(AFX_PMSG, void*, UINT, double *))
+                    pfnDispatch)(pfn, pStack, nSizeArgs, UnsupportedplatParams.DoubleValues);
+#else
+                result.fltVal = ((float (AFXAPI*)(AFX_PMSG, void*, UINT))
+                    pfnDispatch)(pfn, pStack, nSizeArgs);
+#endif
 				break;
 			case VT_R8:
-				result.dblVal = ((double (AFXAPI*)(AFX_PMSG, void*, UINT))
-					pfnDispatch)(pfn, pStack, nSizeArgs);
+#if defined(_M_ARM64)
+                result.dblVal = ((double (AFXAPI*)(AFX_PMSG, void*, UINT, double *))
+                    pfnDispatch)(pfn, pStack, nSizeArgs, UnsupportedplatParams.DoubleValues);
+#else
+                result.dblVal = ((double (AFXAPI*)(AFX_PMSG, void*, UINT))
+                    pfnDispatch)(pfn, pStack, nSizeArgs);
+#endif
 				break;
 			case VT_DATE:
-				result.dblVal = ((DATE (AFXAPI*)(AFX_PMSG, void*, UINT))
-					pfnDispatch)(pfn, pStack, nSizeArgs);
-				break;
-
+#if defined(_M_ARM64)
+                result.dblVal = ((DATE(AFXAPI*)(AFX_PMSG, void*, UINT, double *))
+                    pfnDispatch)(pfn, pStack, nSizeArgs, UnsupportedplatParams.DoubleValues);
+#else
+                result.dblVal = ((DATE(AFXAPI*)(AFX_PMSG, void*, UINT))
+                    pfnDispatch)(pfn, pStack, nSizeArgs);
+#endif			
+                break;
 			case VT_I8:
 			case VT_UI8:
 				result.ullVal = ((ULONGLONG (AFXAPI*)(AFX_PMSG, void*, UINT))
@@ -1062,7 +1113,11 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 				break;
 
 			default:
-				dwResult = pfnDispatch(pfn, pStack, nSizeArgs);
+#if defined(_M_ARM64)
+                dwResult = pfnDispatch(pfn, pStack, nSizeArgs, UnsupportedplatParams.DoubleValues);
+#else
+                dwResult = pfnDispatch(pfn, pStack, nSizeArgs);
+#endif
 				break;
 			}
 		}

@@ -19,8 +19,8 @@
 #define new DEBUG_NEW
 #endif
 
-#define AFX_REG_SECTION_FMT _T("%sDockablePaneAdapter-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sDockablePaneAdapter-%d%x")
+#define AFX_REG_SECTION_FMT _T("%TsDockablePaneAdapter-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsDockablePaneAdapter-%d%x")
 
 IMPLEMENT_SERIAL(CDockablePaneAdapter, CDockablePane, VERSIONABLE_SCHEMA | 2)
 

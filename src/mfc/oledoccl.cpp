@@ -327,7 +327,7 @@ void COleDocObjectItem::OnInsertMenus(CMenu* pMenuShared,
 		}
 
 		CString strTearOffName;
-		strTearOffName.Format(_T("%s %s"), AfxGetAppName(), strHelpMenuName);
+		strTearOffName.Format(_T("%Ts %Ts"), AfxGetAppName(), strHelpMenuName);
 		strTearOffName.Remove('&');
 
 		// get the normal frame menu

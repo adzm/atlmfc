@@ -178,12 +178,9 @@ public:
 			// If Registering as an EXE, then we quote the resultant path.
 			// We don't do it for a DLL, because LoadLibrary fails if the path is
 			// quoted
-			TCHAR szModuleQuote[_MAX_PATH + _ATL_QUOTES_SPACE];
-			szModuleQuote[0] = _T('\"');
-			Checked::tcscpy_s(szModuleQuote + 1, _countof(szModuleQuote) - 1, szModule);
-			int nLen = static_cast<int>(_tcslen(szModuleQuote));
-			szModuleQuote[nLen] = _T('\"');
-			szModuleQuote[nLen + 1] = 0;
+			TCHAR szModuleQuote[_MAX_PATH + _ATL_QUOTES_SPACE] = _T("\"");
+			Checked::tcscat_s(szModuleQuote, _countof(szModuleQuote), szModule);
+			Checked::tcscat_s(szModuleQuote, _countof(szModuleQuote), _T("\""));
 			hr = AddReplacement(_T("Module"), szModuleQuote);
 		}
 		else
@@ -202,7 +199,7 @@ public:
 		hr = StringFromCLSID(CAtlModule::m_libid, &sz);
 		if (FAILED(hr))
 			return hr;
-		
+
 		LPCTSTR pszModuleGUID = OLE2T_EX_DEF(sz);
 		ATLASSUME(pszModuleGUID != NULL);
 		hr = AddReplacement(_T("MODULEGUID"), pszModuleGUID);
@@ -331,7 +328,7 @@ ATLPREFAST_UNSUPPRESS()
 					return (BYTE) (10 + (ch - 'a'));
 			default:
 					ATLASSERT(FALSE);
-					ATLTRACE(atlTraceRegistrar, 0, _T("Bogus value %c passed as binary Hex value\n"), ch);
+					ATLTRACE(atlTraceRegistrar, 0, _T("Bogus value %Tc passed as binary Hex value\n"), ch);
 					return 0;
 		}
 	}
@@ -428,7 +425,7 @@ ATLPREFAST_UNSUPPRESS()
 			lRet = rkForceRemove.RecurseDeleteKey((szReplacement) ? szReplacement : rgBytes.m_aT);
 		if (lRet != ERROR_SUCCESS && lRet != ERROR_FILE_NOT_FOUND && lRet != ERROR_PATH_NOT_FOUND)
 		{
-			ATLTRACE(atlTraceRegistrar, 0, _T("Failed to delete key %s or one of its subkeys\n"),
+			ATLTRACE(atlTraceRegistrar, 0, _T("Failed to delete key %Ts or one of its subkeys\n"),
 				(szReplacement) ? szReplacement : rgBytes.m_aT);
 			hr = AtlHresultFromWin32(lRet);
 		}
@@ -589,7 +586,7 @@ ATLPREFAST_UNSUPPRESS()
 						return AtlHresultFromWin32(lRes);
 					if (bRestoreRK)
 						rkCur.m_hKey = NULL;
-					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
+					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %Ts at %Ts\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
 				}
 				pOps++;
 				GetOpsFromDWORD(*pOps, code, p1, p2);
@@ -612,7 +609,7 @@ ATLPREFAST_UNSUPPRESS()
 					if (SUCCEEDED(hr) && p1 != 0)
 						hr = GetStringAtLoc(rgStrings, p1, rgBytes2, &szReplacement2);
 
-					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
+					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %Ts at %Ts\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
 
 					TCHAR* pszValue = (szReplacement) ? szReplacement : rgBytes.m_aT;
 					int nLen = static_cast<int>(_tcslen(pszValue)) + 2; //Allocate space for double null termination.
@@ -721,7 +718,7 @@ ATLPREFAST_UNSUPPRESS()
 						return AtlHresultFromWin32(lRes);
 					if (bRestoreRK)
 						rkCur.m_hKey = NULL;
-					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
+					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %Ts at %Ts\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
 				}
 				pOps++;
 				GetOpsFromDWORD(*pOps, code, p1, p2);
@@ -784,7 +781,7 @@ ATLPREFAST_UNSUPPRESS()
 						return AtlHresultFromWin32(lRes);
 					if (bRestoreRK)
 						rkCur.m_hKey = NULL;
-					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
+					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %Ts at %Ts\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
 				}
 				pOps++;
 				GetOpsFromDWORD(*pOps, code, p1, p2);
@@ -900,7 +897,7 @@ public:
 					return (BYTE) (10 + (ch - 'a'));
 			default:
 					ATLASSERT(FALSE);
-					ATLTRACE(atlTraceRegistrar, 0, _T("Bogus value %c passed as binary Hex value\n"), ch);
+					ATLTRACE(atlTraceRegistrar, 0, _T("Bogus value %Tc passed as binary Hex value\n"), ch);
 					return 0;
 		}
 	}

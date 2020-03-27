@@ -41,8 +41,8 @@ public:
 #endif
 #endif
 
-#if !defined(_M_IX86) && !defined(_M_AMD64) && !defined(_M_ARM)
-	#error Compiling for unsupported platform.  Only x86, x64 and ARM platforms are supported by MFC.
+#if !defined(_M_IX86) && !defined(_M_AMD64) && !defined(_M_ARM) && !defined(_M_ARM64)
+	#error Compiling for unsupported platform.  Only x86, x64, ARM, and ARM64 platforms are supported by MFC.
 #endif
 
 #if defined(_MANAGED) && !defined(_M_IX86) && !defined(_M_AMD64)
@@ -324,7 +324,17 @@ typedef __POSITION* POSITION;
 
 #ifdef _DEBUG
 
-BOOL AFXAPI AfxAssertFailedLine(LPCSTR lpszFileName, int nLine);
+inline BOOL AFXAPI AfxAssertFailedLine(LPCSTR lpszFileName, int nLine)
+{
+	// we remove WM_QUIT because if it is in the queue then the message box
+	// won't display
+	MSG msg;
+	BOOL bQuit = PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
+	BOOL bResult = _CrtDbgReport(_CRT_ASSERT, lpszFileName, nLine, NULL, NULL);
+	if (bQuit)
+		PostQuitMessage((int)msg.wParam);
+	return bResult;
+}
 
 void AFX_CDECL AfxTrace(LPCTSTR lpszFormat, ...);
 // Note: file names are still ANSI strings (filenames rarely need UNICODE)
@@ -344,7 +354,7 @@ void AFXAPI AfxDump(const CObject* pOb); // Dump an object from CodeView
 // The following trace macros are provided for backward compatiblity
 //  (they also take a fixed number of parameters which provides
 //   some amount of extra error checking)
-#define TRACE0(sz)              TRACE(_T("%s"), _T(sz))
+#define TRACE0(sz)              TRACE(_T("%Ts"), _T(sz))
 #define TRACE1(sz, p1)          TRACE(_T(sz), p1)
 #define TRACE2(sz, p1, p2)      TRACE(_T(sz), p1, p2)
 #define TRACE3(sz, p1, p2, p3)  TRACE(_T(sz), p1, p2, p3)
@@ -410,9 +420,9 @@ inline void AFX_CDECL AfxTrace(...) { }
 	do { \
 		TCHAR szErrorMessage[512]; \
 		if (pException->GetErrorMessage(szErrorMessage, sizeof(szErrorMessage)/sizeof(*szErrorMessage), 0)) \
-			TRACE(traceAppMsg, 0, _T("%s (%s:%d)\n%s\n"), szMsg, _T(__FILE__), __LINE__, szErrorMessage); \
+			TRACE(traceAppMsg, 0, _T("%Ts (%Ts:%d)\n%Ts\n"), szMsg, _T(__FILE__), __LINE__, szErrorMessage); \
 		else \
-			TRACE(traceAppMsg, 0, _T("%s (%s:%d)\n"), szMsg, _T(__FILE__), __LINE__); \
+			TRACE(traceAppMsg, 0, _T("%Ts (%Ts:%d)\n"), szMsg, _T(__FILE__), __LINE__); \
 		ASSERT(FALSE); \
 	} while (0)
 #else
@@ -421,9 +431,9 @@ inline void AFX_CDECL AfxTrace(...) { }
 		CString strMsg; \
 		TCHAR  szErrorMessage[512]; \
 		if (pException->GetErrorMessage(szErrorMessage, sizeof(szErrorMessage)/sizeof(*szErrorMessage), 0)) \
-			strMsg.Format(_T("%s (%s:%d)\n%s"), szMsg, _T(__FILE__), __LINE__, szErrorMessage); \
+			strMsg.Format(_T("%Ts (%Ts:%d)\n%Ts"), szMsg, _T(__FILE__), __LINE__, szErrorMessage); \
 		else \
-			strMsg.Format(_T("%s (%s:%d)"), szMsg, _T(__FILE__), __LINE__); \
+			strMsg.Format(_T("%Ts (%Ts:%d)"), szMsg, _T(__FILE__), __LINE__); \
 		AfxMessageBox(strMsg); \
 	} while (0)
 #endif
@@ -1447,6 +1457,12 @@ BOOL AfxIsValidAtom(LPCTSTR psz);
 
 #if defined(_DEBUG)
 
+#if _MSC_VER >= 1900 && !defined(__EDG__)
+#define _AFX_DECLSPEC_ALLOCATOR __declspec(allocator)
+#else
+#define _AFX_DECLSPEC_ALLOCATOR
+#endif
+
 // Memory tracking allocation
 void* AFX_CDECL operator new(size_t nSize, LPCSTR lpszFileName, int nLine);
 #define DEBUG_NEW new(THIS_FILE, __LINE__)
@@ -1457,7 +1473,7 @@ void* __cdecl operator new[](size_t nSize, LPCSTR lpszFileName, int nLine);
 void __cdecl operator delete[](void* p, LPCSTR lpszFileName, int nLine);
 void __cdecl operator delete[](void *);
 
-void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject,
+_AFX_DECLSPEC_ALLOCATOR void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject,
 	LPCSTR lpszFileName, int nLine);
 void AFXAPI AfxFreeMemoryDebug(void* pbData, BOOL bIsObject);
 

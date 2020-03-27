@@ -362,7 +362,7 @@ BOOL __stdcall CMFCVisualManagerOffice2007::SetStyle(Style style, LPCTSTR lpszPa
 
 	if (::FindResource(hinstRes, strStyle, AFX_RT_STYLE_XML) == NULL)
 	{
-		TRACE(_T("Cannot load Style: %s\r\n"), strStyle);
+		TRACE(_T("Cannot load Style: %Ts\r\n"), strStyle);
 		ASSERT(FALSE);
 		return FALSE;
 	}

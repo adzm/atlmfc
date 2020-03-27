@@ -63,8 +63,8 @@ static const UINT idCopy = (UINT) -10003;
 static const UINT idPaste = (UINT) -10004;
 static const UINT idSelectAll = (UINT) -10005;
 
-#define AFX_REG_SECTION_FMT _T("%sMFCRibbonBar-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sMFCRibbonBar-%d%x")
+#define AFX_REG_SECTION_FMT _T("%TsMFCRibbonBar-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsMFCRibbonBar-%d%x")
 
 #define AFX_REG_ENTRY_QA_TOOLBAR_LOCATION _T("QuickAccessToolbarOnTop")
 #define AFX_REG_ENTRY_QA_TOOLBAR_COMMANDS _T("QuickAccessToolbarCommands")
@@ -6783,7 +6783,7 @@ BOOL CMFCRibbonBar::SaveToXMLFile(LPCTSTR lpszFilePath) const
 	catch(CFileException* pEx)
 	{
 		bRes = FALSE;
-		TRACE(_T("CMFCRibbonBar::SaveToXMLFile (%s): Reporting file I/O exception with lOsError = %lX.\n"), lpszFilePath, pEx->m_lOsError);
+		TRACE(_T("CMFCRibbonBar::SaveToXMLFile (%Ts): Reporting file I/O exception with lOsError = %lX.\n"), lpszFilePath, pEx->m_lOsError);
 		pEx->Delete();
 	}
 

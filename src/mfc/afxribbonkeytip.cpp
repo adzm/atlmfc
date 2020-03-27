@@ -143,10 +143,7 @@ BOOL CMFCRibbonKeyTip::Show(BOOL bRepos)
 		rect.OffsetRect(rectScreen.top - rect.top, 0);
 	}
 
-	if (m_strClassName.IsEmpty())
-	{
-		m_strClassName = ::AfxRegisterWndClass(CS_SAVEBITS, ::LoadCursor(NULL, IDC_ARROW), (HBRUSH)(COLOR_BTNFACE + 1), NULL);
-	}
+	m_strClassName = ::AfxRegisterWndClass(CS_SAVEBITS, ::LoadCursor(NULL, IDC_ARROW), (HBRUSH)(COLOR_BTNFACE + 1), NULL);
 
 	DWORD dwStyleEx = WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
 

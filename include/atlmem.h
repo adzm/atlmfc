@@ -52,7 +52,7 @@ class CCRTHeap :
 	public IAtlMemMgr
 {
 public:
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( malloc( nBytes ) );
 	}
@@ -60,7 +60,7 @@ public:
 	{
 		free( p );
 	}
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -140,7 +140,7 @@ public:
 	}
 
 // IAtlMemMgr
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::HeapAlloc( m_hHeap, 0, nBytes ) );
 	}
@@ -154,7 +154,7 @@ public:
 			ATLASSERT( bSuccess );
 		}
 	}
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -188,7 +188,7 @@ class CLocalHeap :
 {
 // IAtlMemMgr
 public:
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::LocalAlloc( LMEM_FIXED, nBytes ) );
 	}
@@ -196,7 +196,7 @@ public:
 	{
 		::LocalFree( p );
 	}
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -223,7 +223,7 @@ class CGlobalHeap :
 {
 // IAtlMemMgr
 public:
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::GlobalAlloc( LMEM_FIXED, nBytes ) );
 	}
@@ -231,7 +231,7 @@ public:
 	{
 		::GlobalFree( p );
 	}
-	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{

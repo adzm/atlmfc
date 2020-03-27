@@ -73,7 +73,7 @@ CObject::operator delete(void *pObject, LPCSTR /* lpszFileName */,
 	_free_dbg(pObject, _AFX_CLIENT_BLOCK);
 }
 
-void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject,  LPCSTR lpszFileName, int nLine)
+_AFX_DECLSPEC_ALLOCATOR void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject, LPCSTR lpszFileName, int nLine)
 {
 	return _malloc_dbg(nSize, bIsObject ? _AFX_CLIENT_BLOCK : _NORMAL_BLOCK,
 		lpszFileName, nLine);

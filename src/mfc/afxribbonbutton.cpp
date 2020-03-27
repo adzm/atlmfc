@@ -2069,7 +2069,7 @@ void CMFCRibbonButton::FillWindowList()
 		::GetWindowText(hwndT,szWndTitle,sizeof(szWndTitle)/sizeof(szWndTitle[0]));
 
 		CString strItem;
-		strItem.Format(_T("&%d %s"), i + 1, szWndTitle);
+		strItem.Format(_T("&%d %Ts"), i + 1, szWndTitle);
 
 		CMFCRibbonButton* pItem = new CMFCRibbonButton(AFX_IDM_FIRST_MDICHILD, strItem);
 		pItem->SetData((DWORD_PTR) hwndT);

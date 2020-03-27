@@ -674,9 +674,11 @@ BOOL CMFCPopupMenuBar::ImportFromMenu(HMENU hMenu, BOOL bShowAllCommands)
 		pMsgWindow = AfxGetMainWnd();
 	}
 
+	CMFCPopupMenu* pParentMenu = NULL;
+
 	if (GetSafeHwnd() != NULL)
 	{
-		CMFCPopupMenu* pParentMenu = DYNAMIC_DOWNCAST(CMFCPopupMenu, GetParent());
+		pParentMenu = DYNAMIC_DOWNCAST(CMFCPopupMenu, GetParent());
 		if (pParentMenu != NULL && pParentMenu->GetMessageWnd() != NULL)
 		{
 			pMsgWindow = pParentMenu->GetMessageWnd();
@@ -690,8 +692,27 @@ BOOL CMFCPopupMenuBar::ImportFromMenu(HMENU hMenu, BOOL bShowAllCommands)
 
 	if (pMsgWindow != NULL)
 	{
+		int nParentIndex = 0;
+
+		// Find parent bar index:
+		if (pParentMenu != NULL)
+		{
+			ASSERT_VALID (pParentMenu);
+
+			CMFCToolBarMenuButton* pParentButton = pParentMenu->GetParentButton();
+			if (pParentButton != NULL)
+			{
+				CMFCToolBar* pParentToolBar = DYNAMIC_DOWNCAST(CMFCToolBar, pParentButton->GetParentWnd());
+				if (pParentToolBar != NULL)
+				{
+					ASSERT_VALID(pParentToolBar);
+					nParentIndex = pParentToolBar->ButtonToIndex(pParentButton);
+				}
+			}
+		}
+
 		WPARAM theMenu = WPARAM(hMenu);
-		LPARAM theItem = MAKELPARAM(m_iOffset, 0);
+		LPARAM theItem = MAKELPARAM(nParentIndex, 0);
 		pMsgWindow->SendMessage(WM_INITMENUPOPUP, theMenu, theItem);
 	}
 
@@ -813,10 +834,10 @@ BOOL CMFCPopupMenuBar::ImportFromMenu(HMENU hMenu, BOOL bShowAllCommands)
 					{
 						pButton->m_nStyle |= TBBS_BREAK;
 					}
-				}
 
-				bPrevWasSeparator = FALSE;
-				bFirstItem = FALSE;
+					bPrevWasSeparator = FALSE;
+					bFirstItem = FALSE;
+				}
 			}
 			else if (CMFCToolBar::IsCommandRarelyUsed(uiCmd) && CMFCToolBar::IsCommandPermitted(uiCmd))
 			{

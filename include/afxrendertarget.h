@@ -10,11 +10,22 @@
 
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable:4458)
+
+// This header resets packing to the default packing; we must defend ourselves
+// against this.
+#pragma pack(push)
+#include <d3d9types.h>
+#pragma pack(pop)
+
 #include <dxgitype.h>
 #include <d2d1.h>
 #include <d2d1helper.h>
 #include <dwrite.h>
 #include <wincodec.h>
+
+#pragma warning(pop)
 
 class CBitmapRenderTarget;
 

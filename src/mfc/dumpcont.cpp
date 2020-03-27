@@ -20,7 +20,7 @@ void CDumpContext::OutputString(LPCTSTR lpsz)
 	// use C-runtime/OutputDebugString when m_pFile is NULL
 	if (m_pFile == NULL)
 	{
-		TRACE(atlTraceGeneral, 0, _T("%s"), lpsz);
+		TRACE(atlTraceGeneral, 0, _T("%Ts"), lpsz);
 		return;
 	}
 

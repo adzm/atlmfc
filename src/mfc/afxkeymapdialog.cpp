@@ -488,7 +488,7 @@ int CMFCKeyMapDialog::OnPrintHeader(CDC& dc, int nPage, int cx) const
 	GetWindowText(strTitle);
 
 	CString strCaption;
-	strCaption.Format(_T("- %d -\r\n%s: %s"), nPage, (LPCTSTR)strAppName, (LPCTSTR)strTitle);
+	strCaption.Format(_T("- %d -\r\n%Ts: %Ts"), nPage, (LPCTSTR)strAppName, (LPCTSTR)strTitle);
 
 	CRect rectText(0, nYMargin, cx, 32767);
 	return dc.DrawText(strCaption, rectText, DT_WORDBREAK | DT_CENTER) + 2 * nYMargin;
@@ -592,7 +592,7 @@ CString CMFCKeyMapDialog::FormatItem(int nItem) const
 	}
 
 	CString strItem;
-	strItem.Format(_T("%-30s\t%-20s\t%s"), (LPCTSTR)m_KeymapList.GetItemText(nItem, nColumnCommand), (LPCTSTR)strKeys, (LPCTSTR)m_KeymapList.GetItemText(nItem, nColumnDescr));
+	strItem.Format(_T("%-30s\t%-20s\t%Ts"), (LPCTSTR)m_KeymapList.GetItemText(nItem, nColumnCommand), (LPCTSTR)strKeys, (LPCTSTR)m_KeymapList.GetItemText(nItem, nColumnDescr));
 	return strItem;
 }
 

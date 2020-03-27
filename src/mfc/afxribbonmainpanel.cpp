@@ -129,11 +129,11 @@ void CMFCRibbonRecentFilesList::FillList()
 
 				if (iNumOfFiles == 9)
 				{
-					strItem.Format(_T("1&0 %s"), (LPCTSTR)strName);
+					strItem.Format(_T("1&0 %Ts"), (LPCTSTR)strName);
 				}
 				else if (iNumOfFiles < 9)
 				{
-					strItem.Format(_T("&%d %s"), iNumOfFiles + 1, (LPCTSTR)strName);
+					strItem.Format(_T("&%d %Ts"), iNumOfFiles + 1, (LPCTSTR)strName);
 				}
 				else
 				{

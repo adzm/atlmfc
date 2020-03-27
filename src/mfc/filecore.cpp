@@ -661,7 +661,7 @@ BOOL AFXAPI _AfxFullPath2(_Out_writes_z_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR 
 	{
 #ifdef _DEBUG
 		if (lpszFileIn != NULL && lpszFileIn[0] != '\0')
-			TRACE(traceAppMsg, 0, _T("Warning: could not parse the path '%s'.\n"), lpszFileIn);
+			TRACE(traceAppMsg, 0, _T("Warning: could not parse the path '%Ts'.\n"), lpszFileIn);
 #endif
 		Checked::tcsncpy_s(lpszPathOut, _MAX_PATH, lpszFileIn, _TRUNCATE); // take it literally
 		_AfxFillExceptionInfo(pException,lpszFileIn);
@@ -671,7 +671,7 @@ BOOL AFXAPI _AfxFullPath2(_Out_writes_z_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR 
 	{
 		#ifdef _DEBUG
 			if (lpszFileIn[0] != '\0')
-				TRACE1("Warning: could not parse the path '%s'. Path is too long.\n", lpszFileIn);
+				TRACE1("Warning: could not parse the path '%Ts'. Path is too long.\n", lpszFileIn);
 		#endif
 		// GetFullPathName() returned a path greater than _MAX_PATH
 		if (pException != NULL)
@@ -693,7 +693,7 @@ BOOL AFXAPI _AfxFullPath2(_Out_writes_z_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR 
 		if (!GetVolumeInformation(strRoot, NULL, 0, NULL, &dwDummy, &dwFlags,
 			NULL, 0))
 		{
-			TRACE(traceAppMsg, 0, _T("Warning: could not get volume information '%s'.\n"),
+			TRACE(traceAppMsg, 0, _T("Warning: could not get volume information '%Ts'.\n"),
 				(LPCTSTR)strRoot);
 			_AfxFillExceptionInfo(pException,lpszFileIn);
 			return FALSE;   // preserving case may not be correct

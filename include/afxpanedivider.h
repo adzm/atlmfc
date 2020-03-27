@@ -25,6 +25,7 @@ class CPaneContainerManager;
 class CPane;
 class CDockablePane;
 class CPaneContainer;
+class CPaneTrackingWnd;
 
 /*============================================================================*/
 // CPaneDivider window
@@ -154,6 +155,7 @@ protected:
 	CPoint m_ptHotDrag;
 	CWnd*  m_pParentWndForSerialize;
 	CPaneContainerManager* m_pContainerManager;
+	CPaneTrackingWnd* m_pWndTrack;
 };
 
 #ifdef _AFX_MINREBUILD

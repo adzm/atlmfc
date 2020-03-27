@@ -35,6 +35,7 @@ CMFCEditBrowseCtrl::CMFCEditBrowseCtrl()
 	m_bIsButtonHighlighted = FALSE;
 	m_bIsButtonCaptured = FALSE;
 	m_Mode = BrowseMode_None;
+	m_dwFileDialogFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
 	m_sizeImage = CSize(0, 0);
 	m_nBrowseButtonWidth = 20;
 	m_bDefaultImage = TRUE;
@@ -350,7 +351,7 @@ void CMFCEditBrowseCtrl::OnBrowse()
 				}
 			}
 
-			CFileDialog dlg(TRUE, !m_strDefFileExt.IsEmpty() ? (LPCTSTR)m_strDefFileExt : (LPCTSTR)NULL, strFile, 0, !m_strFileFilter.IsEmpty() ? (LPCTSTR)m_strFileFilter : (LPCTSTR)NULL, NULL);
+			CFileDialog dlg(TRUE, !m_strDefFileExt.IsEmpty() ? (LPCTSTR)m_strDefFileExt : (LPCTSTR)NULL, strFile, m_dwFileDialogFlags, !m_strFileFilter.IsEmpty() ? (LPCTSTR)m_strFileFilter : (LPCTSTR)NULL, NULL);
 			if (dlg.DoModal() == IDOK && strFile != dlg.GetPathName())
 			{
 				SetWindowText(dlg.GetPathName());
@@ -375,7 +376,7 @@ BOOL CMFCEditBrowseCtrl::OnIllegalFileName(CString& strFileName)
 	strError.LoadString(AFX_IDP_INVALID_FILENAME);
 
 	CString strMessage;
-	strMessage.Format(_T("%s\r\n%s"), strFileName, strError);
+	strMessage.Format(_T("%Ts\r\n%Ts"), strFileName, strError);
 
 	MessageBox(strMessage, NULL, MB_OK | MB_ICONEXCLAMATION);
 	return FALSE;
@@ -527,7 +528,7 @@ void CMFCEditBrowseCtrl::SetBrowseButtonImage(UINT uiBmpResId)
 	m_bDefaultImage = FALSE;
 }
 
-void CMFCEditBrowseCtrl::EnableFileBrowseButton(LPCTSTR lpszDefExt/* = NULL*/, LPCTSTR lpszFilter/* = NULL*/)
+void CMFCEditBrowseCtrl::EnableFileBrowseButton(LPCTSTR lpszDefExt/* = NULL*/, LPCTSTR lpszFilter/* = NULL*/, DWORD dwFlags/* = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT*/)
 {
 	ASSERT_VALID(this);
 	ENSURE(GetSafeHwnd() != NULL);
@@ -536,6 +537,7 @@ void CMFCEditBrowseCtrl::EnableFileBrowseButton(LPCTSTR lpszDefExt/* = NULL*/, L
 
 	m_strDefFileExt = lpszDefExt == NULL ? _T("") : lpszDefExt;
 	m_strFileFilter = lpszFilter == NULL ? _T("") : lpszFilter;
+	m_dwFileDialogFlags = dwFlags;
 
 	SetInternalImage();
 	OnChangeLayout();

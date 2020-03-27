@@ -115,7 +115,7 @@ protected:
 #endif
 
 // Smart docking theme:
-typedef enum AFX_SMARTDOCK_THEME
+enum AFX_SMARTDOCK_THEME
 {
 	AFX_SDT_DEFAULT = 0,	// Visual Manager-specific theme
 	AFX_SDT_VS2005 = 1,		// VS 2005-style

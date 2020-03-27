@@ -99,7 +99,7 @@ void COleClientItem::CheckGeneral(SCODE sc)
 		{
 #ifdef _DEBUG
 			// warn about non-NULL success codes
-			TRACE(traceOle, 0, _T("Warning: operation returned scode = %s.\n"),
+			TRACE(traceOle, 0, _T("Warning: operation returned scode = %Ts.\n"),
 				AfxGetFullScodeString(m_scLast));
 #endif
 			return;

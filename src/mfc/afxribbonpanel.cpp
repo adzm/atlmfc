@@ -444,6 +444,12 @@ CMFCRibbonPanel::~CMFCRibbonPanel()
 		pDroppedDown->ClosePopupMenu();
 	}
 
+	if (m_btnDefault.m_hIcon != NULL)
+	{
+		::DestroyIcon(m_btnDefault.m_hIcon);
+		m_btnDefault.m_hIcon = NULL;
+	}
+
 	RemoveAll();
 }
 

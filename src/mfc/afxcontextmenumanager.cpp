@@ -142,7 +142,7 @@ BOOL CContextMenuManager::ShowPopupMenu(UINT uiMenuResId, int x, int y, CWnd* pW
 		else
 		{
 			ASSERT(info.hSubMenu == NULL);
-			TRACE(_T("Menu %d, first option '%s' doesn't contain popup menu!\n"), uiMenuResId, info.dwTypeData);
+			TRACE(_T("Menu %d, first option '%Ts' doesn't contain popup menu!\n"), uiMenuResId, info.dwTypeData);
 		}
 
 #endif // _DEBUG

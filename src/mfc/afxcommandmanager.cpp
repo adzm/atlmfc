@@ -18,7 +18,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define AFX_REG_PARAMS_FMT _T("%sCommandManager")
+#define AFX_REG_PARAMS_FMT _T("%TsCommandManager")
 #define AFX_REG_ENTRY_COMMANDS_WITHOUT_IMAGES _T("CommandsWithoutImages")
 #define AFX_REG_ENTRY_MENU_USER_IMAGES _T("MenuUserImages")
 

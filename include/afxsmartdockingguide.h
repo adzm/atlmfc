@@ -215,13 +215,7 @@ protected:
 template <DWORD WndStyle>
 LPCTSTR GetSmartDockingWndClassName()
 {
-	static CString strSDWndClassName;
-	if (strSDWndClassName.IsEmpty ())
-	{
-		strSDWndClassName = AfxRegisterWndClass(WndStyle);
-	}
-
-	return strSDWndClassName;
+	return AfxRegisterWndClass(WndStyle);
 }
 
 #ifdef _AFX_MINREBUILD

@@ -71,7 +71,6 @@ CMFCStatusBar::CMFCStatusBar()
 	m_hFont = NULL;
 
 	// setup correct margins
-	m_cxRightBorder = m_cxDefaultGap;
 	m_cxSizeBox = 0;
 
 	m_cxLeftBorder = 4;

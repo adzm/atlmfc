@@ -48,7 +48,7 @@ IMPLEMENT_DYNAMIC(CMFCPropertyGridProperty, CObject)
 #define AFX_PROP_HAS_BUTTON 0x0002
 #define AFX_PROP_HAS_SPIN 0x0004
 
-#define AFX_FORMAT_CHAR   _T("%c")
+#define AFX_FORMAT_CHAR   _T("%Tc")
 #define AFX_FORMAT_SHORT  _T("%d")
 #define AFX_FORMAT_LONG   _T("%ld")
 #define AFX_FORMAT_USHORT _T("%u")
@@ -1197,7 +1197,11 @@ BOOL CMFCPropertyGridProperty::TextToVar(const CString& strText)
 
 	case VT_UINT:
 	case VT_UI4:
-		m_varValue.ulVal = unsigned long(_ttol(strVal));
+#ifdef _UNICODE
+		m_varValue.ulVal = wcstoul(strText, NULL, 10);
+#else
+		m_varValue.ulVal = strtoul(strText, NULL, 10);
+#endif // _UNICODE
 		return TRUE;
 
 	case VT_R4:
@@ -2182,6 +2186,12 @@ void CMFCPropertyGridColorProperty::AdjustInPlaceEditRect(CRect& rectEdit, CRect
 	rectEdit.right = m_rectButton.left;
 }
 
+void CMFCPropertyGridColorProperty::SetOriginalValue(const COleVariant& varValue)
+{
+	CMFCPropertyGridProperty::SetOriginalValue(varValue);
+	m_ColorOrig = (COLORREF)varValue.lVal;
+}
+
 void CMFCPropertyGridColorProperty::ResetOriginalValue()
 {
 	CMFCPropertyGridProperty::ResetOriginalValue();
@@ -2454,7 +2464,7 @@ CString CMFCPropertyGridFontProperty::FormatProperty()
 	int nLogY = dc.GetDeviceCaps(LOGPIXELSY);
 	if (nLogY != 0)
 	{
-		str.Format( _T("%s(%i)"), m_lf.lfFaceName, MulDiv(72, -m_lf.lfHeight, nLogY));
+		str.Format( _T("%Ts(%i)"), m_lf.lfFaceName, MulDiv(72, -m_lf.lfHeight, nLogY));
 	}
 	else
 	{

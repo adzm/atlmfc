@@ -24,7 +24,7 @@
 #include "afxglobalutils.h"
 #include "afxdatarecovery.h"
 
-#define AFX_REG_SECTION_FMT _T("%sMDIClientArea-%d")
+#define AFX_REG_SECTION_FMT _T("%TsMDIClientArea-%d")
 #define AFX_REG_ENTRY_MDITABS_STATE _T("MDITabsState")
 #define AFX_MDI_CLIENT_AREA_PROFILE _T("MDIClientArea")
 

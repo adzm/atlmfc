@@ -958,7 +958,7 @@ CString AFX_GLOBAL_DATA::RegisterWindowClass(LPCTSTR lpszClassNamePrefix)
 	HBRUSH hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
 
 	CString strClassName;
-	strClassName.Format(_T("%s:%x:%x:%x:%x"), lpszClassNamePrefix, (UINT_PTR)hInst, uiClassStyle, (UINT_PTR)hCursor, (UINT_PTR)hbrBackground);
+	strClassName.Format(_T("%Ts:%x:%x:%x:%x"), lpszClassNamePrefix, (UINT_PTR)hInst, uiClassStyle, (UINT_PTR)hCursor, (UINT_PTR)hbrBackground);
 
 	// See if the class already exists:
 	WNDCLASS wndcls;
@@ -1236,3 +1236,7 @@ HRESULT AFX_GLOBAL_DATA::ShellCreateItemFromParsingName(PCWSTR pszPath, IBindCtx
 	return _AfxSHCreateItemFromParsingName(pszPath, pbc, riid, ppv);
 }
 
+void AFX_GLOBAL_DATA::ResetCheckCompositionFlag()
+{
+	g_bCheckCompositionEnableSucceeded = FALSE;
+}

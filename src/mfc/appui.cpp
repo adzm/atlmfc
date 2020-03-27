@@ -136,7 +136,7 @@ BOOL CWinApp::OnOpenRecentFile(UINT nID)
 	int nIndex = nID - ID_FILE_MRU_FILE1;
 	ASSERT((*m_pRecentFileList)[nIndex].GetLength() != 0);
 
-	TRACE(traceAppMsg, 0, _T("MRU: open file (%d) '%s'.\n"), (nIndex) + 1,
+	TRACE(traceAppMsg, 0, _T("MRU: open file (%d) '%Ts'.\n"), (nIndex) + 1,
 			(LPCTSTR)(*m_pRecentFileList)[nIndex]);
 
 	g_bRemoveFromMRU = TRUE;

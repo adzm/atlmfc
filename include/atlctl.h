@@ -182,11 +182,28 @@ public:
 public:
 	CComControlBase(_Inout_ HWND& h) : m_hWndCD(h)
 	{
-		memset(this, 0, sizeof(CComControlBase));
-		m_phWndCD = &h;
 		m_sizeExtent.cx = 2*2540;
 		m_sizeExtent.cy = 2*2540;
 		m_sizeNatural = m_sizeExtent;
+		m_rcPos.left = 0;
+		m_rcPos.right = 0;
+		m_rcPos.top = 0;
+		m_rcPos.bottom = 0;
+		m_nFreezeEvents = 0;
+		m_bNegotiatedWnd = 0;
+		m_bWndLess = 0;
+		m_bInPlaceActive = 0;
+		m_bUIActive = 0;
+		m_bUsingWindowRgn = 0;
+		m_bInPlaceSiteEx = 0;
+		m_bWindowOnly = 0;
+		m_bRequiresSave = 0;
+		m_bWasOnceWindowless = 0;
+		m_bAutoSize = 0;
+		m_bRecomposeOnResize = 0;
+		m_bResizeNatural = 0;
+		m_bDrawFromNatural = 0;
+		m_bDrawGetDataInHimetric = 0;
 	}
 	virtual ~CComControlBase()
 	{
@@ -334,7 +351,7 @@ public:
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_BACKCOLOR, var);
 		ATLASSERT(FAILED(hRes) || var.vt == VT_I4 || var.vt == VT_UI4);
 		if (SUCCEEDED(hRes))
-            BackColor = var.lVal;
+			BackColor = var.lVal;
 		return hRes;
 	}
 	HRESULT GetAmbientDisplayName(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrDisplayName)
@@ -406,7 +423,7 @@ ATLPREFAST_UNSUPPRESS()
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_FORECOLOR, var);
 		ATLASSERT(FAILED(hRes) || var.vt == VT_I4 || var.vt == VT_UI4);
 		if (SUCCEEDED(hRes))
-            ForeColor = var.lVal;
+			ForeColor = var.lVal;
 		return hRes;
 	}
 	HRESULT GetAmbientLocaleID(_Out_ LCID& lcid)
@@ -415,7 +432,7 @@ ATLPREFAST_UNSUPPRESS()
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_LOCALEID, var);
 		ATLASSERT(FAILED(hRes) || (var.vt == VT_UI4 || var.vt == VT_I4));
 		if (SUCCEEDED(hRes))
-            lcid = var.lVal;
+			lcid = var.lVal;
 		return hRes;
 	}
 	HRESULT GetAmbientScaleUnits(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrScaleUnits)
@@ -564,12 +581,12 @@ ATLPREFAST_UNSUPPRESS()
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_PALETTE, var);
 #ifdef _WIN64
 		ATLASSERT(FAILED(hRes) || var.vt == VT_I8 || var.vt == VT_UI8);
-        if (SUCCEEDED(hRes))
-		    hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.llVal));
+		if (SUCCEEDED(hRes))
+			hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.llVal));
 #else
 		ATLASSERT(FAILED(hRes) || var.vt == VT_I4 || var.vt == VT_UI4);
-        if (SUCCEEDED(hRes))
-    		hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.lVal));
+		if (SUCCEEDED(hRes))
+			hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.lVal));
 #endif
 		return hRes;
 	}
@@ -580,7 +597,7 @@ ATLPREFAST_UNSUPPRESS()
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_CODEPAGE, var);
 		ATLASSERT(FAILED(hRes) || var.vt == VT_UI4);
 		if (SUCCEEDED(hRes))
-            ulCodePage = var.ulVal;
+			ulCodePage = var.ulVal;
 		return hRes;
 	}
 
@@ -756,15 +773,7 @@ public:
 	SIZE m_sizeNatural; //unscaled size in himetric
 	SIZE m_sizeExtent;  //current extents in himetric
 	RECT m_rcPos; // position in pixels
-#pragma warning(push)
-#pragma warning(disable: 4510 4610) // unnamed union
-	union
-	{
-		HWND& m_hWndCD;
-		HWND* m_phWndCD;
-	};
-#pragma warning(pop)
-
+	HWND& m_hWndCD;
 	int m_nFreezeEvents; // count of freezes versus thaws
 	unsigned m_bNegotiatedWnd:1;
 	unsigned m_bWndLess:1;
@@ -929,8 +938,8 @@ inline HRESULT CComControlBase::DoVerbProperties(
 				LPOLESTR szTitle = NULL;
 
 				hr = spObj->GetUserType(USERCLASSTYPE_SHORT, &szTitle);
-                _Analysis_assume_(SUCCEEDED(hr) || (szTitle = NULL) == NULL);
-                
+				_Analysis_assume_(SUCCEEDED(hr) || (szTitle = NULL) == NULL);
+				
 				LCID lcid;
 				if (FAILED(GetAmbientLocaleID(lcid)))
 					lcid = LOCALE_USER_DEFAULT;
@@ -1045,8 +1054,8 @@ inline HRESULT CComControlBase::InPlaceActivate(
 	{
 		hr = m_spInPlaceSite->GetWindowContext(&spInPlaceFrame,
 			&spInPlaceUIWindow, &rcPos, &rcClip, &frameInfo);
-        if (FAILED(hr))
-            return hr;
+		if (FAILED(hr))
+			return hr;
 
 		if (!m_bWndLess)
 		{
@@ -2893,7 +2902,7 @@ public:
 	// declare empty map in case derived classes doesn't want to specify one
 	DECLARE_EMPTY_PROP_VAL_MAP()
 
-    _Success_(return == S_OK)
+	_Success_(return == S_OK)
 	STDMETHOD(GetDisplayString)(
 		_In_ DISPID dispID, 
 		_Outptr_result_maybenull_z_ BSTR *pBstr)
@@ -3662,7 +3671,7 @@ public:
 			return E_POINTER;
 
 		HRESULT hr;
-		IUnknown* pUnk;
+		IUnknown* pUnk = NULL;
 		// Check if we support this interface
 		hr = pT->GetUnknown()->QueryInterface(riid, (void**)&pUnk);
 		if (SUCCEEDED(hr))
@@ -3695,7 +3704,7 @@ public:
 	{
 		ATLTRACE(atlTraceControls,2,_T("IObjectSafetyImpl::SetInterfaceSafetyOptions\n"));
 		T* pT = static_cast<T*>(this);
-		IUnknown* pUnk;
+		IUnknown* pUnk = NULL;
 
 		// Check if we support the interface and return E_NOINTEFACE if we don't
 		if (FAILED(pT->GetUnknown()->QueryInterface(riid, (void**)&pUnk)))
@@ -4043,7 +4052,7 @@ ATLPREFAST_UNSUPPRESS()
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
-			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::put_%s\n"), #fname); \
+			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::put_%Ts\n"), #fname); \
 			T* pT = (T*) this; \
 			if (pT->m_nFreezeEvents == 0 && pT->FireOnRequestEdit(dispid) == S_FALSE) \
 				return S_FALSE; \
@@ -4064,7 +4073,7 @@ ATLPREFAST_UNSUPPRESS()
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
-			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::get_%s\n"), #fname); \
+			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::get_%Ts\n"), #fname); \
 			ATLASSERT(p##pname != NULL); \
 			if (p##pname == NULL) \
 				return E_POINTER; \
@@ -4079,7 +4088,7 @@ ATLPREFAST_UNSUPPRESS()
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
-			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::put_%s\n"), #fname); \
+			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::put_%Ts\n"), #fname); \
 			T* pT = (T*) this; \
 			if (pT->m_nFreezeEvents == 0 && pT->FireOnRequestEdit(dispid) == S_FALSE) \
 				return S_FALSE; \
@@ -4100,7 +4109,7 @@ ATLPREFAST_UNSUPPRESS()
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
-			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::get_%s\n"), #fname); \
+			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::get_%Ts\n"), #fname); \
 			ATLASSERT(p##pname != NULL); \
 			if (p##pname == NULL) \
 				return E_POINTER; \
@@ -4115,7 +4124,7 @@ ATLPREFAST_UNSUPPRESS()
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
-			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::put_%s\n"), #fname); \
+			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::put_%Ts\n"), #fname); \
 			T* pT = (T*) this; \
 			if (pT->m_nFreezeEvents == 0 && pT->FireOnRequestEdit(dispid) == S_FALSE) \
 				return S_FALSE; \
@@ -4139,7 +4148,7 @@ ATLPREFAST_UNSUPPRESS()
 	{ \
 		__if_exists(T::m_##pname) \
 		{ \
-			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::get_%s\n"), #fname); \
+			ATLTRACE(ATL::atlTraceControls,2,_T("CStockPropImpl::get_%Ts\n"), #fname); \
 			ATLASSERT(p##pname != NULL); \
 			if (p##pname == NULL) \
 				return E_POINTER; \

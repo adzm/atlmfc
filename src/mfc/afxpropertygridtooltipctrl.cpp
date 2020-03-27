@@ -53,10 +53,7 @@ BOOL CMFCPropertyGridToolTipCtrl::Create(CWnd* pWndParent)
 	ASSERT_VALID(pWndParent);
 	m_pWndParent = pWndParent;
 
-	if (m_strClassName.IsEmpty())
-	{
-		m_strClassName = ::AfxRegisterWndClass(CS_SAVEBITS, ::LoadCursor(NULL, IDC_ARROW), (HBRUSH)(COLOR_BTNFACE + 1));
-	}
+	m_strClassName = ::AfxRegisterWndClass(CS_SAVEBITS, ::LoadCursor(NULL, IDC_ARROW), (HBRUSH)(COLOR_BTNFACE + 1));
 
 	return CreateEx(0, m_strClassName, _T(""), WS_POPUP, 0, 0, 0, 0, pWndParent->GetSafeHwnd(), (HMENU) NULL);
 }

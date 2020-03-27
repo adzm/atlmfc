@@ -989,8 +989,19 @@ void CMFCPopupMenu::RecalcLayout(BOOL /*bNotify*/)
 			{
 				int yParentButtonTop = ptTop.y + size.cy;
 
+				BOOL bRepos = TRUE;
+
+				if (m_bScrollable)
+				{
+					CMFCToolBar* pParentToolBar = (m_pParentBtn == NULL) ? NULL : DYNAMIC_DOWNCAST(CMFCToolBar, m_pParentBtn->m_pWndParent);
+					if (pParentToolBar == NULL || !pParentToolBar->IsHorizontal() || GetParentPopupMenu() != NULL)
+					{
+						bRepos = FALSE;
+					}
+				}
+
 				// Where more space: on top or on bottom of the button?
-				if (rectScreen.bottom - yParentButtonTop < yParentButtonTop - rectScreen.top)
+				if (rectScreen.bottom - yParentButtonTop < yParentButtonTop - rectScreen.top && bRepos)
 				{
 					m_ptLocation.y = rectScreen.top;
 					m_DropDirection = DROP_DIRECTION_NONE;
@@ -2148,7 +2159,7 @@ BOOL CMFCPopupMenu::InitMenuBar()
 					{
 						// Add shortcut number:
 						CString strItem;
-						strItem.Format(_T("&%d %s"), ++iNumOfFiles, (LPCTSTR)strName);
+						strItem.Format(_T("&%d %Ts"), ++iNumOfFiles, (LPCTSTR)strName);
 
 						pMenuBar->InsertButton(CMFCToolBarMenuButton(ID_FILE_MRU_FILE1 + i, NULL, -1, strItem), iMRUItemIndex ++);
 					}

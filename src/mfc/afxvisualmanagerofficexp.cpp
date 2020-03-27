@@ -1983,15 +1983,15 @@ void CMFCVisualManagerOfficeXP::OnDrawSpinButtons(CDC* pDC, CRect rectSpin, int 
 	if (!bOrientation)
 	{
 		rect[0].DeflateRect(0, 0, 0, rect[0].Height() / 2);
-		rect[1].top = rect[0].bottom ;
+		rect[1].top = rect[0].bottom + 1;
 	}
 	else
 	{
-		rect[0].DeflateRect(0, 0, rect[0].Width() / 2, 0);
-		rect[1].left = rect[0].right ;
+		rect[1].DeflateRect(0, 0, rect[0].Width() / 2, 0);
+		rect[0].left = rect[1].right;
 	}
 
-	CMenuImages::IMAGES_IDS id[2][2] = {{CMenuImages::IdArrowUp, CMenuImages::IdArrowDown}, {CMenuImages::IdArrowLeft, CMenuImages::IdArrowRight}};
+	CMenuImages::IMAGES_IDS id[2][2] = {{CMenuImages::IdArrowUp, CMenuImages::IdArrowDown}, {CMenuImages::IdArrowRight, CMenuImages::IdArrowLeft}};
 
 	int idxPressed = (nState &(AFX_SPIN_PRESSEDUP | AFX_SPIN_PRESSEDDOWN)) - 1;
 	int idxHighlighted = -1;

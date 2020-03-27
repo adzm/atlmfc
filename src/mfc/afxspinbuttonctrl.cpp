@@ -104,7 +104,7 @@ void CMFCSpinButtonCtrl::OnDraw(CDC* pDC)
 		nState |= AFX_SPIN_DISABLED;
 	}
 
-	CMFCVisualManager::GetInstance()->OnDrawSpinButtons(pDC, rectClient, nState, FALSE, this);
+	CMFCVisualManager::GetInstance()->OnDrawSpinButtons(pDC, rectClient, nState, (GetStyle() & UDS_HORZ) == UDS_HORZ, this);
 }
 
 void CMFCSpinButtonCtrl::OnLButtonDown(UINT nFlags, CPoint point)
@@ -113,10 +113,18 @@ void CMFCSpinButtonCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 	GetClientRect(rect);
 
 	CRect rectUp = rect;
-	rectUp.bottom = rect.CenterPoint().y;
-
 	CRect rectDown = rect;
-	rectDown.top = rectUp.bottom;
+
+	if ((GetStyle() & UDS_HORZ) == UDS_HORZ)
+	{
+		rectDown.right = rect.CenterPoint().x;
+		rectUp.left = rectDown.right;
+	}
+	else
+	{
+		rectUp.bottom = rect.CenterPoint().y;
+		rectDown.top = rectUp.bottom;
+	}
 
 	m_bIsButtonPressedUp = rectUp.PtInRect(point);
 	m_bIsButtonPressedDown = rectDown.PtInRect(point);
@@ -155,10 +163,18 @@ void CMFCSpinButtonCtrl::OnMouseMove(UINT nFlags, CPoint point)
 	GetClientRect(rect);
 
 	CRect rectUp = rect;
-	rectUp.bottom = rect.CenterPoint().y;
-
 	CRect rectDown = rect;
-	rectDown.top = rectUp.bottom;
+
+	if ((GetStyle() & UDS_HORZ) == UDS_HORZ)
+	{
+		rectDown.right = rect.CenterPoint().x;
+		rectUp.left = rectDown.right;
+	}
+	else
+	{
+		rectUp.bottom = rect.CenterPoint().y;
+		rectDown.top = rectUp.bottom;
+	}
 
 	m_bIsButtonHighlightedUp = rectUp.PtInRect(point);
 	m_bIsButtonHighlightedDown = rectDown.PtInRect(point);

@@ -31,6 +31,7 @@ CFormView::CFormView(LPCTSTR lpszTemplateName)
 	m_hWndFocus = NULL;     // focus window is unknown
 	m_pOccDialogInfo = NULL;
 	m_pCreatedOccDialogInfo = NULL;
+	m_bInitDlgCompleted = FALSE;
 	EnableActiveAccessibility();
 }
 
@@ -42,6 +43,7 @@ CFormView::CFormView(UINT nIDTemplate)
 	m_hWndFocus = NULL;     // focus window is unknown
 	m_pOccDialogInfo = NULL;
 	m_pCreatedOccDialogInfo = NULL;
+	m_bInitDlgCompleted = FALSE;
 	EnableActiveAccessibility();
 }
 
@@ -133,6 +135,8 @@ BOOL CFormView::Create(LPCTSTR /*lpszClassName*/, LPCTSTR /*lpszWindowName*/,
 void CFormView::OnInitialUpdate()
 {
 	ASSERT_VALID(this);
+
+	m_bInitDlgCompleted = TRUE;
 
 	if (!UpdateData(FALSE))
 		TRACE(traceAppMsg, 0, "UpdateData failed during formview initial update.\n");
@@ -257,6 +261,8 @@ LRESULT CFormView::HandleInitDialog(WPARAM, LPARAM)
 			return FALSE;
 		}
 	}
+
+	LoadDynamicLayoutResource(m_lpszTemplateName);
 
 	return FALSE;   // don't set focus until later
 }

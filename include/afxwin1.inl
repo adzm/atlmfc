@@ -68,15 +68,15 @@ _AFXWIN_INLINE HGDIOBJ CGdiObject::GetSafeHandle() const
 	{ return this == NULL ? NULL : m_hObject; }
 _AFXWIN_INLINE CGdiObject::CGdiObject()
 	{ m_hObject = NULL; }
+#pragma warning(push)
+#pragma warning(disable:6271 6273)
 _AFXWIN_INLINE CGdiObject::~CGdiObject()
 {
-    AFX_BEGIN_DESTRUCTOR
-
-        DeleteObject(); 
-
-    AFX_END_DESTRUCTOR
+	AFX_BEGIN_DESTRUCTOR
+	DeleteObject();
+	AFX_END_DESTRUCTOR
 }
-
+#pragma warning(pop)
 _AFXWIN_INLINE int CGdiObject::_AFX_FUNCNAME(GetObject)(int nCount, LPVOID lpObject) const
 	{ ASSERT(m_hObject != NULL); return ::GetObject(m_hObject, nCount, lpObject); }
 #pragma push_macro("GetObject")

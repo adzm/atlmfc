@@ -1383,10 +1383,7 @@ void CMDIChildWndEx::OnTaskbarTabThumbnailActivate(UINT nState, CWnd* pWndOther,
 	UNREFERENCED_PARAMETER(pWndOther);
 	UNREFERENCED_PARAMETER(bMinimized);
 
-	CMDIFrameWndEx* pTopLevelFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
-	ASSERT_VALID(pTopLevelFrame);
-
-	if (nState != WA_CLICKACTIVE)
+	if (nState == WA_ACTIVE)
 	{
 		ActivateTopLevelFrame();
 	}
@@ -1519,6 +1516,29 @@ void CMDIChildWndEx::ActivateTopLevelFrame()
 BOOL CMDIChildWndEx::IsTabbedMDIChild()
 {
 	return m_pMDIFrame != NULL && m_pMDIFrame->AreMDITabs();
+}
+
+BOOL CMDIChildWndEx::CanShowOnMDITabs() 
+{ 
+	if ((GetStyle() & WS_VISIBLE) != 0)
+	{
+		// Window is visible: show it on the MDI tabs
+		return TRUE;
+	}
+
+	// Window is hidden.
+	COleServerDoc* pDoc = DYNAMIC_DOWNCAST(COleServerDoc, GetActiveDocument());
+	if (pDoc != NULL)
+	{
+		ASSERT_VALID(pDoc);
+		if (pDoc->IsEmbedded())
+		{
+			// Embedded server documents should be always added to the MDI tabs:
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 //////////////////////////////////////////////////

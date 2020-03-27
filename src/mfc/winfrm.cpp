@@ -1275,7 +1275,7 @@ void CFrameWnd::OnDDEExecute(CWnd* pWndClient, HANDLE handle)
 	// don't execute the command when the window is disabled
 	if (!IsWindowEnabled())
 	{
-		TRACE(traceAppMsg, 0, _T("Warning: DDE command '%s' ignored because window is disabled.\n"),
+		TRACE(traceAppMsg, 0, _T("Warning: DDE command '%Ts' ignored because window is disabled.\n"),
 			strCommand.GetString());
 		return;
 	}
@@ -1283,7 +1283,7 @@ void CFrameWnd::OnDDEExecute(CWnd* pWndClient, HANDLE handle)
 	// execute the command
 	LPTSTR lpszCommand = strCommand.GetBuffer();
 	if (!AfxGetApp()->OnDDECommand(lpszCommand))
-		TRACE(traceAppMsg, 0, _T("Error: failed to execute DDE command '%s'.\n"), lpszCommand);
+		TRACE(traceAppMsg, 0, _T("Error: failed to execute DDE command '%Ts'.\n"), lpszCommand);
 	strCommand.ReleaseBuffer();
 }
 

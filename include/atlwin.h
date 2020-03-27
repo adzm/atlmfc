@@ -2834,7 +2834,7 @@ public: \
 #define END_MSG_MAP() \
 			break; \
 		default: \
-			ATLTRACE(ATL::atlTraceWindowing, 0, _T("Invalid message map ID (%i)\n"), dwMsgMapID); \
+			ATLTRACE(static_cast<int>(ATL::atlTraceWindowing), 0, _T("Invalid message map ID (%i)\n"), dwMsgMapID); \
 			ATLASSERT(FALSE); \
 			break; \
 		} \
@@ -4208,14 +4208,14 @@ public:
 									{
 										hr = AtlHresultFromLastError();
 										break;
-									}									
-									BYTE* pSource = SAL_Assume_bytecap_for_opt_(pData, dwLen);									
+									}
+									BYTE* pSource = SAL_Assume_bytecap_for_opt_(pData, dwLen);
 									ATLASSUME(pSource != NULL);
 									Checked::memcpy_s(pBytes, dwLen, pSource, dwLen);
 									GlobalUnlock(h);
-ATLPREFAST_SUPPRESS(6031)
-									CreateStreamOnHGlobal(h, TRUE, &spStream);
-ATLPREFAST_UNSUPPRESS()
+									hr = CreateStreamOnHGlobal(h, TRUE, &spStream);
+									if (FAILED(hr))
+										break;
 								}
 								else
 								{
@@ -5272,7 +5272,7 @@ ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(
 					// try process local
 					if(!T::GetClassInfoEx(pBaseModule->m_hInst, p->m_lpszOrigName, &wc))
 					{
-						ATLTRACE(atlTraceWindowing, 0, _T("ERROR : Could not obtain Window Class information for %s\n"), p->m_lpszOrigName);
+						ATLTRACE(atlTraceWindowing, 0, _T("ERROR : Could not obtain Window Class information for %Ts\n"), p->m_lpszOrigName);
 						return 0;
 					}
 				}

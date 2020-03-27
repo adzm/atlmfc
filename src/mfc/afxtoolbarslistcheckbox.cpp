@@ -91,7 +91,7 @@ LRESULT CMFCToolBarsListCheckBox::OnLBDeleteString(WPARAM wParam, LPARAM /*lPara
 	LRESULT lRes = Default();
 	if (lRes != LB_ERR)
 	{
-		m_arCheckData.RemoveAt((int) wParam);
+		m_arCheckData.RemoveAt(wParam);
 	}
 
 	return lRes;

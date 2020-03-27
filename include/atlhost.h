@@ -363,6 +363,7 @@ public:
 		m_bWindowless = FALSE;
 		m_bCapture = FALSE;
 		m_bHaveFocus = FALSE;
+		m_bLocked = FALSE;
 
 		// Initialize ambient properties
 		m_bCanWindowlessActivate = TRUE;
@@ -377,15 +378,23 @@ public:
 
 		m_bSubclassed = FALSE;
 
+		m_iidSink = {0};
+		m_dwViewObjectType = 0;
 		m_dwAdviseSink = 0xCDCDCDCD;
 		m_dwDocHostFlags = DOCHOSTUIFLAG_NO3DBORDER;
 		m_dwDocHostDoubleClickFlags = DOCHOSTUIDBLCLK_DEFAULT;
-		m_bAllowContextMenu = true;
-		m_bAllowShowUI = false;
+		m_bAllowContextMenu = TRUE;
+		m_bAllowShowUI = FALSE;
 		m_hDCScreen = NULL;
 		m_bDCReleased = true;
 
 		m_hAccel = NULL;
+
+		m_dwOleObject = 0;
+		m_dwMiscStatus = 0;
+		m_hmSize = {0};
+		m_pxSize = {0};
+		m_rcPos = {0};
 	}
 
 	virtual ~CAxHostWindow()
@@ -2462,7 +2471,7 @@ ATLPREFAST_UNSUPPRESS()
 			if (nCreateSize)
 			{
 				HGLOBAL h = GlobalAlloc(GHND, nCreateSize);
-ATLPREFAST_SUPPRESS(6031 6387)
+ATLPREFAST_SUPPRESS(6387)
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
@@ -2471,7 +2480,7 @@ ATLPREFAST_SUPPRESS(6031 6387)
 					//pSource += (((~((DWORD)pSource)) + 1) & 3);
 					Checked::memcpy_s(pBytes, nCreateSize, pSource, nCreateSize);
 					GlobalUnlock(h);
-					CreateStreamOnHGlobal(h, TRUE, &spStream);
+					ATLENSURE_RETURN_VAL(SUCCEEDED(CreateStreamOnHGlobal(h, TRUE, &spStream)), -1);
 				}
 ATLPREFAST_UNSUPPRESS()
 			}
@@ -2486,8 +2495,8 @@ ATLPREFAST_UNSUPPRESS()
 #ifdef _DEBUG
 				LPTSTR pszMsg = NULL;
 				::FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM, NULL, hRet, 0, (LPTSTR)&pszMsg, 0, NULL);
-				ATLTRACE(atlTraceControls, 0, _T("Control creation failed for '%s'\n"), static_cast<TCHAR *>(spName));
-				ATLTRACE(atlTraceControls, 0, _T("Error code: 0x%x - %s"), hRet, pszMsg);
+				ATLTRACE(atlTraceControls, 0, _T("Control creation failed for '%Ts'\n"), static_cast<TCHAR *>(spName));
+				ATLTRACE(atlTraceControls, 0, _T("Error code: 0x%x - %Ts"), hRet, pszMsg);
 				::LocalFree(pszMsg);
 #endif
 				return -1;	// abort window creation
@@ -2545,7 +2554,7 @@ static LRESULT CALLBACK AtlAxWindowProc2(
 	{
 	case WM_CREATE:
 		{
-		// create control from a PROGID in the title
+			// create control from a PROGID in the title
 			// This is to make sure drag drop works
 ATLPREFAST_SUPPRESS(6031)
 			::OleInitialize(NULL);
@@ -2581,7 +2590,7 @@ ATLPREFAST_UNSUPPRESS()
 			if (nCreateSize)
 			{
 				HGLOBAL h = GlobalAlloc(GHND, nCreateSize);
-ATLPREFAST_SUPPRESS(6031 6387)
+ATLPREFAST_SUPPRESS(6387)
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
@@ -2590,7 +2599,7 @@ ATLPREFAST_SUPPRESS(6031 6387)
 					//pSource += (((~((DWORD)pSource)) + 1) & 3);
 					Checked::memcpy_s(pBytes, nCreateSize, pSource, nCreateSize);
 					GlobalUnlock(h);
-					CreateStreamOnHGlobal(h, TRUE, &spStream);
+					ATLENSURE_RETURN_VAL(SUCCEEDED(CreateStreamOnHGlobal(h, TRUE, &spStream)), -1);
 				}
 ATLPREFAST_UNSUPPRESS()
 			}
@@ -2610,8 +2619,8 @@ ATLPREFAST_UNSUPPRESS()
 #ifdef _DEBUG
 				LPTSTR pszMsg = NULL;
 				::FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM, NULL, hRet, 0, (LPTSTR)&pszMsg, 0, NULL);
-				ATLTRACE(atlTraceControls, 0, _T("Control creation failed for '%s'\n"), static_cast<TCHAR *>(spName));
-				ATLTRACE(atlTraceControls, 0, _T("Error code: 0x%x - %s"), hRet, pszMsg);
+				ATLTRACE(atlTraceControls, 0, _T("Control creation failed for '%Ts'\n"), static_cast<TCHAR *>(spName));
+				ATLTRACE(atlTraceControls, 0, _T("Error code: 0x%x - %Ts"), hRet, pszMsg);
 				::LocalFree(pszMsg);
 #endif
 				return -1;	// abort window creation

@@ -822,7 +822,7 @@ BOOL CDHtmlDialog::LoadFromResource(LPCTSTR lpszResource)
 		bRetVal = FALSE;
 	else
 	{
-		strResourceURL.Format(_T("res://%s/%s"), lpszModule, lpszResource);
+		strResourceURL.Format(_T("res://%Ts/%Ts"), lpszModule, lpszResource);
 		Navigate(strResourceURL, 0, 0, 0);
 	}
 
@@ -841,7 +841,7 @@ BOOL CDHtmlDialog::LoadFromResource(UINT nRes)
 
 	if (GetModuleFileName(hInstance, lpszModule, _MAX_PATH))
 	{
-		strResourceURL.Format(_T("res://%s/%d"), lpszModule, nRes);
+		strResourceURL.Format(_T("res://%Ts/%d"), lpszModule, nRes);
 		Navigate(strResourceURL, 0, 0, 0);
 	}
 	else

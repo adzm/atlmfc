@@ -12,6 +12,7 @@
 
 #include "afxcontrolbarutil.h"
 #include "afxbasepane.h"
+#include "afxaccessibility.h"
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -415,6 +416,21 @@ protected:
 
 	virtual BOOL ActivateOnBtnUp() const { return m_bActivateOnBtnUp; }
 
+	virtual BOOL OnSetAccData(long lVal);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT get_accChild(VARIANT varChild, IDispatch **ppdispChild);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
+	virtual HRESULT get_accRole(VARIANT varChild, VARIANT *pvarRole);
+	virtual HRESULT get_accValue(VARIANT varChild, BSTR *pszValue);
+	virtual HRESULT get_accState(VARIANT varChild, VARIANT *pvarState);
+	virtual HRESULT get_accName(VARIANT varChild, BSTR *pszName);
+	virtual HRESULT get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction);
+	virtual HRESULT accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild);
+
+	virtual BOOL SetACCData(CMFCTabInfo* pTab, CAccessibilityData& data, BOOL bIsActive);
+
 protected:
 	int CMFCBaseTabCtrl::FindTabInfo(int nBarID, CMFCTabInfo** ppTabInfo);
 
@@ -451,7 +467,7 @@ protected:
 	BOOL m_bIsDlgControl;     // Tab is created on the dialog
 	BOOL m_bIsMDITab;         // Tab is created for switching MDI windows
 
-	COLORREF m_clrActiveTabBk; // Active tab backgound color
+	COLORREF m_clrActiveTabBk; // Active tab background color
 	COLORREF m_clrActiveTabFg; // Active tab foreground color
 
 	CBrush m_brActiveTab;  // Active tab background brush
@@ -486,7 +502,7 @@ protected:
 	BOOL m_bSetActiveTabFired;
 	BOOL m_bSetActiveTabByMouseClick;
 
-	// needed to prevent unnesessary capturing during LButtonDown
+	// needed to prevent unnecessary capturing during LButtonDown
 	// in case tab activation leads to adjust layout and moving of tab window.
 	BOOL m_bWindowPosChanged;
 
@@ -494,6 +510,9 @@ protected:
 	BOOL  m_bTabCloseButtonHighlighted;
 	BOOL  m_bTabCloseButtonPressed;
 	CRect m_rectCloseButton;
+
+	// Accessibility attributes:
+	CAccessibilityData	m_AccData;
 
 public:
 	BOOL  m_bUserSelectedTab;

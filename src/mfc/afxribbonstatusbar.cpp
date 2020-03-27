@@ -29,8 +29,8 @@
 
 #define AFX_UM_UPDATE_SHADOWS (WM_USER + 101)
 
-#define AFX_REG_SECTION_FMT _T("%sMFCRibbonBar-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sMFCRibbonBar-%d%x")
+#define AFX_REG_SECTION_FMT _T("%TsMFCRibbonBar-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsMFCRibbonBar-%d%x")
 #define AFX_REG_ENTRY_STATUSBAR_PANES _T("MFCStatusBarPanes")
 
 static const int nMaxValueLen = 50;

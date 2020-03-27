@@ -68,7 +68,7 @@ public:
 	};
 
 	CDataSourceControl(COleControlSite *pClientSite);
-	~CDataSourceControl();
+	virtual ~CDataSourceControl();
 	HRESULT Initialize();
 	virtual IUnknown* GetCursor();
 	HRESULT GetMetaData();

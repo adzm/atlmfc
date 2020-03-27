@@ -122,6 +122,7 @@ inline int _wcstombsz(
 
 _Success_(return != 0)  
 _When_(count != 0, _Post_equal_to_(_String_length_(wcstr)+1))  
+#pragma warning(suppress: 28196) // Return value = string_length + 1 (terminating null character)
 inline int _mbstowcsz(
 	_Out_writes_(count) wchar_t* wcstr,
 	_In_z_ const char* mbstr,
@@ -437,7 +438,7 @@ public:
 		return bstr;
 	}
 
-    _Success_(return != FALSE)
+	_Success_(return != FALSE)
 	static BOOL __cdecl ReAllocSysString(
 		_In_reads_(nDataLength) const char* pchData,
 		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
@@ -445,7 +446,7 @@ public:
 	{
 		int nLen = ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength, NULL, NULL );
 		BOOL bSuccess = ::SysReAllocStringLen( pbstr, NULL, nLen );
-		if( bSuccess )
+		if( bSuccess && nLen > 0 )
 		{
 			bSuccess = ( 0 != ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength, *pbstr, nLen ));
 		}
@@ -505,7 +506,7 @@ public:
 		return int( _mbclen( reinterpret_cast< const unsigned char* >( pch ) ) );
 	}
 
-    _Success_(return != 0 && return < dwSize)  
+	_Success_(return != 0 && return < dwSize)  
 	static DWORD __cdecl _AFX_FUNCNAME(GetEnvironmentVariable)(
 		_In_z_ LPCSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPSTR pszBuffer,
@@ -515,7 +516,7 @@ public:
 	}
 
 #if defined(_AFX)
-    _Success_(return != 0 && return < dwSize)  
+	_Success_(return != 0 && return < dwSize)  
 	static DWORD __cdecl GetEnvironmentVariable(
 		_In_z_ LPCSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPSTR pszBuffer,
@@ -675,7 +676,21 @@ public:
 	static int __cdecl GetFormattedLength(
 		_In_z_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
 	{
-		return _vscwprintf( pszFormat, args );
+#if _MSC_VER < 1900
+		return _vscwprintf(pszFormat, args);
+#else
+		// Explicitly request the legacy wide format specifiers mode from the CRT,
+		// for compatibility with previous versions.  While the CRT supports two
+		// modes, the ATL and MFC functions that accept format strings only support
+		// legacy mode format strings.
+		int const result = __stdio_common_vswprintf(
+			_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS |
+			_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR |
+			_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS,
+			NULL, 0, pszFormat, NULL, args);
+
+		return result < 0 ? -1 : result;
+#endif
 	}
 
 	_ATL_INSECURE_DEPRECATE("You must pass an output size to ChTraitsCRT::Format")
@@ -683,19 +698,44 @@ public:
 		_Out_ _Post_z_ LPWSTR pszBuffer,
 		_In_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
 	{
-#pragma warning (push)
-#pragma warning(disable : 4995)
-#pragma warning(disable : 4996)
-#pragma warning(disable : 28719)
-		return vswprintf( pszBuffer, pszFormat, args );
-#pragma warning (pop)
+#pragma warning(suppress : 4995)
+#pragma warning(suppress : 4996)
+#pragma warning(suppress : 6386)
+#pragma warning(suppress : 28719)
+#if _MSC_VER < 1900
+		return vswprintf(pszBuffer, pszFormat, args);
+#else
+		// Explicitly request the legacy wide format specifiers mode from the CRT,
+		// for compatibility with previous versions.  While the CRT supports two
+		// modes, the ATL and MFC functions that accept format strings only support
+		// legacy mode format strings.
+		int const result = __stdio_common_vswprintf(
+			_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS |
+			_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS,
+			pszBuffer, INT_MAX, pszFormat, NULL, args);
+
+		return result < 0 ? -1 : result;
+#endif
 	}
 	static int __cdecl Format(
 		_Out_writes_(nLength) LPWSTR pszBuffer,
 		_In_ size_t nLength,
 		_In_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
 	{
-		return vswprintf_s( pszBuffer, nLength, pszFormat, args );
+#if _MSC_VER < 1900
+		return vswprintf_s(pszBuffer, nLength, pszFormat, args);
+#else
+		// Explicitly request the legacy wide format specifiers mode from the CRT,
+		// for compatibility with previous versions.  While the CRT supports two
+		// modes, the ATL and MFC functions that accept format strings only support
+		// legacy mode format strings.
+		int const result = __stdio_common_vswprintf_s(
+			_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS |
+			_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS,
+			pszBuffer, nLength, pszFormat, NULL, args);
+
+		return result < 0 ? -1 : result;
+#endif
 	}
 
 	static int __cdecl GetBaseTypeLength(_In_z_ LPCSTR pszSrc) throw()
@@ -802,7 +842,7 @@ public:
 
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 ATLPREFAST_SUPPRESS(6103)
-    _Success_(return != 0 && return < dwSize)     
+	_Success_(return != 0 && return < dwSize)     
 	static DWORD __cdecl _AFX_FUNCNAME(GetEnvironmentVariable)(
 		_In_z_ LPCWSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPWSTR pszBuffer,
@@ -814,7 +854,7 @@ ATLPREFAST_UNSUPPRESS()
 
 #if defined(_AFX)
 ATLPREFAST_SUPPRESS(6103)
-    _Success_(return != 0 && return < dwSize) 
+	_Success_(return != 0 && return < dwSize) 
 	static DWORD __cdecl GetEnvironmentVariable(
 		_In_z_ LPCWSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPWSTR pszBuffer,
@@ -1638,7 +1678,7 @@ public:
 			if( *pszSource != chRemove )
 			{
 				// Copy the source to the destination.  Remember to copy all bytes of an MBCS character
-	   			// Copy the source to the destination.  Remember to copy all bytes of an MBCS character
+				// Copy the source to the destination.  Remember to copy all bytes of an MBCS character
 				size_t NewSourceGap = (pszNewSource-pszSource);
 				PXSTR pszNewDest = pszDest + NewSourceGap;
 				size_t i = 0;
@@ -2136,7 +2176,7 @@ public:
 			AtlThrow(E_INVALIDARG);
 
 		return( Left( StringTraits::StringSpanExcluding( GetString(), pszCharSet ) ) );
- 	}
+	}
 
 	// Format data using format string 'pszFormat'
 	void __cdecl Format(_In_z_ _Printf_format_string_ PCXSTR pszFormat, ...);

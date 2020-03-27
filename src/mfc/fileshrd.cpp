@@ -45,7 +45,7 @@ void CSharedFile::SetHandle(HGLOBAL hGlobalMemory, BOOL bAllowGrow)
 
 	m_hGlobalMemory = hGlobalMemory;
 	m_lpBuffer = (BYTE*)::GlobalLock(m_hGlobalMemory);
-	m_nBufferSize = m_nFileSize = (ULONG)::GlobalSize(m_hGlobalMemory);
+	m_nBufferSize = m_nFileSize = ::GlobalSize(m_hGlobalMemory);
 	m_bAllowGrow = bAllowGrow;
 }
 

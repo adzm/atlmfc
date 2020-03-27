@@ -30,7 +30,7 @@ class CComHeap :
 {
 // IAtlMemMgr
 public:
-	virtual _Ret_maybenull_ _Post_writable_byte_size_(nBytes) void* Allocate(_In_ size_t nBytes) throw()
+	virtual _Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR void* Allocate(_In_ size_t nBytes) throw()
 	{
 #ifdef _WIN64
 		if( nBytes > INT_MAX )
@@ -44,7 +44,7 @@ public:
 	{
 		::CoTaskMemFree( p );
 	}
-	virtual _Ret_maybenull_ _Post_writable_byte_size_(nBytes) void* Reallocate(
+	virtual _Ret_maybenull_ _Post_writable_byte_size_(nBytes) _ATL_DECLSPEC_ALLOCATOR void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{

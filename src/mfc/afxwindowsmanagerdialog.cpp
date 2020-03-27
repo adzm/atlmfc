@@ -467,9 +467,8 @@ void CMFCWindowsManagerDialog::OnWindowHelp()
 	pParentFrame->SendMessage(AFX_WM_WINDOW_HELP, 0, (LPARAM) this);
 }
 
-BOOL CMFCWindowsManagerDialog::OnHelpInfo(HELPINFO* pHelpInfo)
+BOOL CMFCWindowsManagerDialog::OnHelpInfo(HELPINFO*)
 {
-	pHelpInfo->iCtrlId;
 	CWnd* pParentFrame = AfxGetMainWnd();
 	pParentFrame->SendMessage(AFX_WM_WINDOW_HELP, 0, (LPARAM) this);
 	return FALSE;

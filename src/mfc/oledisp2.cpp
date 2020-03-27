@@ -111,7 +111,7 @@ Failed:
 		pError->m_sc = sc;
 
 #ifdef _DEBUG
-	TRACE(traceOle, 0, _T("Warning: CreateDispatch returning scode = %s.\n"),
+	TRACE(traceOle, 0, _T("Warning: CreateDispatch returning scode = %Ts.\n"),
 		AfxGetFullScodeString(sc));
 #endif
 

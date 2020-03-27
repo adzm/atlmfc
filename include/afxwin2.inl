@@ -1084,14 +1084,15 @@ _AFXWIN_INLINE void CWinApp::SetDialogBkColor(COLORREF /*clrCtlBk*/, COLORREF /*
 
 _AFXWIN_INLINE CWaitCursor::CWaitCursor()
 	{ AfxGetApp()->BeginWaitCursor(); }
+#pragma warning(push)
+#pragma warning(disable:6271 6273)
 _AFXWIN_INLINE CWaitCursor::~CWaitCursor()
 {
 	AFX_BEGIN_DESTRUCTOR
-
-		AfxGetApp()->EndWaitCursor();
-
+	AfxGetApp()->EndWaitCursor();
 	AFX_END_DESTRUCTOR
 }
+#pragma warning(pop)
 _AFXWIN_INLINE void CWaitCursor::Restore()
 	{ AfxGetApp()->RestoreWaitCursor(); }
 

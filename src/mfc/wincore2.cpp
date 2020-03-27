@@ -10,6 +10,7 @@
 
 #include "stdafx.h"
 #include "occimpl.h"
+#include "afxext.h"
 
 // This module is compiled two different ways:
 // 1) It is compiled without _AFX_NO_MFC_CONTROLS_IN_DIALOGS #defined as part of the normal
@@ -22,6 +23,8 @@
 #if defined(_AFXDLL) || !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
 #include "afxctrlcontainer.h"
 #include "afxglobals.h"
+#include "afxpropertysheet.h"
+#include "afxpropertypage.h"
 #endif
 
 #define new DEBUG_NEW
@@ -162,5 +165,52 @@ void AFXAPI DDX_Control(CDataExchange* pDX, int nIDC, CWnd& rControl)
 					rControl.AttachControlSite(pDX->m_pDlgWnd);
 			}
 		}
+	}
+}
+
+void CMFCDynamicLayout::GetHostWndRect(CRect& rect) const
+{
+	rect.SetRectEmpty();
+
+	if (m_pHostWnd->GetSafeHwnd() != NULL)
+	{
+		m_pHostWnd->GetClientRect(rect);
+
+#if defined(_AFXDLL) || !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
+		if (DYNAMIC_DOWNCAST(CMFCPropertyPage, m_pHostWnd) != NULL)
+		{
+			CMFCPropertySheet* pParent = DYNAMIC_DOWNCAST(CMFCPropertySheet, m_pHostWnd->GetParent());
+			if (pParent != NULL)
+			{
+				int nNavigatorWidth = pParent->GetNavBarWidth();
+				int nHeaderHeight = pParent->GetHeaderHeight();
+
+				if (nHeaderHeight > 0)
+				{
+					rect.top += nHeaderHeight;
+
+					if (pParent->GetLook() != CMFCPropertySheet::PropSheetLook_Tabs)
+					{
+						rect.bottom -= nHeaderHeight;
+					}
+				}
+
+				rect.left += nNavigatorWidth;
+			}
+
+			rect.OffsetRect(-rect.TopLeft());
+		}
+		else 
+#endif
+			if (DYNAMIC_DOWNCAST(CFormView, m_pHostWnd) != NULL)
+			{
+				CPoint ptScroll(((CFormView*)m_pHostWnd)->GetScrollPos(SB_HORZ), ((CFormView*)m_pHostWnd)->GetScrollPos(SB_VERT));
+
+				rect.InflateRect(0 ,0, ptScroll.x, ptScroll.y);
+				rect.OffsetRect(-ptScroll.x, -ptScroll.y);
+			}
+
+			rect.right = rect.left + max(m_MinSize.cx, rect.Width());
+			rect.bottom = rect.top + max(m_MinSize.cy, rect.Height());
 	}
 }

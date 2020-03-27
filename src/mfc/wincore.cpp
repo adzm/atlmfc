@@ -16,6 +16,7 @@
 
 #include "afxctrlcontainer.h"
 #include "afxrendertarget.h"
+#include "afxlayout.h"
 
 // for dll builds we just delay load it
 #ifndef _AFXDLL
@@ -40,9 +41,6 @@ const TCHAR _afxWndControlBar[] = AFX_WNDCONTROLBAR;
 const TCHAR _afxWndMDIFrame[] = AFX_WNDMDIFRAME;
 const TCHAR _afxWndFrameOrView[] = AFX_WNDFRAMEORVIEW;
 const TCHAR _afxWndOleControl[] = AFX_WNDOLECONTROL;
-
-CMap<CWnd*, CWnd*, CHwndRenderTarget*, CHwndRenderTarget*>	g_RenderTargets;
-CCriticalSection g_RenderTargetCriticalSection;
 
 /////////////////////////////////////////////////////////////////////////////
 // D2D notification messages:
@@ -85,31 +83,14 @@ HRESULT WINAPI AccessibilityCreateInstance(_COM_Outptr_ CComObjectNoLock<Base>**
 /////////////////////////////////////////////////////////////////////////////
 // CWnd construction
 
-CWnd::CWnd()
+CWnd::CWnd() : CWnd(NULL)
 {
-	m_hWnd = NULL;
-	m_bEnableActiveAccessibility = false;
-	m_bIsTouchWindowRegistered = FALSE;
-	m_pProxy = NULL;
-	m_pStdObject = NULL;
-	m_hWndOwner = NULL;
-	m_nFlags = 0;
-	m_pfnSuper = NULL;
-	m_nModalResult = 0;
-	m_pDropTarget = NULL;
-	m_pCtrlCont = NULL;
-	m_pCtrlSite = NULL;
-	m_pMFCCtrlContainer = NULL;
-
-	m_ptGestureFrom = CPoint(-1, -1);
-	m_ulGestureArg = 0;
-	m_bGestureInited = FALSE;
-	m_pCurrentGestureInfo = NULL;
 }
 
 CWnd::CWnd(HWND hWnd)
 {
 	m_hWnd = hWnd;
+	m_pStdObject = NULL;
 	m_bEnableActiveAccessibility = false;
 	m_bIsTouchWindowRegistered = FALSE;
 	m_pProxy = NULL;
@@ -126,6 +107,8 @@ CWnd::CWnd(HWND hWnd)
 	m_ulGestureArg = 0;
 	m_bGestureInited = FALSE;
 	m_pCurrentGestureInfo = NULL;
+	m_pRenderTarget = NULL;
+	m_pDynamicLayout = NULL;
 }
 
 // Change a window's style
@@ -832,6 +815,12 @@ CWnd::~CWnd()
 	{
 		delete m_pCurrentGestureInfo;
 	}
+
+	if (m_pDynamicLayout != NULL)
+	{
+		delete m_pDynamicLayout;
+		m_pDynamicLayout = NULL;
+	}
 }
 
 void CWnd::OnDestroy()
@@ -857,17 +846,12 @@ void CWnd::OnDestroy()
 		RegisterTouchWindow(FALSE);
 	}
 
-	CHwndRenderTarget* pRenderTarget = NULL;
-	g_RenderTargetCriticalSection.Lock();
-	
-	if (g_RenderTargets.Lookup(this, pRenderTarget))
+	if (m_pRenderTarget != NULL)
 	{
-		ASSERT_VALID(pRenderTarget);
-		g_RenderTargets.RemoveKey(this);
-		delete pRenderTarget;
+		ASSERT_VALID(m_pRenderTarget);
+		delete m_pRenderTarget;
+		m_pRenderTarget = NULL;
 	}
-
-	g_RenderTargetCriticalSection.Unlock();
 
 	Default();
 }
@@ -1432,7 +1416,7 @@ BOOL AFXAPI AfxRegisterClass(WNDCLASS* lpWndClass)
 
 	if (!RegisterClass(lpWndClass))
 	{
-		TRACE(traceAppMsg, 0, _T("Can't register window class named %s\n"),
+		TRACE(traceAppMsg, 0, _T("Can't register window class named %Ts\n"),
 			lpWndClass->lpszClassName);
 		return FALSE;
 	}
@@ -1838,7 +1822,7 @@ void CWnd::WinHelp(DWORD_PTR dwData, UINT nCmd)
 	// need to use top level parent (for the case where m_hWnd is in DLL)
 	CWnd* pWnd = EnsureTopLevelParent();
 
-	TRACE(traceAppMsg, 0, _T("WinHelp: pszHelpFile = '%s', dwData: $%lx, fuCommand: %d.\n"), pApp->m_pszHelpFilePath, dwData, nCmd);
+	TRACE(traceAppMsg, 0, _T("WinHelp: pszHelpFile = '%Ts', dwData: $%lx, fuCommand: %d.\n"), pApp->m_pszHelpFilePath, dwData, nCmd);
 
 	// finally, run the Windows Help engine
 	if (!::WinHelp(pWnd->m_hWnd, pApp->m_pszHelpFilePath, nCmd, dwData))
@@ -1863,7 +1847,7 @@ void CWnd::HtmlHelp(DWORD_PTR dwData, UINT nCmd)
 	// need to use top level parent (for the case where m_hWnd is in DLL)
 	CWnd* pWnd = EnsureTopLevelParent();
 
-	TRACE(traceAppMsg, 0, _T("HtmlHelp: pszHelpFile = '%s', dwData: $%lx, fuCommand: %d.\n"), pApp->m_pszHelpFilePath, dwData, nCmd);
+	TRACE(traceAppMsg, 0, _T("HtmlHelp: pszHelpFile = '%Ts', dwData: $%lx, fuCommand: %d.\n"), pApp->m_pszHelpFilePath, dwData, nCmd);
 
 	// run the HTML Help engine
 	if (!AfxHtmlHelp(pWnd->m_hWnd, pApp->m_pszHelpFilePath, nCmd, dwData))
@@ -2113,6 +2097,21 @@ BOOL CWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult
 		return FALSE;
 	}
 
+	if (message == WM_CREATE && m_pDynamicLayout != NULL)
+	{
+		ASSERT_VALID(m_pDynamicLayout);
+
+		if (!m_pDynamicLayout->Create(this))
+		{
+			delete m_pDynamicLayout;
+			m_pDynamicLayout = NULL;
+		}
+		else
+		{
+			InitDynamicLayout();
+		}
+	}
+
 	// special case for notifies
 	if (message == WM_NOTIFY)
 	{
@@ -2156,13 +2155,14 @@ BOOL CWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult
 	{
 	case WM_SIZE:
 		{
-			CHwndRenderTarget* pRenderTarget = LockRenderTarget();
+			ResizeDynamicLayout();
+
+			CHwndRenderTarget* pRenderTarget = GetRenderTarget();
 			if (pRenderTarget != NULL && pRenderTarget->IsValid())
 			{
 				pRenderTarget->Resize(CD2DSizeU(UINT32(LOWORD(lParam)), UINT32(HIWORD(lParam))));
 				RedrawWindow();
 			}
-			UnlockRenderTarget();
 		}
 		break;
 
@@ -2175,15 +2175,10 @@ BOOL CWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult
 		break;
 
 	case WM_ERASEBKGND:
+		if (m_pRenderTarget != NULL && m_pRenderTarget->IsValid())
 		{
-			CHwndRenderTarget* pRenderTarget = LockRenderTarget();
-			BOOL fValid = (pRenderTarget != NULL) && pRenderTarget->IsValid();
-			UnlockRenderTarget();
-			if (fValid)
-			{
-				lResult = 1;
-				goto LReturnTrue;
-			}
+			lResult = 1;
+			goto LReturnTrue;
 		}
 		break;
 	}
@@ -2667,7 +2662,7 @@ LDispatch:
 		(this->*mmf.pfn_v_u_h)(static_cast<UINT>(wParam), reinterpret_cast<HKL>(lParam));
 		break;
 	case AfxSig_b_v_ii:
-		lResult = (this->*mmf.pfn_b_v_ii)(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		lResult = (this->*mmf.pfn_b_v_ii)(GET_Y_LPARAM(lParam), GET_X_LPARAM(lParam));
 		break;
 	}
 	goto LReturnTrue;
@@ -4518,6 +4513,7 @@ BOOL CWnd::ExecuteDlgInit(LPCTSTR lpszResourceName)
 		UnlockResource(hResource);
 		FreeResource(hResource);
 	}
+
 	return bResult;
 }
 
@@ -5027,7 +5023,7 @@ COleControlContainer* CWnd::GetControlContainer()
 	return m_pCtrlCont;
 }
 
-void CWnd::EnableD2DSupport(BOOL bEnable)
+void CWnd::EnableD2DSupport(BOOL bEnable, BOOL bUseDCRenderTarget)
 {
 	if (bEnable)
 	{
@@ -5044,110 +5040,232 @@ void CWnd::EnableD2DSupport(BOOL bEnable)
 			return;
 		}
 
-		CHwndRenderTarget* pRenderTarget = new CHwndRenderTarget(GetSafeHwnd());
-		ASSERT_VALID(pRenderTarget);
-
-		g_RenderTargetCriticalSection.Lock();
-		g_RenderTargets.SetAt(this, pRenderTarget);
-		g_RenderTargetCriticalSection.Unlock();
+		if (bUseDCRenderTarget)
+		{
+			m_pRenderTarget = new CDCRenderTarget;
+		}
+		else
+		{
+			m_pRenderTarget = new CHwndRenderTarget(GetSafeHwnd());
+		}
+		ASSERT_VALID(m_pRenderTarget);
 	}
 	else
 	{
-		CHwndRenderTarget* pRenderTarget = NULL;
-
-		g_RenderTargetCriticalSection.Lock();
-		if (g_RenderTargets.Lookup(this, pRenderTarget))
+		if (m_pRenderTarget != NULL)
 		{
-			ASSERT_VALID(pRenderTarget);
-			g_RenderTargets.RemoveKey(this);
-			delete pRenderTarget;
+			ASSERT_VALID(m_pRenderTarget);
+			delete m_pRenderTarget;
+			m_pRenderTarget = NULL;
 		}
-		
-		g_RenderTargetCriticalSection.Unlock();
 	}
 }
 
 BOOL CWnd::IsD2DSupportEnabled()
 {
-	return GetRenderTarget() != NULL;
+	return m_pRenderTarget != NULL;
 }
 
 CHwndRenderTarget* CWnd::GetRenderTarget()
 {
-	CHwndRenderTarget* pRenderTarget = NULL;
-
-	g_RenderTargetCriticalSection.Lock();
-	BOOL bRes = g_RenderTargets.Lookup(this, pRenderTarget);
-	g_RenderTargetCriticalSection.Unlock();
-
-	if (bRes)
-	{
-		ASSERT_VALID(pRenderTarget);
-		return pRenderTarget;
-	}
-
-	return NULL;
+	return DYNAMIC_DOWNCAST(CHwndRenderTarget, m_pRenderTarget);
 }
 
-CHwndRenderTarget* CWnd::LockRenderTarget()
+CDCRenderTarget* CWnd::GetDCRenderTarget()
 {
-	CHwndRenderTarget* pRenderTarget = NULL;
-
-	g_RenderTargetCriticalSection.Lock();
-	BOOL bRes = g_RenderTargets.Lookup(this, pRenderTarget);
-
-	if (bRes)
-	{
-		ASSERT_VALID(pRenderTarget);
-		return pRenderTarget;
-	}
-
-	return NULL;
-}
-
-void CWnd::UnlockRenderTarget()
-{
-	g_RenderTargetCriticalSection.Unlock();
+	return DYNAMIC_DOWNCAST(CDCRenderTarget, m_pRenderTarget);
 }
 
 BOOL CWnd::DoD2DPaint()
 {
-	CHwndRenderTarget* pRenderTarget = LockRenderTarget();
-	if (pRenderTarget == NULL)
+	if (m_pRenderTarget == NULL)
 	{
-		UnlockRenderTarget();
 		return FALSE;
 	}
 
-	ASSERT_VALID(pRenderTarget);
+	ASSERT_VALID(m_pRenderTarget);
 
-	if (!pRenderTarget->IsValid())
+	BOOL bD2DIsReady = FALSE;
+
+	CHwndRenderTarget* pHwndRenderTarget = GetRenderTarget();
+	if (pHwndRenderTarget != NULL)
 	{
-		pRenderTarget->Create(GetSafeHwnd());
-	}
-
-	if (pRenderTarget->IsValid())
-	{
-		pRenderTarget->BeginDraw();
-
-		BOOL bD2DIsReady = (BOOL)SendMessage(AFX_WM_DRAW2D, 0, (LPARAM)pRenderTarget);
-
-		if (pRenderTarget->EndDraw() == D2DERR_RECREATE_TARGET)
+		if (!pHwndRenderTarget->IsValid())
 		{
-			pRenderTarget->ReCreate(GetSafeHwnd());
-			SendMessage(AFX_WM_RECREATED2DRESOURCES, 0, (LPARAM)pRenderTarget);
+			pHwndRenderTarget->Create(GetSafeHwnd());
+			if (!pHwndRenderTarget->IsValid())
+			{
+				return FALSE;
+			}
+		}
+
+		pHwndRenderTarget->BeginDraw();
+		bD2DIsReady = (BOOL)SendMessage(AFX_WM_DRAW2D, 0, (LPARAM)pHwndRenderTarget);
+
+		if (pHwndRenderTarget->EndDraw() == D2DERR_RECREATE_TARGET)
+		{
+			pHwndRenderTarget->ReCreate(GetSafeHwnd());
+			SendMessage(AFX_WM_RECREATED2DRESOURCES, 0, (LPARAM)pHwndRenderTarget);
 		}
 
 		if (bD2DIsReady)
 		{
 			ValidateRect(NULL);
-			UnlockRenderTarget();
 			return TRUE;
+		}
+
+		return FALSE;
+	}
+
+	CDCRenderTarget* pDCRenderTarget = GetDCRenderTarget();
+	if (pDCRenderTarget == NULL)
+	{
+		ASSERT(FALSE);	// m_pRenderTarget should be either CDCRenderTarget or CHwndRenderTarget
+		return FALSE;
+	}
+
+	if (!pDCRenderTarget->IsValid())
+	{
+		D2D1_RENDER_TARGET_PROPERTIES props;
+
+		props.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+		props.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		props.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+		props.dpiX = props.dpiY = 0;
+		props.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+		props.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+		pDCRenderTarget->Create(props);
+		if (!pDCRenderTarget->IsValid())
+		{
+			return FALSE;
 		}
 	}
 
-	UnlockRenderTarget();
-	return FALSE;
+	PAINTSTRUCT ps;
+	CDC dcPaint;
+
+	CRect rectClient;
+	GetClientRect(&rectClient);
+
+	dcPaint.Attach(::BeginPaint(GetSafeHwnd(), &ps));
+	pDCRenderTarget->BindDC(dcPaint, rectClient);
+
+	pDCRenderTarget->BeginDraw();
+	bD2DIsReady = (BOOL)SendMessage(AFX_WM_DRAW2D, 0, (LPARAM)pDCRenderTarget);
+
+	if (pDCRenderTarget->EndDraw() == D2DERR_RECREATE_TARGET)
+	{
+		SendMessage(AFX_WM_RECREATED2DRESOURCES, 0, (LPARAM)pDCRenderTarget);
+	}
+
+	dcPaint.Detach();
+	::EndPaint(GetSafeHwnd(), &ps);
+
+	return bD2DIsReady;
+}
+
+void CWnd::EnableDynamicLayout(BOOL bEnable)
+{
+	if (m_pDynamicLayout != NULL)
+	{
+		delete m_pDynamicLayout;
+		m_pDynamicLayout = NULL;
+	}
+
+	if (!bEnable)
+	{
+		return;
+	}
+
+	m_pDynamicLayout = new CMFCDynamicLayout;
+}
+
+void CWnd::ResizeDynamicLayout()
+{
+	if (m_pDynamicLayout != NULL && !IsIconic())
+	{
+		ASSERT_VALID(m_pDynamicLayout);
+		m_pDynamicLayout->Adjust();
+	}
+}
+
+void CWnd::InitDynamicLayout()
+{
+	if (m_pDynamicLayout != NULL)
+	{
+		ASSERT_VALID(m_pDynamicLayout);
+
+		CDialog* pDialog = DYNAMIC_DOWNCAST(CDialog, this);
+		CPropertySheet* pPropSheet = DYNAMIC_DOWNCAST(CPropertySheet, this);
+
+		const BOOL bIsChild = (GetStyle() & WS_CHILD) == WS_CHILD;
+
+		if (!bIsChild && (pDialog != NULL || pPropSheet != NULL))
+		{
+			CRect rect;
+			GetClientRect(&rect);
+
+			ModifyStyle(DS_MODALFRAME, WS_POPUP | WS_THICKFRAME);
+			::AdjustWindowRectEx(&rect, GetStyle(), ::IsMenu(GetMenu()->GetSafeHmenu()), GetExStyle());
+
+			SetWindowPos(NULL, 0, 0, rect.Width(), rect.Height(), SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+		}
+
+		if (pPropSheet == NULL && DYNAMIC_DOWNCAST(CPropertyPage, this) == NULL)
+		{
+			CRect rect;
+			GetClientRect(rect);
+
+			m_pDynamicLayout->SetMinSize(rect.Size());
+		}
+	}
+}
+
+BOOL CWnd::LoadDynamicLayoutResource(LPCTSTR lpszResourceName)
+{
+	if (GetSafeHwnd() == NULL || !::IsWindow(GetSafeHwnd()) || lpszResourceName == NULL)
+	{
+		return FALSE;
+	}
+
+	// find resource handle
+	DWORD dwSize = 0;
+	LPVOID lpResource = NULL;
+	HGLOBAL hResource = NULL;
+	if (lpszResourceName != NULL)
+	{
+		HINSTANCE hInst = AfxFindResourceHandle(lpszResourceName, RT_DIALOG_LAYOUT);
+		HRSRC hDlgLayout = ::FindResource(hInst, lpszResourceName, RT_DIALOG_LAYOUT);
+		if (hDlgLayout != NULL)
+		{
+			// load it
+			dwSize = SizeofResource(hInst, hDlgLayout);
+			hResource = LoadResource(hInst, hDlgLayout);
+			if (hResource == NULL)
+				return FALSE;
+			// lock it
+			lpResource = LockResource(hResource);
+			ASSERT(lpResource != NULL);
+		}
+	}
+
+	// Use lpResource
+	BOOL bResult = CMFCDynamicLayout::LoadResource(this, lpResource, dwSize);
+
+	// cleanup
+	if (lpResource != NULL && hResource != NULL)
+	{
+		UnlockResource(hResource);
+		FreeResource(hResource);
+	}
+
+	if (bResult)
+	{
+		InitDynamicLayout();
+	}
+
+	return bResult;
 }
 
 /////////////////////////////////////////////////////////////////////////////

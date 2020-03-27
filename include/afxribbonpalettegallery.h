@@ -120,6 +120,7 @@ protected:
 		return	m_bQuickAccessMode || m_bFloatyMode || m_bIsButtonMode || m_bIsCollapsed || m_pParentGroup != NULL || m_nIcons == 0;
 	}
 
+	virtual BOOL PreClickPaletteIcon(CMFCRibbonGalleryIcon* /*pIcon*/, const CPoint& /*point*/) { return TRUE; }
 	virtual void OnClickPaletteIcon(CMFCRibbonGalleryIcon* pIcon);
 	void GetMenuItems(CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons);
 

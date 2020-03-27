@@ -9,22 +9,3 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-
-#ifdef _DEBUG   // entire file
-
-
-// NOTE: in separate module so it can replaced if needed
-
-BOOL AFXAPI AfxAssertFailedLine(LPCSTR lpszFileName, int nLine)
-{
-	// we remove WM_QUIT because if it is in the queue then the message box
-	// won't display
-	MSG msg;
-	BOOL bQuit = PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
-	BOOL bResult = _CrtDbgReport(_CRT_ASSERT, lpszFileName, nLine, NULL, NULL);
-	if (bQuit)
-		PostQuitMessage((int)msg.wParam);
-	return bResult;
-}
-
-#endif // _DEBUG

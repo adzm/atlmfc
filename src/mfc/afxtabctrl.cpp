@@ -1907,7 +1907,15 @@ void CMFCTabCtrl::RecalcLayout()
 
 			if (pTab->m_bVisible && pTab->m_pWnd->GetSafeHwnd() != NULL)
 			{
-				pTab->m_pWnd->SetWindowPos(NULL, m_rectWndArea.left, m_rectWndArea.top, m_rectWndArea.Width(), m_rectWndArea.Height(), SWP_NOACTIVATE | SWP_NOZORDER);
+				CRect rectWndArea = m_rectWndArea;
+				CWnd* pParent = pTab->m_pWnd->GetParent();
+
+				if (pParent->GetSafeHwnd() != NULL && pParent->GetSafeHwnd() != GetSafeHwnd())
+				{
+					MapWindowPoints(pParent, rectWndArea);
+				}
+
+				pTab->m_pWnd->SetWindowPos(NULL, rectWndArea.left, rectWndArea.top, rectWndArea.Width(), rectWndArea.Height(), SWP_NOACTIVATE | SWP_NOZORDER);
 			}
 		}
 	}

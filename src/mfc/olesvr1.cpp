@@ -335,7 +335,7 @@ COleServerItem* COleServerDoc::OnGetLinkedItem(LPCTSTR lpszItemName)
 	}
 
 	TRACE(traceOle, 1, "Warning: default COleServerDoc::OnGetLinkedItem implementation\n");
-	TRACE(traceOle, 1, _T("\tfailed to find item '%s'.\n"), lpszItemName);
+	TRACE(traceOle, 1, _T("\tfailed to find item '%Ts'.\n"), lpszItemName);
 
 	return NULL;        // not found (no link found)
 }

@@ -220,7 +220,7 @@ void CMenuTearOffManager::Build(UINT uiTearOffBarID, CString& strText)
 	ASSERT(uiTearOffBarID != 0);
 
 	CString strNew;
-	strNew.Format(_T("%c%d%c%s"), cIDChar, uiTearOffBarID, cIDChar, (LPCTSTR)strText);
+	strNew.Format(_T("%Tc%d%Tc%Ts"), cIDChar, uiTearOffBarID, cIDChar, (LPCTSTR)strText);
 	strText = strNew;
 }
 

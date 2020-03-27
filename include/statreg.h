@@ -267,7 +267,7 @@ protected:
 #pragma warning(push)
 #pragma warning(disable: 22008)
 			/* Prefast false warning is fired here despite the all above checks */
-			Checked::memcpy_s(p + nPos, (nSize-nPos) * sizeof(TCHAR), pch, int(nChars * sizeof(TCHAR)));
+			Checked::memcpy_s(p + nPos, (nSize-nPos) * sizeof(TCHAR), pch, nChars * sizeof(TCHAR));
 			nPos += nChars;
 			*(p + nPos) = _T('\0');
 #pragma warning(pop)
@@ -470,7 +470,7 @@ inline HRESULT CRegObject::RegisterFromResource(
 
 	if (NULL == hInstResDll)
 	{
-		ATLTRACE(atlTraceRegistrar, 0, _T("Failed to LoadLibrary on %s\n"), bstrFileName);
+		ATLTRACE(atlTraceRegistrar, 0, _T("Failed to LoadLibrary on %Ts\n"), bstrFileName);
 		hr = AtlHresultFromLastError();
 		goto ReturnHR;
 	}
@@ -480,8 +480,8 @@ inline HRESULT CRegObject::RegisterFromResource(
 	if (NULL == hrscReg)
 	{
 		ATLTRACE(atlTraceRegistrar, 0, (HIWORD(szID) == 0) ?
-			_T("Failed to FindResource on ID:%d TYPE:%s\n") :
-			_T("Failed to FindResource on ID:%s TYPE:%s\n"),
+			_T("Failed to FindResource on ID:%d TYPE:%Ts\n") :
+			_T("Failed to FindResource on ID:%Ts TYPE:%Ts\n"),
 			szID, szType);
 		hr = AtlHresultFromLastError();
 		goto ReturnHR;
@@ -674,7 +674,7 @@ inline HRESULT CRegObject::CommonFileRegister(
 							  NULL);
 	if (INVALID_HANDLE_VALUE == hFile)
 	{
-		ATLTRACE2(atlTraceRegistrar, 0, _T("Failed to CreateFile on %s\n"), lpszBSTRFileName);
+		ATLTRACE2(atlTraceRegistrar, 0, _T("Failed to CreateFile on %Ts\n"), lpszBSTRFileName);
 		return AtlHresultFromLastError();
 	}
 
@@ -812,7 +812,7 @@ inline BYTE CRegParser::ChToByte(_In_ const TCHAR ch)
 				return (BYTE) (10 + (ch - 'a'));
 		default:
 				ATLASSERT(FALSE);
-				ATLTRACE(atlTraceRegistrar, 0, _T("Bogus value %c passed as binary Hex value\n"), ch);
+				ATLTRACE(atlTraceRegistrar, 0, _T("Bogus value %Tc passed as binary Hex value\n"), ch);
 				return 0;
 	}
 }
@@ -979,7 +979,7 @@ inline HRESULT CRegParser::AddValue(
 		return hr;
 	if (!VTFromRegType(szValue, vt))
 	{
-		ATLTRACE(atlTraceRegistrar, 0, _T("%s Type not supported\n"), szValue);
+		ATLTRACE(atlTraceRegistrar, 0, _T("%Ts Type not supported\n"), szValue);
 		return GenerateError(E_ATL_TYPE_NOT_SUPPORTED);
 	}
 
@@ -992,12 +992,12 @@ inline HRESULT CRegParser::AddValue(
 	case VT_BSTR:
 		{
 			lRes = rkParent.SetStringValue(szValueName, szValue);
-			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), szValue, !szValueName ? _T("default") : szValueName);
+			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %Ts at %Ts\n"), szValue, !szValueName ? _T("default") : szValueName);
 			break;
 		}
 	case VT_BSTR | VT_BYREF:
 		{
-			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), szValue, !szValueName ? _T("default") : szValueName);
+			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %Ts at %Ts\n"), szValue, !szValueName ? _T("default") : szValueName);
 			int nLen = static_cast<int>(_tcslen(szValue) + 2); //Allocate space for double null termination.
 			CTempBuffer<TCHAR, 256> pszDestValue;
 			//nLen should be >= the max size of the target buffer.
@@ -1061,7 +1061,7 @@ inline HRESULT CRegParser::AddValue(
                 return hr;
 
 			lRes = rkParent.SetDWORDValue(szValueName, ulVal);
-			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %d at %s\n"), ulVal, !szValueName ? _T("default") : szValueName);
+			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %d at %Ts\n"), ulVal, !szValueName ? _T("default") : szValueName);
 			break;
 		}
 	case VT_UI1:
@@ -1351,7 +1351,7 @@ inline HRESULT CRegParser::RegisterBuffer(
 	if (FAILED(hr))
 		return hr;
 
-	ATLTRACE(atlTraceRegistrar, 0, _T("%s\n"), szReg);
+	ATLTRACE(atlTraceRegistrar, 0, _T("%Ts\n"), szReg);
 
 	m_pchCur = szReg;
 
@@ -1364,7 +1364,7 @@ inline HRESULT CRegParser::RegisterBuffer(
 		HKEY hkBase;
 		if ((hkBase = HKeyFromString(szToken)) == NULL)
 		{
-			ATLTRACE(atlTraceRegistrar, 0, _T("HKeyFromString failed on %s\n"), szToken);
+			ATLTRACE(atlTraceRegistrar, 0, _T("HKeyFromString failed on %Ts\n"), szToken);
 			hr = GenerateError(E_ATL_BAD_HKEY);
 			break;
 		}
@@ -1374,7 +1374,7 @@ inline HRESULT CRegParser::RegisterBuffer(
 
 		if (chLeftBracket != *szToken)
 		{
-			ATLTRACE(atlTraceRegistrar, 0, _T("Syntax error, expecting a {, found a %s\n"), szToken);
+			ATLTRACE(atlTraceRegistrar, 0, _T("Syntax error, expecting a {, found a %Ts\n"), szToken);
 			hr = GenerateError(E_ATL_MISSING_OPENKEY_TOKEN);
 			break;
 		}
@@ -1491,7 +1491,7 @@ inline HRESULT CRegParser::RegisterSubkeys(
 			{
 				if (!bRecover && bDelete)
 				{
-					ATLTRACE(atlTraceRegistrar, 1, _T("Deleting %s\n"), szValueName);
+					ATLTRACE(atlTraceRegistrar, 1, _T("Deleting %Ts\n"), szValueName);
 					// We have to open the key for write to be able to delete.
 					CRegKey rkParent;
 					lRes = rkParent.Open(hkParent, NULL, KEY_WRITE);
@@ -1530,7 +1530,7 @@ inline HRESULT CRegParser::RegisterSubkeys(
 				if (ERROR_SUCCESS != lRes)
 				{
 					// Finally try creating it
-					ATLTRACE(atlTraceRegistrar, 2, _T("Creating key %s\n"), szToken);
+					ATLTRACE(atlTraceRegistrar, 2, _T("Creating key %Ts\n"), szToken);
 					lRes = keyCur.Create(hkParent, szToken, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE);
 					if (lRes != ERROR_SUCCESS)
 						return AtlHresultFromWin32(lRes);
@@ -1565,9 +1565,9 @@ inline HRESULT CRegParser::RegisterSubkeys(
 			// TRACE out Key open status and if in recovery mode
 #ifdef _DEBUG
 			if (!bRecover)
-				ATLTRACE(atlTraceRegistrar, 1, _T("Opened Key %s\n"), szToken);
+				ATLTRACE(atlTraceRegistrar, 1, _T("Opened Key %Ts\n"), szToken);
 			else
-				ATLTRACE(atlTraceRegistrar, 0, _T("Ignoring Open key on %s : In Recovery mode\n"), szToken);
+				ATLTRACE(atlTraceRegistrar, 0, _T("Ignoring Open key on %Ts : In Recovery mode\n"), szToken);
 #endif //_DEBUG
 
 			// Remember Subkey
@@ -1617,7 +1617,7 @@ inline HRESULT CRegParser::RegisterSubkeys(
 				// See if the KEY is in the NeverDelete list and if so, don't
 				if (CanForceRemoveKey(szKey) && bDelete)
 				{
-					ATLTRACE(atlTraceRegistrar, 0, _T("Deleting non-empty subkey %s by force\n"), szKey);
+					ATLTRACE(atlTraceRegistrar, 0, _T("Deleting non-empty subkey %Ts by force\n"), szKey);
 					// Error not returned since we are in recovery mode. The error that caused recovery mode is returned
 					keyCur.RecurseDeleteKey(szKey);
 				}
@@ -1631,7 +1631,7 @@ inline HRESULT CRegParser::RegisterSubkeys(
 
 			if (bDelete&& !bHasSubKeys)
 			{
-				ATLTRACE(atlTraceRegistrar, 0, _T("Deleting Key %s\n"), szKey);
+				ATLTRACE(atlTraceRegistrar, 0, _T("Deleting Key %Ts\n"), szKey);
 				CRegKey rkParent;
 				rkParent.Attach(hkParent);
 				lRes = rkParent.DeleteSubKey(szKey);

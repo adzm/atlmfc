@@ -21,14 +21,70 @@
 #define new DEBUG_NEW
 #endif
 
+/////////////////////////////////////////////////////////////////////////////
+// CPaneTrackingWnd
+
+class CPaneTrackingWnd : public CWnd
+{
+public:
+	CPaneTrackingWnd()
+	{
+	}
+
+	BOOL Create(const CRect& rect, CWnd* pWndOwner)
+	{
+		CString strClassName = GetGlobalData()->RegisterWindowClass(_T("Afx:TrackingWnd"));
+
+		if (!CWnd::CreateEx(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, strClassName, _T(""), WS_POPUP | MFS_SYNCACTIVE, rect, pWndOwner == NULL ? AfxGetMainWnd() : pWndOwner, 0))
+		{
+			return FALSE;
+		}
+
+		if (pWndOwner != NULL)
+		{
+			SetOwner(pWndOwner);
+		}
+
+		ShowWindow(SW_SHOWNOACTIVATE);
+		return TRUE;
+	}
+
+	// Generated message map functions
+protected:
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnPaint();
+	DECLARE_MESSAGE_MAP()
+};
+
+BEGIN_MESSAGE_MAP(CPaneTrackingWnd, CWnd)
+	ON_WM_ERASEBKGND()
+	ON_WM_PAINT()
+END_MESSAGE_MAP()
+
+BOOL CPaneTrackingWnd::OnEraseBkgnd(CDC* /*pDC*/) 
+{
+	return TRUE;
+}
+
+void CPaneTrackingWnd::OnPaint() 
+{
+	CPaintDC dc(this); // device context for painting
+
+	CRect rectClient;
+	GetClientRect(&rectClient);
+
+	::FillRect(dc.GetSafeHdc(), &rectClient, GetGlobalData()->hbrBtnShadow);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CPaneDivider
+
 IMPLEMENT_DYNCREATE(CPaneDivider,CBasePane)
 
 int CPaneDivider::m_nDefaultWidth = 4;
 CRuntimeClass* CPaneDivider::m_pContainerManagerRTC = RUNTIME_CLASS(CPaneContainerManager);
 CRuntimeClass* CPaneDivider::m_pSliderRTC = RUNTIME_CLASS(CPaneDivider);
 
-/////////////////////////////////////////////////////////////////////////////
-// CPaneDivider
 CPaneDivider::CPaneDivider()
 {
 	Init();
@@ -50,6 +106,7 @@ void CPaneDivider::Init(BOOL bDefaultSlider, CWnd* pParentWnd)
 
 	m_rectLastDragRect.SetRectEmpty();
 	m_rectDragBounds.SetRectEmpty();
+	m_pWndTrack = NULL;
 	m_nMinOffset = 0;
 	m_nMaxOffset = 0;
 	m_nStep		 = -1;
@@ -231,9 +288,13 @@ void CPaneDivider::OnLButtonDown(UINT nFlags, CPoint point)
 
 		CRect rectSlider;
 		GetWindowRect(rectSlider);
-		CSize size(m_nWidth / 2, m_nWidth / 2);
-		CWindowDC dc(GetDesktopWindow());
-		dc.DrawDragRect(&rectSlider, size, NULL, size);
+
+		ASSERT(m_pWndTrack == NULL);
+		m_pWndTrack = new CPaneTrackingWnd();
+		if (!m_pWndTrack->Create(rectSlider, this))
+		{
+			ASSERT(FALSE);
+		}
 
 		m_rectLastDragRect = rectSlider;
 		m_rectDragBounds = rectSlider;
@@ -316,9 +377,11 @@ void CPaneDivider::OnMouseMove(UINT nFlags, CPoint point)
 			}
 		}
 
-		CSize size(m_nWidth / 2, m_nWidth / 2);
-		CWindowDC dc(GetDesktopWindow());
-		dc.DrawDragRect(&rectNew, size, &m_rectLastDragRect, size);
+		if (m_pWndTrack->GetSafeHwnd() != NULL)
+		{
+			m_pWndTrack->SetWindowPos(&CWnd::wndTopMost, rectNew.left, rectNew.top, -1, -1, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+		}
+
 		m_rectLastDragRect = rectNew;
 	}
 
@@ -340,12 +403,12 @@ void CPaneDivider::StopTracking(BOOL bMoveSlider)
 
 		CPoint ptOffset = m_rectLastDragRect.TopLeft() - rectSlider.TopLeft();
 
-		CRect rectEmpty;
-		rectEmpty.SetRectEmpty();
-
-		CWindowDC dc(NULL);
-		CSize size(m_nWidth / 2, m_nWidth / 2);
-		dc.DrawDragRect(&rectEmpty, size, &m_rectLastDragRect, size);
+		if (m_pWndTrack->GetSafeHwnd() != NULL)
+		{
+			m_pWndTrack->DestroyWindow();
+			delete m_pWndTrack;
+			m_pWndTrack = NULL;
+		}
 
 		if (bMoveSlider)
 		{
@@ -414,15 +477,6 @@ void CPaneDivider::Move(CPoint& ptOffset, BOOL /*bAdjustLayout*/)
 	// it moves the slider
 	AdjustDockingLayout();
 
-	// CGlobalUtils::ScreenToClientUnmapped(GetParent(), rectSlider);
-	/*
-	int nLeftBound = rectSlider.left;
-	if (bIsRTL && m_dwDividerStyle & SS_VERT)
-	{
-	GetParent()->ScreenToClient(rectSliderWnd);
-	nLeftBound = rectSliderWnd.left - ptOffset.x;
-	}
-	*/
 	// move the slider by ourself
 	SetWindowPos(NULL, rectSlider.left, rectSlider.top, rectSlider.Width(), rectSlider.Height(), SWP_NOZORDER  | SWP_NOACTIVATE);
 
@@ -661,7 +715,13 @@ void CPaneDivider::RepositionPanes(CRect& rectNew, HDWP& hdwp)
 
 void CPaneDivider::OnDestroy()
 {
-
+	if (m_pWndTrack->GetSafeHwnd() != NULL)
+	{
+		m_pWndTrack->DestroyWindow();
+		delete m_pWndTrack;
+		m_pWndTrack = NULL;
+	}
+	
 	CBasePane::OnDestroy();
 }
 

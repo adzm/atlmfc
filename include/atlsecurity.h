@@ -582,11 +582,11 @@ public:
 	CSecurityAttributes() throw();
 	explicit CSecurityAttributes(
 		_In_ const CSecurityDesc &rSecurityDescriptor,
-		_In_ bool bInheritHandle = false) throw(...);
+		_In_ bool bInheritsHandle = false) throw(...);
 
 	void Set(
 		_In_ const CSecurityDesc &rSecurityDescriptor,
-		_In_ bool bInheritHandle = false) throw(...);
+		_In_ bool bInheritsHandle = false) throw(...);
 
 protected:
 	CSecurityDesc m_SecurityDescriptor;
@@ -844,7 +844,7 @@ protected:
 	}
 
 	template<typename RET_T, typename INFO_T>
-	bool GetInfoConvert(
+	_Success_(return != false) bool GetInfoConvert(
 		_Inout_ RET_T *pRet,
 		_In_ TOKEN_INFORMATION_CLASS TokenClass,
 		_Out_opt_ INFO_T *pWork = NULL) const throw(...)
@@ -4069,21 +4069,21 @@ inline CSecurityAttributes::CSecurityAttributes() throw()
 
 inline CSecurityAttributes::CSecurityAttributes(
 		_In_ const CSecurityDesc &rSecurityDescriptor,
-		_In_ bool bInheritHandle /* = false */) throw(...) :
+		_In_ bool bInheritsHandle /* = false */) throw(...) :
 	m_SecurityDescriptor(rSecurityDescriptor)
 {
-	Set(m_SecurityDescriptor, bInheritHandle);
+	Set(m_SecurityDescriptor, bInheritsHandle);
 }
 
 inline void CSecurityAttributes::Set(
 	_In_ const CSecurityDesc &rSecurityDescriptor,
-	_In_ bool bInheritHandle /* = false */) throw(...)
+	_In_ bool bInheritsHandle /* = false */) throw(...)
 {
 	m_SecurityDescriptor = rSecurityDescriptor;
 	nLength = sizeof(SECURITY_ATTRIBUTES);
 	lpSecurityDescriptor = const_cast<SECURITY_DESCRIPTOR *>
 		(m_SecurityDescriptor.GetPSECURITY_DESCRIPTOR());
-	this->bInheritHandle = bInheritHandle;
+	this->bInheritHandle = bInheritsHandle;
 }
 
 //******************************************************
@@ -5144,17 +5144,19 @@ inline bool CAccessToken::OpenCOMClientToken(
 	m_hToken = hToken;
 
 	if(!bImpersonate)
-ATLPREFAST_SUPPRESS(6031)
-		::CoRevertToSelf();
-ATLPREFAST_UNSUPPRESS()
+	{
+		HRESULT hr = ::CoRevertToSelf();
+		ATLASSERT(SUCCEEDED(hr));
+		UNREFERENCED_PARAMETER(hr);
+	}
 	else
 	{
 		m_pRevert = _ATL_NEW CCoRevertToSelf;
 		if(!m_pRevert)
 		{
-ATLPREFAST_SUPPRESS(6031)
-			::CoRevertToSelf();
-ATLPREFAST_UNSUPPRESS()
+			HRESULT hr = ::CoRevertToSelf();
+			ATLASSERT(SUCCEEDED(hr));
+			UNREFERENCED_PARAMETER(hr);
 			Clear();
 			return false;
 		}

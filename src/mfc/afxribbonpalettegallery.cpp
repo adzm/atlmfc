@@ -167,6 +167,11 @@ void CMFCRibbonGalleryIcon::OnClick(CPoint point)
 	ASSERT_VALID(this);
 	ASSERT_VALID(m_pOwner);
 
+	if (!m_pOwner->PreClickPaletteIcon(this, point))
+	{
+		return;
+	}
+
 	m_pOwner->OnClickPaletteIcon(m_pOriginal == NULL ? this : (CMFCRibbonGalleryIcon*)m_pOriginal);
 
 	if (m_nIndex < 0)

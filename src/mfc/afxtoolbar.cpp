@@ -53,9 +53,9 @@
 #define AFX_BUTTON_MIN_WIDTH 5
 #define AFX_TOOLBAR_BUTTON_MARGIN 6
 
-#define AFX_REG_SECTION_FMT _T("%sMFCToolBar-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sMFCToolBar-%d%x")
-#define AFX_REG_PARAMS_FMT _T("%sMFCToolBarParameters")
+#define AFX_REG_SECTION_FMT _T("%TsMFCToolBar-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsMFCToolBar-%d%x")
+#define AFX_REG_PARAMS_FMT _T("%TsMFCToolBarParameters")
 #define AFX_REG_ENTRY_NAME _T("Name")
 #define AFX_REG_ENTRY_BUTTONS _T("Buttons")
 #define AFX_REG_ENTRY_ORIG_ITEMS _T("OriginalItems")

@@ -85,7 +85,7 @@ protected:
             return E_POINTER;
         }
         
-        static const IID IID_UNKNOWN = { 0x00000000, 0x0000, 0x0000, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 };
+        static const IID IID_UNKNOWN = { 0x00000000, 0x0000, 0x0000, {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46} };
         if (::InlineIsEqualGUID(riid, IID_UNKNOWN))
         {
             *ppvObject = static_cast<IUIAnimationCallback *>(this);

@@ -398,6 +398,7 @@ ATLPREFAST_UNSUPPRESS()
 		}
 		if (bFailed)
 		{
+			AtlConvFreeMemory(m_psz, m_szBuffer, t_nBufferLength);
 			AtlThrowLastWin32();
 		}		
 	}
@@ -467,6 +468,7 @@ ATLPREFAST_UNSUPPRESS()
 		}
 		if (bFailed)
 		{
+			AtlConvFreeMemory(m_psz, m_szBuffer, t_nBufferLength);
 			AtlThrowLastWin32();
 		}
 	}

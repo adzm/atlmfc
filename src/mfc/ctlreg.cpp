@@ -145,7 +145,7 @@ BOOL AFXAPI AfxOleRegisterTypeLib(HINSTANCE hInstance, REFGUID tlid,
 	}
 	else
 	{
-		TRACE(traceAppMsg, 0, L"Warning: Could not load type library from %s\n", strPathNameW);
+		TRACE(traceAppMsg, 0, L"Warning: Could not load type library from %ls\n", strPathNameW);
 	}
 
 	return bSuccess;
@@ -184,7 +184,7 @@ BOOL AFXAPI AfxOleUnregisterTypeLib(REFGUID tlid, WORD wVerMajor,
 	LONG error = ERROR_SUCCESS;
 
 	const CString strTypeLibID(szTypeLibID);
-	if (-1 == _stprintf_s(szKeyTypeLib, _countof(szKeyTypeLib), _T("TYPELIB\\%s"), strTypeLibID.GetString()))
+	if (-1 == _stprintf_s(szKeyTypeLib, _countof(szKeyTypeLib), _T("TYPELIB\\%Ts"), strTypeLibID.GetString()))
 		return FALSE;
 
 	HKEY hKeyTypeLib;
@@ -396,11 +396,11 @@ BOOL AFXAPI AfxOleRegisterControlClass(HINSTANCE hInstance,
 	TCHAR szScratch[_MAX_PATH];
 	TCHAR szProgID[_MAX_PATH];
 
-	if (-1 == _stprintf_s(szScratch, _countof(szScratch), _T("%sCLSID\\%s"), szRedirection, strClassID.GetString()))
+	if (-1 == _stprintf_s(szScratch, _countof(szScratch), _T("%TsCLSID\\%Ts"), szRedirection, strClassID.GetString()))
 	{
 		return FALSE;
 	}
-	if (-1 == _stprintf_s(szProgID, _countof(szProgID), _T("%s%s"), szRedirection, pszProgID))
+	if (-1 == _stprintf_s(szProgID, _countof(szProgID), _T("%Ts%Ts"), szRedirection, pszProgID))
 	{
 		return FALSE;
 	}
@@ -467,7 +467,7 @@ BOOL AFXAPI AfxOleUnregisterClass(REFCLSID clsid, LPCTSTR pszProgID)
 
 	// check to see if a 16-bit InprocServer key is found when unregistering
 	// 32-bit (or vice versa).
-	if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%s\\%s"), strClassID.GetString(), INPROCSERVER_2))
+	if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%Ts\\%Ts"), strClassID.GetString(), INPROCSERVER_2))
 		return FALSE;
 
 	HKEY hkey=NULL;
@@ -478,12 +478,12 @@ BOOL AFXAPI AfxOleUnregisterClass(REFCLSID clsid, LPCTSTR pszProgID)
 	{
 		// Only remove the keys specific to this version of the control,
 		// leaving things in tact for the other version.
-		if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%s\\%s"), strClassID.GetString(), INPROCSERVER))
+		if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%Ts\\%Ts"), strClassID.GetString(), INPROCSERVER))
 			return FALSE;
 		error = AfxRegDeleteKey(HKEY_CLASSES_ROOT, szKey);
 		bRetCode = bRetCode && _AfxRegDeleteKeySucceeded(error);
 
-		if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%s\\%s"), strClassID.GetString(), TOOLBOXBITMAP))
+		if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%Ts\\%Ts"), strClassID.GetString(), TOOLBOXBITMAP))
 			return FALSE;
 		error = AfxRegDeleteKey(HKEY_CLASSES_ROOT, szKey);
 		bRetCode = bRetCode && _AfxRegDeleteKeySucceeded(error);
@@ -492,7 +492,7 @@ BOOL AFXAPI AfxOleUnregisterClass(REFCLSID clsid, LPCTSTR pszProgID)
 	{
 		// No other versions of this control were detected,
 		// so go ahead and remove the control completely.
-		if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%s"), strClassID.GetString()))
+		if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%Ts"), strClassID.GetString()))
 			return FALSE;
 		error = _AfxRecursiveRegDeleteKey(HKEY_CLASSES_ROOT, szKey);
 		bRetCode = bRetCode && _AfxRegDeleteKeySucceeded(error);
@@ -550,7 +550,7 @@ BOOL AFXAPI AfxOleRegisterPropertyPageClass(HINSTANCE hInstance,
 	HKEY hkeyClassID = NULL;
 
 	TCHAR szKey[_MAX_PATH];
-	if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%s"), strClassID.GetString()))
+	if (-1 == _stprintf_s(szKey, _countof(szKey), _T("CLSID\\%Ts"), strClassID.GetString()))
 		return FALSE;
 	if (AfxRegCreateKey(HKEY_CLASSES_ROOT, szKey, &hkeyClassID) != ERROR_SUCCESS)
 		goto Error;

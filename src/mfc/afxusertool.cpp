@@ -65,7 +65,7 @@ BOOL CUserTool::Invoke()
 
 	if (::ShellExecute(AfxGetMainWnd()->GetSafeHwnd(), NULL, m_strCommand, m_strArguments, m_strInitialDirectory, SW_SHOWNORMAL) <(HINSTANCE) 32)
 	{
-		TRACE(_T("Can't invoke command: %s\n"), m_strCommand);
+		TRACE(_T("Can't invoke command: %Ts\n"), m_strCommand);
 		return FALSE;
 	}
 

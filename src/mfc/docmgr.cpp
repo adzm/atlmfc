@@ -11,12 +11,12 @@
 #include "stdafx.h"
 #include "sal.h"
 
-AFX_STATIC_DATA const TCHAR _afxShellOpenFmt[] = _T("%s\\shell\\open\\%s");
-AFX_STATIC_DATA const TCHAR _afxShellPrintFmt[] = _T("%s\\shell\\print\\%s");
-AFX_STATIC_DATA const TCHAR _afxShellPrintToFmt[] = _T("%s\\shell\\printto\\%s");
-AFX_STATIC_DATA const TCHAR _afxDefaultIconFmt[] = _T("%s\\DefaultIcon");
-AFX_STATIC_DATA const TCHAR _afxShellNewFmt[] = _T("%s\\ShellNew");
-AFX_STATIC_DATA const TCHAR _afxShellExFmt[] = _T("%s\\ShellEx");
+AFX_STATIC_DATA const TCHAR _afxShellOpenFmt[] = _T("%Ts\\shell\\open\\%Ts");
+AFX_STATIC_DATA const TCHAR _afxShellPrintFmt[] = _T("%Ts\\shell\\print\\%Ts");
+AFX_STATIC_DATA const TCHAR _afxShellPrintToFmt[] = _T("%Ts\\shell\\printto\\%Ts");
+AFX_STATIC_DATA const TCHAR _afxDefaultIconFmt[] = _T("%Ts\\DefaultIcon");
+AFX_STATIC_DATA const TCHAR _afxShellNewFmt[] = _T("%Ts\\ShellNew");
+AFX_STATIC_DATA const TCHAR _afxShellExFmt[] = _T("%Ts\\ShellEx");
 AFX_STATIC_DATA const TCHAR _afxPreviewHostCLSIDKey [] = _T("\\{8895b1c6-b41f-4c1c-a562-0d564250836f}");
 
 #define DEFAULT_ICON_INDEX 0
@@ -93,7 +93,7 @@ _AfxSetRegKey(LPCTSTR lpszKey, LPCTSTR lpszValue, LPCTSTR lpszValueName = NULL)
 		if (AfxRegSetValue(HKEY_CLASSES_ROOT, lpszKey, REG_SZ,
 			  lpszValue, static_cast<DWORD>(AtlStrLen(lpszValue)) * sizeof(TCHAR)) != ERROR_SUCCESS)
 		{
-			TRACE(traceAppMsg, 0, _T("Warning: registration database update failed for key '%s'.\n"),
+			TRACE(traceAppMsg, 0, _T("Warning: registration database update failed for key '%Ts'.\n"),
 				lpszKey);
 			return FALSE;
 		}
@@ -111,7 +111,7 @@ _AfxSetRegKey(LPCTSTR lpszKey, LPCTSTR lpszValue, LPCTSTR lpszValueName = NULL)
 			if(::RegCloseKey(hKey) == ERROR_SUCCESS && lResult == ERROR_SUCCESS)
 				return TRUE;
 		}
-		TRACE(traceAppMsg, 0, _T("Warning: registration database update failed for key '%s'.\n"), lpszKey);
+		TRACE(traceAppMsg, 0, _T("Warning: registration database update failed for key '%Ts'.\n"), lpszKey);
 		return FALSE;
 	}
 }

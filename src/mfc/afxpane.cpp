@@ -43,8 +43,8 @@
 
 int CPane::m_bHandleMinSize = FALSE;
 
-#define AFX_REG_SECTION_FMT _T("%sPane-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sPane-%d%x")
+#define AFX_REG_SECTION_FMT _T("%TsPane-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsPane-%d%x")
 
 IMPLEMENT_DYNCREATE(CPane, CBasePane)
 

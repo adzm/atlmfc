@@ -18,6 +18,7 @@
 #include <crtdbg.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <tchar.h>
 
 //
 // Tracing mechanism doesn't require AtlTraceTool anymore
@@ -140,7 +141,7 @@ private:
 		return nullptr;
 	}
 
-	static void __cdecl CTrace::TraceV(
+	static void __cdecl TraceV(
 			_In_opt_z_ const char *pszFileName,
 			_In_ int nLine,
 			_In_ unsigned int dwCategory,
@@ -157,7 +158,7 @@ private:
 		const wchar_t *const pwszCategoryName = GetCategoryName(dwCategory);
 		if (pwszCategoryName != nullptr)
 		{
-			if ((categoryLength = swprintf_s(wszCategory, TraceBufferSize, L"%s - ", pwszCategoryName)) == -1)
+			if ((categoryLength = swprintf_s(wszCategory, TraceBufferSize, L"%ls - ", pwszCategoryName)) == -1)
 			{
 				return;
 			}
@@ -179,18 +180,22 @@ private:
 
 		wszBuf[0] = '\0';
 
-		if (swprintf_s(wszBuf, chCount, L"%s%s", wszCategory, pwszMessage) == -1)
+		if (swprintf_s(wszBuf, chCount, L"%ls%ls", wszCategory, pwszMessage) == -1)
 		{
 			return;
 		}
 
 		wchar_t fileName[_MAX_PATH] = {'\0'};	
+#if _MSC_VER < 1900
 		if (swprintf_s(fileName, _MAX_PATH, L"%S", pszFileName) == -1)
+#else
+		if (swprintf_s(fileName, _MAX_PATH, L"%hs", pszFileName) == -1)
+#endif
 		{
 			return;
 		}
 
-		_CrtDbgReportW(_CRT_WARN, fileName, nLine, nullptr, L"%s", wszBuf);
+		_CrtDbgReportW(_CRT_WARN, fileName, nLine, nullptr, L"%ls", static_cast<const wchar_t*>(wszBuf));
 	}
 
 public:
@@ -223,7 +228,7 @@ public:
 		m_nCategory = nCategory;
 	}
 
-	static void __cdecl CTrace::TraceV(
+	static void __cdecl TraceV(
 		_In_opt_z_ const char *pszFileName,
 		_In_ int nLine,
 		_In_ unsigned int dwCategory,
@@ -266,7 +271,7 @@ public:
 		TraceV(pszFileName, nLine, dwCategory, nLevel, wszBuf);
 	}
 
-	static void __cdecl CTrace::TraceV(
+	static void __cdecl TraceV(
 		_In_opt_z_ const char *pszFileName,
 		_In_ int nLine,
 		_In_ unsigned int dwCategory,
@@ -274,7 +279,19 @@ public:
 		_In_z_ LPCWSTR pwszFmt,
 		_In_ va_list args)
 	{
+#if _MSC_VER < 1900
 		int cchNeeded = _vscwprintf(pwszFmt, args);
+#else
+		// Explicitly request the legacy wide format specifiers mode from the CRT,
+		// for compatibility with previous versions.  While the CRT supports two
+		// modes, the ATL and MFC functions that accept format strings only support
+		// legacy mode format strings.
+		int cchNeeded = __stdio_common_vswprintf(
+			_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS |
+			_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR |
+			_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS,
+			NULL, 0, pwszFmt, NULL, args);
+#endif
 		if (cchNeeded < 0)
 		{
 			return;
@@ -288,7 +305,19 @@ public:
 
 		wszBuf[0] = '\0';
 
+#if _MSC_VER < 1900
 		if (_vsnwprintf_s(wszBuf, cchNeeded + 1, cchNeeded, pwszFmt, args) == -1)
+#else
+		// Explicitly request the legacy wide format specifiers mode from the CRT,
+		// for compatibility with previous versions.  While the CRT supports two
+		// modes, the ATL and MFC functions that accept format strings only support
+		// legacy mode format strings.
+		int const vsnwprintf_result = __stdio_common_vsnwprintf_s(
+			_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS |
+			_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS,
+			wszBuf, cchNeeded + 1, cchNeeded, pwszFmt, NULL, args);
+		if (vsnwprintf_result < 0)
+#endif
 		{
 			return;
 		}
@@ -314,7 +343,11 @@ public:
 		wcscpy_s(m_nMap[m_nLastCategory].categryName, MaxLengthOfCategoryName - 1, pszCategory);
 #else
 		wchar_t buffer[MaxLengthOfCategoryName] = { 0 };	
+#if _MSC_VER < 1900
 		swprintf_s(buffer, MaxLengthOfCategoryName - 1, L"%S", pszCategory);
+#else
+		swprintf_s(buffer, MaxLengthOfCategoryName - 1, L"%hs", pszCategory);
+#endif
 		wcscpy_s(m_nMap[m_nLastCategory].categryName, MaxLengthOfCategoryName - 1, buffer);
 #endif
 	
@@ -351,6 +384,23 @@ inline bool IsTracingEnabled(
 	return CTrace::IsTracingEnabled(dwCategory, nLevel);
 }
 
+class CPreserveLastError
+{
+public:
+	CPreserveLastError()
+	{
+		m_dwLastError = GetLastError();
+	}
+
+	~CPreserveLastError()
+	{
+		SetLastError(m_dwLastError);
+	}
+
+private:
+	DWORD m_dwLastError;
+};
+
 class CTraceFileAndLineInfo
 {
 public:
@@ -369,6 +419,7 @@ public:
 		_In_z_ const char *pszFmt, 
 		...) const
 	{
+		CPreserveLastError ple;
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::TraceV(m_pszFileName, m_nLineNo, dwCategory, nLevel, pszFmt, ptr);
 		va_end(ptr);
@@ -383,6 +434,7 @@ public:
 		_In_z_ const wchar_t *pszFmt, 
 		...) const
 	{
+		CPreserveLastError ple;
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::TraceV(m_pszFileName, m_nLineNo, dwCategory, nLevel, pszFmt, ptr);
 		va_end(ptr);
@@ -395,6 +447,7 @@ public:
 		_In_z_ const char *pszFmt, 
 		...) const
 	{
+		CPreserveLastError ple;
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::TraceV(m_pszFileName, m_nLineNo, atlTraceGeneral, 0, pszFmt, ptr);
 		va_end(ptr);
@@ -407,6 +460,7 @@ public:
 		_In_z_ const wchar_t *pszFmt, 
 		...) const
 	{
+		CPreserveLastError ple;
 		va_list ptr; va_start(ptr, pszFmt);
 		ATL::CTrace::TraceV(m_pszFileName, m_nLineNo, atlTraceGeneral, 0, pszFmt, ptr);
 		va_end(ptr);
@@ -510,6 +564,7 @@ __declspec( selectany ) _CRT_REPORT_HOOK CNoUIAssertHook::s_pfnPrevHook = NULL;
 #pragma warning(disable : 4793)
 inline void __cdecl AtlTrace(_In_z_ _Printf_format_string_ LPCSTR pszFormat, ...)
 {
+	CPreserveLastError ple;
 	va_list ptr;
 	va_start(ptr, pszFormat);
 	ATL::CTrace::TraceV(NULL, -1, atlTraceGeneral, 0, pszFormat, ptr);
@@ -521,6 +576,7 @@ inline void __cdecl AtlTrace(_In_z_ _Printf_format_string_ LPCSTR pszFormat, ...
 #pragma warning(disable : 4793)
 inline void __cdecl AtlTrace(_In_z_ _Printf_format_string_ LPCWSTR pszFormat, ...)
 {
+	CPreserveLastError ple;
 	va_list ptr;
 	va_start(ptr, pszFormat);
 	ATL::CTrace::TraceV(NULL, -1, atlTraceGeneral, 0, pszFormat, ptr);
@@ -535,6 +591,7 @@ inline void __cdecl AtlTrace2(
 	_In_ UINT nLevel,
 	_In_z_ _Printf_format_string_ LPCSTR pszFormat, ...)
 {
+	CPreserveLastError ple;
 	va_list ptr;
 	va_start(ptr, pszFormat);
 	ATL::CTrace::TraceV(NULL, -1, dwCategory, nLevel, pszFormat, ptr);
@@ -549,6 +606,7 @@ inline void __cdecl AtlTrace2(
 	_In_ UINT nLevel,
 	_In_z_ _Printf_format_string_ LPCWSTR pszFormat, ...)
 {
+	CPreserveLastError ple;
 	va_list ptr;
 	va_start(ptr, pszFormat);
 	ATL::CTrace::TraceV(NULL, -1, dwCategory, nLevel, pszFormat, ptr);
@@ -556,7 +614,7 @@ inline void __cdecl AtlTrace2(
 }
 #pragma warning(pop)
 
-#define ATLTRACENOTIMPL(funcname)  do { ATLTRACE(ATL::atlTraceNotImpl, 0, _T("ATL: %s not implemented.\n"), funcname); return E_NOTIMPL; } while(0)
+#define ATLTRACENOTIMPL(funcname)  do { ATLTRACE(ATL::atlTraceNotImpl, 0, _T("ATL: %Ts not implemented.\n"), funcname); return E_NOTIMPL; } while(0)
 
 #else // !DEBUG
 

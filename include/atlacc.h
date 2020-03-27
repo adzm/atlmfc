@@ -1250,7 +1250,7 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleGetIDsOfNamesHelper(
 	_In_ LCID,
 	_Out_writes_(cNames) DISPID *rgDispId)
 {
-	static LPOLESTR names[] =
+	static const wchar_t* const names[] =
 	{
 		L"accParent",
 		L"accChildCount",

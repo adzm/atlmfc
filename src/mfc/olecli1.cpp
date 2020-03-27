@@ -995,7 +995,7 @@ void COleClientItem::GetItemStorageCompound()
 		0, 0, &lpStorage);
 	if (sc != S_OK)
 	{
-		TRACE(traceOle, 0, _T("Warning: unable to create child storage %s.\n"), szItemName);
+		TRACE(traceOle, 0, _T("Warning: unable to create child storage %Ts.\n"), szItemName);
 		// upon failure throw file exception (item will be cleaned up)
 		AfxThrowOleException(sc);
 	}
@@ -1057,14 +1057,14 @@ void COleClientItem::ReadItemCompound(CArchive& ar)
 
 		if (sc != S_OK)
 		{
-			TRACE(traceOle, 0, _T("Warning: unable to open child storage for write. Opening for read only %s.\n"), szItemName);
+			TRACE(traceOle, 0, _T("Warning: unable to open child storage for write. Opening for read only %Ts.\n"), szItemName);
 			sc = pDoc->m_lpRootStg->OpenStorage(strItemName.GetString(), NULL,
 				STGM_READ | STGM_SHARE_EXCLUSIVE, 0, 0, &lpStorage);
 		}
 
 		if (sc != S_OK)
 		{
-			TRACE(traceOle, 0, _T("Warning: unable to open child storage %s.\n"), szItemName);
+			TRACE(traceOle, 0, _T("Warning: unable to open child storage %Ts.\n"), szItemName);
 			// upon failure throw file exception (item will be cleaned up)
 			AfxThrowOleException(sc);
 		}
@@ -1127,7 +1127,7 @@ void COleClientItem::WriteItemCompound(CArchive& ar)
 			0, 0, &lpStorage);
 		if (sc != S_OK)
 		{
-			TRACE(traceOle, 0, _T("Warning: unable to create child storage %s.\n"),
+			TRACE(traceOle, 0, _T("Warning: unable to create child storage %Ts.\n"),
 				szItemName);
 			AfxThrowOleException(sc);
 		}

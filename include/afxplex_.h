@@ -25,14 +25,11 @@
 #pragma component(minrebuild, off)
 #endif
 
-struct CPlex     // warning variable length structure
+#pragma warning(push)
+#pragma warning(disable:4324)
+__declspec(align(8)) struct CPlex
 {
 	CPlex* pNext;
-#ifndef _WIN64
-#if (_AFX_PACKING >= 8)
-	DWORD dwReserved[1];    // align on 8 byte boundary
-#endif
-#endif
 	// BYTE data[maxNum*elementSize];
 
 	void* data() { return this+1; }
@@ -43,6 +40,7 @@ struct CPlex     // warning variable length structure
 
 	void FreeDataChain();       // free this one and links
 };
+#pragma warning(pop)
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

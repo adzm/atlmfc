@@ -31,7 +31,7 @@
 /*============================================================================*/
 // Auxiliary System/Screen metrics
 
-typedef enum AFX_DOCK_TYPE
+enum AFX_DOCK_TYPE
 {
 	DT_UNDEFINED = 0,    // inherit from application
 	DT_IMMEDIATE = 1,    // control bar torn off immediately and follows the mouse
@@ -314,6 +314,7 @@ struct AFX_GLOBAL_DATA
 	/// Operation System is less than Windows 7.</returns>
 	ITaskbarList3* GetITaskbarList3();
 #endif
+	void ResetCheckCompositionFlag();
 
 protected:
 

@@ -101,7 +101,7 @@ void CFullScreenImpl::ShowFullScreen(CFrameWnd* pFrame)
 
 	MONITORINFO mi;
 	mi.cbSize = sizeof(MONITORINFO);
-	if (GetMonitorInfo(MonitorFromPoint(rectFrame.TopLeft(), MONITOR_DEFAULTTONEAREST), &mi))
+	if (GetMonitorInfo(MonitorFromRect(rectFrame, MONITOR_DEFAULTTONEAREST), &mi))
 	{
 		rcScreen = mi.rcMonitor;
 

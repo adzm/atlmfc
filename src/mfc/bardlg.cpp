@@ -122,6 +122,8 @@ LRESULT CDialogBar::HandleInitDialog(WPARAM, LPARAM)
 		}
 	}
 
+	LoadDynamicLayoutResource(m_lpszTemplateName);
+
 	return FALSE;
 }
 

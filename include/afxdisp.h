@@ -31,10 +31,15 @@
 	#include <ocidl.h>
 #endif
  
+#pragma warning(push)
+#pragma warning(disable:4091)
+
 // Shell interface support
 #ifndef _SHLOBJ_H_
 	#include <shlobj.h>
 #endif
+
+#pragma warning(pop)
 
 // Include ATL COM headers
 #include <atlcomcli.h>

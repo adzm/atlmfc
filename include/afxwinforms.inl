@@ -12,8 +12,8 @@
 
 #pragma warning(disable:4439)	// C4439: function with a managed parameter must have a __clrcall calling convention
 
-extern "C" void AfxmEnsureManagedInitialization();
-extern "C" void AfxmReleaseManagedReferences(IUnknown*);
+extern "C" void __cdecl AfxmEnsureManagedInitialization();
+extern "C" void __cdecl AfxmReleaseManagedReferences(IUnknown*);
 
 namespace Microsoft {
 	namespace VisualC {

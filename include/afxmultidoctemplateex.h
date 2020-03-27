@@ -23,6 +23,7 @@
 // to protected member 'uiMenuResId' of CMultiDocTemplate!
 //--------------------------------------------------------
 
+#pragma warning(push)
 #pragma warning (disable : 4510 4610)
 
 class CMultiDocTemplateEx : public CMultiDocTemplate
@@ -31,7 +32,7 @@ public:
 	UINT GetResId () const { return m_nIDResource; }
 };
 
-#pragma warning (default : 4510 4610)
+#pragma warning(pop)
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

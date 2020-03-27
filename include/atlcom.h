@@ -827,7 +827,7 @@ template <class T>
 IPersistStreamInit* IPersistStorageImpl<T>::IPSI_GetIPersistStreamInit()
 {
 	T* pT = static_cast<T*>(this);
-	IPersistStreamInit* p;
+	IPersistStreamInit* p = NULL;
 	if (FAILED(pT->GetUnknown()->QueryInterface(__uuidof(IPersistStreamInit), (void**)&p)))
 		pT->_InternalQueryInterface(__uuidof(IPersistStreamInit), (void**)&p);
 	return p;
@@ -2394,7 +2394,7 @@ struct AtlVerifyInheritance
 
 #if defined(_M_IX86)
 #define OBJECT_ENTRY_PRAGMA(class) __pragma(comment(linker, "/include:___pobjMap_" #class));
-#elif defined(_M_IA64) || defined(_M_AMD64) || (_M_ARM)
+#elif defined(_M_IA64) || defined(_M_AMD64) || (_M_ARM) || defined(_M_ARM64)
 #define OBJECT_ENTRY_PRAGMA(class) __pragma(comment(linker, "/include:__pobjMap_" #class));
 #else
 #error Unknown Platform. define OBJECT_ENTRY_PRAGMA
@@ -3930,7 +3930,7 @@ public:
 	STDMETHOD(CreateInstance)(
 		_In_opt_ LPUNKNOWN pUnkOuter, 
 		_In_ REFIID riid, 
-		_COM_Outptr_ void** ppvObj)
+		_COM_Outptr_result_maybenull_ void** ppvObj)
 	{
 		HRESULT hRes = E_POINTER;
 		if (ppvObj != NULL)
@@ -4325,7 +4325,7 @@ inline HRESULT CComTypeInfoHolder::GetTI(_In_ LCID lcid)
 								(pLibAttr->wMajorVerNum != m_wMajor ||
 								pLibAttr->wMinorVerNum != m_wMinor))
 							{
-								ATLTRACE(atlTraceCOM, 0, _T("Warning : CComTypeInfoHolder::GetTI : Loaded typelib does not match the typelib in the module : %s\n"), szFilePath);
+								ATLTRACE(atlTraceCOM, 0, _T("Warning : CComTypeInfoHolder::GetTI : Loaded typelib does not match the typelib in the module : %Ts\n"), szFilePath);
 								ATLTRACE(atlTraceCOM, 0, _T("\tSee IDispatchImpl overview help topic for more information\n"));							
 							}
 							spTypeLibModule->ReleaseTLibAttr(pLibAttr);
@@ -4515,7 +4515,7 @@ public:
 	}
 };
 
-#elif defined ( _M_IX86 ) || defined ( _M_AMD64 ) || defined ( _M_ARM )
+#elif defined ( _M_IX86 ) || defined ( _M_AMD64 ) || defined ( _M_ARM ) || defined (_M_ARM64)
 
 extern "C"
 {
@@ -4691,7 +4691,7 @@ public:
 		_In_ LCID lcid, 
 		_In_ WORD /*wFlags*/, 
 		_In_ DISPPARAMS* pdispparams, 
-		_Out_opt_ VARIANT* pvarResult,
+		_Inout_opt_ VARIANT* pvarResult,
 		_In_opt_ EXCEPINFO* /*pexcepinfo*/, 
 		_In_opt_ UINT* /*puArgErr*/)
 	{
@@ -5205,7 +5205,7 @@ class ATL_NO_VTABLE IProvideClassInfoImpl :
 public:
 	typedef tihclass _tihclass;
 
-	STDMETHOD(GetClassInfo)(_Outptr_ ITypeInfo** pptinfo)
+	STDMETHOD(GetClassInfo)(_Outptr_result_maybenull_ ITypeInfo** pptinfo)
 	{
 		return _tih.GetTypeInfo(0, LANG_NEUTRAL, pptinfo);
 	}
@@ -5229,7 +5229,7 @@ class ATL_NO_VTABLE IProvideClassInfo2Impl :
 public:
 	typedef tihclass _tihclass;
 
-	STDMETHOD(GetClassInfo)(_Outptr_ ITypeInfo** pptinfo)
+	STDMETHOD(GetClassInfo)(_Outptr_result_maybenull_ ITypeInfo** pptinfo)
 	{
 		return _tih.GetTypeInfo(0, LANG_NEUTRAL, pptinfo);
 	}
@@ -6343,7 +6343,7 @@ STDMETHODIMP IConnectionPointImpl<T, piid, CDV>::Advise(
 	_Out_ DWORD* pdwCookie)
 {
 	T* pT = static_cast<T*>(this);
-	IUnknown* p;
+	IUnknown* p = NULL;
 	HRESULT hRes = S_OK;
 	if (pdwCookie != NULL)
 		*pdwCookie = 0;
@@ -6647,7 +6647,7 @@ ATLINLINE ATLAPI AtlSetErrorInfo(
 			return E_OUTOFMEMORY;
 #endif			
 		if (hRes == 0)
-			hRes = MAKE_HRESULT(3, FACILITY_ITF, nID);
+			hRes = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, nID);
 	}
 
 	CComPtr<ICreateErrorInfo> pICEI;
@@ -6946,7 +6946,7 @@ ATLPREFAST_UNSUPPRESS()
 				if (lp == NULL)
 					ATLTRACE(atlTraceCOM, 0, _T("Property not in Bag\n"));
 				else
-					ATLTRACE(atlTraceCOM, 0, _T("Property %s not in Bag\n"), lp);
+					ATLTRACE(atlTraceCOM, 0, _T("Property %Ts not in Bag\n"), lp);
 			}
 			else
 			{
@@ -6954,7 +6954,7 @@ ATLPREFAST_UNSUPPRESS()
 				if (lp == NULL)
 					ATLTRACE(atlTraceCOM, 0, _T("Error attempting to read Property from PropertyBag \n"));
 				else
-					ATLTRACE(atlTraceCOM, 0, _T("Error attempting to read Property %s from PropertyBag \n"), lp);
+					ATLTRACE(atlTraceCOM, 0, _T("Error attempting to read Property %Ts from PropertyBag \n"), lp);
 			}
 #endif			
 			var.vt = VT_EMPTY;

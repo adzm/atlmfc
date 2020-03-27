@@ -33,9 +33,14 @@
 #pragma push_macro("new")
 #undef new
 
+#pragma warning(push)
+#pragma warning(disable:4458)
+
 ATLPREFAST_SUPPRESS(6385)
 #include <gdiplus.h>
 ATLPREFAST_UNSUPPRESS()
+
+#pragma warning(pop)
 
 #pragma pop_macro("new")
 #pragma warning( pop )

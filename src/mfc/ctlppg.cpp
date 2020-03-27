@@ -136,10 +136,10 @@ void _ValidatePageDialog(CDialogTemplate& dt, CString& strPage,
 		int nLen = strPage.GetLength() + 128;
 		pszTmp = new TCHAR[nLen];
 
-		_stprintf_s(pszTmp, nLen, _T("Property page '%s' has nonstandard dimensions."),
+		_stprintf_s(pszTmp, nLen, _T("Property page '%Ts' has nonstandard dimensions."),
 			(LPCTSTR)strPage);
 
-		TRACE(traceAppMsg, 0, _T("Warning: %s\n"), pszTmp);
+		TRACE(traceAppMsg, 0, _T("Warning: %Ts\n"), pszTmp);
 
 		if (bMessageBox)
 		{
@@ -163,16 +163,16 @@ void _ValidatePageDialog(CDialogTemplate& dt, CString& strPage,
 		int nLen = strPage.GetLength() + 128;
 		pszTmp = new TCHAR[nLen];
 
-		_stprintf_s(pszTmp, nLen, _T("Property page '%s' uses a nonstandard font."),
+		_stprintf_s(pszTmp, nLen, _T("Property page '%Ts' uses a nonstandard font."),
 			(LPCTSTR)strPage);
 
-		TRACE(traceAppMsg, 0, _T("Warning: %s\n"), pszTmp);
+		TRACE(traceAppMsg, 0, _T("Warning: %Ts\n"), pszTmp);
 
 		if (bMessageBox)
 		{
 			CString strText(_T("Font name and its size should be one of the following combinations:\r\n"));
 			for (int i = 0; i < _countof(_afxStandardFonts); i++)
-				strText.AppendFormat(_T("%s %dpt\r\n"), _afxStandardFonts[i].lpszFontName, _afxStandardFonts[i].dwFontSize);
+				strText.AppendFormat(_T("%Ts %dpt\r\n"), _afxStandardFonts[i].lpszFontName, _afxStandardFonts[i].dwFontSize);
 			pPage->MessageBox(strText, _T("Property page warning"),
 				MB_ICONEXCLAMATION);
 		}

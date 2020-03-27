@@ -588,7 +588,7 @@ void CMFCRibbonQuickAccessToolBar::RebuildKeys()
 
 			if (k < 26)
 			{
-				strKeys.Format(_T("%c%c"), _T('0') + k / 26, _T('a') +(k % 26));
+				strKeys.Format(_T("%Tc%Tc"), _T('0') + k / 26, _T('a') +(k % 26));
 			}
 		}
 

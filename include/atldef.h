@@ -119,7 +119,7 @@
 // Include the delete() operator
 #if defined _M_IX86 || defined _M_ARM
 #pragma comment(linker, "/include:??3@YAXPAX@Z")
-#elif defined _M_AMD64
+#elif defined _M_AMD64 || defined _M_ARM64
 #pragma comment(linker, "/include:??3@YAXPEAX@Z")
 #else 
 #error Unsupported target architecture.
@@ -383,9 +383,7 @@ do { \
 #endif
 #endif
 
-#ifndef _ATL_PACKING
 #define _ATL_PACKING 8
-#endif
 
 #define ATLAPI __declspec(nothrow) HRESULT __stdcall
 #define ATLAPI_(x) __declspec(nothrow) x __stdcall
@@ -510,18 +508,18 @@ this end
 // Master version numbers
 
 #define _ATL     1      // Active Template Library
-#define _ATL_VER 0x0C00 // Active Template Library version 12.00
+#define _ATL_VER 0x0E00 // Active Template Library version 14.00
 
 #ifndef _ATL_FILENAME_VER
-#define _ATL_FILENAME_VER "120"
+#define _ATL_FILENAME_VER "140"
 #endif
 
 #ifndef _ATL_FILENAME_VER_NUM
-#define _ATL_FILENAME_VER_NUM 120
+#define _ATL_FILENAME_VER_NUM 140
 #endif
 
 #ifndef _ATL_VER_RBLD
-#define _ATL_VER_RBLD "12.00"
+#define _ATL_VER_RBLD "14.00"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -582,8 +580,8 @@ this end
 // #define ATLAXWIN_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWin, _ATL_FILENAME_VER_NUM))
 // #define ATLAXWINLIC_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWinLic, _ATL_FILENAME_VER_NUM))
 
-#define ATLAXWIN_CLASS "AtlAxWin120"
-#define ATLAXWINLIC_CLASS "AtlAxWinLic120"
+#define ATLAXWIN_CLASS "AtlAxWin140"
+#define ATLAXWINLIC_CLASS "AtlAxWinLic140"
 
 #if defined(_ATL_SECURE_NO_DEPRECATE) && !defined(_ATL_SECURE_NO_WARNINGS)
 #define _ATL_SECURE_NO_WARNINGS
@@ -631,6 +629,12 @@ that we consider it dangerous to even throw an exception
 #define ATL_MAKEINTRESOURCE  ATL_MAKEINTRESOURCEA
 #endif // !UNICODE
 #define ATL_IS_INTRESOURCE(_r) ((((ULONG_PTR)(_r)) >> 16) == 0)
+
+#if _MSC_VER >= 1900 && !defined(__EDG__)
+#define _ATL_DECLSPEC_ALLOCATOR __declspec(allocator)
+#else
+#define _ATL_DECLSPEC_ALLOCATOR
+#endif
 
 /*
  * Predefined Resource Types

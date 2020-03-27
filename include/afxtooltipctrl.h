@@ -35,7 +35,7 @@ public:
 	BOOL m_bBalloonTooltip;
 	BOOL m_bDrawIcon;
 	BOOL m_bDrawDescription;
-	BOOL m_bRoundedCorners;
+	BOOL m_bRoundedCorners;	// Obsolete
 	BOOL m_bBoldLabel;
 	BOOL m_bDrawSeparator;
 	BOOL m_bVislManagerTheme;
@@ -112,6 +112,7 @@ protected:
 	int     m_nRibbonImageType;
 	CString m_strDescription;
 	CSize   m_sizeImage;
+	CSize	m_sizeCornerRadius;
 	CPoint  m_ptMargin;
 	CPoint  m_ptLocation;
 

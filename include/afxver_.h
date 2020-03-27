@@ -17,11 +17,11 @@
 
 #define _AFX     1      // Microsoft Application Framework Classes
 #ifndef _MFC_VER
-#define _MFC_VER 0x0C00 // Microsoft Foundation Classes version 12.00
+#define _MFC_VER 0x0E00 // Microsoft Foundation Classes version 14.00
 #endif
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "120"
+#define _MFC_FILENAME_VER "140"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -84,20 +84,13 @@
 	#define AFX_INLINE inline /*__forceinline*/
 #endif
 
-#include <afxv_w32.h>
+// setup packing value
+#define _AFX_PACKING    8   // MFC packs structs at 8 bytes
 
-// Include any non-Intel platform specific items
-#ifndef _M_IX86
-	#include <afxv_cpu.h>
-#endif
+#include <afxv_w32.h>
 
 #ifdef _M_IX86
 	#define _AFX_MINREBUILD
-#endif
-
-// setup default packing value
-#ifndef _AFX_PACKING
-	#define _AFX_PACKING    4   // default packs structs at 4 bytes
 #endif
 
 #ifdef _AFXDLL

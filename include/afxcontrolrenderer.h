@@ -86,8 +86,6 @@ public:
 	
 	int GetImageCount() const
 	{
-		CRect rectImage(m_Params.m_rectImage);
-
 		if (m_Bitmap.GetCount() == 1)
 		{
 			HBITMAP hBmp = m_Bitmap.GetImageWell();

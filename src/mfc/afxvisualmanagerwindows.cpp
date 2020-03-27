@@ -1437,7 +1437,14 @@ void CMFCVisualManagerWindows::OnDrawSpinButtons(CDC* pDC, CRect rect, int nStat
 
 	// Draw up part:
 	CRect rectUp = rect;
-	rectUp.bottom = rect.CenterPoint().y - 1;
+	if (bOrientation)
+	{
+		rectUp.left = rect.CenterPoint().x;
+	}
+	else
+	{
+		rectUp.bottom = rect.CenterPoint().y;
+	}
 
 	int nDrawState = UPS_NORMAL;
 
@@ -1458,7 +1465,14 @@ void CMFCVisualManagerWindows::OnDrawSpinButtons(CDC* pDC, CRect rect, int nStat
 
 	// Draw up part:
 	CRect rectDown = rect;
-	rectDown.top = rect.CenterPoint().y;
+	if (bOrientation)
+	{
+		rectDown.right = rect.CenterPoint().x;
+	}
+	else
+	{
+		rectDown.top = rect.CenterPoint().y;
+	}
 
 	nDrawState = UPS_NORMAL;
 

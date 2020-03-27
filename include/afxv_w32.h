@@ -146,6 +146,10 @@
 #define _WINSOCKAPI_
 #endif
 
+#ifdef _AFX_PACKING
+#pragma pack(push, _AFX_PACKING)
+#endif
+
 #include <windows.h>
 
 #pragma pop_macro("_WINSOCKAPI_")
@@ -177,6 +181,10 @@ typedef struct HKEY__ *HKEY;
 		#undef TB_INSERTBUTTON
 		#define TB_INSERTBUTTON TB_INSERTBUTTONA
 	#endif
+#endif
+
+#ifdef _AFX_PACKING
+#pragma pack(pop)
 #endif
 
 #ifndef EXPORT

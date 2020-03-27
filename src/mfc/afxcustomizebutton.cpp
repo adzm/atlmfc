@@ -196,7 +196,7 @@ CMFCPopupMenu* CMFCCustomizeButton::CreatePopupMenu()
 
 	pMenu->m_bRightAlign = m_bMenuRightAlign && (m_pWndParentToolbar->GetExStyle() & WS_EX_LAYOUTRTL) == 0;
 
-	BOOL bIsLocked = (m_pWndParentToolbar == NULL || m_pWndParentToolbar->IsLocked());
+	BOOL bIsLocked = m_pWndParentToolbar->IsLocked();
 	BOOL bIsFirst = TRUE;
 
 	for (POSITION pos = m_lstInvisibleButtons.GetHeadPosition(); pos != NULL;)

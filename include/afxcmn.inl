@@ -286,8 +286,12 @@ _AFXCMN_INLINE void CTreeCtrl::SetIndent(_In_ UINT nIndent)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, TVM_SETINDENT, nIndent, 0); }
 _AFXCMN_INLINE CImageList* CTreeCtrl::GetImageList(_In_ int nImageList) const
 	{ ASSERT(::IsWindow(m_hWnd)); return CImageList::FromHandle((HIMAGELIST)::SendMessage(m_hWnd, TVM_GETIMAGELIST, (WPARAM)nImageList, 0)); }
-_AFXCMN_INLINE CImageList* CTreeCtrl::SetImageList(_In_ CImageList* pImageList, _In_ int nImageList)
-	{ ASSERT(::IsWindow(m_hWnd)); return CImageList::FromHandle((HIMAGELIST)::SendMessage(m_hWnd, TVM_SETIMAGELIST, (WPARAM)nImageList, (LPARAM)pImageList->GetSafeHandle())); }
+_AFXCMN_INLINE CImageList* CTreeCtrl::SetImageList(_In_opt_ CImageList* pImageList, _In_ int nImageList)
+{
+	ASSERT(::IsWindow(m_hWnd));
+#pragma warning(suppress : 6011) // GetSafeHandle does the "right" thing even when called on a null pointer, so the warning is spurious.
+	return CImageList::FromHandle((HIMAGELIST)::SendMessage(m_hWnd, TVM_SETIMAGELIST, (WPARAM)nImageList, (LPARAM)pImageList->GetSafeHandle()));
+}
 _AFXCMN_INLINE UINT CTreeCtrl::SetScrollTime(_In_ UINT uScrollTime)
 	{ ASSERT(::IsWindow(m_hWnd)); return (UINT) ::SendMessage(m_hWnd, TVM_SETSCROLLTIME, (WPARAM) uScrollTime, 0); }
 _AFXCMN_INLINE HTREEITEM CTreeCtrl::GetNextItem(_In_ HTREEITEM hItem, _In_ UINT nCode) const
@@ -539,7 +543,7 @@ _AFXCMN_INLINE int CHeaderCtrl::InsertItem(_In_ int nPos, _In_ HDITEM* phdi)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, HDM_INSERTITEM, nPos, (LPARAM)phdi); }
 _AFXCMN_INLINE BOOL CHeaderCtrl::DeleteItem(_In_ int nPos)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, HDM_DELETEITEM, nPos, 0L); }
-_AFXCMN_INLINE BOOL CHeaderCtrl::GetItem(_In_ int nPos, _Out_ HDITEM* pHeaderItem) const
+_AFXCMN_INLINE BOOL CHeaderCtrl::GetItem(_In_ int nPos, _Inout_ HDITEM* pHeaderItem) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, HDM_GETITEM, nPos, (LPARAM)pHeaderItem); }
 _AFXCMN_INLINE BOOL CHeaderCtrl::SetItem(_In_ int nPos, _In_ HDITEM* pHeaderItem)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, HDM_SETITEM, nPos, (LPARAM)pHeaderItem); }

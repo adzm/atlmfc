@@ -234,7 +234,7 @@ static void AFXAPI TraceDDE(LPCTSTR lpszPrefix, const MSG* pMsg)
 
 		LPCTSTR lpszCommands = (LPCTSTR)::GlobalLock(hCommands);
 		ENSURE_THROW(lpszCommands != NULL, ::AfxThrowMemoryException() );
-		TRACE(traceAppMsg, 0, _T("%s: Execute '%s'.\n"), lpszPrefix, lpszCommands);
+		TRACE(traceAppMsg, 0, _T("%Ts: Execute '%Ts'.\n"), lpszPrefix, lpszCommands);
 		::GlobalUnlock(hCommands);
 	}
 	else if (pMsg->message == WM_DDE_ADVISE)
@@ -275,7 +275,7 @@ static void AFXAPI TraceDDE(LPCTSTR lpszPrefix, const MSG* pMsg)
 		}
 
 		AfxTrace(
-			_T("%s: Advise item='%s', Format='%s', Ack=%d, Defer Update= %d\n"),
+			_T("%Ts: Advise item='%Ts', Format='%Ts', Ack=%d, Defer Update= %d\n"),
 			 lpszPrefix, szItem, szFormat, lpAdvise->fAckReq,
 			lpAdvise->fDeferUpd);
 		::GlobalUnlock(hAdvise);
@@ -339,11 +339,11 @@ void AFXAPI _AfxTraceMsg(LPCTSTR lpszPrefix, const MSG* pMsg)
 	if (lpszMsgName != NULL)
 	{
 #ifdef WIN64
-		TRACE(traceAppMsg, 4, _T("%s: hwnd=%p, msg = %hs (%p, %p)\n"),
+		TRACE(traceAppMsg, 4, _T("%Ts: hwnd=%p, msg = %hs (%p, %p)\n"),
 			lpszPrefix, pMsg->hwnd, lpszMsgName,
 			pMsg->wParam, pMsg->lParam);
 #else
-		TRACE(traceAppMsg, 4, _T("%s: hwnd=0x%08X, msg = %hs (0x%08X, 0x%08X)\n"),
+		TRACE(traceAppMsg, 4, _T("%Ts: hwnd=0x%08X, msg = %hs (0x%08X, 0x%08X)\n"),
 			lpszPrefix, pMsg->hwnd, lpszMsgName,
 			pMsg->wParam, pMsg->lParam);
 #endif
@@ -351,11 +351,11 @@ void AFXAPI _AfxTraceMsg(LPCTSTR lpszPrefix, const MSG* pMsg)
 	else
 	{
 #ifdef WIN64
-		TRACE(traceAppMsg, 4, _T("%s: hwnd=%p, msg = 0x%04X (%p, %p)\n"),
+		TRACE(traceAppMsg, 4, _T("%Ts: hwnd=%p, msg = 0x%04X (%p, %p)\n"),
 			lpszPrefix, pMsg->hwnd, pMsg->message,
 			pMsg->wParam, pMsg->lParam);
 #else
-		TRACE(traceAppMsg, 4, _T("%s: hwnd=0x%08X, msg = 0x%04X (0x%08X, 0x%08X)\n"),
+		TRACE(traceAppMsg, 4, _T("%Ts: hwnd=0x%08X, msg = 0x%04X (0x%08X, 0x%08X)\n"),
 			lpszPrefix, pMsg->hwnd, pMsg->message,
 			pMsg->wParam, pMsg->lParam);
 #endif

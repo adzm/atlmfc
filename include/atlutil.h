@@ -25,7 +25,14 @@
 #include <stdlib.h>
 #include <mbstring.h>
 #include <atldef.h>
+
+#pragma warning(push)
+#pragma warning(disable:4091)
+
 #include <imagehlp.h>
+
+#pragma warning(pop)
+
 #include <atlbase.h>
 #include <atlstr.h>
 #include <atlcoll.h>
@@ -355,7 +362,7 @@ public:
 
 		CHAR szUndec[ATL_SYMBOL_NAME_LEN];
 		CHAR szWithOffset[ATL_SYMBOL_NAME_LEN];
-		LPSTR pszSymbol = NULL;
+		const char* pszSymbol = NULL;
 		IMAGEHLP_MODULE mi;
 
 		memset(&siSymbol, 0, sizeof(_ATL_SYMBOL_INFO));
@@ -439,6 +446,9 @@ class _AtlThreadContextInfo
 {
 public:
 	HANDLE             hThread; //Thread to get context for
+#if defined(_M_ARM64)
+    __int64            pad;
+#endif	
 	CONTEXT            context; //Where to put context
 	IStackDumpHandler* pHandler;
 	_AtlThreadContextInfo(_In_ IStackDumpHandler* p) throw()
@@ -532,6 +542,10 @@ public:
 			// only program counter
 			dwMachType                   = IMAGE_FILE_MACHINE_ARMNT;
 			stackFrame.AddrPC.Offset     = context.Pc;
+#elif defined(_M_ARM64)
+			// only program counter
+			dwMachType                   = IMAGE_FILE_MACHINE_ARM64;
+			stackFrame.AddrPC.Offset     = context.Pc;			
 #else
 #error("Unknown Target Machine");
 #endif
@@ -2416,7 +2430,7 @@ ATLPREFAST_UNSUPPRESS()
 
 	inline BOOL SetScheme(_In_ ATL_URL_SCHEME nScheme)
 	{
-		if ((nScheme < 0) || (nScheme >= s_nSchemes))
+		if ((nScheme < 0) || (static_cast<DWORD>(nScheme) >= s_nSchemes))
 		{
 			// invalid scheme
 			return FALSE;
@@ -2770,8 +2784,6 @@ private:
 
 						//get the port number
 						m_nPortNumber = (ATL_URL_PORT) _ttoi(tmpBuf);
-						if (m_nPortNumber < 0)
-							goto error;
 
 						bGotPortNumber = bGotHostName = TRUE;
 					}

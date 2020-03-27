@@ -1266,7 +1266,7 @@ void CPaneContainerManager::Serialize(CArchive& ar)
 		}
 		else if (m_pDockSite->IsKindOf(RUNTIME_CLASS(CPaneFrameWnd)))
 		{
-			pDockManager = afxGlobalUtils.GetDockingManager(m_pDockSite->GetParent());
+			pDockManager = afxGlobalUtils.GetDockingManager(((CPaneFrameWnd*)m_pDockSite)->GetParent());
 		}
 
 		if (pDockManager == NULL)

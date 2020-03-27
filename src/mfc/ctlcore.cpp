@@ -1973,7 +1973,7 @@ STDMETHODIMP COleControl::XSpecifyPropertyPages::GetPages(CAUUID* pPages)
 			ASSERT(pPages->pElems != NULL);
 			pPages->cElems = cElems;
 			Checked::memcpy_s(pPages->pElems, cElems * sizeof(CLSID), 
-				pClassID, (int)(cElems * sizeof(CLSID)));
+				pClassID, cElems * sizeof(CLSID));
 		}
 		else
 			hr = E_OUTOFMEMORY;

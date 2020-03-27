@@ -256,7 +256,7 @@ inline void* CThreadSlotData::GetThreadValue(int nSlot)
 	}
 
 	CThreadData* pData = (CThreadData*)TlsGetValue(m_tlsIndex);
-	if (pData == NULL || nSlot >= pData->nCount)
+	if (pData == NULL || pData->pData == NULL || nSlot >= pData->nCount)
 	{
 		LeaveCriticalSection(&m_sect);
 		return NULL;

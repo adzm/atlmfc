@@ -967,7 +967,7 @@ BOOL CMFCToolBarImages::LoadStr(LPCTSTR lpszResourceName, HINSTANCE hinstRes, BO
 		}
 		else
 		{
-			TRACE(_T("Can't load bitmap: %s. GetLastError() = %x\n"), lpszResourceName, GetLastError());
+			TRACE(_T("Can't load bitmap: %Ts. GetLastError() = %x\n"), lpszResourceName, GetLastError());
 		}
 		return FALSE;
 	}
@@ -1088,7 +1088,7 @@ BOOL CMFCToolBarImages::Load(LPCTSTR lpszBmpFileName, DWORD dwMaxFileSize /* = 8
 
 	if (m_hbmImageWell == NULL)
 	{
-		TRACE(_T("Can't load bitmap: %s. GetLastError() = %x\r\n"), lpszBmpFileName, GetLastError());
+		TRACE(_T("Can't load bitmap: %Ts. GetLastError() = %x\r\n"), lpszBmpFileName, GetLastError());
 		return FALSE;
 	}
 

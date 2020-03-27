@@ -18,8 +18,8 @@
 // CDockState
 
 AFX_STATIC_DATA const TCHAR _afxVisible[] = _T("Visible");
-AFX_STATIC_DATA const TCHAR _afxBarSection[] = _T("%s-Bar%d");
-AFX_STATIC_DATA const TCHAR _afxSummarySection[] = _T("%s-Summary");
+AFX_STATIC_DATA const TCHAR _afxBarSection[] = _T("%Ts-Bar%d");
+AFX_STATIC_DATA const TCHAR _afxSummarySection[] = _T("%Ts-Summary");
 AFX_STATIC_DATA const TCHAR _afxXPos[] = _T("XPos");
 AFX_STATIC_DATA const TCHAR _afxYPos[] = _T("YPos");
 AFX_STATIC_DATA const TCHAR _afxMRUWidth[] = _T("MRUWidth");

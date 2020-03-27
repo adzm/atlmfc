@@ -823,7 +823,7 @@ public:
 
 		_ATLTRY
 		{
-		strBuffer.Format(_T("%d,%d,%d,%d,%s,%s,%s"),
+		strBuffer.Format(_T("%d,%d,%d,%d,%Ts,%Ts,%Ts"),
 						bBold ? 1 : 0,
 						bItalic ? 1 : 0,
 						bUnderline ? 1 : 0,
@@ -956,7 +956,7 @@ public:
 		CString strGlyphEntry;
 		_ATLTRY
 		{
-			strGlyphEntry.Format(_T("%%%%%s^^%%%%%s^^%%%%%d^^%%%%%d^^%%%%%d^^")
+			strGlyphEntry.Format(_T("%%%%%Ts^^%%%%%Ts^^%%%%%d^^%%%%%d^^%%%%%d^^")
 								 _T("%%%%%d^^%%%%%d^^%%%%%d^^%%%%%d^^%%%%%d^^**"),
 								 szTag, szImgUrl, nTagType, nAlignment, nPosInfo,
 								 nDirection, nImgWidth, nImgHeight, nImgWidth, nImgHeight);

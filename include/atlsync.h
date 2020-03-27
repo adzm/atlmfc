@@ -488,6 +488,7 @@ inline CMutexLock::CMutexLock(
 {
 	if( bInitialLock )
 	{
+#pragma warning(suppress : 28313) // The C28313 warning associated with the following line is spurious.
 		Lock();
 	}
 }
@@ -511,7 +512,7 @@ inline void CMutexLock::Lock()
 	if( dwResult == WAIT_ABANDONED )
 	{
 #pragma warning(push)
-#pragma warning(disable: 4302) // 'conversion' : truncation
+#pragma warning(disable: 4302 4311) // 'conversion' : truncation
 		ATLTRACE(atlTraceSync, 0, _T("Warning: abandoned mutex 0x%x\n"), 
 			reinterpret_cast<int>(static_cast<HANDLE>(m_mtx)));
 #pragma warning(pop)

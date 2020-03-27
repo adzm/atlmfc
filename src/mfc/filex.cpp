@@ -110,7 +110,7 @@ void __declspec(noreturn) AFXAPI AfxThrowFileException(int cause, LONG lOsError,
 		lpsz = rgszCFileExceptionCause[cause];
 	else
 		lpsz = szUnknown;
-	TRACE(traceAppMsg, 0, _T("CFile exception: %hs, File %s, OS error information = %ld.\n"),
+	TRACE(traceAppMsg, 0, _T("CFile exception: %hs, File %Ts, OS error information = %ld.\n"),
 		lpsz, (lpszFileName == NULL) ? _T("Unknown") : lpszFileName, lOsError);
 #endif
 	THROW(new CFileException(cause, lOsError, lpszFileName));

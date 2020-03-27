@@ -615,9 +615,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID)
 				if (pszFilename > rgchFullModulePath)  // filename portion of path should not be at the beginning of the buffer
 				{
 					*pszFilename = 0;
-					// the buffer passed to AfxLoadLangResourceDLL is filled with the path (first %s) and the locale, e.g. "ITA" (the second %s)
+					// the buffer passed to AfxLoadLangResourceDLL is filled with the path (first %Ts) and the locale, e.g. "ITA" (the second %Ts)
 					g_fLoadingResourcesForMFCDLL = TRUE;
-					hLangDLL = AfxLoadLangResourceDLL(_T("%s") _T("MFC") _T(_MFC_FILENAME_VER) _T("%s.DLL"), rgchFullModulePath);
+					hLangDLL = AfxLoadLangResourceDLL(_T("%Ts") _T("MFC") _T(_MFC_FILENAME_VER) _T("%Ts.DLL"), rgchFullModulePath);
 					g_fLoadingResourcesForMFCDLL = FALSE;
 				}
 			}

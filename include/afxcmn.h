@@ -740,7 +740,7 @@ public:
 	CImageList* GetImageList(_In_ int nImageList) const;
 
 	// Sets the image list associated with this control.
-	CImageList* SetImageList(_In_ CImageList* pImageList, _In_ int nImageList);
+	CImageList* SetImageList(_In_opt_ CImageList* pImageList, _In_ int nImageList);
 
 	// Retrieves the next item having the given relationship with the
 	// specified item.
@@ -1322,7 +1322,7 @@ public:
 	int GetItemCount() const;
 
 	// Retrieves information about an item in the header control.
-	BOOL GetItem(_In_ int nPos, _Out_ HDITEM* pHeaderItem) const;
+	BOOL GetItem(_In_ int nPos, _Inout_ HDITEM* pHeaderItem) const;
 
 	// Sets the attributes of the specified item in the header control.
 	BOOL SetItem(_In_ int nPos, _In_ HDITEM* pHeaderItem);
@@ -2148,7 +2148,7 @@ public:
 	CImageList* GetImageList() const;
 
 	// Associates an image list with the rebar control.
-	BOOL SetImageList(_In_ CImageList* pImageList);
+	BOOL SetImageList(_In_opt_ CImageList* pImageList);
 
 	// Retrieves the borders of a band in the rebar control.
 	void GetBandBorders(_In_ UINT uBand, _Out_ LPRECT prc) const;

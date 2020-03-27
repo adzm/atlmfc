@@ -213,6 +213,7 @@ struct COleControlSiteOrWnd; // ActiveX dialog control helper
 class CControlCreationInfo; //Used in CWnd::CreateControl overloads.
 
 class CVariantBoolConverter;
+class CMFCDynamicLayout;
 
 /*============================================================================*/
 
@@ -1217,7 +1218,7 @@ public:
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
 #endif
-	static CMenu* PASCAL CMenu::FromHandlePermanent(HMENU hMenu);
+	static CMenu* PASCAL FromHandlePermanent(HMENU hMenu);
 };
 
 /*============================================================================*/
@@ -1357,7 +1358,9 @@ typedef tagEXCEPINFO EXCEPINFO;
 
 /*============================================================================*/
 // CCmdTarget
-
+#ifdef _M_ARM64  
+typedef struct _ARM64_PARAMS ARM64_PARAMS, *PARM64_PARAMS;
+#endif 
 // private structures
 struct AFX_CMDHANDLERINFO;  // info about where the command is handled
 struct AFX_EVENT;           // info about an event
@@ -1696,6 +1699,10 @@ protected: \
 /*============================================================================*/
 // CCmdTarget proper
 
+#ifdef _ARM64_  
+typedef struct _ARM64_PARAMS ARM64_PARAMS, *PARM64_PARAMS;
+#endif 
+
 class COccManager;      // forward reference (see ..\src\occimpl.h)
 
 class AFX_NOVTABLE CCmdTarget : public CObject
@@ -1830,10 +1837,14 @@ protected:
 
 	// helpers for member function calling implementation
 	static UINT PASCAL GetStackSize(const BYTE* pbParams, VARTYPE vtResult);
-#ifdef _SHADOW_DOUBLES
+#if defined(_SHADOW_DOUBLES)
 	SCODE PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 		void* pResult, VARTYPE vtResult, DISPPARAMS* pDispParams,
 		UINT* puArgErr, VARIANT* rgTempVars, UINT nSizeArgs,CVariantBoolConverter* pTempStackArgs = NULL);
+#elif defined(_M_ARM64)
+    SCODE PushStackArgs(BYTE* pStack, const BYTE* pbParams,
+                                    void* pResult, VARTYPE vtResult, DISPPARAMS* pDispParams, UINT* puArgErr,
+                                    VARIANT* rgTempVars, CVariantBoolConverter* pTempStackArgs = NULL, PARM64_PARAMS pArm64Params = NULL);
 #else
 	SCODE PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 		void* pResult, VARTYPE vtResult, DISPPARAMS* pDispParams,
@@ -2956,6 +2967,29 @@ public:
 	}
 #endif
 
+	// controls dynamic layout:
+
+	/// <summary>
+	/// Enables or disables layout manager for a window.</summary>
+	/// <param name="bEnable"> TRUE - enable layout management, FALSE - disable layout management.</param>
+	void EnableDynamicLayout(BOOL bEnable = TRUE);
+
+	/// <summary>
+	/// This function returns TRUE, if layout management is enabled for a window; otherwise FALSE.</summary>
+	/// <remarks>
+	/// Call EnableDynamicLayout in order to enable or disable layout management for a window.</remarks>
+	/// <returns> 
+	/// TRUE, if layout management is enabled for a window; otherwise FALSE.</returns>
+	BOOL IsDynamicLayoutEnabled() const { return m_pDynamicLayout != NULL; }
+
+	/// <summary>
+	/// Call this function to retrieve a pointer to layout manager.</summary>
+	/// <remarks>
+	/// Call EnableDynamicLayout in order to enable or disable layout management for a window.</remarks>
+	/// <returns> 
+	/// Returns a pointer to the window layout manager or NULL if layout wasn't enabled.</returns>
+	CMFCDynamicLayout* GetDynamicLayout() { return m_pDynamicLayout; }
+
 protected:
 	// for processing Windows messages
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
@@ -3046,6 +3080,16 @@ protected:
 	/// <param name="ptPress">"Pressed" point. In client coordinates</param>
 	/// <param name="lDelta">The distance from the "pressed" point. In pixels</param>
 	virtual BOOL OnGesturePressAndTap(CPoint ptPress, long lDelta);
+
+	// controls layouts:
+	CMFCDynamicLayout* m_pDynamicLayout;
+
+	/// <summary>
+	/// The method is called to adjust positions of child controls. 
+	/// It recalculates positions of child controls if layout management is enabled for a window.</summary>
+	virtual void ResizeDynamicLayout();
+	void InitDynamicLayout();
+	BOOL LoadDynamicLayoutResource(LPCTSTR lpszResourceName);
 
 // Implementation
 public:
@@ -3212,7 +3256,8 @@ public:
 	/// <summary>
 	/// Enable/disable window D2D support This method should be called prior to initialization of the main window .</summary>
 	/// <param name="bEnable">Specifies whether to turn on, or off D2D support.</param>
-	void EnableD2DSupport(BOOL bEnable = TRUE);
+	/// <param name="bUseDCRenderTarget">Specifies whether to use CHwndRenderTarget or CDCRenderTarget.</param>
+	void EnableD2DSupport(BOOL bEnable = TRUE, BOOL bUseDCRenderTarget = FALSE);
 
 	/// <summary>
 	/// Determines whether the D2D support is enabled</summary>
@@ -3221,22 +3266,23 @@ public:
 	BOOL IsD2DSupportEnabled();
 
 	/// <summary>
-	/// Get a render target associated with this window</summary>
+	/// Get HWND render target associated with this window</summary>
 	/// <returns> 
 	/// Pointer to the render target or NULL.</returns>
 	CHwndRenderTarget* GetRenderTarget();
 
 	/// <summary>
-	/// Get a render target associated with this window, leaving the render target critical section locked</summary>
+	/// Get DC render target associated with this window</summary>
 	/// <returns> 
 	/// Pointer to the render target or NULL.</returns>
-	CHwndRenderTarget* LockRenderTarget();
+	CDCRenderTarget* GetDCRenderTarget();
 
-	/// <summary>
-	/// Unlock the render target critical section</summary>
-	void UnlockRenderTarget();
+	// Obsolete D2D methods:
+	CHwndRenderTarget* LockRenderTarget() { return GetRenderTarget(); }
+	void UnlockRenderTarget() {}
 
 protected:
+	CRenderTarget* m_pRenderTarget;
 	BOOL DoD2DPaint();
 };
 
@@ -6566,6 +6612,7 @@ void AFXAPI AfxOleUnlockAllControls();
 #endif
 
 #include <afxwin4.inl>
+#include <afxlayout.h>
 
 #undef AFX_DATA
 #define AFX_DATA

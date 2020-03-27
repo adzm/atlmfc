@@ -161,6 +161,7 @@ AFX_INLINE UINT AFXAPI HashKey(ARG_KEY key)
 {
 	// (algorithm copied from STL hash in xfunctional)
 #pragma warning(suppress: 4302) // 'type cast' : truncation
+#pragma warning(suppress: 4311) // pointer truncation
 	ldiv_t HashVal = ldiv((long)(ARG_KEY)key, 127773);
 	HashVal.rem = 16807 * HashVal.rem - 2836 * HashVal.quot;
 	if (HashVal.rem < 0)

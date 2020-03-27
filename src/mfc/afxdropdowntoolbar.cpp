@@ -244,10 +244,7 @@ BOOL CMFCDropDownFrame::Create(CWnd* pWndParent, int x, int y, CMFCDropDownToolB
 
 	AFXPlaySystemSound(AFX_SOUND_MENU_POPUP);
 
-	if (m_strClassName.IsEmpty())
-	{
-		m_strClassName = ::AfxRegisterWndClass(CS_SAVEBITS, ::LoadCursor(NULL, IDC_ARROW), (HBRUSH)(COLOR_BTNFACE + 1), NULL);
-	}
+	m_strClassName = ::AfxRegisterWndClass(CS_SAVEBITS, ::LoadCursor(NULL, IDC_ARROW), (HBRUSH)(COLOR_BTNFACE + 1), NULL);
 
 	m_pWndOriginToolbar = pWndOriginToolbar;
 

@@ -486,7 +486,7 @@ protected:
 	BOOL m_bOpenFileDialog;       // TRUE for file open, FALSE for file save
 	CString m_strFilter;          // filter string
 						// separate fields with '|', terminate with '||\0'
-	TCHAR m_szFileTitle[64];       // contains file title after return
+	TCHAR m_szFileTitle[_MAX_FNAME];       // contains file title after return
 	TCHAR m_szFileName[_MAX_PATH]; // contains full path name after return
 
 	OPENFILENAME*  m_pofnTemp;
@@ -1079,11 +1079,16 @@ public:
 	BOOL IsModeless() const;
 
 protected:
+	virtual BOOL IsLeftNavigationPane(HWND /*hWnd*/) const { return FALSE; }
+	virtual BOOL CanAddPageToDynamicLayout() const { return TRUE; }
+
+protected:
 	CPtrArray m_pages;      // array of CPropertyPage pointers
 	CString m_strCaption;   // caption of the pseudo-dialog
 	CWnd* m_pParentWnd;     // parent window of property sheet
 	BOOL m_bStacked;        // EnableStackedTabs sets this
 	BOOL m_bModeless;       // TRUE when Create called instead of DoModal
+	CSize m_sizeMin;		// Used in OnGetMinMaxInfo
 
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT);
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
@@ -1093,6 +1098,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM);
 	afx_msg LRESULT OnSetDefID(WPARAM, LPARAM);
 	afx_msg LRESULT OnKickIdle(WPARAM, LPARAM);
+	afx_msg void OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI);
 
 	DECLARE_MESSAGE_MAP()
 

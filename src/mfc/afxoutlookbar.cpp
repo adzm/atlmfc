@@ -24,8 +24,8 @@
 #define new DEBUG_NEW
 #endif
 
-#define AFX_REG_SECTION_FMT _T("%sMFCOutlookBar-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sMFCOutlookBar-%d%x")
+#define AFX_REG_SECTION_FMT _T("%TsMFCOutlookBar-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsMFCOutlookBar-%d%x")
 
 #define AFX_OUTLOOK_BAR_PROFILE  _T("MFCOutlookBars")
 #define AFX_OUTLOOK_CUSTOM_PAGES  _T("MFCOutlookCustomPages")

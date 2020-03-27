@@ -1128,7 +1128,7 @@ BOOL CHtmlView::LoadFromResource(LPCTSTR lpszResource)
 
 	if (GetModuleFileName(hInstance, lpszModule, _MAX_PATH))
 	{
-		strResourceURL.Format(_T("res://%s/%s"), lpszModule, lpszResource);
+		strResourceURL.Format(_T("res://%Ts/%Ts"), lpszModule, lpszResource);
 		Navigate(strResourceURL, 0, 0, 0);
 	}
 	else
@@ -1149,7 +1149,7 @@ BOOL CHtmlView::LoadFromResource(UINT nRes)
 
 	if (GetModuleFileName(hInstance, lpszModule, _MAX_PATH))
 	{
-		strResourceURL.Format(_T("res://%s/%d"), lpszModule, nRes);
+		strResourceURL.Format(_T("res://%Ts/%d"), lpszModule, nRes);
 		Navigate(strResourceURL, 0, 0, 0);
 	}
 	else

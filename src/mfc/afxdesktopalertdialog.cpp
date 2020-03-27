@@ -174,7 +174,7 @@ BOOL CMFCDesktopAlertDialog::OnInitDialog()
 			::GetClassName(pWndChild->GetSafeHwnd(), lpszClassName, AFX_MAX_CLASS_NAME);
 			CString strClass = lpszClassName;
 
-			if (strClass == AFX_STATIC_CLASS &&(pWndChild->GetStyle() & SS_ICON))
+			if (strClass == AFX_STATIC_CLASS && (pWndChild->GetStyle() & SS_TYPEMASK) == SS_ICON)
 			{
 				pWndChild->ShowWindow(SW_HIDE);
 			}
@@ -219,7 +219,7 @@ void CMFCDesktopAlertDialog::OnDraw(CDC* pDC)
 		::GetClassName(pWndChild->GetSafeHwnd(), lpszClassName, AFX_MAX_CLASS_NAME);
 		CString strClass = lpszClassName;
 
-		if (strClass == AFX_STATIC_CLASS &&(pWndChild->GetStyle() & SS_ICON))
+		if (strClass == AFX_STATIC_CLASS && (pWndChild->GetStyle() & SS_TYPEMASK) == SS_ICON)
 		{
 			CRect rectIcon;
 			pWndChild->GetWindowRect(rectIcon);
@@ -298,13 +298,22 @@ BOOL CMFCDesktopAlertDialog::CreateFromParams(CMFCDesktopAlertWndInfo& params, C
 
 	m_Params = params;
 
+	const double dblScale = GetGlobalData()->GetRibbonImageScale();
+
 	int nXMargin = 10;
 	int nYMargin = 10;
+
+	if (dblScale > 1.0)
+	{
+		nXMargin = (int)(0.5 + dblScale * nXMargin);
+		nYMargin = (int)(0.5 + dblScale * nYMargin);
+	}
 
 	int x = nXMargin;
 	int y = nYMargin;
 
 	int cxIcon = 0;
+	int cyIcon = 0;
 
 	CString strText = m_Params.m_strText;
 	if (strText.GetLength() > AFX_MAX_TEXT_LEN)
@@ -334,12 +343,23 @@ BOOL CMFCDesktopAlertDialog::CreateFromParams(CMFCDesktopAlertWndInfo& params, C
 		::DeleteObject(iconInfo.hbmColor);
 		::DeleteObject(iconInfo.hbmMask);
 
-		CRect rectIcon = CRect(nXMargin, nYMargin, bitmap.bmWidth + nXMargin, bitmap.bmHeight + nYMargin);
+		cxIcon = bitmap.bmWidth;
+		cyIcon = bitmap.bmHeight;
+
+		if (dblScale > 1.0)
+		{
+			cxIcon = (int)(0.5 + dblScale * cxIcon);
+			cyIcon = (int)(0.5 + dblScale * cyIcon);
+		}
+
+		CRect rectIcon = CRect(nXMargin, nYMargin, cxIcon + nXMargin, cyIcon + nYMargin);
 
 		m_wndIcon.Create(_T(""), WS_CHILD | SS_ICON | SS_NOPREFIX, rectIcon, this);
 		m_wndIcon.SetIcon(m_Params.m_hIcon);
 
-		cxIcon = rectIcon.Width() + nXMargin;
+		cxIcon += nXMargin;
+		cyIcon += 2 * nYMargin;
+
 		x += cxIcon;
 	}
 
@@ -367,7 +387,7 @@ BOOL CMFCDesktopAlertDialog::CreateFromParams(CMFCDesktopAlertWndInfo& params, C
 		y = rectURL.bottom + nYMargin;
 	}
 
-	m_sizeDlg = CSize(cxIcon + cx + 2 * nXMargin, y);
+	m_sizeDlg = CSize(cxIcon + cx + 2 * nXMargin, max(y, cyIcon));
 	return TRUE;
 }
 

@@ -346,7 +346,7 @@ template< class TLock >
 _Post_same_lock_(cs, this->m_cs)
 _When_(bInitialLock != 0, _Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0))
 _When_(bInitialLock == 0, _Post_satisfies_(this->m_bLocked == 0))
-#pragma warning(suppress: 26166) // Constructor throws on failure of Lock() method
+#pragma warning(suppress: 26166 28196) // Constructor throws on failure of Lock() method
 inline CComCritSecLock< TLock >::CComCritSecLock(
 		_Inout_ TLock& cs,
 		_In_ bool bInitialLock) :
@@ -556,7 +556,7 @@ ATLAPI AtlFreeMarshalStream(_Inout_ IStream* pStream);
 ATLAPI AtlMarshalPtrInProc(
 	_Inout_ IUnknown* pUnk,
 	_In_ const IID& iid,
-	_Outptr_ IStream** ppStream);
+	_Outptr_result_maybenull_ IStream** ppStream);
 
 ATLAPI AtlUnmarshalPtr(
 	_Inout_ IStream* pStream,
@@ -615,13 +615,6 @@ ATLAPI AtlRegisterClassCategoriesHelper(
 	_In_ REFCLSID clsid,
 	_In_opt_ const struct _ATL_CATMAP_ENTRY* pCatMap,
 	_In_ BOOL bRegister);
-
-ATLAPI AtlUpdateRegistryFromResourceD(
-	_In_ HINSTANCE hInst,
-	_In_z_ LPCOLESTR lpszRes,
-	_In_ BOOL bRegister,
-	_In_opt_ struct _ATL_REGMAP_ENTRY* pMapEntries,
-	_In_opt_ IRegistrar* pReg = NULL);
 
 ATLAPI AtlSetPerUserRegistration(_In_ bool bEnable);
 ATLAPI AtlGetPerUserRegistration(_Out_ bool* pbEnabled);
@@ -1280,10 +1273,11 @@ public:
 	{
 		if( bInitialLock )
 		{
+#pragma warning(suppress : 28313) // The C28313 warning associated with the following line is spurious.
 			Lock();
-		}		
+		}
 	}
-		
+
 	_When_(this->m_bLocked != 0, _Requires_lock_held_(this->m_cs) _Releases_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked == 0))
 	~CCritSecLock() throw()
 	{
@@ -3081,7 +3075,7 @@ __declspec(selectany) GUID CAtlModule::m_libid = {0x0, 0x0, 0x0, {0x0, 0x0, 0x0,
 	{ \
 		return OLESTR(appid); \
 	} \
-	static TCHAR* GetAppIdT() throw() \
+	static const TCHAR* GetAppIdT() throw() \
 	{ \
 		return _T(appid); \
 	} \
@@ -4011,24 +4005,21 @@ public :
 		return hr;
 	}
 
-	HRESULT PreMessageLoop(_In_ int nShowCmd) throw()
+	HRESULT PreMessageLoop(_In_ int /*nShowCmd*/) throw()
 	{
 		HRESULT hr = S_OK;
+#ifndef _ATL_NO_COM_SUPPORT
 		T* pT = static_cast<T*>(this);
 
 		if (m_bService)
 		{
-#ifndef _ATL_NO_COM_SUPPORT
 			hr = pT->InitializeSecurity();
 
 			if (FAILED(hr))
 			{
 				return hr;
 			}
-#endif	// _ATL_NO_COM_SUPPORT
 		}
-
-#ifndef _ATL_NO_COM_SUPPORT
 
 		// NOTE: much of this code is duplicated in CAtlExeModuleT::PreMessageLoop above, so if
 		// you make changes to either method make sure to change both methods (if necessary).
@@ -5031,9 +5022,9 @@ public:
 	}
 	DWORD Apartment()
 	{
-ATLPREFAST_SUPPRESS(6031)
-		CoInitialize(NULL);
-ATLPREFAST_UNSUPPRESS()
+		HRESULT hr = ::CoInitialize(NULL);
+		ATLASSERT(SUCCEEDED(hr));
+		UNREFERENCED_PARAMETER(hr);
 		MSG msg;
 		while(GetMessage(&msg, 0, 0, 0) > 0)
 		{
@@ -6308,9 +6299,7 @@ inline LSTATUS CRegKey::SetGUIDValue(
 
 	ATLASSUME(m_hKey != NULL);
 
-ATLPREFAST_SUPPRESS(6031)
-	::StringFromGUID2(guidValue, szGUID, 64);
-ATLPREFAST_UNSUPPRESS()
+	ATLENSURE_RETURN_VAL(::StringFromGUID2(guidValue, szGUID, 64), E_INVALIDARG);
 
 	USES_CONVERSION_EX;
 	LPCTSTR lpstr = OLE2CT_EX(szGUID, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
@@ -6350,7 +6339,7 @@ inline LSTATUS CRegKey::RecurseDeleteKey(_In_z_ LPCTSTR lpszKey) throw()
 	{
 		if (lRes != ERROR_FILE_NOT_FOUND && lRes != ERROR_PATH_NOT_FOUND)
 		{
-			ATLTRACE(atlTraceCOM, 0, _T("CRegKey::RecurseDeleteKey : Failed to Open Key %s(Error = %d)\n"), lpszKey, lRes);
+			ATLTRACE(atlTraceCOM, 0, _T("CRegKey::RecurseDeleteKey : Failed to Open Key %Ts(Error = %d)\n"), lpszKey, lRes);
 		}
 		return lRes;
 	}
@@ -6468,7 +6457,7 @@ inline HRESULT CComModule::RegisterAppId(_In_z_ LPCTSTR pAppId)
 			}
 			else
 			{
-				ATLTRACE(atlTraceCOM, 0, _T("CComModule::RegisterAppId : Failed to get full path name for file %s\n"), szModule1);
+				ATLTRACE(atlTraceCOM, 0, _T("CComModule::RegisterAppId : Failed to get full path name for file %Ts\n"), szModule1);
 				hr = AtlHresultFromLastError();
 			}
 		}
@@ -6520,7 +6509,7 @@ inline HRESULT CComModule::UnregisterAppId(_In_z_ LPCTSTR pAppId)
 			}
 			else
 			{
-				ATLTRACE(atlTraceCOM, 0, _T("CComModule::UnregisterAppId : Failed to get full path name for file %s\n"), szModule1);
+				ATLTRACE(atlTraceCOM, 0, _T("CComModule::UnregisterAppId : Failed to get full path name for file %Ts\n"), szModule1);
 				hr = AtlHresultFromLastError();
 			}
 		}
@@ -6891,7 +6880,7 @@ inline HRESULT WINAPI CComModule::UnregisterClassHelper(
 		lRet = key.RecurseDeleteKey(lpszProgID);
 		if (lRet != ERROR_SUCCESS && lRet != ERROR_FILE_NOT_FOUND && lRet != ERROR_PATH_NOT_FOUND)
 		{
-			ATLTRACE(atlTraceCOM, 0, _T("Failed to Unregister ProgID : %s\n"), lpszProgID);
+			ATLTRACE(atlTraceCOM, 0, _T("Failed to Unregister ProgID : %Ts\n"), lpszProgID);
 			key.Detach();
 			return AtlHresultFromWin32(lRet);
 		}
@@ -6901,7 +6890,7 @@ inline HRESULT WINAPI CComModule::UnregisterClassHelper(
 		lRet = key.RecurseDeleteKey(lpszVerIndProgID);
 		if (lRet != ERROR_SUCCESS && lRet != ERROR_FILE_NOT_FOUND && lRet != ERROR_PATH_NOT_FOUND)
 		{
-			ATLTRACE(atlTraceCOM, 0, _T("Failed to Unregister Version Independent ProgID : %s\n"), lpszVerIndProgID);
+			ATLTRACE(atlTraceCOM, 0, _T("Failed to Unregister Version Independent ProgID : %Ts\n"), lpszVerIndProgID);
 			key.Detach();
 			return AtlHresultFromWin32(lRet);
 		}
@@ -6924,7 +6913,7 @@ inline HRESULT WINAPI CComModule::UnregisterClassHelper(
 			lRet = key.RecurseDeleteKey(lpsz);
 		if (lRet != ERROR_SUCCESS && lRet != ERROR_FILE_NOT_FOUND && lRet != ERROR_PATH_NOT_FOUND)
 		{
-			ATLTRACE(atlTraceCOM, 0, _T("Failed to delete CLSID : %s\n"), lpsz);
+			ATLTRACE(atlTraceCOM, 0, _T("Failed to delete CLSID : %Ts\n"), lpsz);
 			hr = AtlHresultFromWin32(lRet);
 		}
 		CoTaskMemFree(lpOleStr);
@@ -7173,8 +7162,8 @@ ATLINLINE ATLAPI AtlLoadTypeLib(
 	if (FAILED(hr))
 	{
 		// typelib not in module, try <module>.tlb instead
-		TCHAR szExt[] = _T(".tlb");
-		if ((lpszExt - szModule + sizeof(szExt)/sizeof(TCHAR)) > _MAX_PATH)
+		const TCHAR szExt[] = _T(".tlb");
+		if ((lpszExt - szModule + _countof(szExt)) > _MAX_PATH)
 			return E_FAIL;
 
 #ifdef UNICODE
@@ -7278,9 +7267,7 @@ ATLINLINE ATLAPI AtlRegisterClassCategoriesHelper(
    if (!bRegister)
    {
 		OLECHAR szGUID[64];
-ATLPREFAST_SUPPRESS(6031)
-		::StringFromGUID2(clsid, szGUID, 64);
-ATLPREFAST_UNSUPPRESS()
+		ATLENSURE_RETURN_VAL(::StringFromGUID2(clsid, szGUID, 64), ERROR_INVALID_DATA);
 		USES_CONVERSION_EX;
 		TCHAR* pszGUID = OLE2T_EX(szGUID, _ATL_SAFE_ALLOCA_DEF_THRESHOLD);
 		if (pszGUID != NULL)
@@ -7482,17 +7469,6 @@ HRESULT AtlModuleLoadTypeLib(
 	_Outptr_ ITypeLib** ppTypeLib)
 {
 	return AtlLoadTypeLib(_AtlComModule.m_hInstTypeLib, lpszIndex, pbstrPath, ppTypeLib);
-}
-
-inline ATL_DEPRECATED("AtlModuleUpdateRegistryFromResourceD has been replaced by AtlUpdateRegistryFromResourceD")
-HRESULT AtlModuleUpdateRegistryFromResourceD(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_z_ LPCOLESTR lpszRes,
-	_In_ BOOL bRegister,
-	_In_ struct _ATL_REGMAP_ENTRY* pMapEntries,
-	_In_opt_ IRegistrar* pReg = NULL)
-{
-	return AtlUpdateRegistryFromResourceD(_AtlBaseModule.GetModuleInstance(), lpszRes, bRegister, pMapEntries, pReg);
 }
 
 inline ATL_DEPRECATED("AtlModuleRegisterClassObjects has been replaced by AtlComModuleRegisterClassObjects")
@@ -8070,7 +8046,7 @@ ATLPREFAST_SUPPRESS(6387)
 ATLINLINE ATLAPI AtlMarshalPtrInProc(
 	_Inout_ IUnknown* pUnk,
 	_In_ const IID& iid,
-	_Outptr_ IStream** ppStream)
+	_Outptr_result_maybenull_ IStream** ppStream)
 {
 	ATLASSERT(ppStream != NULL);
 	if (ppStream == NULL)

@@ -876,7 +876,7 @@ void CMFCToolBarComboBoxButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 				else
 				{
 					COLORREF cltTextOld = pDC->SetTextColor(GetGlobalData()->clrWindowText);
-					pDC->DrawText(m_strEdit, rectText, DT_VCENTER | DT_SINGLELINE);
+					pDC->DrawText(m_strEdit, rectText, DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 					pDC->SetTextColor(cltTextOld);
 				}
 			}
@@ -1803,7 +1803,7 @@ void CMFCToolBarComboBoxEdit::OnPaint()
 	CFont* pOldFont = dc.SelectObject(&(GetGlobalData()->fontRegular));
 
 	rect.DeflateRect(1, 1);
-	dc.DrawText(m_combo.GetPrompt(), rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+	dc.DrawText(m_combo.GetPrompt(), rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 
 	dc.SelectObject(pOldFont);
 }

@@ -23,7 +23,7 @@
 #endif
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "120"
+#define _MFC_FILENAME_VER "140"
 #endif
 
 #ifdef RC_INVOKED
@@ -45,7 +45,8 @@
 #define RT_TOOLBAR  MAKEINTRESOURCE(241)
 #endif
 
-#define RT_RIBBON_XML   28
+#define RT_RIBBON_XML		28
+#define RT_DIALOG_LAYOUT	_T("AFX_DIALOG_LAYOUT")
 
 /////////////////////////////////////////////////////////////////////////////
 

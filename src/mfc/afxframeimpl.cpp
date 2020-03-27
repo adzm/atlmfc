@@ -454,7 +454,7 @@ void CFrameImpl::LoadTearOffMenus()
 	for (int iIndex = 0;; iIndex++)
 	{
 		CString strKey;
-		strKey.Format(_T("%s-%d"), (LPCTSTR)strProfileName, iIndex);
+		strKey.Format(_T("%Ts-%d"), (LPCTSTR)strProfileName, iIndex);
 
 		int iId = 0;
 		CMFCToolBar* pToolBar = NULL;
@@ -502,7 +502,7 @@ void CFrameImpl::SaveTearOffMenus(BOOL bFrameBarsOnly)
 	for (iIndex = 0;; iIndex++)
 	{
 		CString strKey;
-		strKey.Format(_T("%s-%d"), (LPCTSTR)strProfileName, iIndex);
+		strKey.Format(_T("%Ts-%d"), (LPCTSTR)strProfileName, iIndex);
 
 		CSettingsStoreSP regSP;
 		CSettingsStore& reg = regSP.Create(FALSE, FALSE);
@@ -526,7 +526,7 @@ void CFrameImpl::SaveTearOffMenus(BOOL bFrameBarsOnly)
 			pBar->GetWindowText(strName);
 
 			CString strKey;
-			strKey.Format(_T("%s-%d"), (LPCTSTR)strProfileName, iIndex);
+			strKey.Format(_T("%Ts-%d"), (LPCTSTR)strProfileName, iIndex);
 
 			CSettingsStoreSP regSP;
 			CSettingsStore& reg = regSP.Create(FALSE, FALSE);
@@ -2293,6 +2293,8 @@ BOOL CFrameImpl::IsPrintPreview()
 
 void CFrameImpl::OnCompositionChanged()
 {
+	GetGlobalData()->ResetCheckCompositionFlag();
+
 	if (m_pRibbonBar != NULL && m_pRibbonBar->IsWindowVisible() && m_pRibbonBar->IsReplaceFrameCaption())
 	{
 		m_pRibbonBar->DWMCompositionChanged();

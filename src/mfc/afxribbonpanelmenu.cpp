@@ -1804,6 +1804,7 @@ BOOL CMFCRibbonPanelMenu::OnMouseWheel(UINT /*nFlags*/, short zDelta, CPoint /*p
 	ASSERT_VALID(this);
 
 	const int nSteps = abs(zDelta) / WHEEL_DELTA;
+	const int nOldOffset = m_wndRibbonBar.GetOffset();
 
 	for (int i = 0; i < nSteps; i++)
 	{
@@ -1832,6 +1833,11 @@ BOOL CMFCRibbonPanelMenu::OnMouseWheel(UINT /*nFlags*/, short zDelta, CPoint /*p
 		{
 			m_wndRibbonBar.OnVScroll(zDelta < 0 ? SB_LINEDOWN : SB_LINEUP, 0, &m_wndRibbonBar.m_wndScrollBarVert);
 		}
+	}
+
+	if (nOldOffset != m_wndRibbonBar.GetOffset())
+	{
+		m_wndRibbonBar.RedrawWindow();
 	}
 
 	return TRUE;

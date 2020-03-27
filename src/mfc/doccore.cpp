@@ -264,7 +264,7 @@ void CDocument::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
 		ASSERT(FALSE);
 		// MFC requires paths with length < _MAX_PATH
 		// No other way to handle the error from a void function
-		AfxThrowFileException(CFileException::badPath);
+		AfxThrowFileException(CFileException::badPath, -1, lpszPathName);
 	}
 
 	if( AfxFullPath(szFullPath, lpszPathName) == FALSE )
@@ -272,7 +272,7 @@ void CDocument::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
 		ASSERT(FALSE);
 		// MFC requires paths with length < _MAX_PATH
 		// No other way to handle the error from a void function
-		AfxThrowFileException(CFileException::badPath);
+		AfxThrowFileException(CFileException::badPath, -1, lpszPathName);
 	}
 
 	m_strPathName = szFullPath;

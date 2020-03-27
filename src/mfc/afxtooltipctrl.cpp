@@ -46,6 +46,7 @@ CMFCToolTipCtrl::CMFCToolTipCtrl(CMFCToolTipInfo* pParams/* = NULL*/)
 	m_pToolBarImages = NULL;
 	m_pHotButton = NULL;
 	m_sizeImage = CSize(0, 0);
+	m_sizeCornerRadius = CSize(0, 0);
 	m_ptMargin = CPoint(0, 0);
 	m_ptLocation = CPoint(-1, -1);
 	m_pRibbonButton = NULL;
@@ -162,7 +163,7 @@ void CMFCToolTipCtrl::OnShow(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 	GetHotButton();
 
 	m_sizeImage = m_Params.m_bDrawIcon ? GetIconSize() : CSize(0, 0);
-	m_ptMargin = m_Params.m_bRoundedCorners ? CPoint(6, 4) : CPoint(4, 2);
+	m_ptMargin = CPoint(6, 4);
 
 	CRect rectMargin;
 	GetMargin(rectMargin);
@@ -276,15 +277,8 @@ void CMFCToolTipCtrl::OnShow(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 		SetWindowPos(NULL, -1, -1, cx, cy, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 	}
 
-	if (m_Params.m_bRoundedCorners)
-	{
-		CRgn rgn;
-		rgn.CreateRoundRectRgn(0, 0, cx + 1, cy + 1, 4, 4);
-
-		SetWindowRgn(rgn, FALSE);
-	}
-
-	SetWindowPos(&wndTop, -1, -1, -1, -1, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOSIZE);
+	m_sizeCornerRadius = GetWindowTheme(GetSafeHwnd()) != NULL ? CSize(3, 3) : CSize(0, 0);
+	SetWindowPos(&wndTop, -1, -1, -1, -1, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOSIZE | SWP_DRAWFRAME);
 }
 
 void CMFCToolTipCtrl::OnPop(NMHDR* /*pNMHDR*/, LRESULT* pResult)
@@ -380,27 +374,28 @@ void CMFCToolTipCtrl::OnDrawBorder(CDC* pDC, CRect rect, COLORREF clrLine)
 {
 	ASSERT_VALID(pDC);
 
-	if (!m_Params.m_bRoundedCorners)
+	const int nOffsetX = m_sizeCornerRadius.cx / 2;
+	const int nOffsetY = m_sizeCornerRadius.cy / 2;
+
+	if (nOffsetX == 0 || nOffsetY == 0)
 	{
 		pDC->Draw3dRect(rect, clrLine, clrLine);
 		return;
 	}
 
-	const int nOffset = 2;
+	pDC->MoveTo(rect.left + nOffsetX, rect.top);
+	pDC->LineTo(rect.right - nOffsetX - 1, rect.top);
 
-	pDC->MoveTo(rect.left + nOffset, rect.top);
-	pDC->LineTo(rect.right - nOffset - 1, rect.top);
+	pDC->LineTo(rect.right - 1, rect.top + nOffsetY);
+	pDC->LineTo(rect.right - 1, rect.bottom - 1 - nOffsetY);
 
-	pDC->LineTo(rect.right - 1, rect.top + nOffset);
-	pDC->LineTo(rect.right - 1, rect.bottom - 1 - nOffset);
+	pDC->LineTo(rect.right - nOffsetX - 1, rect.bottom - 1);
+	pDC->LineTo(rect.left + nOffsetX, rect.bottom - 1);
 
-	pDC->LineTo(rect.right - nOffset - 1, rect.bottom - 1);
-	pDC->LineTo(rect.left + nOffset, rect.bottom - 1);
+	pDC->LineTo(rect.left, rect.bottom - 1 - nOffsetY);
+	pDC->LineTo(rect.left, rect.top + nOffsetY);
 
-	pDC->LineTo(rect.left, rect.bottom - 1 - nOffset);
-	pDC->LineTo(rect.left, rect.top + nOffset);
-
-	pDC->LineTo(rect.left + nOffset, rect.top);
+	pDC->LineTo(rect.left + nOffsetX, rect.top);
 }
 
 BOOL CMFCToolTipCtrl::OnDrawIcon(CDC* pDC, CRect rectImage)

@@ -119,7 +119,7 @@ BOOL CMFCOutlookBarPane::AddButton(LPCTSTR szBmpFileName, LPCTSTR szLabel, UINT 
 	HBITMAP hBmp = (HBITMAP) ::LoadImage(NULL, szBmpFileName, IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE);
 	if (hBmp == NULL)
 	{
-		TRACE(_T("Can't load bitmap resource: %s"), szBmpFileName);
+		TRACE(_T("Can't load bitmap resource: %Ts"), szBmpFileName);
 		ASSERT(FALSE);
 
 		return FALSE;

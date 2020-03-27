@@ -169,6 +169,64 @@ inline typename ChTraits::PCXSTR strstrT(typename ChTraits::PCXSTR pStr,typename
 
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
+namespace AtlUtil
+{
+	// Pre-dev14 implementation was based on wvsprintf, which limits the buffer
+	// size to 1024. The new implementation will keep the limitation to preserve
+	// the behavior (even though there are no technical reasons to keep it)
+	const int legacyBufSize = 1024;
+
+	inline int vsprintf_s_worker(
+		_Out_writes_z_(cchDest) char* pszDest,
+		_In_ size_t cchDest,
+		_In_z_ _Printf_format_string_ const char* pszFormat,
+		_In_ va_list argList)
+	{
+		return vsprintf_s(pszDest, cchDest, pszFormat, argList);
+	}
+
+	inline int vsprintf_s_worker(
+		_Out_writes_z_(cchDest) wchar_t* pszDest,
+		_In_ size_t cchDest,
+		_In_z_ _Printf_format_string_ const wchar_t* pszFormat,
+		_In_ va_list argList)
+	{
+		return vswprintf_s(pszDest, cchDest, pszFormat, argList);
+	}
+
+	template< typename _CharType>
+	int GetFormattedLengthWorker(
+		_In_z_ _Printf_format_string_ const _CharType* pszFormat,
+		_In_ va_list args)
+	{
+		_CharType szBuffer[legacyBufSize + 1]; // this ensures the resulting length is capped to 1024
+
+		int nLength = AtlUtil::vsprintf_s_worker(szBuffer, _countof(szBuffer), pszFormat, args);
+
+		ATLASSERT(nLength >= 0);
+		ATLASSERT(nLength <= legacyBufSize);
+
+		return nLength;
+	}
+
+	template< typename _CharType>
+	int Format(
+		_Out_writes_to_(nlength, return) _Post_z_ _CharType* pszBuffer,
+		_In_ size_t nlength,
+		_In_z_ _Printf_format_string_ const _CharType* pszFormat,
+		_In_ va_list args)
+	{
+		size_t safeLen = __min(legacyBufSize + 1, nlength); // backwards compatible with the old implementation based on wvsprintfA
+		int nCharsWritten = AtlUtil::vsprintf_s_worker(pszBuffer, safeLen, pszFormat, args);
+
+		ATLENSURE(nCharsWritten <= legacyBufSize);
+		//nlength should have room for nCharsWritten + null terminator
+		ATLENSURE_THROW(static_cast<size_t>(nCharsWritten) < nlength, E_INVALIDARG);
+
+		return nCharsWritten;
+	}
+}
+
 template< typename _CharType = char >
 class ChTraitsOS :
 	public ChTraitsBase< _CharType >
@@ -504,63 +562,16 @@ public:
 		_In_z_ _Printf_format_string_ const _CharType* pszFormat, 
 		_In_ va_list args)
 	{
-		_CharType szBuffer[1028];
-		int nLength = 0;
-
-		SetLastError(ERROR_SUCCESS);
-#pragma warning(push)
-#pragma warning(disable:4995)
-#pragma warning(disable:4996)
-		// wvsprintf always truncates the output to 1024 character plus the '\0'.
-		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
-		// an insecure function and should be avoided. Here the use of wvsprintf
-		// is safe and the only way to get a string formatted without using the CRT.
-		nLength = wvsprintfA(szBuffer, pszFormat, args);
-#pragma warning(pop)
-		ATLENSURE(GetLastError() == ERROR_SUCCESS);
-		ATLASSERT(nLength >= 0);
-		ATLASSERT(nLength <= 1024);
-
-		return nLength;
+		return AtlUtil::GetFormattedLengthWorker(pszFormat, args);
 	}
 
-	_ATL_INSECURE_DEPRECATE("CSimpleStringT::Format must be passed a buffer size")
-	static int Format(
-		_Out_ _Post_z_ _Post_readable_size_(return) _CharType* pszBuffer,
-		_In_z_ _Printf_format_string_ const _CharType* pszFormat,
-		_In_ va_list args) throw()
-	{
-#pragma warning(push)
-#pragma warning(disable:4995)
-#pragma warning(disable:4996)
-		return wvsprintfA(pszBuffer, pszFormat, args);
-#pragma warning(pop)
-	}
 	static int Format(
 		_Out_writes_to_(nlength, return) _Post_z_ _CharType*  pszBuffer,
 		_In_ size_t nlength,
 		_In_z_ _Printf_format_string_ const _CharType* pszFormat, 
 		_In_ va_list args )
 	{
-		_CharType buffSafe[1030]; //wvsprintf output is max 1024.
-		int nCharsWritten = 0;
-
-		SetLastError(ERROR_SUCCESS);
-#pragma warning(push)
-#pragma warning(disable:4995)
-#pragma warning(disable:4996)
-		// wvsprintf always truncates the output to 1024 character plus the '\0'.
-		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
-		// an insecure function and should be avoided. Here the use of wvsprintf
-		// is safe and the only way to get a string formatted without using the CRT.
-		nCharsWritten = wvsprintfA(buffSafe, pszFormat, args);
-#pragma warning(pop)
-		ATLENSURE(GetLastError() == ERROR_SUCCESS);
-		ATLENSURE(nCharsWritten <= 1024);
-		//nlength should have room for nCharsWritten + NULL
-		ATLENSURE_THROW((size_t)nCharsWritten < nlength ,E_INVALIDARG);
-		Checked::strcpy_s(pszBuffer,nlength,buffSafe);
-		return nCharsWritten;
+		return AtlUtil::Format(pszBuffer, nlength, pszFormat, args);
 	}
 
 	static int GetBaseTypeLength(_In_z_ const char* pszSrc) throw()
@@ -1052,39 +1063,7 @@ public:
 		_In_z_ _Printf_format_string_ const wchar_t* pszFormat, 
 		_In_ va_list args)
 	{
-		wchar_t szBuffer[1028];
-		int nLength = 0;
-
-		SetLastError(ERROR_SUCCESS);
-#pragma warning(push)
-#pragma warning(disable:4995)
-#pragma warning(disable:4996)
-#pragma warning(disable:28719)
-		// wvsprintf always truncates the output to 1024 character plus the '\0'.
-		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
-		// an insecure function and should be avoided. Here the use of wvsprintf
-		// is safe and the only way to get a string formatted without using the CRT.
-		nLength = wvsprintfW(szBuffer, pszFormat, args);
-#pragma warning(pop)
-		ATLENSURE(GetLastError() == ERROR_SUCCESS);
-		ATLASSERT(nLength >= 0);
-		ATLASSERT(nLength <= 1024);
-
-		return nLength;
-	}
-
-	_ATL_INSECURE_DEPRECATE("ChTraitsOS::Format must be passed a buffer size")
-	static int Format(
-		_Out_ _Post_z_ wchar_t* pszBuffer,
-		_In_z_ _Printf_format_string_ const wchar_t* pszFormat,
-		_In_ va_list args) throw()
-	{
-#pragma warning(push)
-#pragma warning(disable:4995)
-#pragma warning(disable:4996)
-#pragma warning(disable:28719)
-		return wvsprintfW(pszBuffer, pszFormat, args);
-#pragma warning(pop)
+		return AtlUtil::GetFormattedLengthWorker(pszFormat, args);
 	}
 
 	static int Format(
@@ -1093,32 +1072,7 @@ public:
 		_In_z_ _Printf_format_string_ const wchar_t* pszFormat,
 		_In_ va_list args)
 	{
-		wchar_t buffSafe[1028];
-		int nCharsWritten = 0;
-
-		SetLastError(ERROR_SUCCESS);
-#pragma warning(push)
-#pragma warning(disable:4995)
-#pragma warning(disable:4996)
-#pragma warning(disable:28719)
-		// wvsprintf always truncates the output to 1024 character plus the '\0'.
-		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
-		// an insecure function and should be avoided. Here the use of wvsprintf
-		// is safe and the only way to get a string formatted without using the CRT.
-		nCharsWritten = wvsprintfW(buffSafe, pszFormat, args);
-#pragma warning(pop)
-		ATLENSURE(GetLastError() == ERROR_SUCCESS);
-		ATLENSURE(nCharsWritten <= 1024);
-		//nlength should have room for nCharsWritten + NULL
-		ATLENSURE_THROW((size_t)nCharsWritten < nLength ,E_INVALIDARG);
-		ATLENSURE_THROW(static_cast<size_t>(AtlStrLen(buffSafe)) < nLength ,E_INVALIDARG);
-
-ATLPREFAST_SUPPRESS(6386)
-		/* prefast noise 497597 */
-		Checked::wcscpy_s(pszBuffer,nLength,buffSafe);
-ATLPREFAST_UNSUPPRESS()
-	
-		return nCharsWritten;
+		return AtlUtil::Format(pszBuffer, nLength, pszFormat, args);
 	}
 
 	static int GetBaseTypeLength(_In_z_ const char* pszSrc) throw()
@@ -1273,9 +1227,9 @@ inline typename ChTraits::PCXSTR strstrT(
 		return pStr;
 	//strlen returns length in bytes, not chars.
 	size_t nStrLen = ChTraits::GetBaseTypeLength(pStr);
-	ChTraits::PCXSTR pStrEnd=pStr + nStrLen;
-	const ChTraits::XCHAR* pMatch;
-	const ChTraits::XCHAR* pStart = pStr;
+	typename ChTraits::PCXSTR pStrEnd=pStr + nStrLen;
+	const typename ChTraits::XCHAR* pMatch;
+	const typename ChTraits::XCHAR* pStart = pStr;
 	while ((pMatch = ChTraits::strchr(pStart, *pCharSet)) != NULL)
 	{
 		size_t nCharsLeftInStr=pStrEnd - pMatch;
@@ -1283,7 +1237,7 @@ inline typename ChTraits::PCXSTR strstrT(
 		{
 			break;
 		}
-		if (memcmp(pMatch, pCharSet, nCharSetLen*sizeof(ChTraits::XCHAR)) == 0)
+		if (memcmp(pMatch, pCharSet, nCharSetLen*sizeof(typename ChTraits::XCHAR)) == 0)
 		{
 			return pMatch;
 		}

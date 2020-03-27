@@ -118,7 +118,7 @@ namespace ATL
 	DEFINE_OLEDB_TYPE_FUNCTION(DBDATE           ,DBTYPE_DBDATE)
 	DEFINE_OLEDB_TYPE_FUNCTION(DBTIME           ,DBTYPE_DBTIME)
 	DEFINE_OLEDB_TYPE_FUNCTION(DBTIMESTAMP      ,DBTYPE_DBTIMESTAMP)
- 	DEFINE_OLEDB_TYPE_FUNCTION(FILETIME			,DBTYPE_FILETIME)
+	DEFINE_OLEDB_TYPE_FUNCTION(FILETIME			,DBTYPE_FILETIME)
 	DEFINE_OLEDB_TYPE_FUNCTION(PROPVARIANT		,DBTYPE_PROPVARIANT)
 	DEFINE_OLEDB_TYPE_FUNCTION(DB_VARNUMERIC	,DBTYPE_VARNUMERIC)
 
@@ -587,23 +587,23 @@ public:
 
 		if (pbstrDescription != NULL)
 			if (FAILED(spErrorInfo->GetDescription(pbstrDescription)))
-                    *pbstrDescription = NULL;
+					*pbstrDescription = NULL;
 
 		if (pguid != NULL)
-            if (FAILED(spErrorInfo->GetGUID(pguid)))
-                memcpy_s(pguid, sizeof(GUID), &__uuidof(NULL), sizeof(GUID));
+			if (FAILED(spErrorInfo->GetGUID(pguid)))
+				*pguid = GUID{};
 
 		if (pdwHelpContext != NULL)
 			if (FAILED(spErrorInfo->GetHelpContext(pdwHelpContext)))
-                *pdwHelpContext = 0;
+				*pdwHelpContext = 0;
 
 		if (pbstrHelpFile != NULL)
 			if (FAILED(spErrorInfo->GetHelpFile(pbstrHelpFile)))
-                *pbstrHelpFile = NULL;
+				*pbstrHelpFile = NULL;
 
 		if (pbstrSource != NULL)
 			if (FAILED(spErrorInfo->GetSource(pbstrSource)))
-                *pbstrSource = NULL;
+				*pbstrSource = NULL;
 
 		return S_OK;
 	}
@@ -684,11 +684,11 @@ inline void AtlTraceErrorRecords(_In_ HRESULT hrErr = S_OK)
 					_T("OLE DB Error Record dump retrieval failed: hr = 0x%x\n"), hr);
 				return;
 			}
-ATLPREFAST_SUPPRESS(6031)
-			StringFromGUID2(guid, wszGuid, sizeof(wszGuid) / sizeof(WCHAR));
-ATLPREFAST_UNSUPPRESS()
+			int result = ::StringFromGUID2(guid, wszGuid, sizeof(wszGuid) / sizeof(WCHAR));
+			ATLASSERT(result != 0);
+			UNREFERENCED_PARAMETER(result);
 			ATLTRACE(atlTraceDBClient, 0,
-				_T("Row #: %4d Source: \"%s\" Description: \"%s\" Help File: \"%s\" Help Context: %4d GUID: %s\n"),
+				_T("Row #: %4d Source: \"%Ts\" Description: \"%Ts\" Help File: \"%Ts\" Help Context: %4d GUID: %Ts\n"),
 				i, static_cast<TCHAR*>(COLE2T(bstrSource)), static_cast<TCHAR*>(COLE2T(bstrDesc)), static_cast<TCHAR*>(COLE2T(bstrHelpFile)), dwHelpContext, static_cast<TCHAR*>(COLE2T(wszGuid)));
 			bstrSource.Empty();
 			bstrDesc.Empty();
@@ -740,7 +740,7 @@ public:
 		{
 			this->~CDBPropSet();
 			InternalCopy(propset);
-        }
+		}
 		return *this;
 	}
 	// Set the GUID of the property set this class represents.
@@ -2404,7 +2404,7 @@ public:
 
 		ATLENSURE(nMaxElements <=size_t(-1)/sizeof(T)); //overflow check
 		m_nMaxElements = nMaxElements;
- 		m_pBase = (T*) VirtualAlloc(NULL,sizeof(T)*nMaxElements,	MEM_RESERVE, PAGE_READWRITE);
+		m_pBase = (T*) VirtualAlloc(NULL,sizeof(T)*nMaxElements,	MEM_RESERVE, PAGE_READWRITE);
 		if(m_pBase == NULL)
 		{
 			_AtlRaiseException((DWORD)STATUS_NO_MEMORY);
@@ -2884,8 +2884,8 @@ public:
 
 		// First time just get the number of entries by passing in &nColumns
 		hr = _OutputColumnsClass::_GetBindEntries(NULL, &nColumns, NULL, nAccessor, NULL);
-        if (FAILED(hr))
-            return hr;
+		if (FAILED(hr))
+			return hr;
 
 		ATLASSERT(nColumns > 0);
 
@@ -2930,7 +2930,7 @@ public:
 		else
 		{            
 ATLPREFAST_SUPPRESS(6102)
-            // free any DBBINDING::pObject's
+			// free any DBBINDING::pObject's
 			for( ULONG i = 0; i < nColumns; i++ )
 				delete spBindings[i].pObject;
 ATLPREFAST_UNSUPPRESS()
@@ -3708,7 +3708,8 @@ ATLPREFAST_UNSUPPRESS()
 	{
 		for (ULONG i = 0; i < m_nColumns; i++)
 		{
-			memset((BYTE*)_GetDataPtr(i), 0, m_pColumnInfo[i].ulColumnSize);
+#pragma warning(suppress : 28313) // The C28313 warning associated with the following line is spurious.
+			memset(_GetDataPtr(i), 0, m_pColumnInfo[i].ulColumnSize);
 		}
 	}
 
@@ -6229,7 +6230,7 @@ BEGIN_COLUMN_MAP(CEnumeratorAccessor)
 	COLUMN_ENTRY(2, m_szParseName)
 	COLUMN_ENTRY(3, m_szDescription)
 	COLUMN_ENTRY(4, m_nType)
-	COLUMN_ENTRY(5, m_bIsParent)
+	COLUMN_ENTRY_TYPE(5, DBTYPE_BOOL, m_bIsParent)
 END_COLUMN_MAP()
 };
 
@@ -6351,7 +6352,7 @@ public:
 		// Loop through the providers looking for the passed name
 		while (MoveNext()==S_OK && lstrcmpW(m_szName, wszSearchName))
 		{
-			ATLTRACE(atlTraceDBClient, 2, _T("%s, %s, %d\n"), m_szName, m_szParseName, m_nType);
+			ATLTRACE(atlTraceDBClient, 2, _T("%Ts, %Ts, %d\n"), m_szName, m_szParseName, m_nType);
 		}
 		if (lstrcmpW(m_szName, wszSearchName))
 			return false;
@@ -6756,15 +6757,15 @@ ATLPREFAST_UNSUPPRESS()
 		if (FAILED(hr))
 			return hr;
 
-        hr = spPersist->GetClassID(&clsid);
+		hr = spPersist->GetClassID(&clsid);
 		if (FAILED(hr))
-            return hr;
+			return hr;
 
 		ULONG       ulPropSets=0;
 		CDBPropSet* pPropSets=NULL;
 		hr = pIDBProperties->GetProperties(0, NULL, &ulPropSets, (DBPROPSET**)&pPropSets);
-        if (FAILED(hr))
-            return hr;
+		if (FAILED(hr))
+			return hr;
 
 		hr = Open(clsid, &pPropSets[0], ulPropSets);
 
@@ -7471,8 +7472,8 @@ public:
 		_In_ ULONG ulPropSets = 0) throw()
 	{
 		HRESULT hr;
-        if (ppInterface)
-            *ppInterface = NULL;
+		if (ppInterface)
+			*ppInterface = NULL;
 
 		// Specify the properties if we have some
 		if (pPropSet)

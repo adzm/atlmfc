@@ -203,7 +203,7 @@ public:
 
 	virtual void OnUpdateFrameTitle(BOOL bAddToTitle);
 
-	virtual BOOL CanShowOnMDITabs() { return (GetStyle() & WS_VISIBLE) != 0; }
+	virtual BOOL CanShowOnMDITabs();
 	virtual BOOL CanShowOnWindowsList() { return TRUE; }
 	virtual BOOL IsReadOnly() { return FALSE; }
 	virtual BOOL IsTabbedMDIChild();

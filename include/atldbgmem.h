@@ -104,6 +104,9 @@ extern __declspec(selectany) const _PNH _pfnUninitialized = (_PNH)-1;
 }; // namespace ATL
 #pragma pack(pop)
 
+#pragma warning(push)
+#pragma warning(disable: 6387 28196 28251)
+
 inline void* __cdecl operator new(size_t nSize)
 {
 	void* pResult;
@@ -123,6 +126,8 @@ inline void* __cdecl operator new(size_t nSize)
 	return pResult;
 }
 
+#pragma warning(pop)
+
 inline void __cdecl operator delete(void* p)
 {
 #if !defined(_ATL_NO_DEBUG_CRT) && defined(_DEBUG)
@@ -132,10 +137,15 @@ inline void __cdecl operator delete(void* p)
 #endif // !defined(_ATL_NO_DEBUG_CRT) && defined(_DEBUG)
 }
 
+#pragma warning(push)
+#pragma warning(disable: 28251)
+
 inline void* __cdecl operator new[](size_t nSize)
 {
 	return ::operator new(nSize);
 }
+
+#pragma warning(pop)
 
 inline void __cdecl operator delete[](void* p)
 {
@@ -238,7 +248,7 @@ inline void __cdecl operator delete[](
 namespace ATL
 {
 
-inline void* AtlAllocMemoryDebug(
+_ATL_DECLSPEC_ALLOCATOR inline void* AtlAllocMemoryDebug(
 	_In_ size_t nSize,
 	_In_z_ LPCSTR lpszFileName,
 	_In_ int nLine)
@@ -376,7 +386,7 @@ inline int __cdecl _AtlAllocReportHook(
 	_In_z_ const unsigned char* szFileName,
 	_In_ int nLine)
 {
-	char *operation[] = { "", "allocating", "re-allocating", "freeing" };
+	const char* const operation[] = { "", "allocating", "re-allocating", "freeing" };
 
 	if (nBlockUse == _CRT_BLOCK)   // Ignore internal C runtime library allocations
 		return TRUE;
@@ -546,7 +556,7 @@ inline BOOL __stdcall _AtlHeapDestroy(
 	return HeapDestroy(hHeap);
 }
 
-inline LPVOID __stdcall _AtlHeapAlloc(
+_ATL_DECLSPEC_ALLOCATOR inline LPVOID __stdcall _AtlHeapAlloc(
 	_In_ HANDLE hHeap,
 	_In_ DWORD dwFlags,
 	_In_ SIZE_T nSize,
@@ -566,7 +576,7 @@ inline LPVOID __stdcall _AtlHeapAlloc(
 }
 
 ATLPREFAST_SUPPRESS(6001 6101)
-inline LPVOID __stdcall _AtlHeapReAlloc(
+_ATL_DECLSPEC_ALLOCATOR inline LPVOID __stdcall _AtlHeapReAlloc(
 	_In_ HANDLE hHeap,
 	_In_ DWORD dwFlags,
 	_Inout_opt_ LPVOID lpMem,
@@ -628,7 +638,7 @@ inline BOOL __stdcall _AtlHeapValidate(
 	return HeapValidate(hHeap, dwFlags, lpMem);
 }
 
-inline LPVOID __stdcall _AtlVirtualAlloc(
+_ATL_DECLSPEC_ALLOCATOR inline LPVOID __stdcall _AtlVirtualAlloc(
 	_In_ LPVOID lpAddress,
 	_In_ SIZE_T dwSize,
 	_In_ DWORD flAllocationType,

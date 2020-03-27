@@ -650,17 +650,18 @@ BOOL CMFCPropertySheet::OnInitDialog()
 		pTab->GetItemRect(0, rectTabItem);
 		pTab->MapWindowPoints(this, &rectTabItem);
 
-		const int nVertMargin = 5;
-		const int nHorzMargin = 5;
+		const int nVertMargin = (int)(GetGlobalData()->GetRibbonImageScale() * 5);
+		const int nHorzMargin = (int)(GetGlobalData()->GetRibbonImageScale() * 5);
+
 		const int nTabsHeight = rectTabItem.Height() + nVertMargin;
 
 		CRect rectClient;
 		GetClientRect(rectClient);
 
-		SetWindowPos(NULL, -1, -1, rectClient.Width() + m_nBarWidth, rectClient.Height() - nTabsHeight + 3 * nVertMargin + m_nHeaderHeight, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+		SetWindowPos(NULL, -1, -1, rectClient.Width() + m_nBarWidth, rectClient.Height() - nTabsHeight + 4 * nVertMargin + m_nHeaderHeight, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 
 		GetClientRect(rectClient);
-		pTab->MoveWindow(m_nBarWidth, -nTabsHeight, rectClient.right, rectClient.bottom - 2 * nVertMargin);
+		pTab->MoveWindow(m_nBarWidth, -nTabsHeight, rectClient.right - m_nBarWidth, rectClient.bottom - 2 * nVertMargin);
 
 		CRect rectTab;
 		pTab->GetWindowRect(rectTab);
@@ -723,6 +724,19 @@ BOOL CMFCPropertySheet::OnInitDialog()
 	}
 
 	return bResult;
+}
+
+int CMFCPropertySheet::GetNavBarWidth() const
+{
+	switch (m_look)
+	{
+	case PropSheetLook_OutlookBar:
+	case PropSheetLook_Tree:
+	case PropSheetLook_List:
+		return m_nBarWidth;
+	}
+
+	return 0;
 }
 
 CWnd* CMFCPropertySheet::InitNavigationControl()
@@ -1338,4 +1352,19 @@ void CMFCPropertySheet::EnablePageHeader(int nHeaderHeight)
 
 void CMFCPropertySheet::OnDrawPageHeader(CDC* /*pDC*/, int /*nPage*/, CRect /*rectHeader*/)
 {
+}
+
+BOOL CMFCPropertySheet::IsLeftNavigationPane(HWND hWnd) const
+{
+	if (hWnd == NULL)
+	{
+		return FALSE;
+	}
+
+	return m_wndList.GetSafeHwnd() == hWnd || m_wndOutlookBar.GetSafeHwnd() == hWnd || m_wndTree.GetSafeHwnd() == hWnd;
+}
+
+BOOL CMFCPropertySheet::CanAddPageToDynamicLayout() const
+{
+	return m_wndTab.GetSafeHwnd() == NULL;
 }

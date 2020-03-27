@@ -159,12 +159,31 @@ BOOL CMFCColorDialog::OnInitDialog()
 		TRACE0("CMFCColorDialog::OnInitDialog(): Can't create the property sheet.....\n");
 	}
 
+	m_pPropSheet->SetActivePage(0);
+
+	CRect rectPage1Initial;
+	m_pPropSheet->GetWindowRect(rectPage1Initial);
+
 	m_pPropSheet->SetWindowPos(NULL, rectListWnd.left, rectListWnd.top, rectListWnd.Width(), rectListWnd.Height(), SWP_NOZORDER | SWP_NOACTIVATE);
 
 	SetPageOne(GetRValue(m_CurrentColor), GetGValue(m_CurrentColor), GetBValue(m_CurrentColor));
 	SetPageTwo(GetRValue(m_CurrentColor), GetGValue(m_CurrentColor), GetBValue(m_CurrentColor));
 
 	m_btnColorSelect.SetImage(IDB_AFXBARRES_COLOR_PICKER);
+
+	CRect rectPage1Current;
+	m_pPropSheet->GetWindowRect(rectPage1Current);
+
+	int cy = rectPage1Initial.Height() - rectPage1Current.Height();
+	if (cy > 0)
+	{
+		// Resize the dialog:
+		CRect rectThis;
+		GetWindowRect(rectThis);
+
+		SetWindowPos(NULL, -1, -1, rectThis.Width(), rectThis.Height() + cy, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pPropSheet->SetWindowPos(NULL, -1, -1, rectListWnd.Width(), rectListWnd.Height() + cy, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+	}
 
 	m_hcurPicker = AfxGetApp()->LoadCursor(IDC_AFXBARRES_COLOR);
 

@@ -65,7 +65,7 @@ BOOL AFXAPI AfxOleInit()
 	{
 		// warn about non-NULL success codes
 #ifdef _DEBUG
-		TRACE(traceOle, 0, _T("Warning: OleInitialize returned scode = %s.\n"),
+		TRACE(traceOle, 0, _T("Warning: OleInitialize returned scode = %Ts.\n"),
 			AfxGetFullScodeString(sc));
 #endif
 		goto InitFailed;

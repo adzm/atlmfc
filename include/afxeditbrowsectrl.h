@@ -54,6 +54,7 @@ protected:
 	CSize   m_sizeImage;
 	CString m_strDefFileExt;
 	CString m_strFileFilter;
+	DWORD m_dwFileDialogFlags;
 	CString m_strBrowseFolderTitle;
 	UINT    m_ulBrowseFolderFlags;
 
@@ -63,7 +64,7 @@ protected:
 // Operations
 public:
 	void EnableBrowseButton(BOOL bEnable = TRUE);
-	void EnableFileBrowseButton(LPCTSTR lpszDefExt = NULL, LPCTSTR lpszFilter = NULL);
+	void EnableFileBrowseButton(LPCTSTR lpszDefExt = NULL, LPCTSTR lpszFilter = NULL, DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT);
 	void EnableFolderBrowseButton(LPCTSTR lpszBrowseFolderTitle = NULL, UINT ulBrowseFolderFlags = BIF_RETURNONLYFSDIRS);
 
 	void SetBrowseButtonImage(HICON hIcon, BOOL bAutoDestroy = TRUE);

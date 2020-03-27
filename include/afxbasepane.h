@@ -38,7 +38,7 @@ class CMFCBaseTabCtrl;
 class CBaseTabbedPane;
 
 // DM - dock method
-typedef enum AFX_DOCK_METHOD
+enum AFX_DOCK_METHOD
 {
 	DM_UNKNOWN,
 	DM_MOUSE,
@@ -49,7 +49,7 @@ typedef enum AFX_DOCK_METHOD
 };
 
 // DT - dock type
-typedef enum AFX_DOCK_TYPES
+enum AFX_DOCK_TYPES
 {
 	DT_DOCK_FIRST,
 	DT_DOCK_LAST,

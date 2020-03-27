@@ -123,6 +123,7 @@ public:
 public:
 	CMFCTabCtrl& GetTab() const; // for PropSheetLook_OneNoteTabs only
 	int GetHeaderHeight() const { return m_nHeaderHeight; }
+	int GetNavBarWidth() const;
 
 protected:
 	PropSheetLook  m_look;
@@ -166,6 +167,10 @@ public:
 	virtual BOOL OnRemoveTreePage(CPropertyPage* pPage);
 	
 	virtual void OnDrawPageHeader(CDC* pDC, int nPage, CRect rectHeader);
+
+protected:
+	virtual BOOL IsLeftNavigationPane(HWND hWnd) const;
+	virtual BOOL CanAddPageToDynamicLayout() const;
 
 public:
 	virtual BOOL OnInitDialog();

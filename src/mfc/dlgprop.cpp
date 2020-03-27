@@ -294,9 +294,12 @@ void CPropertyPage::PreProcessPageTemplate(PROPSHEETPAGE& psp, BOOL bWizard)
 void CPropertyPage::CancelToClose()
 {
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(GetParentSheet() != NULL);
 
-	GetParentSheet()->SendMessage(PSM_CANCELTOCLOSE);
+	CPropertySheet* pParentSheet = GetParentSheet();
+	if (pParentSheet->GetSafeHwnd() != NULL)
+	{
+		pParentSheet->SendMessage(PSM_CANCELTOCLOSE);
+	}
 }
 
 void CPropertyPage::SetModified(BOOL bChanged)
@@ -305,21 +308,25 @@ void CPropertyPage::SetModified(BOOL bChanged)
 		return;
 
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(GetParentSheet() != NULL);
 
-	CWnd* pParentWnd = GetParentSheet();
-	if (bChanged)
-		pParentWnd->SendMessage(PSM_CHANGED, (WPARAM)m_hWnd);
-	else
-		pParentWnd->SendMessage(PSM_UNCHANGED, (WPARAM)m_hWnd);
+	CPropertySheet* pParentSheet = GetParentSheet();
+	if (pParentSheet->GetSafeHwnd() != NULL)
+	{
+		pParentSheet->SendMessage(bChanged ? PSM_CHANGED : PSM_UNCHANGED, (WPARAM)m_hWnd);
+	}
 }
 
 LRESULT CPropertyPage::QuerySiblings(WPARAM wParam, LPARAM lParam)
 {
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(GetParentSheet() != NULL);
 
-	return GetParentSheet()->SendMessage(PSM_QUERYSIBLINGS, wParam, lParam);
+	CPropertySheet* pParentSheet = GetParentSheet();
+	if (pParentSheet->GetSafeHwnd() != NULL)
+	{
+		return pParentSheet->SendMessage(PSM_QUERYSIBLINGS, wParam, lParam);
+	}
+
+	return 0L;
 }
 
 BOOL CPropertyPage::OnApply()
@@ -350,6 +357,23 @@ void CPropertyPage::OnCancel()
 BOOL CPropertyPage::OnSetActive()
 {
 	ASSERT_VALID(this);
+
+	if (m_bFirstSetActive)
+	{
+		CPropertySheet* pPropSheet = DYNAMIC_DOWNCAST(CPropertySheet, GetParent());
+		if (pPropSheet != NULL)
+		{
+			ASSERT_VALID(pPropSheet);
+
+			CMFCDynamicLayout* pLayout = pPropSheet->GetDynamicLayout();
+			if (pLayout != NULL && !pLayout->HasItem(GetSafeHwnd()) && !pLayout->IsEmpty() && pPropSheet->CanAddPageToDynamicLayout())
+			{
+				pLayout->AddItem(GetSafeHwnd(), CMFCDynamicLayout::MoveNone(), CMFCDynamicLayout::SizeHorizontalAndVertical(100, 100));
+			}
+		}
+	}
+
+	ResizeDynamicLayout();
 
 	if (m_bFirstSetActive)
 		m_bFirstSetActive = FALSE;
@@ -398,7 +422,7 @@ BOOL CPropertyPage::OnWizardFinish()
 	if (UpdateData())
 	{
 		CPropertySheet *pSheet = GetParentSheet();
-		if (pSheet != NULL)
+		if (pSheet->GetSafeHwnd() != NULL)
 		{
 			if (pSheet->IsModeless() && pSheet->IsWizard())
 			{
@@ -514,7 +538,6 @@ CPropertySheet *CPropertyPage::GetParentSheet()
 			return pSheet;
 		}
 	}
-	ASSERT(FALSE); // Could not find the CPropertySheet
 	return NULL;
 }
 
@@ -580,6 +603,7 @@ BEGIN_MESSAGE_MAP(CPropertySheet, CWnd)
 	ON_WM_SYSCOMMAND()
 	ON_MESSAGE(DM_SETDEFID, &CPropertySheet::OnSetDefID)
 	ON_MESSAGE(WM_KICKIDLE,&CPropertySheet::OnKickIdle)
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 AFX_STATIC_DATA const int _afxPropSheetIDs[4] = { ID_WIZNEXT, ID_WIZFINISH, ID_WIZBACK, IDCANCEL };
@@ -667,6 +691,7 @@ void CPropertySheet::CommonConstruct(CWnd* pParentWnd, UINT iSelectPage)
 	m_psh.nStartPage = iSelectPage;
 	m_bStacked = TRUE;
 	m_bModeless = FALSE;
+	m_sizeMin = CSize(0, 0);
 
 	if (AfxHelpEnabled())
 		m_psh.dwFlags |= PSH_HASHELP;
@@ -1203,7 +1228,7 @@ BOOL CPropertySheet::SetActivePage(CPropertyPage* pPage)
 	ASSERT_KINDOF(CPropertyPage, pPage);
 
 	int nPage = GetPageIndex(pPage);
-	ASSERT(pPage >= 0);
+	ASSERT(nPage >= 0);
 
 	return SetActivePage(nPage);
 }
@@ -1440,12 +1465,46 @@ BOOL CPropertySheet::OnNcCreate(LPCREATESTRUCT)
 	// from CPropertySheet.
 	ModifyStyleEx(WS_EX_CONTEXTHELP, 0);
 
+	if (GetDynamicLayout() != NULL && (GetStyle() & WS_CHILD) == 0)
+	{
+		ModifyStyle(DS_MODALFRAME, WS_THICKFRAME);
+	}
+
 	return (BOOL)Default();
 }
 
 LRESULT CPropertySheet::HandleInitDialog(WPARAM, LPARAM)
 {
 	LRESULT lResult = OnInitDialog();
+
+	CMFCDynamicLayout* pDynamicLayout = GetDynamicLayout();
+	if (pDynamicLayout != NULL)
+	{
+		CRect rectWindow;
+		GetWindowRect(rectWindow);
+		m_sizeMin = rectWindow.Size();
+
+		for (CWnd *pChild = GetWindow(GW_CHILD); pChild->GetSafeHwnd() != NULL; pChild = pChild->GetWindow(GW_HWNDNEXT))
+		{
+			HWND hwndChild = pChild->GetSafeHwnd();
+			if (!pDynamicLayout->HasItem(hwndChild))
+			{
+				if (pChild->SendMessage(WM_GETDLGCODE) & DLGC_BUTTON)
+				{
+					pDynamicLayout->AddItem(hwndChild, CMFCDynamicLayout::MoveHorizontalAndVertical(100, 100), CMFCDynamicLayout::SizeNone());
+				}
+				else if (IsLeftNavigationPane(hwndChild))
+				{
+					pDynamicLayout->AddItem(hwndChild, CMFCDynamicLayout::MoveNone(), CMFCDynamicLayout::SizeVertical(100));
+				}
+				else if (DYNAMIC_DOWNCAST(CPropertyPage, pChild) == NULL || CanAddPageToDynamicLayout())
+				{
+					pDynamicLayout->AddItem(hwndChild, CMFCDynamicLayout::MoveNone(), CMFCDynamicLayout::SizeHorizontalAndVertical(100, 100));
+				}
+			}
+		}
+	}
+
 	return lResult;
 }
 
@@ -1494,6 +1553,17 @@ HBRUSH CPropertySheet::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		return (HBRUSH)lResult;
 
 	return CWnd::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+void CPropertySheet::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI) 
+{
+	CWnd::OnGetMinMaxInfo(lpMMI);
+
+	if (GetDynamicLayout() != NULL && m_sizeMin != CSize(0, 0))
+	{
+		lpMMI->ptMinTrackSize.x = m_sizeMin.cx;
+		lpMMI->ptMinTrackSize.y = m_sizeMin.cy;
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////

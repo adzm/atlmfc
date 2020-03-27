@@ -437,6 +437,7 @@ BOOL COleControlSite::QuickActivate()
 
 		// Initialize QACONTAINER structure.
 		QACONTAINER qaContainer;
+		ZeroMemory(&qaContainer, sizeof(QACONTAINER));
 		qaContainer.cbSize = sizeof(QACONTAINER);
 		qaContainer.pClientSite = &m_xOleClientSite;
 		qaContainer.pAdviseSink = NULL;
@@ -1526,8 +1527,7 @@ void COleControlSite::BindDefaultProperty(DISPID dwDispID, VARTYPE vtProp, LPCTS
 		m_dwType = vtProp;
 		m_strDataField = szFieldName;
 		m_pDSCSite->m_pDataSourceControl->BindProp(this, TRUE);
-		if (m_pDSCSite != NULL)
-			m_pDSCSite->m_pDataSourceControl->BindColumns();
+		m_pDSCSite->m_pDataSourceControl->BindColumns();
 	}
 }
 

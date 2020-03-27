@@ -99,6 +99,8 @@ LRESULT CPaneDialog::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 		}
 	}
 
+	LoadDynamicLayoutResource(m_lpszBarTemplateName);
+
 	return TRUE;
 }
 

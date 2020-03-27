@@ -142,7 +142,7 @@ int CEditView::OnCreate(LPCREATESTRUCT lpcs)
 		// attempt to create the font
 		_afxUnicodeFont = ::CreateFontIndirect(&logFont);
 		if (_afxUnicodeFont == NULL)
-			TRACE(traceAppMsg, 0, _T("Unable to create unicode font '%s'.\n"), logFont.lfFaceName);
+			TRACE(traceAppMsg, 0, _T("Unable to create unicode font '%Ts'.\n"), logFont.lfFaceName);
 	}
 	if (!_afxEditviewTerm)
 		_afxEditviewTerm = (char)!atexit(&AfxEditviewTerm);
@@ -1248,9 +1248,29 @@ BOOL CEditView::FindText(LPCTSTR lpszFind, BOOL bNext, BOOL bCase)
 
 			LPSTR lpch = (LPSTR)(lpsz + nLenFind);
 			char chSave = *lpch;
+			char chSave2 = '\0';
+
+#ifdef _UNICODE
+			if (*lpsz <= 0xFF)
+				*lpch = '\0';
+			else
+			{
+				// The actual character size is more than 1 byte - we should clear 2 bytes (and restore them at the end of search)
+				chSave2 = *(lpch + 1);
+
+				*lpch = '\0';
+				*(lpch + 1) = '\0';
+			}
+#else
 			*lpch = '\0';
+#endif
 			int nResult = (*pfnCompare)(lpsz, lpszFind);
 			*lpch = chSave;
+			if (chSave2 != '\0')
+			{
+				*(lpch + 1) = chSave2;
+			}
+
 			if (nResult == 0)
 			{
 				UnlockBuffer();

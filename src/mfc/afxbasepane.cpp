@@ -47,8 +47,8 @@
 #define AFX_BASE_CONTROL_BAR_PROFILE _T("BasePanes")
 BOOL CBasePane::m_bSetTooltipTopmost = TRUE;
 
-#define AFX_REG_SECTION_FMT    _T("%sBasePane-%d")
-#define AFX_REG_SECTION_FMT_EX _T("%sBasePane-%d%x")
+#define AFX_REG_SECTION_FMT    _T("%TsBasePane-%d")
+#define AFX_REG_SECTION_FMT_EX _T("%TsBasePane-%d%x")
 
 BOOL CBasePane::m_bMultiThreaded = FALSE;
 CCriticalSection CBasePane::m_CriticalSection;
@@ -158,7 +158,7 @@ BOOL CBasePane::CreateEx(DWORD dwStyleEx, LPCTSTR lpszClassName, LPCTSTR lpszWin
 		//--------------------------
 		if (!CreateDlg(m_lpszBarTemplateName, pParentWnd))
 		{
-			TRACE(_T("Can't create dialog: %s\n"), m_lpszBarTemplateName);
+			TRACE(_T("Can't create dialog: %Ts\n"), m_lpszBarTemplateName);
 			return FALSE;
 		}
 

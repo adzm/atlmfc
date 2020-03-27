@@ -53,11 +53,11 @@ private:
 	}
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 public:
-	void Lock()
+	_Acquires_lock_(this->m_sec) void Lock()
 	{
 		EnterCriticalSection(&m_sec);
 	}
-	void Unlock()
+	_Releases_lock_(this->m_sec) void Unlock()
 	{
 		LeaveCriticalSection(&m_sec);
 	}

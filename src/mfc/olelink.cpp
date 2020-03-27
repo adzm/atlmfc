@@ -175,7 +175,7 @@ BOOL COleLinkingDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	if (!RegisterIfServerAttached(lpszPathName, FALSE))
 	{
 		// always output a trace (it is just an FYI -- not generally fatal)
-		TRACE(traceOle, 0, _T("Warning: Unable to register moniker '%s' as running\n"), lpszPathName);
+		TRACE(traceOle, 0, _T("Warning: Unable to register moniker '%Ts' as running\n"), lpszPathName);
 	}
 
 	if (!COleDocument::OnOpenDocument(lpszPathName))
@@ -362,7 +362,7 @@ COleClientItem* COleLinkingDoc::OnFindEmbeddedItem(LPCTSTR lpszItemName)
 	}
 
 	TRACE(traceOle, 1, "Warning: default COleLinkingDoc::OnFindEmbeddedItem\n");
-	TRACE(traceOle, 1, _T("\timplementation failed to find item '%s'.\n"), lpszItemName);
+	TRACE(traceOle, 1, _T("\timplementation failed to find item '%Ts'.\n"), lpszItemName);
 
 	return NULL;    // no matching item found
 }

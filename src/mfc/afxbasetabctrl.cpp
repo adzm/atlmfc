@@ -178,6 +178,8 @@ CMFCBaseTabCtrl::CMFCBaseTabCtrl()
 	m_bTabCloseButtonHighlighted = FALSE;
 	m_bTabCloseButtonPressed = FALSE;
 	m_rectCloseButton.SetRectEmpty();
+
+	EnableActiveAccessibility();
 }
 
 CMFCBaseTabCtrl::~CMFCBaseTabCtrl()
@@ -2635,6 +2637,15 @@ void CMFCBaseTabCtrl::FireChangeActiveTab(int nNewTab)
 	}
 
 	m_bSetActiveTabFired = TRUE;
+
+	if (GetGlobalData()->IsAccessibilitySupport() && nNewTab >= 0 && nNewTab < (int)m_arTabs.GetSize())
+	{
+		CMFCTabInfo* pTab = (CMFCTabInfo*)m_arTabs[nNewTab];
+		ASSERT_VALID(pTab);
+
+		SetACCData(pTab, m_AccData, nNewTab == m_iActiveTab);
+		::NotifyWinEvent(EVENT_OBJECT_SELECTION, GetSafeHwnd(), OBJID_CLIENT , nNewTab + 1);
+	}
 }
 
 BOOL CMFCBaseTabCtrl::FireChangingActiveTab(int nNewTab)
@@ -2800,5 +2811,398 @@ void CMFCBaseTabCtrl::OnWindowPosChanged(WINDOWPOS FAR* lpwndpos)
 	m_bWindowPosChanged = TRUE;
 }
 
+BOOL CMFCBaseTabCtrl::OnSetAccData(long lVal)
+{
+	ASSERT_VALID(this);
+
+	m_AccData.Clear();
+
+	for (int i = 0; i < m_iTabsNum; i++)
+	{
+		CMFCTabInfo* pTab = (CMFCTabInfo*)m_arTabs[i];
+		ASSERT_VALID(pTab);
+
+		if ((i + 1 == lVal) && pTab->m_bVisible && !pTab->m_rect.IsRectEmpty())
+		{
+			SetACCData(pTab, m_AccData, i == m_iActiveTab);
+			return TRUE;
+		}
+	}
+	
+	return FALSE;
+}
+
+HRESULT CMFCBaseTabCtrl::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+{
+	if (!pvarChild)
+    {
+        return E_INVALIDARG;
+    }
+
+	pvarChild->vt = VT_I4;
+	pvarChild->lVal = CHILDID_SELF;
+
+	CPoint pt(xLeft, yTop);
+	ScreenToClient(&pt);
+
+	for (int i = 0; i < m_iTabsNum; i++)
+	{
+		CMFCTabInfo* pTab = (CMFCTabInfo*)m_arTabs[i];
+		ASSERT_VALID(pTab);
+
+		if (pTab->m_rect.PtInRect(pt))
+		{
+			pvarChild->lVal = i + 1;
+			SetACCData(pTab, m_AccData, i == m_iActiveTab);
+			break;
+		}
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCBaseTabCtrl::get_accChildCount(long *pcountChildren)
+{
+	if (!pcountChildren)
+    {
+        return E_INVALIDARG;
+    }
+
+	int count = 0;
+	for (int i = 0; i < m_iTabsNum; i++)
+	{
+		CMFCTabInfo* pTab = (CMFCTabInfo*)m_arTabs[i];
+		ASSERT_VALID(pTab);
+
+		if (pTab->m_bVisible && !pTab->m_rect.IsRectEmpty())
+		{
+			count++;
+		}
+	}
+
+	*pcountChildren = count;
+	return S_OK;
+}
+
+HRESULT CMFCBaseTabCtrl::get_accChild(VARIANT /*varChild*/, IDispatch **ppdispChild)
+{
+	if (!ppdispChild)
+    {
+        return E_INVALIDARG;
+    }
+
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseTabCtrl::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEndUpAt)
+{
+    pvarEndUpAt->vt = VT_EMPTY;
+
+    if (varStart.vt != VT_I4)
+    {
+        return E_INVALIDARG;
+    }
+
+	int count = 0;
+	for (int i = 0; i < m_iTabsNum; i++)
+	{
+		CMFCTabInfo* pTab = (CMFCTabInfo*)m_arTabs[i];
+		ASSERT_VALID(pTab);
+
+		if (pTab->m_bVisible && !pTab->m_rect.IsRectEmpty())
+		{
+			count++;
+		}
+	}
+
+	switch (navDir)
+    {
+	case NAVDIR_FIRSTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = 1;
+
+			return S_OK;	
+		}
+		break;
+
+	case NAVDIR_LASTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = count;
+
+			return S_OK;
+		}
+		break;
 
 
+	case NAVDIR_NEXT:   
+	case NAVDIR_RIGHT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal + 1;
+
+			if (pvarEndUpAt->lVal > count)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+
+			return S_OK;
+		}
+		break;
+
+	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal - 1;
+
+			if (pvarEndUpAt->lVal <= 0)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+
+			return S_OK;
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseTabCtrl::accDoDefaultAction(VARIANT varChild)
+{
+    if (varChild.vt != VT_I4)
+    {
+        return E_INVALIDARG;
+    }
+
+	if (varChild.lVal != CHILDID_SELF)
+    {
+		int count = 0;
+
+		for (int i = 0; i < m_iTabsNum; i++)
+		{
+			CMFCTabInfo* pTab = (CMFCTabInfo*) m_arTabs[i];
+			ASSERT_VALID (pTab);
+
+			if (pTab->m_bVisible && !pTab->m_rect.IsRectEmpty())
+			{
+				if (count == varChild.lVal)
+				{
+					SetActiveTab(i);
+					FireChangeActiveTab(m_iActiveTab);
+					break;
+				}
+
+				count++;
+			}
+		}
+    }
+
+    return S_OK;
+}
+
+BOOL CMFCBaseTabCtrl::SetACCData(CMFCTabInfo* pTab, CAccessibilityData& data, BOOL bIsActive)
+{
+	ASSERT_VALID(this);
+	ASSERT_VALID(pTab);
+
+	data.Clear();
+
+	data.m_strAccName = pTab->m_strText;
+	data.m_strAccDefAction = _T("Switch");
+	
+	data.m_nAccHit = 1;
+	data.m_nAccRole = ROLE_SYSTEM_PAGETAB;
+
+	if (bIsActive)
+	{
+		data.m_bAccState |= STATE_SYSTEM_SELECTED;
+	}
+	
+	data.m_rectAccLocation = pTab->m_rect;
+	ClientToScreen(&data.m_rectAccLocation);
+
+	return TRUE;
+}
+
+HRESULT CMFCBaseTabCtrl::get_accRole(VARIANT varChild, VARIANT *pvarRole)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		pvarRole->vt = VT_I4;
+		pvarRole->lVal = ROLE_SYSTEM_PAGETABLIST;
+		return S_OK;
+	}
+
+	if (!pvarRole || ((varChild.vt != VT_I4) && (varChild.lVal != CHILDID_SELF)))
+    {
+        return E_INVALIDARG;
+    }
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		pvarRole->vt = VT_I4;
+
+		OnSetAccData(varChild.lVal);
+		pvarRole->lVal = m_AccData.m_nAccRole;
+
+		return S_OK;
+	}
+			
+    return S_OK;
+}
+
+HRESULT CMFCBaseTabCtrl::get_accValue(VARIANT varChild, BSTR *pszValue)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+		
+		if (m_AccData.m_strAccValue.IsEmpty())
+		{
+			return S_FALSE;
+		}
+
+		*pszValue = m_AccData.m_strAccValue.AllocSysString();
+	}
+	else
+	{
+		if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF && m_iActiveTab != -1)
+		{
+			CMFCTabInfo* pTab = (CMFCTabInfo*)m_arTabs[m_iActiveTab];
+			ASSERT_VALID(pTab);
+
+			if (pTab->m_strText.IsEmpty())
+			{
+				return S_FALSE;
+			}
+
+			*pszValue = pTab->m_strText.AllocSysString();
+			return S_OK;
+		}
+
+		return S_FALSE;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCBaseTabCtrl::get_accState(VARIANT varChild, VARIANT *pvarState)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		pvarState->vt = VT_I4;
+	    pvarState->lVal = STATE_SYSTEM_NORMAL;
+
+		return S_OK;
+	}
+
+	if (!pvarState || ((varChild.vt != VT_I4 ) && (varChild.lVal != CHILDID_SELF )))
+    {
+        return E_INVALIDARG;
+    }
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		pvarState->vt = VT_I4;
+		pvarState->lVal = m_AccData.m_bAccState;
+
+		return S_OK; 
+	}
+
+	return E_INVALIDARG;
+}
+
+HRESULT CMFCBaseTabCtrl::get_accName(VARIANT varChild, BSTR *pszName)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CString strText;
+		GetWindowText (strText);
+
+		*pszName = strText.AllocSysString();
+		return S_OK;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		if (m_AccData.m_strAccName.IsEmpty())
+		{
+			return S_FALSE;
+		}
+
+		*pszName = m_AccData.m_strAccName.AllocSysString();
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCBaseTabCtrl::accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild)
+{
+	if (!pxLeft || !pyTop || !pcxWidth || !pcyHeight)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CRect rc;
+		GetWindowRect (rc);
+
+		*pxLeft = rc.left;
+		*pyTop = rc.top;
+		*pcxWidth = rc.Width();
+		*pcyHeight = rc.Height();
+
+		return S_OK;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		*pxLeft = m_AccData.m_rectAccLocation.left;
+		*pyTop = m_AccData.m_rectAccLocation.top;
+		*pcxWidth = m_AccData.m_rectAccLocation.Width();
+		*pcyHeight = m_AccData.m_rectAccLocation.Height();
+
+		return S_OK;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCBaseTabCtrl::get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		return S_FALSE;
+	}
+
+	if (varChild.vt != VT_I4 && varChild.lVal != CHILDID_SELF)
+	{
+		return E_INVALIDARG;
+	}
+
+	OnSetAccData(varChild.lVal);
+
+	if (m_AccData.m_strAccDefAction.IsEmpty())
+	{
+		return S_FALSE;
+	}
+
+	*pszDefaultAction = m_AccData.m_strAccDefAction.AllocSysString();			
+	return S_OK;
+}

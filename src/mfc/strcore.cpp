@@ -27,6 +27,9 @@ LPSTR AFXAPI AfxW2AHelper(_Out_writes_z_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, 
 	return AtlW2AHelper(lpa, lpw, nChars, CP_ACP);
 }
 
+// Workaround VSO:187457 - bug in SSAOptimizer
+#pragma optimize("", off)
+
 ///////////////////////////////////////////////////////////////////////////////
 // CComBSTR support for template collections
 
@@ -46,6 +49,9 @@ template<> UINT AFXAPI HashKey<CComBSTR> (CComBSTR key)
 
 	return(uHashVal);
 }
+
+// End workaround VSO:187457 - bug in SSAOptimizer
+#pragma optimize("", on)
 
 template<>
 void AFXAPI SerializeElements<CComBSTR> (CArchive& ar, CComBSTR* pElements, INT_PTR nCount)

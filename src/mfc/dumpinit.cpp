@@ -46,7 +46,7 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 			// 
 			// To investigate leaks like this, you'll likely need to set a breakpoint here and look at the object itself
 			// or force the leak code to run earlier in your process shutdown
-			sprintf_s(sz, _countof(sz), "an object at $%p, %u bytes long\n", pvData, nBytes);
+			sprintf_s(sz, _countof(sz), "an object at $%p, %zu bytes long\n", pvData, nBytes);
 			afxDump << sz;
 		}
 		// with vtable, verify that object and vtable are valid
@@ -54,7 +54,7 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 			!AfxIsValidAddress(pObject, pObject->GetRuntimeClass()->m_nObjectSize, FALSE))
 		{
 			// short form for invalid objects
-			sprintf_s(sz, _countof(sz), "an invalid object at $%p, %u bytes long\n", pvData, nBytes);
+			sprintf_s(sz, _countof(sz), "an invalid object at $%p, %zu bytes long\n", pvData, nBytes);
 			afxDump << sz;
 		}
 		else if (afxDump.GetDepth() > 0)
@@ -66,7 +66,7 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 		else
 		{
 			// short form
-			ATL_CRT_ERRORCHECK_SPRINTF(_snprintf_s(sz, _countof(sz), _countof(sz) - 1, "a %hs object at $%p, %u bytes long\n",
+			ATL_CRT_ERRORCHECK_SPRINTF(_snprintf_s(sz, _countof(sz), _countof(sz) - 1, "a %hs object at $%p, %zu bytes long\n",
 				pObject->GetRuntimeClass()->m_lpszClassName, pvData, nBytes));
 			afxDump << sz;
 		}
@@ -74,7 +74,7 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 	__except(EXCEPTION_ACCESS_VIOLATION == GetExceptionCode())
 	{
 		// short form for trashed objects
-		sprintf_s(sz, _countof(sz), "faulted while dumping object at $%p, %u bytes long\n", pvData, nBytes);
+		sprintf_s(sz, _countof(sz), "faulted while dumping object at $%p, %zu bytes long\n", pvData, nBytes);
 		afxDump << sz;
 	}
 

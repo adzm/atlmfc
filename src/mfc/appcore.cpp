@@ -175,7 +175,7 @@ HINSTANCE AFXAPI AfxLoadLangResourceDLL(LPCTSTR pszFormat, LPCTSTR pszPath)
 
 HINSTANCE AFXAPI AfxLoadLangResourceDLL(LPCTSTR pszFormat)
 {
-	TCHAR pszNewFormat[MAX_PATH + 2 + 1] = _T("%s"); // have space for %s and string terminator
+	TCHAR pszNewFormat[MAX_PATH + 3 + 1] = _T("%Ts"); // have space for %Ts and string terminator
 	ENSURE(AtlStrLen(pszFormat) <= MAX_PATH);
 	_tcscat_s (pszNewFormat, _countof(pszNewFormat), pszFormat);
 	return AfxLoadLangResourceDLL(pszNewFormat, _T(""));
@@ -247,7 +247,7 @@ CWinApp::CWinApp(LPCTSTR lpszAppName)
 
 // Fix for warnings when building against WinBlue build 9444.0.130614-1739
 // warning C4996: 'GetVersionExW': was declared deprecated
-// externalapis\windows\winblue\sdk\inc\sysinfoapi.h(442)
+// externalapis\windows\8.1\sdk\inc\sysinfoapi.h(442)
 // Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
 #pragma warning( disable : 4996 )
 	::GetVersionEx(&osvi);
@@ -431,7 +431,7 @@ HINSTANCE CWinApp::LoadAppLangResourceDLL()
 	pszExtension = ::PathFindExtension(szPath);
 	*pszExtension = '\0';
 
-	TCHAR szFormat[] = _T("%s%s.dll");
+	TCHAR szFormat[] = _T("%Ts%Ts.dll");
 
 	return AfxLoadLangResourceDLL(szFormat, szPath);
 }

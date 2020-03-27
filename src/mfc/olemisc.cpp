@@ -383,8 +383,8 @@ LPCTSTR AFXAPI AfxGetFullScodeString(SCODE sc)
 	if ((lpsz = AfxGetScodeString(sc)) != NULL)
 	{
 		// found exact match
-		static const TCHAR szFormat[] = _T("%s ($%08lX)");
-		if( _tcslen(lpsz) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
+		static const TCHAR szFormat[] = _T("%Ts ($%08lX)");
+		if( _tcslen(lpsz) + _countof(szFormat) - 2 /*%Ts*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
 		{
 			_stprintf_s(szBuf, _countof(szBuf), szFormat, lpsz, sc);
 		}
@@ -392,8 +392,8 @@ LPCTSTR AFXAPI AfxGetFullScodeString(SCODE sc)
 	else if ((lpsz = AfxGetScodeRangeString(sc)) != NULL)
 	{
 		// found suitable range
-		static const TCHAR szFormat[] = _T("range: %s ($%08lX)");
-		if( _tcslen(lpsz) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
+		static const TCHAR szFormat[] = _T("range: %Ts ($%08lX)");
+		if( _tcslen(lpsz) + _countof(szFormat) - 2 /*%Ts*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
 		{
 			_stprintf_s(szBuf, _countof(szBuf), szFormat, lpsz, sc);
 		}
@@ -403,9 +403,9 @@ LPCTSTR AFXAPI AfxGetFullScodeString(SCODE sc)
 		// not found at all -- split it up into its parts
 		LPCTSTR lpszSeverity = AfxGetSeverityString(sc);
 		LPCTSTR lpszFacility = AfxGetFacilityString(sc);
-		static const TCHAR szFormat[] = _T("severity: %s, facility: %s ($%08lX)");
+		static const TCHAR szFormat[] = _T("severity: %Ts, facility: %Ts ($%08lX)");
 
-		if( AtlStrLen(lpszSeverity) + AtlStrLen(lpszFacility) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
+		if( AtlStrLen(lpszSeverity) + AtlStrLen(lpszFacility) + _countof(szFormat) - 2 /*%Ts*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
 		{
 			_stprintf_s(szBuf, _countof(szBuf), szFormat, lpszSeverity, lpszFacility, sc);
 		}
@@ -420,7 +420,7 @@ LPCTSTR AFXAPI AfxGetFullScodeString(SCODE sc)
 void __declspec(noreturn) AFXAPI AfxThrowOleException(SCODE sc)
 {
 #ifdef _DEBUG
-	TRACE(traceOle, 0, _T("Warning: constructing COleException, scode = %s.\n"),
+	TRACE(traceOle, 0, _T("Warning: constructing COleException, scode = %Ts.\n"),
 		AfxGetFullScodeString(sc));
 #endif
 	COleException* pException = new COleException;
@@ -681,7 +681,7 @@ AFX_STATIC HGLOBAL AFXAPI _AfxCopyGlobalMemory(HGLOBAL hDest, HGLOBAL hSource)
 	LPVOID lpDest = ::GlobalLock(hDest);
 	ASSERT(lpDest != NULL);
 	ASSERT(lpSource != NULL);
-	Checked::memcpy_s(lpDest, (ULONG)::GlobalSize(hDest), lpSource, (ULONG)nSize);
+	Checked::memcpy_s(lpDest, ::GlobalSize(hDest), lpSource, (ULONG)nSize);
 	::GlobalUnlock(hDest);
 	::GlobalUnlock(hSource);
 
@@ -971,7 +971,7 @@ HGLOBAL AFXAPI _AfxOleGetObjectDescriptorData(
 	// Get FullUserTypeName
 	sc = lpOleObj->GetUserType(USERCLASSTYPE_FULL, &sposzFullUserTypeName);
 
-	// if object is a link, then expand usertypename to be "Linked %s"
+	// if object is a link, then expand usertypename to be "Linked %Ts"
 	if (fIsLink && sposzFullUserTypeName)
 	{
 		// Note: If this LoadString call fails, it is likely that

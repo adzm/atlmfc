@@ -175,7 +175,7 @@ typedef struct tagPROPHEADER
 {
 	WORD        wByteOrder ;    // Always 0xFFFE
 	WORD        wFormat ;       // Always 0
-	DWORD       dwOSVer ;       // System version
+	DWORD       dwOSVer ;       // This member is no longer used and it's always 0
 	CLSID       clsID ;         // Application CLSID
 	DWORD       cSections ;     // Number of sections (must be at least 1)
 } PROPHEADER, *LPPROPHEADER ;

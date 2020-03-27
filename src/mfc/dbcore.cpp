@@ -64,7 +64,7 @@ void AFXAPI AfxThrowDBException(RETCODE nRetCode, CDatabase* pdb, HSTMT hstmt)
 		VERIFY((bResult = pException->m_strError.LoadString(AFX_IDP_SQL_FIRST+(nRetCode-AFX_SQL_ERROR))) == TRUE);
 		if (!bResult)
 			pException->m_strError = szUnableToLoadErrorString;		
-		TRACE(traceDatabase, 0, _T("%s\n"), pException->m_strError);
+		TRACE(traceDatabase, 0, _T("%Ts\n"), pException->m_strError);
 	}
 	THROW(pException);
 }
@@ -171,16 +171,16 @@ void CDBException::TraceErrorMessage(LPCTSTR szTrace) const
 	CString strTrace = szTrace;
 
 	if (strTrace.GetLength() <= 80)
-		TRACE(traceDatabase, 0, _T("%s\n"), strTrace);
+		TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace);
 	else
 	{
 		// Display 80 chars/line
 		while (strTrace.GetLength() > 80)
 		{
-			TRACE(traceDatabase, 0, _T("%s\n"), strTrace.Left(80));
+			TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace.Left(80));
 			strTrace = strTrace.Right(strTrace.GetLength() - 80);
 		}
-		TRACE(traceDatabase, 0, _T("%s\n"), strTrace);
+		TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace);
 	}
 }
 #endif // _DEBUG
@@ -471,7 +471,7 @@ void CDatabase::OnSetOptions(HSTMT hstmt)
 	{
 		// Attempt to set query timeout.  Ignore failure
 		AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_QUERY_TIMEOUT,
-			(SQLPOINTER) m_dwQueryTimeout, 0));
+			(SQLPOINTER)(DWORD_PTR)m_dwQueryTimeout, 0));
 		if (!Check(nRetCode))
 			// don't attempt it again
 			m_dwQueryTimeout = (DWORD)-1;
@@ -730,7 +730,7 @@ void CDatabase::AllocConnect(DWORD dwOptions)
 #endif // _DEBUG
 
 	AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc, SQL_LOGIN_TIMEOUT,
-		(SQLPOINTER) m_dwLoginTimeout, 0));
+		(SQLPOINTER)(DWORD_PTR)m_dwLoginTimeout, 0));
 #ifdef _DEBUG
 	if (nRetCode != SQL_SUCCESS && nRetCode != SQL_SUCCESS_WITH_INFO)
 		TRACE(traceDatabase, 0, _T("Warning: Failure setting login timeout.\n"));
@@ -951,17 +951,17 @@ void CDatabase::GetConnectInfo()
 		szInfo, sizeof(szInfo), &nResult));
 	if (Check(nRetCode))
 	{
-		TRACE(traceDatabase, 0, _T("DBMS: %s\n"), szInfo);
+		TRACE(traceDatabase, 0, _T("DBMS: %Ts\n"), szInfo);
 		AFX_SQL_SYNC(::SQLGetInfo(m_hdbc, SQL_DBMS_VER,
 			szInfo, sizeof(szInfo), &nResult));
 		if (Check(nRetCode))
-			TRACE(traceDatabase, 0, _T("Version: %s\n"), szInfo);
+			TRACE(traceDatabase, 0, _T("Version: %Ts\n"), szInfo);
 	}
 
 	AFX_SQL_SYNC(::SQLGetInfo(m_hdbc, SQL_ODBC_VER,
 		szInfo, sizeof(szInfo), &nResult));
 	if(Check(nRetCode))
-		TRACE(traceDatabase, 0, _T("ODBC Driver Manager Version: %s\n"), szInfo);
+		TRACE(traceDatabase, 0, _T("ODBC Driver Manager Version: %Ts\n"), szInfo);
 #endif // _DEBUG
 }
 
@@ -1645,7 +1645,7 @@ void CRecordset::SetRowsetSize(DWORD dwNewRowsetSize)
 
 	RETCODE nRetCode;
 	AFX_SQL_SYNC(::SQLSetStmtAttr(m_hstmt, SQL_ROWSET_SIZE,
-		(SQLPOINTER) m_dwRowsetSize, 0));
+		(SQLPOINTER)(DWORD_PTR)m_dwRowsetSize, 0));
 }
 
 void CRecordset::AddNew()
@@ -2512,7 +2512,7 @@ void CRecordset::PrepareAndExecute()
 
 				// Attempt to reset the concurrency model.
 				AFX_SQL_SYNC(::SQLSetStmtAttr(m_hstmt, SQL_CONCURRENCY,
-					(SQLPOINTER) m_dwConcurrency, 0));
+					(SQLPOINTER)(DWORD_PTR)m_dwConcurrency, 0));
 				if (!Check(nRetCode))
 				{
 					TRACE(traceDatabase, 0, _T("Error: ODBC failure setting recordset concurrency.\n"));
@@ -2799,7 +2799,7 @@ void CRecordset::SetConcurrencyAndCursorType(HSTMT hstmt, DWORD dwScrollOptions)
 	}
 
 	// Set cursor type (Let rowset size default to 1).
-	AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_CURSOR_TYPE, (SQLPOINTER) dwScrollOptions, 0));
+	AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_CURSOR_TYPE, (SQLPOINTER)(DWORD_PTR)dwScrollOptions, 0));
 	if (!Check(nRetCode))
 	{
 		TRACE(traceDatabase, 0, _T("Error: ODBC failure setting recordset cursor type.\n"));
@@ -2807,7 +2807,7 @@ void CRecordset::SetConcurrencyAndCursorType(HSTMT hstmt, DWORD dwScrollOptions)
 	}
 
 	// Set the concurrency model (NOTE: may have to reset concurrency later).
-	AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_CONCURRENCY, (SQLPOINTER) m_dwConcurrency, 0));
+	AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_CONCURRENCY, (SQLPOINTER)(DWORD_PTR)m_dwConcurrency, 0));
 	if (!Check(nRetCode))
 	{
 		TRACE(traceDatabase, 0, _T("Error: ODBC failure setting recordset concurrency.\n"));

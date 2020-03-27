@@ -502,32 +502,32 @@ inline HINSTANCE AtlFindStringResourceInstance(
 Needed by both atlcomcli and atlsafe, so needs to be in here
 */
 inline HRESULT AtlSafeArrayGetActualVartype(
-    _In_ SAFEARRAY *psaArray,
-    _Out_ VARTYPE *pvtType)
+	_In_ SAFEARRAY *psaArray,
+	_Out_ VARTYPE *pvtType)
 {
-    HRESULT hrSystem=::SafeArrayGetVartype(psaArray, pvtType);
+	HRESULT hrSystem=::SafeArrayGetVartype(psaArray, pvtType);
 
-    if(FAILED(hrSystem))
-    {
-        return hrSystem;
-    }
+	if(FAILED(hrSystem))
+	{
+		return hrSystem;
+	}
 
-    /*
-    When Windows has a SAFEARRAY of type VT_DISPATCH with FADF_HAVEIID,
-    it returns VT_UNKNOWN instead of VT_DISPATCH. We patch the value to be correct
-    */
-    if(pvtType && *pvtType==VT_UNKNOWN)
-    {
-        if(psaArray && ((psaArray->fFeatures & FADF_HAVEIID)!=0))
-        {
-            if(psaArray->fFeatures & FADF_DISPATCH)
-            {
-                *pvtType=VT_DISPATCH;
-            }
-        }
-    }
+	/*
+	When Windows has a SAFEARRAY of type VT_DISPATCH with FADF_HAVEIID,
+	it returns VT_UNKNOWN instead of VT_DISPATCH. We patch the value to be correct
+	*/
+	if(pvtType && *pvtType==VT_UNKNOWN)
+	{
+		if(psaArray && ((psaArray->fFeatures & FADF_HAVEIID)!=0))
+		{
+			if(psaArray->fFeatures & FADF_DISPATCH)
+			{
+				*pvtType=VT_DISPATCH;
+			}
+		}
+	}
 
-    return hrSystem;
+	return hrSystem;
 }
 template <typename _CharType>
 inline _CharType* AtlCharNext(_In_ const _CharType* p) throw()
@@ -589,7 +589,18 @@ inline int AtlprintfT(_In_z_ _Printf_format_string_ const wchar_t* pszFormat,...
 	int retval=0;
 	va_list argList;
 	va_start( argList, pszFormat );
-	retval=vwprintf(pszFormat,	argList);
+#if _MSC_VER < 1900
+	retval = vwprintf(pszFormat, argList);
+#else
+	// Explicitly request the legacy wide format specifiers mode from the CRT,
+	// for compatibility with previous versions.  While the CRT supports two
+	// modes, the ATL and MFC functions that accept format strings only support
+	// legacy mode format strings.
+	retval = __stdio_common_vfwprintf(
+		_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS |
+		_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS,
+		stdout, pszFormat, NULL, argList);
+#endif
 	va_end( argList );
 	return retval;
 }
@@ -638,13 +649,13 @@ inline HMODULE AtlLoadSystemLibraryUsingFullPath(_In_z_ const WCHAR *pszLibrary)
 	// ...otherwise fall back to using LoadLibrary from the SYSTEM32 folder explicitly.
 #endif
 	WCHAR wszLoadPath[MAX_PATH+1];
-    UINT rc = ::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath));
+	UINT rc = ::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath));
 	if (rc == 0 || rc >= _countof(wszLoadPath))
 	{
 		return NULL;
 	}
 
-	if (wszLoadPath[wcslen(wszLoadPath)-1] != L'\\')
+	if (wszLoadPath[rc-1] != L'\\')
 	{
 		if (wcscat_s(wszLoadPath, _countof(wszLoadPath), L"\\") != 0)
 		{

@@ -522,7 +522,7 @@ public:
         _In_ int nParams, 
         _Out_opt_ VARIANT* pvarRet = NULL) throw()
     {
-        DISPPARAMS dispparams = { pvarParams, NULL, nParams, 0};
+        DISPPARAMS dispparams = {pvarParams, NULL, (unsigned int)nParams, 0};
         return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
     }
     // Invoke a method by name with Nparameters
@@ -541,16 +541,16 @@ public:
     }
 
     _Check_return_ static HRESULT PutProperty(
-        _In_ IDispatch* p, 
+        _In_ IDispatch* pDispatch, 
         _In_ DISPID dwDispID, 
         _In_ VARIANT* pVar) throw()
     {
-        ATLASSERT(p);
+        ATLASSERT(pDispatch);
         ATLASSERT(pVar != NULL);
         if (pVar == NULL)
             return E_POINTER;
         
-        if(p == NULL)
+        if (pDispatch == NULL)
             return E_INVALIDARG;
         
         ATLTRACE(atlTraceCOM, 2, _T("CPropertyHelper::PutProperty\n"));
@@ -562,33 +562,33 @@ public:
         if (pVar->vt == VT_UNKNOWN || pVar->vt == VT_DISPATCH || 
             (pVar->vt & VT_ARRAY) || (pVar->vt & VT_BYREF))
         {
-            HRESULT hr = p->Invoke(dwDispID, IID_NULL,
+            HRESULT hr = pDispatch->Invoke(dwDispID, IID_NULL,
                 LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUTREF,
                 &dispparams, NULL, NULL, NULL);
             if (SUCCEEDED(hr))
                 return hr;
         }
-        return p->Invoke(dwDispID, IID_NULL,
+        return pDispatch->Invoke(dwDispID, IID_NULL,
                 LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
                 &dispparams, NULL, NULL, NULL);
     }
 
     _Check_return_ static HRESULT GetProperty(
-        _In_ IDispatch* p, 
+        _In_ IDispatch* pDispatch,
         _In_ DISPID dwDispID, 
         _Out_ VARIANT* pVar) throw()
     {
-        ATLASSERT(p);
+        ATLASSERT(pDispatch);
         ATLASSERT(pVar != NULL);
         if (pVar == NULL)
             return E_POINTER;
         
-        if(p == NULL)
+        if (pDispatch == NULL)
             return E_INVALIDARG;
             
         ATLTRACE(atlTraceCOM, 2, _T("CPropertyHelper::GetProperty\n"));
         DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
-        return p->Invoke(dwDispID, IID_NULL,
+        return pDispatch->Invoke(dwDispID, IID_NULL,
                 LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
                 &dispparamsNoArgs, pVar, NULL, NULL);
     }
@@ -792,9 +792,9 @@ public:
     CComBSTR(_In_ REFGUID guid)
     {
         OLECHAR szGUID[64];
-ATLPREFAST_SUPPRESS(6031)
-        ::StringFromGUID2(guid, szGUID, 64);
-ATLPREFAST_UNSUPPRESS()
+        int result = ::StringFromGUID2(guid, szGUID, 64);
+        ATLASSERT(result != 0);
+        UNREFERENCED_PARAMETER(result);
         m_str = ::SysAllocString(szGUID);
         if (!*this)
         {

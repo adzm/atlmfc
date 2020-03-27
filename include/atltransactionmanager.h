@@ -22,7 +22,7 @@
 #include <ktmw32.h>
 #include <tchar.h>
 
-_CRTIMP bool __cdecl __uncaught_exception();
+extern "C" _VCRTIMP bool __cdecl __uncaught_exception();
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL

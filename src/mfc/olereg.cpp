@@ -444,7 +444,7 @@ BOOL AFXAPI AfxOleUnregisterHelper(LPCTSTR const* rglpszRegister,
 
 		if ((hKeyRoot == HKEY_CLASSES_ROOT) && strKey.IsEmpty())
 		{
-			TRACE(traceOle, 0, _T("Warning: skipping empty key '%s'.\n"), lpszKey);
+			TRACE(traceOle, 0, _T("Warning: skipping empty key '%Ts'.\n"), lpszKey);
 			continue;
 		}
 
@@ -487,7 +487,7 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 
 		if ((hKeyRoot == HKEY_CLASSES_ROOT) && strKey.IsEmpty())
 		{
-			TRACE(traceOle, 0, _T("Warning: skipping empty key '%s'.\n"), lpszKey);
+			TRACE(traceOle, 0, _T("Warning: skipping empty key '%Ts'.\n"), lpszKey);
 			continue;
 		}
 
@@ -500,8 +500,8 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 #ifdef _DEBUG
 				if (strValue != szBuffer)
 				{
-					TRACE(traceOle, 0, _T("Warning: Leaving value '%s' for key '%s' in registry\n"), szBuffer, (LPCTSTR)strKey);
-					TRACE(traceOle, 0, _T("\tintended value was '%s'.\n"), (LPCTSTR)strValue);
+					TRACE(traceOle, 0, _T("Warning: Leaving value '%Ts' for key '%Ts' in registry\n"), szBuffer, (LPCTSTR)strKey);
+					TRACE(traceOle, 0, _T("\tintended value was '%Ts'.\n"), (LPCTSTR)strValue);
 				}
 #endif
 				continue;
@@ -511,7 +511,7 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 		LONG lResult = AfxRegSetValue(hKeyRoot, strKey, REG_SZ, strValue, AtlStrLen(strValue) * sizeof(TCHAR));
 		if(lResult != ERROR_SUCCESS)
 		{
-			TRACE(traceOle, 0, _T("Error: failed setting key '%s' to value '%s'.\n"), (LPCTSTR)strKey, (LPCTSTR)strValue);
+			TRACE(traceOle, 0, _T("Error: failed setting key '%Ts' to value '%Ts'.\n"), (LPCTSTR)strKey, (LPCTSTR)strValue);
 
 			if(lResult != ERROR_ACCESS_DENIED)
 			{
@@ -527,7 +527,7 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 AFX_STATIC_DATA const TCHAR _afxPreviewHostCLSID [] = _T("{8895b1c6-b41f-4c1c-a562-0d564250836f}");
 AFX_STATIC_DATA const TCHAR _afxThumbnailHostCLSID [] = _T("{E357FCCD-A995-4576-B01F-234630154E96}");
 AFX_STATIC_DATA const TCHAR _afxPreviewHandlersRegPath [] = _T("Software\\Microsoft\\Windows\\CurrentVersion\\PreviewHandlers");
-AFX_STATIC_DATA const TCHAR _afxShellExFormat [] = _T("%s\\ShellEx\\%s");
+AFX_STATIC_DATA const TCHAR _afxShellExFormat [] = _T("%Ts\\ShellEx\\%Ts");
 AFX_STATIC_DATA const TCHAR _afxTreatmentValueName [] = _T("Treatment");
 
 BOOL AFXAPI AfxRegisterPreviewHandler(LPCTSTR lpszCLSID, LPCTSTR lpszShortTypeName, LPCTSTR lpszFilterExt)
@@ -540,7 +540,7 @@ BOOL AFXAPI AfxRegisterPreviewHandler(LPCTSTR lpszCLSID, LPCTSTR lpszShortTypeNa
 
 	if (regPreviewHandlersKey.SetStringValue(lpszCLSID, strData) != ERROR_SUCCESS)
 	{
-		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_LOCAL_MACHINE\\'%s'.\n"), lpszCLSID, _afxPreviewHandlersRegPath);
+		TRACE(traceOle, 0, _T("Error: failed setting value '%Ts' for key HKEY_LOCAL_MACHINE\\'%Ts'.\n"), lpszCLSID, _afxPreviewHandlersRegPath);
 		return FALSE;
 	}
 
@@ -552,7 +552,7 @@ BOOL AFXAPI AfxRegisterPreviewHandler(LPCTSTR lpszCLSID, LPCTSTR lpszShortTypeNa
 
 	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID)lpszCLSID, (ULONG)(AtlStrLen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
 	{
-		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_CLASSES_ROOT\\'%s'.\n"), lpszCLSID, strShellExKey);
+		TRACE(traceOle, 0, _T("Error: failed setting value '%Ts' for key HKEY_CLASSES_ROOT\\'%Ts'.\n"), lpszCLSID, strShellExKey);
 		return FALSE;
 	}
 
@@ -586,7 +586,7 @@ BOOL AFXAPI AfxRegisterThumbnailHandler(LPCTSTR lpszCLSID, LPCTSTR lpszFilterExt
 
 	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID) lpszCLSID, (ULONG)(AtlStrLen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
 	{
-		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_CLASSES_ROOT\\'%s'.\n"), lpszCLSID, strShellExKey);
+		TRACE(traceOle, 0, _T("Error: failed setting value '%Ts' for key HKEY_CLASSES_ROOT\\'%Ts'.\n"), lpszCLSID, strShellExKey);
 		return FALSE;
 	}
 	else
