@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <atldef.h>
 #include <atlbase.h>
 #include <new.h>
 
@@ -117,8 +118,8 @@ public:
 	typedef T& OUTARGTYPE;
 
 	static void CopyElements(
-		_Out_bytecap_x_(nElements * sizeof(T)) T* pDest,
-		_In_bytecount_x_(nElements * sizeof(T)) const T* pSrc,
+		_Out_writes_all_(nElements) T* pDest,
+		_In_reads_(nElements) const T* pSrc,
 		_In_ size_t nElements)
 	{		
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
@@ -128,8 +129,8 @@ public:
 	}
 	
 	static void RelocateElements(
-		_Out_bytecap_x_(nElements * sizeof(T)) T* pDest,
-		_In_bytecount_x_(nElements * sizeof(T)) T* pSrc,
+		_Out_writes_all_(nElements) T* pDest,
+		_In_reads_(nElements) T* pSrc,
 		_In_ size_t nElements)
 	{
 		// A simple memmove works for nearly all types.
@@ -343,8 +344,8 @@ public:
 
     // Specialise copy elements to allow non-const since we transfer ownership on assignment
     static void CopyElements(
-		_Out_cap_(nElements) ::ATL::CAutoPtr< T >* pDest,
-		_In_count_(nElements) ::ATL::CAutoPtr< T >* pSrc,
+		_Out_writes_(nElements) ::ATL::CAutoPtr< T >* pDest,
+		_In_reads_(nElements) ::ATL::CAutoPtr< T >* pSrc,
 		_In_ size_t nElements)
 	{
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
@@ -364,8 +365,8 @@ public:
 
     // Specialise copy elements to allow non-const since we transfer ownership on assignment
     static void CopyElements(
-		_Out_cap_(nElements) ::ATL::CAutoVectorPtr< T >* pDest,
-		_In_count_(nElements) ::ATL::CAutoVectorPtr< T >* pSrc,
+		_Out_writes_(nElements) ::ATL::CAutoVectorPtr< T >* pDest,
+		_In_reads_(nElements) ::ATL::CAutoVectorPtr< T >* pSrc,
 		_In_ size_t nElements)
 	{
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
@@ -597,10 +598,10 @@ private:
 
 private:
 	static void CallConstructors(
-		_Inout_cap_(nElements) E* pElements,
+		_Inout_updates_(nElements) E* pElements,
 		_In_ size_t nElements);
 	static void CallDestructors(
-		_Inout_ _Prepost_bytecount_x_(sizeof(E) * nElements) E* pElements,
+		_Inout_updates_to_(nElements, 0) E* pElements,
 		_In_ size_t nElements) throw();
 
 public:
@@ -819,10 +820,13 @@ bool CAtlArray< E, ETraits >::GrowBuffer(_In_ size_t nNewSize)
 			size_t nGrowBy = m_nGrowBy;
 			if( nGrowBy == 0 )
 			{
-				// heuristically determine growth when nGrowBy == 0
-				//  (this avoids heap fragmentation in many situations)
-				nGrowBy = m_nSize/8;
-				nGrowBy = (nGrowBy < 4) ? 4 : ((nGrowBy > 1024) ? 1024 : nGrowBy);
+				// use 1.5 ratio for growing buffers				
+				nGrowBy = m_nMaxSize / 2;
+				
+				if ((nNewSize - m_nMaxSize) > nGrowBy)
+				{
+					nGrowBy = nNewSize - m_nMaxSize;
+				}				
 			}
 			size_t nNewMax;
 			if( nNewSize < (m_nMaxSize+nGrowBy) )
@@ -1127,7 +1131,7 @@ void CAtlArray< E, ETraits >::AssertValid() const
 
 template< typename E, class ETraits >
 void CAtlArray< E, ETraits >::CallConstructors(
-	_Inout_cap_(nElements) E* pElements,
+	_Inout_updates_(nElements) E* pElements,
 	_In_ size_t nElements)
 {
 	size_t iElement = 0;
@@ -1153,9 +1157,10 @@ void CAtlArray< E, ETraits >::CallConstructors(
 
 #pragma pop_macro("new")
 
+ATLPREFAST_SUPPRESS(6385)
 template< typename E, class ETraits >
 void CAtlArray< E, ETraits >::CallDestructors(
-	_Inout_ _Prepost_bytecount_x_(sizeof(E) * nElements) E* pElements,
+	_Inout_updates_to_(nElements, 0) E* pElements,
 	_In_ size_t nElements) throw()
 {
 	(pElements);
@@ -1165,7 +1170,7 @@ void CAtlArray< E, ETraits >::CallDestructors(
 		pElements[iElement].~E();
 	}
 }
-
+ATLPREFAST_UNSUPPRESS()
 
 template< typename E, class ETraits = CElementTraits< E > >
 class CAtlList
@@ -2153,7 +2158,7 @@ public:
 	size_t GetCount() const throw();
 	bool IsEmpty() const throw();
 
-	bool Lookup(
+	_Success_(return != false) bool Lookup(
 		/* _In_ */ KINARGTYPE key,
 		_Out_ VOUTARGTYPE value) const;
 	const CPair* Lookup(/* _In_ */ KINARGTYPE key) const throw();
@@ -2232,11 +2237,11 @@ private:
 		_In_ UINT nHash);
 	void FreeNode(_Inout_ CNode* pNode);
 	void FreePlexes() throw();
-	CNode* GetNode(
+	_Success_(return != NULL) CNode* GetNode(
 		/* _In_ */ KINARGTYPE key,
 		_Out_ UINT& iBin,
 		_Out_ UINT& nHash,
-		_Deref_out_opt_ CNode*& pPrev) const throw();
+		_Outref_result_maybenull_ CNode*& pPrev) const throw();
 	CNode* CreateNode(
 		/* _In_ */ KINARGTYPE key,
 		_In_ UINT iBin,
@@ -2410,20 +2415,20 @@ inline bool CAtlMap< K, V, KTraits, VTraits >::IsLocked() const throw()
 	return( m_nLockCount != 0 );
 }
 
+// List of primes such that s_anPrimes[i] is the smallest prime greater than 2^(5+i/3)
+extern __declspec(selectany) const UINT s_anPrimes[] =
+{
+	17, 23, 29, 37, 41, 53, 67, 83, 103, 131, 163, 211, 257, 331, 409, 521, 647, 821,
+	1031, 1291, 1627, 2053, 2591, 3251, 4099, 5167, 6521, 8209, 10331,
+	13007, 16411, 20663, 26017, 32771, 41299, 52021, 65537, 82571, 104033,
+	131101, 165161, 208067, 262147, 330287, 416147, 524309, 660563,
+	832291, 1048583, 1321139, 1664543, 2097169, 2642257, 3329023, 4194319,
+	5284493, 6658049, 8388617, 10568993, 13316089, UINT_MAX
+};
+
 template< typename K, typename V, class KTraits, class VTraits >
 UINT CAtlMap< K, V, KTraits, VTraits >::PickSize(_In_ size_t nElements) const throw()
 {
-	// List of primes such that s_anPrimes[i] is the smallest prime greater than 2^(5+i/3)
-	static const UINT s_anPrimes[] =
-	{
-		17, 23, 29, 37, 41, 53, 67, 83, 103, 131, 163, 211, 257, 331, 409, 521, 647, 821,
-		1031, 1291, 1627, 2053, 2591, 3251, 4099, 5167, 6521, 8209, 10331,
-		13007, 16411, 20663, 26017, 32771, 41299, 52021, 65537, 82571, 104033,
-		131101, 165161, 208067, 262147, 330287, 416147, 524309, 660563,
-		832291, 1048583, 1321139, 1664543, 2097169, 2642257, 3329023, 4194319,
-		5284493, 6658049, 8388617, 10568993, 13316089, UINT_MAX
-	};
-
 	size_t nBins = (size_t)(nElements/m_fOptimalLoad);
 	UINT nBinsEstimate = UINT(  UINT_MAX < nBins ? UINT_MAX : nBins );
 
@@ -2607,7 +2612,7 @@ bool CAtlMap< K, V, KTraits, VTraits >::InitHashTable(_In_ UINT nBins, _In_ bool
 
 	if( bAllocNow )
 	{
-		ATLTRY( m_ppBins = new CNode*[nBins] );
+		m_ppBins = _ATL_NEW CNode*[nBins];
 		if( m_ppBins == NULL )
 		{
 			return false;
@@ -2711,8 +2716,10 @@ typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTrai
 	}
 	_ATLCATCHALL()
 	{
+		ATLPREFAST_SUPPRESS(6001)
 		pNewNode->m_pNext = m_pFree;
 		m_pFree = pNewNode;
+		ATLPREFAST_UNSUPPRESS()
 
 		_ATLRETHROW;
 	}
@@ -2766,11 +2773,11 @@ void CAtlMap< K, V, KTraits, VTraits >::FreePlexes() throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::GetNode(
+_Success_(return != NULL) typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::GetNode(
 	/* _In_ */ KINARGTYPE key,
 	_Out_ UINT& iBin,
 	_Out_ UINT& nHash,
-	_Deref_out_opt_ CNode*& pPrev) const throw()
+	_Outref_result_maybenull_ CNode*& pPrev) const throw()
 {
 	CNode* pFollow;
 
@@ -2798,7 +2805,7 @@ typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTrai
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CAtlMap< K, V, KTraits, VTraits >::Lookup(
+_Success_(return != false) bool CAtlMap< K, V, KTraits, VTraits >::Lookup(
 	/* _In_ */ KINARGTYPE key,
 	_Out_ VOUTARGTYPE value) const
 {
@@ -2917,8 +2924,6 @@ void CAtlMap< K, V, KTraits, VTraits >::RemoveAtPos(_In_ POSITION pos)
 template< typename K, typename V, class KTraits, class VTraits >
 void CAtlMap< K, V, KTraits, VTraits >::Rehash(_In_ UINT nBins)
 {
-	CNode** ppBins = NULL;
-
 	if( nBins == 0 )
 	{
 		nBins = PickSize( m_nElements );
@@ -2938,7 +2943,7 @@ void CAtlMap< K, V, KTraits, VTraits >::Rehash(_In_ UINT nBins)
 		return;
 	}
 
-	ATLTRY(ppBins = new CNode*[nBins]);
+	CNode** ppBins = _ATL_NEW CNode*[nBins];
 	if (ppBins == NULL)
 	{
 		AtlThrow( E_OUTOFMEMORY );
@@ -3209,7 +3214,7 @@ private:
 
 	// methods
 	bool IsNil(_In_ CNode *p) const throw();
-	void SetNil(_Deref_out_ CNode **p) throw();
+	void SetNil(_Outptr_ CNode **p) throw();
 
 	CNode* NewNode(
 		/* _In_ */ KINARGTYPE key,
@@ -3311,7 +3316,7 @@ inline bool CRBTree< K, V, KTraits, VTraits >::IsNil(_In_ CNode *p) const throw(
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-inline void CRBTree< K, V, KTraits, VTraits >::SetNil(_Deref_out_ CNode **p)
+inline void CRBTree< K, V, KTraits, VTraits >::SetNil(_Outptr_ CNode **p)
 {
 	ATLENSURE( p != NULL );
 	*p = m_pNil;

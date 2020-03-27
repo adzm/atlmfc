@@ -128,7 +128,7 @@ void CMFCColorMenuButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages*
 	}
 
 	CPalette* pOldPalette = NULL;
-	if (afxGlobalData.m_nBitsPerPixel == 8) // 256 colors
+	if (GetGlobalData()->m_nBitsPerPixel == 8) // 256 colors
 	{
 		if (m_Palette.GetSafeHandle() == NULL)
 		{
@@ -155,17 +155,17 @@ void CMFCColorMenuButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages*
 	rectColor.OffsetRect(0, 1);
 
 	// Draw color bar:
-	BOOL bDrawImageShadow = bHighlight && !bCustomizeMode && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !afxGlobalData.IsHighContrastMode() &&
+	BOOL bDrawImageShadow = bHighlight && !bCustomizeMode && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !GetGlobalData()->IsHighContrastMode() &&
 		((m_nStyle & TBBS_PRESSED) == 0) && ((m_nStyle & TBBS_CHECKED) == 0) && ((m_nStyle & TBBS_DISABLED) == 0);
 
 	if (bDrawImageShadow)
 	{
-		CBrush brShadow(afxGlobalData.clrBarShadow);
+		CBrush brShadow(GetGlobalData()->clrBarShadow);
 		pDC->FillRect(rectColor, &brShadow);
 		rectColor.OffsetRect(-1, -1);
 	}
 
-	COLORREF color = (m_nStyle & TBBS_DISABLED) ? afxGlobalData.clrBarShadow : (m_Color == (COLORREF)-1 ? m_colorAutomatic : m_Color);
+	COLORREF color = (m_nStyle & TBBS_DISABLED) ? GetGlobalData()->clrBarShadow : (m_Color == (COLORREF)-1 ? m_colorAutomatic : m_Color);
 
 	CBrush br(PALETTERGB( GetRValue(color), GetGValue(color), GetBValue(color)));
 
@@ -179,14 +179,14 @@ void CMFCColorMenuButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages*
 
 	if (CMFCVisualManager::GetInstance()->IsMenuFlatLook())
 	{
-		if (color == afxGlobalData.clrBarFace)
+		if (color == GetGlobalData()->clrBarFace)
 		{
-			pDC->Draw3dRect(rectColor, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarDkShadow);
+			pDC->Draw3dRect(rectColor, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarDkShadow);
 		}
 	}
 	else
 	{
-		pDC->Draw3dRect(rectColor, afxGlobalData.clrBarShadow, afxGlobalData.clrBarLight);
+		pDC->Draw3dRect(rectColor, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarLight);
 	}
 
 	if (pOldPalette != NULL)

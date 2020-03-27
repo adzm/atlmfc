@@ -136,7 +136,7 @@ enum OLE_OBJTYPE
 	OT_OLE2 = 256,
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleDataObject -- simple wrapper for IDataObject
 
 class COleDataObject
@@ -182,7 +182,7 @@ private:
 	void operator=(const COleDataObject&);  // no implementation
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleDataSource -- wrapper for implementing IDataObject
 //  (works similar to how data is provided on the clipboard)
 
@@ -273,7 +273,7 @@ public:
 	friend class COleServerItem;
 };
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // DocItem support
 
 class CDocItem : public CCmdTarget
@@ -308,7 +308,7 @@ public:
 	friend class COleDocument;              // for access to back pointer
 };
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleDocument - common OLE container behavior (enables server functionality)
 
 class COleDocument : public CDocument
@@ -422,14 +422,21 @@ protected:
 	afx_msg void OnEditChangeIcon();
 	afx_msg void OnUpdateObjectVerbMenu(CCmdUI* pCmdUI);
 	afx_msg void OnFileSendMail();
+	afx_msg void OnUpdateObjectVerbPopup(CCmdUI* pCmdUI);
 
 	friend class COleClientItem;
 	friend class COleServerItem;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleClientItem - Supports OLE2 non-inplace editing.
 //      implements IOleClientSite, IAdviseSink, and IOleInPlaceSite
+
+union ClassesAllowedInStorage
+{
+	const CLSID *rgclsidAllowed;
+	HRESULT (*pfnClsidAllowed)(_In_ const CLSID& clsid, _In_ REFIID iidInterface);
+};
 
 class COleFrameHook;    // forward reference (see ..\src\oleimpl2.h)
 
@@ -439,7 +446,7 @@ class COleClientItem : public CDocItem
 
 // Constructors
 public:
-	/* explicit */ COleClientItem(COleDocument* pContainerDoc = NULL);
+	explicit COleClientItem(COleDocument* pContainerDoc = NULL);
 
 	// create from the clipboard
 	BOOL CreateFromClipboard(OLERENDER render = OLERENDER_DRAW,
@@ -664,6 +671,9 @@ public:
 
 	DWORD m_dwFrameMenuBarVisibility; // visibility of the frame window menu bar
 
+	ClassesAllowedInStorage m_ClassesAllowedInStorage;
+	DWORD m_nClassesAllowedInStorage;
+
 public:
 	virtual ~COleClientItem();
 	virtual void Serialize(CArchive& ar);
@@ -680,7 +690,7 @@ public:
 	DWORD GetNewItemNumber();   // generates new item number
 	_AFX_INSECURE_DEPRECATE("COleClientItem::GetItemName(TCHAR *) is insecure. Instead use COleClientItem::GetItemName(TCHAR *, UINT *size)")
 	void GetItemName(_Out_ _Pre_notnull_ _Post_z_ LPTSTR lpszItemName) const; // gets readable item name
-	void GetItemName(_Out_z_cap_(cchItemName)  _Pre_notnull_ _Post_z_ LPTSTR lpszItemName, UINT cchItemName) const;
+	void GetItemName(_Out_writes_z_(cchItemName)  _Pre_notnull_ _Post_z_ LPTSTR lpszItemName, UINT cchItemName) const;
 
 	void UpdateItemType();  // update m_nItemType
 
@@ -775,7 +785,7 @@ class COleDocObjectItem : public COleClientItem
 
 // Constructors
 public:
-	/* explicit */ COleDocObjectItem(COleDocument* pContainerDoc = NULL);
+	explicit COleDocObjectItem(COleDocument* pContainerDoc = NULL);
 
 //Overridables
 public:
@@ -826,7 +836,7 @@ protected:
 	DECLARE_INTERFACE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleServerItem - IOleObject & IDataObject OLE component
 
 class AFX_NOVTABLE COleServerItem : public CDocItem
@@ -1008,7 +1018,7 @@ public:
 		STDMETHOD(Update)();
 		STDMETHOD(IsUpToDate)();
 		STDMETHOD(GetUserClassID)(LPCLSID);
-		STDMETHOD(GetUserType)(DWORD, _Deref_out_z_ LPOLESTR*);
+		STDMETHOD(GetUserType)(DWORD, _Outptr_result_z_ LPOLESTR*);
 		STDMETHOD(SetExtent)(DWORD, LPSIZEL);
 		STDMETHOD(GetExtent)(DWORD, LPSIZEL);
 		STDMETHOD(Advise)(LPADVISESINK, LPDWORD);
@@ -1038,7 +1048,7 @@ public:
 	friend class COleLinkingDoc;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleLinkingDoc -
 //  (enables linking to embeddings - beginnings of server fuctionality)
 
@@ -1133,7 +1143,7 @@ public:
 	friend class COleServerItem::XOleObject;
 };
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleServerDoc - registered server document containing COleServerItems
 
 class AFX_NOVTABLE COleServerDoc : public COleLinkingDoc
@@ -1275,12 +1285,11 @@ protected:
 	void UpdateUsingHostObj(UINT nIDS, CCmdUI* pCmdUI);
 
 // Message Maps
-	//{{AFX_MSG(COleServerDoc)
 	afx_msg void OnFileUpdate();
 	afx_msg void OnFileSaveCopyAs();
 	afx_msg void OnUpdateFileUpdate(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateFileExit(CCmdUI* pCmdUI);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Interface Maps
@@ -1362,7 +1371,7 @@ public:
 	friend class CDocObjectServer;
 };
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleIPFrameWnd
 
 class COleCntrFrameWnd;
@@ -1435,7 +1444,6 @@ protected:
 	virtual void OnRequestPositionChange(LPCRECT lpRect);
 
 protected:
-	//{{AFX_MSG(COleIPFrameWnd)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg LRESULT OnRecalcParent(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnIdleUpdateCmdUI();
@@ -1446,7 +1454,7 @@ protected:
 	afx_msg void OnUpdateControlBarMenu(CCmdUI* pCmdUI);
 	afx_msg BOOL OnBarCheck(UINT nID);
 	afx_msg void OnWindowPosChanging(LPWINDOWPOS lpWndPos);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	friend class COleServerDoc;
@@ -1454,7 +1462,7 @@ protected:
 	friend class CDocObjectServer;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleResizeBar - supports in-place resizing in server applications
 
 class COleResizeBar : public CControlBar
@@ -1476,18 +1484,17 @@ protected:
 	CRectTracker m_tracker;     // implemented with a tracker
 
 protected:
-	//{{AFX_MSG(COleResizeBar)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnLButtonDown(UINT, CPoint point);
 	afx_msg LRESULT OnSizeParent(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleStreamFile - implementation of CFile which uses an IStream
 
 class COleStreamFile : public CFile
@@ -1499,7 +1506,7 @@ private:
 
 // Constructors and Destructors
 public:
-	/* explicit */ COleStreamFile(LPSTREAM lpStream = NULL);
+	explicit COleStreamFile(LPSTREAM lpStream = NULL);
 
 // Operations
 	// Note: OpenStream and CreateStream can accept eith STGM_ flags or
@@ -1553,7 +1560,7 @@ protected:
 	CString m_strStorageName;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMonikerFile - implementation of COleStreamFile that uses an IMoniker to
 //                get the IStream
 
@@ -1630,7 +1637,7 @@ protected:
 	// Prevents copying.
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CAsyncMonikerFile - implementation of COleStreamFile that uses an
 //                     asynchronous IMoniker to get the IStream
 
@@ -1744,7 +1751,7 @@ protected:
 	virtual BOOL PostBindToStream(CFileException* pError);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleDropSource (advanced drop source support)
 
 class COleDropSource : public CCmdTarget
@@ -1785,7 +1792,7 @@ public:
 	friend class COleDataSource;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleDropTarget (advanced drop target support)
 
 class COleDropTarget : public CCmdTarget
@@ -1848,7 +1855,7 @@ public:
 	DECLARE_INTERFACE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleMessageFilter (implements IMessageFilter)
 
 class COleMessageFilter : public CCmdTarget
@@ -1931,6 +1938,8 @@ public:
 
 void AFXAPI AfxOleSetEditMenu(COleClientItem* pClient, CMenu* pMenu,
 	UINT iMenuItem, UINT nIDVerbMin, UINT nIDVerbMax = 0, UINT nIDConvert = 0);
+
+HRESULT AfxInternalOleLoadFromStorage(IStorage* pStg, REFIID iidInterface, IOleClientSite *pClientSite, void** ppvObj, ClassesAllowedInStorage rgclsidAllowed, DWORD cclsidAllowed);
 
 #ifdef _DEBUG
 // Mapping SCODEs to readable text

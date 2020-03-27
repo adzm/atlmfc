@@ -18,14 +18,12 @@
 // CDockBar
 
 BEGIN_MESSAGE_MAP(CDockBar, CControlBar)
-	//{{AFX_MSG_MAP(CDockBar)
 	ON_WM_NCCALCSIZE()
 	ON_WM_NCPAINT()
 	ON_WM_WINDOWPOSCHANGING()
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
 	ON_MESSAGE(WM_SIZEPARENT, &CDockBar::OnSizeParent)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -598,12 +596,21 @@ BOOL CDockBar::OnEraseBkgnd(CDC* pDC)
 	{
 		HRESULT hr;
 
-		if (CThemeHelper::IsThemeBackgroundPartiallyTransparent(m_hReBarTheme, RP_BACKGROUND, 0 /* No states defined */))
+		if (IsThemeBackgroundPartiallyTransparent(m_hReBarTheme, RP_BACKGROUND, 0 /* No states defined */))
 		{
-			CThemeHelper::DrawThemeParentBackground(m_hWnd, pDC->m_hDC, &rect);
+			DrawThemeParentBackground(m_hWnd, pDC->m_hDC, &rect);
 		}
 
-		hr = CThemeHelper::DrawThemeBackground(m_hReBarTheme, pDC->m_hDC, RP_BACKGROUND, 0 /* No states defined */, &rect, NULL);
+		// make sure artifact of non-themed background is not painted at right-most (or bottom-most) edge
+		CRect rectScreen;
+		rectScreen.SetRectEmpty();
+
+		::SystemParametersInfo(SPI_GETWORKAREA, 0, &rectScreen, 0);
+		rect.right = max(rectScreen.right, rect.right + 1);
+		rect.top -= 1;
+		rect.bottom = max(rectScreen.bottom, rect.bottom + 1);
+
+		hr = DrawThemeBackground(m_hReBarTheme, pDC->m_hDC, RP_BACKGROUND, 0 /* No states defined */, &rect, NULL);
 		if (SUCCEEDED( hr ))
 		{
 			return TRUE;
@@ -775,11 +782,9 @@ void CControlBar::EnableDocking(DWORD dwDockStyle)
 // CMiniDockFrameWnd
 
 BEGIN_MESSAGE_MAP(CMiniDockFrameWnd, CMiniFrameWnd)
-	//{{AFX_MSG_MAP(CMiniDockFrameWnd)
 	ON_WM_CLOSE()
 	ON_WM_NCLBUTTONDOWN()
 	ON_WM_NCLBUTTONDBLCLK()
-	//}}AFX_MSG_MAP
 	ON_WM_MOUSEACTIVATE()
 END_MESSAGE_MAP()
 

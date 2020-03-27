@@ -22,7 +22,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTabbedPane window
 
 class CTabbedPane : public CBaseTabbedPane
@@ -68,10 +68,9 @@ protected:
 	virtual void OnPressCloseButton();
 
 protected:
-	//{{AFX_MSG(CTabbedPane)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	// Tab Auto-colors support

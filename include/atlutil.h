@@ -12,6 +12,13 @@
 #define __ATLUTIL_H__
 
 #pragma once
+
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <crtdbg.h>
@@ -51,7 +58,7 @@ IsDebuggerPresent
 namespace ATL {
 
 template <typename CharType>
-inline BOOL AtlIsFullPathT(_In_count_c_(3) const CharType* szPath)
+inline BOOL AtlIsFullPathT(_In_reads_(3) const CharType* szPath)
 {
 	ATLENSURE( szPath != NULL );
 	//Full path len >= 2
@@ -76,12 +83,12 @@ inline BOOL AtlIsFullPathT(_In_count_c_(3) const CharType* szPath)
 
 }
 
-inline BOOL IsFullPath(_In_count_c_(3) LPCTSTR szPath) throw()
+inline BOOL IsFullPath(_In_reads_(3) LPCTSTR szPath) throw()
 {
 	return AtlIsFullPathT(szPath);
 }
 
-inline BOOL IsFullPathA(_In_count_c_(3) LPCSTR szPath) throw()
+inline BOOL IsFullPathA(_In_reads_(3) LPCSTR szPath) throw()
 {
 	return AtlIsFullPathT(szPath);
 }
@@ -93,8 +100,8 @@ inline BOOL IsFullPathA(_In_count_c_(3) LPCSTR szPath) throw()
 // this function is different from the the CRT
 // strncpy in that it does not pad out the whole string with zeroes
 inline char * __cdecl _strncpy(
-	_Out_z_cap_(count) char * dest,
-	_In_z_count_(count) const char * source,
+	_Out_writes_z_(count) char * dest,
+	_In_reads_z_(count) const char * source,
 	_In_ size_t count) throw()
 {
 	ATLASSERT( dest != NULL );
@@ -124,8 +131,8 @@ inline char * __cdecl _strncpy(
 #pragma warning(pop)
 
 inline bool _SafeStringCopy(
-	_Out_z_cap_(nLen) char *szDest,
-	_In_z_count_(nLen) const char *szSrc,
+	_Out_writes_z_(nLen) char *szDest,
+	_In_reads_z_(nLen) const char *szSrc,
 	_In_ size_t nLen) throw()
 {
 	ATLASSERT( szDest != NULL );
@@ -171,7 +178,7 @@ public:
 		// should have been Restore()'d by now.
 #ifdef _DEBUG
 		if(m_hThreadToken != INVALID_HANDLE_VALUE)
-			DebugBreak();
+			__debugbreak();
 #endif
 	}
 
@@ -193,6 +200,9 @@ public:
 			}
 			return TRUE;
 		}
+
+		// OpenThreadToken may change the value of m_hThreadToken even on failure, so reset it to invalid.
+		m_hThreadToken = INVALID_HANDLE_VALUE;
 		return FALSE;
 	}
 
@@ -409,11 +419,13 @@ public:
 				}
 				if (siSymbol.dwOffset != 0)
 				{
+ATLPREFAST_SUPPRESS(6340)
 #ifdef _WIN64
 					sprintf_s(szWithOffset, ATL_SYMBOL_NAME_LEN, "%s + %I64d bytes", pszSymbol, siSymbol.dwOffset);
 #else
 					sprintf_s(szWithOffset, ATL_SYMBOL_NAME_LEN, "%s + %d bytes", pszSymbol, siSymbol.dwOffset);						
 #endif
+ATLPREFAST_UNSUPPRESS()
 
 					// ensure null-terminated
 					szWithOffset[ATL_SYMBOL_NAME_LEN-1] = '\0';
@@ -528,14 +540,14 @@ public:
 			// only program counter
 			dwMachType                   = IMAGE_FILE_MACHINE_AMD64;
 			stackFrame.AddrPC.Offset     = context.Rip;
-#elif defined(_M_MRX000)
-			// only program counter
-			dwMachType                   = IMAGE_FILE_MACHINE_R4000;
-			stackFrame.AddrPC.Offset     = context.Fir;
 #elif defined(_M_IA64)
 			// only program counter
 			dwMachType                   = IMAGE_FILE_MACHINE_IA64;
 			stackFrame.AddrPC.Offset     = context.StIIP;
+#elif defined(_M_ARM)
+			// only program counter
+			dwMachType                   = IMAGE_FILE_MACHINE_ARMNT;
+			stackFrame.AddrPC.Offset     = context.Pc;
 #else
 #error("Unknown Target Machine");
 #endif
@@ -790,7 +802,7 @@ public:
 				if (revert.Restore())
 				{
 #ifdef _DEBUG
-					DebugBreak();
+					__debugbreak();
 #endif
 				}
 				if (reportType == _CRT_ASSERT)
@@ -804,7 +816,7 @@ public:
 				if (revert.Restore())
 				{
 #ifdef _DEBUG
-					DebugBreak();
+					__debugbreak();
 #endif
 				}
 				if (reportType == _CRT_ASSERT)
@@ -854,7 +866,7 @@ public:
 					if (revert.Restore())
 					{
 	#ifdef _DEBUG
-						DebugBreak();
+						__debugbreak();
 	#endif
 					}
 					return (reportType == _CRT_ASSERT ? TRUE : FALSE);
@@ -865,7 +877,7 @@ public:
 				if (revert.Restore())
 				{
 #ifdef _DEBUG
-					DebugBreak();
+					__debugbreak();
 #endif
 				}
 				return (reportType == _CRT_ASSERT ? TRUE : FALSE);
@@ -880,7 +892,7 @@ public:
 		if (revert.Restore())
 		{
 #ifdef _DEBUG
-			DebugBreak();
+			__debugbreak();
 #endif
 		}
 
@@ -896,7 +908,7 @@ public:
 		{
 			if (IsDebuggerPresent())
 			{
-				DebugBreak();
+				__debugbreak();
 			}
 		}
 
@@ -1159,8 +1171,8 @@ ATLPREFAST_UNSUPPRESS()
 
 	// IUnknown methods
 	_Check_return_ HRESULT STDMETHODCALLTYPE QueryInterface(
-		_In_ REFIID riid,
-		_Deref_out_ void** ppv) throw()
+		REFIID riid,
+		_Outptr_ void** ppv) throw()
 	{
 		if (!ppv)
 			return E_POINTER;
@@ -1578,9 +1590,9 @@ ATL_NOINLINE inline BOOL AtlEscapeUrlMetaHelper(
 
 //Convert all unsafe characters in szStringIn to escape sequences
 //lpszStringIn and lpszStringOut should be different strings
-inline BOOL AtlEscapeUrl(
+inline _Success_(return != FALSE) BOOL AtlEscapeUrl(
 	_In_z_ LPCSTR szStringIn,
-	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
+	_Out_writes_to_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
 	_Out_opt_ DWORD* pdwStrLen,
 	_In_ DWORD dwMaxLength,
 	_In_ DWORD dwFlags = 0)
@@ -1745,9 +1757,10 @@ inline BOOL AtlEscapeUrl(
 	return bRet;
 }
 
+_Success_(return != FALSE)
 inline BOOL AtlEscapeUrl(
 	_In_z_ LPCWSTR szStringIn,
-	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPWSTR szStringOut,
+	_Out_writes_to_(dwMaxLength, *pdwStrLen) LPWSTR szStringOut,
 	_Out_opt_ DWORD* pdwStrLen,
 	_In_ DWORD dwMaxLength,
 	_In_ DWORD dwFlags = 0)
@@ -1757,7 +1770,7 @@ inline BOOL AtlEscapeUrl(
 	// convert to UTF8
 	BOOL bRet = FALSE;
 
-	int nSrcLen = (int) wcslen(szStringIn);
+	int nSrcLen = AtlStrLen(szStringIn);
 	if (nSrcLen == 0) // handle the case of an empty string
 	{
 		if (pdwStrLen != NULL)
@@ -1838,10 +1851,11 @@ inline BOOL AtlEscapeUrl(
 
 //Convert all escaped characters in szString to their real values
 //lpszStringIn and lpszStringOut can be the same string
+_Success_(return != FALSE)
 inline BOOL AtlUnescapeUrl(
 	_In_z_ LPCSTR szStringIn,
-	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
-	_Out_opt_ LPDWORD pdwStrLen,
+	_Out_writes_to_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
+	_Out_opt_ _Always_(_When_(pdwStrLen != NULL, _Post_valid_)) LPDWORD pdwStrLen,
 	_In_ DWORD dwMaxLength)
 {
 	ATLENSURE(szStringIn != NULL);
@@ -1902,9 +1916,10 @@ inline BOOL AtlUnescapeUrl(
 	return bRet;
 }
 
+_Success_(return != FALSE)
 inline BOOL AtlUnescapeUrl(
 	_In_z_ LPCWSTR szStringIn,
-	_Out_z_cap_post_count_(dwMaxLength, *pdwStrLen) LPWSTR szStringOut,
+	_Out_writes_to_(dwMaxLength, *pdwStrLen) LPWSTR szStringOut,
 	_Out_opt_ LPDWORD pdwStrLen,
 	_In_ DWORD dwMaxLength)
 {
@@ -1913,7 +1928,7 @@ inline BOOL AtlUnescapeUrl(
 	/// convert to UTF8
 	BOOL bRet = FALSE;
 
-	int nSrcLen = (int) wcslen(szStringIn);
+	int nSrcLen = AtlStrLen(szStringIn);
 	int nCnt = AtlUnicodeToUTF8(szStringIn, nSrcLen, NULL, 0);
 	if (nCnt != 0)
 	{
@@ -1986,7 +2001,7 @@ inline BOOL AtlUnescapeUrl(
 //Canonicalize a URL (same as InternetCanonicalizeUrl)
 inline BOOL AtlCanonicalizeUrl(
 	_In_z_ LPCTSTR szUrl,
-	_Out_z_capcount_(*pdwMaxLength) LPTSTR szCanonicalized,
+	_Out_writes_(*pdwMaxLength) LPTSTR szCanonicalized,
 	_Inout_ DWORD* pdwMaxLength,
 	_In_ DWORD dwFlags = 0)
 {
@@ -1998,10 +2013,11 @@ inline BOOL AtlCanonicalizeUrl(
 }
 
 //Combine a base and relative URL (same as InternetCombineUrl)
+_Success_(return != FALSE)
 inline BOOL AtlCombineUrl(
 	_In_z_ LPCTSTR szBaseUrl,
 	_In_z_ LPCTSTR szRelativeUrl,
-	_Out_z_capcount_(*pdwMaxLength) LPTSTR szBuffer,
+	_Out_writes_(*pdwMaxLength) LPTSTR szBuffer,
 	_Inout_ DWORD* pdwMaxLength,
 	_In_ DWORD dwFlags = 0)
 {
@@ -2169,8 +2185,9 @@ public:
 		return bRet;
 	}
 
+	_Success_(return != FALSE)
 	inline BOOL CreateUrl(
-		_Out_z_cap_post_count_(*pdwMaxLength,*pdwMaxLength) LPTSTR lpszUrl,
+		_Out_writes_to_(*pdwMaxLength,*pdwMaxLength) LPTSTR lpszUrl,
 		_Inout_ DWORD* pdwMaxLength,
 		_In_ DWORD dwFlags = 0) const throw()
 	{
@@ -2191,8 +2208,9 @@ public:
 		if (*pdwMaxLength > dwLength)
 			return FALSE;
 
-
+ATLPREFAST_SUPPRESS(6340)
 		int nWritten=_stprintf_s(szPortNumber, _countof(szPortNumber), _T(":%d"), m_nPortNumber);
+ATLPREFAST_UNSUPPRESS()
 		if(nWritten<0)
 		{
 			return FALSE;
@@ -2329,7 +2347,9 @@ public:
 		//i.e. ":xx" where "xx" is the port number
 		if (m_nPortNumber != AtlGetDefaultUrlPort(m_nScheme))
 		{
+ATLPREFAST_SUPPRESS(6340)
 			dwUrlLength += _sctprintf(_T(":%d"), m_nPortNumber);
+ATLPREFAST_UNSUPPRESS()
 		}
 
 		dwUrlLength += m_dwUrlPathLength + m_dwExtraInfoLength;
@@ -2434,7 +2454,7 @@ public:
 	}
 
 	//Set the Host name
-	inline BOOL SetHostName(_In_z_count_c_(ATL_URL_MAX_HOST_NAME_LENGTH+1) LPCTSTR lpszHost) throw()
+	inline BOOL SetHostName(_In_reads_z_(ATL_URL_MAX_HOST_NAME_LENGTH+1) LPCTSTR lpszHost) throw()
 	{
 		ATLASSERT(lpszHost != NULL);
 
@@ -2474,7 +2494,7 @@ public:
 	}
 
 	//Set the user name
-	inline BOOL SetUserName(_In_z_count_c_(ATL_URL_MAX_USER_NAME_LENGTH+1) LPCTSTR lpszUser) throw()
+	inline BOOL SetUserName(_In_reads_z_(ATL_URL_MAX_USER_NAME_LENGTH+1) LPCTSTR lpszUser) throw()
 	{
 		ATLASSERT(lpszUser != NULL);
 
@@ -2501,7 +2521,7 @@ public:
 	}
 
 	//Set the password
-	inline BOOL SetPassword(_In_z_count_c_(ATL_URL_MAX_PASSWORD_LENGTH+1) LPCTSTR lpszPass)
+	inline BOOL SetPassword(_In_reads_z_(ATL_URL_MAX_PASSWORD_LENGTH+1) LPCTSTR lpszPass)
 	{
 		ATLENSURE(lpszPass != NULL);
 
@@ -2532,7 +2552,7 @@ public:
 	}
 
 	//Set the url path
-	inline BOOL SetUrlPath(_In_z_count_c_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszPath) throw()
+	inline BOOL SetUrlPath(_In_reads_z_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszPath) throw()
 	{
 		ATLASSERT(lpszPath != NULL);
 
@@ -2559,7 +2579,7 @@ public:
 	}
 
 	//Set extra info
-	inline BOOL SetExtraInfo(_In_z_count_c_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszInfo) throw()
+	inline BOOL SetExtraInfo(_In_reads_z_(ATL_URL_MAX_PATH_LENGTH+1) LPCTSTR lpszInfo) throw()
 	{
 		ATLASSERT(lpszInfo != NULL);
 
@@ -3333,7 +3353,7 @@ public:
 
 private:
 
-	int CopyHandles(_Out_cap_c_(MAXIMUM_WAIT_OBJECTS) HANDLE handles[MAXIMUM_WAIT_OBJECTS]) throw()
+	int CopyHandles(_Out_writes_to_(MAXIMUM_WAIT_OBJECTS, return) HANDLE handles[MAXIMUM_WAIT_OBJECTS]) throw()
 	{
 		ATLENSURE_RETURN_VAL( MAXIMUM_WAIT_OBJECTS >= m_hWaitHandles.GetSize(), 0 );
 
@@ -3351,7 +3371,7 @@ private:
 	}
 
 	int CopyClientEntries(
-		_Out_bytecap_x_(MAXIMUM_WAIT_OBJECTS * sizeof(WorkerClientEntry)) WorkerClientEntry clientEntries[MAXIMUM_WAIT_OBJECTS]) throw()
+		_Out_writes_to_(MAXIMUM_WAIT_OBJECTS, return) WorkerClientEntry clientEntries[MAXIMUM_WAIT_OBJECTS]) throw()
 	{
 		ATLENSURE_RETURN_VAL( MAXIMUM_WAIT_OBJECTS >= m_ClientEntries.GetSize(), 0 );
 
@@ -3519,7 +3539,7 @@ public:
 template <class StringType>
 inline BOOL CopyCString(
 	_In_ const StringType& str,
-	_Out_z_capcount_(*pdwDestLen) typename StringType::PXSTR szDest,
+	_Out_writes_z_(*pdwDestLen) typename StringType::PXSTR szDest,
 	_Inout_ DWORD *pdwDestLen) throw()
 {
 	if (!pdwDestLen)
@@ -3561,7 +3581,7 @@ inline void SystemTimeToHttpDate(
 		"May", "Jun", "Jul", "Aug", "Sep",
 		"Oct", "Nov", "Dec" };
 
-	strTime.Format("%s, %02d %s %d %02d:%02d:%02d GMT",
+	strTime.Format("%s, %02ud %s %ud %02ud:%02ud:%02ud GMT",
 		szDays[st.wDayOfWeek], st.wDay, szMonth[st.wMonth-1], st.wYear,
 		st.wHour, st.wMinute, st.wSecond);
 }
@@ -3574,7 +3594,7 @@ inline void SystemTimeToHttpDate(
 // nBuffer:	 Specifies the number of bytes in pbOut.
 bool inline RGBToHtml(
 	_In_ COLORREF color,
-	_Out_bytecap_(nBuffer) _Post_bytecount_c_(9 * sizeof(TCHAR)) LPTSTR pbOut,
+	_Out_writes_bytes_(nBuffer) _Post_readable_byte_size_(9 * sizeof(TCHAR)) LPTSTR pbOut,
 	_In_ long nBuffer)
 {
 	ATLENSURE (nBuffer >= 9 * sizeof(TCHAR));

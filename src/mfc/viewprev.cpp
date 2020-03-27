@@ -244,7 +244,6 @@ BOOL CALLBACK _AfxPreviewCloseProc(CFrameWnd* pFrameWnd)
 // Preview View
 
 BEGIN_MESSAGE_MAP(CPreviewView, CScrollView)
-	//{{AFX_MSG_MAP(CPreviewView)
 	ON_WM_SIZE()        // overriding CScrollView
 	ON_WM_CREATE()
 
@@ -267,7 +266,6 @@ BEGIN_MESSAGE_MAP(CPreviewView, CScrollView)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_ERASEBKGND()
 	ON_WM_SETCURSOR()
-	//}}AFX_MSG_MAP
 
 END_MESSAGE_MAP()
 

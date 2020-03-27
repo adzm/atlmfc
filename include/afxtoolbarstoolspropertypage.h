@@ -40,7 +40,7 @@ public:
 	CMFCToolBarsToolsPropertyPage* m_pParent;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsToolsPropertyPage dialog
 
 class CMFCToolBarsToolsPropertyPage : public CPropertyPage
@@ -76,12 +76,11 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarsToolsPropertyPage)
 	afx_msg void OnBrowseCommand();
 	afx_msg void OnUpdateTool();
 	afx_msg void OnArgumentsOptions();
 	afx_msg void OnInitialDirectoryOptions();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CUserTool* CreateNewTool();

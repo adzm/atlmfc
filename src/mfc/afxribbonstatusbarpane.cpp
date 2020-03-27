@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -31,8 +31,8 @@ CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane()
 	CommonInit();
 }
 
-CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, BOOL bIsStatic, HICON hIcon, LPCTSTR lpszAlmostLargeText) :
-	CMFCRibbonButton(nCmdID, lpszText, hIcon)
+CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, BOOL bIsStatic, HICON hIcon, LPCTSTR lpszAlmostLargeText, BOOL bAlphaBlendIcon) :
+	CMFCRibbonButton(nCmdID, lpszText, hIcon, FALSE, NULL, FALSE, bAlphaBlendIcon)
 {
 	CommonInit();
 
@@ -40,8 +40,8 @@ CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, 
 	m_bIsStatic = bIsStatic;
 }
 
-CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, HBITMAP hBmpAnimationList, int cxAnimation, COLORREF clrTransp, HICON hIcon, BOOL bIsStatic) :
-	CMFCRibbonButton(nCmdID, lpszText, hIcon)
+CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, HBITMAP hBmpAnimationList, int cxAnimation, COLORREF clrTransp, HICON hIcon, BOOL bIsStatic, BOOL bAlphaBlendIcon) :
+	CMFCRibbonButton(nCmdID, lpszText, hIcon, FALSE, NULL, FALSE, bAlphaBlendIcon)
 {
 	CommonInit();
 
@@ -49,8 +49,8 @@ CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, 
 	SetAnimationList(hBmpAnimationList, cxAnimation, clrTransp);
 }
 
-CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, UINT uiAnimationListResID, int cxAnimation, COLORREF clrTransp, HICON hIcon, BOOL bIsStatic) :
-	CMFCRibbonButton(nCmdID, lpszText, hIcon)
+CMFCRibbonStatusBarPane::CMFCRibbonStatusBarPane(UINT nCmdID, LPCTSTR lpszText, UINT uiAnimationListResID, int cxAnimation, COLORREF clrTransp, HICON hIcon, BOOL bIsStatic, BOOL bAlphaBlendIcon) :
+	CMFCRibbonButton(nCmdID, lpszText, hIcon, FALSE, NULL, FALSE, bAlphaBlendIcon)
 {
 	CommonInit();
 
@@ -283,12 +283,12 @@ void CMFCRibbonStatusBarPane::OnDraw(CDC* pDC)
 	}
 	else
 	{
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
 			CAfxDrawState ds;
 
 			CSize sizeImage = m_AnimImages.GetImageSize();
-			CSize sizeDest = CSize((int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cx), (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cy));
+			CSize sizeDest = CSize((int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImage.cx), (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImage.cy));
 
 			m_AnimImages.PrepareDrawImage(ds, sizeDest);
 

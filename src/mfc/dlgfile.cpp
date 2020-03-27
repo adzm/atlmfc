@@ -9,10 +9,12 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
+#include <shobjidl.h>
 #include <dlgs.h>       // for standard control IDs for commdlg
-#include "afxglobals.h"
 
 #define new DEBUG_NEW
+
+#pragma comment(lib, "propsys.lib")
 
 ////////////////////////////////////////////////////////////////////////////
 // FileOpen/FileSaveAs common dialog helper
@@ -38,6 +40,7 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,
 	}
 
 	m_bPickFoldersMode = FALSE;
+	m_bPickNonFileSysFoldersMode = FALSE;
 
 	// determine size of OPENFILENAME struct if dwSize is zero
 	if (dwSize == 0)
@@ -59,6 +62,7 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,
 	m_pofnTemp = NULL;
 
 	m_bOpenFileDialog = bOpenFileDialog;
+	m_bFileTypesSet = FALSE;
 	m_nIDHelp = bOpenFileDialog ? AFX_IDD_FILEOPEN : AFX_IDD_FILESAVE;
 
 	m_ofn.lStructSize = dwSize;
@@ -239,7 +243,7 @@ void CFileDialog::UpdateOFNFromShellDialog()
 								::PathRemoveFileSpecW(wcPathName);
 #ifdef UNICODE
 								wcsncpy_s(pszFileName, m_ofn.nMaxFile - 1, wcPathName, _TRUNCATE);
-								pszFileName += wcslen(wcPathName) + 1;
+								pszFileName += AtlStrLen(wcPathName) + 1;
 #else
 								pszFileName += ::WideCharToMultiByte(CP_ACP, 0, wcPathName, -1,
 												pszFileName, m_ofn.nMaxFile - 1, NULL, NULL);
@@ -263,7 +267,7 @@ void CFileDialog::UpdateOFNFromShellDialog()
 #ifdef UNICODE
 									wcsncpy_s(pszFileName, m_ofn.nMaxFile - (pszFileName - m_ofn.lpstrFile) - 1,
 											wcPathName + offset, _TRUNCATE);
-									pszFileName += wcslen(wcPathName + offset) + 1;
+									pszFileName += AtlStrLen(wcPathName + offset) + 1;
 #else
 									pszFileName += ::WideCharToMultiByte(CP_ACP, 0, wcPathName + offset, -1, pszFileName,
 													m_ofn.nMaxFile - static_cast<int>(pszFileName - m_ofn.lpstrFile) - 1,
@@ -394,8 +398,14 @@ void CFileDialog::ApplyOFNToShellDialog()
 
 					nFilterIndex ++;
 				}
-				hr = (static_cast<IFileDialog*>(m_pIFileDialog))->SetFileTypes(nFilterCount, pFilter);
-				ENSURE(SUCCEEDED(hr));
+
+				if (!m_bFileTypesSet)  // file types can only be set once per dialog instance
+				{
+					hr = (static_cast<IFileDialog*>(m_pIFileDialog))->SetFileTypes(nFilterCount, pFilter);
+					ENSURE(SUCCEEDED(hr));
+					m_bFileTypesSet = TRUE;
+				}
+
 				for (nFilterIndex = 0; nFilterIndex < nFilterCount; nFilterIndex++)
 				{
 					delete[] pFilter[nFilterIndex].pszName;
@@ -433,7 +443,7 @@ void CFileDialog::ApplyOFNToShellDialog()
 			{
 				IShellItem *psiInitialDir = NULL;
 
-				hr = afxGlobalData.ShellCreateItemFromParsingName(strInitialDir.GetString(), NULL, IID_PPV_ARGS(&psiInitialDir));
+				hr = _AfxSHCreateItemFromParsingName(strInitialDir.GetString(), NULL, IID_PPV_ARGS(&psiInitialDir));
 				if (SUCCEEDED(hr))
 				{
 					hr = (static_cast<IFileDialog*>(m_pIFileDialog))->SetFolder(psiInitialDir);
@@ -468,26 +478,35 @@ void CFileDialog::ApplyOFNToShellDialog()
 		VISTA_FILE_DIALOG_FLAG_DIRECT_MAPPING(PATHMUSTEXIST);
 		VISTA_FILE_DIALOG_FLAG_DIRECT_MAPPING(SHAREAWARE);
 
-		(m_ofn.FlagsEx & OFN_EX_NOPLACESBAR) ? (dwFlags |=  FOS_HIDEPINNEDPLACES) : (dwFlags &= ~FOS_HIDEPINNEDPLACES);
-		m_bPickFoldersMode ? (dwFlags |=  FOS_PICKFOLDERS) : (dwFlags &= ~FOS_PICKFOLDERS);
-
 #undef VISTA_FILE_DIALOG_FLAG_DIRECT_MAPPING
 #undef VISTA_FILE_DIALOG_FLAG_MAPPING
 #endif
 #endif
+
+		dwFlags &= ~FOS_HIDEPINNEDPLACES;
+		if ((m_ofn.FlagsEx & OFN_EX_NOPLACESBAR) == OFN_EX_NOPLACESBAR)
+		{
+			dwFlags |= FOS_HIDEPINNEDPLACES;
+		}
+
+		dwFlags &= ~FOS_PICKFOLDERS;
+		if (m_bPickFoldersMode || m_bPickNonFileSysFoldersMode)
+		{
+			dwFlags |= FOS_PICKFOLDERS;
+		}
+
+		// We only expect and handle file system paths (for compatibility with GetOpenFileName functionality), so set the
+		// "force file system" flag which enables GetOpenFileName-like download behavior for non file system paths, unless
+		// the m_bPickNonFileSysFoldersMode is set to allow picking non-file system folders (like libraries in Windows 7).
+		dwFlags |= FOS_FORCEFILESYSTEM;
+		if (m_bPickNonFileSysFoldersMode)
+		{
+			dwFlags &= ~FOS_FORCEFILESYSTEM;
+		}
+
 		hr = (static_cast<IFileDialog*>(m_pIFileDialog))->SetOptions(dwFlags);
 		ENSURE(SUCCEEDED(hr));
 	}
-}
-
-HRESULT CFileDialog::_PSGetPropertyDescriptionListFromString(LPCWSTR pszPropList, REFIID riid, void **ppv)
-{
-	static HMODULE hPropSysDll = AfxCtxLoadLibrary(_T("propsys.dll"));
-	ENSURE(hPropSysDll != NULL);
-	typedef HRESULT (__stdcall *PFNPSGETPROPERTYDESCRIPTIONLISTFROMSTRING)(LPCWSTR, REFIID, void**);
-	static PFNPSGETPROPERTYDESCRIPTIONLISTFROMSTRING pFunc = (PFNPSGETPROPERTYDESCRIPTIONLISTFROMSTRING)GetProcAddress(hPropSysDll, "PSGetPropertyDescriptionListFromString");
-	ENSURE(pFunc != NULL);
-	return (*pFunc)(pszPropList, riid, ppv);
 }
 
 IFileOpenDialog* CFileDialog::GetIFileOpenDialog()
@@ -534,7 +553,7 @@ void CFileDialog::AddPlace(LPCWSTR lpszFolder, FDAP fdap)
 
 	CComPtr<IShellItem> shellItem;
 
-	HRESULT hr = afxGlobalData.ShellCreateItemFromParsingName(lpszFolder, 0, IID_IShellItem, reinterpret_cast<void**>(&shellItem));
+	HRESULT hr = _AfxSHCreateItemFromParsingName(lpszFolder, 0, IID_IShellItem, reinterpret_cast<void**>(&shellItem));
 	ENSURE(SUCCEEDED(hr));
 
 	AddPlace(shellItem, fdap);
@@ -711,7 +730,7 @@ INT_PTR CFileDialog::DoModal()
 
 	// zero out the file buffer for consistent parsing later
 	ASSERT(AfxIsValidAddress(m_ofn.lpstrFile, m_ofn.nMaxFile));
-	DWORD nOffset = lstrlen(m_ofn.lpstrFile)+1;
+	DWORD nOffset = static_cast<DWORD>(_tcslen(m_ofn.lpstrFile))+1;
 	ASSERT(nOffset <= m_ofn.nMaxFile);
 	memset(m_ofn.lpstrFile+nOffset, 0, (m_ofn.nMaxFile-nOffset)*sizeof(TCHAR));
 
@@ -749,9 +768,9 @@ INT_PTR CFileDialog::DoModal()
 		nResult = (hr == S_OK) ? IDOK : IDCANCEL;
 	}
 	else if (m_bOpenFileDialog)
-		nResult = ::AfxCtxGetOpenFileName(&m_ofn);
+		nResult = GetOpenFileName(&m_ofn);
 	else
-		nResult = ::AfxCtxGetSaveFileName(&m_ofn);
+		nResult = GetSaveFileName(&m_ofn);
 
 	if (nResult)
 		ASSERT(pThreadState->m_pAlternateWndInit == NULL);
@@ -783,9 +802,9 @@ IShellItem *CFileDialog::GetResult()
 
 #ifndef UNICODE
 	CStringW strPathNameW = GetPathName().GetString();
-	hr = afxGlobalData.ShellCreateItemFromParsingName((PCWSTR)strPathNameW, 0, IID_IShellItem, (void**)&pItem);
+	hr = _AfxSHCreateItemFromParsingName((PCWSTR)strPathNameW, 0, IID_IShellItem, (void**)&pItem);
 #else
-	hr = afxGlobalData.ShellCreateItemFromParsingName((PCWSTR)GetPathName().GetString(), 0, IID_IShellItem, (void**)&pItem);
+	hr = _AfxSHCreateItemFromParsingName((PCWSTR)GetPathName().GetString(), 0, IID_IShellItem, (void**)&pItem);
 #endif
 	ENSURE(SUCCEEDED(hr));
 
@@ -1109,44 +1128,24 @@ CString CFileDialog::GetFolderPath() const
 	return strResult;
 }
 
+void CFileDialog::SetControlText(int nID, LPCTSTR lpsz)
+{
+	ASSERT(::IsWindow(m_hWnd));
+
+	if (m_bVistaStyle == TRUE)
+	{
 #ifdef UNICODE
-void CFileDialog::SetControlText(int nID, const wchar_t  *lpsz)
-{
-	ASSERT(::IsWindow(m_hWnd));
-
-	if (m_bVistaStyle == TRUE)
-	{
 		HRESULT hr = (static_cast<IFileDialogCustomize*>(m_pIFileDialogCustomize))->SetControlLabel(nID, lpsz);
-		ENSURE(SUCCEEDED(hr));
-	}
-	else
-	{
-		ASSERT(m_ofn.Flags & OFN_EXPLORER);
-		GetParent()->SendMessage(CDM_SETCONTROLTEXT, (WPARAM)nID, (LPARAM)lpsz);
-	}
-}
-#endif
-
-void CFileDialog::SetControlText(int nID, LPCSTR lpsz)
-{
-	ASSERT(::IsWindow(m_hWnd));
-
-	if (m_bVistaStyle == TRUE)
-	{
+#else
 		CStringW dest(lpsz);
 		HRESULT hr = (static_cast<IFileDialogCustomize*>(m_pIFileDialogCustomize))->SetControlLabel(nID, dest.GetString());
+#endif
 		ENSURE(SUCCEEDED(hr));
 	}
 	else
 	{
 		ASSERT(m_ofn.Flags & OFN_EXPLORER);
-
-#ifdef UNICODE
-		CStringW dest(lpsz);
-		GetParent()->SendMessage(CDM_SETCONTROLTEXT, (WPARAM)nID, (LPARAM)dest.GetString());
-#else
 		GetParent()->SendMessage(CDM_SETCONTROLTEXT, (WPARAM)nID, (LPARAM)lpsz);
-#endif
 	}
 }
 
@@ -1165,13 +1164,17 @@ void CFileDialog::HideControl(int nID)
 	}
 }
 
-void CFileDialog::SetDefExt(LPCSTR lpsz)
+void CFileDialog::SetDefExt(LPCTSTR lpsz)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	if (m_bVistaStyle == TRUE)
 	{
+#ifdef UNICODE
+		HRESULT hr = (static_cast<IFileDialog*>(m_pIFileDialog))->SetDefaultExtension(lpsz);
+#else
 		CStringW strExt(lpsz);
 		HRESULT hr = (static_cast<IFileDialog*>(m_pIFileDialog))->SetDefaultExtension(strExt.GetString());
+#endif
 		ENSURE(SUCCEEDED(hr));
 	}
 	else
@@ -1258,7 +1261,7 @@ BOOL CFileDialog::SetProperties(LPCWSTR lpszPropList)
 	}
 
 	IPropertyDescriptionList* pPropertyDescriptionList = NULL;
-	HRESULT hr = _PSGetPropertyDescriptionListFromString(lpszPropList, IID_PPV_ARGS(&pPropertyDescriptionList));
+	HRESULT hr = _AfxPSGetPropertyDescriptionListFromString(lpszPropList, IID_PPV_ARGS(&pPropertyDescriptionList));
 
 	if (SUCCEEDED(hr))
 	{
@@ -1268,9 +1271,9 @@ BOOL CFileDialog::SetProperties(LPCWSTR lpszPropList)
 			IShellItem2* pItem = NULL;
 #ifndef UNICODE
 			CStringW strPathNameW = GetPathName().GetString();
-			hr = afxGlobalData.ShellCreateItemFromParsingName((PCWSTR)strPathNameW, 0, IID_IShellItem2, reinterpret_cast<void**>(&pItem));
+			hr = _AfxSHCreateItemFromParsingName((PCWSTR)strPathNameW, 0, IID_IShellItem2, reinterpret_cast<void**>(&pItem));
 #else
-			hr = afxGlobalData.ShellCreateItemFromParsingName((PCWSTR)GetPathName().GetString(), 0, IID_IShellItem2, reinterpret_cast<void**>(&pItem));
+			hr = _AfxSHCreateItemFromParsingName((PCWSTR)GetPathName().GetString(), 0, IID_IShellItem2, reinterpret_cast<void**>(&pItem));
 #endif
 			if (SUCCEEDED(hr) && pItem != NULL)
 			{
@@ -1844,7 +1847,7 @@ void CFileDialog::Dump(CDumpContext& dc) const
 	while (lpstrItem != NULL && *lpstrItem != '\0')
 	{
 		dc << lpstrItem << lpszBreak;
-		lpstrItem += lstrlen(lpstrItem) + 1;
+		lpstrItem += _tcslen(lpstrItem) + 1;
 	}
 	if (lpstrItem != NULL)
 		dc << lpszBreak;
@@ -1854,7 +1857,7 @@ void CFileDialog::Dump(CDumpContext& dc) const
 	while (lpstrItem != NULL && *lpstrItem != '\0')
 	{
 		dc << lpstrItem << lpszBreak;
-		lpstrItem += lstrlen(lpstrItem) + 1;
+		lpstrItem += _tcslen(lpstrItem) + 1;
 	}
 	if (lpstrItem != NULL)
 		dc << lpszBreak;
@@ -1879,10 +1882,11 @@ IMPLEMENT_DYNAMIC(CFileDialog, CCommonDialog)
 ////////////////////////////////////////////////////////////////////////////
 // Folder Picker common dialog helper
 
-CFolderPickerDialog::CFolderPickerDialog(LPCTSTR lpszFolder, DWORD dwFlags, CWnd* pParentWnd, DWORD dwSize) :
+CFolderPickerDialog::CFolderPickerDialog(LPCTSTR lpszFolder, DWORD dwFlags, CWnd* pParentWnd, DWORD dwSize, BOOL fNonFileSystemFolders) :
 	CFileDialog(TRUE, NULL, lpszFolder, dwFlags, NULL, pParentWnd, dwSize, TRUE)
 {
 	m_bPickFoldersMode = TRUE;
+	m_bPickNonFileSysFoldersMode = fNonFileSystemFolders;
 }
 
 CFolderPickerDialog::~CFolderPickerDialog()

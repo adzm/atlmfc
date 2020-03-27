@@ -861,7 +861,7 @@ void CDHtmlDialog::Navigate(LPCTSTR lpszURL, DWORD dwFlags /*= 0*/,
 	if (lpvPostData != NULL)
 	{
 		if (dwPostDataLen == 0)
-			dwPostDataLen = lstrlen((LPCTSTR) lpvPostData);
+			dwPostDataLen = static_cast<DWORD>(_tcslen((LPCTSTR) lpvPostData));
 
 		vPostData.CreateOneDim(VT_UI1, dwPostDataLen, lpvPostData);
 	}

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "sal.h"
+#include "afxwinverapi.h"
 
 #ifdef SetWindowLongPtrA
 #undef SetWindowLongPtrA
@@ -113,7 +114,10 @@ class _AFX_RICHEDIT_STATE : public _AFX_EDIT_STATE
 {
 public:
 	HINSTANCE m_hInstRichEdit;      // handle to RICHED32.DLL
-	HINSTANCE m_hInstRichEdit2;      // handle to RICHED20.DLL
+	HINSTANCE m_hInstRichEdit2;     // handle to RICHED20.DLL
+#ifdef _UNICODE
+	HINSTANCE m_hInstRichEdit5;     // handle to MSFTEDIT.DLL
+#endif
 	virtual ~_AFX_RICHEDIT_STATE();
 };
 
@@ -412,22 +416,18 @@ void AFXAPI AfxGlobalFree(HGLOBAL hGlobal);
 // locale-invariant comparison helpers till CRT gets that support
 inline int AfxInvariantStrICmp(const char *pszLeft, const char *pszRight)
 {
-    return ::CompareStringA(MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT),
-                            NORM_IGNORECASE,
-                            pszLeft,
-                            -1,
-                            pszRight,
-                            -1)-CSTR_EQUAL;
+    return ::CompareStringA(LOCALE_INVARIANT, NORM_IGNORECASE, pszLeft, -1, pszRight, -1) - CSTR_EQUAL;
 }
+
+#if (NTDDI_VERSION < NTDDI_VISTA)
+#ifndef LOCALE_NAME_INVARIANT
+#define LOCALE_NAME_INVARIANT  L""
+#endif // LOCALE_NAME_INVARIANT
+#endif // (NTDDI_VERSION < NTDDI_VISTA)
 
 inline int AfxInvariantStrICmp(const wchar_t *pwszLeft, const wchar_t *pwszRight)
 {
-    return ::CompareStringW(MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT),
-                            NORM_IGNORECASE,
-                            pwszLeft,
-                            -1,
-                            pwszRight,
-                            -1)-CSTR_EQUAL;
+    return _AfxCompareStringEx(LOCALE_NAME_INVARIANT, NORM_IGNORECASE, pwszLeft, -1, pwszRight, -1) - CSTR_EQUAL;
 }
 
 
@@ -538,8 +538,8 @@ private:
 BOOL AFXAPI AfxFullPath(_Pre_notnull_ _Post_z_ LPTSTR lpszPathOut, LPCTSTR lpszFileIn);
 BOOL AFXAPI AfxComparePath(LPCTSTR lpszPath1, LPCTSTR lpszPath2);
 
-UINT AFXAPI AfxGetFileTitle(LPCTSTR lpszPathName, _Out_cap_(nMax) LPTSTR lpszTitle, UINT nMax);
-UINT AFXAPI AfxGetFileName(LPCTSTR lpszPathName, _Out_opt_cap_(nMax) LPTSTR lpszTitle, UINT nMax);
+UINT AFXAPI AfxGetFileTitle(LPCTSTR lpszPathName, _Out_writes_(nMax) LPTSTR lpszTitle, UINT nMax);
+UINT AFXAPI AfxGetFileName(LPCTSTR lpszPathName, _Out_writes_opt_(nMax) LPTSTR lpszTitle, UINT nMax);
 void AFX_CDECL AfxTimeToFileTime(const CTime& time, LPFILETIME pFileTime);
 void AFXAPI AfxGetRoot(LPCTSTR lpszPath, CString& strRoot);
 
@@ -555,7 +555,7 @@ public:
 CString AFXAPI AfxStringFromCLSID(REFCLSID rclsid);
 BOOL AFXAPI AfxGetInProcServer(LPCTSTR lpszCLSID, CString& str);
 BOOL AFXAPI AfxResolveShortcut(CWnd* pWnd, LPCTSTR pszShortcutFile,
-	_Out_cap_(cchPath) LPTSTR pszPath, int cchPath);
+	_Out_writes_(cchPath) LPTSTR pszPath, int cchPath);
 #endif // _AFX_NO_OLE_SUPPORT
 
 #define NULL_TLS ((DWORD)-1)
@@ -595,6 +595,7 @@ union MessageMapFunctions
 	UINT (AFX_MSG_CALL CWnd::*pfn_u_u)(UINT);
 	BOOL (AFX_MSG_CALL CWnd::*pfn_b_v)();
 	void (AFX_MSG_CALL CWnd::*pfn_v_u)(UINT);
+	void (AFX_MSG_CALL CWnd::*pfn_v_up)(UINT_PTR);
 	void (AFX_MSG_CALL CWnd::*pfn_v_u_u)(UINT, UINT);
 	void (AFX_MSG_CALL CWnd::*pfn_v_i_i)(int, int);
 	void (AFX_MSG_CALL CWnd::*pfn_v_u_u_u)(UINT, UINT, UINT);

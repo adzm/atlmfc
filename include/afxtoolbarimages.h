@@ -47,6 +47,11 @@ class CMFCToolBarImages : public CObject
 
 public:
 	CMFCToolBarImages();
+	CMFCToolBarImages(BOOL fDelayInitialize);
+
+	void CommonInit(BOOL fDelayInitialize);
+	void Initialize();
+
 	virtual ~CMFCToolBarImages();
 
 	enum ImageAlignHorz
@@ -217,7 +222,7 @@ public:
 	/// <summary> 
 	/// Smoothly resizes underlined images.</summary>
 	/// <param name="dblScale"> Scale ratio.</param>
-	/// <retruns> TRUE if resize succeeds; otherwise FALSE.</returns>
+	/// <returns> TRUE if resize succeeds; otherwise FALSE.</returns>
 	BOOL SmoothResize(double dblImageScale);
 
 	/// <summary>
@@ -266,7 +271,6 @@ public:
 	AFX_IMPORT_DATA static BOOL    m_bDisableTrueColorAlpha;
 	AFX_IMPORT_DATA static BOOL    m_bMultiThreaded; // Set to TRUE if images are used in different threads
 	AFX_IMPORT_DATA static BOOL    m_bIsDrawOnGlass; // Draw image on Vista Glass area
-	AFX_IMPORT_DATA static CString m_strPngResType;  // "PNG" by default
 
 protected:
 	int m_iCount;           // image counter
@@ -274,6 +278,7 @@ protected:
 	int m_nGrayImageLuminancePercentage;  // Grayed image brightness
 	int m_nLightPercentage; // Light image percentage value
 
+	BOOL m_bInitialized;
 	BOOL m_bUserImagesList;  // is user-defined images list?
 	BOOL m_bModified;        // is image modified?
 	BOOL m_bStretch;         // stretch images

@@ -62,7 +62,6 @@ CPaneDivider::~CPaneDivider()
 }
 
 BEGIN_MESSAGE_MAP(CPaneDivider, CBasePane)
-	//{{AFX_MSG_MAP(CPaneDivider)
 	ON_WM_SIZE()
 	ON_WM_SETCURSOR()
 	ON_WM_LBUTTONDOWN()
@@ -74,7 +73,6 @@ BEGIN_MESSAGE_MAP(CPaneDivider, CBasePane)
 	ON_WM_DESTROY()
 	ON_WM_CREATE()
 	ON_WM_CANCELMODE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -125,7 +123,7 @@ BOOL CPaneDivider::CreateEx(DWORD dwStyleEx, DWORD dwStyle, const RECT& rect, CW
 		ASSERT(FALSE);
 	}
 
-	return CWnd::CreateEx(dwStyleEx, afxGlobalData.RegisterWindowClass(_T("Afx:Slider")), NULL, dwSliderStyle, rect, pParentWnd, nID, pContext);
+	return CWnd::CreateEx(dwStyleEx, GetGlobalData()->RegisterWindowClass(_T("Afx:Slider")), NULL, dwSliderStyle, rect, pParentWnd, nID, pContext);
 }
 
 void CPaneDivider::Serialize(CArchive& ar)
@@ -211,11 +209,11 @@ BOOL CPaneDivider::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 	case HTCLIENT:
 		if (m_dwDividerStyle & SS_HORZ)
 		{
-			SetCursor(afxGlobalData.m_hcurStretchVert);
+			SetCursor(GetGlobalData()->m_hcurStretchVert);
 		}
 		else if (m_dwDividerStyle & SS_VERT)
 		{
-			SetCursor(afxGlobalData.m_hcurStretch);
+			SetCursor(GetGlobalData()->m_hcurStretch);
 		}
 		return TRUE;
 	}
@@ -267,7 +265,12 @@ void CPaneDivider::OnLButtonUp(UINT nFlags, CPoint point)
 	ASSERT_VALID(this);
 
 	StopTracking(TRUE);
+	Sleep(20);
+
 	CWnd::OnLButtonUp(nFlags, point);
+
+	Invalidate();
+	UpdateWindow();
 }
 
 void CPaneDivider::OnMouseMove(UINT nFlags, CPoint point)
@@ -689,14 +692,14 @@ int CPaneDivider::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CBasePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	if (afxGlobalData.m_hcurStretch == NULL)
+	if (GetGlobalData()->m_hcurStretch == NULL)
 	{
-		afxGlobalData.m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
+		GetGlobalData()->m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
 	}
 
-	if (afxGlobalData.m_hcurStretchVert == NULL)
+	if (GetGlobalData()->m_hcurStretchVert == NULL)
 	{
-		afxGlobalData.m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
+		GetGlobalData()->m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
 	}
 
 	return 0;

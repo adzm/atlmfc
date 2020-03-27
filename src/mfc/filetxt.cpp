@@ -153,6 +153,14 @@ BOOL CStdioFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags, CFileException* pEx
 		szMode[nMode++] = 't';
 	szMode[nMode++] = '\0';
 
+#ifdef _UNICODE
+	if (nOpenFlags & typeUnicode)
+	{
+		nFlags ^= _O_TEXT;
+		nFlags |= _O_WTEXT;
+	}
+#endif
+
 	// open a C-runtime low-level file handle
 	int nHandle = _open_osfhandle((UINT_PTR) m_hFile, nFlags);
 
@@ -232,7 +240,7 @@ void CStdioFile::WriteString(LPCTSTR lpsz)
 		AfxThrowFileException(CFileException::diskFull, _doserrno, m_strFileName);
 }
 
-LPTSTR CStdioFile::ReadString(_Out_z_cap_(nMax) LPTSTR lpsz, _In_ UINT nMax)
+LPTSTR CStdioFile::ReadString(_Out_writes_z_(nMax) LPTSTR lpsz, _In_ UINT nMax)
 {
 	ASSERT(lpsz != NULL);
 	ASSERT(AfxIsValidAddress(lpsz, nMax));
@@ -276,7 +284,7 @@ BOOL CStdioFile::ReadString(CString& rString)
 
 		// if string is read completely or EOF
 		if (lpszResult == NULL ||
-			(nLen = (int)lstrlen(lpsz)) < nMaxSize ||
+			(nLen = AtlStrLen(lpsz)) < nMaxSize ||
 			lpsz[nLen-1] == '\n')
 			break;
 

@@ -24,7 +24,7 @@
 
 class CMFCColorPopupMenu;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCColorButton window
 
 class CMFCColorButton : public CMFCButton
@@ -98,14 +98,12 @@ protected:
 	BOOL IsDrawXPTheme() const;
 
 protected:
-	//{{AFX_MSG(CMFCColorButton)
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg UINT OnGetDlgCode();
 	afx_msg void OnSysColorChange();
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 };

@@ -37,12 +37,14 @@ __interface IAtlStringMgr
 {
 public:
 	// Allocate a new CStringData
+	_Ret_maybenull_ _Post_writable_byte_size_(sizeof(CStringData) + nAllocLength*nCharSize)
 	CStringData* Allocate(
 		_In_ int nAllocLength,
 		_In_ int nCharSize) throw();
 	// Free an existing CStringData
 	void Free(_Inout_ CStringData* pData) throw();
 	// Change the size of an existing CStringData
+	virtual _Ret_maybenull_ _Post_writable_byte_size_(sizeof(CStringData) + nAllocLength*nCharSize)
 	CStringData* Reallocate(
 		_Inout_ CStringData* pData,
 		_In_ int nAllocLength,
@@ -264,7 +266,7 @@ public:
 		CopyChars( m_pszData, nLength, pszSrc, nLength );
 	}
 	CSimpleStringT(
-		_In_count_(nLength) const XCHAR* pchSrc,
+		_In_reads_(nLength) const XCHAR* pchSrc,
 		_In_ int nLength,
 		_Inout_ IAtlStringMgr* pStringMgr)
 	{
@@ -408,7 +410,7 @@ public:
 		Append( pszSrc, StringLength( pszSrc ) );
 	}
 	void Append(
-		_In_count_(nLength) PCXSTR pszSrc,
+		_In_reads_(nLength) PCXSTR pszSrc,
 		_In_ int nLength)
 	{
 		// See comment in SetString() about why we do this
@@ -529,11 +531,11 @@ public:
 
 		return( m_pszData );
 	}
-	_Ret_cap_(nMinBufferLength + 1) PXSTR GetBuffer(_In_ int nMinBufferLength)
+	_Ret_notnull_ _Post_writable_size_(nMinBufferLength + 1) PXSTR GetBuffer(_In_ int nMinBufferLength)
 	{
 		return( PrepareWrite( nMinBufferLength ) );
 	}
-	_Ret_cap_(nLength + 1) PXSTR GetBufferSetLength(_In_ int nLength)
+	_Ret_notnull_ _Post_writable_size_(nLength + 1) PXSTR GetBufferSetLength(_In_ int nLength)
 	{
 		PXSTR pszBuffer = GetBuffer( nLength );
 		SetLength( nLength );
@@ -550,7 +552,7 @@ public:
 		return pStringMgr ? pStringMgr->Clone() : NULL;
 	}
 
-	_Ret_count_x_(m_nLength) PCXSTR GetString() const throw()
+	PCXSTR GetString() const throw()
 	{
 		return( m_pszData );
 	}
@@ -628,7 +630,7 @@ public:
 		SetString( pszSrc, StringLength( pszSrc ) );
 	}
 	void SetString(
-		_In_opt_count_(nLength) PCXSTR pszSrc,
+		_In_reads_opt_(nLength) PCXSTR pszSrc,
 		_In_ int nLength)
 	{
 		if( nLength == 0 )
@@ -701,19 +703,22 @@ public:
 
 	_ATL_INSECURE_DEPRECATE("CSimpleStringT::CopyChars must be passed a buffer size")
 	static void __cdecl CopyChars(
-		_Out_cap_(nChars) XCHAR* pchDest,
-		_In_opt_count_(nChars) const XCHAR* pchSrc,
+		_Out_writes_(nChars) XCHAR* pchDest,
+		_In_reads_opt_(nChars) const XCHAR* pchSrc,
 		_In_ int nChars) throw()
 	{
-		#pragma warning (push)
-		#pragma warning(disable : 4996)
-		memcpy( pchDest, pchSrc, nChars*sizeof( XCHAR ) );
-		#pragma warning (pop)
+		if (pchSrc != NULL)
+		{
+			#pragma warning (push)
+			#pragma warning(disable : 4996)
+			memcpy( pchDest, pchSrc, nChars*sizeof( XCHAR ) );
+			#pragma warning (pop)
+		}
 	}
 	static void __cdecl CopyChars(
-		_Out_cap_post_count_(nDestLen,nChars) XCHAR* pchDest,
+		_Out_writes_to_(nDestLen,nChars) XCHAR* pchDest,
 		_In_ size_t nDestLen,
-		_In_opt_count_(nChars) const XCHAR* pchSrc,
+		_In_reads_opt_(nChars) const XCHAR* pchSrc,
 		_In_ int nChars) throw()
 	{
 		memcpy_s( pchDest, nDestLen*sizeof( XCHAR ),
@@ -722,8 +727,8 @@ public:
 
 	_ATL_INSECURE_DEPRECATE("CSimpleStringT::CopyCharsOverlapped must be passed a buffer size")
 	static void __cdecl CopyCharsOverlapped(
-		_Out_cap_(nChars) XCHAR* pchDest,
-		_In_count_(nChars) const XCHAR* pchSrc,
+		_Out_writes_(nChars) XCHAR* pchDest,
+		_In_reads_(nChars) const XCHAR* pchSrc,
 		_In_ int nChars) throw()
 	{
 		#pragma warning (push)
@@ -732,9 +737,9 @@ public:
 		#pragma warning (pop)
 	}
 	static void __cdecl CopyCharsOverlapped(
-		_Out_cap_post_count_(nDestLen, nDestLen) XCHAR* pchDest,
+		_Out_writes_to_(nDestLen, nDestLen) XCHAR* pchDest,
 		_In_ size_t nDestLen,
-		_In_count_(nChars) const XCHAR* pchSrc,
+		_In_reads_(nChars) const XCHAR* pchSrc,
 		_In_ int nChars) throw()
 	{
 		memmove_s( pchDest, nDestLen*sizeof( XCHAR ),
@@ -757,7 +762,7 @@ public:
 		return( int( wcslen( psz ) ) );
 	}
 	static int __cdecl StringLengthN(
-		_In_opt_z_count_(sizeInXChar) const char* psz,
+		_In_reads_opt_z_(sizeInXChar) const char* psz,
 		_In_ size_t sizeInXChar) throw()
 	{
 		if( psz == NULL )
@@ -767,7 +772,7 @@ public:
 		return( int( strnlen( psz, sizeInXChar ) ) );
 	}
 	static int __cdecl StringLengthN(
-		_In_opt_z_count_(sizeInXChar) const wchar_t* psz,
+		_In_reads_opt_z_(sizeInXChar) const wchar_t* psz,
 		_In_ size_t sizeInXChar) throw()
 	{
 		if( psz == NULL )
@@ -780,9 +785,9 @@ public:
 protected:
 	static void __cdecl Concatenate(
 		_Inout_ CSimpleStringT& strResult,
-		_In_count_(nLength1) PCXSTR psz1,
+		_In_reads_(nLength1) PCXSTR psz1,
 		_In_ int nLength1,
-		_In_count_(nLength2) PCXSTR psz2,
+		_In_reads_(nLength2) PCXSTR psz2,
 		_In_ int nLength2)
 	{
 		int nNewLength = nLength1+nLength2;

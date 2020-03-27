@@ -20,10 +20,8 @@
 // Message map
 
 BEGIN_MESSAGE_MAP(CControlFrameWnd, CWnd)
-	//{{AFX_MSG_MAP(CControlFrameWnd)
 	ON_WM_CLOSE()
 	ON_WM_ACTIVATE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

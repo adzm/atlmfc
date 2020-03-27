@@ -52,9 +52,7 @@ AfxPropPageCallback(HWND, UINT message, PROPSHEETPAGE* pPropPage)
 }
 
 BEGIN_MESSAGE_MAP(CPropertyPage, CDialog)
-	//{{AFX_MSG_MAP(CPropertyPage)
 	ON_WM_CTLCOLOR()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -143,6 +141,8 @@ void CPropertyPage::CommonConstruct(LPCTSTR lpszTemplateName, UINT nIDCaption)
 		m_nIDHelp = LOWORD((DWORD_PTR)lpszTemplateName);
 	m_lpszTemplateName = m_psp.pszTemplate;
 	m_bFirstSetActive = TRUE;
+
+	AfxRegisterMFCCtrlClasses();
 }
 
 CPropertyPage::CPropertyPage(UINT nIDTemplate, UINT nIDCaption, UINT nIDHeaderTitle, UINT nIDHeaderSubTitle, DWORD dwSize)
@@ -302,9 +302,9 @@ void CPropertyPage::PreProcessPageTemplate(PROPSHEETPAGE& psp, BOOL bWizard)
 void CPropertyPage::CancelToClose()
 {
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(GetParent() != NULL);
+	ASSERT(GetParentSheet() != NULL);
 
-	GetParent()->SendMessage(PSM_CANCELTOCLOSE);
+	GetParentSheet()->SendMessage(PSM_CANCELTOCLOSE);
 }
 
 void CPropertyPage::SetModified(BOOL bChanged)
@@ -313,9 +313,9 @@ void CPropertyPage::SetModified(BOOL bChanged)
 		return;
 
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(GetParent() != NULL);
+	ASSERT(GetParentSheet() != NULL);
 
-	CWnd* pParentWnd = GetParent();
+	CWnd* pParentWnd = GetParentSheet();
 	if (bChanged)
 		pParentWnd->SendMessage(PSM_CHANGED, (WPARAM)m_hWnd);
 	else
@@ -325,9 +325,9 @@ void CPropertyPage::SetModified(BOOL bChanged)
 LRESULT CPropertyPage::QuerySiblings(WPARAM wParam, LPARAM lParam)
 {
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(GetParent() != NULL);
+	ASSERT(GetParentSheet() != NULL);
 
-	return GetParent()->SendMessage(PSM_QUERYSIBLINGS, wParam, lParam);
+	return GetParentSheet()->SendMessage(PSM_QUERYSIBLINGS, wParam, lParam);
 }
 
 BOOL CPropertyPage::OnApply()
@@ -405,8 +405,7 @@ BOOL CPropertyPage::OnWizardFinish()
 	BOOL bClose=FALSE;
 	if (UpdateData())
 	{
-		CWnd* pParent = GetParent();
-		CPropertySheet* pSheet = DYNAMIC_DOWNCAST(CPropertySheet, pParent);
+		CPropertySheet *pSheet = GetParentSheet();
 		if (pSheet != NULL)
 		{
 			if (pSheet->IsModeless() && pSheet->IsWizard())
@@ -428,8 +427,7 @@ LRESULT CPropertyPage::MapWizardResult(LRESULT lToMap)
 		return lToMap;
 
 	// only do special stuff if MFC owns the property sheet
-	CWnd* pParent = GetParent();
-	CPropertySheet* pSheet = DYNAMIC_DOWNCAST(CPropertySheet, pParent);
+	CPropertySheet *pSheet = GetParentSheet();
 	if (pSheet != NULL)
 	{
 		// search the pages for a matching ID
@@ -475,8 +473,8 @@ BOOL CPropertyPage::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	{
 	case PSN_SETACTIVE:
 		{
-			CPropertySheet* pSheet = DYNAMIC_DOWNCAST(CPropertySheet, GetParent());
-			if (pSheet != NULL && !(pSheet->m_nFlags & WF_CONTINUEMODAL) && !(pSheet->m_bModeless))
+			CPropertySheet* pSheet = GetParentSheet();
+			if (pSheet != NULL && !(pSheet->m_nFlags & WF_CONTINUEMODAL) && !(pSheet->m_bModeless) && !(pSheet->m_psh.dwFlags & PSH_AEROWIZARD))
 				*pResult = -1;
 			else
 				*pResult = OnSetActive() ? 0 : -1;
@@ -512,6 +510,20 @@ BOOL CPropertyPage::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	}
 
 	return TRUE;    // handled
+}
+
+CPropertySheet *CPropertyPage::GetParentSheet()
+{
+	for (CWnd *pWnd = GetParent(); pWnd != NULL; pWnd = pWnd->GetParent())
+	{
+		CPropertySheet *pSheet = DYNAMIC_DOWNCAST(CPropertySheet, pWnd);
+		if (pSheet != NULL)
+		{
+			return pSheet;
+		}
+	}
+	ASSERT(FALSE); // Could not find the CPropertySheet
+	return NULL;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -559,7 +571,7 @@ void CPropertyPage::EndDialog(int nID)
 	// Normally you shouldn't call EndDialog from a page. But in case it does
 	// happen during error situations, call CPropertySheet::EndDialog instead.
 
-	CPropertySheet* pParent = DYNAMIC_DOWNCAST(CPropertySheet, GetParent());
+	CPropertySheet* pParent = GetParentSheet();
 	if (pParent != NULL)
 		pParent->EndDialog(nID);
 }
@@ -568,7 +580,6 @@ void CPropertyPage::EndDialog(int nID)
 // CPropertySheet -- a tabbed "dialog" (really a popup-window)
 
 BEGIN_MESSAGE_MAP(CPropertySheet, CWnd)
-	//{{AFX_MSG_MAP(CPropertySheet)
 	ON_WM_CTLCOLOR()
 	ON_WM_NCCREATE()
 	ON_MESSAGE(WM_INITDIALOG, &CPropertySheet::HandleInitDialog)
@@ -577,7 +588,6 @@ BEGIN_MESSAGE_MAP(CPropertySheet, CWnd)
 	ON_WM_SYSCOMMAND()
 	ON_MESSAGE(DM_SETDEFID, &CPropertySheet::OnSetDefID)
 	ON_MESSAGE(WM_KICKIDLE,&CPropertySheet::OnKickIdle)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 AFX_STATIC_DATA const int _afxPropSheetIDs[4] = { ID_WIZNEXT, ID_WIZFINISH, ID_WIZBACK, IDCANCEL };
@@ -921,14 +931,14 @@ INT_PTR CPropertySheet::DoModal()
 	AfxHookWindowCreate(this);
 	if( PSH_AEROWIZARD & m_psh.dwFlags )
 	{
-		nResult = ::AfxPropertySheet(&m_psh);
+		nResult = PropertySheet(&m_psh);
 		AfxUnhookWindowCreate();
 		m_hWnd = NULL;
 	}
 	else
 	{
 		m_psh.dwFlags |= PSH_MODELESS;
-		HWND hWnd = (HWND)::AfxPropertySheet(&m_psh);
+		HWND hWnd = (HWND)PropertySheet(&m_psh);
 #ifdef _DEBUG
 		DWORD dwError = ::GetLastError();
 #endif
@@ -1054,10 +1064,18 @@ BOOL CPropertySheet::Create(CWnd* pParentWnd, DWORD dwStyle, DWORD dwExStyle)
 
 	// hook the window creation process
 	AfxHookWindowCreate(this);
-	HWND hWnd = (HWND)AfxPropertySheet(&m_psh);
+	HWND hWnd = (HWND)PropertySheet(&m_psh);
 #ifdef _DEBUG
 	DWORD dwError = ::GetLastError();
 #endif
+
+	if (hWnd == (HWND)-1)
+	{
+		// An error occurred in the creation of the sheet, so assuming that the window
+		// was destroyed and cleanup was done via PostNcDestroy, which was called.  If a
+		// memory leak is reported, the window was not deleted in class::PostNcDestroy.
+		return FALSE;
+	}
 
 	// cleanup on failure, otherwise return TRUE
 	if (!AfxUnhookWindowCreate())
@@ -1247,13 +1265,13 @@ void CPropertySheet::AddPage(CPropertyPage* pPage)
 			ppsp->pszHeaderSubTitle = pPage->m_strHeaderSubTitle;
 			ppsp->dwFlags |= PSP_USEHEADERSUBTITLE;
 		}
-		HPROPSHEETPAGE hPSP = AfxCreatePropertySheetPage(ppsp);
+		HPROPSHEETPAGE hPSP = CreatePropertySheetPage(ppsp);
 		if (hPSP == NULL)
 			AfxThrowMemoryException();
 
 		if (!SendMessage(PSM_ADDPAGE, 0, (LPARAM)hPSP))
 		{
-			AfxDestroyPropertySheetPage(hPSP);
+			DestroyPropertySheetPage(hPSP);
 			AfxThrowMemoryException();
 		}
 		++m_psh.nPages;

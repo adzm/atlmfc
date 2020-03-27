@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -94,15 +94,15 @@ class CMFCRibbonColorMenuButton : public CMFCRibbonButton
 
 			const int nIconSize = 16;
 
-			if (afxGlobalData.m_hiconColors == NULL)
+			if (GetGlobalData()->m_hiconColors == NULL)
 			{
-				afxGlobalData.m_hiconColors = (HICON) ::LoadImageW(
+				GetGlobalData()->m_hiconColors = (HICON) ::LoadImageW(
 					AfxFindResourceHandle(MAKEINTRESOURCE(IDI_AFXRES_COLORS), RT_GROUP_ICON),
 					MAKEINTRESOURCEW(IDI_AFXRES_COLORS), IMAGE_ICON, 16, 16, LR_SHARED);
 			}
 
 			::DrawIconEx(pDC->GetSafeHdc(), rectImage.left +(rectImage.Width() - nIconSize) / 2,
-				rectImage.top +(rectImage.Height() - nIconSize) / 2, afxGlobalData.m_hiconColors, nIconSize, nIconSize, 0, NULL, DI_NORMAL);
+				rectImage.top +(rectImage.Height() - nIconSize) / 2, GetGlobalData()->m_hiconColors, nIconSize, nIconSize, 0, NULL, DI_NORMAL);
 		}
 		else if (m_nType == nMenuButtonAuto)
 		{
@@ -202,9 +202,9 @@ void CMFCRibbonColorButton::DrawImage(CDC* pDC, RibbonImageType type, CRect rect
 
 	int nColorHeight = 5;
 
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		nColorHeight = (int)(afxGlobalData.GetRibbonImageScale() * nColorHeight);
+		nColorHeight = (int)(GetGlobalData()->GetRibbonImageScale() * nColorHeight);
 	}
 
 	rectColor.top = rectColor.bottom - nColorHeight + 1;
@@ -218,7 +218,7 @@ void CMFCRibbonColorButton::DrawImage(CDC* pDC, RibbonImageType type, CRect rect
 	rectImage.OffsetRect(0, -1);
 	CMFCRibbonButton::DrawImage(pDC, type, rectImage);
 
-	COLORREF color = (IsDisabled()) ? afxGlobalData.clrBarShadow : (m_Color == (COLORREF)-1 ? m_ColorAutomatic : m_Color);
+	COLORREF color = (IsDisabled()) ? GetGlobalData()->clrBarShadow : (m_Color == (COLORREF)-1 ? m_ColorAutomatic : m_Color);
 	COLORREF clrBorder = (COLORREF)-1;
 
 	if (m_bIsAutomaticButtonBorder && m_Color == (COLORREF)-1)
@@ -285,7 +285,7 @@ void CMFCRibbonColorButton::UpdateColor(COLORREF color)
 		if (m_pParentMenu->IsRibbonMiniToolBar())
 		{
 			CMFCRibbonMiniToolBar* pFloaty = DYNAMIC_DOWNCAST(CMFCRibbonMiniToolBar, m_pParentMenu->GetParent());
-			if (pFloaty != NULL && !pFloaty->IsContextMenuMode())
+			if (pFloaty != NULL)
 			{
 				return;
 			}
@@ -704,10 +704,10 @@ void CMFCRibbonColorButton::SetColorBoxSize(CSize sizeBox)
 {
 	ASSERT_VALID(this);
 
-	if (afxGlobalData.GetRibbonImageScale () != 1.)
+	if (GetGlobalData()->GetRibbonImageScale () != 1.)
 	{
-		sizeBox.cx = (int) (.5 + afxGlobalData.GetRibbonImageScale () * sizeBox.cx);
-		sizeBox.cy = (int) (.5 + afxGlobalData.GetRibbonImageScale () * sizeBox.cy);
+		sizeBox.cx = (int) (.5 + GetGlobalData()->GetRibbonImageScale () * sizeBox.cx);
+		sizeBox.cy = (int) (.5 + GetGlobalData()->GetRibbonImageScale () * sizeBox.cy);
 	}
 
 	m_sizeBox = sizeBox;

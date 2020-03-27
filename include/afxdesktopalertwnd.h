@@ -24,7 +24,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCDesktopAlertWndButton window
 
 extern AFX_IMPORT_DATA UINT AFX_WM_ON_CLOSEPOPUPWINDOW;
@@ -52,7 +52,7 @@ protected:
 	BOOL m_bIsCloseButton;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCDesktopAlertWnd window
 
 class CMFCDesktopAlertWnd : public CWnd
@@ -71,15 +71,7 @@ public:
 	CMFCPopupMenu::ANIMATION_TYPE GetAnimationType() { return m_AnimationType; }
 	void SetAnimationType(CMFCPopupMenu::ANIMATION_TYPE type) { m_AnimationType = type; }
 
-	void SetAnimationSpeed(UINT nSpeed)
-	{
-		if(nSpeed == 0 || nSpeed > 200)
-		{
-			ASSERT(FALSE);
-			return;
-		}
-		m_AnimationSpeed = max (2, nSpeed);
-	}
+	void SetAnimationSpeed(UINT nSpeed);
 	UINT GetAnimationSpeed() const { return m_AnimationSpeed; }
 
 	void SetTransparency(BYTE nTransparency)
@@ -163,6 +155,23 @@ protected:
 
 	void StartWindowMove();
 
+	CMFCPopupMenu::ANIMATION_TYPE GetActualAnimationType()
+	{
+		if (m_AnimationType == CMFCPopupMenu::SYSTEM_DEFAULT_ANIMATION)
+		{
+			if (GetGlobalData()->m_bMenuAnimation)
+			{
+				return GetGlobalData()->m_bMenuFadeEffect ? CMFCPopupMenu::FADE : CMFCPopupMenu::SLIDE;
+			}
+			else
+			{
+				return CMFCPopupMenu::NO_ANIMATION;
+			}
+		}
+
+		return m_AnimationType;
+	}
+
 // Overrides
 public:
 	virtual BOOL Create(CWnd* pWndOwner, UINT uiDlgResID, HMENU hMenu = NULL, CPoint ptPos = CPoint (-1, -1), CRuntimeClass* pRTIDlgBar = RUNTIME_CLASS(CMFCDesktopAlertDialog));
@@ -181,7 +190,6 @@ public:
 	virtual ~CMFCDesktopAlertWnd();
 
 protected:
-	//{{AFX_MSG(CMFCDesktopAlertWnd)
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnNcDestroy();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -194,7 +202,7 @@ protected:
 	afx_msg void OnCancelMode();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

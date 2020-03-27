@@ -224,13 +224,13 @@ using namespace System::Reflection;
 #ifdef BUILD_PREBUILT
 
 // TEMP (alecont)
-#define _MFC_FILENAME_VER_DOT "9.0"
+#define _MFC_FILENAME_VER_DOT "11.0"
 
 [assembly: AssemblyTitle("mfcm" _MFC_FILENAME_VER)];
 [assembly: AssemblyDescription("MFC " _MFC_FILENAME_VER_DOT " Managed Interoperability")];
 [assembly: AssemblyConfiguration("")];
 [assembly: AssemblyCompany("Microsoft")];
-[assembly: AssemblyProduct("Visual Studio 9.0")];
+[assembly: AssemblyProduct("Visual Studio 11.0")];
 [assembly: AssemblyCopyright("Microsoft Corporation")];
 [assembly: AssemblyTrademark("")];
 [assembly: AssemblyCulture("")];
@@ -247,7 +247,7 @@ using namespace System::Reflection;
 
 
 [assembly: AssemblyTitle("")];
-[assembly: AssemblyDescription("MFC " "9.0" " Managed Interoperability")];
+[assembly: AssemblyDescription("MFC " "11.0" " Managed Interoperability")];
 [assembly: AssemblyConfiguration("")];
 [assembly: AssemblyCompany("")];
 [assembly: AssemblyProduct("")];

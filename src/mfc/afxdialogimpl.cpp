@@ -39,13 +39,17 @@ BOOL CDialogImpl::ProcessMouseClick(POINT pt)
 {
 	if (!CMFCToolBar::IsCustomizeMode() && CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
 	{
-		CMFCPopupMenu::MENUAREA_TYPE clickArea = CMFCPopupMenu::m_pActivePopupMenu->CheckArea(pt);
+		// If CMFCPopupMenu::m_pActivePopupMenu is owned by another UI thread, the CMFCPopupMenu::m_pActivePopupMenu pointer may be set to
+		// NULL in the midst of this processing.  So save the pointer and use the saved value to close the active popup menu and continue.
+		CMFCPopupMenu *pActivePopupMenu = CMFCPopupMenu::m_pActivePopupMenu;
+
+		CMFCPopupMenu::MENUAREA_TYPE clickArea = pActivePopupMenu->CheckArea(pt);
 
 		if (clickArea == CMFCPopupMenu::OUTSIDE)
 		{
 			// Click outside of menu
 			// Maybe secondary click on the parent button?
-			CMFCToolBarMenuButton* pParentButton = CMFCPopupMenu::m_pActivePopupMenu->GetParentButton();
+			CMFCToolBarMenuButton* pParentButton = pActivePopupMenu->GetParentButton();
 			if (pParentButton != NULL)
 			{
 				CWnd* pWndParent = pParentButton->GetParentWnd();
@@ -61,10 +65,10 @@ BOOL CDialogImpl::ProcessMouseClick(POINT pt)
 						// If user clicks second time on the parent button,
 						// we should close an active menu on the toolbar/menubar
 						// and leave it on the popup menu:
-						if (pWndParentPopupMenuBar == NULL && !CMFCPopupMenu::m_pActivePopupMenu->InCommand())
+						if (pWndParentPopupMenuBar == NULL && !pActivePopupMenu->InCommand())
 						{
 							// Toolbar/menu bar: close an active menu!
-							CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
+							pActivePopupMenu->SendMessage(WM_CLOSE);
 						}
 
 						return TRUE;
@@ -99,9 +103,9 @@ BOOL CDialogImpl::ProcessMouseClick(POINT pt)
 				}
 			}
 
-			if (!CMFCPopupMenu::m_pActivePopupMenu->InCommand())
+			if (!pActivePopupMenu->InCommand())
 			{
-				CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
+				pActivePopupMenu->SendMessage(WM_CLOSE);
 
 				CWnd* pWndFocus = CWnd::GetFocus();
 				if (pWndFocus != NULL && pWndFocus->IsKindOf(RUNTIME_CLASS(CMFCToolBar)))
@@ -117,7 +121,7 @@ BOOL CDialogImpl::ProcessMouseClick(POINT pt)
 		}
 		else if (clickArea == CMFCPopupMenu::SHADOW_RIGHT || clickArea == CMFCPopupMenu::SHADOW_BOTTOM)
 		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
+			pActivePopupMenu->SendMessage(WM_CLOSE);
 			m_Dlg.SetFocus();
 
 			return TRUE;

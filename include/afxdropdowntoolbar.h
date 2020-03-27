@@ -51,14 +51,13 @@ public:
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
 	virtual BOOL AllowShowOnPaneMenu() const { return FALSE; }
 
-	//{{AFX_MSG(CMFCDropDownToolBar)
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCDropDownFrame frame
 
 class CMFCDropDownFrame : public CMiniFrameWnd
@@ -106,7 +105,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCDropDownFrame)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnPaint();
@@ -114,7 +112,7 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnActivateApp(BOOL bActive, DWORD dwThreadID);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

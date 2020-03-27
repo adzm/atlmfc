@@ -53,9 +53,6 @@ COleServerItem* COleServerDocEx::OnGetEmbeddedItem()
 }
 
 BEGIN_MESSAGE_MAP(COleServerDocEx, COleServerDoc)
-	//{{AFX_MSG_MAP(COleServerDocEx)
-	// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -118,6 +115,14 @@ void COleServerDocEx::OnResizeBorder( LPCRECT lpRectBorder, LPOLEINPLACEUIWINDOW
 
 	if (pMainFrame == NULL)
 	{
+		COleDocIPFrameWnd* p_IpDocFrame2 = DYNAMIC_DOWNCAST(COleDocIPFrameWnd, m_pInPlaceFrame);
+		COleIPFrameWnd* p_IpFrame2 = DYNAMIC_DOWNCAST(COleIPFrameWnd, m_pInPlaceFrame);
+
+		if ((p_IpDocFrame2 != NULL) || (p_IpFrame2 != NULL))
+		{
+			COleServerDoc::OnResizeBorder(lpRectBorder, lpUIWindow, bFrame);
+		}
+
 		return;
 	}
 

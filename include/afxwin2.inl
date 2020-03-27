@@ -35,7 +35,7 @@ _AFXWIN_INLINE BOOL CWnd::ModifyStyleEx(DWORD dwRemove, DWORD dwAdd, UINT nFlags
 #endif //_AFX_NO_OCC_SUPPORT
 _AFXWIN_INLINE CWnd* CWnd::GetOwner() const
 	{ return m_hWndOwner != NULL ? CWnd::FromHandle(m_hWndOwner) : GetParent(); }
-_AFXWIN_INLINE void CWnd::SetOwner(CWnd* pOwnerWnd)
+_AFXWIN_INLINE void CWnd::SetOwner(_In_ CWnd* pOwnerWnd)
 	{ m_hWndOwner = pOwnerWnd != NULL ? pOwnerWnd->m_hWnd : NULL; }
 
 _AFXWIN_INLINE LRESULT CWnd::_AFX_FUNCNAME(SendMessage)(UINT message, WPARAM wParam, LPARAM lParam) const
@@ -52,7 +52,7 @@ _AFXWIN_INLINE BOOL CWnd::DragDetect(POINT pt) const
 #ifdef _AFX_NO_OCC_SUPPORT
 _AFXWIN_INLINE void CWnd::SetWindowText(LPCTSTR lpszString)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SetWindowText(m_hWnd, lpszString); }
-_AFXWIN_INLINE int CWnd::GetWindowText(_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpszString, _In_ int nMaxCount) const
+_AFXWIN_INLINE int CWnd::GetWindowText(_Out_writes_to_(nMaxCount, return + 1) LPTSTR lpszString, _In_ int nMaxCount) const
 	{ ASSERT(::IsWindow(m_hWnd)); return ::GetWindowText(m_hWnd, lpszString, nMaxCount); }
 _AFXWIN_INLINE int CWnd::GetWindowTextLength() const
 	{ ASSERT(::IsWindow(m_hWnd)); return ::GetWindowTextLength(m_hWnd); }
@@ -231,13 +231,13 @@ _AFXWIN_INLINE int CWnd::DlgDirListComboBox(_Inout_z_ LPTSTR lpPathSpec, _In_ in
 		_In_ int nIDStaticPath, _In_ UINT nFileType)
 	{ ASSERT(::IsWindow(m_hWnd)); return ::DlgDirListComboBox(m_hWnd, lpPathSpec,
 			nIDComboBox, nIDStaticPath, nFileType); }
-_AFXWIN_INLINE BOOL CWnd::DlgDirSelect(_Out_z_cap_c_(_MAX_PATH) LPTSTR lpString, int nIDListBox)
+_AFXWIN_INLINE BOOL CWnd::DlgDirSelect(_Out_writes_z_(_MAX_PATH) LPTSTR lpString, _In_ int nIDListBox)
 	{ ASSERT(::IsWindow(m_hWnd)); return ::DlgDirSelectEx(m_hWnd, lpString, _MAX_PATH, nIDListBox); }
-_AFXWIN_INLINE BOOL CWnd::DlgDirSelect(_Out_z_cap_(nSize) LPTSTR lpString, int nSize, int nIDListBox)
+_AFXWIN_INLINE BOOL CWnd::DlgDirSelect(_Out_writes_z_(nSize) LPTSTR lpString, _In_ int nSize, _In_ int nIDListBox)
 	{ ASSERT(::IsWindow(m_hWnd)); return ::DlgDirSelectEx(m_hWnd, lpString, nSize, nIDListBox); }
-_AFXWIN_INLINE BOOL CWnd::DlgDirSelectComboBox(_Out_z_cap_c_(_MAX_PATH) LPTSTR lpString, int nIDComboBox)
+_AFXWIN_INLINE BOOL CWnd::DlgDirSelectComboBox(_Out_writes_z_(_MAX_PATH) LPTSTR lpString, _In_ int nIDComboBox)
 	{ ASSERT(::IsWindow(m_hWnd)); return ::DlgDirSelectComboBoxEx(m_hWnd, lpString, _MAX_PATH, nIDComboBox);}
-_AFXWIN_INLINE BOOL CWnd::DlgDirSelectComboBox(_Out_z_cap_(nSize) LPTSTR lpString, int nSize, int nIDComboBox)
+_AFXWIN_INLINE BOOL CWnd::DlgDirSelectComboBox(_Out_writes_z_(nSize) LPTSTR lpString, _In_ int nSize, _In_ int nIDComboBox)
 	{ ASSERT(::IsWindow(m_hWnd)); return ::DlgDirSelectComboBoxEx(m_hWnd, lpString, nSize, nIDComboBox);}
 #ifdef _AFX_NO_OCC_SUPPORT
 _AFXWIN_INLINE CWnd* CWnd::GetDlgItem(int nID) const
@@ -247,7 +247,7 @@ _AFXWIN_INLINE void CWnd::GetDlgItem(int nID, HWND* phWnd) const
 _AFXWIN_INLINE UINT CWnd::GetDlgItemInt(int nID, BOOL* lpTrans,
 		BOOL bSigned) const
 	{ ASSERT(::IsWindow(m_hWnd)); return ::GetDlgItemInt(m_hWnd, nID, lpTrans, bSigned);}
-_AFXWIN_INLINE int CWnd::GetDlgItemText(_In_ int nID, _Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpStr, _In_ int nMaxCount) const
+_AFXWIN_INLINE int CWnd::GetDlgItemText(_In_ int nID, _Out_writes_to_(nMaxCount, return + 1) LPTSTR lpStr, _In_ int nMaxCount) const
 	{ ASSERT(::IsWindow(m_hWnd)); return ::GetDlgItemText(m_hWnd, nID, lpStr, nMaxCount);}
 #endif //_AFX_NO_OCC_SUPPORT
 _AFXWIN_INLINE CWnd* CWnd::GetNextDlgGroupItem(CWnd* pWndCtl, BOOL bPrevious) const
@@ -280,7 +280,7 @@ _AFXWIN_INLINE CWnd* CWnd::ChildWindowFromPoint(POINT point, UINT nFlags) const
 	{ ASSERT(::IsWindow(m_hWnd)); return CWnd::FromHandle(::ChildWindowFromPointEx(m_hWnd, point, nFlags)); }
 _AFXWIN_INLINE CWnd* PASCAL CWnd::FindWindow(LPCTSTR lpszClassName, LPCTSTR lpszWindowName)
 	{ return CWnd::FromHandle(::FindWindow(lpszClassName, lpszWindowName)); }
-_AFXWIN_INLINE CWnd* CWnd::FindWindowEx(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszClass, LPCTSTR lpszWindow)
+_AFXWIN_INLINE CWnd* PASCAL CWnd::FindWindowEx(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszClass, LPCTSTR lpszWindow)
 	{ return CWnd::FromHandle(::FindWindowEx(hwndParent, hwndChildAfter, lpszClass, lpszWindow)); }
 
 _AFXWIN_INLINE CWnd* CWnd::GetNextWindow(UINT nFlag) const
@@ -344,7 +344,7 @@ _AFXWIN_INLINE BOOL CWnd::SendNotifyMessage(UINT message, WPARAM wParam, LPARAM 
 // Win4
 _AFXWIN_INLINE HICON CWnd::SetIcon(HICON hIcon, BOOL bBigIcon)
 	{ ASSERT(::IsWindow(m_hWnd)); return (HICON)::SendMessage(m_hWnd, WM_SETICON, bBigIcon, (LPARAM)hIcon); }
-_AFXWIN_INLINE HICON CWnd::GetIcon(BOOL bBigIcon) const
+_AFXWIN_INLINE HICON CWnd::GetIcon(_In_ BOOL bBigIcon) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (HICON)::SendMessage(m_hWnd, WM_GETICON, bBigIcon, 0); }
 _AFXWIN_INLINE void CWnd::Print(CDC* pDC, DWORD dwFlags) const
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, WM_PRINT, (WPARAM)pDC->GetSafeHdc(), dwFlags); }
@@ -556,7 +556,7 @@ _AFXWIN_INLINE void CWnd::OnInitMenuPopup(CMenu*, UINT, BOOL)
 	{ Default(); }
 _AFXWIN_INLINE void CWnd::OnUnInitMenuPopup(CMenu*, UINT)
 	{ Default(); }
-_AFXWIN_INLINE void CWnd::OnAskCbFormatName(_In_ UINT nMaxCount, _Out_z_cap_(nMaxCount) LPTSTR pszName)
+_AFXWIN_INLINE void CWnd::OnAskCbFormatName(_In_ UINT nMaxCount, _Out_writes_z_(nMaxCount) LPTSTR pszName)
 {
 	(nMaxCount);
 	if(nMaxCount>0)
@@ -781,11 +781,14 @@ _AFXWIN_INLINE int CListBox::GetSel(int nIndex) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, LB_GETSEL, nIndex, 0); }
 _AFXWIN_INLINE int CListBox::SetSel(int nIndex, BOOL bSelect)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, LB_SETSEL, bSelect, nIndex); }
+#pragma warning(push)
+#pragma warning(disable: 6001 6054)
 _AFXWIN_INLINE int CListBox::GetText(_In_ int nIndex, _Pre_notnull_ _Post_z_ LPTSTR lpszBuffer) const
 { 
 	ASSERT(::IsWindow(m_hWnd)); 
 	return (int)::SendMessage(m_hWnd, LB_GETTEXT, nIndex, (LPARAM)lpszBuffer); 
 }
+#pragma warning(push)
 _AFXWIN_INLINE int CListBox::GetTextLen(int nIndex) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, LB_GETTEXTLEN, nIndex, 0); }
 _AFXWIN_INLINE void CListBox::SetColumnWidth(int cxWidth)
@@ -854,7 +857,7 @@ _AFXWIN_INLINE DWORD CComboBox::GetEditSel() const
 	{ ASSERT(::IsWindow(m_hWnd)); return DWORD(::SendMessage(m_hWnd, CB_GETEDITSEL, 0, 0)); }
 _AFXWIN_INLINE BOOL CComboBox::LimitText(int nMaxChars)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, CB_LIMITTEXT, nMaxChars, 0); }
-_AFXWIN_INLINE BOOL CComboBox::SetEditSel(int nStartChar, int nEndChar)
+_AFXWIN_INLINE BOOL CComboBox::SetEditSel(_In_ int nStartChar, _In_ int nEndChar)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, CB_SETEDITSEL, 0, MAKELONG(nStartChar, nEndChar)); }
 _AFXWIN_INLINE DWORD_PTR CComboBox::GetItemData(int nIndex) const
 	{ ASSERT(::IsWindow(m_hWnd)); return ::SendMessage(m_hWnd, CB_GETITEMDATA, nIndex, 0); }
@@ -864,11 +867,14 @@ _AFXWIN_INLINE void* CComboBox::GetItemDataPtr(int nIndex) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (LPVOID)GetItemData(nIndex); }
 _AFXWIN_INLINE int CComboBox::SetItemDataPtr(int nIndex, void* pData)
 	{ ASSERT(::IsWindow(m_hWnd)); return SetItemData(nIndex, (DWORD_PTR)(LPVOID)pData); }
+#pragma warning(push)
+#pragma warning(disable: 6001 6054)
 _AFXWIN_INLINE int CComboBox::GetLBText(_In_ int nIndex, _Pre_notnull_ _Post_z_ LPTSTR lpszText) const
 { 
 	ASSERT(::IsWindow(m_hWnd)); 
 	return (int)::SendMessage(m_hWnd, CB_GETLBTEXT, nIndex, (LPARAM)lpszText); 
 }
+#pragma warning(pop)
 _AFXWIN_INLINE int CComboBox::GetLBTextLen(int nIndex) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_GETLBTEXTLEN, nIndex, 0); }
 _AFXWIN_INLINE void CComboBox::ShowDropDown(BOOL bShowIt)
@@ -877,13 +883,13 @@ _AFXWIN_INLINE int CComboBox::AddString(LPCTSTR lpszString)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_ADDSTRING, 0, (LPARAM)lpszString); }
 _AFXWIN_INLINE int CComboBox::DeleteString(UINT nIndex)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_DELETESTRING, nIndex, 0);}
-_AFXWIN_INLINE int CComboBox::InsertString(int nIndex, LPCTSTR lpszString)
+_AFXWIN_INLINE int CComboBox::InsertString(_In_ int nIndex, _In_z_ LPCTSTR lpszString)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_INSERTSTRING, nIndex, (LPARAM)lpszString); }
 _AFXWIN_INLINE void CComboBox::ResetContent()
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, CB_RESETCONTENT, 0, 0); }
-_AFXWIN_INLINE int CComboBox::Dir(UINT attr, LPCTSTR lpszWildCard)
+_AFXWIN_INLINE int CComboBox::Dir(_In_ UINT attr, _In_ LPCTSTR lpszWildCard)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_DIR, attr, (LPARAM)lpszWildCard); }
-_AFXWIN_INLINE int CComboBox::FindString(int nStartAfter, LPCTSTR lpszString) const
+_AFXWIN_INLINE int CComboBox::FindString(_In_ int nStartAfter, _In_z_ LPCTSTR lpszString) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, CB_FINDSTRING, nStartAfter,
 		(LPARAM)lpszString); }
 _AFXWIN_INLINE int CComboBox::SelectString(int nStartAfter, LPCTSTR lpszString)
@@ -949,9 +955,12 @@ _AFXWIN_INLINE HLOCAL CEdit::GetHandle() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (HLOCAL)::SendMessage(m_hWnd, EM_GETHANDLE, 0, 0); }
 _AFXWIN_INLINE void CEdit::SetHandle(HLOCAL hBuffer)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, EM_SETHANDLE, (WPARAM)hBuffer, 0); }
+#pragma warning(push)
+#pragma warning(disable: 6001 6054)
 _AFXWIN_INLINE int CEdit::GetLine(_In_ int nIndex, _Out_ LPTSTR lpszBuffer) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, EM_GETLINE, nIndex, (LPARAM)lpszBuffer); }
-_AFXWIN_INLINE int CEdit::GetLine(_In_ int nIndex, _Out_cap_post_count_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const
+#pragma warning(pop)
+_AFXWIN_INLINE int CEdit::GetLine(_In_ int nIndex, _Out_writes_to_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const
 	{
 		ASSERT(::IsWindow(m_hWnd));
 		*(LPWORD)lpszBuffer = (WORD)nMaxLength;

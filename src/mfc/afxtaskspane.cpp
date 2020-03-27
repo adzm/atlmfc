@@ -10,6 +10,7 @@
 
 #include "stdafx.h"
 #include "afxcontrolbarutil.h"
+#include "afxres.h"
 
 #include "afxwinappex.h"
 #include "afxribbonres.h"
@@ -27,7 +28,7 @@
 #define new DEBUG_NEW
 #endif
 
-static const CString strTasksPaneProfile = _T("MFCTasksPanes");
+#define AFX_TASKS_PANE_PROFILE  _T("MFCTasksPanes")
 #define AFX_REG_SECTION_FMT _T("%sMFCTasksPane-%d")
 #define AFX_REG_SECTION_FMT_EX _T("%sMFCTasksPane-%d%x")
 #define AFX_REG_ENTRY_SETTINGS _T("Settings")
@@ -36,8 +37,6 @@ static const CString strTasksPaneProfile = _T("MFCTasksPanes");
 
 static const int nBorderSize = 1;
 static const int nNavToolbarId = 1;
-static const int nAnimTimerId = AFX_ID_CHECK_AUTO_HIDE_CONDITION + 1;
-static const int nScrollTimerId = AFX_ID_CHECK_AUTO_HIDE_CONDITION + 2;
 
 static inline BOOL __stdcall IsSystemCommand(UINT uiCmd)
 {
@@ -251,11 +250,9 @@ IMPLEMENT_SERIAL(CTasksPaneMenuButton, CMFCToolBarMenuButton, 1)
 
 IMPLEMENT_SERIAL(CMFCTasksPaneToolBar, CMFCToolBar, 1)
 
-//{{AFX_MSG_MAP(CMFCTasksPaneToolBar)
 BEGIN_MESSAGE_MAP(CMFCTasksPaneToolBar, CMFCToolBar)
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CMFCTasksPaneToolBar::OnIdleUpdateCmdUI)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 LRESULT CMFCTasksPaneToolBar::OnIdleUpdateCmdUI(WPARAM wParam, LPARAM)
 {
@@ -489,7 +486,7 @@ CMFCTasksPane::CMFCTasksPane(): CDockablePane(), m_nMaxHistory(10)
 	m_iScrollBtnHeight = CMenuImages::Size().cy + 2 * nBorderSize;
 	m_iScrollMode = 0;
 
-	m_bAnimationEnabled = !afxGlobalData.bIsRemoteSession;
+	m_bAnimationEnabled = !GetGlobalData()->bIsRemoteSession;
 
 	m_pAnimatedGroup = NULL;
 	m_sizeAnim = CSize(0, 0);
@@ -511,7 +508,6 @@ CMFCTasksPane::~CMFCTasksPane()
 }
 
 BEGIN_MESSAGE_MAP(CMFCTasksPane, CDockablePane)
-	//{{AFX_MSG_MAP(CMFCTasksPane)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_SETTINGCHANGE()
@@ -540,7 +536,6 @@ BEGIN_MESSAGE_MAP(CMFCTasksPane, CDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_AFXBARRES_TASKPANE_BACK, &CMFCTasksPane::OnUpdateBack)
 	ON_UPDATE_COMMAND_UI(ID_AFXBARRES_TASKPANE_FORWARD, &CMFCTasksPane::OnUpdateForward)
 	ON_UPDATE_COMMAND_UI(ID_AFXBARRES_TASKPANE_CLOSE, &CMFCTasksPane::OnUpdateClose)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -619,7 +614,7 @@ void CMFCTasksPane::OnSize(UINT nType, int cx, int cy)
 
 int CMFCTasksPane::ReposTasks(BOOL bCalcHeightOnly/* = FALSE*/)
 {
-	if (afxGlobalData.bIsRemoteSession)
+	if (GetGlobalData()->bIsRemoteSession)
 	{
 		m_bAnimationEnabled = FALSE;
 	}
@@ -679,7 +674,7 @@ int CMFCTasksPane::ReposTasks(BOOL bCalcHeightOnly/* = FALSE*/)
 			int nCaptionHeight = 0;
 			if (!pGroup->m_strName.IsEmpty())
 			{
-				CFont* pFontOldBold = dc.SelectObject(&afxGlobalData.fontBold);
+				CFont* pFontOldBold = dc.SelectObject(&(GetGlobalData()->fontBold));
 				CSize sizeText = dc.GetTextExtent(pGroup->m_strName);
 				dc.SelectObject(pFontOldBold);
 				int nVOffset = (GetGroupCaptionVertOffset() != -1 ? GetGroupCaptionVertOffset() : CMFCVisualManager::GetInstance()->GetTasksPaneGroupCaptionVertOffset());
@@ -782,7 +777,7 @@ int CMFCTasksPane::ReposTasks(BOOL bCalcHeightOnly/* = FALSE*/)
 								rectText.left += m_sizeIcon.cx + nIconHOffset;
 
 								// Determines the height of the text rectangle
-								CFont* pFontOldUnd = dc.SelectObject(&afxGlobalData.fontUnderline);
+								CFont* pFontOldUnd = dc.SelectObject(&(GetGlobalData()->fontUnderline));
 								int cy = dc.DrawText(pTask->m_strName, rectText, DT_CALCRECT | DT_WORDBREAK);
 								dc.SelectObject(pFontOldUnd);
 
@@ -807,7 +802,7 @@ int CMFCTasksPane::ReposTasks(BOOL bCalcHeightOnly/* = FALSE*/)
 							// ----------------
 							else
 							{
-								CFont* pFontOldUnd = dc.SelectObject(&afxGlobalData.fontUnderline);
+								CFont* pFontOldUnd = dc.SelectObject(&(GetGlobalData()->fontUnderline));
 								CSize sizeText = dc.GetTextExtent(pTask->m_strName);
 								dc.SelectObject(pFontOldUnd);
 								int cy = max(sizeText.cy, m_sizeIcon.cy);
@@ -2197,13 +2192,13 @@ BOOL CMFCTasksPane::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 	CMFCTasksPaneTask* pTaskHit = TaskHitTest(ptCursor);
 	if (m_pClickedTask != NULL && m_pClickedTask->m_bEnabled || pTaskHit != NULL && pTaskHit->m_bEnabled)
 	{
-		::SetCursor(afxGlobalData.GetHandCursor());
+		::SetCursor(GetGlobalData()->GetHandCursor());
 		return TRUE;
 	}
 
 	if (m_bCanCollapse &&(m_pClickedGroupCaption != NULL || GroupCaptionHitTest(ptCursor) != NULL))
 	{
-		::SetCursor(afxGlobalData.GetHandCursor());
+		::SetCursor(GetGlobalData()->GetHandCursor());
 		return TRUE;
 	}
 
@@ -2235,7 +2230,7 @@ void CMFCTasksPane::OnMouseMove(UINT nFlags, CPoint point)
 
 		if (m_iScrollMode != 0)
 		{
-			SetTimer(nScrollTimerId, m_nScrollTimerDuration, NULL);
+			SetTimer(AFX_TIMER_ID_TASK_SCROLL, m_nScrollTimerDuration, NULL);
 			return;
 		}
 	}
@@ -2421,7 +2416,7 @@ void CMFCTasksPane::OnLButtonUp(UINT nFlags, CPoint point)
 			m_pAnimatedGroup = pHotGroupCaption;
 			m_sizeAnim = m_pAnimatedGroup->m_rectGroup.Size();
 
-			SetTimer(nAnimTimerId, m_nAnimTimerDuration, NULL);
+			SetTimer(AFX_TIMER_ID_TASK_ANIMATION, m_nAnimTimerDuration, NULL);
 			m_nLastAnimTime = clock();
 		}
 
@@ -2865,7 +2860,7 @@ void CMFCTasksPane::AdjustScroll()
 	}
 	else if (m_pAnimatedGroup != NULL/* animation is in progress */)
 	{
-		KillTimer(nScrollTimerId);
+		KillTimer(AFX_TIMER_ID_TASK_SCROLL);
 		m_iScrollMode = 0;
 	}
 
@@ -3582,7 +3577,7 @@ BOOL CMFCTasksPane::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 BOOL CMFCTasksPane::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strTasksPaneProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_TASKS_PANE_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -3641,7 +3636,7 @@ BOOL CMFCTasksPane::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 
 BOOL CMFCTasksPane::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strTasksPaneProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_TASKS_PANE_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -3709,7 +3704,7 @@ void CMFCTasksPane::OnTimer(UINT_PTR nIDEvent)
 {
 	switch(nIDEvent)
 	{
-	case nAnimTimerId:
+	case AFX_TIMER_ID_TASK_ANIMATION:
 		if (m_pAnimatedGroup != NULL && m_nRowHeight != 0)
 		{
 			ASSERT_VALID(m_pAnimatedGroup);
@@ -3763,12 +3758,12 @@ void CMFCTasksPane::OnTimer(UINT_PTR nIDEvent)
 		}
 		else
 		{
-			KillTimer(nAnimTimerId);
+			KillTimer(AFX_TIMER_ID_TASK_ANIMATION);
 			m_pAnimatedGroup = NULL;
 		}
 		break;
 
-	case nScrollTimerId:
+	case AFX_TIMER_ID_TASK_SCROLL:
 		{
 			CPoint point;
 			::GetCursorPos(&point);
@@ -3792,7 +3787,7 @@ void CMFCTasksPane::OnTimer(UINT_PTR nIDEvent)
 			}
 			else
 			{
-				KillTimer(nScrollTimerId);
+				KillTimer(AFX_TIMER_ID_TASK_SCROLL);
 				m_iScrollMode = 0;
 				InvalidateRect(m_rectScrollDn);
 				InvalidateRect(m_rectScrollUp);
@@ -3981,12 +3976,12 @@ BOOL CMFCTasksPane::CreateNavigationToolbar()
 	// All commands will be routed via this bar, not via the parent frame:
 	m_wndToolBar.SetRouteCommandsViaFrame(FALSE);
 
-	CSize sizeNavImage = afxGlobalData.Is32BitIcons() ? CSize(16, 16) : CSize(12, 12);
+	CSize sizeNavImage = GetGlobalData()->Is32BitIcons() ? CSize(16, 16) : CSize(12, 12);
 	const int nImageMargin = 4;
 
 	CSize sizeNavButton = sizeNavImage + CSize(nImageMargin, nImageMargin);
 
-	const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+	const double dblImageScale = GetGlobalData()->GetRibbonImageScale();
 
 	// -----------------------
 	// Load navigation images:
@@ -4003,7 +3998,7 @@ BOOL CMFCTasksPane::CreateNavigationToolbar()
 
 		m_wndToolBar.SetLockedSizes(sizeNavButton, sizeNavImage);
 
-		BOOL bIsLoaded = m_wndToolBar.LoadBitmap(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_TASKPANE32 : IDB_AFXBARRES_TASKPANE, 0, 0, TRUE);
+		BOOL bIsLoaded = m_wndToolBar.LoadBitmap(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_TASKPANE32 : IDB_AFXBARRES_TASKPANE, 0, 0, TRUE);
 		ASSERT(bIsLoaded);
 	}
 	else
@@ -4236,9 +4231,9 @@ void CMFCTasksPane::EnableNavigationToolbar(BOOL bEnable, UINT uiToolbarBmpRes, 
 
 	if (bReloadImages)
 	{
-		const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+		const double dblImageScale = GetGlobalData()->GetRibbonImageScale();
 
-		CSize sizeNavImage = afxGlobalData.Is32BitIcons() ? CSize(16, 16) : CSize(12, 12);
+		CSize sizeNavImage = GetGlobalData()->Is32BitIcons() ? CSize(16, 16) : CSize(12, 12);
 		const int nImageMargin = 4;
 
 		CSize sizeNavButton = sizeNavImage + CSize(nImageMargin, nImageMargin);
@@ -4257,7 +4252,7 @@ void CMFCTasksPane::EnableNavigationToolbar(BOOL bEnable, UINT uiToolbarBmpRes, 
 
 			m_wndToolBar.SetLockedSizes(sizeNavButton, sizeNavImage);
 
-			BOOL bIsLoaded = m_wndToolBar.LoadBitmap(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_TASKPANE32 : IDB_AFXBARRES_TASKPANE, 0, 0, TRUE);
+			BOOL bIsLoaded = m_wndToolBar.LoadBitmap(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_TASKPANE32 : IDB_AFXBARRES_TASKPANE, 0, 0, TRUE);
 			ASSERT(bIsLoaded);
 		}
 		else

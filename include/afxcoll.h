@@ -607,7 +607,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CPtrList(INT_PTR nBlockSize = 10);
+	explicit CPtrList(INT_PTR nBlockSize = 10);
 
 // Attributes (head and tail)
 	// count of elements
@@ -706,7 +706,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CObList(INT_PTR nBlockSize = 10);
+	explicit CObList(INT_PTR nBlockSize = 10);
 
 // Attributes (head and tail)
 	// count of elements
@@ -807,7 +807,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CStringList(INT_PTR nBlockSize = 10);
+	explicit CStringList(INT_PTR nBlockSize = 10);
 
 // Attributes (head and tail)
 	// count of elements
@@ -917,7 +917,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CMapWordToPtr(INT_PTR nBlockSize = 10);
+	explicit CMapWordToPtr(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements
@@ -1000,7 +1000,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CMapPtrToWord(INT_PTR nBlockSize = 10);
+	explicit CMapPtrToWord(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements
@@ -1083,7 +1083,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CMapPtrToPtr(INT_PTR nBlockSize = 10);
+	explicit CMapPtrToPtr(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements
@@ -1167,7 +1167,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CMapWordToOb(INT_PTR nBlockSize = 10);
+	explicit CMapWordToOb(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements
@@ -1252,7 +1252,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CMapStringToPtr(INT_PTR nBlockSize = 10);
+	explicit CMapStringToPtr(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements
@@ -1335,7 +1335,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CMapStringToOb(INT_PTR nBlockSize = 10);
+	explicit CMapStringToOb(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements
@@ -1428,7 +1428,7 @@ protected:
 public:
 
 // Construction
-	/* explicit */ CMapStringToString(INT_PTR nBlockSize = 10);
+	explicit CMapStringToString(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements

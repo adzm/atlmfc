@@ -31,9 +31,6 @@ CSplitterWndEx::~CSplitterWndEx()
 }
 
 BEGIN_MESSAGE_MAP(CSplitterWndEx, CSplitterWnd)
-	//{{AFX_MSG_MAP(CSplitterWndEx)
-	// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

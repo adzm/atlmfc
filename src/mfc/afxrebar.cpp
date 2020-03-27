@@ -18,7 +18,6 @@ HWND ChWindowFromPoint(HWND hWnd, POINT pt);
 /////////////////////////////////////////////////////////////////////////////
 // CReBar
 
-//{{AFX_MSG_MAP(CMFCReBar)
 BEGIN_MESSAGE_MAP(CMFCReBar, CPane)
 	ON_WM_NCCREATE()
 	ON_WM_PAINT()
@@ -33,7 +32,6 @@ BEGIN_MESSAGE_MAP(CMFCReBar, CPane)
 	ON_NOTIFY_REFLECT(RBN_HEIGHTCHANGE, &CMFCReBar::OnHeightChange)
 	ON_NOTIFY_REFLECT(RBN_ENDDRAG, &CMFCReBar::OnHeightChange)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 CMFCReBar::CMFCReBar() : m_Impl(this)
 {

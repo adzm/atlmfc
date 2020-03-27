@@ -27,7 +27,7 @@
 class CMFCPropertySheet;
 class CMFCPropertyPage;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCOutlookBarPaneList
 
 class CMFCOutlookBarPaneList : public CMFCOutlookBarPane
@@ -60,7 +60,7 @@ class CMFCProperySheetListBox : public CListBox
 	afx_msg void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
+	afx_msg void OnMouseLeave();
 	DECLARE_MESSAGE_MAP()
 
 	int  m_nHighlightedItem;
@@ -68,7 +68,7 @@ class CMFCProperySheetListBox : public CListBox
 	CMFCPropertySheet* m_pParent;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertySheetCategoryInfo
 
 class CMFCPropertySheetCategoryInfo : public CObject
@@ -91,7 +91,7 @@ class CMFCPropertySheetCategoryInfo : public CObject
 	CList<CMFCPropertyPage*, CMFCPropertyPage*> m_lstPages;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertySheet
 
 class CMFCPropertySheet : public CPropertySheet
@@ -176,14 +176,13 @@ public:
 	virtual ~CMFCPropertySheet();
 
 protected:
-	//{{AFX_MSG(CMFCPropertySheet)
 	afx_msg void OnSysColorChange();
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
 	afx_msg LRESULT OnAfterActivatePage(WPARAM,LPARAM);
 	afx_msg void OnSelectTree(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnSelectList();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void InternalAddPage(int nTab);

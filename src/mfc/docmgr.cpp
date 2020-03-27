@@ -10,9 +10,6 @@
 
 #include "stdafx.h"
 #include "sal.h"
-#include "afxglobals.h"
-
-
 
 AFX_STATIC_DATA const TCHAR _afxShellOpenFmt[] = _T("%s\\shell\\open\\%s");
 AFX_STATIC_DATA const TCHAR _afxShellPrintFmt[] = _T("%s\\shell\\print\\%s");
@@ -52,7 +49,7 @@ BOOL AFXAPI _AfxDeleteRegKey(LPCTSTR lpszKey)
 	if(lpszKeyCopy == NULL)
 		return FALSE;
 
-	LPTSTR lpszLast = lpszKeyCopy + lstrlen(lpszKeyCopy);
+	LPTSTR lpszLast = lpszKeyCopy + _tcslen(lpszKeyCopy);
 
 	// work until the end of the string
 	while (lpszLast != NULL)
@@ -94,7 +91,7 @@ _AfxSetRegKey(LPCTSTR lpszKey, LPCTSTR lpszValue, LPCTSTR lpszValueName = NULL)
 	if (lpszValueName == NULL)
 	{
 		if (AfxRegSetValue(HKEY_CLASSES_ROOT, lpszKey, REG_SZ,
-			  lpszValue, lstrlen(lpszValue) * sizeof(TCHAR)) != ERROR_SUCCESS)
+			  lpszValue, static_cast<DWORD>(AtlStrLen(lpszValue)) * sizeof(TCHAR)) != ERROR_SUCCESS)
 		{
 			TRACE(traceAppMsg, 0, _T("Warning: registration database update failed for key '%s'.\n"),
 				lpszKey);
@@ -109,7 +106,7 @@ _AfxSetRegKey(LPCTSTR lpszKey, LPCTSTR lpszValue, LPCTSTR lpszValueName = NULL)
 		if(AfxRegCreateKey(HKEY_CLASSES_ROOT, lpszKey, &hKey) == ERROR_SUCCESS)
 		{
 			LONG lResult = ::RegSetValueEx(hKey, lpszValueName, 0, REG_SZ,
-				(CONST BYTE*)lpszValue, (lstrlen(lpszValue) + 1) * sizeof(TCHAR));
+				(CONST BYTE*)lpszValue, (static_cast<DWORD>(AtlStrLen(lpszValue)) + 1) * sizeof(TCHAR));
 
 			if(::RegCloseKey(hKey) == ERROR_SUCCESS && lResult == ERROR_SUCCESS)
 				return TRUE;
@@ -294,13 +291,10 @@ void CDocManager::RegisterShellFileTypes(BOOL bCompat)
 			if (!_AfxSetRegKey(strFileTypeId, strFileTypeName))
 				continue;       // just skip it
 
-			if (afxGlobalData.bIsWindows7)
+			CWinApp* pApp = AfxGetApp();
+			if (pApp != NULL && pApp->IsWindows7() && AtlStrLen(pApp->m_pszAppID) > 0)
 			{
-				CWinApp* pApp = AfxGetApp();
-				if (pApp != NULL && _tcslen(pApp->m_pszAppID) > 0)
-				{
-					_AfxSetRegKey(strFileTypeId, pApp->m_pszAppID, _afxAppUserModelIDValueName);
-				}
+				_AfxSetRegKey(strFileTypeId, pApp->m_pszAppID, _afxAppUserModelIDValueName);
 			}
 
 			if (bCompat)
@@ -506,9 +500,7 @@ public:
 	CDocTemplate*   m_pSelectedTemplate;
 
 public:
-	//{{AFX_DATA(CNewTypeDlg)
 	enum { IDD = AFX_IDD_NEWTYPEDLG };
-	//}}AFX_DATA
 	CNewTypeDlg(CPtrList* pList) : CDialog(CNewTypeDlg::IDD)
 	{
 		m_pList = pList;
@@ -519,15 +511,11 @@ public:
 protected:
 	BOOL OnInitDialog();
 	void OnOK();
-	//{{AFX_MSG(CNewTypeDlg)
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
 
 BEGIN_MESSAGE_MAP(CNewTypeDlg, CDialog)
-	//{{AFX_MSG_MAP(CNewTypeDlg)
 	ON_LBN_DBLCLK(AFX_IDC_LISTBOX, &CNewTypeDlg::OnOK)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CNewTypeDlg::OnInitDialog()
@@ -989,7 +977,7 @@ CDocument* CDocManager::OpenDocumentFile(LPCTSTR lpszFileName, BOOL bAddToMRU)
 	CDocument* pOpenDocument = NULL;
 
 	TCHAR szPath[_MAX_PATH];
-	ASSERT(lstrlen(lpszFileName) < _countof(szPath));
+	ASSERT(AtlStrLen(lpszFileName) < _countof(szPath));
 	TCHAR szTemp[_MAX_PATH];
 	if (lpszFileName[0] == '\"')
 		++lpszFileName;

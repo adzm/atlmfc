@@ -913,6 +913,12 @@ SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 extern "C" DWORD_PTR AFXAPI
 _AfxDispatchCall(AFX_PMSG pfn, void* pArgs, UINT nSizeArgs);
 
+// disable run-time checks (/RTC1) in debug builds because this method
+// intentionally messes with the stack in order to call the OLE method.
+#if defined(_M_IX86) || defined(_M_AMD64)
+#pragma runtime_checks("", off)
+#endif
+
 // invoke standard method given IDispatch parameters/return value, etc.
 SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 	VARIANT* pvarResult, DISPPARAMS* pDispParams, UINT* puArgErr)
@@ -938,7 +944,7 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 	const BYTE* pbParams = (const BYTE*)pEntry->lpszParams;
 	if (pbParams == NULL)
 		pbParams = &bNoParams;
-	UINT nParams = lstrlenA((LPCSTR)pbParams);
+	size_t nParams = strlen((LPCSTR)pbParams);
 
 	// get default function and return value information
 	AFX_PMSG pfn = pEntry->pfn;
@@ -1172,6 +1178,11 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 	return S_OK;    // success!
 }
 
+// restore run-time check settings (/RTC1 in debug)
+#if defined(_M_IX86) || defined(_M_AMD64)
+#pragma runtime_checks("", restore)
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // CCmdTarget::XDispatch implementation
 
@@ -1320,7 +1331,7 @@ STDMETHODIMP COleDispatchImpl::Invoke(
 		//  number of parameters being passed.
 		wFlags &= ~DISPATCH_METHOD;
 		UINT nExpectedArgs = pEntry->lpszParams != NULL ?
-			(UINT)lstrlenA(pEntry->lpszParams) : 0;
+			(UINT)strlen(pEntry->lpszParams) : 0;
 		if (pDispParams->cArgs <= nExpectedArgs)
 		{
 			// no extra param -- so treat as property get
@@ -1633,7 +1644,7 @@ COleDispatchException::COleDispatchException(
 	m_scError = wCode != 0 ? NOERROR : E_UNEXPECTED;
 }
 
-BOOL COleDispatchException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL COleDispatchException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 	_Out_opt_ PUINT pnHelpContext) const
 {
 	ASSERT(lpszError != NULL && AfxIsValidString(lpszError, nMaxError));

@@ -49,7 +49,7 @@
 #undef AFX_DATA
 #define AFX_DATA AFX_CORE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CListView
 
 class CListView : public CCtrlView
@@ -74,13 +74,12 @@ protected:
 public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
-	//{{AFX_MSG(CListView)
 	afx_msg void OnNcDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTreeView
 
 class CTreeView : public CCtrlView
@@ -101,13 +100,12 @@ protected:
 public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
-	//{{AFX_MSG(CTreeView)
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Inline function declarations
 
 #ifdef _AFX_PACKING

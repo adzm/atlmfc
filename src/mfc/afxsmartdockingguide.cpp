@@ -124,7 +124,7 @@ void CSmartDockingStandaloneGuide::Create(SDMarkerPlace nSideNo, CWnd* pwndOwner
 
 	if (!bAlphaMarkers)
 	{
-		afxGlobalData.SetLayeredAttrib(m_wndBmp.GetSafeHwnd(), params.m_clrTransparent, 0, LWA_COLORKEY);
+		GetGlobalData()->SetLayeredAttrib(m_wndBmp.GetSafeHwnd(), params.m_clrTransparent, 0, LWA_COLORKEY);
 	}
 
 	m_bLayered = TRUE;
@@ -775,7 +775,7 @@ void CSmartDockingGroupGuidesManager::Create(CWnd* pwndOwner)
 
 		if (!params.m_bIsAlphaMarkers && GetVMTheme() != AFX_SDT_VS2008)
 		{
-			afxGlobalData.SetLayeredAttrib(m_Wnd.GetSafeHwnd(), params.m_clrTransparent, 0, LWA_COLORKEY);
+			GetGlobalData()->SetLayeredAttrib(m_Wnd.GetSafeHwnd(), params.m_clrTransparent, 0, LWA_COLORKEY);
 		}
 		else
 		{
@@ -955,11 +955,9 @@ CSmartDockingStandaloneGuideWnd::~CSmartDockingStandaloneGuideWnd()
 }
 
 BEGIN_MESSAGE_MAP(CSmartDockingStandaloneGuideWnd, CWnd)
-	//{{AFX_MSG_MAP(CSmartDockingStandaloneGuideWnd)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
 	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 // if the window gets created, the region is deeded to Windows

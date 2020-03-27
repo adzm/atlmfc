@@ -1621,7 +1621,7 @@ public:
 	/// </summary>
 	/// <returns>
 	/// Current value of animation color object as COLORREF.
-	/// <returns>
+	/// </returns>
 	/// <remarks>
 	/// This function internally calls GetValue. If GetValue for some reason fails, the returned COLORREF will contain default values for all color components.
 	/// </remarks>
@@ -1929,7 +1929,7 @@ protected:
 	/// A helper that adds transitions to a storyboard.
 	/// </summary>
 	/// <param name="pStoryboard">A pointer to a storyboard COM object.</param>
-	/// <param name="bAddDeep">Specifies whether this method should add to the storyboard transitions that depend on other keyframes.</param>
+	/// <param name="bDependOnKeyframes">Specifies whether this method should add to the storyboard transitions that depend on other keyframes.</param>
 	void AddTransitions(IUIAnimationStoryboard* pStoryboard, BOOL bDependOnKeyframes);
 
 	/// <summary>
@@ -2782,7 +2782,7 @@ public:
 	/// </returns>
 	/// <param name="newStatus">New status.</param>
 	/// <param name="previousStatus">Previous status.</param>
-	IFACEMETHOD(OnManagerStatusChanged)(UI_ANIMATION_MANAGER_STATUS newStatus,UI_ANIMATION_MANAGER_STATUS previousStatus)
+	IFACEMETHOD(OnManagerStatusChanged)(_In_ UI_ANIMATION_MANAGER_STATUS newStatus, _In_ UI_ANIMATION_MANAGER_STATUS previousStatus)
 	{
 		if (m_pAnimationController != NULL)
 		{
@@ -2821,7 +2821,7 @@ public:
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.
 	/// </returns>
 	/// <param name="pAnimationController">A pointer to animation controller, which will receive events.</param>
-	/// <param name="ppManagerEventHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
+	/// <param name="ppHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
 	/// variable change events.</param>
 	static COM_DECLSPEC_NOTHROW HRESULT CreateInstance(CAnimationController* pAnimationController, IUIAnimationVariableChangeHandler **ppHandler)
 	{
@@ -2856,15 +2856,15 @@ public:
 	/// <param name="previousValue">The previous value.</param>
 	IFACEMETHOD(OnValueChanged)
     (
-        __in IUIAnimationStoryboard *storyboard,
-        __in IUIAnimationVariable *variable,
-        __in DOUBLE newValue,
-        __in DOUBLE previousValue
+        _In_ IUIAnimationStoryboard *storyboard,
+        _In_ IUIAnimationVariable *variable,
+        _In_ DOUBLE newValue,
+        _In_ DOUBLE previousValue
     ) 
 	{
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of OnValueChanged event handler has not been initialized.\n");
+			TRACE(_T("An instance of OnValueChanged event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 
@@ -2881,7 +2881,7 @@ public:
 			pGroup = m_pAnimationController->FindAnimationGroup(storyboard);
 			if (pGroup == NULL)
 			{
-				TRACE("Got OnValueChanged event for a storyboard, which does not belong to any Animation Group.\n");
+				TRACE(_T("Got OnValueChanged event for a storyboard, which does not belong to any Animation Group.\n"));
 				return E_FAIL;
 			}
 
@@ -2889,7 +2889,7 @@ public:
 
 			if (pObject == NULL)
 			{
-				TRACE("Got OnValueChanged event from an animation variable, which does not belong to any Animation Group.\n");
+				TRACE(_T("Got OnValueChanged event from an animation variable, which does not belong to any Animation Group.\n"));
 				return E_FAIL;
 			}
 		}
@@ -2930,7 +2930,7 @@ public:
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.
 	/// </returns>
 	/// <param name="pAnimationController">A pointer to animation controller, which will receive events.</param>
-	/// <param name="ppManagerEventHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
+	/// <param name="ppHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
 	/// variable integer change events.</param>
 	static COM_DECLSPEC_NOTHROW HRESULT CreateInstance(CAnimationController* pAnimationController, IUIAnimationVariableIntegerChangeHandler **ppHandler)
 	{
@@ -2965,15 +2965,15 @@ public:
 	/// <param name="previousValue">The previous rounded value.</param>
 	IFACEMETHOD(OnIntegerValueChanged)
     (
-        __in IUIAnimationStoryboard *storyboard,
-        __in IUIAnimationVariable *variable,
-        __in INT32 newValue,
-        __in INT32 previousValue
+        _In_ IUIAnimationStoryboard *storyboard,
+        _In_ IUIAnimationVariable *variable,
+        _In_ INT32 newValue,
+        _In_ INT32 previousValue
     )
 	{
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of OnIntegerValueChanged event handler has not been initialized.\n");
+			TRACE(_T("An instance of OnIntegerValueChanged event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 
@@ -2990,7 +2990,7 @@ public:
 			pGroup = m_pAnimationController->FindAnimationGroup(storyboard);
 			if (pGroup == NULL)
 			{
-				TRACE("Got OnIntegerValueChanged event for a storyboard, which does not belong to any Animation Group.\n");
+				TRACE(_T("Got OnIntegerValueChanged event for a storyboard, which does not belong to any Animation Group.\n"));
 				return E_FAIL;
 			}
 
@@ -2998,7 +2998,7 @@ public:
 
 			if (pObject == NULL)
 			{
-				TRACE("Got OnIntegerValueChanged event from an animation variable, which does not belong to any Animation Group.\n");
+				TRACE(_T("Got OnIntegerValueChanged event from an animation variable, which does not belong to any Animation Group.\n"));
 				return E_FAIL;
 			}
 		}
@@ -3037,7 +3037,7 @@ public:
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.
 	/// </returns>
 	/// <param name="pAnimationController">A pointer to animation controller, which will receive events.</param>
-	/// <param name="ppManagerEventHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
+	/// <param name="ppHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
 	/// storyboard events.</param>
 	static COM_DECLSPEC_NOTHROW HRESULT CreateInstance(CAnimationController* pAnimationController, IUIAnimationStoryboardEventHandler **ppHandler)
 	{
@@ -3071,21 +3071,21 @@ public:
 	/// <param name="previousStatus">Specifies previous storyboard status.</param>
     IFACEMETHOD(OnStoryboardStatusChanged)
     (
-        __in IUIAnimationStoryboard *storyboard,                        // The storyboard that changed status
-        __in UI_ANIMATION_STORYBOARD_STATUS newStatus,                  // The new status
-        __in UI_ANIMATION_STORYBOARD_STATUS previousStatus              // The previous status 
+        _In_ IUIAnimationStoryboard *storyboard,                        // The storyboard that changed status
+        _In_ UI_ANIMATION_STORYBOARD_STATUS newStatus,                  // The new status
+        _In_ UI_ANIMATION_STORYBOARD_STATUS previousStatus              // The previous status 
     ) 
 	{
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of OnStoryboardStatusChanged event handler has not been initialized.\n");
+			TRACE(_T("An instance of OnStoryboardStatusChanged event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 
 		CAnimationGroup* pGroup = m_pAnimationController->FindAnimationGroup(storyboard);
 		if (pGroup == NULL)
 		{
-			TRACE("Got an event from storyboard, which does not belong to any Animation Group.\n");
+			TRACE(_T("Got an event from storyboard, which does not belong to any Animation Group.\n"));
 			return E_FAIL;
 		}
 		m_pAnimationController->OnStoryboardStatusChanged(pGroup, newStatus, previousStatus);
@@ -3101,19 +3101,19 @@ public:
 	/// <param name="storyboard">A pointer to storyboard, which was updated.</param>
     IFACEMETHOD(OnStoryboardUpdated)
     (
-        __in IUIAnimationStoryboard *storyboard                         // The storyboard that was updated
+        _In_ IUIAnimationStoryboard *storyboard                         // The storyboard that was updated
     ) 
 	{
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of OnStoryboardUpdated event handler has not been initialized.\n");
+			TRACE(_T("An instance of OnStoryboardUpdated event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 		
 		CAnimationGroup* pGroup = m_pAnimationController->FindAnimationGroup(storyboard);
 		if (pGroup == NULL)
 		{
-			TRACE("Got an event from storyboard, which does not belong to any Animation Group.\n");
+			TRACE(_T("Got an event from storyboard, which does not belong to any Animation Group.\n"));
 			return E_FAIL;
 		}
 		m_pAnimationController->OnStoryboardUpdated(pGroup);
@@ -3157,6 +3157,8 @@ public:
 	}
 };
 
+#pragma warning(push)
+#pragma warning(disable:4634)
 /// <summary>
 /// Implements a call back, which is called by Animation API when it needs to resolve scheduling conflicts.
 /// </summary>
@@ -3210,34 +3212,35 @@ public:
 	/// <param name="priorityEffect">Potential effect on attempt to schedule storyboard if HasPriority returns S_FALSE.</param>
 	IFACEMETHOD(HasPriority)
     (
-        __in IUIAnimationStoryboard *pStoryboardScheduled,
-        __in IUIAnimationStoryboard *pStoryboardNew,
-        __in UI_ANIMATION_PRIORITY_EFFECT priorityEffect
+        _In_ IUIAnimationStoryboard *pStoryboardScheduled,
+        _In_ IUIAnimationStoryboard *pStoryboardNew,
+        _In_ UI_ANIMATION_PRIORITY_EFFECT priorityEffect
     ) 
 	{
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of HasPriority event handler has not been initialized.\n");
+			TRACE(_T("An instance of HasPriority event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 
 		CAnimationGroup* pGroupScheduled = m_pAnimationController->FindAnimationGroup(pStoryboardScheduled);
 		if (pGroupScheduled == NULL)
 		{
-			TRACE("Got a HasPriority event for a storyboard that does not belong to any group.\n");
+			TRACE(_T("Got a HasPriority event for a storyboard that does not belong to any group.\n"));
 			return E_FAIL;
 		}
 
 		CAnimationGroup* pGroupNew = m_pAnimationController->FindAnimationGroup(pStoryboardNew);
 		if (pGroupNew == NULL)
 		{
-			TRACE("Got a HasPriority event for a storyboard that does not belong to any group.\n");
+			TRACE(_T("Got a HasPriority event for a storyboard that does not belong to any group.\n"));
 			return E_FAIL;
 		}
 		BOOL bResult = PriorityComparisonMethod::Method(m_pAnimationController, pGroupScheduled, pGroupNew, priorityEffect);
 		return bResult ? S_OK : S_FALSE;
 	}
 };
+#pragma warning(pop)
 
 /// <summary>
 /// Implements a call back, which is called by Animation API when timing events occur.
@@ -3258,7 +3261,7 @@ public:
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.
 	/// </returns>
 	/// <param name="pAnimationController">A pointer to animation controller, which will receive events.</param>
-	/// <param name="ppManagerEventHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
+	/// <param name="ppTimerEventHandler">Output. If the method succeeds it contains a pointer to COM object that will handle 
 	/// animation timer events.</param>
 	static COM_DECLSPEC_NOTHROW HRESULT CreateInstance(CAnimationController* pAnimationController, IUIAnimationTimerEventHandler **ppTimerEventHandler)
     {
@@ -3292,7 +3295,7 @@ public:
     {
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of CAnimationTimerEventHandler event handler has not been initialized.\n");
+			TRACE(_T("An instance of CAnimationTimerEventHandler event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 
@@ -3310,7 +3313,7 @@ public:
     {
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of CAnimationTimerEventHandler event handler has not been initialized.\n");
+			TRACE(_T("An instance of CAnimationTimerEventHandler event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 		
@@ -3324,11 +3327,11 @@ public:
 	/// <returns>
 	/// S_OK if the method succeeds; otherwise E_FAIL.
 	/// </returns>
-    IFACEMETHOD(OnRenderingTooSlow)(UINT32 fps)
+    IFACEMETHOD(OnRenderingTooSlow)(_In_ UINT32 fps)
     {
 		if (m_pAnimationController == NULL)
 		{
-			TRACE("An instance of CAnimationTimerEventHandler event handler has not been initialized.\n");
+			TRACE(_T("An instance of CAnimationTimerEventHandler event handler has not been initialized.\n"));
 			return E_FAIL;
 		}
 		
@@ -3401,8 +3404,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3450,8 +3455,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3511,8 +3518,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3572,8 +3581,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3620,8 +3631,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3673,8 +3686,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3727,8 +3742,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3784,8 +3801,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3846,8 +3865,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3894,8 +3915,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -3965,8 +3988,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -4020,8 +4045,10 @@ public:
 	/// </returns>
 	/// <param name="pLibrary">A pointer to transition library, which is responsible for creation of standard transitions.</param>
 	/// <param name="pFactory">A pointer to transition factory, which is responsible for creation of custom transitions.</param>
-	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* /*pFactory*/)
+	virtual BOOL Create(IUIAnimationTransitionLibrary* pLibrary, IUIAnimationTransitionFactory* pFactory)
 	{
+		UNREFERENCED_PARAMETER(pFactory);
+
 		Clear();
 
 		if (pLibrary != NULL)
@@ -4172,8 +4199,10 @@ public:
 	/// The offset is always greater than or equal to zero and less than the duration of the transition. 
 	/// This method is not called if the duration of the transition is zero.</param>
 	/// <param name="value">Output. The interpolated value.</param>
-	virtual BOOL InterpolateValue(UI_ANIMATION_SECONDS /*offset*/, DOUBLE *value) 
+	virtual BOOL InterpolateValue(UI_ANIMATION_SECONDS offset, DOUBLE *value) 
 	{
+		UNREFERENCED_PARAMETER(offset);
+
 		*value = m_currentValue;
 		return TRUE;
 	}
@@ -4188,8 +4217,10 @@ public:
 	/// The offset is always greater than or equal to zero and less than or equal to the duration of the transition. 
 	/// This method is not called if the duration of the transition is zero. </param>
 	/// <param name="velocity">Output. The velocity of the variable at the offset.</param>
-	virtual BOOL InterpolateVelocity(UI_ANIMATION_SECONDS /*offset*/, DOUBLE *velocity) 
+	virtual BOOL InterpolateVelocity(UI_ANIMATION_SECONDS offset, DOUBLE *velocity) 
 	{
+		UNREFERENCED_PARAMETER(offset);
+
 		*velocity = m_currentVelocity;
 		return TRUE;
 	}
@@ -4270,7 +4301,7 @@ public:
 	/// </returns>
 	/// <param name="initialValue">The value of the variable at the start of the transition.</param>
 	/// <param name="initialVelocity">The velocity of the variable at the start of the transition.</param>
-    IFACEMETHOD(SetInitialValueAndVelocity)(__in DOUBLE initialValue, __in DOUBLE initialVelocity) 
+    IFACEMETHOD(SetInitialValueAndVelocity)(_In_ DOUBLE initialValue, _In_ DOUBLE initialVelocity) 
 	{
 		if (m_pInterpolator == NULL || !m_pInterpolator->SetInitialValueAndVelocity(initialValue, initialVelocity))
 		{
@@ -4287,7 +4318,7 @@ public:
 	/// set, or custom implementation returns FALSE from the SetDuration method.
 	/// </returns>
 	/// <param name="duration">The duration of the transition.</param>
-    IFACEMETHOD(SetDuration)(__in UI_ANIMATION_SECONDS duration)
+    IFACEMETHOD(SetDuration)(_In_ UI_ANIMATION_SECONDS duration)
 	{
 		if (m_pInterpolator == NULL || !m_pInterpolator->SetDuration(duration))
 		{
@@ -4304,7 +4335,7 @@ public:
 	/// set, or custom implementation returns FALSE from the GetDuration method.
 	/// </returns>
 	/// <param name="duration">Output. The duration of the transition, in seconds.</param>
-    IFACEMETHOD(GetDuration)(__out UI_ANIMATION_SECONDS *duration) 
+    IFACEMETHOD(GetDuration)(_Out_ UI_ANIMATION_SECONDS *duration) 
 	{
 		if (m_pInterpolator == NULL || !m_pInterpolator->GetDuration(duration))
 		{
@@ -4321,7 +4352,7 @@ public:
 	/// set, or custom implementation returns FALSE from the GetFinalValue method.
 	/// </returns>
 	/// <param name="value">Output. The final value of a variable at the end of the transition.</param>
-    IFACEMETHOD(GetFinalValue)(__out DOUBLE *value) 
+    IFACEMETHOD(GetFinalValue)(_Out_ DOUBLE *value) 
 	{
 		if (m_pInterpolator == NULL || !m_pInterpolator->GetFinalValue(value))
 		{
@@ -4341,7 +4372,7 @@ public:
 	/// The offset is always greater than or equal to zero and less than the duration of the transition. 
 	/// This method is not called if the duration of the transition is zero.</param>
 	/// <param name="value">Output. The interpolated value.</param>
-    IFACEMETHOD(InterpolateValue)(__in UI_ANIMATION_SECONDS offset, __out DOUBLE *value) 
+    IFACEMETHOD(InterpolateValue)(_In_ UI_ANIMATION_SECONDS offset, _Out_ DOUBLE *value) 
 	{
 		if (m_pInterpolator == NULL || !m_pInterpolator->InterpolateValue(offset, value))
 		{
@@ -4361,7 +4392,7 @@ public:
 	/// The offset is always greater than or equal to zero and less than or equal to the duration of the transition. 
 	/// This method is not called if the duration of the transition is zero. </param>
 	/// <param name="velocity">Output. The velocity of the variable at the offset.</param>
-    IFACEMETHOD(InterpolateVelocity)(__in UI_ANIMATION_SECONDS offset, __out DOUBLE *velocity) 
+    IFACEMETHOD(InterpolateVelocity)(_In_ UI_ANIMATION_SECONDS offset, _Out_ DOUBLE *velocity) 
 	{
 		if (m_pInterpolator == NULL || !m_pInterpolator->InterpolateVelocity(offset, velocity))
 		{
@@ -4380,8 +4411,8 @@ public:
 	/// <param name="initialValueDependencies">Output. Aspects of the interpolator that depend on the initial value passed to SetInitialValueAndVelocity.</param>
 	/// <param name="initialVelocityDependencies">Output. Aspects of the interpolator that depend on the initial velocity passed to SetInitialValueAndVelocity.</param>
 	/// <param name="durationDependencies">Output. Aspects of the interpolator that depend on the duration passed to SetDuration.</param>
-    IFACEMETHOD(GetDependencies)(__out UI_ANIMATION_DEPENDENCIES *initialValueDependencies, __out UI_ANIMATION_DEPENDENCIES *initialVelocityDependencies, 
-        __out UI_ANIMATION_DEPENDENCIES *durationDependencies) 
+    IFACEMETHOD(GetDependencies)(_Out_ UI_ANIMATION_DEPENDENCIES *initialValueDependencies, _Out_ UI_ANIMATION_DEPENDENCIES *initialVelocityDependencies, 
+        _Out_ UI_ANIMATION_DEPENDENCIES *durationDependencies) 
 	{
 		if (m_pInterpolator == NULL || !m_pInterpolator->GetDependencies(initialValueDependencies, initialVelocityDependencies, durationDependencies))
 		{
@@ -4483,14 +4514,14 @@ public:
 
 			if (FAILED(CInterpolatorBase::CreateInstance(m_pInterpolator, &pHandler)))
 			{
-				TRACE("Failed to create custom transition.\n");
+				TRACE(_T("Failed to create custom transition.\n"));
 				return FALSE;
 			}
 
 			HRESULT hr = pFactory->CreateTransition(pHandler, &m_transition);
 			if (FAILED(hr) || m_transition == NULL)
 			{
-				TRACE1("Transtion factory failed to create custom transition. Error code: %x.\n", hr);
+				TRACE1("Transition factory failed to create custom transition. Error code: %x.\n", hr);
 				return FALSE;
 			}
 

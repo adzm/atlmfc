@@ -13,6 +13,12 @@
 
 #pragma once
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #ifdef _AFX
 #include <afxstr.h>
 #else
@@ -31,84 +37,84 @@ namespace ATL
 namespace ATLPath
 {
 
-_Ret_opt_z_ inline char* AddBackslash(
-	_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+_Ret_maybenull_z_ inline char* AddBackslash(
+	_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	return ::PathAddBackslashA( pszPath );
 }
 
-_Ret_opt_z_ inline wchar_t* AddBackslash(
-	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+_Ret_maybenull_z_ inline wchar_t* AddBackslash(
+	_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathAddBackslashW( pszPath );
 }
 
 inline BOOL AddExtension(
-	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_Inout_updates_z_(MAX_PATH) char* pszPath,
 	_In_z_ const char* pszExtension)
 {
 	return ::PathAddExtensionA( pszPath, pszExtension );
 }
 
 inline BOOL AddExtension(
-	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_Inout_updates_z_(MAX_PATH) wchar_t* pszPath,
 	_In_z_ const wchar_t* pszExtension)
 {
 	return ::PathAddExtensionW( pszPath, pszExtension );
 }
 
 inline BOOL Append(
-	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_Inout_updates_z_(MAX_PATH) char* pszPath,
 	_In_z_ const char* pszMore)
 {
 	return ::PathAppendA( pszPath, pszMore );
 }
 
 inline BOOL Append(
-	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_Inout_updates_z_(MAX_PATH) wchar_t* pszPath,
 	_In_z_ const wchar_t* pszMore)
 {
 	return ::PathAppendW( pszPath, pszMore );
 }
 
 _Ret_z_ inline char* BuildRoot(
-	_Out_z_cap_c_(4) char* pszPath,
+	_Out_writes_z_(4) char* pszPath,
 	_In_ int iDrive)
 {
 	return ::PathBuildRootA( pszPath, iDrive );
 }
 
 _Ret_z_ inline wchar_t* BuildRoot(
-	_Out_z_cap_c_(4) wchar_t* pszPath,
+	_Out_writes_z_(4) wchar_t* pszPath,
 	_In_ int iDrive)
 {
 	return ::PathBuildRootW( pszPath, iDrive );
 }
 
 inline BOOL Canonicalize(
-	_Out_z_cap_c_(MAX_PATH) char* pszDest,
+	_Out_writes_z_(MAX_PATH) char* pszDest,
 	_In_z_ const char* pszSrc)
 {
 	return ::PathCanonicalizeA( pszDest, pszSrc );
 }
 
 inline BOOL Canonicalize(
-	_Out_z_cap_c_(MAX_PATH) wchar_t* pszDest,
+	_Out_writes_z_(MAX_PATH) wchar_t* pszDest,
 	_In_z_ const wchar_t* pszSrc)
 {
 	return ::PathCanonicalizeW( pszDest, pszSrc );
 }
 
-_Ret_opt_z_ inline char* Combine(
-	_Out_z_cap_c_(MAX_PATH) char* pszDest,
+_Ret_maybenull_z_ inline char* Combine(
+	_Out_writes_z_(MAX_PATH) char* pszDest,
 	_In_z_ const char* pszDir,
 	_In_z_ const char* pszFile)
 {
 	return ::PathCombineA( pszDest, pszDir, pszFile );
 }
 
-_Ret_opt_z_ inline wchar_t* Combine(
-	_Out_z_cap_c_(MAX_PATH) wchar_t* pszDest,
+_Ret_maybenull_z_ inline wchar_t* Combine(
+	_Out_writes_z_(MAX_PATH) wchar_t* pszDest,
 	_In_ const wchar_t* pszDir,
 	_In_ const wchar_t* pszFile)
 {
@@ -118,7 +124,7 @@ _Ret_opt_z_ inline wchar_t* Combine(
 inline int CommonPrefix(
 	_In_z_ const char* pszFile1,
 	_In_z_ const char* pszFile2,
-	_Out_z_cap_c_(MAX_PATH) char* pszDest)
+	_Out_writes_z_(MAX_PATH) char* pszDest)
 {
 	return ::PathCommonPrefixA( pszFile1, pszFile2, pszDest );
 }
@@ -126,7 +132,7 @@ inline int CommonPrefix(
 inline int CommonPrefix(
 	_In_z_ const wchar_t* pszFile1,
 	_In_z_ const wchar_t* pszFile2,
-	_Out_z_cap_c_(MAX_PATH) wchar_t* pszDest)
+	_Out_writes_z_(MAX_PATH) wchar_t* pszDest)
 {
 	return ::PathCommonPrefixW( pszFile1, pszFile2, pszDest );
 }
@@ -269,12 +275,12 @@ inline BOOL IsUNCServerShare(_In_z_ const wchar_t* pszPath)
 	return ::PathIsUNCServerShareW( pszPath );
 }
 
-inline BOOL MakePretty(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline BOOL MakePretty(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	return ::PathMakePrettyA( pszPath );
 }
 
-inline BOOL MakePretty(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline BOOL MakePretty(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathMakePrettyW( pszPath );
 }
@@ -293,18 +299,18 @@ inline BOOL MatchSpec(
 	return ::PathMatchSpecW( pszPath, pszSpec );
 }
 
-inline void QuoteSpaces(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline void QuoteSpaces(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	::PathQuoteSpacesA( pszPath );
 }
 
-inline void QuoteSpaces(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline void QuoteSpaces(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathQuoteSpacesW( pszPath );
 }
 
 inline BOOL RelativePathTo(
-	_Out_z_cap_c_(MAX_PATH) char* pszPath,
+	_Out_writes_z_(MAX_PATH) char* pszPath,
 	_In_z_ const char* pszFrom,
 	_In_ DWORD dwAttrFrom,
 	_In_z_ const char* pszTo,
@@ -314,7 +320,7 @@ inline BOOL RelativePathTo(
 }
 
 inline BOOL RelativePathTo(
-	_Out_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_Out_writes_z_(MAX_PATH) wchar_t* pszPath,
 	_In_z_ const wchar_t* pszFrom,
 	_In_ DWORD dwAttrFrom,
 	_In_z_ const wchar_t* pszTo,
@@ -323,65 +329,65 @@ inline BOOL RelativePathTo(
 	return ::PathRelativePathToW( pszPath, pszFrom, dwAttrFrom, pszTo, dwAttrTo );
 }
 
-inline void RemoveArgs(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline void RemoveArgs(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	::PathRemoveArgsA( pszPath );
 }
 
-inline void RemoveArgs(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline void RemoveArgs(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathRemoveArgsW( pszPath );
 }
 
-inline char* RemoveBackslash(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline char* RemoveBackslash(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	return ::PathRemoveBackslashA( pszPath );
 }
 
-inline wchar_t* RemoveBackslash(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline wchar_t* RemoveBackslash(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathRemoveBackslashW( pszPath );
 }
 
-inline void RemoveBlanks(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline void RemoveBlanks(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	::PathRemoveBlanksA( pszPath );
 }
 
-inline void RemoveBlanks(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline void RemoveBlanks(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathRemoveBlanksW( pszPath );
 }
 
-inline void RemoveExtension(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline void RemoveExtension(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	::PathRemoveExtensionA( pszPath );
 }
 
-inline void RemoveExtension(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline void RemoveExtension(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathRemoveExtensionW( pszPath );
 }
 
-inline BOOL RemoveFileSpec(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline BOOL RemoveFileSpec(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	return ::PathRemoveFileSpecA( pszPath );
 }
 
-inline BOOL RemoveFileSpec(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline BOOL RemoveFileSpec(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathRemoveFileSpecW( pszPath );
 }
 
 inline BOOL RenameExtension(
-	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_Inout_updates_z_(MAX_PATH) char* pszPath,
 	_In_z_ const char* pszExt)
 {
 	return ::PathRenameExtensionA( pszPath, pszExt );
 }
 
 inline BOOL RenameExtension(
-	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_Inout_updates_z_(MAX_PATH) wchar_t* pszPath,
 	_In_z_ const wchar_t* pszExt)
 {
 	return ::PathRenameExtensionW( pszPath, pszExt );
@@ -397,22 +403,22 @@ inline wchar_t* SkipRoot(_In_z_ const wchar_t* pszPath)
 	return ::PathSkipRootW( pszPath );
 }
 
-inline void StripPath(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline void StripPath(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	::PathStripPathA( pszPath );
 }
 
-inline void StripPath(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline void StripPath(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	::PathStripPathW( pszPath );
 }
 
-inline BOOL StripToRoot(_Inout_z_cap_c_(MAX_PATH) char* pszPath)
+inline BOOL StripToRoot(_Inout_updates_z_(MAX_PATH) char* pszPath)
 {
 	return ::PathStripToRootA( pszPath );
 }
 
-inline BOOL StripToRoot(_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath)
+inline BOOL StripToRoot(_Inout_updates_z_(MAX_PATH) wchar_t* pszPath)
 {
 	return ::PathStripToRootW( pszPath );
 }
@@ -429,7 +435,7 @@ inline void UnquoteSpaces(_Inout_z_ wchar_t* pszPath)
 
 inline BOOL CompactPath(
 	_In_ HDC hDC,
-	_Inout_z_cap_c_(MAX_PATH) char* pszPath,
+	_Inout_updates_z_(MAX_PATH) char* pszPath,
 	_In_ UINT dx)
 {
 	return ::PathCompactPathA( hDC, pszPath, dx );
@@ -437,14 +443,14 @@ inline BOOL CompactPath(
 
 inline BOOL CompactPath(
 	_In_ HDC hDC,
-	_Inout_z_cap_c_(MAX_PATH) wchar_t* pszPath,
+	_Inout_updates_z_(MAX_PATH) wchar_t* pszPath,
 	_In_ UINT dx)
 {
 	return ::PathCompactPathW( hDC, pszPath, dx );
 }
 
 inline BOOL CompactPathEx(
-	_Out_z_cap_(nMaxChars) char* pszDest,
+	_Out_writes_z_(nMaxChars) char* pszDest,
 	_In_z_ const char* pszSrc,
 	_In_ UINT nMaxChars,
 	_In_ DWORD dwFlags)
@@ -453,7 +459,7 @@ inline BOOL CompactPathEx(
 }
 
 inline BOOL CompactPathEx(
-	_Out_z_cap_(nMaxChars) wchar_t* pszDest,
+	_Out_writes_z_(nMaxChars) wchar_t* pszDest,
 	_In_z_ const wchar_t* pszSrc,
 	_In_ UINT nMaxChars,
 	_In_ DWORD dwFlags)
@@ -505,15 +511,13 @@ public:
 
 	void AddBackslash()
 	{
-		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+1 );
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
 		ATLPath::AddBackslash( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}
 	BOOL AddExtension(_In_z_ PCXSTR pszExtension)
-	{
-		// If NULL is passed, shlwapi's PathAddExtension API adds ".EXE"
-		int nLenExtension = (pszExtension == NULL) ? 4 : StringType::StringLength(pszExtension);
-		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+nLenExtension);
+	{		
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
 		BOOL bResult = ATLPath::AddExtension( pszBuffer, pszExtension );
 		m_strPath.ReleaseBuffer();
 
@@ -521,7 +525,7 @@ public:
 	}
 	BOOL Append(_In_z_ PCXSTR pszMore)
 	{
-		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+StringType::StringLength( pszMore )+1 );
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
 		BOOL bResult = ATLPath::Append( pszBuffer, pszMore );
 		m_strPath.ReleaseBuffer();
 
@@ -532,7 +536,7 @@ public:
 		ATLASSERT( iDrive >= 0 );
 		ATLASSERT( iDrive <= 25 );
 
-		PXSTR pszBuffer = m_strPath.GetBuffer( 3 );
+		PXSTR pszBuffer = m_strPath.GetBuffer( 4 );
 		ATLPath::BuildRoot( pszBuffer, iDrive );
 		m_strPath.ReleaseBuffer();
 	}
@@ -678,7 +682,7 @@ public:
 	}
 	void QuoteSpaces()
 	{
-		PXSTR pszBuffer = m_strPath.GetBuffer( m_strPath.GetLength()+2 );
+		PXSTR pszBuffer = m_strPath.GetBuffer( MAX_PATH );
 		ATLPath::QuoteSpaces( pszBuffer );
 		m_strPath.ReleaseBuffer();
 	}

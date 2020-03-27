@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -55,9 +55,6 @@ static const int nMinTabSpace = 10;
 static const int nEmptyMenuWidth = 50;
 static const int nEmptyMenuHeight = 20;
 
-static const int nPopupTimerEvent = 1;
-static const int nRemovePopupTimerEvent = 2;
-
 UINT CMFCPopupMenuBar::m_uiPopupTimerDelay = (UINT) -1;
 int CMFCPopupMenuBar::m_nLastCommandIndex = -1;
 
@@ -86,7 +83,6 @@ CMFCPopupMenuBar::~CMFCPopupMenuBar()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCPopupMenuBar)
 BEGIN_MESSAGE_MAP(CMFCPopupMenuBar, CMFCToolBar)
 	ON_WM_NCPAINT()
 	ON_WM_NCCALCSIZE()
@@ -101,7 +97,6 @@ BEGIN_MESSAGE_MAP(CMFCPopupMenuBar, CMFCToolBar)
 	ON_COMMAND(ID_AFXBARRES_TOOLBAR_TEXT, &CMFCPopupMenuBar::OnToolbarText)
 	ON_WM_LBUTTONDBLCLK()
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCPopupMenuBar message handlers
@@ -338,7 +333,7 @@ void CMFCPopupMenuBar::AdjustLocations()
 	GetClientRect(&rectClient);
 
 	CClientDC dc(this);
-	CFont* pOldFont = (CFont*) dc.SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = (CFont*) dc.SelectObject(&(GetGlobalData()->fontRegular));
 	ENSURE(pOldFont != NULL);
 
 	int y = rectClient.top + nVertMargin - m_iOffset * GetRowHeight();
@@ -353,7 +348,7 @@ void CMFCPopupMenuBar::AdjustLocations()
 	CSize sizeMenuButton = GetMenuImageSize();
 	sizeMenuButton += CSize(2 * nHorzMargin, 2 * nVertMargin);
 
-	sizeMenuButton.cy = max(sizeMenuButton.cy, afxGlobalData.GetTextHeight());
+	sizeMenuButton.cy = max(sizeMenuButton.cy, GetGlobalData()->GetTextHeight());
 
 	for (POSITION pos = m_Buttons.GetHeadPosition(); pos != NULL;)
 	{
@@ -362,7 +357,7 @@ void CMFCPopupMenuBar::AdjustLocations()
 		ASSERT_VALID(pButton);
 
 		/// support for the menu with breaks:
-		if ((pButton->m_nStyle & AFX_TBBS_BREAK) &&(y != origy) && !CMFCToolBar::IsCustomizeMode())
+		if ((pButton->m_nStyle & TBBS_BREAK) &&(y != origy) && !CMFCToolBar::IsCustomizeMode())
 		{
 			y = origy;
 			nColumn ++;
@@ -425,7 +420,7 @@ CSize CMFCPopupMenuBar::CalcSize(BOOL /*bVertDock*/)
 	CSize size(0, 0);
 
 	CClientDC dc(this);
-	CFont* pOldFont = (CFont*) dc.SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = (CFont*) dc.SelectObject(&(GetGlobalData()->fontRegular));
 	ENSURE(pOldFont != NULL);
 
 	if (m_Buttons.IsEmpty())
@@ -442,7 +437,7 @@ CSize CMFCPopupMenuBar::CalcSize(BOOL /*bVertDock*/)
 		CSize sizeMenuButton = GetMenuImageSize();
 		sizeMenuButton += CSize(2 * nHorzMargin, 2 * nVertMargin);
 
-		sizeMenuButton.cy = max(sizeMenuButton.cy, afxGlobalData.GetTextHeight());
+		sizeMenuButton.cy = max(sizeMenuButton.cy, GetGlobalData()->GetTextHeight());
 
 		for (POSITION pos = m_Buttons.GetHeadPosition(); pos != NULL;)
 		{
@@ -454,14 +449,14 @@ CSize CMFCPopupMenuBar::CalcSize(BOOL /*bVertDock*/)
 
 			if (m_uiDefaultMenuCmdId != 0 && pButton->m_nID == m_uiDefaultMenuCmdId)
 			{
-				dc.SelectObject(&afxGlobalData.fontBold);
+				dc.SelectObject(&(GetGlobalData()->fontBold));
 				bRestoreFont = TRUE;
 			}
 
 			CSize sizeButton = pButton->OnCalculateSize(&dc, sizeMenuButton, TRUE);
 
 			// support for the menu with breaks:
-			if ((pButton->m_nStyle & AFX_TBBS_BREAK) && !CMFCToolBar::IsCustomizeMode())
+			if ((pButton->m_nStyle & TBBS_BREAK) && !CMFCToolBar::IsCustomizeMode())
 			{
 				if ((column.cx != 0) &&(column.cy != 0))
 				{
@@ -496,7 +491,7 @@ CSize CMFCPopupMenuBar::CalcSize(BOOL /*bVertDock*/)
 
 			if (bRestoreFont)
 			{
-				dc.SelectObject(&afxGlobalData.fontRegular);
+				dc.SelectObject(&(GetGlobalData()->fontRegular));
 			}
 		}
 
@@ -816,7 +811,7 @@ BOOL CMFCPopupMenuBar::ImportFromMenu(HMENU hMenu, BOOL bShowAllCommands)
 					//support for the menu with breaks:
 					if (mii.fType & MF_MENUBREAK)
 					{
-						pButton->m_nStyle |= AFX_TBBS_BREAK;
+						pButton->m_nStyle |= TBBS_BREAK;
 					}
 				}
 
@@ -874,7 +869,7 @@ HMENU CMFCPopupMenuBar::ExportToMenu() const
 			UINT uiStyle = (MF_STRING | MF_POPUP);
 
 			//support for the menu with breaks:
-			if (pButton->m_nStyle & AFX_TBBS_BREAK)
+			if (pButton->m_nStyle & TBBS_BREAK)
 			{
 				uiStyle |= MF_MENUBREAK;
 			}
@@ -955,7 +950,7 @@ void CMFCPopupMenuBar::OnChangeHot(int iHot)
 			if (CMFCToolBar::IsCustomizeMode() ||
 				(pMsg != NULL && pMsg->message == WM_KEYDOWN))
 			{
-				KillTimer(nRemovePopupTimerEvent);
+				KillTimer(AFX_TIMER_ID_MENUBAR_REMOVE);
 				m_pDelayedClosePopupMenuButton = NULL;
 
 				pCurrPopupMenu->OnCancelMode();
@@ -970,7 +965,7 @@ void CMFCPopupMenuBar::OnChangeHot(int iHot)
 				m_pDelayedClosePopupMenuButton = pCurrPopupMenu;
 				m_pDelayedClosePopupMenuButton->m_bToBeClosed = TRUE;
 
-				SetTimer(nRemovePopupTimerEvent, max(0, m_uiPopupTimerDelay - 1), NULL);
+				SetTimer(AFX_TIMER_ID_MENUBAR_REMOVE, max(0, m_uiPopupTimerDelay - 1), NULL);
 
 				InvalidateRect(pCurrPopupMenu->Rect());
 				UpdateWindow();
@@ -997,7 +992,7 @@ void CMFCPopupMenuBar::OnChangeHot(int iHot)
 		m_pDelayedClosePopupMenuButton->m_bToBeClosed = FALSE;
 		m_pDelayedClosePopupMenuButton = NULL;
 
-		KillTimer(nRemovePopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_MENUBAR_REMOVE);
 	}
 
 	m_iHot = iHot;
@@ -1056,8 +1051,8 @@ void CMFCPopupMenuBar::OnChangeHot(int iHot)
 
 void CMFCPopupMenuBar::OnDestroy()
 {
-	KillTimer(nPopupTimerEvent);
-	KillTimer(nRemovePopupTimerEvent);
+	KillTimer(AFX_TIMER_ID_MENUBAR_POPUP);
+	KillTimer(AFX_TIMER_ID_MENUBAR_REMOVE);
 
 	m_pDelayedPopupMenuButton = NULL;
 	m_pDelayedClosePopupMenuButton = NULL;
@@ -1412,9 +1407,9 @@ void CMFCPopupMenuBar::OnTimer(UINT_PTR nIDEvent)
 	::GetCursorPos(&ptCursor);
 	ScreenToClient(&ptCursor);
 
-	if (nIDEvent == nPopupTimerEvent)
+	if (nIDEvent == AFX_TIMER_ID_MENUBAR_POPUP)
 	{
-		KillTimer(nPopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_MENUBAR_POPUP);
 
 		// Remove current tooltip(if any):
 		if (m_pToolTip->GetSafeHwnd() != NULL)
@@ -1438,9 +1433,9 @@ void CMFCPopupMenuBar::OnTimer(UINT_PTR nIDEvent)
 			pDelayedPopupMenuButton->OpenPopupMenu(this);
 		}
 	}
-	else if (nIDEvent == nRemovePopupTimerEvent)
+	else if (nIDEvent == AFX_TIMER_ID_MENUBAR_REMOVE)
 	{
-		KillTimer(nRemovePopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_MENUBAR_REMOVE);
 
 		if (m_pDelayedClosePopupMenuButton != NULL)
 		{
@@ -1461,9 +1456,9 @@ void CMFCPopupMenuBar::OnTimer(UINT_PTR nIDEvent)
 			}
 		}
 	}
-	else if (nIDEvent == AFX_ACCELERATOR_NOTIFY_EVENT)
+	else if (nIDEvent == AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT)
 	{
-		KillTimer(AFX_ACCELERATOR_NOTIFY_EVENT);
+		KillTimer(AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT);
 
 		CRect rc;
 		GetClientRect(&rc);
@@ -1486,7 +1481,7 @@ void CMFCPopupMenuBar::StartPopupMenuTimer(CMFCToolBarMenuButton* pMenuButton, i
 
 	if (m_pDelayedPopupMenuButton != NULL)
 	{
-		KillTimer(nPopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_MENUBAR_POPUP);
 	}
 
 	if ((m_pDelayedPopupMenuButton = pMenuButton) != NULL)
@@ -1498,7 +1493,7 @@ void CMFCPopupMenuBar::StartPopupMenuTimer(CMFCToolBarMenuButton* pMenuButton, i
 		}
 		else
 		{
-			SetTimer(nPopupTimerEvent, m_uiPopupTimerDelay * nDelayFactor, NULL);
+			SetTimer(AFX_TIMER_ID_MENUBAR_POPUP, m_uiPopupTimerDelay * nDelayFactor, NULL);
 		}
 	}
 }
@@ -1971,7 +1966,7 @@ void CMFCPopupMenuBar::CloseDelayedSubMenu()
 	{
 		ASSERT_VALID(m_pDelayedClosePopupMenuButton);
 
-		KillTimer(nRemovePopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_MENUBAR_REMOVE);
 
 		m_pDelayedClosePopupMenuButton->OnCancelMode();
 		m_pDelayedClosePopupMenuButton = NULL;
@@ -2009,7 +2004,7 @@ void CMFCPopupMenuBar::RestoreDelayedSubMenu()
 		UpdateWindow();
 	}
 
-	KillTimer(nRemovePopupTimerEvent);
+	KillTimer(AFX_TIMER_ID_MENUBAR_REMOVE);
 }
 
 BOOL CMFCPopupMenuBar::LoadFromHash(HMENU hMenu)
@@ -2103,7 +2098,7 @@ void CMFCPopupMenuBar::OnLButtonDblClk(UINT nFlags, CPoint point)
 	if (iItem >= 0)
 	{
 		CMFCToolBarMenuButton* pMenuItem = DYNAMIC_DOWNCAST(CMFCToolBarMenuButton, GetButton(iItem));
-		if (pMenuItem != NULL && pMenuItem->m_nID == (UINT) -1)
+		if (pMenuItem != NULL && (pMenuItem->m_nID == (UINT) -1 || pMenuItem->IsDroppedDown()))
 		{
 			CWnd::OnLButtonDblClk(nFlags, point);
 			return;
@@ -2256,7 +2251,6 @@ int CMFCPopupMenuBar::GetGutterWidth()
 	if (bQuickMode)
 	{
 		cx = 2 * cxImage + 4 * nImageMargin + 4;
-
 	}
 	else
 	{
@@ -2266,4 +2260,36 @@ int CMFCPopupMenuBar::GetGutterWidth()
 	return cx;
 }
 
+HRESULT CMFCPopupMenuBar::get_accRole(VARIANT varChild, VARIANT *pvarRole)
+{
+	if (pvarRole == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		pvarRole->vt = VT_I4;
+		pvarRole->lVal = ROLE_SYSTEM_TOOLBAR;
+		return S_OK;
+	}
+
+	return CMFCToolBar::get_accRole(varChild, pvarRole);
+}
+
+HRESULT CMFCPopupMenuBar::get_accState(VARIANT varChild, VARIANT *pvarState)
+{
+	if (pvarState == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		pvarState->vt = VT_I4;
+		pvarState->lVal = STATE_SYSTEM_DEFAULT;
+		return S_OK;
+	}
+
+	return CMFCToolBar::get_accState(varChild, pvarState);
+}

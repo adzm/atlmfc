@@ -35,9 +35,7 @@ extern CObList afxAllToolBars;
 
 CMFCToolBarsCommandsPropertyPage::CMFCToolBarsCommandsPropertyPage() : CPropertyPage(CMFCToolBarsCommandsPropertyPage::IDD)
 {
-	//{{AFX_DATA_INIT(CMFCToolBarsCommandsPropertyPage)
 	m_strButtonDescription = _T("");
-	//}}AFX_DATA_INIT
 }
 
 CMFCToolBarsCommandsPropertyPage::~CMFCToolBarsCommandsPropertyPage()
@@ -47,18 +45,14 @@ CMFCToolBarsCommandsPropertyPage::~CMFCToolBarsCommandsPropertyPage()
 void CMFCToolBarsCommandsPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarsCommandsPropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_CATEGORY, m_wndCategory);
 	DDX_Control(pDX, IDC_AFXBARRES_USER_TOOLS, m_wndTools);
 	DDX_Text(pDX, IDC_AFXBARRES_BUTTON_DESCR, m_strButtonDescription);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsCommandsPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCToolBarsCommandsPropertyPage)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_USER_TOOLS, &CMFCToolBarsCommandsPropertyPage::OnSelchangeUserTools)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_CATEGORY, &CMFCToolBarsCommandsPropertyPage::OnSelchangeCategory)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CMFCToolBarsCommandsPropertyPage::OnSelchangeCategory()
@@ -207,9 +201,7 @@ void CMFCToolBarsCommandsPropertyPage::SetAllCategory(LPCTSTR lpszCategory)
 CMFCToolBarsListPropertyPage::CMFCToolBarsListPropertyPage(CFrameWnd* pParentFrame) :
 	CPropertyPage(CMFCToolBarsListPropertyPage::IDD), m_bUserDefinedToolbars(FALSE), m_pParentFrame(pParentFrame)
 {
-	//{{AFX_DATA_INIT(CMFCToolBarsListPropertyPage)
 	m_bTextLabels = FALSE;
-	//}}AFX_DATA_INIT
 
 	m_pSelectedToolbar = NULL;
 	ASSERT_VALID(m_pParentFrame);
@@ -222,7 +214,6 @@ CMFCToolBarsListPropertyPage::~CMFCToolBarsListPropertyPage()
 void CMFCToolBarsListPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarsListPropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_TEXT_LABELS, m_wndTextLabels);
 	DDX_Control(pDX, IDC_AFXBARRES_RENAME_TOOLBAR, m_bntRenameToolbar);
 	DDX_Control(pDX, IDC_AFXBARRES_NEW_TOOLBAR, m_btnNewToolbar);
@@ -230,11 +221,9 @@ void CMFCToolBarsListPropertyPage::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_AFXBARRES_RESET, m_btnReset);
 	DDX_Control(pDX, IDC_AFXBARRES_TOOLBAR_LIST, m_wndToolbarList);
 	DDX_Check(pDX, IDC_AFXBARRES_TEXT_LABELS, m_bTextLabels);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsListPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCToolBarsListPropertyPage)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_TOOLBAR_LIST, &CMFCToolBarsListPropertyPage::OnSelchangeToolbarList)
 	ON_LBN_DBLCLK(IDC_AFXBARRES_TOOLBAR_LIST, &CMFCToolBarsListPropertyPage::OnDblClkToolBarList)
 	ON_BN_CLICKED(IDC_AFXBARRES_RESET, &CMFCToolBarsListPropertyPage::OnResetToolbar)
@@ -243,7 +232,6 @@ BEGIN_MESSAGE_MAP(CMFCToolBarsListPropertyPage, CPropertyPage)
 	ON_BN_CLICKED(IDC_AFXBARRES_NEW_TOOLBAR, &CMFCToolBarsListPropertyPage::OnNewToolbar)
 	ON_BN_CLICKED(IDC_AFXBARRES_RENAME_TOOLBAR, &CMFCToolBarsListPropertyPage::OnRenameToolbar)
 	ON_BN_CLICKED(IDC_AFXBARRES_TEXT_LABELS, &CMFCToolBarsListPropertyPage::OnTextLabels)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CMFCToolBarsListPropertyPage::OnInitDialog()
@@ -402,7 +390,7 @@ void CMFCToolBarsListPropertyPage::OnResetToolbar()
 		return;
 	}
 
-	m_pSelectedToolbar->RestoreOriginalstate();
+	m_pSelectedToolbar->RestoreOriginalState();
 }
 
 void CMFCToolBarsListPropertyPage::OnResetAllToolbars()
@@ -434,7 +422,7 @@ void CMFCToolBarsListPropertyPage::OnResetAllToolbars()
 
 		if (pListToolBar->CanBeRestored())
 		{
-			pListToolBar->RestoreOriginalstate();
+			pListToolBar->RestoreOriginalState();
 		}
 	}
 }

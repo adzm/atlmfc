@@ -20,7 +20,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCHeaderCtrl window
 
 class CMFCHeaderCtrl : public CHeaderCtrl
@@ -68,7 +68,6 @@ public:
 	virtual ~CMFCHeaderCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCHeaderCtrl)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnPaint();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -76,9 +75,9 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnCancelMode();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
+	afx_msg void OnMouseLeave();
 	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void CommonInit();

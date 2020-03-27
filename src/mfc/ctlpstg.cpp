@@ -83,8 +83,13 @@ STDMETHODIMP COleControl::XPersistStorage::InitNew(LPSTORAGE pStg)
 
 STDMETHODIMP COleControl::XPersistStorage::Load(LPSTORAGE pStg)
 {
-	ASSERT(pStg != NULL);
 	METHOD_PROLOGUE_EX(COleControl, PersistStorage)
+
+	ASSERT(pStg != NULL);
+	if (pStg == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	CLIPFORMAT cf;
 	HRESULT hr;
@@ -136,23 +141,27 @@ STDMETHODIMP COleControl::XPersistStorage::Load(LPSTORAGE pStg)
 	return hr;
 }
 
-STDMETHODIMP COleControl::XPersistStorage::Save(LPSTORAGE pStg,
-	BOOL fSameAsLoad)
+STDMETHODIMP COleControl::XPersistStorage::Save(LPSTORAGE pStg, BOOL fSameAsLoad)
 {
 	METHOD_PROLOGUE_EX(COleControl, PersistStorage)
+
 	ASSERT(pStg != NULL);
+	if (pStg == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	// Create a "Contents" stream on the supplied storage object, and
 	// then delegate to the implementation of IPersistStreamInit::Save.
 
 	// Don't bother saving if destination is up-to-date.
 	if (fSameAsLoad && (IsDirty() != S_OK))
+	{
 		return S_OK;
+	}
 
 	LPSTREAM pStm = NULL;
-	HRESULT hr = pStg->CreateStream(OLESTR("Contents"),
-		STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &pStm);
-
+	HRESULT hr = pStg->CreateStream(OLESTR("Contents"), STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &pStm);
 	ASSERT(FAILED(hr) || pStm != NULL);
 
 	if (pStm != NULL)
@@ -162,14 +171,16 @@ STDMETHODIMP COleControl::XPersistStorage::Save(LPSTORAGE pStg,
 
 		// Bookkeeping:  Clear the dirty flag, if storage is same.
 		if (fSameAsLoad)
+		{
 			pThis->m_bModified = FALSE;
-
+		}
 		pStm->Release();
 	}
 
 	if (pThis->m_pDefIPersistStorage == NULL)
-		pThis->m_pDefIPersistStorage =
-			(LPPERSISTSTORAGE)pThis->QueryDefHandler(IID_IPersistStorage);
+	{
+		pThis->m_pDefIPersistStorage = (LPPERSISTSTORAGE)pThis->QueryDefHandler(IID_IPersistStorage);
+	}
 
 	// Delegate to default handler (for cache).
 	pThis->m_pDefIPersistStorage->Save(pStg, fSameAsLoad);

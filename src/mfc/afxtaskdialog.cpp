@@ -10,6 +10,8 @@
 
 #include "stdafx.h"
 
+#include <afxwinverapi.h>
+
 HRESULT CALLBACK TaskDialogCallback(_In_ HWND hWnd, _In_ UINT uNotification, _In_ WPARAM wParam, _In_ LPARAM lParam, _In_ LONG_PTR dwRefData)
 {
 	CTaskDialog *pTaskDialog = reinterpret_cast<CTaskDialog*>(dwRefData);
@@ -709,14 +711,12 @@ void CTaskDialog::SetVerificationCheckbox(_In_ BOOL bChecked)
 	Notify(TDM_CLICK_VERIFICATION, static_cast<WPARAM>(bChecked), 0);
 }
 
-BOOL CTaskDialog::IsSupported()
+BOOL __stdcall CTaskDialog::IsSupported()
 {
-	HINSTANCE hInst = ::GetModuleHandleW(L"COMCTL32.DLL");
-	ENSURE(hInst != NULL);
-	return(GetProcAddress(hInst, "TaskDialogIndirect") != NULL);
+	return _AfxIsTaskDialogSupported();
 }
 
-INT_PTR CTaskDialog::ShowDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction, _In_ const CString& strTitle,
+INT_PTR __stdcall CTaskDialog::ShowDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction, _In_ const CString& strTitle,
 		int nIDCommandControlsFirst, _In_ int nIDCommandControlsLast,
 		int nCommonButtons /* = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON */,
 		int nTaskDialogOptions /* = TDF_ENABLE_HYPERLINKS | TDF_USE_COMMAND_LINKS */,
@@ -920,17 +920,11 @@ INT_PTR CTaskDialog::DoModal(_In_ HWND hParent /* = ::GetActiveWindow() */)
 	// This option cannot be used after the window has been created.
 	ENSURE(NULL == m_hWnd);
 
-	HINSTANCE hInst = ::GetModuleHandleW(L"COMCTL32.DLL");
-	ENSURE(hInst != NULL);
-
-	CTaskDialogIndirectFunc pfnTaskDialogIndirect = reinterpret_cast<CTaskDialogIndirectFunc>(GetProcAddress(hInst, "TaskDialogIndirect"));
-	ENSURE(pfnTaskDialogIndirect != NULL);
-
 	TASKDIALOGCONFIG configTaskDialog = {0};
 	configTaskDialog.hwndParent = hParent;
 
 	FillStruct(configTaskDialog);
-	HRESULT nTaskDialogResult = (*pfnTaskDialogIndirect)(&configTaskDialog, &m_nButtonId, &m_nRadioId, &m_bVerified);
+	HRESULT nTaskDialogResult = _AfxTaskDialogIndirect(&configTaskDialog, &m_nButtonId, &m_nRadioId, &m_bVerified);
 	FreeStruct(configTaskDialog);
 
 	if (S_OK == nTaskDialogResult)

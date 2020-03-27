@@ -13,6 +13,10 @@
 
 #pragma once
 
+#ifdef _ATL_ALL_USER_WARNINGS
+#pragma warning( push )  // disable 4505/4710/4514/4511/4512/4355
+#endif
+
 // Warnings outside of the push/pop sequence will be disabled for all user
 // projects.  The only warnings that should be disabled outside the push/pop
 // are warnings that are a) benign and b) will show up in user projects
@@ -31,15 +35,12 @@
 #pragma warning(disable: 4355) // 'this' : used in base member initializer list
 
 #ifdef _ATL_ALL_WARNINGS
-#pragma warning( push )
+#pragma warning( push )  // disable 4668/4820/4917/4127/4097/4786/4291/4201/4103/4268
 #endif
 
 #pragma warning(disable : 4668)	// is not defined as a preprocessor macro, replacing with '0' for '#if/#elif
 #pragma warning(disable : 4820)	// padding added after member
 #pragma warning(disable : 4917)	// a GUID can only be associated with a class, interface or namespace
-
-#pragma warning(disable : 4217)	// member template functions cannot be used for copy-assignment or copy-construction
-
 #pragma warning(disable: 4127) // constant expression
 #pragma warning(disable: 4097) // typedef name used as synonym for class-name
 #pragma warning(disable: 4786) // identifier was truncated in the debug information
@@ -48,7 +49,7 @@
 #pragma warning(disable: 4103) // pragma pack
 #pragma warning(disable: 4268) // const static/global data initialized to zeros
 
-#pragma warning (push)
+#pragma warning (push)  // disable 4702/4571
 // Warning 4702 is generated based on compiler backend data flow analysis. This means that for
 // some specific instantiations of a template it can be generated even when the code branch is
 // required for other instantiations. In future we should find a way to be more selective about this
@@ -78,7 +79,9 @@
 #include <limits.h>
 
 #include <olectl.h>
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 #include <atliface.h>
+#endif  //  _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 #include <errno.h>
 #include <process.h>    // for _beginthreadex, _endthreadex
@@ -91,7 +94,10 @@
 #include <atlsimpcoll.h>
 #include <atltrace.h>
 #include <atlexcept.h>
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 #include <atltransactionmanager.h>
+#endif
 
 #define _ATL_TYPELIB_INDEX_LENGTH 10
 #define _ATL_QUOTES_SPACE 2
@@ -106,9 +112,17 @@
 #endif	// _ATL_DLL
 
 #ifdef _DEBUG
+#ifdef _UNICODE
 	#pragma comment(lib, "atlsd.lib")
 #else
+	#pragma comment(lib, "atlsnd.lib")
+#endif
+#else
+#ifdef _UNICODE
 	#pragma comment(lib, "atls.lib")
+#else
+	#pragma comment(lib, "atlsn.lib")
+#endif
 #endif
 
 #ifdef _ATL_MIN_CRT
@@ -140,7 +154,7 @@ void AFXAPI AfxOleUnlockApp();
 
 // Support Windows SDK v5.0
 #ifndef LSTATUS
-typedef __success(return==ERROR_SUCCESS) LONG LSTATUS;
+typedef _Return_type_success_(return==ERROR_SUCCESS) LONG LSTATUS;
 #endif
 
 namespace ATL
@@ -159,11 +173,11 @@ struct _ATL_CATMAP_ENTRY
 typedef HRESULT (WINAPI _ATL_CREATORFUNC)(
 	_In_opt_ void* pv,
 	_In_ REFIID riid,
-	_Deref_out_ LPVOID* ppv);
+	_COM_Outptr_ LPVOID* ppv);
 typedef HRESULT (WINAPI _ATL_CREATORARGFUNC)(
 	_In_opt_ void* pv,
 	_In_ REFIID riid,
-	_Deref_out_ LPVOID* ppv,
+	_COM_Outptr_ LPVOID* ppv,
 	_In_ DWORD_PTR dw);
 typedef HRESULT (WINAPI _ATL_MODULEFUNC)(_In_ DWORD_PTR dw);
 typedef LPCTSTR (WINAPI _ATL_DESCRIPTIONFUNC)();
@@ -178,7 +192,8 @@ struct _ATL_TERMFUNC_ELEM
 };
 
 // Can't inherit from _ATL_OBJMAP_ENTRY20
-// because it messes up the OBJECT_MAP macros
+// because it breaks the OBJECT_MAP macros
+// this structure was kept for backward compatibility
 struct _ATL_OBJMAP_ENTRY30
 {
 	const CLSID* pclsid;
@@ -213,7 +228,55 @@ struct _ATL_OBJMAP_ENTRY30
 	void (WINAPI *pfnObjectMain)(_In_ bool bStarting);
 };
 
+// Cache info about factories and cookies
+// This info is keept separate from _ATL_OBJMAP_ENTRY to make it const
+struct _ATL_OBJMAP_CACHE
+{
+	IUnknown* pCF;
+	DWORD dwRegister;
+};
+
+// Can't inherit from _ATL_OBJMAP_ENTRY30
+// because it brakes the OBJECT_MAP macros
+struct _ATL_OBJMAP_ENTRY110
+{
+	const CLSID* pclsid;
+	HRESULT (WINAPI *pfnUpdateRegistry)(_In_ BOOL bRegister);
+	_ATL_CREATORFUNC* pfnGetClassObject;
+	_ATL_CREATORFUNC* pfnCreateInstance;
+	_ATL_OBJMAP_CACHE* pCache;	
+	_ATL_DESCRIPTIONFUNC* pfnGetObjectDescription;
+	_ATL_CATMAPFUNC* pfnGetCategoryMap;
+	HRESULT WINAPI RevokeClassObject()
+	{
+		ATLASSUME(pCache != NULL);
+
+		if (pCache->dwRegister == 0)
+			return S_OK;
+		return CoRevokeClassObject(pCache->dwRegister);
+	}
+	HRESULT WINAPI RegisterClassObject(
+		_In_ DWORD dwClsContext,
+		_In_ DWORD dwFlags)
+	{
+		ATLASSUME(pCache != NULL);
+
+		IUnknown* p = NULL;
+		if (pfnGetClassObject == NULL)
+			return S_OK;
+		HRESULT hRes = pfnGetClassObject(pfnCreateInstance, __uuidof(IUnknown), (LPVOID*) &p);
+		if (SUCCEEDED(hRes))
+			hRes = CoRegisterClassObject(*pclsid, p, dwClsContext, dwFlags, &pCache->dwRegister);
+		if (p != NULL)
+			p->Release();
+		return hRes;
+	}
+// Added in ATL 3.0
+	void (WINAPI *pfnObjectMain)(_In_ bool bStarting);
+};
+
 typedef _ATL_OBJMAP_ENTRY30 _ATL_OBJMAP_ENTRY;
+typedef _ATL_OBJMAP_ENTRY110 _ATL_OBJMAP_ENTRY_EX;
 
 // Auto Object Map
 
@@ -222,8 +285,8 @@ typedef _ATL_OBJMAP_ENTRY30 _ATL_OBJMAP_ENTRY;
 #pragma section("ATL$__m", read)
 extern "C"
 {
-__declspec(selectany) __declspec(allocate("ATL$__a")) _ATL_OBJMAP_ENTRY* __pobjMapEntryFirst = NULL;
-__declspec(selectany) __declspec(allocate("ATL$__z")) _ATL_OBJMAP_ENTRY* __pobjMapEntryLast = NULL;
+__declspec(selectany) __declspec(allocate("ATL$__a")) _ATL_OBJMAP_ENTRY_EX* __pobjMapEntryFirst = NULL;
+__declspec(selectany) __declspec(allocate("ATL$__z")) _ATL_OBJMAP_ENTRY_EX* __pobjMapEntryLast = NULL;
 }
 
 #if !defined(_M_IA64)
@@ -259,12 +322,21 @@ template< class TLock >
 class CComCritSecLock
 {
 public:
+	_Post_same_lock_(cs, this->m_cs)
+	_When_(bInitialLock != 0, _Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0))
+	_When_(bInitialLock == 0, _Post_satisfies_(this->m_bLocked == 0))
 	CComCritSecLock(
 		_Inout_ TLock& cs,
 		_In_ bool bInitialLock = true );
+
+	_When_(this->m_bLocked != 0, _Requires_lock_held_(this->m_cs) _Releases_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked == 0))
 	~CComCritSecLock() throw();
 
+	_Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0)
+	_On_failure_(_Post_satisfies_(this->m_bLocked == 0))
 	HRESULT Lock() throw();
+
+	_Releases_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked == 0)
 	void Unlock() throw();
 
 // Implementation
@@ -278,6 +350,10 @@ private:
 };
 
 template< class TLock >
+_Post_same_lock_(cs, this->m_cs)
+_When_(bInitialLock != 0, _Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0))
+_When_(bInitialLock == 0, _Post_satisfies_(this->m_bLocked == 0))
+#pragma warning(suppress: 26166) // Constructor throws on failure of Lock() method
 inline CComCritSecLock< TLock >::CComCritSecLock(
 		_Inout_ TLock& cs,
 		_In_ bool bInitialLock) :
@@ -297,6 +373,7 @@ inline CComCritSecLock< TLock >::CComCritSecLock(
 }
 
 template< class TLock >
+_When_(this->m_bLocked != 0, _Requires_lock_held_(this->m_cs) _Releases_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked == 0))
 inline CComCritSecLock< TLock >::~CComCritSecLock() throw()
 {
 	if( m_bLocked )
@@ -306,11 +383,15 @@ inline CComCritSecLock< TLock >::~CComCritSecLock() throw()
 }
 
 template< class TLock >
+_Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0)
+_On_failure_(_Post_satisfies_(this->m_bLocked == 0))
+#pragma warning(suppress: 26165) // Lock is acquired by template lock object '(this->m_cs).m_sec'
 inline HRESULT CComCritSecLock< TLock >::Lock() throw()
 {
 	HRESULT hr;
 
 	ATLASSERT( !m_bLocked );
+	ATLASSUME(!m_bLocked);
 	hr = m_cs.Lock();
 	if( FAILED( hr ) )
 	{
@@ -322,9 +403,12 @@ inline HRESULT CComCritSecLock< TLock >::Lock() throw()
 }
 
 template< class TLock >
+_Releases_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked == 0)
+#pragma warning(suppress: 26167) // Lock is released by template lock object '(this->m_cs).m_sec'
 inline void CComCritSecLock< TLock >::Unlock() throw()
 {
 	ATLASSUME( m_bLocked );
+#pragma warning(suppress: 26110) // Template parameter hides lock object
 	m_cs.Unlock();
 	m_bLocked = false;
 }
@@ -334,11 +418,11 @@ class CComMultiThreadModelNoCS
 public:
 	static ULONG WINAPI Increment(_Inout_ LPLONG p) throw()
 	{
-		return InterlockedIncrement(p);
+		return ::InterlockedIncrement(p);
 	}
 	static ULONG WINAPI Decrement(_Inout_ LPLONG p) throw()
 	{
-		return InterlockedDecrement(p);
+		return ::InterlockedDecrement(p);
 	}
 	typedef CComFakeCriticalSection AutoCriticalSection;
 	typedef CComFakeCriticalSection AutoDeleteCriticalSection;
@@ -351,11 +435,11 @@ class CComMultiThreadModel
 public:
 	static ULONG WINAPI Increment(_Inout_ LPLONG p) throw()
 	{
-		return InterlockedIncrement(p);
+		return ::InterlockedIncrement(p);
 	}
 	static ULONG WINAPI Decrement(_Inout_ LPLONG p) throw()
 	{
-		return InterlockedDecrement(p);
+		return ::InterlockedDecrement(p);
 	}
 	typedef CComAutoCriticalSection AutoCriticalSection;
 	typedef CComAutoDeleteCriticalSection AutoDeleteCriticalSection;
@@ -420,8 +504,8 @@ struct _ATL_COM_MODULE70
 {
 	UINT cbSize;
 	HINSTANCE m_hInstTypeLib;
-	_ATL_OBJMAP_ENTRY** m_ppAutoObjMapFirst;
-	_ATL_OBJMAP_ENTRY** m_ppAutoObjMapLast;
+	_ATL_OBJMAP_ENTRY_EX** m_ppAutoObjMapFirst;
+	_ATL_OBJMAP_ENTRY_EX** m_ppAutoObjMapLast;
 	CComCriticalSection m_csObjMap;
 };
 typedef _ATL_COM_MODULE70 _ATL_COM_MODULE;
@@ -469,7 +553,7 @@ ATLAPI AtlInternalQueryInterface(
 	_Inout_ void* pThis,
 	_In_ const _ATL_INTMAP_ENTRY* pEntries,
 	_In_ REFIID iid,
-	_Deref_out_ void** ppvObject);
+	_COM_Outptr_ void** ppvObject);
 
 /////////////////////////////////////////////////////////////////////////////
 // Inproc Marshaling helpers
@@ -479,12 +563,12 @@ ATLAPI AtlFreeMarshalStream(_Inout_ IStream* pStream);
 ATLAPI AtlMarshalPtrInProc(
 	_Inout_ IUnknown* pUnk,
 	_In_ const IID& iid,
-	_Deref_out_ IStream** ppStream);
+	_Outptr_ IStream** ppStream);
 
 ATLAPI AtlUnmarshalPtr(
 	_Inout_ IStream* pStream,
 	_In_ const IID& iid,
-	_Deref_out_ IUnknown** ppUnk);
+	_Outptr_ IUnknown** ppUnk);
 
 ATLAPI_(BOOL) AtlWaitWithMessageLoop(_In_ HANDLE hEvent);
 
@@ -502,17 +586,6 @@ ATLAPI AtlUnadvise(
 	_In_ const IID& iid,
 	_In_ DWORD dw);
 
-/////////////////////////////////////////////////////////////////////////////
-// IDispatch Error handling
-
-ATLAPI AtlSetErrorInfo(
-	_In_ const CLSID& clsid,
-	_In_z_ LPCOLESTR lpszDesc,
-	_In_ DWORD dwHelpID,
-	_In_opt_z_ LPCOLESTR lpszHelpFile,
-	_In_ const IID& iid,
-	_In_ HRESULT hRes,
-	_In_opt_ HINSTANCE hInst);
 
 /////////////////////////////////////////////////////////////////////////////
 // Module
@@ -529,7 +602,21 @@ ATLAPI AtlComModuleGetClassObject(
 	_Inout_ _ATL_COM_MODULE* pComModule,
 	_In_ REFCLSID rclsid,
 	_In_ REFIID riid,
-	_Deref_out_ LPVOID* ppv);
+	_COM_Outptr_ LPVOID* ppv);
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+/////////////////////////////////////////////////////////////////////////////
+// IDispatch Error handling
+
+ATLAPI AtlSetErrorInfo(
+	_In_ const CLSID& clsid,
+	_In_z_ LPCOLESTR lpszDesc,
+	_In_ DWORD dwHelpID,
+	_In_opt_z_ LPCOLESTR lpszHelpFile,
+	_In_ const IID& iid,
+	_In_ HRESULT hRes,
+	_In_opt_ HINSTANCE hInst);
 
 ATLAPI AtlRegisterClassCategoriesHelper(
 	_In_ REFCLSID clsid,
@@ -549,10 +636,32 @@ ATLAPI AtlGetPerUserRegistration(_Out_ bool* pbEnabled);
 ATLAPI AtlLoadTypeLib(
 	_In_ HINSTANCE hInstTypeLib,
 	_In_opt_z_ LPCOLESTR lpszIndex,
-	_Deref_out_z_ BSTR* pbstrPath,
-	_Deref_out_ ITypeLib** ppTypeLib);
+	_Outptr_result_z_ BSTR* pbstrPath,
+	_Outptr_ ITypeLib** ppTypeLib);
+
+ATLAPIINL AtlRegisterTypeLib(
+	_In_ HINSTANCE hInstTypeLib,
+	_In_opt_z_ LPCOLESTR lpszIndex);
+
+ATLAPIINL AtlUnRegisterTypeLib(
+	_In_ HINSTANCE hInstTypeLib,
+	_In_opt_z_ LPCOLESTR lpszIndex);
+
+/////////////////////////////////////////////////////////////////////////////
+
+ATLAPIINL AtlComModuleRegisterServer(
+	_Inout_ _ATL_COM_MODULE* pComModule,
+	_In_ BOOL bRegTypeLib,
+	_In_opt_ const CLSID* pCLSID = NULL);
+
+ATLAPIINL AtlComModuleUnregisterServer(
+	_Inout_ _ATL_COM_MODULE* pComModule,
+	_In_ BOOL bUnRegTypeLib,
+	_In_opt_ const CLSID* pCLSID = NULL);
 
 ATLAPI_(DWORD) AtlGetVersion(_In_opt_ void* pReserved);
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 ATLAPI AtlModuleAddTermFunc(
 	_Inout_ _ATL_MODULE* pModule,
@@ -576,33 +685,13 @@ ATLAPI_(void*) AtlWinModuleExtractCreateWndData(
 	_Inout_opt_ _ATL_WIN_MODULE* pWinModule);
 
 /////////////////////////////////////////////////////////////////////////////
-
-ATLAPIINL AtlComModuleRegisterServer(
-	_Inout_ _ATL_COM_MODULE* pComModule,
-	_In_ BOOL bRegTypeLib,
-	_In_opt_ const CLSID* pCLSID = NULL);
-
-ATLAPIINL AtlComModuleUnregisterServer(
-	_Inout_ _ATL_COM_MODULE* pComModule,
-	_In_ BOOL bUnRegTypeLib,
-	_In_opt_ const CLSID* pCLSID = NULL);
-
-ATLAPIINL AtlRegisterTypeLib(
-	_In_ HINSTANCE hInstTypeLib,
-	_In_opt_z_ LPCOLESTR lpszIndex);
-
-ATLAPIINL AtlUnRegisterTypeLib(
-	_In_ HINSTANCE hInstTypeLib,
-	_In_opt_z_ LPCOLESTR lpszIndex);
-
-/////////////////////////////////////////////////////////////////////////////
 // Get Registrar object from ATL DLL.
 
 #if !defined(_ATL_STATIC_REGISTRY)
 #ifdef _ATL_DLL_IMPL
-extern "C" HRESULT __stdcall AtlCreateRegistrar(_Deref_out_ IRegistrar** ppReg);
+extern "C" HRESULT __stdcall AtlCreateRegistrar(_Outptr_ IRegistrar** ppReg);
 #else
-extern "C" __declspec(dllimport) HRESULT __stdcall AtlCreateRegistrar(_Deref_out_ IRegistrar** ppReg);
+extern "C" __declspec(dllimport) HRESULT __stdcall AtlCreateRegistrar(_Outptr_ IRegistrar** ppReg);
 #endif
 #endif
 
@@ -669,7 +758,7 @@ public:
 	{
 		m_p = p.Detach();  // Transfer ownership
 	}
-	explicit CAutoVectorPtr(_In_ T* p) throw() :
+	explicit CAutoVectorPtr(_Pre_maybenull_ T* p) throw() :
 		m_p( p )
 	{
 	}
@@ -733,7 +822,7 @@ public:
 	bool Allocate(_In_ size_t nElements) throw()
 	{
 		ATLASSUME( m_p == NULL );
-		ATLTRY( m_p = new T[nElements] );
+		ATLTRY( m_p = _ATL_NEW T[nElements] );
 		if( m_p == NULL )
 		{
 			return( false );
@@ -742,7 +831,7 @@ public:
 		return( true );
 	}
 	// Attach to an existing pointer (takes ownership)
-	void Attach(_In_ T* p) throw()
+	void Attach(_In_opt_ T* p) throw()
 	{
 		ATLASSUME( m_p == NULL );
 		m_p = p;
@@ -785,7 +874,7 @@ public:
 	{
 		m_p = p.Detach();  // Transfer ownership
 	}
-	explicit CAutoPtr(_In_ T* p) throw() :
+	explicit CAutoPtr(_In_opt_ T* p) throw() :
 		m_p( p )
 	{
 	}
@@ -1076,24 +1165,24 @@ public:
 };
 
 template <class T, class Reallocator>
-_Ret_opt_count_(cEls) T* AtlSafeRealloc(
+_Ret_writes_maybenull_(cEls) T* AtlSafeRealloc(
 	_In_opt_ T* pT,
 	_In_ size_t cEls) throw()
 {
-	T* pTemp;
-
 	size_t nBytes=0;
 	if(FAILED(::ATL::AtlMultiply(&nBytes, cEls, sizeof(T))))
 	{
+		Reallocator::Free(pT);
 		return NULL;
 	}
-	pTemp = static_cast<T*>(Reallocator::Reallocate(pT, nBytes));
+	
+	T *pTemp = static_cast<T*>(Reallocator::Reallocate(pT, nBytes));
 	if (pTemp == NULL)
 	{
 		Reallocator::Free(pT);
 		return NULL;
 	}
-	pT = pTemp;
+
 	return pTemp;
 }
 
@@ -1192,13 +1281,44 @@ inline void CHandle::Close() throw()
 class CCritSecLock
 {
 public:
+	_Post_same_lock_(cs, this->m_cs)
+	_When_(bInitialLock != 0, _Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0))
+	_When_(bInitialLock == 0, _Post_satisfies_(this->m_bLocked == 0))
 	CCritSecLock(
 		_Inout_ CRITICAL_SECTION& cs,
-		_In_ bool bInitialLock = true);
-	~CCritSecLock() throw();
+		_In_ bool bInitialLock = true) : m_cs(cs), m_bLocked(false)
+	{
+		if( bInitialLock )
+		{
+			Lock();
+		}		
+	}
+		
+	_When_(this->m_bLocked != 0, _Requires_lock_held_(this->m_cs) _Releases_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked == 0))
+	~CCritSecLock() throw()
+	{
+		if( m_bLocked )
+		{
+			Unlock();
+		}
+	}
 
-	void Lock();
-	void Unlock() throw();
+	_Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0)
+	void Lock()
+	{
+		ATLASSERT( !m_bLocked );
+
+		::EnterCriticalSection( &m_cs );
+		m_bLocked = true;
+	}
+
+	_Releases_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked == 0)
+	void Unlock() throw()
+	{
+		ATLASSUME( m_bLocked );
+		::LeaveCriticalSection( &m_cs );
+		m_bLocked = false;	
+	}
 
 // Implementation
 private:
@@ -1209,41 +1329,6 @@ private:
 	CCritSecLock(_In_ const CCritSecLock&) throw();
 	CCritSecLock& operator=(_In_ const CCritSecLock&) throw();
 };
-
-inline CCritSecLock::CCritSecLock(
-		_Inout_ CRITICAL_SECTION& cs,
-		_In_ bool bInitialLock) :
-	m_cs( cs ),
-	m_bLocked( false )
-{
-	if( bInitialLock )
-	{
-		Lock();
-	}
-}
-
-inline CCritSecLock::~CCritSecLock() throw()
-{
-	if( m_bLocked )
-	{
-		Unlock();
-	}
-}
-
-inline void CCritSecLock::Lock()
-{
-	ATLASSERT( !m_bLocked );
-
-	::EnterCriticalSection( &m_cs );
-	m_bLocked = true;
-}
-
-inline void CCritSecLock::Unlock() throw()
-{
-	ATLASSUME( m_bLocked );
-	::LeaveCriticalSection( &m_cs );
-	m_bLocked = false;
-}
 
 /////////////////////////////////////////////////////////////////////////////
 // Interface debugging
@@ -1260,7 +1345,7 @@ struct _QIThunk
 {
 	STDMETHOD(QueryInterface)(
 		_In_ REFIID iid,
-		_Deref_out_ void** pp)
+		_Outptr_ void** pp)
 	{
 		ATLASSUME(m_dwRef >= 0);
 		ATLASSUME(m_pUnk != NULL);
@@ -1270,7 +1355,7 @@ struct _QIThunk
 	{
 		ATLASSUME(m_pUnk != NULL);
 		if (m_bBreak)
-			DebugBreak();
+			__debugbreak();
 		m_pUnk->AddRef();
 		return InternalAddRef();
 	}
@@ -1278,9 +1363,9 @@ struct _QIThunk
 	{
 		ATLASSUME(m_pUnk != NULL);
 		if (m_bBreak)
-			DebugBreak();
+			__debugbreak();
 		ATLASSUME(m_dwRef >= 0);
-		long l = InterlockedIncrement(&m_dwRef);
+		long l = ::InterlockedIncrement(&m_dwRef);
 
 		TCHAR buf[512+1];
 		_stprintf_s(buf, _countof(buf), _T("QIThunk - %-10d\tAddRef  :\tObject = 0x%p\tRefcount = %d\t"),
@@ -2394,14 +2479,20 @@ public:
 		if (cbSize == 0)
 			return;
 
-		for (_ATL_OBJMAP_ENTRY** ppEntry = m_ppAutoObjMapFirst; ppEntry < m_ppAutoObjMapLast; ppEntry++)
+		for (_ATL_OBJMAP_ENTRY_EX** ppEntry = m_ppAutoObjMapFirst; ppEntry < m_ppAutoObjMapLast; ppEntry++)
 		{
 			if (*ppEntry != NULL)
 			{
-				_ATL_OBJMAP_ENTRY* pEntry = *ppEntry;
-				if (pEntry->pCF != NULL)
-					pEntry->pCF->Release();
-				pEntry->pCF = NULL;
+				_ATL_OBJMAP_CACHE* pCache = (**ppEntry).pCache;
+				
+				if (pCache->pCF != NULL)
+				{
+					// Decode factory pointer if it's not null
+					IUnknown *factory = reinterpret_cast<IUnknown*>(::DecodePointer(pCache->pCF));
+					_Analysis_assume_(factory != nullptr);
+					factory->Release();					
+					pCache->pCF = NULL;
+				}				
 			}
 		}
 		m_csObjMap.Term();
@@ -2411,6 +2502,8 @@ public:
 		cbSize = 0;
 	}
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+	
 	// Registry support (helpers)
 	HRESULT RegisterTypeLib()
 	{
@@ -2469,12 +2562,14 @@ public:
 		return AtlComModuleUnregisterServer(this, bRegTypeLib, pCLSID);
 	}
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 	// Implementation
 
 	// Call ObjectMain for all the objects.
 	void ExecuteObjectMain(_In_ bool bStarting)
 	{
-		for (_ATL_OBJMAP_ENTRY** ppEntry = m_ppAutoObjMapFirst; ppEntry < m_ppAutoObjMapLast; ppEntry++)
+		for (_ATL_OBJMAP_ENTRY_EX** ppEntry = m_ppAutoObjMapFirst; ppEntry < m_ppAutoObjMapLast; ppEntry++)
 		{
 			if (*ppEntry != NULL)
 				(*ppEntry)->pfnObjectMain(bStarting);
@@ -2542,8 +2637,8 @@ public:
 		{
 			++m_nIndexQI;
 			if (m_nIndexBreakAt == m_nIndexQI)
-				DebugBreak();
-			ATLTRY(pThunk = new _QIThunk(p, lpsz, iid, m_nIndexQI, (m_nIndexBreakAt == m_nIndexQI)));
+				__debugbreak();
+			pThunk = _ATL_NEW _QIThunk(p, lpsz, iid, m_nIndexQI, (m_nIndexBreakAt == m_nIndexQI));
 			if (pThunk == NULL)
 			{
 				return E_OUTOFMEMORY;
@@ -2557,7 +2652,7 @@ public:
 	HRESULT AddNonAddRefThunk(
 		_In_ IUnknown* p,
 		_In_z_ LPCTSTR lpsz,
-		_Deref_out_ IUnknown** ppThunkRet) throw()
+		_Outptr_ IUnknown** ppThunkRet) throw()
 	{
 		if (ppThunkRet == NULL)
 			return E_POINTER;
@@ -2587,8 +2682,8 @@ public:
 		{
 			++m_nIndexQI;
 			if (m_nIndexBreakAt == m_nIndexQI)
-				DebugBreak();
-			ATLTRY(pThunk = new _QIThunk(p, lpsz, __uuidof(IUnknown), m_nIndexQI, (m_nIndexBreakAt == m_nIndexQI)));
+				__debugbreak();
+			pThunk = _ATL_NEW _QIThunk(p, lpsz, __uuidof(IUnknown), m_nIndexQI, (m_nIndexBreakAt == m_nIndexQI));
 			if (pThunk == NULL)
 			{
 				return E_OUTOFMEMORY;
@@ -2664,13 +2759,13 @@ extern CAtlDebugInterfacesModule _AtlDebugInterfacesModule;
 #ifndef _ATL_STATIC_LIB_IMPL
 // Should not be pulled into the static lib
 __declspec (selectany) CAtlDebugInterfacesModule _AtlDebugInterfacesModule;
-#endif
+#endif // _ATL_STATIC_LIB_IMPL
 
 inline ULONG _QIThunk::Release()
 {
 	ATLASSUME(m_pUnk != NULL);
 	if (m_bBreak)
-		DebugBreak();
+		__debugbreak();
 	ATLASSUME(m_dwRef > 0);
 
 	// save copies of member variables we wish to use after the InterlockedDecrement
@@ -2680,7 +2775,7 @@ inline ULONG _QIThunk::Release()
 	LPCTSTR lpszClassName = m_lpszClassName;
 	bool bNonAddRefThunk = m_bNonAddRefThunk;
 
-	ULONG l = InterlockedDecrement(&m_dwRef);
+	ULONG l = ::InterlockedDecrement(&m_dwRef);
 
 	TCHAR buf[512+1];
 	_stprintf_s(buf, _countof(buf), _T("QIThunk - %-10d\tRelease :\tObject = 0x%p\tRefcount = %d\t"), nIndex, pUnk, l);
@@ -2738,8 +2833,20 @@ public:
 
 extern CAtlWinModule _AtlWinModule;
 
+#ifndef _ATL_STATIC_LIB_IMPL
 class CAtlModule;
 __declspec(selectany) CAtlModule* _pAtlModule = NULL;
+#endif //  _ATL_STATIC_LIB_IMPL
+
+template<bool isDllModule, typename T>
+struct CAtlValidateModuleConfiguration
+{
+#if !defined(_WINDLL) && !defined(_USRDLL)
+	static_assert(!isDllModule, "'CAtlDllModuleT<T>' must be used with either _WINDLL or _USRDLL defined");
+#else
+	static_assert(isDllModule, "'CAtlExeModuleT<T>' must be used with neither _WINDLL nor _USRDLL defined");
+#endif
+};
 
 #if defined(_M_CEE) && !defined(_ATL_MIXED)
 
@@ -2774,6 +2881,8 @@ __declspec (selectany) void *_pAtlReleaseManagedClassFactories = &_AtlReleaseMan
 #endif
 
 #endif
+
+#ifndef _ATL_STATIC_LIB_IMPL
 
 class ATL_NO_VTABLE CAtlModule : 
 	public _ATL_MODULE
@@ -2854,7 +2963,7 @@ public :
 		return AtlModuleAddTermFunc(this, pFunc, dw);
 	}
 
-	virtual HRESULT GetGITPtr(_Deref_out_ IGlobalInterfaceTable** ppGIT) throw()
+	virtual HRESULT GetGITPtr(_Outptr_ IGlobalInterfaceTable** ppGIT) throw()
 	{
 		ATLASSERT(ppGIT != NULL);
 
@@ -2877,6 +2986,7 @@ public :
 		return hr;
 	}
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	virtual HRESULT AddCommonRGSReplacements(_Inout_ IRegistrarBase* /*pRegistrar*/) throw() = 0;
 
 	// Resource-based Registration
@@ -2949,7 +3059,7 @@ public :
 #endif
 
 	static void EscapeSingleQuote(
-		_Out_z_cap_(destSizeInChars) LPOLESTR lpDest,
+		_Out_writes_z_(destSizeInChars) LPOLESTR lpDest,
 		_In_ size_t destSizeInChars,
 		_In_z_ LPCOLESTR lp) throw()
 	{
@@ -2998,7 +3108,7 @@ ATLPREFAST_UNSUPPRESS()
 		}
 		return NULL;
 	}
-#pragma warning(push)
+#pragma warning(push)  // disable 4302
 #pragma warning(disable : 4302)	// 'type cast' : truncation from 'LPSTR' to 'TCHAR'
 
 	static int WordCmpI(
@@ -3019,11 +3129,14 @@ ATLPREFAST_UNSUPPRESS()
 
 		return (c1 < c2) ? -1 : 1;
 	}
+#pragma warning (pop)  // disable 4302
 
-#pragma warning (pop)
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 };
 
 __declspec(selectany) GUID CAtlModule::m_libid = {0x0, 0x0, 0x0, {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0} };
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 #define DECLARE_LIBID(libid) \
 	static void InitLibId() throw() \
@@ -3050,7 +3163,9 @@ __declspec(selectany) GUID CAtlModule::m_libid = {0x0, 0x0, 0x0, {0x0, 0x0, 0x0,
 		return ATL::_pAtlModule->UpdateRegistryFromResource(resid, bRegister, aMapEntries); \
 	}
 
-inline HRESULT AtlGetGITPtr(_Deref_out_ IGlobalInterfaceTable** ppGIT) throw()
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+inline HRESULT AtlGetGITPtr(_Outptr_ IGlobalInterfaceTable** ppGIT) throw()
 {
 	if (ppGIT == NULL)
 		return E_POINTER;
@@ -3079,6 +3194,8 @@ public :
 	static void InitLibId() throw()
 	{
 	}
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 	HRESULT RegisterServer(
 		_In_ BOOL bRegTypeLib = FALSE,
@@ -3151,36 +3268,43 @@ public :
 	{
 		return pRegistrar->AddReplacement(L"APPID", T::GetAppId());
 	}
+
 	static LPCOLESTR GetAppId() throw()
 	{
 		return OLESTR("");
 	}
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 };
 
+#endif // _ATL_STATIC_LIB_IMPL
+
 #if !defined(_ATL_NATIVE_INITIALIZATION)
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 namespace __identifier("<AtlImplementationDetails>")
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 {
 	__declspec(selectany) bool DllModuleInitialized = false;
 }
 
 #endif
 
+#ifndef _ATL_STATIC_LIB_IMPL
+
 template <class T>
 class ATL_NO_VTABLE CAtlDllModuleT : 
-	public CAtlModuleT<T>
+	public CAtlModuleT<T>,
+	private CAtlValidateModuleConfiguration<true, T>
 {
 public :
 	CAtlDllModuleT() throw()
 	{
 		_AtlComModule.ExecuteObjectMain(true);
 #if !defined(_ATL_NATIVE_INITIALIZATION)
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 		using namespace __identifier("<AtlImplementationDetails>");
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 		ATLASSERT(DllModuleInitialized == false);
 		DllModuleInitialized = true;
 		_DllMain(DLL_PROCESS_ATTACH, NULL);
@@ -3190,10 +3314,10 @@ public :
 	~CAtlDllModuleT() throw()
 	{
 #if !defined(_ATL_NATIVE_INITIALIZATION)
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 		using namespace __identifier("<AtlImplementationDetails>");
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 		ATLASSERT(DllModuleInitialized == true);
 		_DllMain(DLL_PROCESS_DETACH, NULL);
 #endif
@@ -3235,11 +3359,13 @@ public :
 	HRESULT DllGetClassObject(
 		_In_ REFCLSID rclsid,
 		_In_ REFIID riid,
-		_Deref_out_ LPVOID* ppv) throw()
+		_COM_Outptr_ LPVOID* ppv) throw()
 	{
 		T* pT = static_cast<T*>(this);
 		return pT->GetClassObject(rclsid, riid, ppv);
 	}
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 	HRESULT DllRegisterServer(
 		_In_ BOOL bRegTypeLib = TRUE) throw()
@@ -3268,17 +3394,23 @@ public :
 		return hr;
 	}
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 	// Obtain a Class Factory
 	HRESULT GetClassObject(
 		_In_ REFCLSID rclsid,
 		_In_ REFIID riid,
-		_Deref_out_ LPVOID* ppv) throw()
+		_COM_Outptr_ LPVOID* ppv) throw()
 	{
 		return AtlComModuleGetClassObject(&_AtlComModule, rclsid, riid, ppv);
 	}
 };
 
+#endif // _ATL_STATIC_LIB_IMPL
+
 #pragma managed(push, off)
+
+#ifndef _ATL_STATIC_LIB_IMPL
 
 template <class T>
 inline BOOL WINAPI CAtlDllModuleT<T>::DllMain(
@@ -3287,10 +3419,10 @@ inline BOOL WINAPI CAtlDllModuleT<T>::DllMain(
 {
 #if !defined(_ATL_NATIVE_INITIALIZATION)
 	UNREFERENCED_PARAMETER(dwReason); UNREFERENCED_PARAMETER(lpReserved);
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 	using namespace __identifier("<AtlImplementationDetails>");
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
 		ATLASSERT(DllModuleInitialized == false);
@@ -3301,14 +3433,19 @@ inline BOOL WINAPI CAtlDllModuleT<T>::DllMain(
 #endif
 }
 
+#endif // _ATL_STATIC_LIB_IMPL
+
 #pragma managed(pop)
 
 #ifndef _AFX
 
+#ifndef _ATL_STATIC_LIB_IMPL
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 template <class T>
 class ATL_NO_VTABLE CAtlExeModuleT : 
-	public CAtlModuleT<T>
+	public CAtlModuleT<T>,
+	private CAtlValidateModuleConfiguration<false, T>
 {
 public :
 #ifndef _ATL_NO_COM_SUPPORT
@@ -3412,6 +3549,7 @@ public :
 	{
 		::WaitForSingleObject(m_hEventShutdown, INFINITE);
 		::CloseHandle(m_hEventShutdown);
+		m_hEventShutdown = NULL;
 		::PostThreadMessage(m_dwMainThreadID, WM_QUIT, 0, 0);
 	}
 
@@ -3427,6 +3565,7 @@ public :
 		if(hThread==NULL)
 		{
 			::CloseHandle(m_hEventShutdown);
+			m_hEventShutdown = NULL;
 		}
 		return hThread;
 	}
@@ -3558,8 +3697,6 @@ public :
 
 #ifndef _ATL_NO_COM_SUPPORT
 
-#if defined(_ATL_FREE_THREADED)
-
 		// NOTE: much of this code is duplicated in CAtlServiceModuleT::PreMessageLoop below, so
 		// if you make changes to either method make sure to change both methods (if necessary).
 
@@ -3602,25 +3739,6 @@ public :
 		{
 			m_bDelayShutdown = false;
 		}
-
-#else
-
-		hr = pT->RegisterClassObjects(CLSCTX_LOCAL_SERVER,
-			REGCLS_MULTIPLEUSE);
-		if (hr == S_OK)
-		{
-			if (m_bDelayShutdown && !pT->StartMonitor())
-			{
-				hr = E_FAIL;
-			}
-		}
-		else
-		{
-			m_bDelayShutdown = false;
-		}
-
-
-#endif
 
 #endif	// _ATL_NO_COM_SUPPORT
 
@@ -3690,6 +3808,8 @@ public :
 	}
 };
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 #ifndef _ATL_NO_SERVICE
 template <class T, UINT nServiceNameID>
 class ATL_NO_VTABLE CAtlServiceModuleT : 
@@ -3732,6 +3852,15 @@ public :
 		// Prevent false memory leak reporting. ~CAtlWinModule may be too late.
 		_AtlWinModule.Term();
 #endif	// _DEBUG
+
+#ifndef _ATL_NO_COM_SUPPORT
+		// COM must be uninitialized after Term method was called in local service scenario
+		if (!m_bService && m_bComInitialized)
+		{
+			T::UninitializeCom();
+		}
+#endif // _ATL_NO_COM_SUPPORT
+
 		return hr;
 	}
 
@@ -3775,7 +3904,24 @@ public :
 			return m_status.dwWin32ExitCode;
 		}
 		// local server - call Run() directly, rather than
-		// from ServiceMain()
+		// from ServiceMain()		
+#ifndef _ATL_NO_COM_SUPPORT
+		HRESULT hr = T::InitializeCom();
+		if (FAILED(hr))
+		{
+			// Ignore RPC_E_CHANGED_MODE if CLR is loaded. Error is due to CLR initializing
+			// COM and InitializeCOM trying to initialize COM with different flags.
+			if (hr != RPC_E_CHANGED_MODE || GetModuleHandle(_T("Mscoree.dll")) == NULL)
+			{
+				return hr;
+			}
+		}
+		else
+		{
+			m_bComInitialized = true;
+		}
+#endif //_ATL_NO_COM_SUPPORT
+
 		m_status.dwWin32ExitCode = pT->Run(nShowCmd);
 		return m_status.dwWin32ExitCode;
 	}
@@ -3861,12 +4007,13 @@ public :
 
 	void ServiceMain(
 		_In_ DWORD dwArgc,
-		_In_count_(dwArgc) _Deref_pre_z_ LPTSTR* lpszArgv) throw()
+		_In_reads_(dwArgc) _Deref_pre_z_ LPTSTR* lpszArgv) throw()
 	{
 		lpszArgv;
 		dwArgc;
 		// Register the control request handler
 		m_status.dwCurrentState = SERVICE_START_PENDING;
+		m_dwThreadID = GetCurrentThreadId();
 		m_hServiceStatus = RegisterServiceCtrlHandler(m_szServiceName, _Handler);
 		if (m_hServiceStatus == NULL)
 		{
@@ -3935,22 +4082,21 @@ public :
 	HRESULT PreMessageLoop(_In_ int nShowCmd) throw()
 	{
 		HRESULT hr = S_OK;
-		T* pT = static_cast<T*>(this);		
+		T* pT = static_cast<T*>(this);
 
 		if (m_bService)
 		{
-			m_dwThreadID = GetCurrentThreadId();			
+#ifndef _ATL_NO_COM_SUPPORT
 			hr = pT->InitializeSecurity();
 
 			if (FAILED(hr))
 			{
 				return hr;
 			}
+#endif	// _ATL_NO_COM_SUPPORT
 		}
 
 #ifndef _ATL_NO_COM_SUPPORT
-
-#if defined(_ATL_FREE_THREADED)
 
 		// NOTE: much of this code is duplicated in CAtlExeModuleT::PreMessageLoop above, so if
 		// you make changes to either method make sure to change both methods (if necessary).
@@ -3974,8 +4120,12 @@ public :
 				{
 					if (m_bService)
 					{
-						LogEvent(_T("Service started/resumed"));
-						SetServiceStatus(SERVICE_RUNNING);
+						// Make sure that service was not stoped during initialization
+						if (::InterlockedCompareExchange(&m_status.dwCurrentState, SERVICE_RUNNING, SERVICE_START_PENDING) == SERVICE_START_PENDING)
+						{
+							LogEvent(_T("Service started/resumed"));
+							::SetServiceStatus(m_hServiceStatus, &m_status);
+						}
 					}
 
 					hr = CoResumeClassObjects();
@@ -3991,8 +4141,12 @@ public :
 			{
 				if (m_bService)
 				{
-					LogEvent(_T("Service started/resumed"));
-					SetServiceStatus(SERVICE_RUNNING);
+					// Make sure that service was not stoped during initialization
+					if (::InterlockedCompareExchange(&m_status.dwCurrentState, SERVICE_RUNNING, SERVICE_START_PENDING) == SERVICE_START_PENDING)
+					{
+						LogEvent(_T("Service started/resumed"));
+						::SetServiceStatus(m_hServiceStatus, &m_status);
+					}
 				}
 
 				hr = CoResumeClassObjects();
@@ -4007,9 +4161,17 @@ public :
 			m_bDelayShutdown = false;
 		}
 
-#else
-		hr = CAtlExeModuleT<T>::PreMessageLoop(nShowCmd);
-#endif // _ATL_FREE_THREADED
+#else	// _ATL_NO_COM_SUPPORT
+
+		if (m_bService)
+		{
+			// Make sure that service was not stoped during initialization
+			if (::InterlockedCompareExchange(&m_status.dwCurrentState, SERVICE_RUNNING, SERVICE_START_PENDING) == SERVICE_START_PENDING)
+			{
+				LogEvent(_T("Service started/resumed"));
+				::SetServiceStatus(m_hServiceStatus, &m_status);
+			}
+		}
 
 #endif	// _ATL_NO_COM_SUPPORT
 
@@ -4020,7 +4182,7 @@ public :
 	void OnStop() throw()
 	{
 		SetServiceStatus(SERVICE_STOP_PENDING);
-		PostThreadMessage(m_dwThreadID, WM_QUIT, 0, 0);
+		::PostThreadMessage(m_dwThreadID, WM_QUIT, 0, 0);
 	}
 
 	void OnPause() throw()
@@ -4236,29 +4398,25 @@ public :
 		_In_opt_z_ LPCTSTR pszMessage=NULL,
 		_In_ WORD type = EVENTLOG_INFORMATION_TYPE) throw()
 	{
-		HANDLE hEventSource;
-		if (m_szServiceName)
+		/* Get a handle to use with ReportEvent(). */
+		HANDLE hEventSource = RegisterEventSource(NULL, m_szServiceName);
+		if (hEventSource != NULL)
 		{
-			/* Get a handle to use with ReportEvent(). */
-			hEventSource = RegisterEventSource(NULL, m_szServiceName);
-			if (hEventSource != NULL)
-			{
-				/* Write to event log. */
-				ReportEvent(hEventSource,
-							type,
-							(WORD)0,
-							id,
-							NULL,
-							(WORD)(pszMessage != NULL ? 1 : 0),
-							0,
-							pszMessage != NULL ? &pszMessage : NULL,
-							NULL);
-				DeregisterEventSource(hEventSource);
-			}
+			/* Write to event log. */
+			ReportEvent(hEventSource,
+						type,
+						(WORD)0,
+						id,
+						NULL,
+						(WORD)(pszMessage != NULL ? 1 : 0),
+						0,
+						pszMessage != NULL ? &pszMessage : NULL,
+						NULL);
+			DeregisterEventSource(hEventSource);
 		}
 	}
 
-#pragma warning(push)
+#pragma warning(push)  // disable 4793
 #pragma warning(disable : 4793)
 	void __cdecl LogEvent(
 		_In_z_ _Printf_format_string_ LPCTSTR pszFormat, ...) throw()
@@ -4294,11 +4452,11 @@ public :
 			DeregisterEventSource(hEventSource);
 		}
 	}
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4793
 
 	void SetServiceStatus(_In_ DWORD dwState) throw()
 	{
-		m_status.dwCurrentState = dwState;
+		::InterlockedExchange(&m_status.dwCurrentState, dwState);
 		::SetServiceStatus(m_hServiceStatus, &m_status);
 	}
 
@@ -4306,7 +4464,7 @@ public :
 protected:
 	static void WINAPI _ServiceMain(
 		_In_ DWORD dwArgc,
-		_In_count_(dwArgc) _Deref_pre_z_ LPTSTR* lpszArgv) throw()
+		_In_reads_(dwArgc) _Deref_pre_z_ LPTSTR* lpszArgv) throw()
 	{
 		((T*)_pAtlModule)->ServiceMain(dwArgc, lpszArgv);
 	}
@@ -4325,6 +4483,8 @@ public:
 };
 
 #endif //	_ATL_NO_SERVICE
+
+#endif // _ATL_STATIC_LIB_IMPL
 
 #endif	// !_AFX
 
@@ -4364,7 +4524,7 @@ public :
 	HRESULT GetClassObject(
 		_In_ REFCLSID rclsid,
 		_In_ REFIID riid,
-		_Deref_out_ LPVOID* ppv)
+		_COM_Outptr_ LPVOID* ppv)
 	{
 		return ATL::AtlComModuleGetClassObject(&ATL::_AtlComModule, rclsid, riid, ppv);
 	}
@@ -4400,16 +4560,16 @@ class CComModule;
 
 #pragma managed(push, off)
 
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 namespace __identifier("<AtlImplementationDetails>")
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 {
 	struct CComModuleHelper
 	{
 		CComModule* Module;
 		HINSTANCE Instance;
-		_ATL_OBJMAP_ENTRY* ObjectMap;
+		_ATL_OBJMAP_ENTRY* ObjectMap;		
 		const GUID* LibraryId;
 
 		// Must NOT have any constructors
@@ -4451,10 +4611,10 @@ public :
 		ATLASSERT(_pModule == NULL);
 		_pModule = this;
 #if !defined(_ATL_NATIVE_INITIALIZATION)
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 		using namespace __identifier("<AtlImplementationDetails>");
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 		ATLASSERT(ComModuleInitialized == false);
 		// If ComModuleHelper.Module == NULL it mean that DllMain has not been called, so we assume CComModule lives in
 		// an exe and not in a dll
@@ -4470,10 +4630,10 @@ public :
 	~CComModule()
 	{
 #if !defined(_ATL_NATIVE_INITIALIZATION)
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 		using namespace __identifier("<AtlImplementationDetails>");
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 		ATLASSERT(ComModuleInitialized == true);
 		// If ComModuleHelper.Module == NULL it mean that DllMain has not been called, so we assume CComModule lives in
 		// an exe and not in a dll
@@ -4587,7 +4747,7 @@ public :
 	HRESULT AddNonAddRefThunk(
 		_Inout_ IUnknown* p,
 		_In_z_ LPCTSTR lpsz,
-		_Deref_out_ IUnknown** ppThunkRet) throw();
+		_Outptr_ IUnknown** ppThunkRet) throw();
 
 	void DeleteNonAddRefThunk(_In_ IUnknown* pUnk) throw();
 	void DeleteThunk(_In_ _QIThunk* p) throw();
@@ -4604,15 +4764,19 @@ public :
 	HRESULT GetClassObject(
 		_In_ REFCLSID rclsid,
 		_In_ REFIID riid,
-		_Deref_out_ LPVOID* ppv) throw();
+		_COM_Outptr_ LPVOID* ppv) throw();
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// Register/Revoke All Class Factories with the OS (EXE only)
 	HRESULT RegisterClassObjects(_In_ DWORD dwClsContext, _In_ DWORD dwFlags) throw();
-	HRESULT RevokeClassObjects() throw();
+	HRESULT RevokeClassObjects() throw();	
+
 	// Registry support (helpers)
 	HRESULT RegisterTypeLib() throw();
-	HRESULT RegisterTypeLib(_In_z_ LPCTSTR lpszIndex) throw();
+	HRESULT RegisterTypeLib(_In_z_ LPCTSTR lpszIndex) throw();	
 	HRESULT UnRegisterTypeLib() throw();
 	HRESULT UnRegisterTypeLib(_In_z_ LPCTSTR lpszIndex) throw();
+
 	HRESULT RegisterServer(
 		_In_ BOOL bRegTypeLib = FALSE,
 		_In_opt_ const CLSID* pCLSID = NULL) throw();
@@ -4620,28 +4784,6 @@ public :
 		_In_ BOOL bUnRegTypeLib,
 		_In_opt_ const CLSID* pCLSID = NULL) throw();
 	HRESULT UnregisterServer(_In_opt_ const CLSID* pCLSID = NULL) throw();
-
-	void AddCreateWndData(
-		_In_ _AtlCreateWndData* pData,
-		_In_ void* pObject) throw()
-	{
-		_AtlWinModule.AddCreateWndData(pData, pObject);
-	}
-
-	void* ExtractCreateWndData() throw()
-	{
-		return _AtlWinModule.ExtractCreateWndData();
-	}
-
-	// Only used in CComAutoThreadModule
-	HRESULT CreateInstance(
-		_In_opt_ void* /*pfnCreateInstance*/,
-		_In_ REFIID /*riid*/,
-		_In_opt_ void** /*ppvObj*/) throw()
-	{
-		ATLASSERT(0);
-		ATLTRACENOTIMPL(_T("CComModule::CreateInstance"));
-	}
 
 	HRESULT RegisterAppId(_In_z_ LPCTSTR pAppId);
 	HRESULT UnregisterAppId(_In_z_ LPCTSTR pAppId);
@@ -4713,6 +4855,17 @@ public :
 #endif
 	}
 
+	HRESULT DllRegisterServer(_In_ BOOL bRegTypeLib = TRUE)  throw()
+	{
+		// registers object, typelib and all interfaces in typelib
+		return RegisterServer(bRegTypeLib);
+	}
+
+	HRESULT DllUnregisterServer(_In_ BOOL bUnRegTypeLib = TRUE)  throw()
+	{
+		return UnregisterServer(bUnRegTypeLib);
+	}
+
 	// Use RGS file for registration
 
 	ATL_DEPRECATED("CComModule::RegisterProgID is no longer recommended. Instead, use an RGS file for registration.")
@@ -4760,6 +4913,30 @@ public :
 		_In_ const CLSID& clsid,
 		_In_opt_z_ LPCTSTR lpszProgID,
 		_In_opt_z_ LPCTSTR lpszVerIndProgID);
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+	void AddCreateWndData(
+		_In_ _AtlCreateWndData* pData,
+		_In_ void* pObject) throw()
+	{
+		_AtlWinModule.AddCreateWndData(pData, pObject);
+	}
+
+	void* ExtractCreateWndData() throw()
+	{
+		return _AtlWinModule.ExtractCreateWndData();
+	}
+
+	// Only used in CComAutoThreadModule
+	HRESULT CreateInstance(
+		_In_opt_ void* /*pfnCreateInstance*/,
+		_In_ REFIID /*riid*/,
+		_COM_Outptr_ void** /*ppvObj*/) throw()
+	{
+		ATLASSERT(0);
+		_Analysis_assume_(FALSE);
+		ATLTRACENOTIMPL(_T("CComModule::CreateInstance"));
+	}
 
 	BOOL WINAPI DllMain(
 		_In_ HINSTANCE hInstance,
@@ -4801,22 +4978,11 @@ public :
 	HRESULT DllGetClassObject(
 		_In_ REFCLSID rclsid,
 		_In_ REFIID riid,
-		_Deref_out_ LPVOID* ppv)  throw()
+		_COM_Outptr_ LPVOID* ppv)  throw()
 	{
 		return GetClassObject(rclsid, riid, ppv);
 	}
-
-	HRESULT DllRegisterServer(_In_ BOOL bRegTypeLib = TRUE)  throw()
-	{
-		// registers object, typelib and all interfaces in typelib
-		return RegisterServer(bRegTypeLib);
-	}
-
-	HRESULT DllUnregisterServer(_In_ BOOL bUnRegTypeLib = TRUE)  throw()
-	{
-		return UnregisterServer(bUnRegTypeLib);
-	}
-
+	
 private:
 	static HRESULT RegisterProgIDHelper(
 		_In_z_ LPCTSTR lpszCLSID,
@@ -4835,10 +5001,10 @@ inline BOOL WINAPI CComModule::DllMain(
 	_In_ const GUID* pLibID)
 {
 #if !defined(_ATL_NATIVE_INITIALIZATION)
-#pragma warning(push)
+#pragma warning(push)  // disable 4483
 #pragma warning(disable:4483)
 	using namespace __identifier("<AtlImplementationDetails>");
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4483
 	UNREFERENCED_PARAMETER(lpReserved);
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
@@ -4853,6 +5019,8 @@ inline BOOL WINAPI CComModule::DllMain(
 #pragma managed(pop)
 
 #endif	// !_ATL_NO_COMMODULE
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 /////////////////////////////////////////////////////////////////////////////
 // Thread creation helpers
@@ -4923,6 +5091,8 @@ HANDLE AtlCreateThread(_In_ DWORD (WINAPI* pfn)(_In_ T *pparam), _In_ T *pparam)
 	return CreateThreadT(0, 0, pfn, pparam, 0, 0);
 }
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Thread Pooling classes
 
@@ -4935,6 +5105,8 @@ public:
 	LPSTREAM pStream;
 	HRESULT hRes;
 };
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 class CComApartment
 {
@@ -5023,7 +5195,7 @@ __interface IAtlAutoThreadModule
 	virtual HRESULT CreateInstance(
 		_In_ void* pfnCreateInstance,
 		_In_ REFIID riid,
-		_Deref_out_ void** ppvObj);
+		_COM_Outptr_ void** ppvObj);
 };
 
 __declspec(selectany) IAtlAutoThreadModule* _pAtlAutoThreadModule;
@@ -5040,10 +5212,9 @@ public:
 	{
 		ATLASSERT(_pAtlAutoThreadModule == NULL);
 		_pAtlAutoThreadModule = this;
-		m_pApartments = NULL;
 		m_nThreads= 0;
 
-		ATLTRY(m_pApartments = new CComApartment[nThreads]);
+		m_pApartments = _ATL_NEW CComApartment[nThreads];
 		ATLASSERT(m_pApartments != NULL);
 		if(m_pApartments == NULL)
 		{
@@ -5122,7 +5293,7 @@ public:
 	HRESULT CreateInstance(
 		_In_opt_ void* pfnCreateInstance,
 		_In_ REFIID riid,
-		_Deref_out_ void** ppvObj)
+		_COM_Outptr_ void** ppvObj)
 	{
 		ATLASSERT(ppvObj != NULL);
 		if (ppvObj == NULL)
@@ -5174,6 +5345,7 @@ class CAtlAutoThreadModule :
 public :
 };
 
+
 #ifndef _ATL_NO_COMMODULE
 
 template <class ThreadAllocator = CComSimpleThreadAllocator, DWORD dwWait = INFINITE>
@@ -5213,6 +5385,7 @@ public:
 };
 
 typedef Win32WaitTraits DefaultWaitTraits;
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 /////////////////////////////////////////////////////////////////////////////
 // GIT Pointer
@@ -5435,7 +5608,7 @@ public:
 	}
 	// Get's the interface from the GIT and copies it to the passed pointer. The pointer
 	// must be released by the caller when finished.
-	HRESULT CopyTo(_Deref_out_ T** pp) const throw()
+	HRESULT CopyTo(_Outptr_ T** pp) const throw()
 	{
 		CComPtr<IGlobalInterfaceTable> spGIT;
 		HRESULT hr = E_FAIL;
@@ -5451,6 +5624,8 @@ public:
 	}
 	DWORD m_dwCookie;
 };
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 /////////////////////////////////////////////////////////////////////////////
 // CRegKey
@@ -5524,7 +5699,7 @@ public:
 
 	ATL_DEPRECATED("CRegKey::QueryValue(TCHAR *value, TCHAR *valueName) has been superseded by CRegKey::QueryStringValue and CRegKey::QueryMultiStringValue")
 	LONG QueryValue(
-		_Out_opt_z_cap_post_count_(*pdwCount, *pdwCount) LPTSTR szValue,
+		_Out_writes_to_opt_(*pdwCount, *pdwCount) LPTSTR szValue,
 		_In_opt_z_ LPCTSTR lpszValueName,
 		_Inout_ DWORD* pdwCount);
 	LONG QueryValue(
@@ -5547,11 +5722,11 @@ public:
 		_Out_ ULONGLONG& qwValue) throw();
 	LONG QueryStringValue(
 		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_opt_z_cap_post_count_(*pnChars, *pnChars) LPTSTR pszValue,
+		_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
 		_Inout_ ULONG* pnChars) throw();
 	LONG QueryMultiStringValue(
 		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_opt_z_cap_post_count_(*pnChars, *pnChars) LPTSTR pszValue,
+		_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
 		_Inout_ ULONG* pnChars) throw();
 
 	// Get the key's security attributes.
@@ -5601,7 +5776,7 @@ public:
 	// Enumerate the subkeys of the key.
 	LONG EnumKey(
 		_In_ DWORD iIndex,
-		_Out_z_cap_post_count_(*pnNameLength, *pnNameLength) LPTSTR pszName,
+		_Out_writes_to_(*pnNameLength, *pnNameLength) _Post_z_ LPTSTR pszName,
 		_Inout_ LPDWORD pnNameLength,
 		_Out_opt_ FILETIME* pftLastWriteTime = NULL) throw();
 	LONG NotifyChangeKeyValue(
@@ -5621,9 +5796,13 @@ inline CRegKey::CRegKey(_In_opt_ CAtlTransactionManager* pTM) throw() :
 }
 
 inline CRegKey::CRegKey(_Inout_ CRegKey& key) throw() :
-	m_hKey( NULL ), m_samWOW64(key.m_samWOW64), m_pTM(key.m_pTM)
+	m_hKey( NULL )
 {
+	REGSAM samWOW64 = key.m_samWOW64;
+	CAtlTransactionManager* pTM = key.m_pTM;
 	Attach( key.Detach() );
+	m_samWOW64 = samWOW64;
+	m_pTM = pTM;
 }
 
 inline CRegKey::CRegKey(_In_ HKEY hKey) throw() :
@@ -5639,9 +5818,11 @@ inline CRegKey& CRegKey::operator=(_Inout_ CRegKey& key) throw()
 	if(m_hKey!=key.m_hKey)
 	{
 		Close();
+		REGSAM samWOW64 = key.m_samWOW64;
+		CAtlTransactionManager* pTM = key.m_pTM;
 		Attach( key.Detach() );
-		m_samWOW64 = key.m_samWOW64;
-		m_pTM = key.m_pTM;
+		m_samWOW64 = samWOW64;
+		m_pTM = pTM;
 	}
 	return( *this );
 }
@@ -5678,9 +5859,12 @@ inline LONG CRegKey::DeleteSubKey(_In_z_ LPCTSTR lpszSubKey) throw()
 	}
 
 #if WINVER >= 0x0501
-	typedef LSTATUS (WINAPI * PFNRegDeleteKeyEx)(_In_ HKEY, _In_z_ LPCTSTR, _In_ REGSAM, _In_ DWORD);
+#ifdef _UNICODE
+	static decltype(RegDeleteKeyExW) *pfnRegDeleteKeyEx = NULL;
+#else
+	static decltype(RegDeleteKeyExA) *pfnRegDeleteKeyEx = NULL;
+#endif	// _UNICODE
 	static bool bInitialized = false;
-	static PFNRegDeleteKeyEx pfnRegDeleteKeyEx = NULL;
 
 	if (!bInitialized)
 	{
@@ -5688,9 +5872,9 @@ inline LONG CRegKey::DeleteSubKey(_In_z_ LPCTSTR lpszSubKey) throw()
 		if (hAdvapi32 != NULL)
 		{
 #ifdef _UNICODE
-			pfnRegDeleteKeyEx = (PFNRegDeleteKeyEx)GetProcAddress(hAdvapi32, "RegDeleteKeyExW");
+			pfnRegDeleteKeyEx = (decltype(RegDeleteKeyExW) *)GetProcAddress(hAdvapi32, "RegDeleteKeyExW");
 #else
-			pfnRegDeleteKeyEx = (PFNRegDeleteKeyEx)GetProcAddress(hAdvapi32, "RegDeleteKeyExA");
+			pfnRegDeleteKeyEx = (decltype(RegDeleteKeyExA) *)GetProcAddress(hAdvapi32, "RegDeleteKeyExA");
 #endif	// _UNICODE
 		}
 		bInitialized = true;
@@ -5733,7 +5917,7 @@ inline LONG CRegKey::Flush() throw()
 
 inline LONG CRegKey::EnumKey(
 	_In_ DWORD iIndex,
-	_Out_z_cap_post_count_(*pnNameLength, *pnNameLength) LPTSTR pszName,
+	_Out_writes_to_(*pnNameLength, *pnNameLength) _Post_z_ LPTSTR pszName,
 	_Inout_ LPDWORD pnNameLength,
 	_Out_opt_ FILETIME* pftLastWriteTime) throw()
 {
@@ -5810,7 +5994,7 @@ inline LONG CRegKey::Open(
 	return lRes;
 }
 
-#pragma warning(push)
+#pragma warning(push)  // disable 4996
 #pragma warning(disable: 4996)
 inline LONG CRegKey::QueryValue(
 	_Out_ DWORD& dwValue,
@@ -5827,9 +6011,9 @@ inline LONG CRegKey::QueryValue(
 	return lRes;
 }
 
-ATLPREFAST_SUPPRESS(6053 6385)
+ATLPREFAST_SUPPRESS(6053 6385 6386)
 inline LONG CRegKey::QueryValue(
-	_Out_opt_z_cap_post_count_(*pdwCount, *pdwCount) LPTSTR pszValue,
+	_Out_writes_to_opt_(*pdwCount, *pdwCount) LPTSTR pszValue,
 	_In_opt_z_ LPCTSTR lpszValueName,
 	_Inout_ DWORD* pdwCount)
 {
@@ -5875,6 +6059,7 @@ inline LONG CRegKey::QueryValue(
 	return lRes;
 }
 ATLPREFAST_UNSUPPRESS()
+#pragma warning(pop)  // disable 4996
 
 inline LONG CRegKey::QueryValue(
 	_In_opt_z_ LPCTSTR pszValueName,
@@ -5953,7 +6138,7 @@ ATLPREFAST_SUPPRESS(6053)
 /* prefast noise VSW 496818 */
 inline LONG CRegKey::QueryStringValue(
 	_In_opt_z_ LPCTSTR pszValueName,
-	_Out_opt_z_cap_post_count_(*pnChars, *pnChars) LPTSTR pszValue,
+	_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
 	_Inout_ ULONG* pnChars) throw()
 {
 	LONG lRes;
@@ -6001,11 +6186,11 @@ ATLPREFAST_UNSUPPRESS()
 }
 ATLPREFAST_UNSUPPRESS()
 
-ATLPREFAST_SUPPRESS(6053)
+ATLPREFAST_SUPPRESS(6053 6054 6386)
 /* prefast noise VSW 496818 */
 inline LONG CRegKey::QueryMultiStringValue(
 	_In_opt_z_ LPCTSTR pszValueName,
-	_Out_opt_z_cap_post_count_(*pnChars, *pnChars) LPTSTR pszValue,
+	_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
 	_Inout_ ULONG* pnChars) throw()
 {
 	LONG lRes;
@@ -6099,7 +6284,7 @@ inline LONG CRegKey::SetKeyValue(
 	return lRes;
 }
 
-#pragma warning(push)
+#pragma warning(push)  // disable 4996
 #pragma warning(disable: 4996)
 inline LONG CRegKey::SetValue(
 	_In_ DWORD dwValue,
@@ -6122,14 +6307,14 @@ inline LONG CRegKey::SetValue(
 		return ERROR_INVALID_PARAMETER;
 
 	if (nValueLen == -1)
-		nValueLen = lstrlen(lpszValue) + 1;
+		nValueLen = static_cast<int>(_tcslen(lpszValue) + 1);
 
 	DWORD dwType = bMulti ? REG_MULTI_SZ : REG_SZ;
 
 	return ::RegSetValueEx(m_hKey, lpszValueName, 0, dwType,
 		reinterpret_cast<const BYTE*>(lpszValue), nValueLen*sizeof(TCHAR));
 }
-#pragma warning(pop)
+#pragma warning(pop)  // disable 4996
 
 inline LONG CRegKey::SetValue(
 	_In_opt_z_ LPCTSTR pszValueName,
@@ -6175,7 +6360,7 @@ inline LONG CRegKey::SetStringValue(
 	ATLENSURE_RETURN_VAL(pszValue != NULL, ERROR_INVALID_DATA);
 	ATLASSERT((dwType == REG_SZ) || (dwType == REG_EXPAND_SZ));
 
-	return ::RegSetValueEx(m_hKey, pszValueName, 0, dwType, reinterpret_cast<const BYTE*>(pszValue), (lstrlen(pszValue)+1)*sizeof(TCHAR));
+	return ::RegSetValueEx(m_hKey, pszValueName, 0, dwType, reinterpret_cast<const BYTE*>(pszValue), (static_cast<DWORD>(_tcslen(pszValue))+1)*sizeof(TCHAR));
 }
 
 inline LONG CRegKey::SetMultiStringValue(
@@ -6196,7 +6381,7 @@ inline LONG CRegKey::SetMultiStringValue(
 	pszTemp = pszValue;
 	do
 	{
-		nLength = lstrlen(pszTemp)+1;
+		nLength = static_cast<ULONG>(_tcslen(pszTemp))+1;
 		pszTemp += nLength;
 		nBytes += nLength*sizeof(TCHAR);
 	} while (nLength != 1);
@@ -6455,8 +6640,10 @@ inline HRESULT CComModule::UnregisterAppId(_In_z_ LPCTSTR pAppId)
 
 namespace ATL
 {
+#ifndef _ATL_STATIC_LIB_IMPL
 
 // Statically linking to Registry Ponent
+#pragma warning(suppress: 6262) // Stack size of '2460' bytes is OK
 inline HRESULT WINAPI CAtlModule::UpdateRegistryFromResourceS(
 	_In_z_ LPCTSTR lpszRes,
 	_In_ BOOL bRegister,
@@ -6542,6 +6729,7 @@ inline HRESULT WINAPI CAtlModule::UpdateRegistryFromResourceS(
 		ro.ResourceUnregisterSz(pszModule, pszRes, szType);
 	return hr;
 }
+#pragma warning(suppress: 6262) // Stack size of '2456' bytes is OK
 inline HRESULT WINAPI CAtlModule::UpdateRegistryFromResourceS(
 	_In_ UINT nResID,
 	_In_ BOOL bRegister,
@@ -6622,11 +6810,13 @@ inline HRESULT WINAPI CAtlModule::UpdateRegistryFromResourceS(
 		ro.ResourceUnregister(pszModule, nResID, szType);
 	return hr;
 }
+#endif // _ATL_STATIC_LIB_IMPL
+
 #endif //_ATL_STATIC_REGISTRY
 
 #ifndef _ATL_NO_COMMODULE
 
-#pragma warning( push )
+#pragma warning( push )  // disable 4996
 #pragma warning( disable: 4996 )  // Disable "deprecated symbol" warning
 
 inline HRESULT WINAPI CComModule::UpdateRegistryClass(
@@ -6659,6 +6849,7 @@ inline HRESULT WINAPI CComModule::UpdateRegistryClass(
 	return UnregisterClassHelper(clsid, lpszProgID, lpszVerIndProgID);
 }
 
+ATLPREFAST_SUPPRESS(6386)
 inline HRESULT WINAPI CComModule::RegisterClassHelper(
 	_In_ const CLSID& clsid,
 	_In_opt_z_ LPCTSTR lpszProgID,
@@ -6773,6 +6964,7 @@ inline HRESULT WINAPI CComModule::RegisterClassHelper(
 		hRes = AtlHresultFromWin32(lRes);
 	return hRes;
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline HRESULT WINAPI CComModule::UnregisterClassHelper(
 	_In_ const CLSID& clsid,
@@ -6847,7 +7039,7 @@ inline HRESULT WINAPI CComModule::UnregisterClassHelper(
 	return hr;
 }
 
-#pragma warning( pop ) // Disable "deprecated symbol" warning
+#pragma warning( pop )  // disable 4996
 
 #endif	// !_ATL_NO_COMMODULE
 
@@ -7016,12 +7208,11 @@ ATLINLINE ATLAPI AtlGetPerUserRegistration(_Out_ bool* pbEnabled)
 
 #define _ATL_MAX_PATH_PLUS_INDEX (_MAX_PATH + _ATL_TYPELIB_INDEX_LENGTH)
 
-ATLPREFAST_SUPPRESS(6387)
 ATLINLINE ATLAPI AtlLoadTypeLib(
 	_In_ HINSTANCE hInstTypeLib,
 	_In_opt_z_ LPCOLESTR lpszIndex,
-	_Deref_out_z_ BSTR* pbstrPath,
-	_Deref_out_ ITypeLib** ppTypeLib)
+	_Outptr_result_z_ BSTR* pbstrPath,
+	_Outptr_ ITypeLib** ppTypeLib)
 {
 	ATLASSERT(pbstrPath != NULL && ppTypeLib != NULL);
 	if (pbstrPath == NULL || ppTypeLib == NULL)
@@ -7036,7 +7227,11 @@ ATLINLINE ATLAPI AtlLoadTypeLib(
 
 	DWORD dwFLen = GetModuleFileName(hInstTypeLib, szModule, MAX_PATH);
 	if( dwFLen == 0 )
-		return AtlHresultFromLastError();
+	{
+		HRESULT hRes = AtlHresultFromLastError();
+		_Analysis_assume_(FAILED(hRes));
+		return hRes;
+	}
 	else if( dwFLen == MAX_PATH )
 		return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
@@ -7052,7 +7247,7 @@ ATLINLINE ATLAPI AtlLoadTypeLib(
 		{
 			return E_OUTOFMEMORY;
 		}
-		DWORD nIndexLen = lstrlen(lpcszIndex);
+		DWORD nIndexLen = static_cast<DWORD>(_tcslen(lpcszIndex));
 
 		DWORD newLen = dwFLen + nIndexLen;
 		if ((newLen < dwFLen) || (newLen < nIndexLen) || (newLen >= _ATL_MAX_PATH_PLUS_INDEX))
@@ -7092,11 +7287,14 @@ ATLINLINE ATLAPI AtlLoadTypeLib(
 	{
 		*pbstrPath = ::SysAllocString(lpszModule);
 		if (*pbstrPath == NULL)
+		{
 			hr = E_OUTOFMEMORY;
+			(*ppTypeLib)->Release();
+			*ppTypeLib = NULL;
+		}
 	}
 	return hr;
 }
-ATLPREFAST_UNSUPPRESS()
 
 ATLINLINE ATLAPI AtlRegisterClassCategoriesHelper(
 	_In_ REFCLSID clsid,
@@ -7231,24 +7429,6 @@ ATLINLINE ATLAPI AtlRegisterClassCategoriesHelper(
 
 #endif // _ATL_DLL
 
-ATLINLINE ATLAPIINL AtlWinModuleTerm(
-	_Inout_ _ATL_WIN_MODULE* pWinModule,
-	_In_ HINSTANCE hInst)
-{
-	if (pWinModule == NULL)
-		return E_INVALIDARG;
-	if (pWinModule->cbSize == 0)
-		return S_OK;
-	if (pWinModule->cbSize != sizeof(_ATL_WIN_MODULE))
-		return E_INVALIDARG;
-
-	for (int i = 0; i < pWinModule->m_rgWindowClassAtoms.GetSize(); i++)
-		UnregisterClass((LPCTSTR)pWinModule->m_rgWindowClassAtoms[i], hInst);
-	pWinModule->m_rgWindowClassAtoms.RemoveAll();
-	pWinModule->m_csWindowCreate.Term();
-	pWinModule->cbSize = 0;
-	return S_OK;
-}
 
 static inline UINT WINAPI AtlGetDirLen(_In_z_ LPCOLESTR lpszPathName) throw()
 {
@@ -7371,6 +7551,124 @@ ATLINLINE ATLAPIINL AtlRegisterTypeLib(
 	return hr;
 }
 
+inline ATL_DEPRECATED("AtlModuleRegisterTypeLib has been replaced by AtlRegisterTypeLib")
+HRESULT AtlModuleRegisterTypeLib(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_z_ LPCOLESTR lpszIndex)
+{
+	return AtlRegisterTypeLib(_AtlComModule.m_hInstTypeLib, lpszIndex);
+}
+
+inline ATL_DEPRECATED("AtlModuleUnRegisterTypeLib has been replaced by AtlUnRegisterTypeLib")
+HRESULT AtlModuleUnRegisterTypeLib(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_z_ LPCOLESTR lpszIndex)
+{
+	return AtlUnRegisterTypeLib(_AtlComModule.m_hInstTypeLib, lpszIndex);
+}
+
+inline ATL_DEPRECATED("AtlModuleLoadTypeLib has been replaced by AtlLoadTypeLib")
+HRESULT AtlModuleLoadTypeLib(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_z_ LPCOLESTR lpszIndex,
+	_Outptr_result_z_ BSTR* pbstrPath,
+	_Outptr_ ITypeLib** ppTypeLib)
+{
+	return AtlLoadTypeLib(_AtlComModule.m_hInstTypeLib, lpszIndex, pbstrPath, ppTypeLib);
+}
+
+inline ATL_DEPRECATED("AtlModuleUpdateRegistryFromResourceD has been replaced by AtlUpdateRegistryFromResourceD")
+HRESULT AtlModuleUpdateRegistryFromResourceD(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_z_ LPCOLESTR lpszRes,
+	_In_ BOOL bRegister,
+	_In_ struct _ATL_REGMAP_ENTRY* pMapEntries,
+	_In_opt_ IRegistrar* pReg = NULL)
+{
+	return AtlUpdateRegistryFromResourceD(_AtlBaseModule.GetModuleInstance(), lpszRes, bRegister, pMapEntries, pReg);
+}
+
+inline ATL_DEPRECATED("AtlModuleRegisterClassObjects has been replaced by AtlComModuleRegisterClassObjects")
+HRESULT AtlModuleRegisterClassObjects(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_ DWORD dwClsContext,
+	_In_ DWORD dwFlags)
+{
+	return AtlComModuleRegisterClassObjects(&_AtlComModule, dwClsContext, dwFlags);
+}
+
+inline ATL_DEPRECATED("AtlModuleRevokeClassObjects has been replaced by AtlComModuleRevokeClassObjects")
+HRESULT AtlModuleRevokeClassObjects(_In_opt_ _ATL_MODULE* /*pM*/)
+{
+	return AtlComModuleRevokeClassObjects(&_AtlComModule);
+}
+
+inline ATL_DEPRECATED("AtlModuleGetClassObject has been replaced by AtlComModuleGetClassObject")
+HRESULT AtlModuleGetClassObject(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_ REFCLSID rclsid,
+	_In_ REFIID riid,
+	_COM_Outptr_ LPVOID* ppv)
+{
+	return AtlComModuleGetClassObject(&_AtlComModule, rclsid, riid, ppv);
+}
+
+inline ATL_DEPRECATED("AtlModuleRegisterServer has been replaced by AtlComModuleRegisterServer")
+HRESULT AtlModuleRegisterServer(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_ BOOL bRegTypeLib,
+	_In_opt_ const CLSID* pCLSID = NULL)
+{
+	return AtlComModuleRegisterServer(&_AtlComModule, bRegTypeLib, pCLSID);
+}
+
+inline ATL_DEPRECATED("AtlModuleUnregisterServer has been replaced by AtlComModuleUnregisterServer")
+HRESULT AtlModuleUnregisterServer(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_opt_ const CLSID* pCLSID = NULL)
+{
+	return AtlComModuleUnregisterServer(&_AtlComModule, FALSE, pCLSID);
+}
+
+inline ATL_DEPRECATED("AtlModuleUnregisterServerEx has been replaced by AtlComModuleUnregisterServer")
+HRESULT AtlModuleUnregisterServerEx(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_ BOOL bUnRegTypeLib,
+	_In_opt_ const CLSID* pCLSID = NULL)
+{
+	return AtlComModuleUnregisterServer(&_AtlComModule, bUnRegTypeLib, pCLSID);
+}
+
+inline ATL_DEPRECATED("AtlModuleInit is no longer required")
+HRESULT AtlModuleInit(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_opt_ _ATL_OBJMAP_ENTRY* /*p*/,
+	_In_ HINSTANCE /*h*/)
+{
+	return S_OK;
+}
+
+inline ATL_DEPRECATED("AtlModuleTerm is no longer required")
+HRESULT AtlModuleTerm(_In_opt_ _ATL_MODULE* /*pM*/)
+{
+	return S_OK;
+}
+
+inline ATL_DEPRECATED("AtlModuleAddCreateWndData has been replaced by AtlWinModuleAddCreateWndData")
+void AtlModuleAddCreateWndData(
+	_In_opt_ _ATL_MODULE* /*pM*/,
+	_In_ _AtlCreateWndData* pData,
+	_In_ void* pObject)
+{
+	AtlWinModuleAddCreateWndData(&_AtlWinModule, pData, pObject);
+}
+
+inline ATL_DEPRECATED("AtlModuleExtractCreateWndData has been replaced by AtlWinModuleExtractCreateWndData")
+void* AtlModuleExtractCreateWndData(_In_opt_ _ATL_MODULE* /*pM*/)
+{
+	return AtlWinModuleExtractCreateWndData(&_AtlWinModule);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // Registration
 
@@ -7389,11 +7687,11 @@ ATLINLINE ATLAPIINL AtlComModuleRegisterServer(
 
 	HRESULT hr = S_OK;
 
-	for (_ATL_OBJMAP_ENTRY** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast; ppEntry++)
+	for (_ATL_OBJMAP_ENTRY_EX** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast; ppEntry++)
 	{
 		if (*ppEntry != NULL)
 		{
-			_ATL_OBJMAP_ENTRY* pEntry = *ppEntry;
+			_ATL_OBJMAP_ENTRY_EX* pEntry = *ppEntry;
 			if (pCLSID != NULL)
 			{
 				if (!IsEqualGUID(*pCLSID, *pEntry->pclsid))
@@ -7432,11 +7730,11 @@ ATLINLINE ATLAPIINL AtlComModuleUnregisterServer(
 
 	HRESULT hr = S_OK;
 
-	for (_ATL_OBJMAP_ENTRY** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast; ppEntry++)
+	for (_ATL_OBJMAP_ENTRY_EX** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast; ppEntry++)
 	{
 		if (*ppEntry != NULL)
 		{
-			_ATL_OBJMAP_ENTRY* pEntry = *ppEntry;
+			_ATL_OBJMAP_ENTRY_EX* pEntry = *ppEntry;
 			if (pCLSID != NULL)
 			{
 				if (!IsEqualGUID(*pCLSID, *pEntry->pclsid))
@@ -7456,216 +7754,26 @@ ATLINLINE ATLAPIINL AtlComModuleUnregisterServer(
 	return hr;
 }
 
-
-/////////////////////////////////////////////////////////////////////////////
-// General DLL Version Helpers
-
-#pragma warning(push)
-#pragma warning(disable : 4191)	// 'type cast' : unsafe conversion from 'FARPROC' to 'DLLGETVERSIONPROC'
-
-inline HRESULT AtlGetDllVersion(
-	_In_ HINSTANCE hInstDLL,
-	_Out_ DLLVERSIONINFO* pDllVersionInfo)
+ATLINLINE ATLAPIINL AtlWinModuleTerm(
+	_Inout_ _ATL_WIN_MODULE* pWinModule,
+	_In_ HINSTANCE hInst)
 {
-	ATLENSURE(pDllVersionInfo != NULL);
+	if (pWinModule == NULL)
+		return E_INVALIDARG;
+	if (pWinModule->cbSize == 0)
+		return S_OK;
+	if (pWinModule->cbSize != sizeof(_ATL_WIN_MODULE))
+		return E_INVALIDARG;
 
-	// We must get this function explicitly because some DLLs don't implement it.
-	DLLGETVERSIONPROC pfnDllGetVersion = (DLLGETVERSIONPROC)::GetProcAddress(hInstDLL, "DllGetVersion");
-
-	if(pfnDllGetVersion == NULL)
-	{
-		return E_NOTIMPL;
-	}
-
-	return (*pfnDllGetVersion)(pDllVersionInfo);
-}
-
-#pragma warning(pop)
-
-inline HRESULT AtlGetDllVersion(
-	_In_z_ LPCTSTR lpstrDllName,
-	_Out_ DLLVERSIONINFO* pDllVersionInfo)
-{
-	HINSTANCE hInstDLL = ::LoadLibrary(lpstrDllName);
-	if(hInstDLL == NULL)
-	{
-		return AtlHresultFromLastError();
-	}
-	HRESULT hRet = AtlGetDllVersion(hInstDLL, pDllVersionInfo);
-	::FreeLibrary(hInstDLL);
-	return hRet;
-}
-
-// Common Control Versions:
-//   WinNT 4.0          maj=4 min=00
-//   IE 3.x             maj=4 min=70
-//   IE 4.0             maj=4 min=71
-//   IE 5.0             maj=5 min=80
-//   Win2000            maj=5 min=81
-inline HRESULT AtlGetCommCtrlVersion(
-	_Out_ LPDWORD pdwMajor,
-	_Out_ LPDWORD pdwMinor)
-{
-	ATLENSURE(( pdwMajor != NULL ) && ( pdwMinor != NULL ));
-
-	DLLVERSIONINFO dvi;
-	memset(&dvi, 0, sizeof(dvi));
-	dvi.cbSize = sizeof(dvi);
-
-	HRESULT hRet = AtlGetDllVersion(_T("comctl32.dll"), &dvi);
-
-	if(SUCCEEDED(hRet))
-	{
-		*pdwMajor = dvi.dwMajorVersion;
-		*pdwMinor = dvi.dwMinorVersion;
-	}
-
-	return hRet;
-}
-
-// Shell Versions:
-//   WinNT 4.0                                      maj=4 min=00
-//   IE 3.x, IE 4.0 without Web Integrated Desktop  maj=4 min=00
-//   IE 4.0 with Web Integrated Desktop             maj=4 min=71
-//   IE 4.01 with Web Integrated Desktop            maj=4 min=72
-//   Win2000                                        maj=5 min=00
-inline HRESULT AtlGetShellVersion(
-	_Out_ LPDWORD pdwMajor,
-	_Out_ LPDWORD pdwMinor)
-{
-	ATLENSURE(( pdwMajor != NULL) && ( pdwMinor != NULL ));
-
-	DLLVERSIONINFO dvi;
-	memset(&dvi, 0, sizeof(dvi));
-	dvi.cbSize = sizeof(dvi);
-	HRESULT hRet = AtlGetDllVersion(_T("shell32.dll"), &dvi);
-
-	if(SUCCEEDED(hRet))
-	{
-		*pdwMajor = dvi.dwMajorVersion;
-		*pdwMinor = dvi.dwMinorVersion;
-	}
-
-	return hRet;
-}
-
-inline ATL_DEPRECATED("AtlModuleRegisterClassObjects has been replaced by AtlComModuleRegisterClassObjects")
-HRESULT AtlModuleRegisterClassObjects(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_ DWORD dwClsContext,
-	_In_ DWORD dwFlags)
-{
-	return AtlComModuleRegisterClassObjects(&_AtlComModule, dwClsContext, dwFlags);
-}
-
-inline ATL_DEPRECATED("AtlModuleRevokeClassObjects has been replaced by AtlComModuleRevokeClassObjects")
-HRESULT AtlModuleRevokeClassObjects(_In_opt_ _ATL_MODULE* /*pM*/)
-{
-	return AtlComModuleRevokeClassObjects(&_AtlComModule);
-}
-
-inline ATL_DEPRECATED("AtlModuleGetClassObject has been replaced by AtlComModuleGetClassObject")
-HRESULT AtlModuleGetClassObject(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_ REFCLSID rclsid,
-	_In_ REFIID riid,
-	_Deref_out_ LPVOID* ppv)
-{
-	return AtlComModuleGetClassObject(&_AtlComModule, rclsid, riid, ppv);
-}
-
-inline ATL_DEPRECATED("AtlModuleRegisterServer has been replaced by AtlComModuleRegisterServer")
-HRESULT AtlModuleRegisterServer(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_ BOOL bRegTypeLib,
-	_In_opt_ const CLSID* pCLSID = NULL)
-{
-	return AtlComModuleRegisterServer(&_AtlComModule, bRegTypeLib, pCLSID);
-}
-
-inline ATL_DEPRECATED("AtlModuleUnregisterServer has been replaced by AtlComModuleUnregisterServer")
-HRESULT AtlModuleUnregisterServer(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_opt_ const CLSID* pCLSID = NULL)
-{
-	return AtlComModuleUnregisterServer(&_AtlComModule, FALSE, pCLSID);
-}
-
-inline ATL_DEPRECATED("AtlModuleUnregisterServerEx has been replaced by AtlComModuleUnregisterServer")
-HRESULT AtlModuleUnregisterServerEx(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_ BOOL bUnRegTypeLib,
-	_In_opt_ const CLSID* pCLSID = NULL)
-{
-	return AtlComModuleUnregisterServer(&_AtlComModule, bUnRegTypeLib, pCLSID);
-}
-
-inline ATL_DEPRECATED("AtlModuleUpdateRegistryFromResourceD has been replaced by AtlUpdateRegistryFromResourceD")
-HRESULT AtlModuleUpdateRegistryFromResourceD(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_z_ LPCOLESTR lpszRes,
-	_In_ BOOL bRegister,
-	_In_ struct _ATL_REGMAP_ENTRY* pMapEntries,
-	_In_opt_ IRegistrar* pReg = NULL)
-{
-	return AtlUpdateRegistryFromResourceD(_AtlBaseModule.GetModuleInstance(), lpszRes, bRegister, pMapEntries, pReg);
-}
-
-inline ATL_DEPRECATED("AtlModuleRegisterTypeLib has been replaced by AtlRegisterTypeLib")
-HRESULT AtlModuleRegisterTypeLib(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_z_ LPCOLESTR lpszIndex)
-{
-	return AtlRegisterTypeLib(_AtlComModule.m_hInstTypeLib, lpszIndex);
-}
-
-inline ATL_DEPRECATED("AtlModuleUnRegisterTypeLib has been replaced by AtlUnRegisterTypeLib")
-HRESULT AtlModuleUnRegisterTypeLib(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_z_ LPCOLESTR lpszIndex)
-{
-	return AtlUnRegisterTypeLib(_AtlComModule.m_hInstTypeLib, lpszIndex);
-}
-
-inline ATL_DEPRECATED("AtlModuleLoadTypeLib has been replaced by AtlLoadTypeLib")
-HRESULT AtlModuleLoadTypeLib(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_z_ LPCOLESTR lpszIndex,
-	_Deref_out_z_ BSTR* pbstrPath,
-	_Deref_out_ ITypeLib** ppTypeLib)
-{
-	return AtlLoadTypeLib(_AtlComModule.m_hInstTypeLib, lpszIndex, pbstrPath, ppTypeLib);
-}
-
-inline ATL_DEPRECATED("AtlModuleInit is no longer required")
-HRESULT AtlModuleInit(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_opt_ _ATL_OBJMAP_ENTRY* /*p*/,
-	_In_ HINSTANCE /*h*/)
-{
+	for (int i = 0; i < pWinModule->m_rgWindowClassAtoms.GetSize(); i++)
+		UnregisterClass((LPCTSTR)pWinModule->m_rgWindowClassAtoms[i], hInst);
+	pWinModule->m_rgWindowClassAtoms.RemoveAll();
+	pWinModule->m_csWindowCreate.Term();
+	pWinModule->cbSize = 0;
 	return S_OK;
 }
 
-inline ATL_DEPRECATED("AtlModuleTerm is no longer required")
-HRESULT AtlModuleTerm(_In_opt_ _ATL_MODULE* /*pM*/)
-{
-	return S_OK;
-}
-
-inline ATL_DEPRECATED("AtlModuleAddCreateWndData has been replaced by AtlWinModuleAddCreateWndData")
-void AtlModuleAddCreateWndData(
-	_In_opt_ _ATL_MODULE* /*pM*/,
-	_In_ _AtlCreateWndData* pData,
-	_In_ void* pObject)
-{
-	AtlWinModuleAddCreateWndData(&_AtlWinModule, pData, pObject);
-}
-
-inline ATL_DEPRECATED("AtlModuleExtractCreateWndData has been replaced by AtlWinModuleExtractCreateWndData")
-void* AtlModuleExtractCreateWndData(_In_opt_ _ATL_MODULE* /*pM*/)
-{
-	return AtlWinModuleExtractCreateWndData(&_AtlWinModule);
-}
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 #ifndef _ATL_NO_COMMODULE
 
@@ -7723,7 +7831,7 @@ inline HRESULT CComModule::AddThunk(
 inline HRESULT CComModule::AddNonAddRefThunk(
 	_Inout_ IUnknown* p,
 	_In_z_ LPCTSTR lpsz,
-	_Deref_out_ IUnknown** ppThunkRet) throw()
+	_Outptr_ IUnknown** ppThunkRet) throw()
 {
 	return _AtlDebugInterfacesModule.AddNonAddRefThunk(p, lpsz, ppThunkRet);
 }
@@ -7766,7 +7874,7 @@ inline HRESULT CComModule::Init(
 			}
 		}
 	}
-	for (_ATL_OBJMAP_ENTRY** ppEntry = _AtlComModule.m_ppAutoObjMapFirst; ppEntry < _AtlComModule.m_ppAutoObjMapLast; ppEntry++)
+	for (_ATL_OBJMAP_ENTRY_EX** ppEntry = _AtlComModule.m_ppAutoObjMapFirst; ppEntry < _AtlComModule.m_ppAutoObjMapLast; ppEntry++)
 	{
 		if (*ppEntry != NULL)
 			(*ppEntry)->pfnObjectMain(true); //initialize class resources
@@ -7790,7 +7898,7 @@ inline void CComModule::Term() throw()
 		}
 	}
 
-	for (_ATL_OBJMAP_ENTRY** ppEntry = _AtlComModule.m_ppAutoObjMapFirst; ppEntry < _AtlComModule.m_ppAutoObjMapLast; ppEntry++)
+	for (_ATL_OBJMAP_ENTRY_EX** ppEntry = _AtlComModule.m_ppAutoObjMapFirst; ppEntry < _AtlComModule.m_ppAutoObjMapLast; ppEntry++)
 	{
 		if (*ppEntry != NULL)
 			(*ppEntry)->pfnObjectMain(false); //cleanup class resources
@@ -7803,11 +7911,10 @@ inline void CComModule::Term() throw()
 	CAtlModuleT<CComModule>::Term();
 }
 
-ATLPREFAST_SUPPRESS(6387)
 inline HRESULT CComModule::GetClassObject(
 	_In_ REFCLSID rclsid,
 	_In_ REFIID riid,
-	_Deref_out_ LPVOID* ppv) throw()
+	_COM_Outptr_ LPVOID* ppv) throw()
 {
 	*ppv = NULL;
 	HRESULT hr = S_OK;
@@ -7854,8 +7961,8 @@ inline HRESULT CComModule::GetClassObject(
 
 	return hr;
 }
-ATLPREFAST_UNSUPPRESS()
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 // Register/Revoke All Class Factories with the OS (EXE only)
 inline HRESULT CComModule::RegisterClassObjects(
 	_In_ DWORD dwClsContext,
@@ -7975,14 +8082,16 @@ inline HRESULT CComModule::UnregisterServer(_In_opt_ const CLSID* pCLSID /*= NUL
 	return UnregisterServer(FALSE, pCLSID);
 }
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 #endif	// !_ATL_NO_COMMODULE
 
 }	// namespace ATL
 
 
-#pragma warning( pop )
+#pragma warning( pop )  // disable 4702/4571
 
-#if !defined(_ATL_DLL) && !defined(_DEBUG)
+#if !defined(_ATL_DLL)
 
 #include <atlbase.inl>
 
@@ -7990,7 +8099,11 @@ inline HRESULT CComModule::UnregisterServer(_In_opt_ const CLSID* pCLSID /*= NUL
 
 #pragma pack(pop)
 #ifdef _ATL_ALL_WARNINGS
-#pragma warning( pop )
+#pragma warning( pop )  // disable 4668/4820/4917/4127/4097/4786/4291/4201/4103/4268
+#endif
+
+#ifdef _ATL_ALL_USER_WARNINGS
+#pragma warning( pop )  // disable 4505/4710/4514/4511/4512/4355
 #endif
 
 /////////////////////////////////////////////////////////////////////////////

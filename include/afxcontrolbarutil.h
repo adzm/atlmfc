@@ -60,7 +60,7 @@ inline CFrameWnd* AFXGetTopLevelFrame(const CWnd* pWnd)
 	return g_pTopLevelFrame == NULL ? pWnd->GetTopLevelFrame() : g_pTopLevelFrame;
 }
 
-CFrameWnd* AFXGetParentFrame(const CWnd* pWnd);
+CFrameWnd* AFX_CDECL AFXGetParentFrame(const CWnd* pWnd);
 
 #define AFX_GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
 #define AFX_GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))

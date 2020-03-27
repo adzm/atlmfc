@@ -95,9 +95,12 @@ void CMFCControlBarImpl::DrawNcArea()
 	CRect rectGripper;
 	GetGripperRect(rectGripper);
 
-	BOOL bHorz = (m_pBar->GetPaneStyle() & CBRS_ORIENT_HORZ) ? TRUE : FALSE;
+	if (rectGripper.Width() >= 1 && rectGripper.Height() >= 1)
+	{
+		BOOL bHorz = (m_pBar->GetPaneStyle() & CBRS_ORIENT_HORZ) ? TRUE : FALSE;
 
-	CMFCVisualManager::GetInstance()->OnDrawBarGripper(&dc, rectGripper, bHorz, m_pBar);
+		CMFCVisualManager::GetInstance()->OnDrawBarGripper(&dc, rectGripper, bHorz, m_pBar);
+	}
 
 	dc.SelectClipRgn(NULL);
 }
@@ -126,7 +129,7 @@ void CMFCControlBarImpl::CalcNcSize(NCCALCSIZE_PARAMS FAR* lpncsp)
 
 BOOL CMFCControlBarImpl::GetBackgroundFromParent(CDC* pDC)
 {
-	return afxGlobalData.DrawParentBackground(m_pBar, pDC);
+	return GetGlobalData()->DrawParentBackground(m_pBar, pDC);
 }
 
 void CMFCControlBarImpl::GetGripperRect(CRect& rectGripper, BOOL bClientCoord)

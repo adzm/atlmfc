@@ -32,11 +32,9 @@ static const int nBtnMoveDn = 3;
 
 CMFCToolBarsToolsPropertyPage::CMFCToolBarsToolsPropertyPage() : CPropertyPage(CMFCToolBarsToolsPropertyPage::IDD), m_wndToolsList(this)
 {
-	//{{AFX_DATA_INIT(CMFCToolBarsToolsPropertyPage)
 	m_strCommand = _T("");
 	m_strArguments = _T("");
 	m_strInitialDirectory = _T("");
-	//}}AFX_DATA_INIT
 
 	m_pSelTool = NULL;
 	m_pParentSheet = NULL;
@@ -51,7 +49,6 @@ CMFCToolBarsToolsPropertyPage::~CMFCToolBarsToolsPropertyPage()
 void CMFCToolBarsToolsPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarsToolsPropertyPage)
 	DDX_Control(pDX, IDD_AFXBARRES_MENU_INITIAL_DIRECTORY, m_wndInitialDirBtn);
 	DDX_Control(pDX, IDD_AFXBARRES_MENU_ARGUMENTS, m_wndArgumentsBtn);
 	DDX_Control(pDX, IDD_AFXBARRES_ARGUMENTS, m_wndArgumentsEdit);
@@ -62,18 +59,15 @@ void CMFCToolBarsToolsPropertyPage::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDD_AFXBARRES_COMMAND, m_strCommand);
 	DDX_Text(pDX, IDD_AFXBARRES_ARGUMENTS, m_strArguments);
 	DDX_Text(pDX, IDD_AFXBARRES_INITIAL_DIRECTORY, m_strInitialDirectory);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsToolsPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCToolBarsToolsPropertyPage)
 	ON_BN_CLICKED(IDD_AFXBARRES_BROWSE_COMMAND, &CMFCToolBarsToolsPropertyPage::OnBrowseCommand)
 	ON_BN_CLICKED(IDD_AFXBARRES_MENU_ARGUMENTS, &CMFCToolBarsToolsPropertyPage::OnArgumentsOptions)
 	ON_BN_CLICKED(IDD_AFXBARRES_MENU_INITIAL_DIRECTORY, &CMFCToolBarsToolsPropertyPage::OnInitialDirectoryOptions)
 	ON_EN_UPDATE(IDD_AFXBARRES_ARGUMENTS, &CMFCToolBarsToolsPropertyPage::OnUpdateTool)
 	ON_EN_UPDATE(IDD_AFXBARRES_COMMAND, &CMFCToolBarsToolsPropertyPage::OnUpdateTool)
 	ON_EN_UPDATE(IDD_AFXBARRES_INITIAL_DIRECTORY, &CMFCToolBarsToolsPropertyPage::OnUpdateTool)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

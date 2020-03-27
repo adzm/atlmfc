@@ -15,9 +15,51 @@
 
 #pragma warning(disable : 4619)	// there is no warning number
 
+// Check if building using WINAPI_FAMILY_APP
+#ifndef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+#ifdef WINAPI_FAMILY
+#include <winapifamily.h>  
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+#endif
+#else // WINAPI_FAMILY
+// Default to Desktop family app
+#define _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+#endif // WINAPI_FAMILY
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+#ifndef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+// These are available for WINAPI_FAMILY_DESKTOP_APP only
+
+#ifndef _ATL_NO_SERVICE
+// No service supported
+#define _ATL_NO_SERVICE
+#endif
+
+#ifndef _ATL_NO_COM_SUPPORT
+// No COM support
+#define _ATL_NO_COM_SUPPORT
+#endif
+
+#ifndef  _ATL_NO_COMMODULE
+// No CComModule
+#define _ATL_NO_COMMODULE
+#endif
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 #include <atlrc.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <sal.h>
+
+#ifndef _ATL_DISABLE_NOTHROW_NEW
+#include <new.h>
+#define _ATL_NEW		new(std::nothrow)
+#else
+#define _ATL_NEW		new
+#endif
 
 // preprocessor string helpers
 #ifndef _ATL_STRINGIZE
@@ -28,6 +70,10 @@
 #ifndef _ATL_APPEND
 #define __ATL_APPEND(_Value1, _Value2) _Value1 ## _Value2
 #define _ATL_APPEND(_Value1, _Value2) __ATL_APPEND(_Value1, _Value2)
+#endif
+
+#if defined(_CHAR_UNSIGNED) && !defined(_ATL_ALLOW_CHAR_UNSIGNED)
+#error ATL doesn't support compilation with /J or _CHAR_UNSIGNED flag enabled
 #endif
 
 #ifndef RC_INVOKED
@@ -44,51 +90,30 @@
 // native code with those that are built /clr, you must define
 // the symbol '_ATL_MIXED'. _ATL_MIXED must be defined for all 
 // compilation units in an executable or it must be defined for none of them.
-#if !defined(_ATL_MIXED)
-namespace Inconsistent_definition_of_symbol__ATL_MIXED
-{
-	struct _Please_define_it_the_same_throughout_your_project { };
-}
-#else
-namespace Inconsistent_definition_of_symbol__ATL_MIXED
-{
-#ifdef _M_IX86
-#pragma comment(linker, "/include:??3@YAXPAX@Z")
-#else
-#pragma comment(linker, "/include:??3@YAXPEAX@Z")
-#endif
-	struct _Please_define_it_the_same_throughout_your_project { virtual void one(){} };
-}
-#endif
-namespace Inconsistent_definition_of_symbol__ATL_MIXED
-{
-	__declspec(selectany) _Please_define_it_the_same_throughout_your_project clash = _Please_define_it_the_same_throughout_your_project ();
-}
-
-#if !defined(_ATL_MIXED)
-namespace Define_the_symbol__ATL_MIXED
-{
 #if defined(_M_CEE)
-	struct Thank_you { };
+#ifdef _ATL_MIXED
+#pragma detect_mismatch("_ATL_MIXED", "Defined")
 #else
-#ifdef _M_IX86
+#pragma detect_mismatch("_ATL_MIXED", "Undefined")
+#endif  // _ATL_MIXED
+#endif  // defined(_M_CEE)
+
+#if defined(_ATL_MIXED) || !defined(_M_CEE)
+
+// Include the delete() operator
+#if defined _M_IX86 || defined _M_ARM
 #pragma comment(linker, "/include:??3@YAXPAX@Z")
-#else
+#elif defined _M_AMD64
 #pragma comment(linker, "/include:??3@YAXPEAX@Z")
+#else 
+#error Unsupported target architecture.
 #endif
-	struct Thank_you { virtual void one(){} };
-#endif
-	__declspec(selectany) Thank_you clash = Thank_you();
-}
-#endif
-
-#if defined(_ATL_MIXED)
+#ifndef _ATL_NATIVE_INITIALIZATION
 #define _ATL_NATIVE_INITIALIZATION
 #endif
 
-#if !defined(_M_CEE)
-#define _ATL_NATIVE_INITIALIZATION
-#endif
+#endif  // defined(_ATL_MIXED) || !defined(_M_CEE)
+
 
 #ifdef _UNICODE
 #ifndef UNICODE
@@ -108,6 +133,16 @@ namespace Define_the_symbol__ATL_MIXED
 #endif
 #endif
 
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#if !defined(_UNICODE)
+#error _UNICODE has to be defined to use ATL under the current WINAPI_FAMILY
+#endif
+
+#if defined(_ATL_DLL)
+#error Cannot link to ATL DLL under the current WINAPI_FAMILY
+#endif
+#endif
+
 
 //PREFAST support static_assert from version 16.00
 #if defined(_PREFAST_) && (_MSC_VER < 1600)
@@ -118,27 +153,6 @@ namespace Define_the_symbol__ATL_MIXED
 
 #ifdef _WIN64
 #define _ATL_SUPPORT_VT_I8  // Always support VT_I8 on Win64.
-#endif
-
-#if !defined(UNALIGNED)
-#if defined(_M_IA64) || defined(_M_AMD64)
-#define UNALIGNED __unaligned
-#else
-#define UNALIGNED
-#endif
-#endif
-
-#if !defined(_countof)
-#if !defined(__cplusplus)
-#define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
-#else
-extern "C++"
-{
-template <typename _CountofType, size_t _SizeOfArray>
-char (*__countof_helper(UNALIGNED _CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
-#define _countof(_Array) sizeof(*__countof_helper(_Array))
-}
-#endif
 #endif
 
 #ifndef AtlThrow
@@ -209,7 +223,7 @@ So we've done a broad replace of all the member-related ATLASSERT to ATLASSUME.
 */
 
 #ifndef ATLASSUME
-#define ATLASSUME(expr) do { ATLASSERT(expr); __analysis_assume(!!(expr)); } while(0)
+#define ATLASSUME(expr) do { ATLASSERT(expr); _Analysis_assume_(!!(expr)); } while(0)
 #endif // ATLASSUME
 
 #ifndef ATLVERIFY
@@ -234,7 +248,11 @@ do {                                       \
 #endif // ATLENSURE
 
 #ifndef ATLENSURE_SUCCEEDED
-#define ATLENSURE_SUCCEEDED(hr) ATLENSURE_THROW(SUCCEEDED(hr), hr)
+#define ATLENSURE_SUCCEEDED(hrExpr)								\
+do {															\
+	HRESULT __atl_hresult = (hrExpr);							\
+	ATLENSURE_THROW(SUCCEEDED(__atl_hresult), __atl_hresult);   \
+} while (0)
 #endif // ATLENSURE_SUCCEEDED
 
 /* Used inside COM methods that do not want to throw */
@@ -444,7 +462,7 @@ this end
  
 #ifndef _ATL_COM_BEGIN 
 #define _ATL_COM_BEGIN \
-	HRESULT __hrAtlComMethod=S_OK; \
+	HRESULT __hrAtlComMethod = S_OK; \
 	try \
 	{
 #endif
@@ -458,24 +476,25 @@ this end
 		{ \
 			e->Delete(); \
 		} \
-		__hrAtlComMethod=E_FAIL; \
+		__hrAtlComMethod = E_FAIL; \
 	}
 #else
 #define _AFX_COM_END_PART \
 	catch(CAtlException e) \
 	{ \
-		__hrAtlComMethod=e.m_hr; \
+		__hrAtlComMethod = e.m_hr; \
 	}
 #endif
 
 #ifndef _ATL_COM_END 
 #define _ATL_COM_END \
+	} \
 	_AFX_COM_END_PART \
 	catch(...) \
 	{ \
-		__hrAtlComMethod=E_FAIL; \
+		__hrAtlComMethod = E_FAIL; \
 	} \
-	return hr; 
+	return __hrAtlComMethod; 
 #endif
 
 
@@ -508,18 +527,18 @@ this end
 // Master version numbers
 
 #define _ATL     1      // Active Template Library
-#define _ATL_VER 0x0A00 // Active Template Library version 10.00
+#define _ATL_VER 0x0B00 // Active Template Library version 11.00
 
 #ifndef _ATL_FILENAME_VER
-#define _ATL_FILENAME_VER "100"
+#define _ATL_FILENAME_VER "110"
 #endif
 
 #ifndef _ATL_FILENAME_VER_NUM
-#define _ATL_FILENAME_VER_NUM 100
+#define _ATL_FILENAME_VER_NUM 110
 #endif
 
 #ifndef _ATL_VER_RBLD
-#define _ATL_VER_RBLD "10.00"
+#define _ATL_VER_RBLD "11.00"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -580,8 +599,8 @@ this end
 // #define ATLAXWIN_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWin, _ATL_FILENAME_VER_NUM))
 // #define ATLAXWINLIC_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWinLic, _ATL_FILENAME_VER_NUM))
 
-#define ATLAXWIN_CLASS "AtlAxWin100"
-#define ATLAXWINLIC_CLASS "AtlAxWinLic100"
+#define ATLAXWIN_CLASS "AtlAxWin110"
+#define ATLAXWINLIC_CLASS "AtlAxWinLic110"
 
 #if defined(_ATL_SECURE_NO_DEPRECATE) && !defined(_ATL_SECURE_NO_WARNINGS)
 #define _ATL_SECURE_NO_WARNINGS
@@ -600,7 +619,7 @@ this end
 This is called when something really bad happens -- so bad
 that we consider it dangerous to even throw an exception
 */
-#ifndef _ATL_FATAL_SHUTDOWN
+#if !defined(_ATL_FATAL_SHUTDOWN) && defined( _ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
 #define _ATL_FATAL_SHUTDOWN do { ::TerminateProcess(::GetCurrentProcess(), 0); } while(0)
 #endif
 
@@ -656,23 +675,6 @@ that we consider it dangerous to even throw an exception
 #define ATL_RT_ANIICON      ATL_MAKEINTRESOURCE(22)
 #define ATL_RT_HTML         ATL_MAKEINTRESOURCE(23)
 
-/* sal.h stuff that is not in the current LKG */
-#ifndef __out_ecount_part_z
-#define __out_ecount_part_z(size,length)                        __out_ecount_part(size,length) __post __nullterminated
-#endif
-
-#ifndef __out_ecount_part_z_opt
-#define __out_ecount_part_z_opt(size,length)                    __out_ecount_part_opt(size,length) __post __nullterminated
-#endif
-
-#ifndef __deref_opt_out_z
-#define __deref_opt_out_z                                       __deref_opt_out __post __deref __nullterminated
-#endif
-
-#ifndef __out_bcount_part_z
-#define __out_bcount_part_z(size,length)                        __out_bcount_part(size,length) __post __nullterminated
-#endif
-
 #define ATLPREFAST_SUPPRESS(x) __pragma(warning(push)) __pragma(warning(disable: x))
 #define ATLPREFAST_UNSUPPRESS() __pragma(warning(pop))
 	
@@ -685,14 +687,16 @@ that we consider it dangerous to even throw an exception
 */
 namespace ATL {
 
+ATLPREFAST_SUPPRESS(6001 6101)
 template < typename T >
-_Ret_opt_bytecap_(dwLen) inline __declspec(noalias) T* SAL_Assume_bytecap_for_opt_(
-	_Out_opt_cap_c_(0) T* buf, 
+_Ret_maybenull_ _Post_writable_byte_size_(dwLen) inline __declspec(noalias) T* SAL_Assume_bytecap_for_opt_(
+	_Out_writes_opt_(0) T* buf, 
 	_In_ size_t dwLen)
 {
 	(void)(dwLen);
 	return buf;
 }
+ATLPREFAST_UNSUPPRESS()
 
 template < typename T >
 _Ret_z_ inline __declspec(noalias) T* SAL_Assume_notnull_for_opt_z_(_In_opt_z_ T* buf)
@@ -704,5 +708,19 @@ _Ret_z_ inline __declspec(noalias) T* SAL_Assume_notnull_for_opt_z_(_In_opt_z_ T
 } // namespace ATL
 
 #endif // __ATLDEF_H__
+
+// Macro for calling GetProcAddress, with type safety for C++ clients.
+// Parameters are the HINSTANCE and the function name.  The return value
+// is automatically cast to match the function prototype.
+//
+// Sample usage:
+//
+// auto pfnSendMail = AtlGetProcAddressFn(hinstMAPI, MAPISendMailW);
+// if (pfnSendMail)
+// {
+//    pfnSendMail(0, 0, pmm, MAPI_USE_DEFAULT, 0);
+// }
+
+#define AtlGetProcAddressFn(hinst, fn) reinterpret_cast<decltype(::fn)*>(GetProcAddress(hinst, #fn))
 
 /////////////////////////////////////////////////////////////////////////////

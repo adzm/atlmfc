@@ -37,14 +37,12 @@ IMPLEMENT_DYNCREATE(CMFCCustomColorsPropertyPage, CPropertyPage)
 
 CMFCCustomColorsPropertyPage::CMFCCustomColorsPropertyPage() : CPropertyPage(CMFCCustomColorsPropertyPage::IDD)
 {
-	//{{AFX_DATA_INIT(CMFCCustomColorsPropertyPage)
 	m_r = 0;
 	m_b = 0;
 	m_g = 0;
 	m_l = 0;
 	m_h = 0;
 	m_s = 0;
-	//}}AFX_DATA_INIT
 
 	m_pDialog = NULL;
 	m_bIsReady = FALSE;
@@ -54,7 +52,6 @@ CMFCCustomColorsPropertyPage::CMFCCustomColorsPropertyPage() : CPropertyPage(CMF
 void CMFCCustomColorsPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCCustomColorsPropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_LUMINANCEPLACEHOLDER, m_wndLuminance);
 	DDX_Control(pDX, IDC_AFXBARRES_COLOURPLACEHOLDER, m_wndColorPicker);
 	DDX_Text(pDX, IDC_AFXBARRES_R, m_r);
@@ -63,11 +60,9 @@ void CMFCCustomColorsPropertyPage::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_AFXBARRES_L, m_l);
 	DDX_Text(pDX, IDC_AFXBARRES_H, m_h);
 	DDX_Text(pDX, IDC_AFXBARRES_S, m_s);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCCustomColorsPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCCustomColorsPropertyPage)
 	ON_EN_CHANGE(IDC_AFXBARRES_B, &CMFCCustomColorsPropertyPage::OnRGBChanged)
 	ON_EN_CHANGE(IDC_AFXBARRES_H, &CMFCCustomColorsPropertyPage::OnHLSChanged)
 	ON_EN_CHANGE(IDC_AFXBARRES_G, &CMFCCustomColorsPropertyPage::OnRGBChanged)
@@ -77,7 +72,6 @@ BEGIN_MESSAGE_MAP(CMFCCustomColorsPropertyPage, CPropertyPage)
 	ON_BN_CLICKED(IDC_AFXBARRES_LUMINANCEPLACEHOLDER, &CMFCCustomColorsPropertyPage::OnLuminance)
 	ON_BN_CLICKED(IDC_AFXBARRES_COLOURPLACEHOLDER, &CMFCCustomColorsPropertyPage::OnColour)
 	ON_BN_DOUBLECLICKED(IDC_AFXBARRES_COLOURPLACEHOLDER, &CMFCCustomColorsPropertyPage::OnDoubleClickedColor)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

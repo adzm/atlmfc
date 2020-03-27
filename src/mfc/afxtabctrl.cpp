@@ -106,7 +106,6 @@ CMFCTabCtrl::~CMFCTabCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCTabCtrl, CMFCBaseTabCtrl)
-	//{{AFX_MSG_MAP(CMFCTabCtrl)
 	ON_WM_DESTROY()
 	ON_WM_PAINT()
 	ON_WM_SIZE()
@@ -125,7 +124,6 @@ BEGIN_MESSAGE_MAP(CMFCTabCtrl, CMFCBaseTabCtrl)
 	ON_WM_WINDOWPOSCHANGED()
 	ON_WM_WINDOWPOSCHANGING()
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCTabCtrl::OnUpdateToolTips)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CMFCTabCtrl::Create(Style style, const RECT& rect, CWnd* pParentWnd, UINT nID, Location location /* = LOCATION_BOTTOM*/, BOOL bCloseBtn /* = FALSE */)
@@ -149,7 +147,7 @@ BOOL CMFCTabCtrl::Create(Style style, const RECT& rect, CWnd* pParentWnd, UINT n
 		m_bSharedScroll = FALSE;
 	}
 
-	return CMFCBaseTabCtrl::Create(afxGlobalData.RegisterWindowClass(_T("Afx:TabWnd")), _T(""), WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, rect, pParentWnd, nID);
+	return CMFCBaseTabCtrl::Create(GetGlobalData()->RegisterWindowClass(_T("Afx:TabWnd")), _T(""), WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, rect, pParentWnd, nID);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -177,6 +175,18 @@ void CMFCTabCtrl::OnPaint()
 	CDC* pDC = &memDC.GetDC();
 
 	dc.GetClipBox(&m_rectCurrClip);
+
+	OnDraw(pDC);
+
+	if (memDC.IsMemDC())
+	{
+		dc.ExcludeClipRect(m_rectWndArea);
+	}
+}
+
+void CMFCTabCtrl::OnDraw(CDC* pDC)
+{
+	ASSERT_VALID(pDC);
 
 	COLORREF clrDark;
 	COLORREF clrBlack;
@@ -420,11 +430,11 @@ void CMFCTabCtrl::OnPaint()
 		pDC->LineTo(rectClient.right - 1, m_rectTabsArea.bottom);
 	}
 
-	CFont* pOldFont = pDC->SelectObject(m_bFlat ? &m_fntTabs : &afxGlobalData.fontRegular);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 	ENSURE(pOldFont != NULL);
 
 	pDC->SetBkMode(TRANSPARENT);
-	pDC->SetTextColor(afxGlobalData.clrBtnText);
+	pDC->SetTextColor(GetGlobalData()->clrBtnText);
 
 	if (m_rectTabsArea.Width() > 5 && m_rectTabsArea.Height() > 5)
 	{
@@ -468,7 +478,7 @@ void CMFCTabCtrl::OnPaint()
 			//-----------------
 			// Draw active tab:
 			//-----------------
-			pDC->SetTextColor(afxGlobalData.clrWindowText);
+			pDC->SetTextColor(GetGlobalData()->clrWindowText);
 
 			CMFCTabInfo* pTabActive = (CMFCTabInfo*) m_arTabs [m_iActiveTab];
 			ASSERT_VALID(pTabActive);
@@ -480,7 +490,7 @@ void CMFCTabCtrl::OnPaint()
 			if (m_bFlat)
 			{
 				pDC->SelectObject(&m_brActiveTab);
-				pDC->SelectObject(&m_fntTabsBold);
+				pDC->SelectObject(&(GetGlobalData()->fontBold));
 				pDC->SetTextColor(GetActiveTabTextColor());
 				pDC->SelectObject(&penBlack);
 
@@ -516,7 +526,7 @@ void CMFCTabCtrl::OnPaint()
 				{
 					if (!IsMDITabGroup() || m_bIsActiveInMDITabGroup)
 					{
-						pDC->SelectObject(&afxGlobalData.fontBold);
+						pDC->SelectObject(&(GetGlobalData()->fontBold));
 					}
 				}
 
@@ -564,11 +574,6 @@ void CMFCTabCtrl::OnPaint()
 	pDC->SelectObject(pOldFont);
 	pDC->SelectObject(pOldBrush);
 	pDC->SelectObject(pOldPen);
-
-	if (memDC.IsMemDC())
-	{
-		dc.ExcludeClipRect(m_rectWndArea);
-	}
 }
 
 void CMFCTabCtrl::OnSize(UINT nType, int cx, int cy)
@@ -883,7 +888,7 @@ void CMFCTabCtrl::AdjustTabs()
 	//-------------------------
 	CClientDC dc(this);
 
-	CFont* pOldFont = dc.SelectObject(m_bFlat ? &m_fntTabsBold : &afxGlobalData.fontRegular);
+	CFont* pOldFont = dc.SelectObject(&(GetGlobalData()->fontBold));
 	ENSURE(pOldFont != NULL);
 
 	m_nTabsTotalWidth = 0;
@@ -907,7 +912,7 @@ void CMFCTabCtrl::AdjustTabs()
 
 		if (m_bIsActiveTabBold &&(m_bIsOneNoteStyle || m_bIsVS2005Style || i == m_iActiveTab))
 		{
-			dc.SelectObject(&afxGlobalData.fontBold);
+			dc.SelectObject(&(GetGlobalData()->fontBold));
 		}
 
 		int nExtraWidth = 0;
@@ -944,7 +949,7 @@ void CMFCTabCtrl::AdjustTabs()
 
 		if (m_bIsActiveTabBold && i == m_iActiveTab)
 		{
-			dc.SelectObject(&afxGlobalData.fontRegular); // Bold tab is available for 3d tabs only
+			dc.SelectObject(&(GetGlobalData()->fontRegular)); // Bold tab is available for 3d tabs only
 		}
 
 		int nTabWidth = pTab->m_nFullWidth;
@@ -1415,14 +1420,14 @@ int CMFCTabCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	CTooltipManager::CreateToolTip(m_pToolTipClose, this, AFX_TOOLTIP_TYPE_TAB);
 
-	if (afxGlobalData.m_hcurStretch == NULL)
+	if (GetGlobalData()->m_hcurStretch == NULL)
 	{
-		afxGlobalData.m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
+		GetGlobalData()->m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
 	}
 
-	if (afxGlobalData.m_hcurStretchVert == NULL)
+	if (GetGlobalData()->m_hcurStretchVert == NULL)
 	{
-		afxGlobalData.m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
+		GetGlobalData()->m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
 	}
 
 	SetTabsHeight();
@@ -1445,7 +1450,7 @@ BOOL CMFCTabCtrl::OnEraseBkgnd(CDC* pDC)
 	{
 		CRect rectClient;
 		GetClientRect(rectClient);
-		pDC->FillRect(rectClient, &afxGlobalData.brBtnFace);
+		pDC->FillRect(rectClient, &(GetGlobalData()->brBtnFace));
 	}
 
 	return TRUE;
@@ -2001,7 +2006,7 @@ BOOL CMFCTabCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 		if (m_rectTabSplitter.PtInRect(ptCursor))
 		{
-			::SetCursor(afxGlobalData.m_hcurStretch);
+			::SetCursor(GetGlobalData()->m_hcurStretch);
 			return TRUE;
 		}
 	}
@@ -2014,7 +2019,7 @@ BOOL CMFCTabCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 		if (m_rectResize.PtInRect(ptCursor))
 		{
-			::SetCursor(m_ResizeMode == RESIZE_VERT ? afxGlobalData.m_hcurStretch : afxGlobalData.m_hcurStretchVert);
+			::SetCursor(m_ResizeMode == RESIZE_VERT ? GetGlobalData()->m_hcurStretch : GetGlobalData()->m_hcurStretchVert);
 			return TRUE;
 		}
 	}
@@ -2289,66 +2294,10 @@ void CMFCTabCtrl::HideActiveWindowHorzScrollBar()
 
 void CMFCTabCtrl::SetTabsHeight()
 {
-	if (m_bFlat)
-	{
-		m_nTabsHeight = ::GetSystemMetrics(SM_CYHSCROLL) + CMFCBaseTabCtrl::AFX_TAB_TEXT_MARGIN / 2;
-
-		LOGFONT lfDefault;
-		afxGlobalData.fontRegular.GetLogFont(&lfDefault);
-
-		LOGFONT lf;
-		memset(&lf, 0, sizeof(LOGFONT));
-
-		lf.lfCharSet = lfDefault.lfCharSet;
-		lf.lfHeight = lfDefault.lfHeight;
-		lf.lfQuality = CLEARTYPE_QUALITY;
-		lstrcpy(lf.lfFaceName, AFX_TABS_FONT);
-
-		CClientDC dc(this);
-
-		TEXTMETRIC tm;
-
-		do
-		{
-			m_fntTabs.DeleteObject();
-			m_fntTabs.CreateFontIndirect(&lf);
-
-			CFont* pFont = dc.SelectObject(&m_fntTabs);
-			ENSURE(pFont != NULL);
-
-			dc.GetTextMetrics(&tm);
-			dc.SelectObject(pFont);
-
-			if (tm.tmHeight + CMFCBaseTabCtrl::AFX_TAB_TEXT_MARGIN / 2 <= m_nTabsHeight)
-			{
-				break;
-			}
-
-			//------------------
-			// Try smaller font:
-			//------------------
-			if (lf.lfHeight < 0)
-			{
-				lf.lfHeight ++;
-			}
-			else
-			{
-				lf.lfHeight --;
-			}
-		}
-		while (lf.lfHeight != 0);
-
-		//------------------
-		// Create bold font:
-		//------------------
-		lf.lfWeight = FW_BOLD;
-		m_fntTabsBold.DeleteObject();
-		m_fntTabsBold.CreateFontIndirect(&lf);
-	}
-	else if (m_bIsVS2005Style)
+	if (m_bIsVS2005Style)
 	{
 		const int nImageHeight = m_sizeImage.cy <= 0 ? 0 : m_sizeImage.cy + 7;
-		m_nTabsHeight = (max(nImageHeight, afxGlobalData.GetTextHeight() + 4));
+		m_nTabsHeight = (max(nImageHeight, GetGlobalData()->GetTextHeight() + 4));
 	}
 	else
 	{
@@ -2997,11 +2946,9 @@ void CMFCTabCtrl::OnShowTabDocumentsMenu(CPoint point)
 		//--------------------------------
 		// Replace all single '&' by '&&':
 		//--------------------------------
-		const CString strDummyAmpSeq = _T("\001\001");
-
-		strTabName.Replace(_T("&&"), strDummyAmpSeq);
+		strTabName.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 		strTabName.Replace(_T("&"), _T("&&"));
-		strTabName.Replace(strDummyAmpSeq, _T("&&"));
+		strTabName.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&&"));
 
 		// Insert sorted:
 		BOOL bInserted = FALSE;

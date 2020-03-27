@@ -184,7 +184,6 @@ CMFCBaseTabCtrl::~CMFCBaseTabCtrl()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCBaseTabCtrl)
 BEGIN_MESSAGE_MAP(CMFCBaseTabCtrl, CWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
@@ -198,7 +197,6 @@ BEGIN_MESSAGE_MAP(CMFCBaseTabCtrl, CWnd)
 	ON_WM_WINDOWPOSCHANGED()
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCBaseTabCtrl::OnNeedTipText)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCBaseTabCtrl message handlers
@@ -829,8 +827,8 @@ BOOL CMFCBaseTabCtrl::SetTabHicon(int iTab, HICON hIcon)
 
 	pTab->m_uiIcon = (UINT)-1;
 
-	m_sizeImage.cx = max(m_sizeImage.cx, afxGlobalData.m_sizeSmallIcon.cx);
-	m_sizeImage.cy = max(m_sizeImage.cy, afxGlobalData.m_sizeSmallIcon.cy);
+	m_sizeImage.cx = max(m_sizeImage.cx, GetGlobalData()->m_sizeSmallIcon.cx);
+	m_sizeImage.cy = max(m_sizeImage.cy, GetGlobalData()->m_sizeSmallIcon.cy);
 
 	SetTabsHeight();
 
@@ -1452,11 +1450,6 @@ void CMFCBaseTabCtrl::OnMouseMove(UINT nFlags, CPoint point)
 
 	if (bTabCloseButtonHighlighted != m_bTabCloseButtonHighlighted)
 	{
-		if (m_bTabCloseButtonHighlighted)
-		{
-			m_bTabCloseButtonPressed = (nFlags & MK_LBUTTON);
-		}
-
 		RedrawWindow(m_rectCloseButton);
 	}
 
@@ -1998,7 +1991,7 @@ BOOL CMFCBaseTabCtrl::StartRenameTab(int iTab)
 	}
 
 	m_pInPlaceEdit->SetWindowText(pTabInfo->m_strText);
-	m_pInPlaceEdit->SetFont(&afxGlobalData.fontRegular);
+	m_pInPlaceEdit->SetFont(&(GetGlobalData()->fontRegular));
 	m_pInPlaceEdit->SetSel(0, -1, TRUE);
 
 	m_pInPlaceEdit->SetFocus();
@@ -2323,7 +2316,7 @@ void CMFCBaseTabCtrl::ResetImageList()
 void CMFCBaseTabCtrl::SetTabsHeight()
 {
 	const int nImageHeight = m_sizeImage.cy <= 0 ? 0 : m_sizeImage.cy + 7;
-	m_nTabsHeight = (max(nImageHeight, afxGlobalData.GetTextHeight() + 5));
+	m_nTabsHeight = (max(nImageHeight, GetGlobalData()->GetTextHeight() + 5));
 }
 
 void CMFCBaseTabCtrl::HideSingleTab(BOOL bHide)
@@ -2481,7 +2474,7 @@ void CMFCBaseTabCtrl::InitAutoColors()
 
 	m_arAutoColors.RemoveAll();
 
-	if (afxGlobalData.m_nBitsPerPixel > 8)
+	if (GetGlobalData()->m_nBitsPerPixel > 8)
 	{
 		m_arAutoColors.Add(RGB(197, 212, 242));
 		m_arAutoColors.Add(RGB(255, 220, 120));

@@ -39,7 +39,6 @@ CMFCShellTreeCtrl::~CMFCShellTreeCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCShellTreeCtrl, CTreeCtrl)
-	//{{AFX_MSG_MAP(CMFCShellTreeCtrl)
 	ON_WM_CREATE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONDOWN()
@@ -47,7 +46,6 @@ BEGIN_MESSAGE_MAP(CMFCShellTreeCtrl, CTreeCtrl)
 	ON_NOTIFY_REFLECT(TVN_ITEMEXPANDING, &CMFCShellTreeCtrl::OnItemexpanding)
 	ON_NOTIFY_REFLECT(TVN_DELETEITEM, &CMFCShellTreeCtrl::OnDeleteitem)
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCShellTreeCtrl::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -579,7 +577,7 @@ void CMFCShellTreeCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	}
 }
 
-BOOL CMFCShellTreeCtrl::SelectPath(LPCTSTR lpszPath)
+BOOL CMFCShellTreeCtrl::SelectPath(LPCTSTR lpszPath, BOOL fExpandToShowChildren/* = TRUE */)
 {
 	ASSERT_VALID(this);
 	ASSERT_VALID(afxShellManager);
@@ -591,13 +589,13 @@ BOOL CMFCShellTreeCtrl::SelectPath(LPCTSTR lpszPath)
 		return FALSE;
 	}
 
-	BOOL bRes = SelectPath(pidl);
+	BOOL bRes = SelectPath(pidl, fExpandToShowChildren);
 	afxShellManager->FreeItem(pidl);
 
 	return bRes;
 }
 
-BOOL CMFCShellTreeCtrl::SelectPath(LPCITEMIDLIST lpidl)
+BOOL CMFCShellTreeCtrl::SelectPath(LPCITEMIDLIST lpidl, BOOL fExpandToShowChildren/* = TRUE */)
 {
 	BOOL bRes = FALSE;
 
@@ -680,7 +678,7 @@ BOOL CMFCShellTreeCtrl::SelectPath(LPCITEMIDLIST lpidl)
 
 		SelectItem(htreeItem);
 
-		if (GetChildItem(htreeItem) == NULL)
+		if (fExpandToShowChildren && (GetChildItem(htreeItem) == NULL))
 		{
 			Expand(htreeItem, TVE_EXPAND);
 		}
@@ -737,21 +735,11 @@ BOOL CMFCShellTreeCtrl::GetItemPath(CString& strPath, HTREEITEM htreeItem) const
 		return FALSE;
 	}
 
-	ULONG uAttribs = SFGAO_FILESYSTEM;
-	if (pItem->pParentFolder != NULL)
+	TCHAR szFolderName [MAX_PATH];
+	if (SHGetPathFromIDList(pItem->pidlFQ, szFolderName))
 	{
-		pItem->pParentFolder->GetAttributesOf(1, (const struct _ITEMIDLIST **)&pItem->pidlFQ, &uAttribs);
-	}
-	// Else - assume desktop
-
-	if ((uAttribs & SFGAO_FILESYSTEM) != 0)
-	{
-		TCHAR szFolderName [MAX_PATH];
-		if (SHGetPathFromIDList(pItem->pidlFQ, szFolderName))
-		{
-			strPath = szFolderName;
-			bRes = TRUE;
-		}
+		strPath = szFolderName;
+		bRes = TRUE;
 	}
 
 	if (lpShellFolder != NULL)

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -126,6 +126,7 @@ public:
 
 public:
 	BOOL m_bLoadUserToolbars;
+	BOOL m_bExitingFullScreenMode;
 
 protected:
 	friend class CFrameImpl;
@@ -157,6 +158,7 @@ protected:
 	BOOL m_bSaveState;          // Automatically save state when the main frame is closed.
 	BOOL m_bForceImageReset;    // Force image reset every time when the frame is loaded
 	BOOL m_bLoadWindowPlacement;
+	BOOL m_bDeferShowOnFirstWindowPlacementLoad;
 
 	const BOOL m_bResourceSmartUpdate; // Automatic toolbars/menu resource update
 

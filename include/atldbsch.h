@@ -17,6 +17,11 @@
 
 #pragma once
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
@@ -29,7 +34,7 @@ public:
 	_CStoreRestrictions()
 	{
 		m_pvarRestrictions = NULL;
-		ATLENSURE(m_pvarRestrictions = new CComVariant[nRestrictions]);
+		ATLENSURE(m_pvarRestrictions = _ATL_NEW CComVariant[nRestrictions]);
 	}
 	~_CStoreRestrictions()
 	{
@@ -40,7 +45,7 @@ ATLPREFAST_SUPPRESS(6387)
 	HRESULT GetRowset(
 		_Inout_ const CSession& session,
 		_In_ const GUID& guidSchema,
-		_Deref_out_opt_ IRowset** ppRowset)
+		_Outptr_result_maybenull_ IRowset** ppRowset)
 	{
 		ATLENSURE_RETURN(session.m_spOpenRowset != NULL);
 		CComPtr<IDBSchemaRowset> spSchemaRowset;
@@ -65,7 +70,7 @@ ATLPREFAST_SUPPRESS(6387)
 	HRESULT GetRowset(
 		_Inout_ const CSession& session,
 		_In_ const GUID& guidSchema,
-		_Deref_out_ IRowset** ppRowset)
+		_Outptr_result_maybenull_ IRowset** ppRowset)
 	{
 		ATLENSURE_RETURN(session.m_spOpenRowset != NULL);
 		CComPtr<IDBSchemaRowset> spSchemaRowset;

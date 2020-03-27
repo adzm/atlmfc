@@ -28,7 +28,7 @@
 
 ////////////////////////////////////////////////////////////////////////////
 
-static void DoRegisterWindowClass(LPCTSTR lpszClassName, LPCTSTR lpszBaseClassName)
+void AfxDoRegisterMFCControlClass(LPCTSTR lpszClassName, LPCTSTR lpszBaseClassName)
 {
 	ASSERT(lpszClassName != NULL);
 	ASSERT(lpszBaseClassName != NULL);
@@ -36,7 +36,7 @@ static void DoRegisterWindowClass(LPCTSTR lpszClassName, LPCTSTR lpszBaseClassNa
 	WNDCLASS wnd = {0};
 
 	HINSTANCE hInst = AfxGetInstanceHandle();
-	if (!AfxCtxGetClassInfo(hInst, lpszBaseClassName, &wnd))
+	if (!GetClassInfo(hInst, lpszBaseClassName, &wnd))
 	{
 		wnd.style = CS_DBLCLKS;
 		wnd.hInstance = hInst;
@@ -45,21 +45,6 @@ static void DoRegisterWindowClass(LPCTSTR lpszClassName, LPCTSTR lpszBaseClassNa
 
 	wnd.lpszClassName = lpszClassName;
 	AfxRegisterClass(&wnd);
-}
-
-void AfxRegisterMFCCtrlClasses()
-{
-	DoRegisterWindowClass(_T("MFCButton"), WC_BUTTON);
-	DoRegisterWindowClass(_T("MFCColorButton"), WC_BUTTON);
-	DoRegisterWindowClass(_T("MFCEditBrowse"), WC_EDIT);
-	DoRegisterWindowClass(_T("MFCFontComboBox"), WC_COMBOBOX);
-	DoRegisterWindowClass(_T("MFCLink"), WC_BUTTON);
-	DoRegisterWindowClass(_T("MFCMaskedEdit"), WC_EDIT);
-	DoRegisterWindowClass(_T("MFCMenuButton"), WC_BUTTON);
-	DoRegisterWindowClass(_T("MFCPropertyGrid"), WC_STATIC);
-	DoRegisterWindowClass(_T("MFCShellList"), WC_LISTVIEW);
-	DoRegisterWindowClass(_T("MFCShellTree"), WC_TREEVIEW);
-	DoRegisterWindowClass(_T("MFCVSListBox"), WC_STATIC);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -73,36 +58,6 @@ CMFCControlContainer::~CMFCControlContainer()
 {
 	FreeSubclassedControls();
 	ClearControlData();
-}
-
-BOOL CMFCControlContainer::SubclassDlgControls()
-{
-	if (m_pWnd->GetSafeHwnd() != NULL)
-	{
-		// Subclass Feature Pack controls:
-		CWnd* pWndChild = m_pWnd->GetWindow(GW_CHILD);
-		while (pWndChild != NULL)
-		{
-			ASSERT_VALID(pWndChild);
-
-			TCHAR lpszClassName [MAX_CLASS_NAME + 1];
-
-			::GetClassName(pWndChild->GetSafeHwnd(), lpszClassName, MAX_CLASS_NAME);
-			CWnd* pWndSubclassedCtrl = CreateDlgControl(lpszClassName);
-
-			if (pWndSubclassedCtrl != NULL)
-			{
-				m_arSubclassedCtrls.Add((CObject*)pWndSubclassedCtrl);
-				pWndSubclassedCtrl->SubclassWindow(pWndChild->GetSafeHwnd());
-			}
-
-			pWndChild = pWndChild->GetNextWindow();
-		}
-
-		return TRUE;
-	}
-
-	return FALSE;
 }
 
 void CMFCControlContainer::FreeSubclassedControls()
@@ -195,15 +150,6 @@ BOOL CMFCControlContainer::IsSubclassedFeaturePackControl(HWND hWndCtrl)
 	}
 
 	return FALSE;
-}
-
-void CMFCControlContainer::PreUnsubclassControl(CWnd* pControl)
-{
-	CMFCShellListCtrl* pListCtrl = DYNAMIC_DOWNCAST(CMFCShellListCtrl, pControl);
-	if (pListCtrl != NULL && pListCtrl->GetHeaderCtrl().GetSafeHwnd() != NULL)
-	{
-		pListCtrl->GetHeaderCtrl().UnsubclassWindow();
-	}
 }
 
 BOOL CMFCControlContainer::ReSubclassControl(HWND hWndCtrl, WORD nIDC, CWnd& control)
@@ -309,61 +255,4 @@ void CMFCControlContainer::ClearControlData()
 	}
 
 	m_mapControlData.RemoveAll();
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Accessing dialog DLGINIT helpers
-
-int __stdcall CMFCControlContainer::UTF8ToString(LPCSTR lpSrc, CString& strDst, int nLength)
-{
-	LPTSTR lpDst = NULL;
-	int count = ::MultiByteToWideChar(CP_UTF8, 0, lpSrc, nLength, NULL, 0);
-	if (count <= 0)
-	{
-		return 0;
-	}
-
-	LPWSTR lpWide = new WCHAR[count + 1];
-	memset(lpWide, 0, (count + 1) * sizeof(WCHAR));
-
-	::MultiByteToWideChar(CP_UTF8, 0, lpSrc, nLength, lpWide, count);
-
-#ifdef _UNICODE
-	lpDst = lpWide;
-#else
-	count = ::WideCharToMultiByte(::GetACP(), 0, lpWide, -1, NULL, 0, NULL, 0);
-
-	if (count > 0)
-	{
-		lpDst = new char[count + 1];
-		memset(lpDst, 0, count + 1);
-
-		::WideCharToMultiByte(::GetACP(), 0, lpWide, -1, lpDst, count, NULL, 0);
-	}
-
-	delete [] lpWide;
-#endif
-
-	strDst = lpDst;
-	delete[] lpDst;
-	return count;
-}
-
-BOOL __stdcall CMFCControlContainer::ReadBoolProp(CTagManager& tagManager, LPCTSTR lpszTag, BOOL& bMember)
-{
-	if (lpszTag == NULL)
-	{
-		return FALSE;
-	}
-
-	CString str;
-	tagManager.ExcludeTag(lpszTag, str);
-
-	if (str.IsEmpty())
-	{
-		return FALSE;
-	}
-
-	bMember = (str.CompareNoCase(PS_True) == 0);
-	return TRUE;
 }

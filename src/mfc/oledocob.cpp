@@ -22,9 +22,6 @@
 IMPLEMENT_DYNAMIC(CDocObjectServer, CCmdTarget)
 
 BEGIN_MESSAGE_MAP(CDocObjectServer, CCmdTarget)
-	//{{AFX_MSG_MAP(CDocObjectServer)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BEGIN_INTERFACE_MAP(CDocObjectServer, CCmdTarget)

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -211,9 +211,7 @@ void CMFCRibbonConstructor::ConstructPanel(CMFCRibbonPanel& panel, const CMFCRib
 	panel.SetJustifyColumns(info.m_bJustifyColumns);
 	panel.SetCenterColumnVert(info.m_bCenterColumnVert);
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	ConstructElement(panel.GetLaunchButton(), info.m_btnLaunch);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	int i = 0;
 	for(i = 0; i < info.m_arElements.GetSize(); i++)
@@ -287,12 +285,10 @@ void CMFCRibbonConstructor::ConstructElement(CMFCRibbonBaseElement& element, con
 
 		const_cast<CMFCToolBarImages&>(infoElement.m_Image.m_Image).CopyTo(pElement->m_Image);
 	}
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	else if (info.GetElementType() == CMFCRibbonInfo::e_TypeButton_Launch && element.IsKindOf(RUNTIME_CLASS(CMFCRibbonLaunchButton)))
 	{
 		ConstructBaseElement(element, info);
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	else if (info.GetElementType() == CMFCRibbonInfo::e_TypeGroup && element.IsKindOf(RUNTIME_CLASS(CMFCRibbonButtonsGroup)))
 	{
 		const CMFCRibbonInfo::XElementGroup& infoElement = (const CMFCRibbonInfo::XElementGroup&)info;
@@ -389,6 +385,11 @@ void CMFCRibbonConstructor::ConstructBaseElement(CMFCRibbonBaseElement& element,
 				if (pSubItem != NULL)
 				{
 					pButton->AddSubItem(pSubItem);
+
+					if (pSubItem->GetID() >= AFX_IDM_WINDOW_FIRST && pSubItem->GetID() <= AFX_IDM_WINDOW_LAST)
+					{
+						pButton->m_bIsWindowsMenu = TRUE;
+					}
 				}
 			}
 		}
@@ -410,7 +411,6 @@ CMFCRibbonBaseElement* CMFCRibbonConstructor::CreateElement(const CMFCRibbonInfo
 
 		ConstructElement(*pElement, info);
 	}
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	else if (info.GetElementType() == CMFCRibbonInfo::e_TypeButton_Launch)
 	{
 		CMFCRibbonLaunchButton* pNewElement = new CMFCRibbonLaunchButton;
@@ -418,7 +418,6 @@ CMFCRibbonBaseElement* CMFCRibbonConstructor::CreateElement(const CMFCRibbonInfo
 
 		ConstructElement(*pElement, info);
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	else if (info.GetElementType() == CMFCRibbonInfo::e_TypeGroup)
 	{
 		CMFCRibbonButtonsGroup* pNewElement = new CMFCRibbonButtonsGroup;

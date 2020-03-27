@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -37,7 +37,7 @@ static const DWORD AFX_MDI_CAN_MOVE_PREV     = 0x004;
 static const DWORD AFX_MDI_CAN_MOVE_NEXT     = 0x008;
 static const DWORD AFX_MDI_CAN_BE_DOCKED     = 0x010;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMDIFrameWndEx frame
 
 class CMDIFrameWndEx : public CMDIFrameWnd
@@ -53,6 +53,7 @@ class CMDIFrameWndEx : public CMDIFrameWnd
 	friend class CGlobalUtils;
 	friend class CMFCTabCtrl;
 	friend class CMFCRibbonButton;
+	friend class CFullScreenImpl;
 
 	DECLARE_DYNCREATE(CMDIFrameWndEx)
 
@@ -197,6 +198,8 @@ public:
 		m_Impl.SetControlbarsMenuId(uiViewToolbarsMenuEntryID, bViewMenuShowsToolbarsOnly);
 	}
 
+	UINT GetPaneMenuEntryID() const { return m_Impl.m_uiControlbarsMenuEntryID; }
+
 	void UpdateCaption() { m_Impl.UpdateCaption(); }
 
 	virtual CMDIChildWndEx* ControlBarToTabbedDocument(CDockablePane* pBar);
@@ -285,7 +288,6 @@ protected:
 	virtual ~CMDIFrameWndEx();
 	virtual COleClientItem* GetInPlaceActiveItem();
 
-	//{{AFX_MSG(CMDIFrameWndEx)
 	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
 	afx_msg void OnWindowPosChanged(WINDOWPOS FAR* lpwndpos);
 	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
@@ -310,16 +312,17 @@ protected:
 	afx_msg void OnUpdatePaneMenu(CCmdUI* pCmdUI);
 	afx_msg BOOL OnPaneCheck(UINT nID);
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
-	afx_msg LRESULT OnExitSizeMove(WPARAM, LPARAM);
+	afx_msg void OnExitSizeMove();
 	afx_msg void OnWindowNew();
 	afx_msg LRESULT OnToolbarContextMenu(WPARAM,LPARAM);
 	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnChangeVisualManager(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPostPreviewFrame(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnDWMCompositionChanged(WPARAM,LPARAM);
-	afx_msg LRESULT OnPowerBroadcast(WPARAM wp, LPARAM lp);
+	afx_msg void OnCompositionChanged();
+	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, UINT nEventData);
 	afx_msg void OnSysColorChange();
-	//}}AFX_MSG
+	afx_msg LRESULT OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam);
+
 	DECLARE_MESSAGE_MAP()
 };
 

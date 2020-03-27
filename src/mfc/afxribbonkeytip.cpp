@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -41,12 +41,10 @@ CMFCRibbonKeyTip::~CMFCRibbonKeyTip()
 }
 
 BEGIN_MESSAGE_MAP(CMFCRibbonKeyTip, CWnd)
-	//{{AFX_MSG_MAP(CMFCRibbonKeyTip)
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
 	ON_WM_DESTROY()
 	ON_WM_MOUSEACTIVATE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -61,7 +59,7 @@ void CMFCRibbonKeyTip::OnPaint()
 	CMemDC memDC(dc, this);
 	CDC* pDC = &memDC.GetDC();
 
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 	ENSURE(pOldFont != NULL);
 
 	pDC->SetBkMode(TRANSPARENT);
@@ -99,7 +97,7 @@ BOOL CMFCRibbonKeyTip::Show(BOOL bRepos)
 
 	CClientDC dc(NULL);
 
-	CFont* pOldFont = dc.SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = dc.SelectObject(&(GetGlobalData()->fontRegular));
 	ENSURE(pOldFont != NULL);
 
 	CRect rect = m_pElement->GetKeyTipRect(&dc, m_bIsMenu);

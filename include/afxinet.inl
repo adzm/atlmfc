@@ -79,6 +79,14 @@ _AFXINET_INLINE BOOL CFtpConnection::SetCurrentDirectory(LPCTSTR pstrDirName)
 	{ return _AFX_FUNCNAME(SetCurrentDirectory)(pstrDirName); }
 #pragma pop_macro("SetCurrentDirectory")
 
+#pragma push_macro("GetCurrentDirectory")
+#undef GetCurrentDirectory
+_AFXINET_INLINE BOOL CFtpConnection::GetCurrentDirectory(CString& strDirName) const
+	{ return _AFX_FUNCNAME(GetCurrentDirectory)(strDirName); }
+_AFXINET_INLINE BOOL CFtpConnection::GetCurrentDirectory(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName, _Inout_ LPDWORD lpdwLen) const
+	{ return _AFX_FUNCNAME(GetCurrentDirectory)(pstrDirName, lpdwLen); }
+#pragma pop_macro("GetCurrentDirectory")
+
 #pragma push_macro("CreateDirectory")
 #undef CreateDirectory
 _AFXINET_INLINE BOOL CFtpConnection::CreateDirectory(LPCTSTR pstrDirName)

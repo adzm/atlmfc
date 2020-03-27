@@ -54,7 +54,7 @@ void CAtlTraceCategory::Reset(
 	_In_z_ const WCHAR *pszName,
 	_In_ LONG nModuleCookie)
 {
-	ATL_CRT_ERRORCHECK(wcsncpy_s(m_szName, _countof(m_szName), pszName, wcslen(pszName)));
+	ATL_CRT_ERRORCHECK(wcsncpy_s(m_szName, _countof(m_szName), pszName, AtlStrLen(pszName)));
 	m_nModuleCookie = nModuleCookie;
 	m_iNextCategory = -1;
 }
@@ -83,6 +83,7 @@ CAtlTraceProcess::CAtlTraceProcess(_In_ DWORD_PTR dwMaxSize) :
 	m_nLevel(0), m_bLoaded(false), m_bEnabled(true), m_bFuncAndCategoryNames(false), m_bFileNameAndLineNo(false),
 	m_nNextCookie( 0 )
 {
+	m_cbSize = sizeof(CAtlTraceProcess);
 	m_pvBase = this;
 
 	Reset( NULL );

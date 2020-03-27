@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -289,15 +289,14 @@ void CMFCRibbonButton::OnCalcTextSize(CDC* pDC)
 
 	// Text placed on right will be always single line:
 
-	const CString strDummyAmpSeq = _T("\001\001");
 	CString strText = m_strText;
-	strText.Replace(_T("&&"), strDummyAmpSeq);
+	strText.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 	strText.Remove(_T('&'));
-	strText.Replace(strDummyAmpSeq, _T("&"));
+	strText.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 
 	if (m_bAlwaysShowDescription && !m_strDescription.IsEmpty())
 	{
-		CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+		CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 		ENSURE(pOldFont != NULL);
 
 		m_sizeTextRight = pDC->GetTextExtent(strText);
@@ -484,10 +483,10 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 		// Use default image:
 		sizeImage = CSize(16, 16);
 
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			sizeImage.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cx);
-			sizeImage.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cy);
+			sizeImage.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImage.cx);
+			sizeImage.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImage.cy);
 		}
 
 		bDrawDefaultImage = TRUE;
@@ -498,10 +497,10 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 
 	if (IsApplicationButton())
 	{
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			sizeImage.cx = (int) (.8 * afxGlobalData.GetRibbonImageScale() * sizeImage.cx);
-			sizeImage.cy = (int) (.8 * afxGlobalData.GetRibbonImageScale() * sizeImage.cy);
+			sizeImage.cx = (int) (.8 * GetGlobalData()->GetRibbonImageScale() * sizeImage.cx);
+			sizeImage.cy = (int) (.8 * GetGlobalData()->GetRibbonImageScale() * sizeImage.cy);
 		}
 
 		rectImage.left += (rectImage.Width () - sizeImage.cx) / 2;
@@ -559,18 +558,18 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 	}
 	else
 	{
-		BOOL bIsRibbonImageScale = afxGlobalData.IsRibbonImageScaleEnabled();
+		BOOL bIsRibbonImageScale = GetGlobalData()->IsRibbonImageScaleEnabled();
 
 		if (IsMenuMode() && !m_bIsLargeImage)
 		{
 			if (m_pParentMenu == NULL || !m_pParentMenu->IsMainPanel())
 			{
-				afxGlobalData.EnableRibbonImageScale(FALSE);
+				GetGlobalData()->EnableRibbonImageScale(FALSE);
 			}
 		}
 
 		DrawImage(pDC, imageType, rectImage);
-		afxGlobalData.EnableRibbonImageScale(bIsRibbonImageScale);
+		GetGlobalData()->EnableRibbonImageScale(bIsRibbonImageScale);
 	}
 
 	//-----------
@@ -627,7 +626,7 @@ void CMFCRibbonButton::OnDraw(CDC* pDC)
 			}
 			else
 			{
-				pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+				pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 				ENSURE(pOldFont != NULL);
 
 				rectText.top += max(0, (m_rect.Height() - m_sizeTextRight.cy) / 2);
@@ -750,7 +749,7 @@ void CMFCRibbonButton::OnDrawOnList(CDC* pDC, CString strText, int nTextOffset, 
 			}
 		}
 
-		CMenuImages::IMAGES_IDS id = afxGlobalData.GetRibbonImageScale() > 1. ? CMenuImages::IdArrowRightLarge : CMenuImages::IdArrowRight;
+		CMenuImages::IMAGES_IDS id = GetGlobalData()->GetRibbonImageScale() > 1. ? CMenuImages::IdArrowRightLarge : CMenuImages::IdArrowRight;
 
 		CMenuImages::Draw(pDC, id, rectWhite, bIsDarkMenu ? CMenuImages::ImageWhite : CMenuImages::ImageBlack); 
 		CMenuImages::Draw(pDC, id, rectMenuArrow, bIsDarkMenu ? CMenuImages::ImageBlack : CMenuImages::ImageWhite); 
@@ -894,16 +893,16 @@ CSize CMFCRibbonButton::GetCompactSize(CDC* /*pDC*/)
 
 	if (m_bQuickAccessMode || m_bFloatyMode)
 	{
-		SetMargin(afxGlobalData.GetRibbonImageScale() != 1. ? CSize(nSmallButtonMarginX, nSmallButtonMarginY - 1) : CSize(nSmallButtonMarginX, nSmallButtonMarginY));
+		SetMargin(GetGlobalData()->GetRibbonImageScale() != 1. ? CSize(nSmallButtonMarginX, nSmallButtonMarginY - 1) : CSize(nSmallButtonMarginX, nSmallButtonMarginY));
 
 		if (sizeImageSmall == CSize(0, 0))
 		{
 			sizeImageSmall = CSize(16, 16);
 
-			if (afxGlobalData.GetRibbonImageScale() != 1.)
+			if (GetGlobalData()->GetRibbonImageScale() != 1.)
 			{
-				sizeImageSmall.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImageSmall.cx);
-				sizeImageSmall.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImageSmall.cy);
+				sizeImageSmall.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImageSmall.cx);
+				sizeImageSmall.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImageSmall.cy);
 			}
 		}
 	}
@@ -1082,6 +1081,21 @@ void CMFCRibbonButton::OnClick(CPoint point)
 	NotifyCommand();
 }
 
+void CMFCRibbonButton::OnAccDefaultAction()
+{
+	ASSERT_VALID (this);
+
+	if (NotifyCommand(TRUE))
+	{
+		return;
+	}
+
+	if (HasMenu ())
+	{
+		OnShowPopupMenu ();
+	}
+}
+
 void CMFCRibbonButton::OnShowPopupMenu()
 {
 	ASSERT_VALID(this);
@@ -1111,6 +1125,10 @@ void CMFCRibbonButton::OnShowPopupMenu()
 	const BOOL bIsRTL = (pTopLevelRibbon->GetExStyle() & WS_EX_LAYOUTRTL);
 
 	CWnd* pWndOwner = pTopLevelRibbon->GetSafeOwner();
+	if (pTopLevelRibbon->GetParentFrame()->GetSafeHwnd() != AfxGetMainWnd()->GetSafeHwnd())
+	{
+		pWndOwner = pTopLevelRibbon->GetParentFrame();
+	}
 
 	if (m_arSubItems.GetSize() > 0)
 	{
@@ -1360,10 +1378,10 @@ void CMFCRibbonButton::DrawImage(CDC* pDC, RibbonImageType type, CRect rectImage
 
 		CSize sizeIcon = type == RibbonImageLarge ? CSize(32, 32) : CSize(16, 16);
 
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			sizeIcon.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cx);
-			sizeIcon.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cy);
+			sizeIcon.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cx);
+			sizeIcon.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cy);
 		}
 
 		if (m_bIsDisabled)
@@ -1430,10 +1448,10 @@ CSize CMFCRibbonButton::GetImageSize(RibbonImageType type) const
 	{
 		CSize sizeIcon = type == RibbonImageLarge ? CSize(32, 32) : CSize(16, 16);
 
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			sizeIcon.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cx);
-			sizeIcon.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cy);
+			sizeIcon.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cx);
+			sizeIcon.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cy);
 		}
 
 		return sizeIcon;
@@ -1966,10 +1984,10 @@ void CMFCRibbonButton::OnAfterChangeRect(CDC* pDC)
 		{
 			CSize sizeIcon = CSize(32, 32);
 
-			if (afxGlobalData.GetRibbonImageScale() != 1.)
+			if (GetGlobalData()->GetRibbonImageScale() != 1.)
 			{
-				sizeIcon.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cx);
-				sizeIcon.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cy);
+				sizeIcon.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cx);
+				sizeIcon.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cy);
 			}
 
 			bIsSmallIcon = sizeIcon.cx > m_rect.Width() || sizeIcon.cy > m_rect.Height();
@@ -2131,15 +2149,13 @@ CSize CMFCRibbonButton::DrawBottomText(CDC* pDC, BOOL bCalcOnly)
 	const int nTextLineHeight = sizeText.cy;
 	int nMenuArrowWidth = (HasMenu() || IsDefaultPanelButton()) ?(CMenuImages::Size().cx) : 0;
 
-	if (nMenuArrowWidth != NULL && afxGlobalData.GetRibbonImageScale() > 1.)
+	if (nMenuArrowWidth != NULL && GetGlobalData()->GetRibbonImageScale() > 1.)
 	{
-		nMenuArrowWidth = (int)(.5 + afxGlobalData.GetRibbonImageScale() * nMenuArrowWidth);
+		nMenuArrowWidth = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * nMenuArrowWidth);
 	}
 
 	if (bCalcOnly)
 	{
-		const CString strDummyAmpSeq = _T("\001\001");
-
 		m_nWrapIndex = -1;
 		int nTextWidth = 0;
 
@@ -2159,9 +2175,9 @@ CSize CMFCRibbonButton::DrawBottomText(CDC* pDC, BOOL bCalcOnly)
 
 				if (!IsDefaultPanelButton())
 				{
-					strLineOne.Replace(_T("&&"), strDummyAmpSeq);
+					strLineOne.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 					strLineOne.Remove(_T('&'));
-					strLineOne.Replace(strDummyAmpSeq, _T("&"));
+					strLineOne.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 				}
 
 				const int cx1 = pDC->GetTextExtent(strLineOne).cx;
@@ -2170,9 +2186,9 @@ CSize CMFCRibbonButton::DrawBottomText(CDC* pDC, BOOL bCalcOnly)
 
 				if (!IsDefaultPanelButton())
 				{
-					strLineTwo.Replace(_T("&&"), strDummyAmpSeq);
+					strLineTwo.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 					strLineTwo.Remove(_T('&'));
-					strLineTwo.Replace(strDummyAmpSeq, _T("&"));
+					strLineTwo.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 				}
 
 				const int cx2 = pDC->GetTextExtent(strLineTwo).cx + nMenuArrowWidth;
@@ -2256,7 +2272,7 @@ CSize CMFCRibbonButton::DrawBottomText(CDC* pDC, BOOL bCalcOnly)
 		CRect rectWhite = rectMenuArrow;
 		rectWhite.OffsetRect(0, 1);
 
-		CMenuImages::IMAGES_IDS id = afxGlobalData.GetRibbonImageScale() > 1. ? CMenuImages::IdArrowDownLarge : CMenuImages::IdArrowDown;
+		CMenuImages::IMAGES_IDS id = GetGlobalData()->GetRibbonImageScale() > 1. ? CMenuImages::IdArrowDownLarge : CMenuImages::IdArrowDown;
 
 		CMenuImages::Draw(pDC, id, rectWhite, CMenuImages::ImageWhite);
 		CMenuImages::Draw(pDC, id, rectMenuArrow, m_bIsDisabled ? CMenuImages::ImageGray : CMenuImages::ImageBlack);

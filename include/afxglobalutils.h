@@ -59,7 +59,7 @@ public:
 	BOOL m_bIsDragging;
 };
 
-extern CGlobalUtils afxGlobalUtils;
+AFX_IMPORT_DATA extern CGlobalUtils afxGlobalUtils;
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

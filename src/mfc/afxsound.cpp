@@ -27,6 +27,7 @@ static const int nThreadDelay = 5;
 void _cdecl AFXSoundThreadProc(LPVOID)
 {
 	const DWORD dwFlags = (SND_SYNC | SND_NODEFAULT | SND_ALIAS | SND_NOWAIT);
+	int nIdleCount = 0;  // loop iterations since last sound played
 
 	while (g_nSoundState != AFX_SOUND_TERMINATE)
 	{
@@ -35,17 +36,34 @@ void _cdecl AFXSoundThreadProc(LPVOID)
 		case AFX_SOUND_MENU_COMMAND:
 			::PlaySound(_T("MenuCommand"), NULL, dwFlags);
 			g_nSoundState = AFX_SOUND_IDLE;
+			nIdleCount = 0;
 			break;
 
 		case AFX_SOUND_MENU_POPUP:
 			::PlaySound(_T("MenuPopup"), NULL, dwFlags);
 			g_nSoundState = AFX_SOUND_IDLE;
+			nIdleCount = 0;
+			break;
+
+		case AFX_SOUND_IDLE:
+			nIdleCount++;
+			break;
+		}
+
+		// We want to avoid waking up the CPU from an idle state--this wastes
+		// energy/battery, so kill the thread after a period of inactivity. An
+		// idle count of 2000 results in approximately 30 seconds of idle time.
+		if (nIdleCount == 2000)
+		{
+			g_nSoundState = AFX_SOUND_TERMINATE;
 		}
 
 		::Sleep(nThreadDelay);
 	}
 
 	::PlaySound(NULL, NULL, SND_PURGE);
+	g_nSoundState = AFX_SOUND_NOT_STARTED;
+	g_hThreadSound = NULL;
 
 	_endthread();
 }
@@ -93,5 +111,3 @@ void AFXPlaySystemSound(int nSound)
 		}
 	}
 }
-
-

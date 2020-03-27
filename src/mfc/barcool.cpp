@@ -18,7 +18,6 @@
 // CReBar
 
 BEGIN_MESSAGE_MAP(CReBar, CControlBar)
-	//{{AFX_MSG_MAP(CReBar)
 	ON_WM_NCCREATE()
 	ON_WM_PAINT()
 	ON_WM_NCCALCSIZE()
@@ -28,7 +27,6 @@ BEGIN_MESSAGE_MAP(CReBar, CControlBar)
 	ON_NOTIFY_REFLECT(RBN_ENDDRAG, &CReBar::OnHeightChange)
 	ON_MESSAGE(RB_SHOWBAND, &CReBar::OnShowBand)
 	ON_MESSAGE_VOID(WM_RECALCPARENT, CReBar::OnRecalcParent)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 CReBar::CReBar()
@@ -140,7 +138,14 @@ BOOL CReBar::_AddBar(CWnd* pBar, REBARBANDINFO* pRBBI)
 		if (pFrameWnd != NULL)
 			pFrameWnd->RecalcLayout();
 
-		GetReBarCtrl().MaximizeBand(0);
+		REBARBANDINFO rbBand;
+		rbBand.cbSize = m_nReBarBandInfoSize;
+		rbBand.fMask = RBBIM_STYLE;
+		VERIFY(DefWindowProc(RB_GETBANDINFO, 0, (LPARAM)&rbBand));
+		if ((rbBand.fStyle & RBBS_HIDDEN) == 0)
+		{
+			GetReBarCtrl().MaximizeBand(0);
+		}
 
 		return TRUE;
 	}

@@ -17,8 +17,8 @@
 #define new DEBUG_NEW
 #endif
 
-static const CString strRegEntryName = _T("Mouse");
-static const CString strMouseProfile = _T("MouseManager");
+#define AFX_MOUSE_KEY  _T("Mouse")
+#define AFX_MOUSE_MANAGER_PROFILE  _T("MouseManager")
 
 CMouseManager* afxMouseManager = NULL;
 
@@ -106,7 +106,7 @@ int CMouseManager::GetViewIdByName(LPCTSTR lpszName) const
 
 BOOL CMouseManager::LoadState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strMouseProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MOUSE_MANAGER_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -122,7 +122,7 @@ BOOL CMouseManager::LoadState(LPCTSTR lpszProfileName)
 		return FALSE;
 	}
 
-	if (!reg.Read(strRegEntryName, &lpbData, &uiDataSize))
+	if (!reg.Read(AFX_MOUSE_KEY, &lpbData, &uiDataSize))
 	{
 		TRACE(_T("CMouseManager::LoadState: Can't load registry data %s!\n"), strProfileName);
 		return FALSE;
@@ -157,7 +157,7 @@ BOOL CMouseManager::LoadState(LPCTSTR lpszProfileName)
 
 BOOL CMouseManager::SaveState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strMouseProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MOUSE_MANAGER_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -182,7 +182,7 @@ BOOL CMouseManager::SaveState(LPCTSTR lpszProfileName)
 
 			if (reg.CreateKey(strProfileName))
 			{
-				bResult = reg.Write(strRegEntryName, lpbData, uiDataSize);
+				bResult = reg.Write(AFX_MOUSE_KEY, lpbData, uiDataSize);
 			}
 
 			free(lpbData);

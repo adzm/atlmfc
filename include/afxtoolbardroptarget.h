@@ -26,7 +26,7 @@
 
 class CMFCToolBar;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarDropTarget command target
 
 class CMFCToolBarDropTarget : public COleDropTarget

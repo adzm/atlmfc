@@ -574,19 +574,8 @@ const CString& COleControl::InternalGetText()
 
 	if (m_hWnd != NULL && IsSubclassedControl())
 	{
-		// Usually, the window text will be shorter than 32 characters.
-		// When it is, we can be more efficient.
-		const int _cchUsual = 32;
-
-		if (DefWindowProc(WM_GETTEXT, (WPARAM)_cchUsual,
-			(LPARAM)m_strText.GetBufferSetLength(_cchUsual)) >= _cchUsual - 1)
-		{
-			// Text was too long: allocate a bigger buffer.
-
-			int nLen = int(DefWindowProc(WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0) + 1);
-			DefWindowProc(WM_GETTEXT, (WPARAM)nLen,
-				(LPARAM)m_strText.GetBufferSetLength(nLen));
-		}
+		int nLen = int(DefWindowProc(WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0) + 1);
+		DefWindowProc(WM_GETTEXT, (WPARAM)nLen, (LPARAM)m_strText.GetBufferSetLength(nLen));
 		m_strText.ReleaseBuffer();
 	}
 
@@ -1279,7 +1268,7 @@ inline LPOLESTR AFXAPI _AfxCopyString(LPCTSTR psz)
 	if (psz == NULL)
 		return NULL;
 
-	int cch = lstrlen(psz) + 1;
+	int cch = static_cast<int>(_tcslen(psz)) + 1;
 	LPOLESTR pszCopy = NULL;
 	if (cch > size_t(-1) / sizeof(OLECHAR))
 	{

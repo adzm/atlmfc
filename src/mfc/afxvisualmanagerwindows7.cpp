@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -342,7 +342,7 @@ void CMFCVisualManagerWindows7::DrawNcBtn(CDC* pDC, const CRect& rect, UINT nBut
 		return;
 	}
 
-	(*m_pfDrawThemeBackground)(m_hThemeWindow, pDC->GetSafeHdc(), nPart, nState, &rect, 0);
+	DrawThemeBackground(m_hThemeWindow, pDC->GetSafeHdc(), nPart, nState, &rect, 0);
 }
 
 void CMFCVisualManagerWindows7::DrawNcText(CDC* pDC, CRect& rect, const CString& strTitle, BOOL bActive, BOOL bIsRTL, BOOL bTextCenter, BOOL bGlass/* = FALSE*/, int nGlassGlowSize/* = 0*/, COLORREF clrGlassText/* = (COLORREF)-1*/)
@@ -360,8 +360,8 @@ void CMFCVisualManagerWindows7::DrawNcText(CDC* pDC, CRect& rect, const CString&
 	DWORD dwTextStyle = DT_END_ELLIPSIS | DT_SINGLELINE | DT_VCENTER | (bIsRTL ? DT_RTLREADING : 0);
 
 	COLORREF clrText = bActive 
-		? afxGlobalData.clrCaptionText
-		: afxGlobalData.clrInactiveCaptionText;
+		? GetGlobalData()->clrCaptionText
+		: GetGlobalData()->clrInactiveCaptionText;
 
 	int widthFull = rect.Width();
 	int width = pDC->GetTextExtent(strTitle).cx;
@@ -410,6 +410,9 @@ void CMFCVisualManagerWindows7::CleanUp()
 	m_ctrlRibbonCategoryBack.CleanUp();
 	m_ctrlRibbonCategoryTab.CleanUp();
 	m_ctrlRibbonCategoryTabSep.CleanUp();
+	m_ctrlRibbonCategoryBtnPage[0].CleanUp();
+	m_ctrlRibbonCategoryBtnPage[1].CleanUp();
+	m_ctrlRibbonPanelBack.CleanUp();
 	m_ctrlRibbonPanelBackSep.CleanUp();
 	m_ctrlRibbonMainPanel.CleanUp();
 	m_ctrlRibbonBtnMainPanel.CleanUp();
@@ -444,8 +447,16 @@ void CMFCVisualManagerWindows7::CleanUp()
 	m_ctrlRibbonBtnPalette[2].CleanUp();
 
 	m_ctrlRibbonBorder_QAT.CleanUp();
+	m_ctrlRibbonBorder_Panel.CleanUp();
+
+	m_ctrlRibbonContextSeparator.CleanUp();
+	for (int i = 0; i < AFX_RIBBON_CATEGORY_COLOR_COUNT; i++)
+	{
+		m_ctrlRibbonContextCategory[i].CleanUp();
+	}
 
 	m_cacheRibbonCategoryBack.Clear();
+	m_cacheRibbonPanelBack.Clear();
 	m_cacheRibbonBtnGroup_S.Clear();
 	m_cacheRibbonBtnGroup_F.Clear();
 	m_cacheRibbonBtnGroup_M.Clear();
@@ -567,19 +578,19 @@ void CMFCVisualManagerWindows7::OnUpdateSystemColors()
 	m_brMenuRarelyUsed.DeleteObject();
 	m_brMenuRarelyUsed.CreateSolidBrush(m_clrMenuRarelyUsed);
 
-	m_clrRibbonEdit            = afxGlobalData.clrWindow;
-	m_clrRibbonEditHighlighted = afxGlobalData.clrWindow;
+	m_clrRibbonEdit            = GetGlobalData()->clrWindow;
+	m_clrRibbonEditHighlighted = GetGlobalData()->clrWindow;
 	m_clrRibbonEditPressed     = m_clrRibbonEditHighlighted;
-	m_clrRibbonEditDisabled    = afxGlobalData.clrBtnFace;
+	m_clrRibbonEditDisabled    = GetGlobalData()->clrBtnFace;
 
-	m_clrRibbonEditBorder            = afxGlobalData.clrWindow;
-	m_clrRibbonEditBorderDisabled    = afxGlobalData.clrBtnShadow;
+	m_clrRibbonEditBorder            = GetGlobalData()->clrWindow;
+	m_clrRibbonEditBorderDisabled    = GetGlobalData()->clrBtnShadow;
 	m_clrRibbonEditBorderHighlighted = m_clrMenuItemBorder;
 	m_clrRibbonEditBorderPressed     = m_clrRibbonEditBorderHighlighted;
-	m_clrRibbonEditSelection         = afxGlobalData.clrHilite;
+	m_clrRibbonEditSelection         = GetGlobalData()->clrHilite;
 
-	m_clrRibbonBarBkgnd         = afxGlobalData.clrBarFace;
-	m_clrRibbonBarGradientLight = afxGlobalData.clrBarLight;
+	m_clrRibbonBarBkgnd         = GetGlobalData()->clrBarFace;
+	m_clrRibbonBarGradientLight = GetGlobalData()->clrBarLight;
 	m_clrRibbonBarGradientDark  = m_clrRibbonBarGradientLight;
 
 	// bars
@@ -602,6 +613,10 @@ void CMFCVisualManagerWindows7::OnUpdateSystemColors()
 	m_brRibbonBarBkgnd.DeleteObject ();
 	m_brRibbonBarBkgnd.CreateSolidBrush  (m_clrRibbonBarBkgnd);
 
+	m_clrRibbonCategoryText            = GetGlobalData()->clrBarText;
+	m_clrRibbonCategoryTextHighlighted = GetGlobalData()->clrBarText;
+	m_clrRibbonCategoryTextDisabled    = GetGlobalData()->clrBarText;
+
 	if (tm.ExcludeTag(_T("RIBBON"), strItem))
 	{
 		CTagManager tmItem(strItem);
@@ -617,13 +632,17 @@ void CMFCVisualManagerWindows7::OnUpdateSystemColors()
 			if (tmCategory.ExcludeTag(_T("TAB"), strTab))
 			{
 				CTagManager tmTab(strTab);
+
 				tmTab.ReadControlRenderer(_T("BUTTON"), m_ctrlRibbonCategoryTab, MakeResourceID(_T("IDB_RIBBON_CATEGORY_TAB")));
+				tmTab.ReadColor (_T("TextNormal"), m_clrRibbonCategoryText);
+				tmTab.ReadColor (_T("TextHighlighted"), m_clrRibbonCategoryTextHighlighted);
+				tmTab.ReadColor (_T("TextDisabled"), m_clrRibbonCategoryTextDisabled);
 			}
 
 			tmCategory.ReadControlRenderer (_T("TAB_SEPARATOR"), m_ctrlRibbonCategoryTabSep, MakeResourceID(_T("IDB_RIBBON_CATEGORY_TAB_SEP")));
 
-//			tmCategory.ReadControlRenderer (_T("BUTTON_PAGE_L"), m_ctrlRibbonCategoryBtnPage[0], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_PAGE_L")));
-//			tmCategory.ReadControlRenderer (_T("BUTTON_PAGE_R"), m_ctrlRibbonCategoryBtnPage[1], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_PAGE_R")));
+			tmCategory.ReadControlRenderer (_T("BUTTON_PAGE_L"), m_ctrlRibbonCategoryBtnPage[0], MakeResourceID(_T("IDB_RIBBON_BTN_PAGE_L")));
+			tmCategory.ReadControlRenderer (_T("BUTTON_PAGE_R"), m_ctrlRibbonCategoryBtnPage[1], MakeResourceID(_T("IDB_RIBBON_BTN_PAGE_R")));
 		}
 
 		if (tmItem.ExcludeTag(_T("PANEL"), str))
@@ -635,6 +654,8 @@ void CMFCVisualManagerWindows7::OnUpdateSystemColors()
 				if (tmPanel.ExcludeTag(_T("BACK"), strBack))
 				{
 					CTagManager tmBack(strBack);
+
+					tmBack.ReadControlRenderer (_T("FULL"), m_ctrlRibbonPanelBack, MakeResourceID(_T("IDB_RIBBON_PANEL_BACK")));
 					tmBack.ReadControlRenderer(_T("SEPARATOR"), m_ctrlRibbonPanelBackSep, MakeResourceID(_T("IDB_RIBBON_PANEL_BACK_SEP")));
 				}
 			}
@@ -716,7 +737,74 @@ void CMFCVisualManagerWindows7::OnUpdateSystemColors()
 			}
 		}
 
+		if (tmItem.ExcludeTag(_T("CONTEXT"), str))
+		{
+			CTagManager tmContext(str);
 
+			CString strCategory;
+			if (tmContext.ExcludeTag(_T("CATEGORY"), strCategory))
+			{
+				CTagManager tmCategory(strCategory);
+
+				CMFCControlRendererInfo prBack;
+				CMFCControlRendererInfo prCaption;
+				CMFCControlRendererInfo prTab;
+				COLORREF clrText = m_clrRibbonCategoryText;
+				COLORREF clrTextHighlighted = m_clrRibbonCategoryTextHighlighted;
+				COLORREF clrCaptionText = clrText;
+
+				tmCategory.ReadControlRendererInfo(_T("BACK"), prBack);
+
+				CString strTab;
+				if (tmCategory.ExcludeTag(_T("TAB"), strTab))
+				{
+					CTagManager tmTab(strTab);
+
+					tmTab.ReadControlRendererInfo(_T("BUTTON"), prTab);
+					tmTab.ReadColor(_T("TextNormal"), clrText);
+					tmTab.ReadColor(_T("TextHighlighted"), clrTextHighlighted);
+				}
+
+				CString strCaption;
+				if (tmCategory.ExcludeTag(_T("CAPTION"), strCaption))
+				{
+					CTagManager tmCaption(strCaption);
+
+					tmCaption.ReadControlRendererInfo(_T("BACK"), prCaption);
+					tmCaption.ReadColor(_T("TextNormal"), clrCaptionText);
+				}
+
+				CString strID[AFX_RIBBON_CATEGORY_COLOR_COUNT] =
+				{
+					MakeResourceID(_T("IDB_RIBBON_CONTEXT_R_")),
+					MakeResourceID(_T("IDB_RIBBON_CONTEXT_O_")),
+					MakeResourceID(_T("IDB_RIBBON_CONTEXT_Y_")),
+					MakeResourceID(_T("IDB_RIBBON_CONTEXT_G_")),
+					MakeResourceID(_T("IDB_RIBBON_CONTEXT_B_")),
+					MakeResourceID(_T("IDB_RIBBON_CONTEXT_I_")),
+					MakeResourceID(_T("IDB_RIBBON_CONTEXT_V_"))
+				};
+
+				for (int i = 0; i < AFX_RIBBON_CATEGORY_COLOR_COUNT; i++)
+				{
+					CMFCRibbonContextCategory& cat = m_ctrlRibbonContextCategory[i];
+
+					prTab.m_strBmpResID     = strID[i] + _T("CATEGORY_TAB");
+					prCaption.m_strBmpResID = strID[i] + _T("CATEGORY_CAPTION");
+					prBack.m_strBmpResID    = strID[i] + _T("CATEGORY_BACK");
+
+					cat.m_ctrlCaption.Create(prCaption);
+					cat.m_ctrlTab.Create(prTab);
+					cat.m_ctrlBack.Create(prBack);
+					cat.m_clrText            = clrText;
+					cat.m_clrTextHighlighted = clrTextHighlighted;
+					cat.m_clrCaptionText     = clrCaptionText;
+				}
+			}
+
+			tmContext.ReadControlRenderer(_T("SEPARATOR"), m_ctrlRibbonContextSeparator, MakeResourceID(_T("IDB_RIBBON_CONTEXT_SEPARATOR")));
+		}
+		
 		tmItem.ReadControlRenderer(_T("MAIN_BUTTON"), m_ctrlRibbonBtnMain, MakeResourceID(_T("IDB_RIBBON_BTN_MAIN")));
 
 		if (tmItem.ExcludeTag(_T("MAIN"), str))
@@ -753,7 +841,7 @@ void CMFCVisualManagerWindows7::OnUpdateSystemColors()
 			CTagManager tmBorders(str);
 
 			tmBorders.ReadControlRenderer(_T("QAT"), m_ctrlRibbonBorder_QAT, MakeResourceID(_T("IDB_RIBBON_BORDER_QAT")));
-			//tmBorders.ReadControlRenderer (_T("FLOATY"), m_ctrlRibbonBorder_Floaty, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BORDER_FLOATY")));
+			tmBorders.ReadControlRenderer (_T("PANEL"), m_ctrlRibbonBorder_Panel, MakeResourceID(_T("IDB_RIBBON_BORDER_PANEL")));
 		}
 	}
 
@@ -765,7 +853,7 @@ void CMFCVisualManagerWindows7::OnUpdateSystemColors()
 
 	NONCLIENTMETRICS ncm;
 	ncm.cbSize = sizeof(ncm);
-	afxGlobalData.GetNonClientMetrics(ncm);
+	GetGlobalData()->GetNonClientMetrics(ncm);
 	m_AppCaptionFont.CreateFontIndirect(&ncm.lfCaptionFont);
 
 	m_penSeparatorDark.CreatePen(PS_SOLID, 0, RGB (198, 212, 227));
@@ -792,14 +880,14 @@ void CMFCVisualManagerWindows7::OnDrawMenuCheck(CDC* pDC, CMFCToolBarMenuButton*
         rectImage.OffsetRect(0, size.cy);
     }
 
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		img.Mirror();
 	}
 
     img.DrawEx(pDC, rect, 0, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter, rectImage);
 
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		img.Mirror();
 	}
@@ -842,46 +930,20 @@ void CMFCVisualManagerWindows7::OnDrawMenuBorder(CDC* pDC, CMFCPopupMenu* pMenu,
 				{
 					return;
 				}
-				else if (pRibbonMenuBar->IsRibbonMiniToolBar() /*&& m_ctrlRibbonBorder_Floaty.IsValid()*/)
+				else if (pRibbonMenuBar->IsRibbonMiniToolBar())
 				{
-/*
-					m_ctrlRibbonBorder_Floaty.DrawFrame (pDC, rect);
-					return;
-*/
 				}
 				else
 				{
 					if (pRibbonMenuBar->GetPanel() != NULL)
 					{
+						m_ctrlRibbonBorder_Panel.DrawFrame(pDC, rect);
 						return;
 					}
 				}
 			}
 		}
 	}
-/*
-	CBasePane* pTopLevelBar = NULL;
-
-	for (CMFCPopupMenu* pParentMenu = pMenu; pParentMenu != NULL; pParentMenu = pParentMenu->GetParentPopupMenu())
-	{
-		CMFCToolBarMenuButton* pParentButton = pParentMenu->GetParentButton();
-		if (pParentButton == NULL)
-		{
-			break;
-		}
-
-		pTopLevelBar = DYNAMIC_DOWNCAST(CBasePane, pParentButton->GetParentWnd());
-	}
-
-	if (pTopLevelBar == NULL || pTopLevelBar->IsKindOf(RUNTIME_CLASS(CMFCPopupMenuBar)))
-	{
-		m_ctrlPopupBorder.DrawFrame(pDC, rect);
-	}
-	else
-	{
-		CMFCVisualManagerWindows::OnDrawMenuBorder(pDC, pMenu, rect);
-	}
-*/
 
 	CMFCVisualManagerWindows::OnDrawMenuBorder (pDC, pMenu, rect);
 }
@@ -894,7 +956,7 @@ void CMFCVisualManagerWindows7::OnHighlightMenuItem(CDC *pDC, CMFCToolBarMenuBut
 		return;
 	}
 
-	clrText = afxGlobalData.clrMenuText;
+	clrText = GetGlobalData()->clrMenuText;
 	m_ctrlMenuHighlighted[(pButton->m_nStyle & TBBS_DISABLED) == TBBS_DISABLED ? 1 : 0].Draw(pDC, rect);
 }
 
@@ -914,7 +976,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* pBa
 
 	const DWORD dwStyleEx = pWnd->GetExStyle();
 
-	const BOOL bIsRTL     = (dwStyleEx & WS_EX_LAYOUTRTL) == WS_EX_LAYOUTRTL;
+	const BOOL bIsRTL  = (dwStyleEx & WS_EX_LAYOUTRTL) == WS_EX_LAYOUTRTL;
 	const BOOL bActive = IsWindowActive(pWnd);
 	const BOOL bGlass  = pBar->IsTransparentCaption();
 
@@ -928,12 +990,12 @@ void CMFCVisualManagerWindows7::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* pBa
 
 			if (m_hThemeWindow != NULL)
 			{
-				(*m_pfDrawThemeBackground)(m_hThemeWindow, pDC->GetSafeHdc(), WP_CAPTION, bActive ? CS_ACTIVE : CS_INACTIVE, &rectCaption1, 0);
+				DrawThemeBackground(m_hThemeWindow, pDC->GetSafeHdc(), WP_CAPTION, bActive ? CS_ACTIVE : CS_INACTIVE, &rectCaption1, 0);
 			}
 			else
 			{
 				CDrawingManager dm(*pDC);
-				dm.FillGradient(rectCaption1, bActive ? afxGlobalData.clrActiveCaption : afxGlobalData.clrInactiveCaption, bActive ? afxGlobalData.clrActiveCaptionGradient : afxGlobalData.clrInactiveCaptionGradient, FALSE);
+				dm.FillGradient(rectCaption1, bActive ? GetGlobalData()->clrActiveCaption : GetGlobalData()->clrInactiveCaption, bActive ? GetGlobalData()->clrActiveCaptionGradient : GetGlobalData()->clrInactiveCaptionGradient, FALSE);
 			}
 		}
 
@@ -1058,20 +1120,49 @@ COLORREF CMFCVisualManagerWindows7::OnDrawRibbonPanel(CDC* pDC, CMFCRibbonPanel*
 	}
 	else
 	{
-		if (!pPanel->IsMenuMode () && !pPanel->IsCollapsed())
+		if (!pPanel->IsMenuMode() && !pPanel->IsCollapsed())
 		{
-			int nWidth = m_ctrlRibbonPanelBackSep.GetParams().m_rectImage.Width();
-			int nWidth2 = nWidth / 2;
+			BOOL bHighlighted = pPanel->IsHighlighted();
 
-			rectPanel.left = rectPanel.right - nWidth2;
-			rectPanel.right += (nWidth - nWidth2);
-			rectPanel.DeflateRect(0, 4);
+			CMFCControlRenderer* pRenderer = &m_ctrlRibbonPanelBack;
+			CMFCVisualManagerBitmapCache* pCache = &m_cacheRibbonPanelBack;
 
-			m_ctrlRibbonPanelBackSep.Draw(pDC, rectPanel);
+			CMFCRibbonCategory* pCategory = pPanel->GetParentCategory();
+			ASSERT_VALID(pCategory);
+
+			const CMFCControlRendererInfo& params = pRenderer->GetParams();
+
+			CRect rectBack(rectPanel);
+			CMFCRibbonPanelMenuBar* pMenuBar = pPanel->GetParentMenuBar();
+			if (m_ctrlRibbonPanelBackSep.IsValid() && (pMenuBar == NULL || pMenuBar->GetPanel() == NULL))
+			{
+				CRect rectSep (rectPanel);
+
+				rectSep.left = rectSep.right - m_ctrlRibbonPanelBackSep.GetParams().m_rectImage.Width();
+				m_ctrlRibbonPanelBackSep.Draw(pDC, rectSep);
+				rectPanel.right = rectSep.left;
+			}
+
+			int nCacheIndex = -1;
+			CSize size (params.m_rectImage.Width(), rectPanel.Height());
+			nCacheIndex = pCache->FindIndex(size);
+			if (nCacheIndex == -1)
+			{
+				nCacheIndex = pCache->CacheY(size.cy, *pRenderer);
+			}
+
+			if (nCacheIndex != -1)
+			{
+				pCache->Get(nCacheIndex)->DrawY(pDC, rectBack, CSize(params.m_rectInter.left, params.m_rectImage.right - params.m_rectInter.right), bHighlighted ? 1 : 0);
+			}
+			else
+			{
+				pRenderer->Draw(pDC, rectBack, bHighlighted ? 1 : 0);
+			}
 		}
 	}
 
-	return afxGlobalData.clrBarText;
+	return m_clrRibbonPanelCaptionText;
 }
 
 void CMFCVisualManagerWindows7::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectCaption)
@@ -1091,7 +1182,6 @@ void CMFCVisualManagerWindows7::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPan
 
 	if (!str.IsEmpty())
 	{
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 		if (pPanel->GetLaunchButton().GetID() > 0)
 		{
 			rectCaption.right = pPanel->GetLaunchButton().GetRect().left;
@@ -1100,7 +1190,6 @@ void CMFCVisualManagerWindows7::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPan
 			rectCaption.OffsetRect(-1, -1);
 		}
 		else
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 		{
 			rectCaption.DeflateRect(1, 1);
 
@@ -1132,7 +1221,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonCategory(CDC* pDC, CMFCRibbonCategor
 
 	CMFCControlRenderer* pRenderer = &m_ctrlRibbonCategoryBack;
 	CMFCVisualManagerBitmapCache* pCache = &m_cacheRibbonCategoryBack;
-/*
+
 	CMFCRibbonBaseElement* pParentButton = pCategory->GetParentButton();
 
 	if (pCategory->GetTabColor() != AFX_CategoryColor_None && (pParentButton == NULL || !pParentButton->IsQATMode()))
@@ -1142,7 +1231,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonCategory(CDC* pDC, CMFCRibbonCategor
 		pRenderer = &context.m_ctrlBack;
 		pCache    = &context.m_cacheBack;
 	}
-*/
+
 	const CMFCControlRendererInfo& params = pRenderer->GetParams();
 
 	CMFCRibbonPanelMenuBar* pMenuBar = pCategory->GetParentMenuBar();
@@ -1181,6 +1270,47 @@ void CMFCVisualManagerWindows7::OnDrawRibbonCategory(CDC* pDC, CMFCRibbonCategor
 	}
 }
 
+void CMFCVisualManagerWindows7::OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScroll* pScroll)
+{
+	if (!CanDrawImage ())
+	{
+		CMFCVisualManagerWindows::OnDrawRibbonCategoryScroll (pDC, pScroll);
+		return;
+	}
+
+	ASSERT_VALID (pDC);
+	ASSERT_VALID (pScroll);
+
+	CRect rect = pScroll->GetRect ();
+
+	CMFCControlRenderer* pRenderer = 
+		&m_ctrlRibbonCategoryBtnPage[pScroll->IsLeftScroll () ? 0 : 1];
+	int index = 0;
+
+	if (pScroll->IsPressed ())
+	{
+		index = 1;
+		if (pScroll->IsHighlighted())
+		{
+			index = 2;
+		}
+	}
+	else if (pScroll->IsHighlighted())
+	{
+		index = 1;
+	}
+
+	pRenderer->Draw (pDC, rect, index);
+	
+	BOOL bIsLeft = pScroll->IsLeftScroll ();
+	if (GetGlobalData()->m_bIsRTL)
+	{
+		bIsLeft = !bIsLeft;
+	}
+
+	CMenuImages::Draw (pDC, bIsLeft ? CMenuImages::IdArrowLeftLarge : CMenuImages::IdArrowRightLarge, rect);
+}
+
 COLORREF CMFCVisualManagerWindows7::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTab, BOOL bIsActive)
 {
 	ASSERT_VALID(pDC);
@@ -1216,47 +1346,42 @@ COLORREF CMFCVisualManagerWindows7::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbon
 		rectTab.left++;
 	}
 
-	int nImage = bIsActive ? 3 : 0;
-
-	if (bPressed)
-	{
-		if (bIsHighlighted)
-		{
-			nImage = bIsActive ? 2 : 1;
-		}
-	}
-	
-	if(bIsHighlighted)
-	{
-		nImage += 1;
-	}
-
 	CMFCControlRenderer* pRenderer = &m_ctrlRibbonCategoryTab;
-/*
 	COLORREF clrText = m_clrRibbonCategoryText;
 	COLORREF clrTextHighlighted = m_clrRibbonCategoryTextHighlighted;
 
-	if (pCategory->GetTabColor() != AFX_CategoryColor_None || pTab->IsSelected())
+	if (pCategory->GetTabColor() != AFX_CategoryColor_None)
 	{
-		CMFCRibbonContextCategory& context = m_ctrlRibbonContextCategory[(pTab->IsSelected() || nImage == 4) ? AFX_CategoryColor_Orange - 1 : pCategory->GetTabColor() - 1];
+		CMFCRibbonContextCategory& context = m_ctrlRibbonContextCategory[pCategory->GetTabColor() - 1];
+
 		pRenderer = &context.m_ctrlTab;
-		clrText  = context.m_clrText;
+		clrText   = context.m_clrText;
 		clrTextHighlighted = context.m_clrTextHighlighted;
 	}
-*/
-	pRenderer->Draw(pDC, rectTab, nImage);
+
+	if (bIsActive || bPressed || bIsHighlighted)
+	{
+		int nImage = 1;
+
+		if (bIsHighlighted && !bPressed)
+		{
+			nImage = bIsActive ? 2 : 0;
+		}
+
+		pRenderer->Draw(pDC, rectTab, nImage);
+	}
 
 	if (ratio > 0)
 	{
 		CRect rectSep(rectTab);
 		rectSep.left = rectSep.right;
-		rectSep.right++;
+		rectSep.right += m_ctrlRibbonCategoryTabSep.GetParams().m_rectImage.Width();
 		rectSep.bottom--;
 
 		m_ctrlRibbonCategoryTabSep.Draw(pDC, rectSep, 0, (BYTE)min(ratio * 255 / 100, 255));
 	}
 
-	return afxGlobalData.clrBarText;
+	return bIsActive ? clrTextHighlighted : clrText;
 }
 
 COLORREF CMFCVisualManagerWindows7::OnDrawRibbonTabsFrame(CDC* pDC, CMFCRibbonBar* pWndRibbonBar, CRect rectTab)
@@ -1370,7 +1495,7 @@ void CMFCVisualManagerWindows7::OnFillBarBackground(CDC* pDC, CBasePane* pBar, C
 	{
 		if (m_hThemeWindow != NULL)
 		{
-			(*m_pfDrawThemeBackground)(m_hThemeStatusBar, pDC->GetSafeHdc(), 0, 0, &rectClient, 0);
+			DrawThemeBackground(m_hThemeStatusBar, pDC->GetSafeHdc(), 0, 0, &rectClient, 0);
 			return;
 		}
 	}
@@ -1393,7 +1518,7 @@ void CMFCVisualManagerWindows7::OnDrawStatusBarSizeBox(CDC* pDC, CMFCStatusBar* 
 		return;
 	}
 
-	(*m_pfDrawThemeBackground)(m_hThemeStatusBar, pDC->GetSafeHdc(), SP_GRIPPER, 0, &rectSizeBox, 0);
+	DrawThemeBackground(m_hThemeStatusBar, pDC->GetSafeHdc(), SP_GRIPPER, 0, &rectSizeBox, 0);
 }
 
 void CMFCVisualManagerWindows7::OnDrawRibbonGalleryButton(CDC* pDC, CMFCRibbonGalleryIcon* pButton)
@@ -1438,6 +1563,33 @@ void CMFCVisualManagerWindows7::OnDrawRibbonGalleryButton(CDC* pDC, CMFCRibbonGa
 	}
 
 	m_ctrlRibbonBtnPalette[nBtn].Draw(pDC, pButton->GetRect(), index);
+}
+
+COLORREF CMFCVisualManagerWindows7::OnDrawRibbonCategoryCaption(CDC* pDC, CMFCRibbonContextCaption* pContextCaption)
+{
+	if (!CanDrawImage() || pContextCaption->GetColor() == AFX_CategoryColor_None)
+	{
+		return CMFCVisualManagerWindows::OnDrawRibbonCategoryCaption(pDC, pContextCaption);
+	}
+
+	CMFCRibbonContextCategory& context = m_ctrlRibbonContextCategory[pContextCaption->GetColor() - 1];
+
+	CRect rect(pContextCaption->GetRect());
+	context.m_ctrlCaption.Draw(pDC, rect);
+
+	int xTabRight = pContextCaption->GetRightTabX();
+
+	if (xTabRight > 0)
+	{
+		CRect rectTab(pContextCaption->GetParentRibbonBar()->GetActiveCategory()->GetTabRect());
+		rect.top = rectTab.top;
+		rect.bottom = rectTab.bottom;
+		rect.right = xTabRight;
+
+		m_ctrlRibbonContextSeparator.DrawFrame(pDC, rect);
+	}
+
+	return context.m_clrCaptionText;
 }
 
 COLORREF CMFCVisualManagerWindows7::OnDrawRibbonStatusBarPane(CDC* pDC, CMFCRibbonStatusBar* pBar, CMFCRibbonStatusBarPane* pPane)
@@ -1523,7 +1675,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonSliderZoomButton(CDC* pDC, CMFCRibbo
 		}
 	}
 
-	pRenderer->FillInterior(pDC, rect, afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignHorzStretch : CMFCToolBarImages::ImageAlignHorzCenter, afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignVertStretch : CMFCToolBarImages::ImageAlignVertCenter, index);
+	pRenderer->FillInterior(pDC, rect, GetGlobalData()->GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignHorzStretch : CMFCToolBarImages::ImageAlignHorzCenter, GetGlobalData()->GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignVertStretch : CMFCToolBarImages::ImageAlignVertCenter, index);
 }
 
 void CMFCVisualManagerWindows7::OnDrawRibbonSliderChannel(CDC* pDC, CMFCRibbonSlider* pSlider, CRect rect)
@@ -1553,7 +1705,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonSliderChannel(CDC* pDC, CMFCRibbonSl
 		}
 	}
 
-	(*m_pfDrawThemeBackground)(m_hThemeTrack, pDC->GetSafeHdc(), bVert ? TKP_TRACKVERT : TKP_TRACK, 1, &rect, 0);
+	DrawThemeBackground(m_hThemeTrack, pDC->GetSafeHdc(), bVert ? TKP_TRACKVERT : TKP_TRACK, 1, &rect, 0);
 }
 
 void CMFCVisualManagerWindows7::OnDrawRibbonSliderThumb(CDC* pDC, CMFCRibbonSlider* pSlider, CRect rect, BOOL bIsHighlighted, BOOL bIsPressed, BOOL bIsDisabled)
@@ -1603,7 +1755,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonSliderThumb(CDC* pDC, CMFCRibbonSlid
 		nState = TUS_NORMAL;
 	}
 
-	(*m_pfDrawThemeBackground)(m_hThemeTrack, pDC->GetSafeHdc(), nPart, nState, &rect, 0);
+	DrawThemeBackground(m_hThemeTrack, pDC->GetSafeHdc(), nPart, nState, &rect, 0);
 }
 
 void CMFCVisualManagerWindows7::OnDrawRibbonProgressBar(CDC* pDC, CMFCRibbonProgressBar* pProgress, CRect rectProgress, CRect rectChunk, BOOL bInfiniteMode)
@@ -1614,13 +1766,13 @@ void CMFCVisualManagerWindows7::OnDrawRibbonProgressBar(CDC* pDC, CMFCRibbonProg
 		return;
 	}
 
-	(*m_pfDrawThemeBackground)(m_hThemeProgress, pDC->GetSafeHdc(), PP_BAR, 0, &rectProgress, 0);
+	DrawThemeBackground(m_hThemeProgress, pDC->GetSafeHdc(), PP_BAR, 0, &rectProgress, 0);
 
 	if (!bInfiniteMode)
 	{
 		if (!rectChunk.IsRectEmpty() || pProgress->GetPos() != pProgress->GetRangeMin())
 		{
-			(*m_pfDrawThemeBackground)(m_hThemeProgress, pDC->GetSafeHdc(), PP_CHUNK, 0, &rectChunk, 0);
+			DrawThemeBackground(m_hThemeProgress, pDC->GetSafeHdc(), PP_CHUNK, 0, &rectChunk, 0);
 		}
 	}
 	else if (pProgress->GetPos() != pProgress->GetRangeMin())
@@ -1633,7 +1785,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonProgressBar(CDC* pDC, CMFCRibbonProg
 
 		rectProgress.OffsetRect((int)(rectProgress.Width() *(index - 1.0)), 0);
 
-		(*m_pfDrawThemeBackground)(m_hThemeProgress, pDC->GetSafeHdc(), PP_MOVEOVERLAY, 0, &rectProgress, 0);
+		DrawThemeBackground(m_hThemeProgress, pDC->GetSafeHdc(), PP_MOVEOVERLAY, 0, &rectProgress, 0);
 
 		pDC->SelectClipRgn(NULL);
 	}
@@ -1741,7 +1893,6 @@ void CMFCVisualManagerWindows7::OnDrawRibbonButtonBorder(CDC* pDC, CMFCRibbonBut
 	}
 }
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 void CMFCVisualManagerWindows7::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel)
 {
 	ASSERT_VALID(pDC);
@@ -1828,7 +1979,6 @@ void CMFCVisualManagerWindows7::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLau
 		}
 	}
 }
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 COLORREF CMFCVisualManagerWindows7::OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButton)
 {
@@ -2128,37 +2278,26 @@ COLORREF CMFCVisualManagerWindows7::OnFillRibbonButton(CDC* pDC, CMFCRibbonButto
 		if (index != -1)
 		{
 			pRenderer = &m_ctrlRibbonBtnDefault;
-			CMFCVisualManagerBitmapCache* pCacheDefault = &m_cacheRibbonBtnDefault;
-/*
-			CMFCRibbonCategory* pCategory = pButton->GetParentCategory();
-			ASSERT_VALID(pCategory);
+			CMFCVisualManagerBitmapCache* pCache = &m_cacheRibbonBtnDefault;
 
-			if (pCategory->GetTabColor() != AFX_CategoryColor_None)
-			{
-				CMFCRibbonContextCategory& context = m_ctrlRibbonContextCategory[pCategory->GetTabColor() - 1];
-
-				pRenderer = &context.m_ctrlBtnDefault;
-				pCacheDefault = &context.m_cacheBtnDefault;
-			}
-*/
 			const CMFCControlRendererInfo& params = pRenderer->GetParams();
 
 			int nCacheIndex = -1;
-			if (pCacheDefault != NULL)
+			if (pCache != NULL)
 			{
 				CSize size(params.m_rectImage.Width(), rect.Height());
-				nCacheIndex = pCacheDefault->FindIndex(size);
+				nCacheIndex = pCache->FindIndex(size);
 				if (nCacheIndex == -1)
 				{
-					nCacheIndex = pCacheDefault->CacheY(size.cy, *pRenderer);
+					nCacheIndex = pCache->CacheY(size.cy, *pRenderer);
 				}
 			}
 
 			if (nCacheIndex != -1)
 			{
-				pCacheDefault->Get(nCacheIndex)->DrawY(pDC, rect, CSize(params.m_rectInter.left, params.m_rectImage.right - params.m_rectInter.right), index);
+				pCache->Get(nCacheIndex)->DrawY(pDC, rect, CSize(params.m_rectInter.left, params.m_rectImage.right - params.m_rectInter.right), index);
 
-				return afxGlobalData.clrBtnText;
+				return GetGlobalData()->clrBtnText;
 			}
 		}
 	}
@@ -2309,7 +2448,7 @@ COLORREF CMFCVisualManagerWindows7::OnFillRibbonButton(CDC* pDC, CMFCRibbonButto
 		}
 	}
 
-	COLORREF clrText = bWasDisabled ? afxGlobalData.clrGrayedText : COLORREF(-1);
+	COLORREF clrText = bWasDisabled ? GetGlobalData()->clrGrayedText : COLORREF(-1);
 
 	if (pRenderer != NULL)
 	{
@@ -2337,7 +2476,7 @@ COLORREF CMFCVisualManagerWindows7::OnFillRibbonButton(CDC* pDC, CMFCRibbonButto
 
 			if (!bWasDisabled)
 			{
-				clrText = afxGlobalData.clrBtnText;
+				clrText = GetGlobalData()->clrBtnText;
 			}
 		}
 	}
@@ -2406,21 +2545,16 @@ int CMFCVisualManagerWindows7::GetRibbonPopupBorderSize(const CMFCRibbonPanelMen
 				}
 				else if (pRibbonMenuBar->IsRibbonMiniToolBar())
 				{
-/*
-					if (m_ctrlRibbonBorder_Floaty.IsValid())
-					{
-						return m_ctrlRibbonBorder_Floaty.GetParams().m_rectSides.left;
-					}
-*/
 				}
 				else
 				{
 					if (pRibbonMenuBar->GetPanel() != NULL)
 					{
-						return 0;
+						if (m_ctrlRibbonBorder_Panel.IsValid())
+						{
+							return m_ctrlRibbonBorder_Panel.GetParams().m_rectSides.left;
+						}
 					}
-
-					// standard size
 				}
 			}
 		}
@@ -2507,7 +2641,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonRecentFilesFrame(CDC* pDC, CMFCRibbo
 	CRect rectSeparator = rect;
 	rectSeparator.right = rectSeparator.left + 2;
 
-	pDC->Draw3dRect(rectSeparator, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnHilite);
+	pDC->Draw3dRect(rectSeparator, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnHilite);
 }
 
 void CMFCVisualManagerWindows7::OnDrawComboDropButton(CDC* pDC, CRect rect, BOOL bDisabled, BOOL bIsDropped, BOOL bIsHighlighted, CMFCToolBarComboBoxButton* pButton)
@@ -2562,7 +2696,7 @@ COLORREF CMFCVisualManagerWindows7::OnDrawMenuLabel(CDC* pDC, CRect rect)
 
 	DrawSeparator(pDC, rectSeparator, m_penSeparatorDark, m_penSeparatorLight, TRUE);
 
-	return afxGlobalData.clrBarText;
+	return GetGlobalData()->clrBarText;
 }
 
 COLORREF CMFCVisualManagerWindows7::GetRibbonEditBackgroundColor(CMFCRibbonRichEditCtrl* pEdit, BOOL bIsHighlighted, BOOL bIsPaneHighlighted, BOOL bIsDisabled)
@@ -2616,7 +2750,7 @@ BOOL CMFCVisualManagerWindows7::OnNcActivate(CWnd* pWnd, BOOL bActive)
 		return FALSE;
 	}
 
-	if (afxGlobalData.DwmIsCompositionEnabled())
+	if (GetGlobalData()->IsDwmCompositionEnabled())
 	{
 		return FALSE;
 	}
@@ -2663,7 +2797,7 @@ BOOL CMFCVisualManagerWindows7::OnNcPaint(CWnd* pWnd, const CObList& lstSysButto
 	UNREFERENCED_PARAMETER(lstSysButtons);
 
 
-	if (afxGlobalData.DwmIsCompositionEnabled())
+	if (GetGlobalData()->IsDwmCompositionEnabled())
 	{
 		return FALSE;
 	}
@@ -2736,7 +2870,7 @@ BOOL CMFCVisualManagerWindows7::OnNcPaint(CWnd* pWnd, const CObList& lstSysButto
 
 		rectCaption.bottom = rectCaption.top + szSysBorders.cy + pBar->GetCaptionHeight();
 
-		(*m_pfDrawThemeBackground)(m_hThemeWindow, dc.GetSafeHdc(), WP_CAPTION, bActive ? CS_ACTIVE : CS_INACTIVE, &rectCaption, 0);
+		DrawThemeBackground(m_hThemeWindow, dc.GetSafeHdc(), WP_CAPTION, bActive ? CS_ACTIVE : CS_INACTIVE, &rectCaption, 0);
 
 		rtWindow.top = rectCaption.bottom;
 		dc.ExcludeClipRect(rectCaption);
@@ -2745,16 +2879,16 @@ BOOL CMFCVisualManagerWindows7::OnNcPaint(CWnd* pWnd, const CObList& lstSysButto
 
 		CRect rectPart(rtWindow);
 		rectPart.top = rectPart.bottom - szSysBorders.cy;
-		(*m_pfDrawThemeBackground)(m_hThemeWindow, dc.GetSafeHdc(), WP_FRAMEBOTTOM, framestate, &rectPart, 0);
+		DrawThemeBackground(m_hThemeWindow, dc.GetSafeHdc(), WP_FRAMEBOTTOM, framestate, &rectPart, 0);
 
 		rectPart.bottom = rectPart.top;
 		rectPart.top = rtWindow.top;
 		rectPart.right = rectPart.left + szSysBorders.cx;
-		(*m_pfDrawThemeBackground)(m_hThemeWindow, dc.GetSafeHdc(), WP_FRAMELEFT, framestate, &rectPart, 0);
+		DrawThemeBackground(m_hThemeWindow, dc.GetSafeHdc(), WP_FRAMELEFT, framestate, &rectPart, 0);
 
 		rectPart.right = rtWindow.right;
 		rectPart.left = rectPart.right - szSysBorders.cx;
-		(*m_pfDrawThemeBackground)(m_hThemeWindow, dc.GetSafeHdc(), WP_FRAMERIGHT, framestate, &rectPart, 0);
+		DrawThemeBackground(m_hThemeWindow, dc.GetSafeHdc(), WP_FRAMERIGHT, framestate, &rectPart, 0);
 
 		dc.SelectClipRgn(NULL);
 

@@ -22,7 +22,11 @@ namespace ATL
 
 inline CCriticalSection::CCriticalSection()
 {
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	if (!::InitializeCriticalSectionAndSpinCount( this, 0 ))
+#else
+	if (!::_AtlInitializeCriticalSectionEx( this, 0, 0 ))
+#endif
 	{
 		AtlThrow(HRESULT_FROM_WIN32(GetLastError()));
 	}
@@ -30,7 +34,11 @@ inline CCriticalSection::CCriticalSection()
 
 inline CCriticalSection::CCriticalSection(_In_ ULONG nSpinCount)
 {
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP) || defined(_ATL_STATIC_LIB_IMPL)
+	if (!::_AtlInitializeCriticalSectionEx( this, nSpinCount, 0 ))
+#else
 	if (!::InitializeCriticalSectionAndSpinCount( this, nSpinCount ))
+#endif
 	{
 		AtlThrow(HRESULT_FROM_WIN32(GetLastError()));
 	}
@@ -41,21 +49,28 @@ inline CCriticalSection::~CCriticalSection() throw()
 	::DeleteCriticalSection( this );
 }
 
+_Acquires_lock_(*this)
 inline void CCriticalSection::Enter()
 {
 	::EnterCriticalSection( this );
 }
 
+_Releases_lock_(*this)
 inline void CCriticalSection::Leave() throw()
 {
 	::LeaveCriticalSection( this );
 }
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 inline ULONG CCriticalSection::SetSpinCount(_In_ ULONG nSpinCount) throw()
 {
 	return( ::SetCriticalSectionSpinCount( this, nSpinCount ) );
 }
 
+#endif
+
+_When_(return != 0, _Acquires_lock_(*this))
 inline BOOL CCriticalSection::TryEnter() throw()
 {
 	return( ::TryEnterCriticalSection( this ) );
@@ -112,7 +127,19 @@ inline BOOL CEvent::Create(
 {
 	ATLASSUME( m_h == NULL );
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	m_h = ::CreateEvent( pSecurity, bManualReset, bInitialState, pszName );
+#else
+	DWORD dwFlags = 0;
+
+	if (bManualReset)
+		dwFlags |= CREATE_EVENT_MANUAL_RESET;
+
+	if (bInitialState)
+		dwFlags |= CREATE_EVENT_INITIAL_SET;
+
+	m_h = ::CreateEventEx( pSecurity, pszName, dwFlags, EVENT_ALL_ACCESS );
+#endif
 
 	return( m_h != NULL );
 }
@@ -128,12 +155,14 @@ inline BOOL CEvent::Open(
 	return( m_h != NULL );
 }
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 inline BOOL CEvent::Pulse() throw()
 {
 	ATLASSUME( m_h != NULL );
 
 	return( ::PulseEvent( m_h ) );
 }
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 inline BOOL CEvent::Reset() throw()
 {
@@ -195,8 +224,11 @@ inline BOOL CMutex::Create(
 	_In_opt_z_ LPCTSTR pszName) throw()
 {
 	ATLASSUME( m_h == NULL );
-
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	m_h = ::CreateMutex( pSecurity, bInitialOwner, pszName );
+#else
+	m_h = ::CreateMutexEx( pSecurity, pszName, bInitialOwner? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS );
+#endif
 	return( m_h != NULL );
 }
 
@@ -211,6 +243,7 @@ inline BOOL CMutex::Open(
 	return( m_h != NULL );
 }
 
+_Releases_lock_(this->m_h)
 inline BOOL CMutex::Release() throw()
 {
 	ATLASSUME( m_h != NULL );
@@ -266,7 +299,11 @@ inline BOOL CSemaphore::Create(
 {
 	ATLASSUME( m_h == NULL );
 
-	m_h = ::CreateSemaphore( pSecurity, nInitialCount, nMaxCount, pszName );
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+	m_h = ::CreateSemaphore( pSecurity, nInitialCount, nMaxCount, pszName);
+#else
+	m_h = ::CreateSemaphoreEx( pSecurity, nInitialCount, nMaxCount, pszName, 0, SEMAPHORE_ALL_ACCESS);
+#endif
 	return( m_h != NULL );
 }
 
@@ -291,6 +328,9 @@ inline BOOL CSemaphore::Release(
 }
 
 
+_Post_same_lock_(mtx, this->m_mtx)
+_When_(bInitialLock != 0, _Acquires_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked != 0))
+_When_(bInitialLock == 0, _Post_satisfies_(this->m_bLocked == 0))
 inline CMutexLock::CMutexLock(
 		_Inout_ CMutex& mtx,
 		_In_ bool bInitialLock) :
@@ -303,6 +343,7 @@ inline CMutexLock::CMutexLock(
 	}
 }
 
+_When_(this->m_bLocked != 0, _Requires_lock_held_(this->m_mtx) _Releases_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked == 0))
 inline CMutexLock::~CMutexLock() throw()
 {
 	if( m_bLocked )
@@ -311,26 +352,31 @@ inline CMutexLock::~CMutexLock() throw()
 	}
 }
 
+_Acquires_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked != 0)
 inline void CMutexLock::Lock()
 {
 	DWORD dwResult;
 
 	ATLASSERT( !m_bLocked );
-	dwResult = ::WaitForSingleObject( m_mtx, INFINITE );
+	dwResult = ::WaitForSingleObjectEx( m_mtx, INFINITE, FALSE );
 	if( dwResult == WAIT_ABANDONED )
 	{
 		ATLTRACE(atlTraceSync, 0, _T("Warning: abandoned mutex 0x%x\n"), 
 			reinterpret_cast<int>(static_cast<HANDLE>(m_mtx)));
 	}
+	_Analysis_assume_lock_held_(this->m_mtx);
 	m_bLocked = true;
 }
 
+_Releases_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked == 0)
 inline void CMutexLock::Unlock() throw()
 {
 	ATLASSUME( m_bLocked );
 
+	_Analysis_assume_lock_held_((this->m_mtx).m_h);
 	m_mtx.Release();
 	//ATLASSERT in CMutexLock::Lock prevents calling Lock more than 1 time.
+	_Analysis_assume_lock_released_(this->m_mtx);
 	m_bLocked = false;
 }
 

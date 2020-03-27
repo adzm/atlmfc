@@ -9,6 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
+#include <math.h>
 #include "afxmdiclientareawnd.h"
 #include "afxmdiframewndex.h"
 #include "afxmdichildwndex.h"
@@ -25,8 +26,7 @@
 
 #define AFX_REG_SECTION_FMT _T("%sMDIClientArea-%d")
 #define AFX_REG_ENTRY_MDITABS_STATE _T("MDITabsState")
-
-static const CString strMDIClientAreaProfile = _T("MDIClientArea");
+#define AFX_MDI_CLIENT_AREA_PROFILE _T("MDIClientArea")
 
 UINT AFX_WM_ON_MOVETOTABGROUP = ::RegisterWindowMessage(_T("AFX_WM_ON_MOVETOTABGROUP"));
 
@@ -56,6 +56,7 @@ CMDITabInfo::CMDITabInfo()
 	m_nTabBorderSize = CMFCVisualManager::GetInstance()->GetMDITabsBordersSize();
 	m_bFlatFrame = TRUE;
 	m_bActiveTabCloseButton = FALSE;
+	m_bReuseRemovedTabGroups = FALSE;
 }
 void CMDITabInfo::Serialize(CArchive& ar)
 {
@@ -101,6 +102,7 @@ CMDIClientAreaWnd::CMDIClientAreaWnd()
 	m_nNewGroupMargin = AFX_NEW_GROUP_MARGIN;
 
 	m_bDisableUpdateTabs = FALSE;
+	m_bInsideDragComplete = FALSE;
 
 	m_rectNewTabGroup.SetRectEmpty();
 	m_nTotalResizeRest = 0;
@@ -234,37 +236,33 @@ void CMDIClientAreaWnd::EnableMDITabbedGroups(BOOL bEnable, const CMDITabInfo& m
 			ModifyStyleEx(0, WS_EX_CLIENTEDGE);
 		}
 
-		if (afxGlobalData.bIsWindowsVista)
+		CWnd* pWndChild = GetWindow(GW_CHILD);
+		CList<CMDIChildWndEx*, CMDIChildWndEx*> lst;
+
+		while (pWndChild != NULL)
 		{
-			CWnd* pWndChild = GetWindow(GW_CHILD);
-			CList<CMDIChildWndEx*, CMDIChildWndEx*> lst;
+			ASSERT_VALID(pWndChild);
 
-			while (pWndChild != NULL)
+			CMDIChildWndEx* pMDIChild = DYNAMIC_DOWNCAST(CMDIChildWndEx, pWndChild);
+			if (pMDIChild != NULL && pMDIChild->CanShowOnMDITabs())
 			{
-				ASSERT_VALID(pWndChild);
-
-				CMDIChildWndEx* pMDIChild = DYNAMIC_DOWNCAST(CMDIChildWndEx, pWndChild);
-				if (pMDIChild != NULL && pMDIChild->CanShowOnMDITabs())
-				{
-					lst.AddTail(pMDIChild);
-				}
-
-				pWndChild = pWndChild->GetNextWindow();
+				lst.AddTail(pMDIChild);
 			}
 
-			m_bDisableUpdateTabs = TRUE;
-
-			for (POSITION pos = lst.GetTailPosition(); pos != NULL;)
-			{
-				CMDIChildWndEx* pMDIChild = lst.GetPrev(pos);
-				pMDIChild->SetWindowPos(NULL, -1, -1, -1, -1, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-			}
-
-			m_bDisableUpdateTabs = FALSE;
-
-			UpdateTabs();
+			pWndChild = pWndChild->GetNextWindow();
 		}
 
+		m_bDisableUpdateTabs = TRUE;
+
+		for (POSITION pos = lst.GetTailPosition(); pos != NULL;)
+		{
+			CMDIChildWndEx* pMDIChild = lst.GetPrev(pos);
+			pMDIChild->SetWindowPos(NULL, -1, -1, -1, -1, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+		}
+
+		m_bDisableUpdateTabs = FALSE;
+
+		UpdateTabs();
 		return;
 	}
 
@@ -329,7 +327,6 @@ void CMDIClientAreaWnd::ApplyParams(CMFCTabCtrl* pTabWnd)
 	pTabWnd->m_bIsMDITab = TRUE;
 }
 
-//{{AFX_MSG_MAP(CMDIClientAreaWnd)
 BEGIN_MESSAGE_MAP(CMDIClientAreaWnd, CWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_STYLECHANGING()
@@ -345,7 +342,6 @@ BEGIN_MESSAGE_MAP(CMDIClientAreaWnd, CWnd)
 	ON_REGISTERED_MESSAGE(AFX_WM_ON_MOVETABCOMPLETE, &CMDIClientAreaWnd::OnMoveTabComplete)
 	ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, &CMDIClientAreaWnd::OnActiveTabChanged)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMDIClientAreaWnd message handlers
@@ -391,6 +387,16 @@ LRESULT CMDIClientAreaWnd::OnMDIRefreshMenu(WPARAM /*wp*/, LPARAM /*lp*/)
 
 BOOL CMDIClientAreaWnd::OnEraseBkgnd(CDC* pDC)
 {
+	if (m_bIsMDITabbedGroup)
+	{
+		HWND hWndMDIActive = (HWND)SendMessage(WM_MDIGETACTIVE);
+		if (hWndMDIActive != NULL && ::IsWindowVisible(hWndMDIActive))
+		{
+			// Don't erase the MDI client area when MDI tabbed group completely covers it.
+			return TRUE;
+		}
+	}
+
 	CMDIFrameWndEx* pMainFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetParentFrame());
 	if (pMainFrame != NULL && pMainFrame->OnEraseMDIClientBackground(pDC))
 	{
@@ -675,6 +681,11 @@ void CMDIClientAreaWnd::CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType)
 
 void CMDIClientAreaWnd::CalcWindowRectForMDITabbedGroups(LPRECT lpClientRect, UINT /*nAdjustType*/)
 {
+	if (m_bInsideDragComplete)
+	{
+		return;
+	}
+
 	SetWindowPos(&wndBottom, lpClientRect->left, lpClientRect->top, lpClientRect->right - lpClientRect->left, lpClientRect->bottom - lpClientRect->top, SWP_NOACTIVATE);
 
 	if (m_lstTabbedGroups.IsEmpty())
@@ -712,17 +723,9 @@ void CMDIClientAreaWnd::CalcWindowRectForMDITabbedGroups(LPRECT lpClientRect, UI
 
 	int nClientAreaWndSize = (m_groupAlignment == GROUP_VERT_ALIGN) ? lpClientRect->right - lpClientRect->left : lpClientRect->bottom - lpClientRect->top;
 
-	int nDelta = (nClientAreaWndSize - nTotalSize) /(int) m_lstTabbedGroups.GetCount();
-	int nRest  = (nClientAreaWndSize - nTotalSize) %(int) m_lstTabbedGroups.GetCount();
-
-	m_nTotalResizeRest += nRest;
-	if (abs(m_nTotalResizeRest) >= m_lstTabbedGroups.GetCount())
-	{
-		m_nTotalResizeRest > 0 ? nDelta ++ : nDelta --;
-		m_nTotalResizeRest = 0;
-	}
-
 	int nOffset = 0;
+	int nMinAllowedSize = m_nResizeMargin;
+
 	for (pos = m_lstTabbedGroups.GetHeadPosition(); pos != NULL;)
 	{
 		CMFCTabCtrl* pNextTab = DYNAMIC_DOWNCAST(CMFCTabCtrl, m_lstTabbedGroups.GetNext(pos));
@@ -732,30 +735,33 @@ void CMDIClientAreaWnd::CalcWindowRectForMDITabbedGroups(LPRECT lpClientRect, UI
 		{
 			CRect rect;
 			pNextTab->GetWindowRect(rect);
-			ScreenToClient(rect);
+
+			double dblCurrSize = m_groupAlignment == GROUP_VERT_ALIGN ? rect.Width () : rect.Height();
+			double dblSizeRatio = ceil(dblCurrSize / (double)nTotalSize * 100.0);
+			int nNewSize = (int)(dblSizeRatio * (double)nClientAreaWndSize / 100.0);
+
+			if (pos == NULL && nClientAreaWndSize - nOffset + nNewSize != 0)
+			{
+				nNewSize = nClientAreaWndSize - nOffset;
+			}
+
+			if (nNewSize < nMinAllowedSize)
+			{
+				nNewSize = nMinAllowedSize;
+			}
 
 			if (m_groupAlignment == GROUP_VERT_ALIGN)
 			{
-				int nFinalWidth = rect.Width() + nDelta;
-				if (pos == NULL && nClientAreaWndSize - nOffset + nFinalWidth != 0)
-				{
-					nFinalWidth = nClientAreaWndSize - nOffset;
-				}
-				pNextTab->SetWindowPos(NULL, nOffset, 0, nFinalWidth, lpClientRect->bottom - lpClientRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
-				nOffset += rect.Width() + nDelta;
+				pNextTab->SetWindowPos(NULL, nOffset, 0, nNewSize, lpClientRect->bottom - lpClientRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
 			}
 			else
 			{
-				int nFinalHeight = rect.Height() + nDelta;
-				if (pos == NULL && nClientAreaWndSize - nOffset + nFinalHeight != 0)
-				{
-					nFinalHeight = nClientAreaWndSize - nOffset;
-				}
-				pNextTab->SetWindowPos(NULL, 0, nOffset, lpClientRect->right - lpClientRect->left, nFinalHeight, SWP_NOZORDER | SWP_NOACTIVATE);
-				nOffset += rect.Height() + nDelta;
+				pNextTab->SetWindowPos (NULL, 0, nOffset, lpClientRect->right - lpClientRect->left, nNewSize, SWP_NOZORDER | SWP_NOACTIVATE);
 			}
 
+			nOffset += nNewSize;
 			AdjustMDIChildren(pNextTab);
+			pNextTab->RedrawWindow();
 		}
 	}
 }
@@ -848,7 +854,7 @@ LRESULT CMDIClientAreaWnd::OnActiveTabChanged(WPARAM wp, LPARAM lp)
 	}
 
 	ASSERT_VALID(pApp);
-	if (!afxGlobalData.bIsWindows7 || !m_bIsMDITabbedGroup || !pApp->IsTaskbarInteractionEnabled())
+	if (!GetGlobalData()->bIsWindows7 || !m_bIsMDITabbedGroup || !pApp->IsTaskbarInteractionEnabled())
 	{
 		return 0;
 	}
@@ -1013,9 +1019,26 @@ void CMDIClientAreaWnd::PreSubclassWindow()
 
 CMFCTabCtrl* CMDIClientAreaWnd::CreateTabGroup(CMFCTabCtrl* pWndTab)
 {
+	BOOL bReusingTab = FALSE;
+
 	if (pWndTab == NULL)
 	{
-		pWndTab = new CMFCTabCtrl;
+		if (m_mdiTabParams.m_bReuseRemovedTabGroups && m_lstRemovedTabbedGroups.GetCount() > 0 && m_bIsMDITabbedGroup)
+		{
+			pWndTab = DYNAMIC_DOWNCAST(CMFCTabCtrl, m_lstRemovedTabbedGroups.RemoveTail());
+
+			if (pWndTab != NULL && ::IsWindow(pWndTab->GetSafeHwnd()))
+			{
+				bReusingTab = TRUE;
+			}
+		}
+
+		if (!bReusingTab)
+		{
+			pWndTab = new CMFCTabCtrl;
+		}
+
+		ASSERT_VALID (pWndTab);
 	}
 
 	if (m_mdiTabParams.m_bTabCustomTooltips)
@@ -1026,11 +1049,25 @@ CMFCTabCtrl* CMDIClientAreaWnd::CreateTabGroup(CMFCTabCtrl* pWndTab)
 	CWnd* pParent = m_bIsMDITabbedGroup ? this :(CWnd*) GetParentFrame();
 
 	// Create MDI tabs control:
-	if (!pWndTab->Create(m_mdiTabParams.m_style, CRect(0, 0, 0, 0), pParent, (UINT)-1, m_mdiTabParams.m_tabLocation, m_mdiTabParams.m_bTabCloseButton))
+	if (!bReusingTab)
 	{
-		TRACE(_T("CMDIClientAreaWnd::OnCreate: can't create tabs window\n"));
-		delete pWndTab;
-		return NULL;
+		if (!pWndTab->Create(m_mdiTabParams.m_style, CRect(0, 0, 0, 0), pParent, (UINT)-1, m_mdiTabParams.m_tabLocation, m_mdiTabParams.m_bTabCloseButton))
+		{
+			TRACE(_T("CMDIClientAreaWnd::OnCreate: can't create tabs window\n"));
+			delete pWndTab;
+			return NULL;
+		}
+	}
+	else
+	{
+		if (pWndTab->GetParent() != pParent)
+		{
+			pWndTab->SetParent(pParent);
+		}
+
+		pWndTab->ModifyTabStyle(m_mdiTabParams.m_style);
+		pWndTab->SetLocation(m_mdiTabParams.m_tabLocation);
+		pWndTab->EnableActiveTabCloseButton(m_mdiTabParams.m_bTabCloseButton);
 	}
 
 	ApplyParams(pWndTab);
@@ -1044,7 +1081,7 @@ CMFCTabCtrl* CMDIClientAreaWnd::CreateTabGroup(CMFCTabCtrl* pWndTab)
 
 	if (!m_bIsMDITabbedGroup)
 	{
-		m_TabIcons.Create(afxGlobalData.m_sizeSmallIcon.cx, afxGlobalData.m_sizeSmallIcon.cy, ILC_COLOR32 | ILC_MASK, 0, 1);
+		m_TabIcons.Create(GetGlobalData()->m_sizeSmallIcon.cx, GetGlobalData()->m_sizeSmallIcon.cy, ILC_COLOR32 | ILC_MASK, 0, 1);
 	}
 	else
 	{
@@ -1059,7 +1096,7 @@ CMFCTabCtrl* CMDIClientAreaWnd::CreateTabGroup(CMFCTabCtrl* pWndTab)
 			m_mapTabIcons.SetAt(pWndTab, pImageList);
 		}
 
-		pImageList->Create(afxGlobalData.m_sizeSmallIcon.cx, afxGlobalData.m_sizeSmallIcon.cy, ILC_COLOR32 | ILC_MASK, 0, 1);
+		pImageList->Create(GetGlobalData()->m_sizeSmallIcon.cx, GetGlobalData()->m_sizeSmallIcon.cy, ILC_COLOR32 | ILC_MASK, 0, 1);
 	}
 
 	return pWndTab;
@@ -1458,7 +1495,7 @@ void CMDIClientAreaWnd::OnStyleChanging(int nStyleType, LPSTYLESTRUCT lpStyleStr
 
 BOOL CMDIClientAreaWnd::IsKeepClientEdge()
 {
-	BOOL bKeepEdge = FALSE;
+	BOOL bKeepEdge = TRUE;
 	HWND hwndActive = (HWND) SendMessage(WM_MDIGETACTIVE, 0, 0);
 	if (hwndActive != NULL)
 	{
@@ -1538,6 +1575,8 @@ LRESULT CMDIClientAreaWnd::OnDragComplete(WPARAM wp, LPARAM lp)
 		return 0;
 	}
 
+	m_bInsideDragComplete = TRUE;
+
 	ASSERT(m_groupAlignment != GROUP_NO_ALIGN);
 
 	ScreenToClient(lpRectResized);
@@ -1553,6 +1592,11 @@ LRESULT CMDIClientAreaWnd::OnDragComplete(WPARAM wp, LPARAM lp)
 
 	AdjustMDIChildren(pTabWndToResize);
 	AdjustMDIChildren(pNextTabWnd);
+
+	pTabWndToResize->RedrawWindow();
+	pNextTabWnd->RedrawWindow();
+
+	m_bInsideDragComplete = FALSE;
 
 	return TRUE;
 }
@@ -1589,22 +1633,22 @@ LRESULT CMDIClientAreaWnd::OnTabGroupMouseMove(WPARAM /*wp*/, LPARAM lp)
 
 	ClientToScreen(rectWnd);
 
-	if (afxGlobalData.m_hcurMoveTab == NULL)
+	if (GetGlobalData()->m_hcurMoveTab == NULL)
 	{
-		afxGlobalData.m_hcurMoveTab = AfxGetApp()->LoadCursor(IDC_AFXBARRES_MOVE_TAB);
-		afxGlobalData.m_hcurNoMoveTab = AfxGetApp()->LoadCursor(IDC_AFXBARRES_NO_MOVE_TAB);
+		GetGlobalData()->m_hcurMoveTab = AfxGetApp()->LoadCursor(IDC_AFXBARRES_MOVE_TAB);
+		GetGlobalData()->m_hcurNoMoveTab = AfxGetApp()->LoadCursor(IDC_AFXBARRES_NO_MOVE_TAB);
 	}
 
 	if (!rectWnd.PtInRect(pointScreen))
 	{
-		::SetCursor(afxGlobalData.m_hcurNoMoveTab);
+		::SetCursor(GetGlobalData()->m_hcurNoMoveTab);
 
 		DrawNewGroupRect(NULL, m_rectNewTabGroup);
 		m_rectNewTabGroup.SetRectEmpty();
 		return TRUE;
 	}
 
-	::SetCursor(afxGlobalData.m_hcurMoveTab);
+	::SetCursor(GetGlobalData()->m_hcurMoveTab);
 
 	CMFCTabCtrl* pHoveredTabWnd = TabWndFromPoint(pointScreen);
 
@@ -2643,7 +2687,7 @@ void CMDIClientAreaWnd::SerializeOpenChildren(CArchive& ar)
 BOOL CMDIClientAreaWnd::SaveState(LPCTSTR lpszProfileName, UINT nFrameID)
 {
 	BOOL bResult = FALSE;
-	CString strProfileName = ::AFXGetRegPath(strMDIClientAreaProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MDI_CLIENT_AREA_PROFILE, lpszProfileName);
 
 	CString strSection;
 	strSection.Format(AFX_REG_SECTION_FMT, (LPCTSTR)strProfileName, nFrameID);
@@ -2696,7 +2740,7 @@ BOOL CMDIClientAreaWnd::LoadState(LPCTSTR lpszProfileName, UINT nFrameID)
 {
 	BOOL bResult = FALSE;
 
-	CString strProfileName = ::AFXGetRegPath(strMDIClientAreaProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MDI_CLIENT_AREA_PROFILE, lpszProfileName);
 
 	CString strSection;
 	strSection.Format(AFX_REG_SECTION_FMT, (LPCTSTR)strProfileName, nFrameID);

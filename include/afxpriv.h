@@ -209,7 +209,7 @@ enum {  FS_SHOW = 0x01, FS_HIDE = 0x02,
 void AFXAPI AfxRepositionWindow(AFX_SIZEPARENTPARAMS* lpLayout,
 	HWND hWnd, LPCRECT lpRect);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Implementation of command routing
 
 struct AFX_CMDHANDLERINFO
@@ -218,7 +218,7 @@ struct AFX_CMDHANDLERINFO
 	void (AFX_MSG_CALL CCmdTarget::*pmf)(void);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Robust file save support
 // opens a temp file if modeCreate specified and enough free space
 // renaming, etc occurs automatically if everything succeeds
@@ -236,7 +236,7 @@ protected:
 	CString m_strMirrorName;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Implementation of PrintPreview
 
 class CPreviewDC : public CDC
@@ -297,7 +297,7 @@ public:
 				int nTabPositions, LPINT lpnTabStopPositions, int nTabOrigin);
 	virtual int _AFX_FUNCNAME(DrawText)(LPCTSTR lpszString, int nCount, LPRECT lpRect,
 				UINT nFormat);
-	virtual int _AFX_FUNCNAME(DrawTextEx)(_In_count_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
+	virtual int _AFX_FUNCNAME(DrawTextEx)(_In_reads_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
 				UINT nFormat, LPDRAWTEXTPARAMS lpDTParams);
 #pragma push_macro("DrawText")
 #pragma push_macro("DrawTextEx")
@@ -308,7 +308,7 @@ public:
 	{
 		return _AFX_FUNCNAME(DrawText)(lpszString, nCount, lpRect, nFormat);
 	}
-	int DrawTextEx(_In_count_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
+	int DrawTextEx(_In_reads_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
 				UINT nFormat, LPDRAWTEXTPARAMS lpDTParams)
 	{
 		return _AFX_FUNCNAME(DrawTextEx)(lpszString, nCount, lpRect, nFormat, lpDTParams);
@@ -331,7 +331,7 @@ protected:
 	void MirrorAttributes();
 
 	CSize ComputeDeltas(int& x, _In_z_ LPCTSTR lpszString, UINT& nCount, _In_ BOOL bTabbed,
-					_In_ UINT nTabStops, _In_count_(nTabStops) LPINT lpnTabStops, _In_ int nTabOrigin,
+					_In_ UINT nTabStops, _In_reads_(nTabStops) LPINT lpnTabStops, _In_ int nTabOrigin,
 					_Pre_notnull_ _Post_z_ LPTSTR lpszOutputString, int* pnDxWidths, int& nRightFixup);
 
 protected:
@@ -347,8 +347,8 @@ protected:
 	CSize m_sizeVpExt;  // cached viewport extents computed for screen
 };
 
-/////////////////////////////////////////////////////////////////////////////
-// CPreviewView
+/*============================================================================*/
+// CDialogBar
 
 class CDialogBar;
 
@@ -399,7 +399,6 @@ public:
 #endif
 
 protected:
-	//{{AFX_MSG(CPreviewView)
 	afx_msg void OnPreviewClose();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -420,7 +419,6 @@ protected:
 	afx_msg void OnUpdateZoomIn(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateZoomOut(CCmdUI* pCmdUI);
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
-	//}}AFX_MSG
 
 	void DoZoom(UINT nPage, CPoint point);
 	void SetScaledSize(UINT nPage);
@@ -485,7 +483,7 @@ protected:
 #define LAYOUT_LTR								 0x00000000	
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // toolbar docking support
 
 class CDockContext
@@ -553,7 +551,7 @@ public:
 	CDockBar* GetDockBar(DWORD dwOverDockStyle);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CControlBarInfo - used for docking serialization
 
 class CControlBarInfo
@@ -585,7 +583,7 @@ public:
 	BOOL SaveState(LPCTSTR lpszProfileName, int nIndex);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDockBar - used for docking
 
 class CDockBar : public CControlBar
@@ -594,7 +592,7 @@ class CDockBar : public CControlBar
 
 // Construction
 public:
-	/* explicit */ CDockBar(BOOL bFloating = FALSE);   // TRUE if attached to CMiniDockFrameWnd
+	explicit CDockBar(BOOL bFloating = FALSE);   // TRUE if attached to CMiniDockFrameWnd
 	virtual BOOL Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID);
 
 // Attributes
@@ -637,14 +635,13 @@ protected:
 	int Insert(CControlBar* pBar, CRect rect, CPoint ptMid);
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
 
-	//{{AFX_MSG(CDockBar)
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 	afx_msg void OnNcPaint();
 	afx_msg void OnWindowPosChanging(LPWINDOWPOS lpWndPos);
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg LRESULT OnSizeParent(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	friend class CMiniDockFrameWnd;
@@ -666,16 +663,15 @@ public:
 public:
 	CDockBar m_wndDockBar;
 
-	//{{AFX_MSG(CMiniFrameWnd)
 	afx_msg void OnClose();
 	afx_msg void OnNcLButtonDown(UINT nHitTest, CPoint point);
 	afx_msg void OnNcLButtonDblClk(UINT nHitTest, CPoint point);
-	//}}AFX_MSG
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleCntrFrameWnd
 
 class COleIPFrameWnd;
@@ -702,14 +698,14 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDialogTemplate
 
 class CDialogTemplate
 {
 // Constructors
 public:
-	/* explicit */ CDialogTemplate(const DLGTEMPLATE* pTemplate = NULL);
+	explicit CDialogTemplate(const DLGTEMPLATE* pTemplate = NULL);
 	explicit CDialogTemplate(HGLOBAL hGlobal);
 
 // Attributes
@@ -741,7 +737,7 @@ protected:
 	BOOL SetTemplate(const DLGTEMPLATE* pTemplate, UINT cb);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // WM_NOTIFY support
 
 struct AFX_NOTIFY
@@ -751,7 +747,7 @@ struct AFX_NOTIFY
 };
 
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // other global state
 class CPushRoutingFrame
 {
@@ -814,8 +810,8 @@ void AFXAPI AfxResetMsgCache();
 
 // string helpers
 void AFXAPI AfxSetWindowText(HWND hWndCtrl, LPCTSTR lpszNew);
-int AFXAPI AfxLoadString(_In_ UINT nIDS, _Out_z_cap_post_count_(nMaxBuf, return + 1) LPSTR lpszBuf, _In_ UINT nMaxBuf = 256);
-int AFXAPI AfxLoadString(_In_ UINT nIDS, _Out_z_cap_post_count_(nMaxBuf, return + 1) LPWSTR lpszBuf, _In_ UINT nMaxBuf = 256);
+int AFXAPI AfxLoadString(_In_ UINT nIDS, _Out_writes_to_(nMaxBuf, return + 1) LPSTR lpszBuf, _In_ UINT nMaxBuf = 256);
+int AFXAPI AfxLoadString(_In_ UINT nIDS, _Out_writes_to_(nMaxBuf, return + 1) LPWSTR lpszBuf, _In_ UINT nMaxBuf = 256);
 
 // registry helpers
 

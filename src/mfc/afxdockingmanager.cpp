@@ -10,6 +10,7 @@
 
 #include "stdafx.h"
 
+#include "afxres.h"
 #include "afxglobalutils.h"
 #include "afxdocksite.h"
 #include "afxdockablepane.h"
@@ -45,7 +46,7 @@
 #define AFX_REG_SECTION_FMT _T("%sDockingManager-%d")
 #define AFX_REG_ENTRY_DOCKING_PANE_AND_PANEDIVIDERS _T("DockingPaneAndPaneDividers")
 
-static const CString strDockingManagerProfile = _T("DockingManagers");
+#define AFX_DOCKING_MANAGER_PROFILE  _T("DockingManagers")
 
 const DWORD dwDockBarMap[4][2] =
 {
@@ -1204,8 +1205,8 @@ BOOL CDockingManager::AdjustRectToClientArea(CRect& rectResult, DWORD dwAlignmen
 {
 	BOOL bAdjusted = FALSE;
 
-	int nAllowedHeight = (int)(m_rectClientAreaBounds.Height() * afxGlobalData.m_nCoveredMainWndClientAreaPercent / 100);
-	int nAllowedWidth = (int)(m_rectClientAreaBounds.Width() * afxGlobalData.m_nCoveredMainWndClientAreaPercent / 100);
+	int nAllowedHeight = (int)(m_rectClientAreaBounds.Height() * GetGlobalData()->m_nCoveredMainWndClientAreaPercent / 100);
+	int nAllowedWidth = (int)(m_rectClientAreaBounds.Width() * GetGlobalData()->m_nCoveredMainWndClientAreaPercent / 100);
 
 	if (dwAlignment & CBRS_ORIENT_HORZ && rectResult.Height() >= nAllowedHeight)
 	{
@@ -1932,7 +1933,7 @@ BOOL CDockingManager::SaveState(LPCTSTR lpszProfileName, UINT uiID)
 
 	m_bSavingState = TRUE;
 
-	CString strProfileName = ::AFXGetRegPath(strDockingManagerProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_DOCKING_MANAGER_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -2014,7 +2015,7 @@ BOOL CDockingManager::LoadState(LPCTSTR lpszProfileName, UINT uiID)
 {
 	ASSERT_VALID(this);
 
-	CString strProfileName = ::AFXGetRegPath(strDockingManagerProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_DOCKING_MANAGER_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -2871,18 +2872,6 @@ void AFX_AUTOHIDE_DOCKSITE_SAVE_INFO::Serialize(CArchive& ar)
 		ar >> m_dwBarAlignment;
 		ar >> m_bIsVisible;
 
-		int nSiblingCount = 0;
-		ar >> nSiblingCount;
-
-		for (int i = 0; i < nSiblingCount; i++)
-		{
-			UINT nSiblingBarID = (UINT)-1;
-			ar >> nSiblingBarID;
-			if (nSiblingBarID != -1) // can't be tabbed or so on
-			{
-				m_lstSiblingBars.AddHead(nSiblingBarID);
-			}
-		}
 		ar >> m_rectBar;
 
 		ar >> m_bFirstInGroup;
@@ -2897,17 +2886,6 @@ void AFX_AUTOHIDE_DOCKSITE_SAVE_INFO::Serialize(CArchive& ar)
 		ar << m_pSavedBar->GetCurrentAlignment();
 		ar <<(m_pSavedBar->IsHideInAutoHideMode() ? m_pSavedBar->IsVisible() : TRUE);
 
-		CList<UINT, UINT&> lstSiblings;
-		m_pSavedBar->GetRecentSiblingPaneInfo(lstSiblings);
-
-		int nSiblingCount = (int) lstSiblings.GetCount();
-		ar << nSiblingCount;
-
-		for (POSITION pos = lstSiblings.GetHeadPosition(); pos != NULL;)
-		{
-			UINT nSiblingBarID = lstSiblings.GetNext(pos);
-			ar << nSiblingBarID;
-		}
 		m_pSavedBar->GetWindowRect(&m_rectBar);
 		if (m_rectBar.IsRectEmpty())
 		{
@@ -3435,7 +3413,7 @@ BOOL CDockingManager::ReplacePane(CDockablePane* pOriginalBar, CDockablePane* pN
 
 		// tell the new bar that it's in autohide mode
 		pNewBar->m_bPinState = TRUE;
-		pNewBar->m_nAutoHideConditionTimerID = pNewBar->SetTimer(AFX_ID_CHECK_AUTO_HIDE_CONDITION, pNewBar->m_nTimeOutBeforeAutoHide, NULL);
+		pNewBar->m_nAutoHideConditionTimerID = pNewBar->SetTimer(AFX_TIMER_ID_CHECK_AUTO_HIDE_CONDITION, pNewBar->m_nTimeOutBeforeAutoHide, NULL);
 		AlignAutoHidePane(pSlider);
 
 		// need to update caption buttons
@@ -3804,6 +3782,20 @@ void CDockingManager::RemoveHiddenMDITabbedBar(CDockablePane* pBar)
 		{
 			m_lstHiddenMDITabbedBars.RemoveAt(pos);
 			return;
+		}
+	}
+}
+
+void CDockingManager::RedrawAllMiniFrames()
+{
+	for (POSITION pos = m_lstMiniFrames.GetHeadPosition (); pos != NULL;)
+	{
+		CPaneFrameWnd* pWnd = DYNAMIC_DOWNCAST(CPaneFrameWnd, m_lstMiniFrames.GetNext(pos));
+
+		if (pWnd->GetSafeHwnd() != NULL && pWnd->IsWindowVisible())
+		{
+			ASSERT_VALID (pWnd);
+			pWnd->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		}
 	}
 }

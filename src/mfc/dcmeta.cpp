@@ -263,7 +263,7 @@ int CMetaFileDC::DrawText(LPCTSTR lpszString, int nCount, LPRECT lpRect,
 	return nHeight;
 }
 
-int CMetaFileDC::DrawTextEx(_In_count_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
+int CMetaFileDC::DrawTextEx(_In_reads_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
 					UINT nFormat, LPDRAWTEXTPARAMS lpDTParams)
 {
 	ASSERT(m_hDC != NULL);

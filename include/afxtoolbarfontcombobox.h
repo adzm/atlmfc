@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -60,9 +60,10 @@ public:
 
 };
 
-#pragma warning( disable : 4312)
+#pragma warning(push)
+#pragma warning(disable : 4312)
 
-//////////////////////////////////////////
+/*============================================================================*/
 //
 class CMFCToolBarFontComboBox : public CMFCToolBarComboBoxButton
 {
@@ -117,9 +118,9 @@ protected:
 	AFX_IMPORT_DATA static int      m_nCount;   // CMFCToolBarFontComboBox count
 };
 
-#pragma warning( default : 4312)
+#pragma warning(pop)
 
-////////////////////////////////////////
+/*============================================================================*/
 // 
 class CMFCToolBarFontSizeComboBox : public CMFCToolBarComboBoxButton  
 {

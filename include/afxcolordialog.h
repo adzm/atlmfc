@@ -28,7 +28,7 @@ class CMFCColorPropertySheet;
 #include "afxstandardcolorspropertypage.h"
 #include "afxcustomcolorspropertypage.h"
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCColorDialog dialog
 
 class CMFCColorDialog : public CDialogEx
@@ -77,15 +77,15 @@ protected:
 	CStatic             m_wndStaticPlaceHolder;
 	CMFCColorPickerCtrl m_wndColors;
 
-	//{{AFX_MSG(CMFCColorDialog)
 	virtual BOOL OnInitDialog();
+
 	afx_msg void OnDestroy();
 	afx_msg void OnSysColorChange();
 	afx_msg void OnColorSelect();
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void RebuildPalette();

@@ -37,6 +37,50 @@ _AFXOLE_INLINE void COleMessageFilter::EnableBusyDialog(BOOL bEnable)
 _AFXOLE_INLINE void COleMessageFilter::EnableNotRespondingDialog(BOOL bEnable)
 	{ ASSERT_VALID(this); m_bEnableNotResponding = bEnable; }
 
+_AFXOLE_INLINE HRESULT AfxInternalOleLoadFromStorage(IStorage* pStg, REFIID iidInterface, IOleClientSite *pClientSite, void** ppvObj, ClassesAllowedInStorage rgclsidAllowed, DWORD cclsidAllowed)
+{
+	AFXASSUME(pStg != NULL);
+
+	if (ppvObj == NULL)
+	{
+		return E_POINTER;
+	}
+	*ppvObj = NULL;
+
+	CLSID clsid;
+	HRESULT hr = ReadClassStg(pStg, &clsid);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
+
+	if (cclsidAllowed != 0)
+	{
+		AFXASSUME(rgclsidAllowed.rgclsidAllowed != NULL);
+		hr = E_ACCESSDENIED;
+		
+		for(DWORD i = 0; i < cclsidAllowed; i++)
+		{
+			if (IsEqualCLSID(clsid, rgclsidAllowed.rgclsidAllowed[i]))
+			{
+				hr = S_OK;
+				break;
+			}
+		}
+	}
+	else if (rgclsidAllowed.pfnClsidAllowed != NULL)
+	{
+		hr = rgclsidAllowed.pfnClsidAllowed(clsid, iidInterface);
+	}
+
+	if (FAILED(hr))
+	{
+		return hr;
+	}
+
+	return(::OleLoad(pStg, iidInterface, pClientSite, ppvObj));
+}
+
 #endif //_AFXOLE_INLINE
 
 /////////////////////////////////////////////////////////////////////////////

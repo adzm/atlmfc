@@ -70,9 +70,9 @@ BOOL CFindReplaceDialog::Create(BOOL bFindDialogOnly,
 
 	AfxHookWindowCreate(this);
 	if (bFindDialogOnly)
-		hWnd = ::AfxCtxFindText(&m_fr);
+		hWnd = FindText(&m_fr);
 	else
-		hWnd = ::AfxCtxReplaceText(&m_fr);
+		hWnd = ReplaceText(&m_fr);
 	if (!AfxUnhookWindowCreate())
 		PostNcDestroy();
 

@@ -167,7 +167,7 @@ LPOLEOBJECT COleServerItem::GetOleObject()
 BOOL COleServerItem::OnQueryUpdateItems()
 {
 	COleDocument* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
+	ENSURE(pDoc);
 
 	// update all of the embedded objects
 	POSITION pos = pDoc->GetStartPosition();
@@ -184,7 +184,7 @@ BOOL COleServerItem::OnQueryUpdateItems()
 void COleServerItem::OnUpdateItems()
 {
 	COleDocument* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
+	ENSURE(pDoc);
 
 	// update all of the embedded objects
 	POSITION pos = pDoc->GetStartPosition();
@@ -276,6 +276,7 @@ void COleServerItem::OnShow()
 
 	// attempt in place activation (if not supported, fall back on "Open")
 	COleServerDoc* pDoc = GetDocument();
+	ENSURE(pDoc);
 	if (!pDoc->ActivateInPlace())
 	{
 		// by default OnShow() maps to OnOpen() if in-place activation
@@ -290,7 +291,7 @@ void COleServerItem::OnOpen()
 
 	// default implementation shows the document
 	COleServerDoc* pDoc = GetDocument();
-	ASSERT(pDoc != NULL);
+	ENSURE(pDoc);
 	pDoc->OnShowDocument(TRUE);
 }
 
@@ -300,7 +301,7 @@ void COleServerItem::OnHide()
 
 	// default implementation hides the document
 	COleServerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
+	ENSURE(pDoc);
 	pDoc->OnShowDocument(FALSE);
 }
 
@@ -552,6 +553,7 @@ void COleServerItem::GetEmbedSourceData(LPSTGMEDIUM lpStgMedium)
 
 	// setup for save copy as
 	COleServerDoc* pDoc = GetDocument();
+	ENSURE(pDoc);
 	pDoc->m_bSameAsLoad = FALSE;
 	pDoc->m_bRemember = FALSE;
 
@@ -739,6 +741,7 @@ void COleServerItem::OnSaveEmbedding(LPSTORAGE lpStorage)
 
 	// always (logically) a "File.Save Copy As" operation
 	COleServerDoc* pDoc = GetDocument();
+	ENSURE(pDoc);
 	LPSTORAGE lpOrigStg = pDoc->m_lpRootStg;
 	pDoc->m_lpRootStg = lpStorage;
 
@@ -842,7 +845,7 @@ void COleServerItem::OnFinalRelease()
 	ASSERT_VALID(this);
 
 	COleServerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
+	ENSURE(pDoc);
 
 	pDoc->InternalAddRef(); // make document stable
 
@@ -908,7 +911,7 @@ STDMETHODIMP COleServerItem::XOleObject::GetMoniker(
 	ASSERT_VALID(pThis);
 
 	COleServerDoc* pDoc = pThis->GetDocument();
-	ASSERT_VALID(pDoc);
+	ENSURE(pDoc);
 	ASSERT_KINDOF(COleServerDoc, pDoc);
 	ASSERT(ppMoniker != NULL);
 	*ppMoniker = NULL;
@@ -941,8 +944,7 @@ STDMETHODIMP COleServerItem::XOleObject::GetMoniker(
 			{
 				// create item moniker from name
 				const CStringW strItemName(pThis->m_strItemName);
-				CreateItemMoniker(OLESTDDELIMOLE, strItemName.GetString(),
-					ppMoniker);
+				::CreateItemMoniker(OLESTDDELIMOLE, strItemName.GetString(), ppMoniker);
 				break;
 			}
 
@@ -1103,7 +1105,13 @@ STDMETHODIMP COleServerItem::XOleObject::GetUserClassID(CLSID* pClsid)
 {
 	METHOD_PROLOGUE_EX_(COleServerItem, OleObject)
 
+	if (pClsid == NULL)
+	{
+		return E_POINTER;
+	}
+
 	COleServerDoc* pDoc = pThis->GetDocument();
+	ENSURE(pDoc);
 	return pDoc->m_xPersistFile.GetClassID(pClsid);
 }
 
@@ -1306,6 +1314,16 @@ STDMETHODIMP COleServerItem::XDataObject::DAdvise(
 	LPADVISESINK pAdvSink, DWORD* pdwConnection)
 {
 	METHOD_PROLOGUE_EX_(COleServerItem, DataObject)
+
+	if (pFormatEtc == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (pdwConnection == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*pdwConnection = 0;
 

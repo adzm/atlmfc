@@ -108,7 +108,9 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 
 
 		if (m_strFileName.IsEmpty())
+		{
 			rStatus.m_attribute = 0;
+		}
 		else
 		{
 			DWORD dwAttribute = m_pTM != NULL ? 
@@ -117,15 +119,12 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 
 			// don't return an error for this because previous versions of MFC didn't
 			if (dwAttribute == 0xFFFFFFFF)
+			{
 				rStatus.m_attribute = 0;
+			}
 			else
 			{
-				rStatus.m_attribute = (BYTE) dwAttribute;
-#ifdef _DEBUG
-				// MFC BUG: m_attribute is only a BYTE wide
-				if (dwAttribute & ~0xFF)
-					TRACE(traceAppMsg, 0, "Warning: CFile::GetStatus() returns m_attribute without high-order flags.\n");
-#endif
+				rStatus.m_attribute = dwAttribute;
 			}
 		}
 
@@ -176,7 +175,7 @@ BOOL PASCAL CFile::GetStatus(LPCTSTR lpszFileName, CFileStatus& rStatus, CAtlTra
 		return FALSE;
 	}
 
-	if ( lstrlen(lpszFileName) >= _MAX_PATH )
+	if ( _tcslen(lpszFileName) >= _MAX_PATH )
 	{
 		ASSERT(FALSE); // MFC requires paths with length < _MAX_PATH
 		return FALSE;
@@ -203,8 +202,7 @@ BOOL PASCAL CFile::GetStatus(LPCTSTR lpszFileName, CFileStatus& rStatus, CAtlTra
 	}
 
 	// strip attribute of NORMAL bit, our API doesn't have a "normal" bit.
-	rStatus.m_attribute = (BYTE)
-		(fileAttributeData.dwFileAttributes & ~FILE_ATTRIBUTE_NORMAL);
+	rStatus.m_attribute = (fileAttributeData.dwFileAttributes & ~FILE_ATTRIBUTE_NORMAL);
 
 	rStatus.m_size = fileAttributeData.nFileSizeHigh;
 	rStatus.m_size <<= 32;
@@ -288,13 +286,13 @@ void PASCAL CFile::SetStatus(LPCTSTR lpszFileName, const CFileStatus& status, CA
 	if (wAttr == (DWORD)-1L)
 		CFileException::ThrowOsError((LONG)GetLastError(), lpszFileName);
 
-	if ((DWORD)status.m_attribute != wAttr && (wAttr & readOnly))
+	if (status.m_attribute != wAttr && (wAttr & readOnly))
 	{
 		// Set file attribute, only if currently readonly.
 		// This way we will be able to modify the time assuming the
 		// caller changed the file from readonly.
 
-		BOOL bRes = (pTM != NULL) ? pTM->SetFileAttributes((LPTSTR)lpszFileName, (DWORD)status.m_attribute) : SetFileAttributes((LPTSTR)lpszFileName, (DWORD)status.m_attribute);
+		BOOL bRes = (pTM != NULL) ? pTM->SetFileAttributes((LPTSTR)lpszFileName, status.m_attribute) : SetFileAttributes((LPTSTR)lpszFileName, status.m_attribute);
 		if (!bRes)
 			CFileException::ThrowOsError((LONG)GetLastError(), lpszFileName);
 	}
@@ -339,11 +337,11 @@ void PASCAL CFile::SetStatus(LPCTSTR lpszFileName, const CFileStatus& status, CA
 			CFileException::ThrowOsError((LONG)::GetLastError(), lpszFileName);
 	}
 
-	if ((DWORD)status.m_attribute != wAttr && !(wAttr & readOnly))
+	if (status.m_attribute != wAttr && !(wAttr & readOnly))
 	{
 		BOOL bRes = (pTM != NULL) ?
-			pTM->SetFileAttributes((LPTSTR)lpszFileName, (DWORD)status.m_attribute) :
-			SetFileAttributes((LPTSTR)lpszFileName, (DWORD)status.m_attribute);
+			pTM->SetFileAttributes((LPTSTR)lpszFileName, status.m_attribute) :
+			SetFileAttributes((LPTSTR)lpszFileName, status.m_attribute);
 
 		if (!bRes)
 			CFileException::ThrowOsError((LONG)GetLastError(), lpszFileName);

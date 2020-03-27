@@ -8,17 +8,13 @@
 // See these sources for detailed information regarding the	
 // Active Template Library product.
 
-extern const char *g_pszUpdateEventName;
-extern const char *g_pszLockMutexName;
-extern const char *g_pszLockEventName;
-extern const char *g_pszAllocFileMapName;
-extern const char *g_pszAllocMutexName;
+// if you change data size or data placement in CAtlTraceProcess or CAtlTraceModule 
+// you should also change file mappings name because atltrace uses shared memory to store
+// data and it will be not compatible with previous version
 
-extern const char *g_pszKernelObjFmt;
-
-extern const wchar_t *g_pszProcessObject;
-extern const wchar_t *g_pszReadsInProgress;
+#define UpdateEventName    "AtlTraceModuleManager_ProcessAddedStatic_110"  // keep the ANSI and Unicode versions of
+#define UpdateEventNameU  L"AtlTraceModuleManager_ProcessAddedStatic_110"  // this event name in synch if changed!
+#define AllocFileMapNameU L"AtlDebugAllocator_FileMappingNameStatic_110"
+#define KernelObjFmtU     L"%s_%0x"
 
 extern class CAtlAllocator g_Allocator;
-extern class CAtlTraceLock g_Lock;
-

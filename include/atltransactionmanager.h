@@ -13,6 +13,12 @@
 
 #pragma once
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <ktmw32.h>
 #include <tchar.h>
 
@@ -162,10 +168,10 @@ public:
 	/// <param name="lpFileName">The name of the file or directory.</param>
 	/// <param name="fInfoLevelId">The level of attribute information to retrieve.</param>
 	/// <param name="lpFileInformation">A pointer to a buffer that receives the attribute information. The type of attribute information that is stored into this buffer is determined by the value of fInfoLevelId. If the fInfoLevelId parameter is GetFileExInfoStandard then this parameter points to a WIN32_FILE_ATTRIBUTE_DATA structure.</param>
-	BOOL GetFileAttributesEx(
+	_Success_(return != FALSE) BOOL GetFileAttributesEx(
 		_In_z_ LPCTSTR lpFileName,
 		_In_ GET_FILEEX_INFO_LEVELS fInfoLevelId,
-		_Out_ LPVOID lpFileInformation);
+		_Out_opt_ LPVOID lpFileInformation);
 
 	/// <summary>
 	/// Sets the attributes for a file or directory as a transacted operation. This wrapper calls Windows SetFileAttributesTransacted function</summary>
@@ -183,9 +189,9 @@ public:
 	/// If the function succeeds, the return value is a search handle used in a subsequent call to FindNextFile or FindClose. If the function fails or fails to locate files from the search string in the lpFileName parameter, the return value is INVALID_HANDLE_VALUE.</returns>
 	/// <param name="lpFileName">The directory or path, and the file name, which can include wildcard characters, for example, an asterisk (*) or a question mark (?).</param>
 	/// <param name="pNextInfo">A pointer to the WIN32_FIND_DATA structure that receives information about a found file or subdirectory.</param>
-	HANDLE FindFirstFile(
+	_Success_(return != INVALID_HANDLE_VALUE) HANDLE FindFirstFile(
 		_In_z_ LPCTSTR lpFileName,
-		_Out_ WIN32_FIND_DATA* pNextInfo);
+		_Out_opt_ WIN32_FIND_DATA* pNextInfo);
 
 	/// <summary>
 	/// Creates the specified registry key and associates it with a transaction. If the key already exists, the function opens it. This wrapper calls Windows RegCreateKeyTransacted function</summary>
@@ -202,7 +208,7 @@ public:
 	LSTATUS RegCreateKeyEx(
 		_In_ HKEY hKey,
 		_In_z_ LPCTSTR lpSubKey,
-		_In_ DWORD dwReserved,
+		_Reserved_ DWORD dwReserved,
 		_In_opt_z_ LPTSTR lpClass,
 		_In_ DWORD dwOptions,
 		_In_ REGSAM samDesired,
@@ -259,7 +265,7 @@ inline BOOL CAtlTransactionManager::Create()
 
 	if (!bInitialized)
 	{
-		HMODULE hKTM32 = AtlLoadSystemLibraryUsingFullPath(L"ktmw32.dll"); 
+		HMODULE hKTM32 = AtlLoadSystemLibraryUsingFullPath(L"ktmw32.dll");
 		if (hKTM32 != NULL)
 		{
 			pfCreateTransaction = (PFNCREATETRANSACTION)GetProcAddress(hKTM32, "CreateTransaction");
@@ -309,7 +315,7 @@ inline BOOL CAtlTransactionManager::Commit()
 
 	if (!bInitialized)
 	{
-		HMODULE hKTM32 = AtlLoadSystemLibraryUsingFullPath(L"ktmw32.dll"); 
+		HMODULE hKTM32 = AtlLoadSystemLibraryUsingFullPath(L"ktmw32.dll");
 		if (hKTM32 != NULL)
 		{
 			pfCommitTransaction = (PFNCOMMITTRANSACTION)GetProcAddress(hKTM32, "CommitTransaction");
@@ -339,7 +345,7 @@ inline BOOL CAtlTransactionManager::Rollback()
 
 	if (!bInitialized)
 	{
-		HMODULE hKTM32 = AtlLoadSystemLibraryUsingFullPath(L"ktmw32.dll"); 
+		HMODULE hKTM32 = AtlLoadSystemLibraryUsingFullPath(L"ktmw32.dll");
 		if (hKTM32 != NULL)
 		{
 			pfRollbackTransaction = (PFNROLLBACKTRANSACTION)GetProcAddress(hKTM32, "RollbackTransaction");
@@ -457,11 +463,16 @@ inline BOOL CAtlTransactionManager::MoveFile(
 	return FALSE;
 }
 
-inline BOOL CAtlTransactionManager::GetFileAttributesEx(
+inline _Success_(return != FALSE) BOOL CAtlTransactionManager::GetFileAttributesEx(
 	_In_z_ LPCTSTR lpFileName,
 	_In_ GET_FILEEX_INFO_LEVELS fInfoLevelId,
-	_Out_ LPVOID lpFileInformation)
+	_Out_opt_ LPVOID lpFileInformation)
 {
+	if (lpFileInformation == NULL)
+	{
+		return FALSE;
+	}
+
 	if (m_hTransaction != NULL)
 	{
 		HMODULE hKernel32 = ::GetModuleHandle(_T("kernel32.dll"));
@@ -535,10 +546,15 @@ inline BOOL CAtlTransactionManager::SetFileAttributes(
 	return FALSE;
 }
 
-inline HANDLE CAtlTransactionManager::FindFirstFile(
+inline _Success_(return != INVALID_HANDLE_VALUE) HANDLE CAtlTransactionManager::FindFirstFile(
 	_In_z_ LPCTSTR lpFileName,
-	_Out_ WIN32_FIND_DATA* pNextInfo)
+	_Out_opt_ WIN32_FIND_DATA* pNextInfo)
 {
+	if (pNextInfo == NULL)
+	{
+		return INVALID_HANDLE_VALUE;
+	}
+
 	if (m_hTransaction != NULL)
 	{
 		HMODULE hKernel32 = ::GetModuleHandle(_T("kernel32.dll"));
@@ -607,7 +623,7 @@ inline LSTATUS CAtlTransactionManager::RegOpenKeyEx(
 inline LSTATUS CAtlTransactionManager::RegCreateKeyEx(
 	_In_ HKEY hKey,
 	_In_z_ LPCTSTR lpSubKey,
-	_In_ DWORD dwReserved,
+	_Reserved_ DWORD dwReserved,
 	_In_opt_z_ LPTSTR lpClass,
 	_In_ DWORD dwOptions,
 	_In_ REGSAM samDesired,

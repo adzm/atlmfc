@@ -13,7 +13,6 @@
 #include "afxcaptionbar.h"
 #include "afxvisualmanager.h"
 #include "afxtoolbar.h"
-#include "afxtrackmouse.h"
 #include "afxframewndex.h"
 #include "afxmdiframewndex.h"
 #include "afxoleipframewndex.h"
@@ -154,7 +153,6 @@ BOOL CMFCCaptionBar::Create(DWORD dwStyle, CWnd* pParentWnd, UINT uID, int nHeig
 	return TRUE;
 }
 
-//{{AFX_MSG_MAP(CMFCCaptionBar)
 BEGIN_MESSAGE_MAP(CMFCCaptionBar, CPane)
 	ON_WM_CREATE()
 	ON_WM_PAINT()
@@ -170,11 +168,10 @@ BEGIN_MESSAGE_MAP(CMFCCaptionBar, CPane)
 	ON_WM_DESTROY()
 	ON_MESSAGE(WM_SETFONT, &CMFCCaptionBar::OnSetFont)
 	ON_MESSAGE(WM_GETFONT, &CMFCCaptionBar::OnGetFont)
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCCaptionBar::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCCaptionBar::OnUpdateToolTips)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCCaptionBar::OnNeedTipText)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 void CMFCCaptionBar::OnUpdateCmdUI(CFrameWnd* /*pTarget*/, BOOL /*bDisableIfNoHndler*/)
 {
@@ -230,7 +227,7 @@ void CMFCCaptionBar::OnPaint()
 	int nOldBkMode = dc.SetBkMode(TRANSPARENT);
 	COLORREF clrOldText = dc.SetTextColor(m_clrBarText != (COLORREF) -1 ? m_clrBarText : CMFCVisualManager::GetInstance()->GetCaptionBarTextColor(this));
 
-	CFont* pOldFont = dc.SelectObject(m_hFont == NULL ? &afxGlobalData.fontRegular : CFont::FromHandle(m_hFont));
+	CFont* pOldFont = dc.SelectObject(m_hFont == NULL ? &(GetGlobalData()->fontRegular) : CFont::FromHandle(m_hFont));
 
 	OnDrawButton(&dc, m_rectButton, m_strBtnText, m_bBtnEnabled);
 	OnDrawText(&dc, m_rectDrawText, m_strText);
@@ -417,7 +414,7 @@ void CMFCCaptionBar::OnDrawText(CDC* pDC, CRect rect, const CString& strText)
 
 			if (bIsBold)
 			{
-				pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+				pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 			}
 
 			CRect rectPart = rect;
@@ -671,7 +668,7 @@ void CMFCCaptionBar::RecalcLayout()
 {
 	CClientDC dc(NULL);
 
-	CFont* pOldFont = dc.SelectObject(m_hFont == NULL ? &afxGlobalData.fontRegular : CFont::FromHandle(m_hFont));
+	CFont* pOldFont = dc.SelectObject(m_hFont == NULL ? &(GetGlobalData()->fontRegular) : CFont::FromHandle(m_hFont));
 
 	TEXTMETRIC tm;
 	dc.GetTextMetrics(&tm);
@@ -1191,12 +1188,11 @@ void CMFCCaptionBar::OnMouseMove(UINT nFlags, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 }
 
-afx_msg LRESULT CMFCCaptionBar::OnMouseLeave(WPARAM,LPARAM)
+void CMFCCaptionBar::OnMouseLeave()
 {
 	m_bTracked = FALSE;
 
@@ -1217,8 +1213,6 @@ afx_msg LRESULT CMFCCaptionBar::OnMouseLeave(WPARAM,LPARAM)
 		InvalidateRect(m_rectClose);
 		UpdateWindow();
 	}
-
-	return 0;
 }
 
 void CMFCCaptionBar::AdjustLayout()
@@ -1417,7 +1411,7 @@ CSize CMFCCaptionBar::GetTextSize(CDC* pDC, const CString& strText)
 
 			if (bIsBold)
 			{
-				pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+				pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 			}
 
 			CSize sizePart = pDC->GetTextExtent(m_arTextParts [i]);

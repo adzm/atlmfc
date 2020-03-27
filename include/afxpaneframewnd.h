@@ -23,9 +23,10 @@
 #pragma component(minrebuild, off)
 #endif
 
-#pragma warning( disable : 4100 34 )
+#pragma warning(push)
+#pragma warning(disable : 4100 34)
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPaneFrameWnd window
 
 class CPane;
@@ -45,9 +46,6 @@ typedef enum AFX_PREDOCK_STATE
 	PDS_DOCK_REGULAR,
 	PDS_DOCK_TO_TAB
 };
-
-static const UINT AFX_DOCK_EVENT = 4;
-static const UINT AFX_CHECK_ROLL_STATE = 5;
 
 extern AFX_IMPORT_DATA UINT AFX_WM_CHECKEMPTYMINIFRAME;
 
@@ -209,7 +207,6 @@ public:
 	virtual ~CPaneFrameWnd();
 
 protected:
-	//{{AFX_MSG(CPaneFrameWnd)
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
@@ -241,11 +238,11 @@ protected:
 	afx_msg LRESULT OnCheckEmptyState(WPARAM, LPARAM);
 	afx_msg LRESULT OnFloatStatus(WPARAM wParam, LPARAM);
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
-	afx_msg LRESULT OnExitSizeMove(WPARAM, LPARAM);
+	afx_msg void OnExitSizeMove();
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 protected:
@@ -337,7 +334,7 @@ protected:
 	AFX_IMPORT_DATA static CFrameWnd* m_pParentWndForSerialize; // should be set by caller before starting serialization
 };
 
-#pragma warning( default : 4100 34 )
+#pragma warning(pop)
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

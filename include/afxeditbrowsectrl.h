@@ -20,11 +20,13 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCEditBrowseCtrl window
 
 class CMFCEditBrowseCtrl : public CEdit
 {
+	DECLARE_DYNAMIC(CMFCEditBrowseCtrl)
+
 // Construction
 public:
 	CMFCEditBrowseCtrl();
@@ -50,18 +52,19 @@ protected:
 
 	CRect   m_rectBtn;
 	CSize   m_sizeImage;
-	CString m_strLabel;
 	CString m_strDefFileExt;
 	CString m_strFileFilter;
+	CString m_strBrowseFolderTitle;
+	UINT    m_ulBrowseFolderFlags;
 
 	BrowseMode m_Mode;
 	CImageList m_ImageBrowse;
 
 // Operations
 public:
-	void EnableBrowseButton(BOOL bEnable = TRUE, LPCTSTR szLabel = _T("..."));
+	void EnableBrowseButton(BOOL bEnable = TRUE);
 	void EnableFileBrowseButton(LPCTSTR lpszDefExt = NULL, LPCTSTR lpszFilter = NULL);
-	void EnableFolderBrowseButton();
+	void EnableFolderBrowseButton(LPCTSTR lpszBrowseFolderTitle = NULL, UINT ulBrowseFolderFlags = BIF_RETURNONLYFSDIRS);
 
 	void SetBrowseButtonImage(HICON hIcon, BOOL bAutoDestroy = TRUE);
 	void SetBrowseButtonImage(HBITMAP hBitmap, BOOL bAutoDestroy = TRUE);
@@ -87,7 +90,6 @@ public:
 	virtual ~CMFCEditBrowseCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCEditBrowseCtrl)
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
@@ -100,7 +102,6 @@ protected:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 

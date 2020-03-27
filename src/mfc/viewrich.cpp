@@ -70,7 +70,6 @@ CReObject::~CReObject()
 UINT _afxMsgFindReplace2 = ::RegisterWindowMessage(FINDMSGSTRING);
 
 BEGIN_MESSAGE_MAP(CRichEditView, CCtrlView)
-	//{{AFX_MSG_MAP(CRichEditView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, &CRichEditView::OnUpdateNeedSel)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, &CRichEditView::OnUpdateNeedClip)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_FIND, &CRichEditView::OnUpdateNeedText)
@@ -100,7 +99,6 @@ BEGIN_MESSAGE_MAP(CRichEditView, CCtrlView)
 	ON_WM_SIZE()
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 	ON_NOTIFY_REFLECT(EN_SELCHANGE, &CRichEditView::OnSelChange)
 	ON_REGISTERED_MESSAGE(_afxMsgFindReplace2, &CRichEditView::OnFindReplaceCmd)
 END_MESSAGE_MAP()
@@ -111,7 +109,11 @@ AFX_DATADEF ULONG CRichEditView::lMaxSize = 0xffffff;
 /////////////////////////////////////////////////////////////////////////////
 // CRichEditView construction/destruction
 
+#ifdef _UNICODE
+CRichEditView::CRichEditView() : CCtrlView(MSFTEDIT_CLASS,
+#else
 CRichEditView::CRichEditView() : CCtrlView(RICHEDIT_CLASS,
+#endif
 	AFX_WS_DEFAULT_VIEW | WS_HSCROLL | WS_VSCROLL | ES_AUTOHSCROLL |
 	ES_AUTOVSCROLL | ES_MULTILINE | ES_NOHIDESEL | ES_SAVESEL | 
 	ES_SELECTIONBAR)
@@ -131,7 +133,11 @@ CRichEditView::CRichEditView() : CCtrlView(RICHEDIT_CLASS,
 
 BOOL CRichEditView::PreCreateWindow(CREATESTRUCT& cs)
 {
+#ifdef _UNICODE
+	if (!AfxInitRichEdit5())
+#else
 	if (!AfxInitRichEdit2())
+#endif
 		return FALSE;
 	CCtrlView::PreCreateWindow(cs);
 	cs.lpszName = _T("");
@@ -736,6 +742,11 @@ void CRichEditView::OnEditReplace()
 	ASSERT_VALID(this);
 	OnEditFindReplace(FALSE);
 }
+
+#pragma push_macro("FindTextA")
+#pragma push_macro("FindTextW")
+#undef FindTextA
+#undef FindTextW
 
 void CRichEditView::OnEditRepeat()
 {
@@ -1551,23 +1562,37 @@ void CRichEditView::OnReplaceAll(LPCTSTR lpszFind, LPCTSTR lpszReplace, BOOL bCa
 	pEditState->bWord = bWord;
 	pEditState->bNext = TRUE;
 
+	// To simplify replace all, we do the following:
+	// 1) store the initial cursor position in the buffer
+	// 2) reset the cursor position to the start of the buffer
+	// 3) replace all occurrences in the buffer
+	//     if the occurrence is before the stored initial cursor position, then update that stored position
+	// 4) set the cursor to the stored cursor position
+
 	CWaitCursor wait;
-	// no selection or different than what looking for
-	if (!SameAsSelected(pEditState->strFind, pEditState->bCase, pEditState->bWord))
-	{
-		if (!FindText(pEditState))
-		{
-			TextNotFound(pEditState->strFind);
-			return;
-		}
-	}
+
+	FINDTEXTEX ft;
+	GetRichEditCtrl().GetSel(ft.chrg);
+	long lInitialCursorPosition = ft.chrg.cpMin;
 
 	GetRichEditCtrl().HideSelection(TRUE, FALSE);
-	do
+	GetRichEditCtrl().SetSel(0, 0);
+
+	if (FindText(pEditState))
 	{
-		GetRichEditCtrl().ReplaceSel(pEditState->strReplace);
-	} while (FindTextSimple(pEditState));
+		do
+		{
+			GetRichEditCtrl().GetSel(ft.chrg);
+			GetRichEditCtrl().ReplaceSel(pEditState->strReplace);
+			if (ft.chrg.cpMin < lInitialCursorPosition)
+			{
+				lInitialCursorPosition += pEditState->strReplace.GetLength() - pEditState->strFind.GetLength();
+			}
+		} while (FindText(pEditState));
+	}
+
 	TextNotFound(pEditState->strFind);
+	GetRichEditCtrl().SetSel(lInitialCursorPosition, lInitialCursorPosition);
 	GetRichEditCtrl().HideSelection(FALSE, FALSE);
 
 	ASSERT_VALID(this);
@@ -1606,14 +1631,6 @@ LRESULT CRichEditView::OnFindReplaceCmd(WPARAM, LPARAM lParam)
 
 BOOL CRichEditView::SameAsSelected(LPCTSTR lpszCompare, BOOL bCase, BOOL /*bWord*/)
 {
-	// check length first
-	size_t nLen = lstrlen(lpszCompare);
-	long lStartChar, lEndChar;
-	GetRichEditCtrl().GetSel(lStartChar, lEndChar);
-	if (nLen != (size_t)(lEndChar - lStartChar))
-		return FALSE;
-
-	// length is the same, check contents
 	CString strSelect = GetRichEditCtrl().GetSelText();
 	return (bCase && lstrcmp(lpszCompare, strSelect) == 0) ||
 		(!bCase && lstrcmpi(lpszCompare, strSelect) == 0);
@@ -1726,6 +1743,9 @@ long CRichEditView::FindAndSelect(DWORD dwFlags, FINDTEXTEX& ft)
 		GetRichEditCtrl().SetSel(ft.chrgText);
 	return index;
 }
+
+#pragma pop_macro("FindTextA")
+#pragma pop_macro("FindTextW")
 
 void CRichEditView::TextNotFound(LPCTSTR lpszFind)
 {

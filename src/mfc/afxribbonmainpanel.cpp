@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -86,7 +86,7 @@ CSize CMFCRibbonRecentFilesList::GetRegularSize(CDC* pDC)
 
 	const int nDefaultSize = 300;
 
-	return CSize(afxGlobalData.GetRibbonImageScale() == 1. ? nDefaultSize :(int)(afxGlobalData.GetRibbonImageScale() *  nDefaultSize), cy);
+	return CSize(GetGlobalData()->GetRibbonImageScale() == 1. ? nDefaultSize :(int)(GetGlobalData()->GetRibbonImageScale() *  nDefaultSize), cy);
 }
 
 void CMFCRibbonRecentFilesList::FillList()
@@ -103,7 +103,7 @@ void CMFCRibbonRecentFilesList::FillList()
 	TCHAR szCurDir [_MAX_PATH];
 	::GetCurrentDirectory(_MAX_PATH, szCurDir);
 
-	int nCurDir = lstrlen(szCurDir);
+	int nCurDir = AtlStrLen(szCurDir);
 	ASSERT(nCurDir >= 0);
 
 	szCurDir [nCurDir] = _T('\\');
@@ -119,6 +119,11 @@ void CMFCRibbonRecentFilesList::FillList()
 
 			if (pMRUFiles->GetDisplayName(strName, i, szCurDir, nCurDir))
 			{
+				// Ensure that ampersands in the actual file name are not used as prefixes
+				strName.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
+				strName.Replace(_T("&"), _T("&&"));
+				strName.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&&"));
+
 				// Add shortcut number:
 				CString strItem;
 
@@ -344,7 +349,7 @@ void CMFCRibbonMainPanel::Reposition(CDC* pDC, const CRect& rect)
 
 		CSize sizeRecentList = m_pElemOnRight->GetSize(pDC);
 
-		int nDefaultWidth = afxGlobalData.GetRibbonImageScale() == 1. ? m_nRightPaneWidth :(int)(afxGlobalData.GetRibbonImageScale() *  m_nRightPaneWidth);
+		int nDefaultWidth = GetGlobalData()->GetRibbonImageScale() == 1. ? m_nRightPaneWidth :(int)(GetGlobalData()->GetRibbonImageScale() *  m_nRightPaneWidth);
 
 		sizeRecentList.cx = max(sizeRecentList.cx, nDefaultWidth);
 
@@ -542,7 +547,7 @@ BOOL CMFCRibbonMainPanel::GetPreferedMenuLocation(CRect& rect)
 	rect = m_pElemOnRight->GetRect();
 	rect.DeflateRect(1, 1);
 
-	const int nShadowSize = CMFCMenuBar::IsMenuShadows() && !CMFCToolBar::IsCustomizeMode() && afxGlobalData.m_nBitsPerPixel > 8 ? // Don't draw shadows in 256 colors or less
+	const int nShadowSize = CMFCMenuBar::IsMenuShadows() && !CMFCToolBar::IsCustomizeMode() && GetGlobalData()->m_nBitsPerPixel > 8 ? // Don't draw shadows in 256 colors or less
 		CMFCVisualManager::GetInstance()->GetMenuShadowDepth() : 0;
 
 	rect.right -= nShadowSize + 3;

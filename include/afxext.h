@@ -67,7 +67,7 @@ struct CCreateContext;      // Creation context
 #undef AFX_DATA
 #define AFX_DATA AFX_CORE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Simple bitmap button
 
 // CBitmapButton - push-button with 1->4 bitmap images
@@ -107,7 +107,7 @@ protected:
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDIS);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Control Bars
 
 // forward declarations (private to implementation)
@@ -239,7 +239,6 @@ public:
 	void GetBarInfo(CControlBarInfo* pInfo);
 	void SetBarInfo(CControlBarInfo* pInfo, CFrameWnd* pFrameWnd);
 
-	//{{AFX_MSG(CControlBar)
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg int OnCreate(LPCREATESTRUCT lpcs);
 	afx_msg void OnDestroy();
@@ -254,14 +253,14 @@ public:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint pt);
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT nMsg);
 	afx_msg LRESULT OnThemeChanged();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	friend class CFrameWnd;
 	friend class CDockBar;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CStatusBar control
 
 class CStatusBarCtrl;   // forward reference (see afxcmn.h for definition)
@@ -330,7 +329,6 @@ protected:
 	void UpdateAllPanes(BOOL bUpdateRects, BOOL bUpdateText);
 	virtual BOOL OnChildNotify(UINT message, WPARAM, LPARAM, LRESULT*);
 
-	//{{AFX_MSG(CStatusBar)
 	afx_msg LRESULT OnNcHitTest(CPoint);
 	afx_msg void OnNcCalcSize(BOOL, NCCALCSIZE_PARAMS*);
 	afx_msg void OnNcPaint();
@@ -341,7 +339,7 @@ protected:
 	afx_msg LRESULT OnGetText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnGetTextLength(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSetMinHeight(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
@@ -353,7 +351,7 @@ protected:
 #define SBPS_DISABLED   0x04000000
 #define SBPS_STRETCH    0x08000000  // stretch to fill status bar
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CToolBar control
 
 HBITMAP AFXAPI AfxLoadSysColorBitmap(HINSTANCE hInst, HRSRC hRsrc, BOOL bMono = FALSE);
@@ -443,7 +441,6 @@ protected:
 	void SizeToolBar(TBBUTTON* pData, int nCount, int nLength, BOOL bVert = FALSE);
 	void Layout(); // called for delayed button layout
 
-	//{{AFX_MSG(CToolBar)
 	afx_msg LRESULT OnNcHitTest(CPoint);
 	afx_msg void OnNcPaint();
 	afx_msg void OnPaint();
@@ -456,7 +453,7 @@ protected:
 	afx_msg LRESULT OnPreserveSizingPolicyHelper(WPARAM, LPARAM);
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	LRESULT OnSetSizeHelper(CSize& size, LPARAM lParam);
@@ -472,6 +469,8 @@ protected:
 #define TBBS_AUTOSIZE	MAKELONG(TBSTYLE_AUTOSIZE, 0) // autocalc button width
 #define TBBS_NOPREFIX	MAKELONG(TBSTYLE_NOPREFIX, 0) // no accel prefix for this button
 
+#define TBBS_BREAK      0x20000000
+
 // styles for display states
 #define TBBS_CHECKED    MAKELONG(0, TBSTATE_CHECKED)    // button is checked/down
 #define TBBS_PRESSED    MAKELONG(0, TBSTATE_PRESSED)    // button is being depressed
@@ -482,7 +481,7 @@ protected:
 #define TBBS_ELLIPSES	MAKELONG(0, TBSTATE_ELIPSES) 
 #define TBBS_MARKED		MAKELONG(0, TBSTATE_MARKED)
 
-////////////////////////////////////////////
+/*============================================================================*/
 // CDialogBar control
 // This is a control bar built from a dialog template. It is a modeless
 // dialog that delegates all control notifications to the parent window
@@ -514,14 +513,13 @@ protected:
 	LPCTSTR m_lpszTemplateName;
 	virtual BOOL SetOccDialogInfo(_AFX_OCC_DIALOG_INFO* pOccDialogInfo);
 
-	//{{AFX_MSG(CDialogBar)
-	DECLARE_MESSAGE_MAP()
-	//}}AFX_MSG
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
+
+	DECLARE_MESSAGE_MAP()
 #endif
 };
 
-////////////////////////////////////////////
+/*============================================================================*/
 // CReBar control
 
 class CReBarCtrl;
@@ -567,7 +565,6 @@ protected:
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 	BOOL _AddBar(CWnd* pBar, REBARBANDINFO* pRBBI);
 
-	//{{AFX_MSG(CReBar)
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT);
 	afx_msg void OnPaint();
 	afx_msg void OnHeightChange(NMHDR* pNMHDR, LRESULT* pResult);
@@ -576,11 +573,11 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg LRESULT OnShowBand(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnRecalcParent();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Splitter Window
 
 #define SPLS_DYNAMIC_SPLIT  0x0001
@@ -740,7 +737,6 @@ protected:
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 
-	//{{AFX_MSG(CSplitterWnd)
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
 	afx_msg void OnPaint();
@@ -757,11 +753,11 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnDisplayChange();
 	afx_msg LRESULT OnPrintClient(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFormView - generic view constructed from a dialog template
 
 class CFormView : public CScrollView
@@ -832,15 +828,14 @@ protected:
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
 #endif
 
-	//{{AFX_MSG(CFormView)
 	afx_msg int OnCreate(LPCREATESTRUCT lpcs);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg LRESULT OnPrintClient(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CEditView - simple text editor view
 
 class CEditView : public CCtrlView
@@ -872,7 +867,13 @@ public:
 
 // Operations
 public:
+#pragma push_macro("FindTextA")
+#pragma push_macro("FindTextW")
+#undef FindTextA
+#undef FindTextW
 	BOOL FindText(LPCTSTR lpszFind, BOOL bNext = TRUE, BOOL bCase = TRUE);
+#pragma pop_macro("FindTextA")
+#pragma pop_macro("FindTextW")
 	void SerializeRaw(CArchive& ar);
 	UINT PrintInsideRect(CDC* pDC, RECT& rectLayout, UINT nIndexStart,
 		UINT nIndexStop);
@@ -928,7 +929,6 @@ protected:
 	virtual void CalcWindowRect(LPRECT lpClientRect,
 		UINT nAdjustType = adjustBorder);
 
-	//{{AFX_MSG(CEditView)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnUpdateNeedSel(CCmdUI* pCmdUI);
@@ -948,11 +948,11 @@ protected:
 	afx_msg void OnEditRepeat();
 	afx_msg LRESULT OnFindReplaceCmd(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMetaFileDC
 
 class CMetaFileDC : public CDC
@@ -1006,7 +1006,7 @@ public:
 				UINT nFormat);
 			int _AFX_FUNCNAME(DrawText)(const CString& str, LPRECT lpRect, UINT nFormat);
 
-	virtual int _AFX_FUNCNAME(DrawTextEx)(_In_count_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
+	virtual int _AFX_FUNCNAME(DrawTextEx)(_In_reads_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
 				UINT nFormat, LPDRAWTEXTPARAMS lpDTParams);
 			int _AFX_FUNCNAME(DrawTextEx)(const CString& str, LPRECT lpRect, UINT nFormat, LPDRAWTEXTPARAMS lpDTParams);
 
@@ -1015,7 +1015,7 @@ public:
 				UINT nFormat);
 			int DrawText(const CString& str, LPRECT lpRect, UINT nFormat);
 
-			int DrawTextEx(_In_count_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
+			int DrawTextEx(_In_reads_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
 				UINT nFormat, LPDRAWTEXTPARAMS lpDTParams);
 			int DrawTextEx(const CString& str, LPRECT lpRect, UINT nFormat, LPDRAWTEXTPARAMS lpDTParams);
 #pragma pop_macro("DrawText")
@@ -1036,7 +1036,7 @@ protected:
 	void AdjustCP(int cx);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRectTracker - simple rectangular tracking rectangle w/resize handles
 
 class CRectTracker
@@ -1104,7 +1104,7 @@ protected:
 	void Construct();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Informational data structures
 
 struct CPrintInfo // Printing information structure

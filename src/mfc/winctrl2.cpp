@@ -27,8 +27,11 @@ void CDragListBox::PreSubclassWindow()
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT((GetStyle() & (LBS_MULTIPLESEL|LBS_SORT)) == 0);
-	AfxMakeDragList(m_hWnd);
+	MakeDragList(m_hWnd);
 }
+
+#pragma push_macro("DrawInsert")
+#undef DrawInsert
 
 BOOL CDragListBox::BeginDrag(CPoint pt)
 {
@@ -83,6 +86,8 @@ void CDragListBox::DrawInsert(int nIndex)
 		m_nLast = nIndex;
 	}
 }
+
+#pragma pop_macro("DrawInsert")
 
 void CDragListBox::DrawSingle(int nIndex)
 {
@@ -141,9 +146,7 @@ BOOL CDragListBox::OnChildNotify(UINT nMessage, WPARAM wParam, LPARAM lParam, LR
 // CToolBarCtrl
 
 BEGIN_MESSAGE_MAP(CToolBarCtrl, CWnd)
-	//{{AFX_MSG_MAP(CToolBarCtrl)
 	ON_WM_CREATE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CToolBarCtrl::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd,
@@ -367,9 +370,7 @@ BOOL CStatusBarCtrl::OnChildNotify(UINT message, WPARAM wParam, LPARAM lParam,
 // CListCtrl
 
 BEGIN_MESSAGE_MAP(CListCtrl, CWnd)
-	//{{AFX_MSG_MAP(CListCtrl)
 	ON_WM_NCDESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CListCtrl::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd,
@@ -565,7 +566,7 @@ CString CListCtrl::GetItemText(int nItem, int nSubItem) const
 	return str;
 }
 
-int CListCtrl::GetItemText(_In_ int nItem, _In_ int nSubItem, _Out_z_cap_post_count_(nLen, return + 1) LPTSTR lpszText, _In_ int nLen) const
+int CListCtrl::GetItemText(_In_ int nItem, _In_ int nSubItem, _Out_writes_to_(nLen, return + 1) LPTSTR lpszText, _In_ int nLen) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	LVITEM lvi;
@@ -641,9 +642,7 @@ CImageList* CListCtrl::CreateDragImage(int nItem, LPPOINT lpPoint)
 // CTreeCtrl
 
 BEGIN_MESSAGE_MAP(CTreeCtrl, CWnd)
-	//{{AFX_MSG_MAP(CTreeCtrl)
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CTreeCtrl::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd,
@@ -695,7 +694,7 @@ CString CTreeCtrl::GetItemText(HTREEITEM hItem) const
 		item.pszText = str.GetBufferSetLength(nLen);
 		item.cchTextMax = nLen;
 		::SendMessage(m_hWnd, TVM_GETITEM, 0, (LPARAM)&item);
-		nRes = lstrlen(item.pszText);
+		nRes = AtlStrLen(item.pszText);
 	} while (nRes >= nLen-1);
 	str.ReleaseBuffer();
 	return str;
@@ -1183,9 +1182,7 @@ CString CHotKeyCtrl::GetHotKeyName() const
 // CTabCtrl
 
 BEGIN_MESSAGE_MAP(CTabCtrl, CWnd)
-	//{{AFX_MSG_MAP(CTabCtrl)
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CTabCtrl::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd,
@@ -1395,7 +1392,7 @@ BOOL CImageList::DeleteImageList()
 {
 	if (m_hImageList == NULL)
 		return FALSE;
-	return AfxImageList_Destroy(Detach());
+	return ImageList_Destroy(Detach());
 }
 
 CImageList* PASCAL CImageList::FromHandle(HIMAGELIST h)
@@ -1422,7 +1419,7 @@ CImageList* PASCAL CImageList::FromHandlePermanent(HIMAGELIST h)
 
 BOOL CImageList::Create(int cx, int cy, UINT nFlags, int nInitial, int nGrow)
 {
-	return Attach(AfxImageList_Create(cx, cy, nFlags, nInitial, nGrow));
+	return Attach(ImageList_Create(cx, cy, nFlags, nInitial, nGrow));
 }
 
 BOOL CImageList::Create(UINT nBitmapID, int cx, int nGrow, COLORREF crMask)
@@ -1430,7 +1427,7 @@ BOOL CImageList::Create(UINT nBitmapID, int cx, int nGrow, COLORREF crMask)
 	ASSERT(HIWORD(nBitmapID) == 0);
 	HINSTANCE hInst = AfxFindResourceHandle((LPCTSTR)(DWORD_PTR)nBitmapID, RT_BITMAP);
 	ASSERT(hInst != NULL);
-	return Attach(AfxImageList_LoadBitmap(hInst, 
+	return Attach(ImageList_LoadBitmap(hInst, 
 		(LPCTSTR)(DWORD_PTR)nBitmapID, cx, nGrow, crMask));
 }
 
@@ -1439,13 +1436,13 @@ BOOL CImageList::Create(LPCTSTR lpszBitmapID, int cx, int nGrow,
 {
 	HINSTANCE hInst = AfxFindResourceHandle(lpszBitmapID, RT_BITMAP);
 	ASSERT(hInst != NULL);
-	return Attach(AfxImageList_LoadBitmap(hInst, lpszBitmapID, cx, nGrow, crMask));
+	return Attach(ImageList_LoadBitmap(hInst, lpszBitmapID, cx, nGrow, crMask));
 }
 
 BOOL CImageList::Create(CImageList& imagelist1, int nImage1,
 	CImageList& imagelist2, int nImage2, int dx, int dy)
 {
-	return Attach(AfxImageList_Merge(imagelist1.m_hImageList, nImage1,
+	return Attach(ImageList_Merge(imagelist1.m_hImageList, nImage1,
 		imagelist2.m_hImageList, nImage2, dx, dy));
 }
 
@@ -1472,7 +1469,7 @@ BOOL CImageList::Read(CArchive* pArchive)
 	ASSERT(pArchive->IsLoading());
 	CArchiveStream arcstream(pArchive);
 
-	m_hImageList = AfxImageList_Read(&arcstream);
+	m_hImageList = ImageList_Read(&arcstream);
 	return (m_hImageList != NULL);
 }
 
@@ -1482,7 +1479,7 @@ BOOL CImageList::Write(CArchive* pArchive)
 	ASSERT(pArchive != NULL);
 	ASSERT(pArchive->IsStoring());
 	CArchiveStream arcstream(pArchive);
-	return AfxImageList_Write(m_hImageList, &arcstream);
+	return ImageList_Write(m_hImageList, &arcstream);
 }
 #endif //_AFX_NO_OLE_SUPPORT
 

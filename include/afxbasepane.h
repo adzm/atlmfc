@@ -18,7 +18,8 @@
 #include "afxglobals.h"
 #include "afxaccessibility.h"
 
-#pragma warning( disable : 4100 34 )
+#pragma warning(push)
+#pragma warning(disable : 4100 34)
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -66,7 +67,7 @@ static const DWORD AFX_CBRS_AUTO_ROLLUP  = 0x10;
 static const DWORD AFX_CBRS_REGULAR_TABS = 0x20;
 static const DWORD AFX_CBRS_OUTLOOK_TABS = 0x40;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CBasePane window
 
 class CBasePane : public CWnd
@@ -177,7 +178,7 @@ public:
 	virtual BOOL LoadState(LPCTSTR lpszProfileName = NULL, int nIndex = -1, UINT uiID = (UINT) -1);
 	virtual BOOL SaveState(LPCTSTR lpszProfileName = NULL, int nIndex = -1, UINT uiID = (UINT) -1);
 
-	virtual HDWP MoveWindow(CRect& rect, BOOL bRepaint = TRUE, HDWP hdwp = NULL);
+	virtual HDWP MoveWindow(const CRect& rect, BOOL bRepaint = TRUE, HDWP hdwp = NULL);
 	virtual HDWP SetWindowPos(const CWnd* pWndInsertAfter, int x, int y, int cx, int cy, UINT nFlags, HDWP hdwp = NULL);
 
 	virtual void CopyState(CBasePane* pOrgBar);
@@ -244,7 +245,6 @@ public:
 protected:
 	virtual void DoPaint(CDC* pDC);
 
-	//{{AFX_MSG(CBasePane)
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -255,7 +255,7 @@ protected:
 	afx_msg LRESULT OnSetIcon(WPARAM,LPARAM);
 	afx_msg LRESULT OnGetObject(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	BOOL m_bVisible; // use this status instead of IsWindowVisible
@@ -286,7 +286,7 @@ protected:
 	static CCriticalSection m_CriticalSection;
 
 public:
-	////------------ for frame mapping ---------------------------
+	//------------ for frame mapping ---------------------------
 	void AddPane(CBasePane* pBar);
 	BOOL InsertPane	(CBasePane* pControlBar, CBasePane* pTarget, BOOL bAfter = TRUE);
 	void RemovePaneFromDockManager(CBasePane* pBar, BOOL bDestroy = TRUE, BOOL bAdjustLayout = FALSE, BOOL bAutoHide = FALSE, CBasePane* pBarReplacement = NULL);
@@ -304,7 +304,7 @@ public:
 		}
 		else
 		{
-			return pDC->SelectObject(&afxGlobalData.fontRegular);
+			return pDC->SelectObject(&(GetGlobalData()->fontRegular));
 		}
 	}
 };
@@ -320,9 +320,9 @@ _inline BOOL CBasePane::CanAcceptPane(const CBasePane* /* pBar */) const
 	return FALSE;
 }
 
-#pragma warning( default : 4100 34 )
+#pragma warning(pop)
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

@@ -17,11 +17,9 @@
 // CDocument
 
 BEGIN_MESSAGE_MAP(CDocument, CCmdTarget)
-	//{{AFX_MSG_MAP(CDocument)
 	ON_COMMAND(ID_FILE_CLOSE, &CDocument::OnFileClose)
 	ON_COMMAND(ID_FILE_SAVE, &CDocument::OnFileSave)
 	ON_COMMAND(ID_FILE_SAVE_AS, &CDocument::OnFileSaveAs)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 #if WINVER >= 0x0600
@@ -263,7 +261,7 @@ void CDocument::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
 	// store the path fully qualified
 	TCHAR szFullPath[_MAX_PATH];
 	ENSURE(lpszPathName);
-	if ( lstrlen(lpszPathName) >= _MAX_PATH )
+	if ( _tcslen(lpszPathName) >= _MAX_PATH )
 	{
 		ASSERT(FALSE);
 		// MFC requires paths with length < _MAX_PATH
@@ -373,6 +371,8 @@ BOOL CDocument::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 			int iBad = newName.FindOneOf(_T(":/\\"));
 			if (iBad != -1)
 				newName.ReleaseBuffer(iBad);
+			if (newName.GetLength() > _MAX_FNAME)
+				newName.ReleaseBuffer(_MAX_FNAME);
 
 			if (AfxGetApp() && AfxGetApp()->GetDataRecoveryHandler())
 			{
@@ -666,6 +666,9 @@ void CMirrorFile::Abort()
 
 void CMirrorFile::Close()
 {
+	// Note that CMirrorFile does not have a virtual destructor, so Close will not
+	// be implicitly called when the object is destroyed (as it is for CFile).
+	// CMirrorFile::Close must be called explicitly in order to close an opened file.
 	CString strName = m_strFileName; //file close empties string
 	CFile::Close();
 	if (!m_strMirrorName.IsEmpty())

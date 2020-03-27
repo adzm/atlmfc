@@ -18,9 +18,6 @@
 /////////////////////////////////////////////////////////////////////////////
 
 BEGIN_MESSAGE_MAP(CRecordView, CFormView)
-	//{{AFX_MSG_MAP(CRecordView)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
 	ON_COMMAND_EX(ID_RECORD_FIRST, &CRecordView::OnMove)
 	ON_UPDATE_COMMAND_UI(ID_RECORD_FIRST, &CRecordView::OnUpdateRecordFirst)
 	ON_COMMAND_EX(ID_RECORD_PREV, &CRecordView::OnMove)
@@ -289,7 +286,7 @@ void AFXAPI DDX_FieldText(CDataExchange* pDX, int nIDC, CString& value,
 	}
 }
 
-void AFXAPI DDX_FieldText(_In_ CDataExchange* pDX, _In_ int nIDC, _Out_z_cap_(nMaxLen) LPTSTR pstrValue,
+void AFXAPI DDX_FieldText(_In_ CDataExchange* pDX, _In_ int nIDC, _Out_writes_z_(nMaxLen) LPTSTR pstrValue,
 	_In_ int nMaxLen, _In_ CRecordset* pRecordset)
 {
 	ASSERT_VALID(pRecordset);

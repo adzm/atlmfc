@@ -582,12 +582,10 @@ HACCEL COleServerDoc::GetDefaultAccelerator()
 // COleServerDoc default command handling
 
 BEGIN_MESSAGE_MAP(COleServerDoc, COleLinkingDoc)
-	//{{AFX_MSG_MAP(COleServerDoc)
 	ON_COMMAND(ID_FILE_UPDATE, &COleServerDoc::OnFileUpdate)
 	ON_COMMAND(ID_FILE_SAVE_COPY_AS, &COleServerDoc::OnFileSaveCopyAs)
 	ON_UPDATE_COMMAND_UI(ID_APP_EXIT, &COleServerDoc::OnUpdateFileExit)
 	ON_UPDATE_COMMAND_UI(ID_FILE_UPDATE, &COleServerDoc::OnUpdateFileUpdate)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void COleServerDoc::OnFileUpdate()
@@ -2047,6 +2045,11 @@ STDMETHODIMP COleServerDoc::XOleObject::GetClientSite(
 {
 	METHOD_PROLOGUE_EX_(COleServerDoc, OleObject)
 
+	if (ppClientSite == NULL)
+	{
+		return E_POINTER;
+	}
+
 	if (pThis->m_lpClientSite == NULL)
 	{
 		*ppClientSite = NULL;
@@ -2139,6 +2142,11 @@ STDMETHODIMP COleServerDoc::XOleObject::GetMoniker(
 {
 	METHOD_PROLOGUE_EX_(COleServerDoc, OleObject)
 
+	if (ppMoniker == NULL)
+	{
+		return E_POINTER;
+	}
+
 	*ppMoniker = pThis->GetMoniker((OLEGETMONIKER)dwAssign);
 	return *ppMoniker == NULL ? E_FAIL : S_OK;
 }
@@ -2177,6 +2185,11 @@ STDMETHODIMP COleServerDoc::XOleObject::GetClipboardData(
 {
 	METHOD_PROLOGUE_EX(COleServerDoc, OleObject)
 	ASSERT_VALID(pThis);
+
+	if (ppDataObject == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*ppDataObject = NULL;
 
@@ -2241,6 +2254,11 @@ STDMETHODIMP COleServerDoc::XOleObject::EnumVerbs(
 	IEnumOLEVERB** ppenumOleVerb)
 {
 	METHOD_PROLOGUE_EX_(COleServerDoc, OleObject)
+
+	if (ppenumOleVerb == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*ppenumOleVerb = NULL;
 
@@ -2332,6 +2350,11 @@ STDMETHODIMP COleServerDoc::XOleObject::SetExtent(
 {
 	METHOD_PROLOGUE_EX(COleServerDoc, OleObject)
 	ASSERT_VALID(pThis);
+
+	if (lpsizel == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	COleServerItem* pItem;
 	SCODE sc = E_FAIL;

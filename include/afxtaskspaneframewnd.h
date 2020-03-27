@@ -40,10 +40,9 @@ public:
 	virtual void CalcBorderSize(CRect& rectBorderSize) const;
 
 protected:
-	//{{AFX_MSG(CMFCTasksPaneFrameWnd)
 	afx_msg void OnNcPaint();
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 protected:

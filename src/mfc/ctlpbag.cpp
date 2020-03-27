@@ -557,10 +557,14 @@ STDMETHODIMP COleControl::XPersistPropertyBag::InitNew()
 	return S_OK;
 }
 
-STDMETHODIMP COleControl::XPersistPropertyBag::Load(LPPROPERTYBAG pPropBag,
-	LPERRORLOG pErrorLog)
+STDMETHODIMP COleControl::XPersistPropertyBag::Load(LPPROPERTYBAG pPropBag, LPERRORLOG pErrorLog)
 {
 	METHOD_PROLOGUE_EX(COleControl, PersistPropertyBag)
+
+	if (pPropBag == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	HRESULT hr;
 
@@ -593,10 +597,14 @@ STDMETHODIMP COleControl::XPersistPropertyBag::Load(LPPROPERTYBAG pPropBag,
 	return hr;
 }
 
-STDMETHODIMP COleControl::XPersistPropertyBag::Save(LPPROPERTYBAG pPropBag,
-	BOOL fClearDirty, BOOL fSaveAllProperties)
+STDMETHODIMP COleControl::XPersistPropertyBag::Save(LPPROPERTYBAG pPropBag, BOOL fClearDirty, BOOL fSaveAllProperties)
 {
 	METHOD_PROLOGUE_EX(COleControl, PersistPropertyBag)
+
+	if (pPropBag == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	HRESULT hr;
 

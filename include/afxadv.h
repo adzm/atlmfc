@@ -62,7 +62,7 @@
 #undef AFX_DATA
 #define AFX_DATA AFX_CORE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Shared file support
 
 class CSharedFile : public CMemFile
@@ -71,7 +71,7 @@ class CSharedFile : public CMemFile
 
 public:
 // Constructors
-	/* explicit */ CSharedFile(UINT nAllocFlags = GMEM_MOVEABLE,
+	explicit CSharedFile(UINT nAllocFlags = GMEM_MOVEABLE,
 		UINT nGrowBytes = 4096);
 
 // Attributes
@@ -91,7 +91,7 @@ protected:
 	BOOL m_bAllowGrow;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRecentFileList
 
 #define AFX_ABBREV_FILENAME_LEN 30
@@ -158,7 +158,7 @@ AFX_INLINE int CRecentFileList::GetSize() const
 AFX_INLINE CString& CRecentFileList::operator[](int nIndex)
 { ENSURE_ARG(nIndex >=0 && nIndex < m_nSize); return m_arrNames[nIndex]; }
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDockState - used for docking serialization
 
 class CDockState : public CObject
@@ -229,7 +229,7 @@ public:
 
 	/// <summary>
 	/// Retrieves the maximum number of items, including category headers that can display in 
-	/// the calling application’s destination menu. </summary>
+	/// the calling application's destination menu. </summary>
 	/// <remarks>
 	/// Applications may only report a number of items and category headers combined up to this value.  
 	/// If calls to AppendCategory, AppendKnownCategory, or AddUserTasks exceed this number, they will 
@@ -309,7 +309,7 @@ public:
 	/// <remarks>
 	/// Known Categories are the Frequent and Recent categories that we will automatically calculate for every 
 	/// application that utilizes SHAddToRecentDocs (or indirectly uses it as the shell will call it on the 
-	/// application’s behalf in some scenarios).</remarks>
+	/// application's behalf in some scenarios).</remarks>
 	/// <param name="category"> Specifies a known category type. Can be either KDC_RECENT, or KDC_KNOWN. </param>
 	BOOL AddKnownCategory(KNOWNDESTCATEGORY category);
 
@@ -318,7 +318,7 @@ public:
 	/// <remarks>
 	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List 
 	/// during CommitList.
-	/// Task items will appear in a category at the bottom of the application’s destination menu.  
+	/// Task items will appear in a category at the bottom of the application's destination menu.  
 	/// This category takes precedence over all other categories when it is filled in the UI. </remarks>
 	/// <param name="strTargetExecutablePath"> Specifies the target task path.</param>
 	/// <param name="strCommandLineArgs"> Specifies command line arguments of the executable specified by strTargetExecutablePath.</param>
@@ -331,7 +331,7 @@ public:
 	/// <remarks>
 	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List 
 	/// during CommitList.
-	/// Task items will appear in a category at the bottom of the application’s destination menu.  
+	/// Task items will appear in a category at the bottom of the application's destination menu.  
 	/// This category takes precedence over all other categories when it is filled in the UI. </remarks>
 	/// <param name="pShellLink"> Shell Link that represents a task to be added.</param>
 	BOOL AddTask(IShellLink* pShellLink);
@@ -341,7 +341,7 @@ public:
 	/// <remarks>
 	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List 
 	/// during CommitList.
-	/// Task items will appear in a category at the bottom of the application’s destination menu.  
+	/// Task items will appear in a category at the bottom of the application's destination menu.  
 	/// This category takes precedence over all other categories when it is filled in the UI. </remarks>
 	/// <param name="pObjectCollection"> A collection of tasks to be added.</param>
 	BOOL AddTasks(IObjectArray* pObjectCollection);
@@ -382,6 +382,7 @@ protected:
 protected:
 	CString		m_strAppID;
 	BOOL		m_bInitialized;
+	BOOL		m_bIsSupported;
 	UINT		m_nMaxSlots;
 	BOOL		m_bAutoCommit; // Automatically call commit in destructor
 

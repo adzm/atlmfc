@@ -50,8 +50,8 @@
 #if !defined(OLE2ANSI)
 
 typedef WCHAR OLECHAR;
-typedef OLECHAR  *LPOLESTR;
-typedef const OLECHAR  *LPCOLESTR;
+typedef _Null_terminated_ OLECHAR  *LPOLESTR;
+typedef _Null_terminated_ const OLECHAR  *LPCOLESTR;
 #define OLESTR(str) L##str
 
 #else
@@ -69,13 +69,13 @@ typedef LPWSTR BSTR;// must (semantically) match typedef in oleauto.h
 
 extern "C"
 {
-__declspec(dllimport) _Ret_opt_z_ BSTR __stdcall SysAllocString(_In_opt_z_ const OLECHAR *);
-__declspec(dllimport) _Ret_opt_z_ BSTR __stdcall SysAllocStringLen(
-	_In_z_count_(nLen) const OLECHAR *, 
+__declspec(dllimport) _Ret_maybenull_z_ BSTR __stdcall SysAllocString(_In_opt_z_ const OLECHAR *);
+__declspec(dllimport) _Ret_maybenull_z_ BSTR __stdcall SysAllocStringLen(
+	_In_reads_z_(nLen) const OLECHAR *, 
 	_In_ UINT nLen);
 __declspec(dllimport) INT  __stdcall SysReAllocStringLen(
-	_Deref_out_opt_z_ BSTR*, 
-	_In_opt_z_count_(nLen) const OLECHAR *, 
+	_Outptr_result_maybenull_z_ BSTR*, 
+	_In_reads_opt_z_(nLen) const OLECHAR *, 
 	_In_ UINT nLen);
 __declspec(dllimport) void __stdcall SysFreeString(_In_opt_z_ BSTR);
 }
@@ -111,9 +111,9 @@ inline UINT WINAPI _AtlGetConversionACP() throw()
 
 template <class _CharType>
 inline void AtlConvAllocMemory(
-	_Inout_ _Deref_post_cap_(nLength) _CharType** ppBuff,
+	_Inout_ _Outptr_result_buffer_(nLength) _CharType** ppBuff,
 	_In_ int nLength,
-	_Inout_cap_(nFixedBufferLength) _CharType* pszFixedBuffer,
+	_In_reads_(nFixedBufferLength) _CharType* pszFixedBuffer,
 	_In_ int nFixedBufferLength)
 {
 	ATLENSURE_THROW(ppBuff != NULL, E_INVALIDARG);
@@ -156,8 +156,8 @@ inline void AtlConvAllocMemory(
 
 template <class _CharType>
 inline void AtlConvFreeMemory(
-	_Inout_ _CharType* pBuff,
-	_Inout_cap_(nFixedBufferLength) _CharType* pszFixedBuffer,
+	_Pre_maybenull_ _Post_invalid_ _CharType* pBuff,
+	_Pre_notnull_ _Pre_writable_size_(nFixedBufferLength) _CharType* pszFixedBuffer,
 	_In_ int nFixedBufferLength)
 {
 	(nFixedBufferLength);
@@ -209,7 +209,7 @@ private:
 			m_psz = NULL;
 			return;
 		}
-		int nLength = lstrlenW( psz )+1;
+		int nLength = static_cast<int>(wcslen( psz ))+1;
 		AtlConvAllocMemory(&m_psz,nLength,m_szBuffer,t_nBufferLength);
 		ATLASSUME(m_psz != NULL);
 		Checked::memcpy_s( m_psz, nLength*sizeof( wchar_t ), psz, nLength*sizeof( wchar_t ));
@@ -261,7 +261,7 @@ private:
 			m_psz = NULL;
 			return;
 		}
-		int nLength = lstrlenA( psz )+1;
+		int nLength = static_cast<int>(strlen( psz ))+1;
 		AtlConvAllocMemory(&m_psz,nLength,m_szBuffer,t_nBufferLength);		
 		Checked::memcpy_s( m_psz, nLength*sizeof( char ), psz, nLength*sizeof( char ));
 	}
@@ -378,7 +378,7 @@ private:
 			m_psz = NULL;
 			return;
 		}
-		int nLengthA = lstrlenA( psz )+1;
+		int nLengthA = static_cast<int>(strlen( psz ))+1;
 		int nLengthW = nLengthA;
 
 		AtlConvAllocMemory(&m_psz,nLengthW,m_szBuffer,t_nBufferLength);
@@ -445,7 +445,7 @@ private:
 			m_psz = NULL;
 			return;
 		}
-		int nLengthW = lstrlenW( psz )+1;		 
+		int nLengthW = static_cast<int>(wcslen( psz ))+1;
 		int nLengthA = nLengthW*4;
 		
 		AtlConvAllocMemory(&m_psz,nLengthA,m_szBuffer,t_nBufferLength);
@@ -554,8 +554,9 @@ typedef CW2AEX<> CW2A;
 
 /////////////////////////////////////////////////////////////////////////////
 // Global UNICODE<>ANSI translation helpers
-_Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(
-	_Out_opt_z_cap_(nChars) LPWSTR lpw, 
+ATLPREFAST_SUPPRESS(6054)
+_Ret_maybenull_z_ _Post_writable_byte_size_(nChars) inline LPWSTR WINAPI AtlA2WHelper(
+	_Out_writes_opt_z_(nChars) LPWSTR lpw, 
 	_In_opt_z_ LPCSTR lpa, 
 	_In_ int nChars, 
 	_In_ UINT acp) throw()
@@ -576,9 +577,11 @@ _Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(
 	}		
 	return lpw;
 }
+ATLPREFAST_UNSUPPRESS()
 
-_Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
-	_Out_opt_z_cap_(nChars) LPSTR lpa, 
+ATLPREFAST_SUPPRESS(6054)
+_Ret_maybenull_z_ _Post_writable_byte_size_(nChars) inline LPSTR WINAPI AtlW2AHelper(
+	_Out_writes_opt_z_(nChars) LPSTR lpa, 
 	_In_opt_z_ LPCWSTR lpw, 
 	_In_ int nChars, 
 	_In_ UINT acp) throw()
@@ -599,16 +602,18 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
 	}
 	return lpa;
 }
-_Ret_opt_z_cap_(nChars) inline LPWSTR WINAPI AtlA2WHelper(
-	_Out_opt_z_cap_(nChars) LPWSTR lpw, 
+ATLPREFAST_UNSUPPRESS()
+
+_Ret_maybenull_z_ _Post_writable_byte_size_(nChars) inline LPWSTR WINAPI AtlA2WHelper(
+	_Out_writes_opt_z_(nChars) LPWSTR lpw, 
 	_In_opt_z_ LPCSTR lpa, 
 	_In_ int nChars) throw()
 {
 	return AtlA2WHelper(lpw, lpa, nChars, CP_ACP);
 }
 
-_Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
-	_Out_opt_z_cap_(nChars) LPSTR lpa, 
+_Ret_maybenull_z_ _Post_writable_byte_size_(nChars) inline LPSTR WINAPI AtlW2AHelper(
+	_Out_writes_opt_z_(nChars) LPSTR lpa, 
 	_In_opt_z_ LPCWSTR lpw, 
 	_In_ int nChars) throw()
 {
@@ -633,25 +638,25 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
 
 #define A2W(lpa) (\
 	((_lpa = lpa) == NULL) ? NULL : (\
-		_convert = (lstrlenA(_lpa)+1),\
+		_convert = (static_cast<int>(strlen(_lpa))+1),\
 		(INT_MAX/2<_convert)? NULL :  \
 		ATLA2WHELPER((LPWSTR) alloca(_convert*sizeof(WCHAR)), _lpa, _convert, _acp)))
 
 #define W2A(lpw) (\
 	((_lpw = lpw) == NULL) ? NULL : (\
-		(_convert = (lstrlenW(_lpw)+1), \
+		(_convert = (static_cast<int>(wcslen(_lpw))+1), \
 		(_convert>INT_MAX/2) ? NULL : \
 		ATLW2AHELPER((LPSTR) alloca(_convert*sizeof(WCHAR)), _lpw, _convert*sizeof(WCHAR), _acp))))
 
 #define A2W_CP(lpa, cp) (\
 	((_lpa = lpa) == NULL) ? NULL : (\
-		_convert = (lstrlenA(_lpa)+1),\
+		_convert = (static_cast<int>(strlen(_lpa))+1),\
 		(INT_MAX/2<_convert)? NULL : \
 		ATLA2WHELPER((LPWSTR) alloca(_convert*sizeof(WCHAR)), _lpa, _convert, (cp))))
 
 #define W2A_CP(lpw, cp) (\
 	((_lpw = lpw) == NULL) ? NULL : (\
-		(_convert = (lstrlenW(_lpw)+1), \
+		(_convert = (static_cast<int>(wcslen(_lpw))+1), \
 		(_convert>INT_MAX/2) ? NULL : \
 		ATLW2AHELPER((LPSTR) alloca(_convert*sizeof(WCHAR)), _lpw, _convert*sizeof(WCHAR), (cp)))))
 
@@ -662,7 +667,7 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
 // these functions to actually use nChars because we could potentially break a lot of legacy code.
 #define A2W_EX(lpa, nChars) (\
 	((_lpa_ex = lpa) == NULL) ? NULL : (\
-		_convert_ex = (lstrlenA(_lpa_ex)+1),\
+		_convert_ex = (static_cast<int>(strlen(_lpa_ex))+1),\
 		FAILED(::ATL::AtlMultiply(&_convert_ex, _convert_ex, static_cast<int>(sizeof(WCHAR)))) ? NULL : \
 		ATLA2WHELPER(	\
 			(LPWSTR)_ATL_SAFE_ALLOCA(_convert_ex, _ATL_SAFE_ALLOCA_DEF_THRESHOLD), \
@@ -674,7 +679,7 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
 
 #define W2A_EX(lpw, nChars) (\
 	((_lpw_ex = lpw) == NULL) ? NULL : (\
-		_convert_ex = (lstrlenW(_lpw_ex)+1),\
+		_convert_ex = (static_cast<int>(wcslen(_lpw_ex))+1),\
 		FAILED(::ATL::AtlMultiply(&_convert_ex, _convert_ex, static_cast<int>(sizeof(WCHAR)))) ? NULL : \
 		ATLW2AHELPER(	\
 			(LPSTR)_ATL_SAFE_ALLOCA(_convert_ex, _ATL_SAFE_ALLOCA_DEF_THRESHOLD), \
@@ -686,7 +691,7 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
 
 #define A2W_CP_EX(lpa, nChars, cp) (\
 	((_lpa_ex = lpa) == NULL) ? NULL : (\
-		_convert_ex = (lstrlenA(_lpa_ex)+1),\
+		_convert_ex = (static_cast<int>(strlen(_lpa_ex))+1),\
 		FAILED(::ATL::AtlMultiply(&_convert_ex, _convert_ex, static_cast<int>(sizeof(WCHAR)))) ? NULL : \
 		ATLA2WHELPER(	\
 			(LPWSTR)_ATL_SAFE_ALLOCA(_convert_ex, _ATL_SAFE_ALLOCA_DEF_THRESHOLD), \
@@ -696,7 +701,7 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
 
 #define W2A_CP_EX(lpw, nChars, cp) (\
 	((_lpw_ex = lpw) == NULL) ? NULL : (\
-		_convert_ex = (lstrlenW(_lpw_ex)+1),\
+		_convert_ex = (static_cast<int>(wcslen(_lpw_ex))+1),\
 		FAILED(::ATL::AtlMultiply(&_convert_ex, _convert_ex, static_cast<int>(sizeof(WCHAR)))) ? NULL : \
 		ATLW2AHELPER(	\
 			(LPSTR)_ATL_SAFE_ALLOCA(_convert_ex, _ATL_SAFE_ALLOCA_DEF_THRESHOLD), \
@@ -722,21 +727,28 @@ _Ret_opt_z_cap_(nChars) inline LPSTR WINAPI AtlW2AHelper(
 #define A2CW_CP_EX(lpa, nChar, cp) ((LPCWSTR)A2W_CP_EX(lpa, nChar, (cp)))
 #define W2CA_CP_EX(lpw, nChar, cp) ((LPCSTR)W2A_CP_EX(lpw, nChar, (cp)))
 
-inline int ocslen(_In_z_ LPCOLESTR x) throw() 
+inline int ocslen(_In_opt_z_ LPCOLESTR x) throw() 
 { 
-	return lstrlenW(x); 
+	if (x == NULL)
+	{
+		return 0;
+	}
+
+	return static_cast<int>(wcslen(x));
 }
 
+ATLPREFAST_SUPPRESS(6054)
 inline bool ocscpy_s(
-	_Out_z_cap_(maxSize) LPOLESTR dest, 
+	_Out_writes_(maxSize) LPOLESTR dest, 
 	_In_ size_t maxSize, 
 	_In_z_ LPCOLESTR src) throw() 
 { 
 	return 0 == memcpy_s(dest, maxSize*sizeof(WCHAR), src, (ocslen(src)+1)*sizeof(WCHAR)); 
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline bool ocscat_s(
-	_Inout_z_cap_(maxSize) LPOLESTR dest, 
+	_Inout_updates_z_(maxSize) LPOLESTR dest, 
 	_In_ size_t maxSize, 
 	_In_z_ LPCOLESTR src) throw() 
 { 
@@ -753,7 +765,7 @@ inline OLECHAR* ocscpy(
 	_In_z_ LPCOLESTR src) throw()
 {
 #pragma warning(push)
-#pragma warning(disable:4996)
+#pragma warning(disable:4996 28719)
 	return wcscpy(dest, src);
 #pragma warning(pop)
 }
@@ -764,7 +776,7 @@ inline OLECHAR* ocscat(
 	_In_z_ LPCOLESTR src) throw()
 {
 #pragma warning(push)
-#pragma warning(disable:4996)
+#pragma warning(disable:4996 28719)
 	return wcscat(dest, src);
 #pragma warning(pop)
 }
@@ -840,7 +852,7 @@ inline OLECHAR* ocscpy(
 {
 #pragma warning(push)
 #pragma warning(disable:4996)
-	return (LPOLESTR) memcpy(dest, src, (lstrlenW(src)+1)*sizeof(WCHAR));
+	return (LPOLESTR) memcpy(dest, src, (ocslen(src)+1)*sizeof(WCHAR));
 #pragma warning(pop)
 }
 
@@ -1118,7 +1130,7 @@ _Ret_z_ inline LPCTSTR A2CT(_In_z_ LPCSTR lp)
 
 #endif // defined(_UNICODE)
 
-_Check_return_ _Ret_opt_z_ inline BSTR A2WBSTR(
+_Check_return_ _Ret_maybenull_z_ inline BSTR A2WBSTR(
 	_In_opt_z_ LPCSTR lp, 
 	_In_ int nLen = -1)
 {
@@ -1150,36 +1162,36 @@ ATLPREFAST_UNSUPPRESS()
 	return str;
 }
 
-_Ret_opt_z_ inline BSTR OLE2BSTR(_In_opt_z_ LPCOLESTR lp) 
+_Ret_maybenull_z_ inline BSTR OLE2BSTR(_In_opt_z_ LPCOLESTR lp) 
 {
 	return ::SysAllocString(lp);
 }
 #if defined(_UNICODE)
 // in these cases the default (TCHAR) is the same as OLECHAR
-_Ret_opt_z_ inline BSTR T2BSTR_EX(_In_opt_z_ LPCTSTR lp) 
+_Ret_maybenull_z_ inline BSTR T2BSTR_EX(_In_opt_z_ LPCTSTR lp) 
 {
 	return ::SysAllocString(lp);
 }
-_Ret_opt_z_ inline BSTR A2BSTR_EX(_In_opt_z_ LPCSTR lp) 
+_Ret_maybenull_z_ inline BSTR A2BSTR_EX(_In_opt_z_ LPCSTR lp) 
 {
 	return A2WBSTR(lp);
 }
-_Ret_opt_z_ inline BSTR W2BSTR_EX(_In_opt_z_ LPCWSTR lp) 
+_Ret_maybenull_z_ inline BSTR W2BSTR_EX(_In_opt_z_ LPCWSTR lp) 
 {
 	return ::SysAllocString(lp);
 }
 
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-_Ret_opt_z_ inline BSTR T2BSTR(_In_opt_z_ LPCTSTR lp) 
+_Ret_maybenull_z_ inline BSTR T2BSTR(_In_opt_z_ LPCTSTR lp) 
 {
 	return ::SysAllocString(lp);
 }
-_Ret_opt_z_ inline BSTR A2BSTR(_In_opt_z_ LPCSTR lp) 
+_Ret_maybenull_z_ inline BSTR A2BSTR(_In_opt_z_ LPCSTR lp) 
 {
 	return A2WBSTR(lp);
 }
-_Ret_opt_z_ inline BSTR W2BSTR(_In_opt_z_ LPCWSTR lp) 
+_Ret_maybenull_z_ inline BSTR W2BSTR(_In_opt_z_ LPCWSTR lp) 
 {
 	return ::SysAllocString(lp);
 }
@@ -1187,30 +1199,30 @@ _Ret_opt_z_ inline BSTR W2BSTR(_In_opt_z_ LPCWSTR lp)
 #endif	// _ATL_EX_CONVERSION_MACROS_ONLY
 
 #else // !defined(_UNICODE)
-_Ret_opt_z_ inline BSTR T2BSTR_EX(_In_opt_z_ LPCTSTR lp) 
+_Ret_maybenull_z_ inline BSTR T2BSTR_EX(_In_opt_z_ LPCTSTR lp) 
 {
 	return A2WBSTR(lp);
 }
-_Ret_opt_z_ inline BSTR A2BSTR_EX(_In_opt_z_ LPCSTR lp) 
+_Ret_maybenull_z_ inline BSTR A2BSTR_EX(_In_opt_z_ LPCSTR lp) 
 {
 	return A2WBSTR(lp);
 }
-_Ret_opt_z_ inline BSTR W2BSTR_EX(_In_opt_z_ LPCWSTR lp) 
+_Ret_maybenull_z_ inline BSTR W2BSTR_EX(_In_opt_z_ LPCWSTR lp) 
 {
 	return ::SysAllocString(lp);
 }
 	
 #ifndef _ATL_EX_CONVERSION_MACROS_ONLY
 
-_Ret_opt_z_ inline BSTR T2BSTR(_In_opt_z_ LPCTSTR lp) 
+_Ret_maybenull_z_ inline BSTR T2BSTR(_In_opt_z_ LPCTSTR lp) 
 {
 	return A2WBSTR(lp);
 }
-_Ret_opt_z_ inline BSTR A2BSTR(_In_opt_z_ LPCSTR lp) 
+_Ret_maybenull_z_ inline BSTR A2BSTR(_In_opt_z_ LPCSTR lp) 
 {
 	return A2WBSTR(lp);
 }
-_Ret_opt_z_ inline BSTR W2BSTR(_In_opt_z_ LPCWSTR lp) 
+_Ret_maybenull_z_ inline BSTR W2BSTR(_In_opt_z_ LPCWSTR lp) 
 {
 	return ::SysAllocString(lp);
 }

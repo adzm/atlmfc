@@ -57,7 +57,7 @@ INT_PTR CColorDialog::DoModal()
 	ASSERT(m_cc.lpfnHook != NULL); // can still be a user hook
 
 	m_cc.hwndOwner = PreModal();
-	INT_PTR nResult = ::AfxCtxChooseColor(&m_cc);
+	INT_PTR nResult = ChooseColor(&m_cc);
 	PostModal();
 	return nResult ? nResult : IDCANCEL;
 }

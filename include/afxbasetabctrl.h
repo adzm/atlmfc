@@ -27,7 +27,7 @@ extern AFX_IMPORT_DATA UINT AFX_WM_CHANGE_ACTIVE_TAB;
 extern AFX_IMPORT_DATA UINT AFX_WM_CHANGING_ACTIVE_TAB;
 extern AFX_IMPORT_DATA UINT AFX_WM_ON_GET_TAB_TOOLTIP;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCTabDropTarget command target
 
 class CMFCBaseTabCtrl;
@@ -56,7 +56,7 @@ public:
 	virtual DROPEFFECT OnDropEx(CWnd* pWnd, COleDataObject* pDataObject, DROPEFFECT dropEffect, DROPEFFECT dropList, CPoint point);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCTabInfo
 
 class CMFCTabInfo : public CObject
@@ -140,7 +140,7 @@ struct CMFCTabToolTipInfo
 	int          m_nTabIndex;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCBaseTabCtrl window
 
 class CMFCBaseTabCtrl : public CWnd
@@ -164,8 +164,8 @@ public:
 	virtual BOOL IsPtInTabArea(CPoint point) const = 0;
 	virtual void GetTabArea(CRect& rectTabAreaTop, CRect& rectTabAreaBottom) const = 0;
 
-	static int AFX_TAB_TEXT_MARGIN;
-	static int AFX_TAB_IMAGE_MARGIN;
+	AFX_IMPORT_DATA static int AFX_TAB_TEXT_MARGIN;
+	AFX_IMPORT_DATA static int AFX_TAB_IMAGE_MARGIN;
 
 // Operations
 public:
@@ -260,12 +260,12 @@ public:
 
 	virtual COLORREF GetActiveTabColor() const
 	{
-		return m_clrActiveTabBk == (COLORREF) -1 ? afxGlobalData.clrWindow : m_clrActiveTabBk;
+		return m_clrActiveTabBk == (COLORREF) -1 ? GetGlobalData()->clrWindow : m_clrActiveTabBk;
 	}
 
 	virtual COLORREF GetActiveTabTextColor() const
 	{
-		return m_clrActiveTabFg == (COLORREF) -1 ? afxGlobalData.clrWindowText : m_clrActiveTabFg;
+		return m_clrActiveTabFg == (COLORREF) -1 ? GetGlobalData()->clrWindowText : m_clrActiveTabFg;
 	}
 
 	virtual CSize GetImageSize() const { return m_sizeImage; }
@@ -384,7 +384,6 @@ public:
 	virtual void CleanUp();
 
 protected:
-	//{{AFX_MSG(CMFCBaseTabCtrl)
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
@@ -396,7 +395,7 @@ protected:
 	afx_msg void OnSysColorChange();
 	afx_msg void OnWindowPosChanged(WINDOWPOS FAR* lpwndpos);
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	virtual int GetTabNumberToDetach(int nTabNum = -1) const;
@@ -445,8 +444,6 @@ protected:
 	COLORREF m_clrActiveTabFg; // Active tab foreground color
 
 	CBrush m_brActiveTab;  // Active tab background brush
-	CFont  m_fntTabs;      // Tab font (flat tabs only)
-	CFont  m_fntTabsBold;  // Active tab font (flat tabs only)
 
 	// in-place editing
 	int m_iEditedTab;

@@ -38,9 +38,7 @@ CMFCColorPropertySheet::~CMFCColorPropertySheet()
 }
 
 BEGIN_MESSAGE_MAP(CMFCColorPropertySheet, CPropertySheet)
-	//{{AFX_MSG_MAP(CMFCColorPropertySheet)
 	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

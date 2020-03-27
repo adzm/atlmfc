@@ -30,6 +30,7 @@
 
 #include <atlchecked.h>
 #include <atlsimpcoll.h>
+#include <atlwinverapi.h>
 
 #if _WIN32_WINNT < 0x0403
 #error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
@@ -38,10 +39,28 @@
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
+
+/////////////////////////////////////////////////////////////////////////////
+// Checking out the string len
+inline int AtlStrLen(_In_opt_z_ const wchar_t *str)
+{
+	if (str == NULL)
+		return 0;
+	return static_cast<int>(::wcslen(str));
+}
+
+
+inline int AtlStrLen(_In_opt_z_ const char *str)
+{
+	if (str == NULL)
+		return 0;
+	return static_cast<int>(::strlen(str));
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // Verify that a null-terminated string points to valid memory
 inline BOOL AtlIsValidString(
-	_In_z_count_(nMaxLength) LPCWSTR psz,
+	_In_reads_z_(nMaxLength) LPCWSTR psz,
 	_In_ size_t nMaxLength = INT_MAX)
 {
 	(nMaxLength);
@@ -50,7 +69,7 @@ inline BOOL AtlIsValidString(
 
 // Verify that a null-terminated string points to valid memory
 inline BOOL AtlIsValidString(
-	_In_z_count_(nMaxLength) LPCSTR psz,
+	_In_reads_z_(nMaxLength) LPCSTR psz,
 	_In_ size_t nMaxLength = UINT_MAX)
 {
 	(nMaxLength);
@@ -59,7 +78,7 @@ inline BOOL AtlIsValidString(
 
 // Verify that a pointer points to valid memory
 inline BOOL AtlIsValidAddress(
-	_In_opt_bytecount_(nBytes) const void* p,
+	_In_reads_bytes_opt_(nBytes) const void* p,
 	_In_ size_t nBytes,
 	_In_ BOOL bReadWrite = TRUE)
 {
@@ -70,7 +89,7 @@ inline BOOL AtlIsValidAddress(
 
 template<typename T>
 inline void AtlAssertValidObject(
-	_In_opt_ _Prepost_opt_bytecount_x_(sizeof(T)) const T *pOb)
+	_Inout_opt_ const T *pOb)
 {
 	ATLASSERT(pOb);
 	ATLASSERT(AtlIsValidAddress(pOb, sizeof(T)));
@@ -91,15 +110,17 @@ public:
 	{
 		memset(&m_sec, 0, sizeof(CRITICAL_SECTION));
 	}
+
 	~CComCriticalSection()
 	{
 	}
-	HRESULT Lock() throw()
+
+	_Success_(1) _Acquires_lock_(this->m_sec) HRESULT Lock() throw()
 	{
 		EnterCriticalSection(&m_sec);
 		return S_OK;
 	}
-	HRESULT Unlock() throw()
+	_Success_(1) _Releases_lock_(this->m_sec) HRESULT Unlock() throw()
 	{
 		LeaveCriticalSection(&m_sec);
 		return S_OK;
@@ -107,8 +128,11 @@ public:
 	HRESULT Init() throw()
 	{
 		HRESULT hRes = S_OK;
-
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP) || defined(_ATL_STATIC_LIB_IMPL)
+		if (!_AtlInitializeCriticalSectionEx(&m_sec, 0, 0))
+#else
 		if (!InitializeCriticalSectionAndSpinCount(&m_sec, 0))
+#endif
 		{
 			hRes = HRESULT_FROM_WIN32(GetLastError());
 		}
@@ -182,6 +206,7 @@ public:
 		return CComCriticalSection::Term();
 	}
 
+	_Success_(1) _Acquires_lock_(this->m_sec)
 	HRESULT Lock()
 	{
 		// CComSafeDeleteCriticalSection::Init or CComAutoDeleteCriticalSection::Init
@@ -270,6 +295,8 @@ public :
 
 __declspec(selectany) bool CAtlBaseModule::m_bInitFailed = false;
 extern CAtlBaseModule _AtlBaseModule;
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 /////////////////////////////////////////////////////////////////////////////
 // String resource helpers
@@ -390,9 +417,10 @@ inline const ATLSTRINGRESOURCEIMAGE* AtlGetStringResourceImage(
 	return p;
 }
 
+ATLPREFAST_SUPPRESS(6054)
 inline int AtlLoadString(
 	_In_ UINT nID,
-	_Out_z_cap_post_count_(nBufferMax, return + 1) LPTSTR lpBuffer,
+	_Out_writes_to_(nBufferMax, return + 1) LPTSTR lpBuffer,
 	_In_ int nBufferMax) throw()
 {
 	HINSTANCE hInst = _AtlBaseModule.GetHInstanceAt(0);
@@ -404,6 +432,7 @@ inline int AtlLoadString(
 	}
 	return nRet;
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline HINSTANCE AtlFindResourceInstance(
 	_In_z_ LPCTSTR lpName,
@@ -411,6 +440,7 @@ inline HINSTANCE AtlFindResourceInstance(
 	_In_ WORD wLanguage = 0) throw()
 {
 	ATLASSERT(lpType != RT_STRING);	// Call AtlFindStringResourceInstance to find the string
+	_Analysis_assume_(lpType != NULL);
 	if (lpType == RT_STRING)
 		return NULL;
 
@@ -470,6 +500,8 @@ inline HINSTANCE AtlFindStringResourceInstance(
 
 	return NULL;
 }
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 /*
 Needed by both atlcomcli and atlsafe, so needs to be in here
@@ -590,11 +622,25 @@ inline BOOL AtlConvertSystemTimeToVariantTime(
 	return ok;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+/////////////////////////////////////////////////////////////////////////////
 // DLL Load Helper
 
 inline HMODULE AtlLoadSystemLibraryUsingFullPath(_In_z_ const WCHAR *pszLibrary)
 {
+#if (_ATL_NTDDI_MIN > NTDDI_WIN7)
+	return(::LoadLibraryExW(pszLibrary, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32));
+#else
+#ifndef _USING_V110_SDK71_
+	// the LOAD_LIBRARY_SEARCH_SYSTEM32 flag for LoadLibraryExW is only supported if the DLL-preload fixes are installed, so
+	// use LoadLibraryExW only if SetDefaultDllDirectories is available (only on Win8, or with KB2533623 on Vista and Win7)...
+	IFDYNAMICGETCACHEDFUNCTION(L"kernel32.dll", SetDefaultDllDirectories, pfSetDefaultDllDirectories)
+	{
+		return(::LoadLibraryExW(pszLibrary, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32));
+	}
+#endif
+	// ...otherwise fall back to using LoadLibrary from the SYSTEM32 folder explicitly.
 	WCHAR wszLoadPath[MAX_PATH+1];
 	if (::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath)) == 0)
 	{
@@ -615,9 +661,12 @@ inline HMODULE AtlLoadSystemLibraryUsingFullPath(_In_z_ const WCHAR *pszLibrary)
 	}
 
 	return(::LoadLibraryW(wszLoadPath));
+#endif
 }
 
-//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 }	// namespace ATL
 #pragma pack(pop)

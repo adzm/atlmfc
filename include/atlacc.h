@@ -13,6 +13,12 @@
 
 #pragma once
 
+#include <atldef.h>
+
+#if !defined(_CRT_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY.
+#endif
+
 #include <oleacc.h>
 #include <atliface.h>
 #include <atlbase.h>
@@ -40,10 +46,10 @@ HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 
 HRESULT STDMETHODCALLTYPE AtlIAccessibleGetIDsOfNamesHelper(
 	_In_ REFIID,
-	_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+	_In_reads_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
 	_In_ UINT cNames,
 	_In_ LCID,
-	_Out_cap_(cNames) DISPID *rgDispId);
+	_Out_writes_(cNames) DISPID *rgDispId);
 
 
 template <class T>
@@ -59,7 +65,7 @@ public :
 	{
 	}
 
-	HRESULT STDMETHODCALLTYPE get_accParent(_Deref_out_ IDispatch **ppdispParent)
+	HRESULT STDMETHODCALLTYPE get_accParent(_Outptr_ IDispatch **ppdispParent)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -78,8 +84,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accChild(
-		_In_ VARIANT varChild,
-		_Deref_out_ IDispatch **ppdispChild)
+		VARIANT varChild,
+		_Outptr_ IDispatch **ppdispChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -89,8 +95,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accName(
-		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszName)
+		VARIANT varChild,
+		_Outptr_result_z_ BSTR *pszName)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -100,8 +106,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accValue(
-		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszValue)
+		VARIANT varChild,
+		_Outptr_result_z_ BSTR *pszValue)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -111,8 +117,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accDescription(
-		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszDescription)
+		VARIANT varChild,
+		_Outptr_result_z_ BSTR *pszDescription)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -122,7 +128,7 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accRole(
-		_In_ VARIANT varChild,
+		VARIANT varChild,
 		_Out_ VARIANT *pvarRole)
 	{
 		if (m_pAccessible == NULL)
@@ -133,7 +139,7 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accState(
-		_In_ VARIANT varChild,
+		VARIANT varChild,
 		_Out_ VARIANT *pvarState)
 	{
 		if (m_pAccessible == NULL)
@@ -144,8 +150,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accHelp(
-		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszHelp)
+		VARIANT varChild,
+		_Outptr_result_z_ BSTR *pszHelp)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -155,8 +161,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accHelpTopic(
-		_Deref_out_z_ BSTR *pszHelpFile,
-		_In_ VARIANT varChild,
+		_Outptr_result_z_ BSTR *pszHelpFile,
+		VARIANT varChild,
 		_Out_ long *pidTopic)
 	{
 		if (m_pAccessible == NULL)
@@ -169,8 +175,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut(
-		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszKeyboardShortcut)
+		VARIANT varChild,
+		_Outptr_result_z_ BSTR *pszKeyboardShortcut)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -200,8 +206,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE get_accDefaultAction(
-		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszDefaultAction)
+		VARIANT varChild,
+		_Outptr_result_z_ BSTR *pszDefaultAction)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -211,8 +217,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE accSelect(
-		_In_ long flagsSelect,
-		_In_ VARIANT varChild)
+		long flagsSelect,
+		VARIANT varChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -224,7 +230,7 @@ public :
 		_Out_ long *pyTop,
 		_Out_ long *pcxWidth,
 		_Out_ long *pcyHeight,
-		_Inout_ VARIANT varChild)
+		VARIANT varChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -243,8 +249,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE accNavigate(
-		_In_ long navDir,
-		_In_ VARIANT varStart,
+		long navDir,
+		VARIANT varStart,
 		_Out_ VARIANT *pvarEndUpAt)
 	{
 		if (m_pAccessible == NULL)
@@ -255,8 +261,8 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE accHitTest(
-		_In_ long xLeft,
-		_In_ long yTop,
+		long xLeft,
+		long yTop,
 		_Out_ VARIANT *pvarChild)
 	{
 		if (m_pAccessible == NULL)
@@ -266,7 +272,7 @@ public :
 		return m_pAccessible->accHitTest(xLeft, yTop, pvarChild);
 	}
 
-	HRESULT STDMETHODCALLTYPE accDoDefaultAction(_In_ VARIANT varChild)
+	HRESULT STDMETHODCALLTYPE accDoDefaultAction(VARIANT varChild)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -274,7 +280,7 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE put_accName(
-		_In_ VARIANT /*varChild*/,
+		VARIANT /*varChild*/,
 		_In_z_ BSTR /*szName*/)
 	{
 		if (m_pAccessible == NULL)
@@ -283,7 +289,7 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE put_accValue(
-		_In_ VARIANT /*varChild*/,
+		VARIANT /*varChild*/,
 		_In_z_ BSTR /*szValue*/)
 	{
 		if (m_pAccessible == NULL)
@@ -318,10 +324,10 @@ public :
 
 	virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(
 		_In_ REFIID riid,
-		_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
-		_In_ UINT cNames,
-		_In_ LCID lcid,
-		_Out_cap_(cNames) DISPID *rgDispId)
+		_In_reads_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+		_In_range_(0,16384) UINT cNames,
+		LCID lcid,
+		_Out_writes_(cNames) DISPID *rgDispId)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -336,9 +342,9 @@ public :
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(
-		_In_ unsigned int iTInfo,
-		_In_ LCID lcid,
-		_Deref_out_ ITypeInfo** ppTInfo)
+		unsigned int iTInfo,
+		LCID lcid,
+		_Outptr_ ITypeInfo** ppTInfo)
 	{
 		if (m_pAccessible == NULL)
 			return RPC_E_DISCONNECTED;
@@ -364,7 +370,7 @@ public:
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE ContextSensitiveHelp(_In_ BOOL /*fEnterMode*/)
+	HRESULT STDMETHODCALLTYPE ContextSensitiveHelp(BOOL /*fEnterMode*/)
 	{
 		return E_NOTIMPL;
 	}
@@ -411,7 +417,7 @@ public :
 	}
 
 	// Delegate to standard helper?
-	HRESULT STDMETHODCALLTYPE get_accParent(_Deref_out_ IDispatch **ppdispParent)
+	HRESULT STDMETHODCALLTYPE get_accParent(_Outptr_ IDispatch **ppdispParent)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accParent(ppdispParent);
@@ -427,7 +433,7 @@ public :
 	// Delegate to standard helper?
 	HRESULT STDMETHODCALLTYPE get_accChild(
 		_In_ VARIANT varChild,
-		_Deref_out_ IDispatch **ppdispChild)
+		_Outptr_ IDispatch **ppdispChild)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accChild(varChild, ppdispChild);
@@ -436,7 +442,7 @@ public :
 	// Override in users code
 	HRESULT STDMETHODCALLTYPE get_accName(
 		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszName)
+		_Outptr_result_z_ BSTR *pszName)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accName(varChild, pszName);
@@ -446,7 +452,7 @@ public :
 	// Default inplementation will get window text and return it.
 	HRESULT STDMETHODCALLTYPE get_accValue(
 		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszValue)
+		_Outptr_result_z_ BSTR *pszValue)
 	{
 		return m_spStdObject->get_accValue(varChild, pszValue);
 	}
@@ -454,7 +460,7 @@ public :
 	// Override in users code
 	HRESULT STDMETHODCALLTYPE get_accDescription(
 		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszDescription)
+		_Outptr_result_z_ BSTR *pszDescription)
 	{
 		return m_spStdObject->get_accDescription(varChild, pszDescription);
 	}
@@ -480,7 +486,7 @@ public :
 	// Override in User's code?
 	HRESULT STDMETHODCALLTYPE get_accHelp(
 		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszHelp)
+		_Outptr_result_z_ BSTR *pszHelp)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accHelp(varChild, pszHelp);
@@ -488,7 +494,7 @@ public :
 
 	// Override in user's code?
 	HRESULT STDMETHODCALLTYPE get_accHelpTopic(
-		_Deref_out_z_ BSTR *pszHelpFile,
+		_Outptr_result_z_ BSTR *pszHelpFile,
 		_In_ VARIANT varChild,
 		_Out_ long *pidTopic)
 	{
@@ -499,7 +505,7 @@ public :
 	// Override in user's code?
 	HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut(
 		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszKeyboardShortcut)
+		_Outptr_result_z_ BSTR *pszKeyboardShortcut)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accKeyboardShortcut(varChild, pszKeyboardShortcut);
@@ -524,7 +530,7 @@ public :
 	// Override in user's code
 	HRESULT STDMETHODCALLTYPE get_accDefaultAction(
 		_In_ VARIANT varChild,
-		_Deref_out_z_ BSTR *pszDefaultAction)
+		_Outptr_result_z_ BSTR *pszDefaultAction)
 	{
 		ATLASSUME(m_spStdObject != NULL);
 		return m_spStdObject->get_accDefaultAction(varChild, pszDefaultAction);
@@ -613,7 +619,7 @@ public :
 	}
 
 	HRESULT STDMETHODCALLTYPE GetEnumVariant(
-		_Deref_out_opt_ IEnumVARIANT **ppEnumVariant)
+		_Outptr_result_maybenull_ IEnumVARIANT **ppEnumVariant)
 	{
 		if (ppEnumVariant == NULL)
 			return E_POINTER;
@@ -637,10 +643,10 @@ public :
 	}
 	virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(
 		_In_ REFIID refiid,
-		_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
-		_In_ UINT cNames,
-		_In_ LCID lcid,
-		_Out_cap_(cNames) DISPID *rgDispId)
+		_In_reads_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+		_In_range_(0,16384) UINT cNames,
+		LCID lcid,
+		_Out_writes_(cNames) DISPID *rgDispId)
 	{
 		return AtlIAccessibleGetIDsOfNamesHelper(refiid, rgszNames, cNames, lcid, rgDispId);
 	}
@@ -663,7 +669,7 @@ public :
 	}
 	long __stdcall QueryInterface(
 		_In_ const struct _GUID &/*refIID*/,
-		_Deref_out_opt_ _Deref_post_opt_bytecount_c_(sizeof(IUnknown)) void **ppv)
+		 _COM_Outptr_ void **ppv)
 	{
 		if (ppv == NULL)
 			return E_POINTER;
@@ -745,6 +751,7 @@ public :
 	}
 };
 
+ATLPREFAST_SUPPRESS(6101)
 inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 	_Inout_ IAccessible* pAccessible,
 	_In_ DISPID dispIdMember,
@@ -1234,13 +1241,14 @@ inline HRESULT STDMETHODCALLTYPE AtlIAccessibleInvokeHelper(
 	VariantClear(&varg);
 	return hr;
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline HRESULT STDMETHODCALLTYPE AtlIAccessibleGetIDsOfNamesHelper(
 	_In_ REFIID,
-	_In_count_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
+	_In_reads_(cNames) _Deref_pre_z_ LPOLESTR *rgszNames,
 	_In_ UINT cNames,
 	_In_ LCID,
-	_Out_cap_(cNames) DISPID *rgDispId)
+	_Out_writes_(cNames) DISPID *rgDispId)
 {
 	static LPOLESTR names[] =
 	{

@@ -20,7 +20,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCSpinButtonCtrl window
 
 class CMFCSpinButtonCtrl : public CSpinButtonCtrl
@@ -33,8 +33,8 @@ public:
 protected:
 	BOOL m_bIsButtonPressedUp;
 	BOOL m_bIsButtonPressedDown;
-	BOOL m_bIsButtonHighligtedUp;
-	BOOL m_bIsButtonHighligtedDown;
+	BOOL m_bIsButtonHighlightedUp;
+	BOOL m_bIsButtonHighlightedDown;
 	BOOL m_bTracked;
 
 // Overrides
@@ -46,15 +46,14 @@ public:
 	virtual ~CMFCSpinButtonCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCSpinButtonCtrl)
 	afx_msg void OnPaint();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnCancelMode();
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
-	//}}AFX_MSG
+	afx_msg void OnMouseLeave();
+
 	DECLARE_MESSAGE_MAP()
 };
 

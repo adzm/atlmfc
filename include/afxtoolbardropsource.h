@@ -24,7 +24,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarDropSource command target
 
 class CMFCToolBarDropSource : public COleDropSource

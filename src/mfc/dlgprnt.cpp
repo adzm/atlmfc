@@ -40,7 +40,7 @@ INT_PTR CPageSetupDialog::DoModal()
 	ASSERT(m_psd.lpfnPagePaintHook != NULL); // can still be a user hook
 
 	m_psd.hwndOwner = PreModal();
-	INT_PTR nResult = ::AfxCtxPageSetupDlg(&m_psd);
+	INT_PTR nResult = PageSetupDlg(&m_psd);
 	PostModal();
 	return nResult ? nResult : IDCANCEL;
 }
@@ -183,9 +183,7 @@ UINT CALLBACK CPageSetupDialog::PaintHookProc(HWND hWnd, UINT message, WPARAM wP
 // Print/Print Setup dialog
 
 BEGIN_MESSAGE_MAP(CPrintDialog, CCommonDialog)
-	//{{AFX_MSG_MAP(CPrintDialog)
 	ON_COMMAND(psh1, &CPrintDialog::OnPrintSetup) // print setup button when print is displayed
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly,
@@ -258,7 +256,7 @@ INT_PTR CPrintDialog::DoModal()
 	ASSERT_VALID(this);
 
 	m_pd.hwndOwner = PreModal();
-	INT_PTR nResult = ::AfxCtxPrintDlg(&m_pd);
+	INT_PTR nResult = PrintDlg(&m_pd);
 	PostModal();
 	return nResult ? nResult : IDCANCEL;
 }
@@ -276,15 +274,15 @@ int CPrintDialog::GetCopies() const
 	ASSERT_VALID(this);
 
 	if (m_pd.Flags & PD_USEDEVMODECOPIES)
-    {
-        LPDEVMODE pDevMode=GetDevMode();
-        ENSURE(pDevMode);
+	{
+		LPDEVMODE pDevMode=GetDevMode();
+		ENSURE(pDevMode);
 		return pDevMode->dmCopies;
-    }
+	}
 	else
-    {
+	{
 		return m_pd.nCopies;
-    }
+	}
 }
 
 LPDEVMODE CPrintDialog::GetDevMode() const
@@ -347,7 +345,7 @@ CString CPrintDialog::GetPortName() const
 BOOL CPrintDialog::GetDefaults()
 {
 	m_pd.Flags |= PD_RETURNDEFAULT;
-	return ::AfxCtxPrintDlg(&m_pd);
+	return PrintDlg(&m_pd);
 }
 
 ////////////////////////////////////////////////////////////////////////////

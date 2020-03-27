@@ -240,7 +240,7 @@ void CWinApp::EnableShellOpen()
 	}
 
 	CString strShortName;
-	AfxGetModuleShortFileName(AfxGetInstanceHandle(), strShortName);
+	AfxGetModuleFileName(AfxGetInstanceHandle(), strShortName);
 
 	// strip out path
 	CString strFileName = ::PathFindFileName(strShortName);

@@ -39,11 +39,11 @@
 #define AFX_MFCM_EXPORT __declspec(dllimport)
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "100"
+#define _MFC_FILENAME_VER "110"
 #endif
 
 #ifndef _MFC_FILENAME_VER_DOT
-#define _MFC_FILENAME_VER_DOT "10.0"
+#define _MFC_FILENAME_VER_DOT "11.0"
 #endif
 
 #ifndef _UNICODE
@@ -75,7 +75,7 @@ namespace Microsoft {
 
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWin32Window - Win32 HWND wrapper implementing IWin32Window. Used to pass 
 // Parent HWNDs from MFC to WinForms.
 //
@@ -94,7 +94,7 @@ public:
 	}	
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CControlCreationInfoEx - Inits and Cleanup CControlCreationInfo struct 
 //  GCHandle information.
 //
@@ -110,7 +110,7 @@ public:
 	
 };
 
-////////////////////////////////////
+/*============================================================================*/
 // Notification from __gc Helper class.
 __interface IHandleEvents {
 	void OnHandleCreated(System::Object^ o, System::EventArgs^ e);
@@ -145,7 +145,7 @@ public:
 
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWinFormsControlSite - overrides COleControlSite when the ActiveX is a 
 // WinForm control.
 
@@ -183,7 +183,7 @@ public:
 	gcroot<CWinFormsEventsHelper^> m_gcEventHelper;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWinFormsControl
 // Provides the basic functionality for AX hosting of WinForms Control
 //
@@ -209,13 +209,13 @@ public:
 
 	inline BOOL CreateManagedControl(DWORD dwStyle,const RECT& rect, CWnd* pParentWnd, int nID);
 	
-	////////////////////////////////////////////////////////////////
+	/*============================================================================*/
 	//Purpose: Create a WinForms control and placing it on top
 	// of a STATIC control, placed in Resource Editor as a place holder
 	// for the .Net control.
 	//Input: window styles, IDC_ of STATIC place holder, and Parent CWnd*
 	//Return: TRUE if creation succeeded.
-	////////////////////////////////////////////////////////////////
+	/*============================================================================*/
 	inline BOOL CreateManagedControl(DWORD dwStyle,int nPlaceHolderID, CWnd* pParentWnd);	
 
 	//Creates a control of managed type.
@@ -223,7 +223,7 @@ public:
 		const RECT& rect, CWnd* pParentWnd, int nID);
 };
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWinFormsView 
 // Provides generic functionality for AX hosting of WinForms Control as an MFC View
 // 

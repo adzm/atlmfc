@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCBaseToolBar window
 
 class CMFCBaseToolBar : public CPane
@@ -57,8 +57,6 @@ public:
 	virtual ~CMFCBaseToolBar();
 
 protected:
-	//{{AFX_MSG(CMFCBaseToolBar)
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
 	virtual void OnAfterStretch(int nStretchSize);

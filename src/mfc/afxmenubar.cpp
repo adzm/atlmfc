@@ -93,10 +93,9 @@ BOOL CMFCMenuBar::m_bShowAllMenusDelay = TRUE;
 BOOL CMFCMenuBar::m_bMenuShadows = TRUE;
 BOOL CMFCMenuBar::m_bHighlightDisabledItems = FALSE;
 
-static const UINT uiShowAllItemsTimerId = 1;
 static const int nShowAllItemsTimerFreq = 5000; // 5 sec
 
-static const CString strMenuProfile = _T("MenuBar");
+#define AFX_MENU_PROFILE  _T("MenuBar")
 
 static const int nAccSystemMenuId = -10;
 
@@ -135,7 +134,6 @@ CMFCMenuBar::~CMFCMenuBar()
 	::DestroyMenu(m_hMenu);
 }
 
-//{{AFX_MSG_MAP(CMFCMenuBar)
 BEGIN_MESSAGE_MAP(CMFCMenuBar, CMFCToolBar)
 	ON_WM_CREATE()
 	ON_WM_LBUTTONDOWN()
@@ -143,9 +141,7 @@ BEGIN_MESSAGE_MAP(CMFCMenuBar, CMFCToolBar)
 	ON_WM_TIMER()
 	ON_WM_LBUTTONDBLCLK()
 	ON_WM_SETTINGCHANGE()
-	ON_WM_KILLFOCUS()
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCMenuBar message handlers
@@ -730,7 +726,7 @@ BOOL CMFCMenuBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT /*uiID*/)
 {
 	ENSURE(m_hDefaultMenu != NULL);
 
-	CString strProfileName = ::AFXGetRegPath(strMenuProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MENU_PROFILE, lpszProfileName);
 
 	// Save current maximize mode(system buttons are not saved!):
 	BOOL bMaximizeMode = m_bMaximizeMode;
@@ -828,7 +824,7 @@ BOOL CMFCMenuBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT /*uiID*/)
 {
 	ENSURE(m_hDefaultMenu != NULL);
 
-	CString strProfileName = ::AFXGetRegPath(strMenuProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MENU_PROFILE, lpszProfileName);
 
 	afxMenuHash.SaveMenuBar(m_hMenu, this);
 
@@ -958,7 +954,7 @@ void CMFCMenuBar::OnLButtonDown(UINT nFlags, CPoint point)
 	}
 }
 
-BOOL CMFCMenuBar::RestoreOriginalstate()
+BOOL CMFCMenuBar::RestoreOriginalState()
 {
 	HMENU hMenuCurr = m_hMenu;
 
@@ -1250,16 +1246,6 @@ BOOL CMFCMenuBar::PreTranslateMessage(MSG* pMsg)
 
 void CMFCMenuBar::OnSetFocus(CWnd* pOldWnd)
 {
-	if (afxGlobalData.IsAccessibilitySupport())
-	{
-		::NotifyWinEvent(EVENT_SYSTEM_MENUSTART, GetSafeHwnd (), OBJID_WINDOW, CHILDID_SELF);
-
-		if (m_iHot >= 0)
-		{
-			AccNotifyObjectFocusEvent (m_iHot);
-		}
-	}
-
 	CMFCToolBar::OnSetFocus(pOldWnd);
 
 	if (GetDroppedDownMenu() == NULL)
@@ -1298,6 +1284,12 @@ CSize CMFCMenuBar::CalcFixedLayout(BOOL bStretch, BOOL bHorz)
 	dwMode |= bHorz ? LM_HORZ : 0;
 
 	return CalcLayout(dwMode);
+}
+
+int CMFCMenuBar::GetRowHeight() const
+{
+	return max((int)(GetGlobalData()->GetTextHeight(GetCurrentAlignment() & CBRS_ORIENT_HORZ)),
+		(int)(m_bHaveButtons ? GetButtonSize().cy : m_sizeMenuButton.cy <= 0 ? m_sizeButton.cy - 2 : m_sizeMenuButton.cy - 2));
 }
 
 BOOL CMFCMenuBar::OnSetDefaultButtonText(CMFCToolBarButton* pButton)
@@ -1398,7 +1390,7 @@ void CMFCMenuBar::OnChangeHot(int iHot)
 {
 	CMFCToolBar::OnChangeHot(iHot);
 
-	KillTimer(uiShowAllItemsTimerId);
+	KillTimer(AFX_TIMER_ID_MENU_SHOW_ALL_ITEMS);
 
 	if (GetDroppedDownMenu() == NULL)
 	{
@@ -1406,7 +1398,12 @@ void CMFCMenuBar::OnChangeHot(int iHot)
 	}
 	else
 	{
-		SetTimer(uiShowAllItemsTimerId, nShowAllItemsTimerFreq, NULL);
+		SetTimer(AFX_TIMER_ID_MENU_SHOW_ALL_ITEMS, nShowAllItemsTimerFreq, NULL);
+	}
+
+	if (GetGlobalData()->IsAccessibilitySupport())
+	{
+		AccNotifyObjectFocusEvent(m_iHighlighted);
 	}
 }
 
@@ -1487,7 +1484,7 @@ CMFCToolBarMenuButtonsButton* CMFCMenuBar::GetSystemButton(UINT uiBtn, BOOL bByC
 
 BOOL __stdcall CMFCMenuBar::SetMenuFont(LPLOGFONT lpLogFont, BOOL bHorz)
 {
-	if (!afxGlobalData.SetMenuFont(lpLogFont, bHorz))
+	if (!GetGlobalData()->SetMenuFont(lpLogFont, bHorz))
 	{
 		return FALSE;
 	}
@@ -1512,12 +1509,12 @@ BOOL __stdcall CMFCMenuBar::SetMenuFont(LPLOGFONT lpLogFont, BOOL bHorz)
 
 const CFont& __stdcall CMFCMenuBar::GetMenuFont(BOOL bHorz)
 {
-	return bHorz ? afxGlobalData.fontRegular : afxGlobalData.fontVert;
+	return bHorz ? GetGlobalData()->fontRegular : GetGlobalData()->fontVert;
 }
 
 void CMFCMenuBar::OnTimer(UINT_PTR nIDEvent)
 {
-	if (nIDEvent == uiShowAllItemsTimerId)
+	if (nIDEvent == AFX_TIMER_ID_MENU_SHOW_ALL_ITEMS)
 	{
 		CPoint ptCursor;
 
@@ -1532,7 +1529,7 @@ void CMFCMenuBar::OnTimer(UINT_PTR nIDEvent)
 			pMenuButon->m_pPopupMenu->ShowAllCommands();
 		}
 
-		KillTimer(uiShowAllItemsTimerId);
+		KillTimer(AFX_TIMER_ID_MENU_SHOW_ALL_ITEMS);
 	}
 
 	CMFCToolBar::OnTimer(nIDEvent);
@@ -1859,14 +1856,4 @@ int CMFCMenuBar::GetFloatPopupDirection(CMFCToolBarMenuButton* pMenuButton)
 
 	ASSERT(FALSE);
 	return -1;
-}
-
-void CMFCMenuBar::OnKillFocus(CWnd* pNewWnd)
-{
-	if (afxGlobalData.IsAccessibilitySupport())
-	{
-		::NotifyWinEvent(EVENT_SYSTEM_MENUEND, GetSafeHwnd (), OBJID_WINDOW, CHILDID_SELF);
-	}
-
-	CMFCToolBar::OnKillFocus(pNewWnd);
 }

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -481,16 +481,16 @@ void CMFCRibbonButtonsGroup::SetImages(CMFCToolBarImages* pImages, CMFCToolBarIm
 
 	const CSize sizeImage = m_Images.GetImageSize();
 
-	const double dblScale = afxGlobalData.GetRibbonImageScale();
+	const double dblScale = GetGlobalData()->GetRibbonImageScale();
 	if (dblScale != 1.0 && sizeImage == CSize(16, 16))
 	{
-		m_Images.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_Images.SetTransparentColor(GetGlobalData()->clrBtnFace);
 		m_Images.SmoothResize(dblScale);
 
-		m_HotImages.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_HotImages.SetTransparentColor(GetGlobalData()->clrBtnFace);
 		m_HotImages.SmoothResize(dblScale);
 
-		m_DisabledImages.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_DisabledImages.SetTransparentColor(GetGlobalData()->clrBtnFace);
 		m_DisabledImages.SmoothResize(dblScale);
 	}
 }
@@ -514,10 +514,10 @@ void CMFCRibbonButtonsGroup::OnDrawImage(CDC* pDC, CRect rectImage,  CMFCRibbonB
 	CPoint ptImage = rectImage.TopLeft();
 	ptImage.x++;
 
-	image.SetTransparentColor(afxGlobalData.clrBtnFace);
+	image.SetTransparentColor(GetGlobalData()->clrBtnFace);
 	image.PrepareDrawImage(ds);
 
-	image.SetTransparentColor(afxGlobalData.clrBtnFace);
+	image.SetTransparentColor(GetGlobalData()->clrBtnFace);
 	image.Draw(pDC, ptImage.x, ptImage.y, nImageIndex, FALSE, pButton->IsDisabled() && m_DisabledImages.GetCount() == 0);
 
 	image.EndDrawImage(ds);

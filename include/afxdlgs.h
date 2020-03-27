@@ -101,7 +101,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #undef AFX_DATA
 #define AFX_DATA AFX_CORE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CCommonDialog - base class for all common dialogs
 
 class CCommonDialog : public CDialog
@@ -119,14 +119,13 @@ protected:
 	virtual void OnOK();
 	virtual void OnCancel();
 
-	//{{AFX_MSG(CCommonDialog)
 	afx_msg BOOL OnHelpInfo(HELPINFO*);
 	afx_msg void OnPaint();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFileDialog - used for FileOpen... or FileSaveAs...
 
 class CFileDialog : public CCommonDialog
@@ -158,8 +157,14 @@ public:
 	/// <summary>
 	/// Determines if the current dialog in folder picker mode.</summary>
 	/// <returns> 
-	/// If the dialog in the folder pikcer mode, the return value is TRUE. Otherwise - FALSE</returns>
+	/// If the dialog in the folder picker mode, the return value is TRUE. Otherwise - FALSE</returns>
 	BOOL IsPickFoldersMode() const { return m_bPickFoldersMode; }
+
+	/// <summary>
+	/// Determines if the current dialog in non-file system folder picker mode.</summary>
+	/// <returns> 
+	/// If the dialog in the non-file system folder picker mode, the return value is TRUE. Otherwise - FALSE</returns>
+	BOOL IsPickNonFileSysFoldersMode() const { return m_bPickNonFileSysFoldersMode; }
 #endif
 
 	// Helpers for parsing file name after successful return
@@ -180,12 +185,9 @@ public:
 
 	// Other operations available while the dialog is visible
 	CString GetFolderPath() const; // return full path
-	void SetControlText(int nID, LPCSTR lpsz);
-	#ifdef UNICODE
-	void SetControlText(int nID, const wchar_t  *lpsz);
-	#endif 
+	void SetControlText(int nID, LPCTSTR lpsz);
 	void HideControl(int nID);
-	void SetDefExt(LPCSTR lpsz);
+	void SetDefExt(LPCTSTR lpsz);
 
 	virtual void UpdateOFNFromShellDialog();
 	void ApplyOFNToShellDialog();
@@ -484,6 +486,7 @@ protected:
 
 	BOOL m_bVistaStyle;
 	BOOL m_bPickFoldersMode;
+	BOOL m_bPickNonFileSysFoldersMode;
 	DWORD m_dwCookie;
 	void* m_pIFileDialog;
 	void* m_pIFileDialogCustomize;
@@ -497,6 +500,9 @@ protected:
 	OPENFILENAME*  m_pofnTemp;
 
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+
+private:
+	BOOL m_bFileTypesSet;   // have file types already been set for Vista style dialog?
 
 protected:
 	DECLARE_INTERFACE_MAP()
@@ -530,14 +536,9 @@ protected:
 	END_INTERFACE_PART_OPTIONAL(FileDialogControlEvents)
 
 #endif
-
-private:
-#if WINVER >= 0x0600
-	HRESULT _PSGetPropertyDescriptionListFromString(LPCWSTR pszPropList, REFIID riid, void **ppv);
-#endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFolderPickerDialog - used to select a folder
 
 /// <summary>
@@ -554,14 +555,14 @@ class CFolderPickerDialog : public CFileDialog
 	/// <param name="dwFlags">A combination of one or more flags that allow you to customize the dialog box</param>
 	/// <param name="pParentWnd">A pointer to the file dialog-box object's parent or owner window</param>
 	/// <param name="dwSize">The size of the OPENFILENAME structure</param>
-	explicit CFolderPickerDialog(LPCTSTR lpszFolder = NULL, DWORD dwFlags = 0, CWnd* pParentWnd = NULL, DWORD dwSize = 0);
+	explicit CFolderPickerDialog(LPCTSTR lpszFolder = NULL, DWORD dwFlags = 0, CWnd* pParentWnd = NULL, DWORD dwSize = 0, BOOL fNonFileSystemFolders = FALSE);
 
 	/// <summary>
 	/// CFolderPickerDialog destructor.</summary>
 	virtual ~CFolderPickerDialog();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFontDialog - used to select a font
 
 class CFontDialog : public CCommonDialog
@@ -619,7 +620,7 @@ protected:
 	TCHAR m_szStyleName[64]; // contains style name after return
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CColorDialog - used to select a color
 
 class CColorDialog : public CCommonDialog
@@ -661,7 +662,7 @@ public:
 // for backward compatibility clrSavedCustom is defined as GetSavedCustomColors
 #define clrSavedCustom GetSavedCustomColors()
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Page Setup dialog
 
 class CPageSetupDialog : public CCommonDialog
@@ -703,7 +704,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPrintDialog - used for Print... and PrintSetup...
 
 class CPrintDialog : public CCommonDialog
@@ -765,13 +766,12 @@ protected:
 	CPrintDialog(PRINTDLG& pdInit);
 	virtual CPrintDialog* AttachOnSetup();
 
-	//{{AFX_MSG(CPrintDialog)
 	afx_msg void OnPrintSetup();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPrintDialogEx - Windows 2000 Print Dialog
 
 #if WINVER >= 0x0500
@@ -854,15 +854,14 @@ public:
 	void PostModal();
 	virtual LRESULT DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 
-	//{{AFX_MSG(CPrintDialogEx)
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
 #endif //(WINVER >= 0x0500)
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Find/FindReplace modeless dialogs
 
 class CFindReplaceDialog : public CCommonDialog
@@ -913,7 +912,7 @@ protected:
 	TCHAR m_szReplaceWith[128];
 };
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPropertyPage -- one page of a tabbed dialog
 
 class CPropertyPage : public CDialog
@@ -965,6 +964,8 @@ public:
 	virtual BOOL OnWizardFinish();	
 	virtual HWND OnWizardFinishEx();
 
+	virtual CPropertySheet *GetParentSheet();
+
 // Implementation
 public:
 	virtual ~CPropertyPage();
@@ -997,10 +998,8 @@ protected:
 	const DLGTEMPLATE* InitDialogInfo(const DLGTEMPLATE* pTemplate);
 #endif
 
-	// Generated message map functions
-	//{{AFX_MSG(CPropertyPage)
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	friend class CPropertySheet;
@@ -1008,7 +1007,7 @@ protected:
 
 #define CPropertyPageEx CPropertyPage
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPropertySheet -- a tabbed "dialog" (really a popup-window)
 
 class CTabCtrl; // forward reference (see afxcmn.h)
@@ -1109,8 +1108,6 @@ protected:
 	BOOL m_bStacked;        // EnableStackedTabs sets this
 	BOOL m_bModeless;       // TRUE when Create called instead of DoModal
 
-	// Generated message map functions
-	//{{AFX_MSG(CPropertySheet)
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT);
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
@@ -1119,7 +1116,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM);
 	afx_msg LRESULT OnSetDefID(WPARAM, LPARAM);
 	afx_msg LRESULT OnKickIdle(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	friend class CPropertyPage;

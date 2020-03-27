@@ -17,7 +17,14 @@
 #pragma warning( disable : 4159 ) //pragma has popped previously pushed identifier
 #pragma warning( disable : 4127 ) //constant expression
 
+#include <atldef.h>
+#include <time.h>
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 #include <atltime.h>
+#endif
+
+#include <atlstr.h>
 
 #ifndef __oledb_h__
 #include <oledb.h>
@@ -39,6 +46,8 @@ namespace ATL
 
 class COleDateTimeSpan
 {
+private:
+	static const long maxDaysInSpan  = 3615897L;
 // Constructors
 public:
 	COleDateTimeSpan() throw();
@@ -134,9 +143,10 @@ public:
 		_In_ int nMin, 
 		_In_ int nSec) throw();
 	COleDateTime(_In_ WORD wDosDate, _In_ WORD wDosTime) throw();
-
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	COleDateTime(_In_ const DBTIMESTAMP& dbts) throw();
-	bool GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const throw();
+	_Success_(return != false) bool GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const throw();
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 // Attributes
 	enum DateTimeStatus
@@ -153,7 +163,7 @@ public:
 	void SetStatus(_In_ DateTimeStatus status) throw();
 	DateTimeStatus GetStatus() const throw();
 
-	bool GetAsSystemTime(_Out_ SYSTEMTIME& sysTime) const throw();
+	_Success_(return != false) bool GetAsSystemTime(_Out_ SYSTEMTIME& sysTime) const throw();
 	bool GetAsUDATE(_Out_ UDATE& udate) const throw();
 
 	int GetYear() const throw();
@@ -180,7 +190,9 @@ public:
 	COleDateTime& operator=(_In_ const __time64_t& timeSrc) throw();
 
 	COleDateTime& operator=(_In_ const SYSTEMTIME& systimeSrc) throw();
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	COleDateTime& operator=(_In_ const FILETIME& filetimeSrc) throw();
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	COleDateTime& operator=(_In_ const UDATE& udate) throw();
 
 	bool operator==(_In_ const COleDateTime& date) const throw();
@@ -215,10 +227,12 @@ public:
 		_In_ DWORD dwFlags = 0,
 		_In_ LCID lcid = LANG_USER_DEFAULT) throw();
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// formatting
 	CString Format(_In_ DWORD dwFlags = 0, _In_ LCID lcid = LANG_USER_DEFAULT) const;
 	CString Format(_In_z_ LPCTSTR lpszFormat) const;
 	CString Format(_In_ UINT nFormatID) const;
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 protected:
 	static double WINAPI DoubleFromDate(_In_ DATE date) throw();
@@ -287,6 +301,8 @@ inline bool COleDateTime::ParseDateTime(
 	return true;
 }
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 inline CString COleDateTimeSpan::Format(_In_z_ LPCTSTR pFormat) const
 {
 	// If null, return empty string
@@ -297,14 +313,7 @@ inline CString COleDateTimeSpan::Format(_In_z_ LPCTSTR pFormat) const
 	return tmp.Format(pFormat);
 }
 
-inline CString COleDateTimeSpan::Format(_In_ UINT nFormatID) const
-{
-	CString strFormat;
-	if (!strFormat.LoadString(nFormatID))
-		AtlThrow(E_INVALIDARG);
-	return Format(strFormat);
-}
-
+#if defined(_UNICODE) || !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION)
 inline CString COleDateTime::Format(
 	_In_ DWORD dwFlags, 
 	_In_ LCID lcid) const
@@ -334,6 +343,7 @@ inline CString COleDateTime::Format(
 	CString tmp = CString(bstr);
 	return tmp;
 }
+#endif
 
 inline CString COleDateTime::Format(_In_z_ LPCTSTR pFormat) const
 {
@@ -380,6 +390,14 @@ inline CString COleDateTime::Format(_In_z_ LPCTSTR pFormat) const
 	return strDate;
 }
 
+inline CString COleDateTimeSpan::Format(_In_ UINT nFormatID) const
+{
+	CString strFormat;
+	if (!strFormat.LoadString(nFormatID))
+		AtlThrow(E_INVALIDARG);
+	return Format(strFormat);
+}
+
 inline CString COleDateTime::Format(_In_ UINT nFormatID) const
 {
 	CString strFormat;
@@ -402,7 +420,7 @@ inline COleDateTime::COleDateTime(_In_ const DBTIMESTAMP& dbts)
 	m_status = ::SystemTimeToVariantTime(&st, &m_dt) ? valid : invalid;
 }
 
-inline bool COleDateTime::GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const
+inline _Success_(return != false) bool COleDateTime::GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const
 {
 	UDATE ud;
 	if (S_OK != VarUdateFromDate(m_dt, 0, &ud))
@@ -418,6 +436,8 @@ inline bool COleDateTime::GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const
 
 	return true;
 }
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 }	// namespace ATL
 #pragma pack(pop)

@@ -345,7 +345,7 @@ ATLTIME_INLINE bool CTime::operator>=(_In_ CTime time) const throw()
 	return( m_time >= time.m_time );
 }
 
-ATLTIME_INLINE struct tm* CTime::GetGmtTm(_Out_ struct tm* ptm) const
+ATLTIME_INLINE _Success_(return != NULL) struct tm* CTime::GetGmtTm(_Out_ struct tm* ptm) const
 {
 	// Ensure ptm is valid
 	ATLENSURE( ptm != NULL );
@@ -365,7 +365,7 @@ ATLTIME_INLINE struct tm* CTime::GetGmtTm(_Out_ struct tm* ptm) const
 	return NULL;
 }
 
-ATLTIME_INLINE struct tm* CTime::GetLocalTm(_Out_ struct tm* ptm) const
+ATLTIME_INLINE _Success_(return != NULL) struct tm* CTime::GetLocalTm(_Out_ struct tm* ptm) const
 {
 	// Ensure ptm is valid
 	ATLENSURE( ptm != NULL );
@@ -387,7 +387,7 @@ ATLTIME_INLINE struct tm* CTime::GetLocalTm(_Out_ struct tm* ptm) const
 	return NULL;
 }
 
-ATLTIME_INLINE bool CTime::GetAsSystemTime(_Out_ SYSTEMTIME& timeDest) const throw()
+ATLTIME_INLINE _Success_(return != false) bool CTime::GetAsSystemTime(_Out_ SYSTEMTIME& timeDest) const throw()
 {
 	struct tm ttm;
 	struct tm* ptm;

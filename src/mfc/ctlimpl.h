@@ -112,10 +112,8 @@ protected:
 
 	COleControl* m_pCtrl;
 
-	//{{AFX_MSG(CControlFrameWnd)
 	afx_msg void OnClose();
 	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
 

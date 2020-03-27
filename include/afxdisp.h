@@ -97,7 +97,7 @@ class COleSafeArray;        // Based on OLE VARIANT
 #undef AFX_DATA
 #define AFX_DATA AFX_OLE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleException - unexpected or rare OLE error returned
 
 class COleException : public CException
@@ -113,14 +113,14 @@ public:
 	COleException();
 	virtual ~COleException();
 
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 };
 
 void AFXAPI AfxThrowOleException(SCODE sc);
 void AFXAPI AfxCheckError(SCODE sc);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // IDispatch specific exception
 
 class COleDispatchException : public CException
@@ -144,7 +144,7 @@ public:
 	static void PASCAL Process(
 		EXCEPINFO* pInfo, const CException* pAnyException);
 
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 
 	SCODE m_scError;            // SCODE describing the error
@@ -1236,6 +1236,8 @@ void AFX_CDECL AfxEnableControlContainer(COccManager* pOccManager=NULL);
 #elif defined (_M_AMD64)
 	#pragma comment(linker, "/include:??0PostDllMain@@$$FQEAA@XZ")
 	#pragma comment(linker, "/include:??0PostRawDllMain@@$$FQEAA@XZ")
+#elif defined (_M_ARM)
+	#error Managed MFC for the ARM platform is currently unsupported.
 #else
 	#error Compiling for unsupported platform
 #endif

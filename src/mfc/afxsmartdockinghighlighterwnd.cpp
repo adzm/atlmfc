@@ -43,7 +43,7 @@ void CSmartDockingHighlighterWnd::Create(CWnd* pwndOwner)
 	CRect rect;
 	rect.SetRectEmpty();
 
-	DWORD dwExStyle = (afxGlobalData.m_nBitsPerPixel > 8) ? WS_EX_LAYERED : 0;
+	DWORD dwExStyle = (GetGlobalData()->m_nBitsPerPixel > 8) ? WS_EX_LAYERED : 0;
 
 	CreateEx(dwExStyle, GetSmartDockingWndClassName<0>(), _T(""), WS_POPUP, rect, pwndOwner, NULL);
 
@@ -141,11 +141,9 @@ void CSmartDockingHighlighterWnd::ShowTabbedAt(CRect rect, CRect rectTab)
 }
 
 BEGIN_MESSAGE_MAP(CSmartDockingHighlighterWnd, CWnd)
-	//{{AFX_MSG_MAP(CSmartDockingHighlighterWnd)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
 	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -163,9 +161,9 @@ void CSmartDockingHighlighterWnd::OnPaint()
 	CRect rect;
 	GetClientRect(rect);
 
-	COLORREF colorFill = m_bUseThemeColorInShading ? afxGlobalData.clrActiveCaption : RGB(47, 103, 190);
+	COLORREF colorFill = m_bUseThemeColorInShading ? GetGlobalData()->clrActiveCaption : RGB(47, 103, 190);
 
-	if (afxGlobalData.m_nBitsPerPixel > 8)
+	if (GetGlobalData()->m_nBitsPerPixel > 8)
 	{
 		CBrush brFill(CDrawingManager::PixelAlpha(colorFill, 105));
 		dc.FillRect(rect, &brFill);

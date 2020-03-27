@@ -35,10 +35,8 @@ CMFCTasksPaneFrameWnd::~CMFCTasksPaneFrameWnd()
 }
 
 BEGIN_MESSAGE_MAP(CMFCTasksPaneFrameWnd, CPaneFrameWnd)
-	//{{AFX_MSG_MAP(CMFCTasksPaneFrameWnd)
 	ON_WM_NCPAINT()
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCTasksPaneFrameWnd::OnNeedTipText)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CMFCTasksPaneFrameWnd::SetCaptionButtons(DWORD dwButtons)

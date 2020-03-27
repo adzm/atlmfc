@@ -57,7 +57,7 @@ _AFXEXT_INLINE int CMetaFileDC::DrawText(LPCTSTR lpszString, int nCount, LPRECT 
 	{ return _AFX_FUNCNAME(DrawText)(lpszString, nCount, lpRect, nFormat); }
 _AFXEXT_INLINE int CMetaFileDC::DrawText(const CString& str, LPRECT lpRect, UINT nFormat)
 	{ return _AFX_FUNCNAME(DrawText)(str, lpRect, nFormat); }
-_AFXEXT_INLINE int CMetaFileDC::DrawTextEx(LPTSTR lpszString, int nCount, LPRECT lpRect, UINT nFormat, LPDRAWTEXTPARAMS lpDTParams)
+_AFXEXT_INLINE int CMetaFileDC::DrawTextEx(_In_reads_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect, UINT nFormat, LPDRAWTEXTPARAMS lpDTParams)
 	{ return _AFX_FUNCNAME(DrawTextEx)(lpszString, nCount, lpRect, nFormat, lpDTParams); }
 _AFXEXT_INLINE int CMetaFileDC::DrawTextEx(const CString& str, LPRECT lpRect, UINT nFormat, LPDRAWTEXTPARAMS lpDTParams)
 	{ return _AFX_FUNCNAME(DrawTextEx)(str, lpRect, nFormat, lpDTParams); }

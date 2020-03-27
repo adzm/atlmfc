@@ -43,7 +43,6 @@ CBaseTabbedPane::~CBaseTabbedPane()
 {
 }
 
-//{{AFX_MSG_MAP(CBaseTabbedPane)
 BEGIN_MESSAGE_MAP(CBaseTabbedPane, CDockablePane)
 	ON_WM_SIZE()
 	ON_WM_NCDESTROY()
@@ -51,7 +50,6 @@ BEGIN_MESSAGE_MAP(CBaseTabbedPane, CDockablePane)
 	ON_WM_SETFOCUS()
 	ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, &CBaseTabbedPane::OnChangeActiveTab)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CBaseTabbedPane message handlers

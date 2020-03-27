@@ -28,6 +28,10 @@
 	#error atlwin.h requires atlbase.h to be included first
 #endif
 
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <atlstdthunk.h>
 #include <commctrl.h>
 #include <atlsimpstr.h>
@@ -696,7 +700,7 @@ public:
 
 	static HRESULT ParseInitData(
 		_Inout_opt_ IStream* pStream,
-		_Deref_out_opt_z_ BSTR* pLicKey)
+		_Outptr_result_maybenull_z_ BSTR* pLicKey)
 	{
 		*pLicKey = NULL;
 		if(pStream == NULL)
@@ -940,7 +944,7 @@ public:
 	}
 
 	int GetWindowText(
-		_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpszStringBuf,
+		_Out_writes_to_(nMaxCount, return + 1) LPTSTR lpszStringBuf,
 		_In_ int nMaxCount) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
@@ -1093,7 +1097,7 @@ public:
 		return ::GetClientRect(m_hWnd, lpRect);
 	}
 
-	BOOL GetWindowPlacement(_Out_ WINDOWPLACEMENT FAR* lpwndpl) const throw()
+	BOOL GetWindowPlacement(_Inout_ WINDOWPLACEMENT FAR* lpwndpl) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowPlacement(m_hWnd, lpwndpl);
@@ -1137,7 +1141,7 @@ public:
 
 	int MapWindowPoints(
 		_In_ HWND hWndTo,
-		_Inout_cap_(nCount) LPPOINT lpPoint,
+		_Inout_updates_(nCount) LPPOINT lpPoint,
 		_In_ UINT nCount) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
@@ -1392,7 +1396,7 @@ public:
 	}
 
 	BOOL DlgDirSelect(
-		_Out_z_cap_(nCount) LPTSTR lpString,
+		_Out_writes_z_(nCount) LPTSTR lpString,
 		_In_ int nCount,
 		_In_ int nIDListBox) throw()
 	{
@@ -1401,7 +1405,7 @@ public:
 	}
 
 	BOOL DlgDirSelectComboBox(
-		_Out_z_cap_(nCount) LPTSTR lpString,
+		_Out_writes_z_(nCount) LPTSTR lpString,
 		_In_ int nCount,
 		_In_ int nIDComboBox) throw()
 	{
@@ -1420,7 +1424,7 @@ public:
 
 	UINT GetDlgItemText(
 		_In_ int nID,
-		_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpStr,
+		_Out_writes_to_(nMaxCount, return + 1) LPTSTR lpStr,
 		_In_ int nMaxCount) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
@@ -1456,7 +1460,7 @@ public:
 #ifdef _OLEAUTO_H_
 	BOOL GetDlgItemText(
 		_In_ int nID,
-		_Inout_ _Deref_post_opt_z_ BSTR& bstrText) const throw()
+		_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrText) const throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -1521,7 +1525,7 @@ ATLPREFAST_SUPPRESS(6387)
 	HRESULT GetDlgControl(
 		_In_ int nID,
 		_In_ REFIID iid,
-		_Deref_out_ void** ppCtrl) throw()
+		_Outptr_ void** ppCtrl) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(ppCtrl != NULL);
@@ -1546,7 +1550,7 @@ ATLPREFAST_SUPPRESS(6387)
 	HRESULT GetDlgHost(
 		_In_ int nID,
 		_In_ REFIID iid,
-		_Deref_out_ void** ppHost) throw()
+		_Outptr_ void** ppHost) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(ppHost != NULL);
@@ -1865,7 +1869,7 @@ ATLPREFAST_UNSUPPRESS()
 //N new
 	BOOL GetScrollInfo(
 		_In_ int nBar,
-		_Out_ LPSCROLLINFO lpScrollInfo) throw()
+		_Inout_ LPSCROLLINFO lpScrollInfo) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetScrollInfo(m_hWnd, nBar, lpScrollInfo);
@@ -1926,7 +1930,7 @@ ATLPREFAST_UNSUPPRESS()
 		return SetWindowPos(NULL, 0, 0, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, uFlags);
 	}
 
-	int GetWindowRgn(_Out_ HRGN hRgn) throw()
+	int GetWindowRgn(_Inout_ HRGN hRgn) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		return ::GetWindowRgn(m_hWnd, hRgn);
@@ -2040,7 +2044,7 @@ ATLPREFAST_UNSUPPRESS()
 		}
 	}
 
-	BOOL CenterWindow(_In_ HWND hWndCenter = NULL) throw()
+	BOOL CenterWindow(_Inout_opt_ HWND hWndCenter = NULL) throw()
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 
@@ -2177,11 +2181,12 @@ ATLPREFAST_UNSUPPRESS()
 	}
 
 #ifdef _OLEAUTO_H_
+ATLPREFAST_SUPPRESS(6001 6054)
 	BOOL GetWindowText(_Inout_ _Deref_post_opt_z_ BSTR* pbstrText) throw()
 	{
 		return GetWindowText(*pbstrText);
 	}
-	BOOL GetWindowText(_Deref_out_opt_z_ BSTR& bstrText) throw()
+	BOOL GetWindowText(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrText) throw()
 	{
 		USES_CONVERSION_EX;
 		ATLASSERT(::IsWindow(m_hWnd));
@@ -2209,6 +2214,7 @@ ATLPREFAST_UNSUPPRESS()
 
 		return nLen==0 ? FALSE : ((bstrText != NULL) ? TRUE : FALSE);
 	}
+ATLPREFAST_UNSUPPRESS()
 #endif // _OLEAUTO_H_
 	CWindow GetTopLevelParent() const throw()
 	{
@@ -2287,7 +2293,7 @@ public:
 	HRESULT CreateControl(
 		_In_z_ LPCOLESTR lpszName,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL)
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL)
 	{
 		return CreateControlEx(lpszName, pStream, ppUnkContainer);
 	}
@@ -2295,7 +2301,7 @@ public:
 	HRESULT CreateControl(
 		_In_ DWORD dwResID,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL)
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL)
 	{
 		return CreateControlEx(dwResID, pStream, ppUnkContainer);
 	}
@@ -2303,8 +2309,8 @@ public:
 	HRESULT CreateControlEx(
 		_In_z_ LPCOLESTR lpszName,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL,
+		_Outptr_opt_ IUnknown** ppUnkControl = NULL,
 		_In_ REFIID iidSink = IID_NULL,
 		_Inout_opt_ IUnknown* punkSink = NULL)
 	{
@@ -2344,15 +2350,19 @@ public:
 	HRESULT CreateControlEx(
 		_In_ DWORD dwResID,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL,
+		_Outptr_opt_ IUnknown** ppUnkControl = NULL,
 		_In_ REFIID iidSink = IID_NULL,
 		_Inout_opt_ IUnknown* punkSink = NULL)
 	{
 		TCHAR szModule[MAX_PATH];
 		DWORD dwFLen = GetModuleFileName(_AtlBaseModule.GetModuleInstance(), szModule, MAX_PATH);
 		if( dwFLen == 0 )
-			return AtlHresultFromLastError();
+		{
+			HRESULT hr = AtlHresultFromLastError();
+			_Analysis_assume_(FAILED(hr));
+			return hr;
+		}
 		else if( dwFLen == MAX_PATH )
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
@@ -2368,7 +2378,7 @@ public:
 			return hr;
 		}
 		TCHAR szResID[11];
-		if (_stprintf_s(szResID, _countof(szResID), _T("%0d"), dwResID) == -1)
+		if (_stprintf_s(szResID, _countof(szResID), _T("%0d"), (int)dwResID) == -1)
 		{
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 		}
@@ -2384,7 +2394,7 @@ public:
 
 	HRESULT AttachControl(
 		_Inout_ IUnknown* pControl,
-		_Deref_out_ IUnknown** ppUnkContainer)
+		_Outptr_ IUnknown** ppUnkContainer)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		// We must have a valid window!
@@ -2414,7 +2424,7 @@ public:
 
 	HRESULT QueryHost(
 		_In_ REFIID iid,
-		_Deref_out_ void** ppUnk)
+		_Outptr_ void** ppUnk)
 	{
 		ATLASSERT(ppUnk != NULL);
 		if (ppUnk == NULL)
@@ -2429,14 +2439,14 @@ public:
 	}
 	
 	template <class Q>
-	HRESULT QueryHost(_Deref_out_ Q** ppUnk)
+	HRESULT QueryHost(_Outptr_ Q** ppUnk)
 	{
 		return QueryHost(__uuidof(Q), (void**)ppUnk);
 	}
 
 	HRESULT QueryControl(
 		_In_ REFIID iid,
-		_Deref_out_ void** ppUnk)
+		_Outptr_ void** ppUnk)
 	{
 		ATLASSERT(ppUnk != NULL);
 		if (ppUnk == NULL)
@@ -2451,7 +2461,7 @@ public:
 	}
 	
 	template <class Q>
-	HRESULT QueryControl(_Deref_out_ Q** ppUnk)
+	HRESULT QueryControl(_Outptr_ Q** ppUnk)
 	{
 		return QueryControl(__uuidof(Q), (void**)ppUnk);
 	}
@@ -2517,7 +2527,7 @@ public:
 	HRESULT CreateControlLic(
 		_In_z_ LPCOLESTR lpszName,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL,
 		_In_opt_z_ BSTR bstrLicKey = NULL)
 	{
 		return CreateControlLicEx(lpszName, pStream, ppUnkContainer, NULL, IID_NULL, NULL, bstrLicKey);
@@ -2526,7 +2536,7 @@ public:
 	HRESULT CreateControlLic(
 		_In_ DWORD dwResID,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL,
 		_In_opt_z_ BSTR bstrLicKey = NULL)
 	{
 		return CreateControlLicEx(dwResID, pStream, ppUnkContainer, NULL, IID_NULL, NULL, bstrLicKey);
@@ -2535,8 +2545,8 @@ public:
 	HRESULT CreateControlLicEx(
 		_In_z_ LPCOLESTR lpszName,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL,
+		_Outptr_opt_ IUnknown** ppUnkControl = NULL,
 		_In_ REFIID iidSink = IID_NULL,
 		_Inout_opt_ IUnknown* punkSink = NULL,
 		_In_opt_z_ BSTR bstrLicKey = NULL)
@@ -2577,8 +2587,8 @@ public:
 	HRESULT CreateControlLicEx(
 		_In_ DWORD dwResID,
 		_Inout_opt_ IStream* pStream = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkContainer = NULL,
-		_Deref_opt_out_ IUnknown** ppUnkControl = NULL,
+		_Outptr_opt_ IUnknown** ppUnkContainer = NULL,
+		_Outptr_opt_ IUnknown** ppUnkControl = NULL,
 		_In_ REFIID iidSink = IID_NULL,
 		_Inout_opt_ IUnknown* punkSink = NULL,
 		_In_opt_z_ BSTR bstrLickey = NULL)
@@ -2586,7 +2596,11 @@ public:
 		TCHAR szModule[MAX_PATH];
 		DWORD dwFLen = GetModuleFileName(_AtlBaseModule.GetModuleInstance(), szModule, MAX_PATH);
 		if( dwFLen == 0 )
-			return AtlHresultFromLastError();
+		{
+			HRESULT hr = AtlHresultFromLastError();
+			_Analysis_assume_(FAILED(hr));
+			return hr;
+		}
 		else if( dwFLen == MAX_PATH )
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
@@ -2599,7 +2613,7 @@ public:
 			return hr;
 
 		TCHAR szResID[11];
-		if (_stprintf_s(szResID, _countof(szResID), _T("%0d"), dwResID) == -1)
+		if (_stprintf_s(szResID, _countof(szResID), _T("%0d"), (int)dwResID) == -1)
 		{
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 		}
@@ -2980,6 +2994,7 @@ public:
 		}
 	}
 
+ATLPREFAST_SUPPRESS(6014)
 	BOOL SetChainEntry(
 		_In_ DWORD dwChainID,
 		_In_ CMessageMap* pObject,
@@ -3001,7 +3016,7 @@ public:
 	// create a new one
 
 		ATL_CHAIN_ENTRY* pEntry = NULL;
-		ATLTRY(pEntry = new ATL_CHAIN_ENTRY);
+		pEntry = _ATL_NEW ATL_CHAIN_ENTRY;
 
 		if(pEntry == NULL)
 			return FALSE;
@@ -3033,6 +3048,7 @@ public:
 
 		return TRUE;
 	}
+ATLPREFAST_UNSUPPRESS()
 
 	BOOL RemoveChainEntry(_In_ DWORD dwChainID)
 	{
@@ -3207,7 +3223,7 @@ public:
 		_In_ WPARAM wParam,
 		_In_ LPARAM lParam,
 		_Out_ BOOL& bHandled);
-	static BOOL DefaultReflectionHandler(
+	static _Success_(return != FALSE) BOOL DefaultReflectionHandler(
 		_In_ HWND hWnd,
 		_In_ UINT uMsg,
 		_In_ WPARAM wParam,
@@ -3215,6 +3231,7 @@ public:
 		_Out_ LRESULT& lResult);
 };
 
+ATLPREFAST_SUPPRESS(6101)
 template <class TBase>
 LRESULT CWindowImplRoot< TBase >::ForwardNotifications(
 	_In_ UINT uMsg,
@@ -3251,7 +3268,9 @@ LRESULT CWindowImplRoot< TBase >::ForwardNotifications(
 	}
 	return lResult;
 }
+ATLPREFAST_UNSUPPRESS()
 
+ATLPREFAST_SUPPRESS(6101)
 template <class TBase>
 LRESULT CWindowImplRoot< TBase >::ReflectNotifications(
 	_In_ UINT uMsg,
@@ -3327,9 +3346,10 @@ LRESULT CWindowImplRoot< TBase >::ReflectNotifications(
 	ATLASSERT(::IsWindow(hWndChild));
 	return ::SendMessage(hWndChild, OCM__BASE + uMsg, wParam, lParam);
 }
+ATLPREFAST_UNSUPPRESS()
 
 template <class TBase>
-BOOL CWindowImplRoot< TBase >::DefaultReflectionHandler(
+_Success_(return != FALSE) BOOL CWindowImplRoot< TBase >::DefaultReflectionHandler(
 	_In_ HWND hWnd,
 	_In_ UINT uMsg,
 	_In_ WPARAM wParam,
@@ -4911,7 +4931,12 @@ public:
 		if (bPropertyPage)
 		{
 			// Get the font used by the property sheet
-			HINSTANCE hInst = LoadLibrary(_T("COMCTL32.DLL"));
+			HINSTANCE hInst = LoadLibraryExW(L"COMCTL32.DLL", NULL, LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE);
+			if (hInst == NULL)
+			{
+				// if library load failed using flags only valid on Vista+, fall back to using flags valid on XP
+				hInst = LoadLibraryExW(L"COMCTL32.DLL", NULL, LOAD_LIBRARY_AS_DATAFILE);
+			}
 			if (hInst != NULL)
 			{
 				HRSRC hResource = ::FindResourceW(hInst,
@@ -4944,6 +4969,8 @@ public:
 						}
 					}
 				}
+
+				FreeLibrary(hInst);
 			}
 		}
 		// Not property page or could not load Property sheet resource.
@@ -4989,9 +5016,10 @@ public:
 		return (BYTE*)pw;
 	}
 
+	_Success_(return != FALSE)
 	static BOOL GetFont(
 		_In_ const DLGTEMPLATE* pTemplate,
-		_Out_z_cap_c_(LF_FACESIZE) TCHAR* pszFace,
+		_Out_writes_z_(LF_FACESIZE) TCHAR* pszFace,
 		_Out_ WORD* pFontSize)
 	{
 		ATLENSURE(pTemplate!=NULL);
@@ -5086,7 +5114,7 @@ public:
 	}
 
 	static void FormatWindowClassName(
-		_Out_z_cap_(dwBuffSize) PXSTR szBuffer,
+		_Out_writes_z_(dwBuffSize) PXSTR szBuffer,
 		_In_ DWORD dwBuffSize,
 		_In_ void* unique)
 	{
@@ -5140,7 +5168,7 @@ public:
 	}
 
 	static void FormatWindowClassName(
-		_Out_z_cap_(dwBuffSize) PXSTR szBuffer,
+		_Out_writes_z_(dwBuffSize) PXSTR szBuffer,
 		_In_ DWORD dwBuffSize,
 		_In_ void* unique)
 	{
@@ -5201,9 +5229,9 @@ template <class T>
 ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(
 	_In_ _ATL_BASE_MODULE* pBaseModule,
 	_In_ _ATL_WIN_MODULE* pWinModule,
-	_Inout_ _Prepost_bytecount_x_(sizeof(T::_ATL_WNDCLASSINFO)) typename T::_ATL_WNDCLASSINFO* p,
+	_Inout_updates_(1) typename T::_ATL_WNDCLASSINFO* p,
 	_In_ WNDPROC* pProc, 
-	_In_ T)
+	_Inout_ T)
 {
 	if (pBaseModule == NULL || pWinModule == NULL || p == NULL || pProc == NULL)
 	{
@@ -5278,6 +5306,7 @@ ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(
 	return p->m_atom;
 }
 
+ATLPREFAST_SUPPRESS(6001)
 ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoA(
 	_In_ _ATL_WIN_MODULE* pWinModule,
 	_In_ _ATL_BASE_MODULE* pBaseModule,
@@ -5299,6 +5328,7 @@ ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoW(
 	return AtlModuleRegisterWndClassInfoT<AtlModuleRegisterWndClassInfoParamW>(
 		pBaseModule, pWinModule, p, pProc, templateParameter);
 }
+ATLPREFAST_UNSUPPRESS()
 
 //All exports go here
 #ifndef _ATL_DLL

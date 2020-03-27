@@ -31,8 +31,6 @@ CMFCBaseToolBar::~CMFCBaseToolBar()
 }
 
 BEGIN_MESSAGE_MAP(CMFCBaseToolBar, CPane)
-	//{{AFX_MSG_MAP(CMFCBaseToolBar)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

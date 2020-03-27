@@ -21,6 +21,13 @@
 	#error statreg.h requires atlbase.h to be included first
 #endif
 
+
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #pragma warning(push)
 #pragma warning(disable:4571) //catch(...) blocks compiled with /EHs do NOT catch or re-throw Structured Exceptions
 
@@ -51,20 +58,19 @@
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
-const TCHAR  chDirSep            = _T('\\');
-const TCHAR  chRightBracket      = _T('}');
-const TCHAR  chLeftBracket       = _T('{');
-const TCHAR  chQuote             = _T('\'');
-const TCHAR  chEquals            = _T('=');
-const LPCTSTR  szStringVal       = _T("S");
-const LPCTSTR  multiszStringVal  = _T("M");
-const LPCTSTR  szDwordVal        = _T("D");
-const LPCTSTR  szBinaryVal       = _T("B");
-const LPCTSTR  szValToken        = _T("Val");
-const LPCTSTR  szForceRemove     = _T("ForceRemove");
-const LPCTSTR  szNoRemove        = _T("NoRemove");
-const LPCTSTR  szDelete          = _T("Delete");
-
+extern __declspec(selectany) const TCHAR  chDirSep            = _T('\\');
+extern __declspec(selectany) const TCHAR  chRightBracket      = _T('}');
+extern __declspec(selectany) const TCHAR  chLeftBracket       = _T('{');
+extern __declspec(selectany) const TCHAR  chQuote             = _T('\'');
+extern __declspec(selectany) const TCHAR  chEquals            = _T('=');
+extern __declspec(selectany) const LPCTSTR  szStringVal       = _T("S");
+extern __declspec(selectany) const LPCTSTR  multiszStringVal  = _T("M");
+extern __declspec(selectany) const LPCTSTR  szDwordVal        = _T("D");
+extern __declspec(selectany) const LPCTSTR  szBinaryVal       = _T("B");
+extern __declspec(selectany) const LPCTSTR  szValToken        = _T("Val");
+extern __declspec(selectany) const LPCTSTR  szForceRemove     = _T("ForceRemove");
+extern __declspec(selectany) const LPCTSTR  szNoRemove        = _T("NoRemove");
+extern __declspec(selectany) const LPCTSTR  szDelete          = _T("Delete");
 
 // Implementation helper
 class CExpansionVectorEqualHelper
@@ -98,6 +104,7 @@ public:
 		 ClearReplacements();
 	}
 
+ATLPREFAST_SUPPRESS(6001 6014 6211)
 	BOOL Add(
 		_In_z_ LPCTSTR lpszKey,
 		_In_z_ LPCOLESTR lpszValue)
@@ -108,17 +115,17 @@ public:
 
 		HRESULT hRes = S_OK;
 
-		size_t cbKey = (lstrlen(lpszKey)+1)*sizeof(TCHAR);
+		size_t cbKey = (_tcslen(lpszKey)+1)*sizeof(TCHAR);
 		TCHAR* szKey = NULL;
 
-		ATLTRY(szKey = new TCHAR[cbKey];)
+		szKey = _ATL_NEW TCHAR[cbKey];
 		CAutoVectorPtr<TCHAR> spKey;
 		ATLASSUME(szKey != NULL);
 		spKey.Attach(szKey);
 
 		size_t cbValue = (ocslen(lpszValue)+1)*sizeof(OLECHAR);
 		LPOLESTR szValue = NULL;
-		ATLTRY(szValue = new OLECHAR[cbValue];)
+		szValue = _ATL_NEW OLECHAR[cbValue];
 		CAutoVectorPtr<OLECHAR> spValue;
 		ATLASSUME(szValue != NULL);
 		spValue.Attach(szValue);
@@ -139,6 +146,8 @@ public:
 		}
 		return SUCCEEDED(hRes);
 	}
+ATLPREFAST_UNSUPPRESS()
+
 	HRESULT ClearReplacements()
 	{
 		for (int i = 0; i < GetSize(); i++)
@@ -160,7 +169,7 @@ public:
 
 	HRESULT PreProcessBuffer(
 		_In_z_ LPTSTR lpszReg,
-		_Deref_out_z_ LPTSTR* ppszReg);
+		_Outptr_result_z_ LPTSTR* ppszReg);
 
 	HRESULT  RegisterBuffer(
 		_In_z_ LPTSTR szReg,
@@ -170,16 +179,16 @@ protected:
 
 	static const int MAX_VALUE = 4096;
 	void    SkipWhiteSpace();
-	HRESULT NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken);
+	HRESULT NextToken(_Out_writes_z_(MAX_VALUE) LPTSTR szToken);
 	HRESULT AddValue(
 		_Inout_ CRegKey& rkParent,
 		_In_opt_z_ LPCTSTR szValueName,
-		_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken);
+		_Out_writes_z_(MAX_VALUE) LPTSTR szToken);
 	BOOL    CanForceRemoveKey(_In_z_ LPCTSTR szKey);
 	BOOL    HasSubKeys(_In_ HKEY hkey);
 	BOOL    HasValues(_In_ HKEY hkey);
 	HRESULT RegisterSubkeys(
-		_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken,
+		_Out_writes_z_(MAX_VALUE) LPTSTR szToken,
 		_In_ HKEY hkParent,
 		_In_ BOOL bRegister,
 		_In_ BOOL bInRecovery = FALSE);
@@ -188,12 +197,13 @@ protected:
 
 	CRegObject*     m_pRegObj;
 
+	_Ret_range_(<, 0)
 	HRESULT GenerateError(_In_ UINT)
 	{
 		return DISP_E_EXCEPTION;
 	}
 	//HRESULT HandleReplacements(LPTSTR& szToken);
-	HRESULT SkipAssignment(_Inout_z_cap_c_(MAX_VALUE) LPTSTR szToken);
+	HRESULT SkipAssignment(_Inout_updates_z_(MAX_VALUE) LPTSTR szToken);
 
 	BOOL    EndOfVar()
 	{
@@ -230,10 +240,11 @@ protected:
 			CoTaskMemFree(p);
 		}
 		BOOL Append(
-			_In_count_(nChars) const TCHAR* pch,
+			_In_reads_(nChars) const TCHAR* pch,
 			_In_ int nChars)
 		{
 			ATLASSERT(p != NULL);
+			ATLASSUME(p != NULL);
 			int newSize = nPos + nChars + 1;
 			if ((newSize <= nPos) || (newSize <= nChars))
 				return FALSE;
@@ -285,7 +296,7 @@ protected:
 			{
 				return FALSE;
 			}
-			return Append(lpszT, (int)lstrlen(lpszT));
+			return Append(lpszT, (int)_tcslen(lpszT));
 		}
 		LPTSTR Detach()
 		{
@@ -312,8 +323,8 @@ public:
 
 #else
 	STDMETHOD(QueryInterface)(
-		_In_ const IID &,
-		_In_opt_ void ** )
+		const IID &,
+		__RPC__deref_out void ** )
 	{
 		ATLASSERT(_T("statically linked in CRegObject is not a com object. Do not callthis function"));
 		return E_NOTIMPL;
@@ -400,6 +411,7 @@ protected:
 		_In_z_ LPCOLESTR pszData,
 		_In_ BOOL bRegister);
 
+	_Ret_range_(<, 0)
 	static HRESULT GenerateError(_In_ UINT)
 	{
 		return DISP_E_EXCEPTION;
@@ -409,6 +421,7 @@ protected:
 	CComObjectThreadModel::AutoDeleteCriticalSection m_csMap;
 };
 
+#pragma warning(suppress: 26165) // Macro instantiated lock object '(this->m_csMap).m_sec'
 inline HRESULT STDMETHODCALLTYPE CRegObject::AddReplacement(
 	_In_z_ LPCOLESTR lpszKey,
 	_In_z_ LPCOLESTR lpszItem)
@@ -430,6 +443,7 @@ inline HRESULT STDMETHODCALLTYPE CRegObject::AddReplacement(
 	return bRet ? S_OK : E_OUTOFMEMORY;
 }
 
+#pragma warning(suppress: 6262) // Stack size of '1104' bytes is OK
 inline HRESULT CRegObject::RegisterFromResource(
 	_In_z_ LPCOLESTR bstrFileName,
 	_In_z_ LPCTSTR szID,
@@ -455,7 +469,13 @@ inline HRESULT CRegObject::RegisterFromResource(
 	}
 #endif // _UNICODE
 
-	hInstResDll = LoadLibraryEx(lpszBSTRFileName, NULL, LOAD_LIBRARY_AS_DATAFILE);
+	hInstResDll = LoadLibraryEx(lpszBSTRFileName, NULL, LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+
+	if (NULL == hInstResDll)
+	{
+		// if library load failed using flags only valid on Vista+, fall back to using flags valid on XP
+		hInstResDll = LoadLibraryEx(lpszBSTRFileName, NULL, LOAD_LIBRARY_AS_DATAFILE);
+	}
 
 	if (NULL == hInstResDll)
 	{
@@ -640,6 +660,7 @@ inline LPCOLESTR CRegObject::StrFromMap(_In_z_ LPTSTR lpszKey)
 	return lpsz;
 }
 
+#pragma warning(suppress: 6262) // Stack size of '1092' bytes is OK
 inline HRESULT CRegObject::CommonFileRegister(
 	_In_z_ LPCOLESTR bstrFileName,
 	_In_ BOOL bRegister)
@@ -668,9 +689,14 @@ inline HRESULT CRegObject::CommonFileRegister(
 
 	HRESULT hRes = S_OK;
 	DWORD cbRead;
-	DWORD cbFile = GetFileSize(hFile, NULL); // No HiOrder DWORD required
-
 	CTempBuffer<char, 1024> szReg;
+
+	DWORD cbFile = GetFileSize(hFile, NULL); // No HiOrder DWORD required
+	if (INVALID_FILE_SIZE == cbFile)
+	{
+		hRes = AtlHresultFromLastError();
+		goto ReturnHR;
+	}
 	// Extra space for NULL.
 	ATLTRY(szReg.Allocate(cbFile + 1));
 	if (szReg == NULL)
@@ -879,16 +905,14 @@ inline void CRegParser::SkipWhiteSpace()
 		m_pchCur = CharNext(m_pchCur);
 }
 
-#pragma warning(push)
-#pragma warning(disable:6385) // suppressing code analysis warning on the GenerateError code path
-inline HRESULT CRegParser::NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
+ATLPREFAST_SUPPRESS(6001 6054 6385)
+inline HRESULT CRegParser::NextToken(_Out_writes_z_(MAX_VALUE) LPTSTR szToken)
 {
 	SkipWhiteSpace();
 
 	// NextToken cannot be called at EOS
 	if (_T('\0') == *m_pchCur)
 		return GenerateError(E_ATL_UNEXPECTED_EOS);
-#pragma warning(pop)
 
 	LPCTSTR szOrig = szToken;
 	// handle quoted value / key
@@ -947,12 +971,11 @@ inline HRESULT CRegParser::NextToken(_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
 	return S_OK;
 }
 
-#pragma warning(push)
-#pragma warning(disable:6385) // suppressing code analysis warning on the GenerateError code path
+#pragma warning(suppress: 6262) // Stack size of '4704' bytes is OK
 inline HRESULT CRegParser::AddValue(
 	_Inout_ CRegKey& rkParent,
 	_In_opt_z_ LPCTSTR szValueName,
-	_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken)
+	_Out_writes_z_(MAX_VALUE) LPTSTR szToken)
 {
 	HRESULT hr;
 
@@ -968,7 +991,6 @@ inline HRESULT CRegParser::AddValue(
 		ATLTRACE(atlTraceRegistrar, 0, _T("%s Type not supported\n"), szValue);
 		return GenerateError(E_ATL_TYPE_NOT_SUPPORTED);
 	}
-#pragma warning(pop)
 
 	SkipWhiteSpace();
 	if (FAILED(hr = NextToken(szValue)))
@@ -985,7 +1007,7 @@ inline HRESULT CRegParser::AddValue(
 	case VT_BSTR | VT_BYREF:
 		{
 			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), szValue, !szValueName ? _T("default") : szValueName);
-			int nLen = lstrlen(szValue) + 2; //Allocate space for double null termination.
+			int nLen = static_cast<int>(_tcslen(szValue) + 2); //Allocate space for double null termination.
 			CTempBuffer<TCHAR, 256> pszDestValue;
 			//nLen should be >= the max size of the target buffer.
 			ATLTRY(pszDestValue.Allocate(nLen));
@@ -1050,7 +1072,7 @@ inline HRESULT CRegParser::AddValue(
 		}
 	case VT_UI1:
 		{
-			int cbValue = lstrlen(szValue);
+			int cbValue = static_cast<int>(_tcslen(szValue));
 			if (cbValue & 0x00000001)
 			{
 				ATLTRACE(atlTraceRegistrar, 0, _T("Binary Data does not fall on BYTE boundries\n"));
@@ -1080,6 +1102,7 @@ inline HRESULT CRegParser::AddValue(
 
 	return S_OK;
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline BOOL CRegParser::CanForceRemoveKey(_In_z_ LPCTSTR szKey)
 {
@@ -1129,7 +1152,8 @@ inline BOOL CRegParser::HasValues(_In_ HKEY hkey)
 	return cValues > 0; // More than 1 means we have a non-default value
 }
 
-inline HRESULT CRegParser::SkipAssignment(_Inout_z_cap_c_(MAX_VALUE) LPTSTR szToken)
+#pragma warning(suppress: 6262) // Stack size of '4108' bytes is OK
+inline HRESULT CRegParser::SkipAssignment(_Inout_updates_z_(MAX_VALUE) LPTSTR szToken)
 {
 	HRESULT hr;
 	TCHAR szValue[MAX_VALUE];
@@ -1149,10 +1173,10 @@ inline HRESULT CRegParser::SkipAssignment(_Inout_z_cap_c_(MAX_VALUE) LPTSTR szTo
 	return S_OK;
 }
 
-ATLPREFAST_SUPPRESS(6387)
+ATLPREFAST_SUPPRESS(6011 6387)
 inline HRESULT CRegParser::PreProcessBuffer(
 	_In_z_ LPTSTR lpszReg,
-	_Deref_out_z_ LPTSTR* ppszReg)
+	_Outptr_result_z_ LPTSTR* ppszReg)
 {
 	ATLASSERT(lpszReg != NULL);
 	ATLASSERT(ppszReg != NULL);
@@ -1161,7 +1185,7 @@ inline HRESULT CRegParser::PreProcessBuffer(
 		return E_POINTER;
 
 	*ppszReg = NULL;
-	int nSize = lstrlen(lpszReg)*2;
+	int nSize = static_cast<int>(_tcslen(lpszReg))*2;
 	CParseBuffer pb(nSize);
 	if (pb.p == NULL)
 		return E_OUTOFMEMORY;
@@ -1320,6 +1344,7 @@ inline HRESULT CRegParser::PreProcessBuffer(
 }
 ATLPREFAST_UNSUPPRESS()
 
+#pragma warning(suppress: 6262) // Stack size of '4124' bytes is OK
 inline HRESULT CRegParser::RegisterBuffer(
 	_In_z_ LPTSTR szBuffer,
 	_In_ BOOL bRegister)
@@ -1383,8 +1408,9 @@ inline HRESULT CRegParser::RegisterBuffer(
 	return hr;
 }
 
+#pragma warning(suppress: 6262) // Stack size of '4460' bytes is OK
 inline HRESULT CRegParser::RegisterSubkeys(
-	_Out_z_cap_c_(MAX_VALUE) LPTSTR szToken,
+	_Out_writes_z_(MAX_VALUE) LPTSTR szToken,
 	_In_ HKEY hkParent,
 	_In_ BOOL bRegister,
 	_In_ BOOL bRecover)
@@ -1558,7 +1584,7 @@ inline HRESULT CRegParser::RegisterSubkeys(
 			if (FAILED(hr = SkipAssignment(szToken)))
 				break;
 
-			if (*szToken == chLeftBracket && lstrlen(szToken) == 1)
+			if (*szToken == chLeftBracket && _tcslen(szToken) == 1)
 			{
 				hr = RegisterSubkeys(szToken, keyCur.m_hKey, bRegister, bRecover);
 				// In recover mode ignore error
@@ -1629,7 +1655,7 @@ EndCheck:
 
 		if (bRegister)
 		{
-			if (*szToken == chLeftBracket && lstrlen(szToken) == 1)
+			if (*szToken == chLeftBracket && _tcslen(szToken) == 1)
 			{
 				if (FAILED(hr = RegisterSubkeys(szToken, keyCur.m_hKey, bRegister, FALSE)))
 					break;

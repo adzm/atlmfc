@@ -181,6 +181,15 @@ class CAtlTraceProcess :
 	public CAtlTraceModuleInfo
 {
 public:
+	// This structure varies in size on x64 and x86, so the trace tool can only control processes
+	// that match its own platform. This member is set in the constructor and checked in the trace
+	// tool when the process is first being opened. If the size does not match the expected size,
+	// then the process is skipped, because it was built for the other platform.
+	// WARNING: Make sure not to add members to the structure that will mis-align it such that the
+	// x86 and x64 versions of the structure do not have m_cbSize in the same location.  Currently
+	// the member is in the same location because it is __int64 and padding is added in x86 builds.
+	__int64 m_cbSize;
+
 	explicit CAtlTraceProcess(_In_ DWORD_PTR dwMaxSize);
 	void Save(_In_ FILE *file, _In_ UINT nTabs) const;
 	bool Load(_In_ FILE *file);

@@ -412,7 +412,7 @@ ATLTYPES_INLINE void CRect::InflateRect(
 	::InflateRect(this, x, y);
 }
 
-ATLTYPES_INLINE void CRect::InflateRect(SIZE size) throw()
+ATLTYPES_INLINE void CRect::InflateRect(_In_ SIZE size) throw()
 {
 	::InflateRect(this, size.cx, size.cy);
 }

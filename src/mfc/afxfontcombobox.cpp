@@ -37,11 +37,9 @@ CMFCFontComboBox::~CMFCFontComboBox()
 }
 
 BEGIN_MESSAGE_MAP(CMFCFontComboBox, CComboBox)
-	//{{AFX_MSG_MAP(CMFCFontComboBox)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCFontComboBox::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -80,6 +78,16 @@ BOOL CMFCFontComboBox::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return CComboBox::PreTranslateMessage(pMsg);
+}
+
+int CMFCFontComboBox::DeleteString(UINT nIndex)
+{
+	if (GetItemData(nIndex) != NULL)
+	{
+		delete (CMFCFontInfo *)GetItemData(nIndex);
+	}
+
+	return CComboBox::DeleteString(nIndex);
 }
 
 int CMFCFontComboBox::CompareItem(LPCOMPAREITEMSTRUCT lpCIS)
@@ -131,8 +139,8 @@ void CMFCFontComboBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	CBrush brushFill;
 	if (lpDIS->itemState & ODS_SELECTED)
 	{
-		brushFill.CreateSolidBrush(afxGlobalData.clrHilite);
-		pDC->SetTextColor(afxGlobalData.clrTextHilite);
+		brushFill.CreateSolidBrush(GetGlobalData()->clrHilite);
+		pDC->SetTextColor(GetGlobalData()->clrTextHilite);
 	}
 	else
 	{
@@ -162,7 +170,7 @@ void CMFCFontComboBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 			if (m_bDrawUsingFont && pDesc->m_nCharSet != SYMBOL_CHARSET)
 			{
 				LOGFONT lf;
-				afxGlobalData.fontRegular.GetLogFont(&lf);
+				GetGlobalData()->fontRegular.GetLogFont(&lf);
 
 				lstrcpy(lf.lfFaceName, pDesc->m_strName);
 
@@ -207,7 +215,7 @@ void CMFCFontComboBox::MeasureItem(LPMEASUREITEMSTRUCT lpMIS)
 	GetWindowRect(&rc);
 	lpMIS->itemWidth = rc.Width();
 
-	int nFontHeight = max(afxGlobalData.GetTextHeight(), CMFCToolBarFontComboBox::m_nFontHeight);
+	int nFontHeight = max(GetGlobalData()->GetTextHeight(), CMFCToolBarFontComboBox::m_nFontHeight);
 	lpMIS->itemHeight = max(nImageHeight, nFontHeight);
 }
 
@@ -371,19 +379,19 @@ LRESULT CMFCFontComboBox::OnInitControl(WPARAM wParam, LPARAM lParam)
 	CTagManager tagManager(strDst);
 
 	BOOL bDrawUsingFont = TRUE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_DrawUsingFont, bDrawUsingFont))
+	if (ReadBoolProp(tagManager, PS_MFCComboBox_DrawUsingFont, bDrawUsingFont))
 	{
 		m_bDrawUsingFont = bDrawUsingFont;
 	}
 
 	BOOL bShowTrueTypeFonts = TRUE;
-	CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_ShowTrueTypeFonts, bShowTrueTypeFonts);
+	ReadBoolProp(tagManager, PS_MFCComboBox_ShowTrueTypeFonts, bShowTrueTypeFonts);
 
 	BOOL bShowRasterTypeFonts = TRUE;
-	CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_ShowRasterTypeFonts, bShowRasterTypeFonts);
+	ReadBoolProp(tagManager, PS_MFCComboBox_ShowRasterTypeFonts, bShowRasterTypeFonts);
 
 	BOOL bShowDeviceTypeFonts = TRUE;
-	CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCComboBox_ShowDeviceTypeFonts, bShowDeviceTypeFonts);
+	ReadBoolProp(tagManager, PS_MFCComboBox_ShowDeviceTypeFonts, bShowDeviceTypeFonts);
 	
 	int nFontType = 0;
 	if (bShowTrueTypeFonts)

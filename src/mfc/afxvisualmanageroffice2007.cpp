@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -589,7 +589,7 @@ void CMFCVisualManagerOffice2007::CleanUp()
 		m_ctrlRibbonContextCategory[i].CleanUp();
 	}
 
-	m_clrCaptionBarText = afxGlobalData.clrWindow;
+	m_clrCaptionBarText = GetGlobalData()->clrWindow;
 
 	m_bToolTipParams = FALSE;
 	CMFCToolTipInfo dummy;
@@ -611,7 +611,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 
 	CMFCVisualManagerOffice2003::OnUpdateSystemColors();
 
-	if (afxGlobalData.IsHighContrastMode() || afxGlobalData.m_nBitsPerPixel <= 8)
+	if (GetGlobalData()->IsHighContrastMode() || GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		return;
 	}
@@ -706,33 +706,33 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 	{
 		CTagManager tmItem(strItem);
 
-		tmItem.ReadColor(_T("BarText"), afxGlobalData.clrBarText);
+		tmItem.ReadColor(_T("BarText"), GetGlobalData()->clrBarText);
 
-		if (tmItem.ReadColor(_T("BarFace"), afxGlobalData.clrBarFace))
+		if (tmItem.ReadColor(_T("BarFace"), GetGlobalData()->clrBarFace))
 		{
-			afxGlobalData.brBarFace.DeleteObject();
-			afxGlobalData.brBarFace.CreateSolidBrush(afxGlobalData.clrBarFace);
-			m_clrMenuShadowBase = afxGlobalData.clrBarFace;
+			GetGlobalData()->brBarFace.DeleteObject();
+			GetGlobalData()->brBarFace.CreateSolidBrush(GetGlobalData()->clrBarFace);
+			m_clrMenuShadowBase = GetGlobalData()->clrBarFace;
 		}
-		if (tmItem.ReadColor(_T("ActiveCaption"), afxGlobalData.clrActiveCaption))
+		if (tmItem.ReadColor(_T("ActiveCaption"), GetGlobalData()->clrActiveCaption))
 		{
-			afxGlobalData.clrInactiveCaption     = afxGlobalData.clrActiveCaption;
-			afxGlobalData.brActiveCaption.DeleteObject();
-			afxGlobalData.brActiveCaption.CreateSolidBrush(afxGlobalData.clrActiveCaption);
+			GetGlobalData()->clrInactiveCaption     = GetGlobalData()->clrActiveCaption;
+			GetGlobalData()->brActiveCaption.DeleteObject();
+			GetGlobalData()->brActiveCaption.CreateSolidBrush(GetGlobalData()->clrActiveCaption);
 		}
-		if (tmItem.ReadColor(_T("CaptionText"), afxGlobalData.clrCaptionText))
+		if (tmItem.ReadColor(_T("CaptionText"), GetGlobalData()->clrCaptionText))
 		{
-			afxGlobalData.clrInactiveCaptionText = afxGlobalData.clrCaptionText;
+			GetGlobalData()->clrInactiveCaptionText = GetGlobalData()->clrCaptionText;
 		}
 
-		tmItem.ReadColor(_T("InactiveCaption"), afxGlobalData.clrInactiveCaption);
-		afxGlobalData.brInactiveCaption.DeleteObject();
-		afxGlobalData.brInactiveCaption.CreateSolidBrush(afxGlobalData.clrInactiveCaption);
-		tmItem.ReadColor(_T("InactiveCaptionText"), afxGlobalData.clrInactiveCaptionText);
+		tmItem.ReadColor(_T("InactiveCaption"), GetGlobalData()->clrInactiveCaption);
+		GetGlobalData()->brInactiveCaption.DeleteObject();
+		GetGlobalData()->brInactiveCaption.CreateSolidBrush(GetGlobalData()->clrInactiveCaption);
+		tmItem.ReadColor(_T("InactiveCaptionText"), GetGlobalData()->clrInactiveCaptionText);
 
-		tmItem.ReadColor(_T("BarShadow"), afxGlobalData.clrBarShadow);
-		tmItem.ReadColor(_T("BarDkShadow"), afxGlobalData.clrBarDkShadow);
-		tmItem.ReadColor(_T("BarLight"), afxGlobalData.clrBarLight);
+		tmItem.ReadColor(_T("BarShadow"), GetGlobalData()->clrBarShadow);
+		tmItem.ReadColor(_T("BarDkShadow"), GetGlobalData()->clrBarDkShadow);
+		tmItem.ReadColor(_T("BarLight"), GetGlobalData()->clrBarLight);
 
 		COLORREF clrFloatToolBarBorder;
 		tmItem.ReadColor(_T("FloatToolBarBorder"), clrFloatToolBarBorder);
@@ -754,16 +754,16 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 
 		tmItem.ReadColor(_T("PressedButtonBorder"), m_clrPressedButtonBorder);
 
-		COLORREF clrHB = afxGlobalData.clrHilite;
-		COLORREF clrHT = afxGlobalData.clrTextHilite;
+		COLORREF clrHB = GetGlobalData()->clrHilite;
+		COLORREF clrHT = GetGlobalData()->clrTextHilite;
 		if (tmItem.ReadColor(_T("Highlight"), clrHB) && tmItem.ReadColor(_T("HighlightText"), clrHT))
 		{
-			afxGlobalData.clrHilite = clrHB;
+			GetGlobalData()->clrHilite = clrHB;
 
-			afxGlobalData.brHilite.DeleteObject();
-			afxGlobalData.brHilite.CreateSolidBrush(clrHB);
+			GetGlobalData()->brHilite.DeleteObject();
+			GetGlobalData()->brHilite.CreateSolidBrush(clrHB);
 
-			afxGlobalData.clrTextHilite = clrHT;
+			GetGlobalData()->clrTextHilite = clrHT;
 		}
 
 		tmItem.ReadColor(_T("MenuShadowColor"), m_clrMenuShadowBase);
@@ -785,7 +785,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 
 			NONCLIENTMETRICS ncm;
 			ncm.cbSize = sizeof(ncm);
-			if (afxGlobalData.GetNonClientMetrics (ncm))
+			if (GetGlobalData()->GetNonClientMetrics (ncm))
 			{
 				tmCaption.ReadFont(_T("FONT"), ncm.lfCaptionFont);
 				m_AppCaptionFont.DeleteObject();
@@ -1018,7 +1018,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 			tmBar.ReadControlRenderer(_T("BUTTON"), m_ctrlToolBarBtn, MakeResourceID(_T("IDB_OFFICE2007_TOOLBAR_BTN")));
 			tmBar.ReadControlRenderer(_T("BORDER"), m_ctrlToolBarBorder, MakeResourceID(_T("IDB_OFFICE2007_TOOLBAR_BORDER")));
 
-			m_clrToolBarBtnText = afxGlobalData.clrBarText;
+			m_clrToolBarBtnText = GetGlobalData()->clrBarText;
 			m_clrToolBarBtnTextHighlighted = m_clrToolBarBtnText;
 			tmBar.ReadColor(_T("TextNormal"), m_clrToolBarBtnText);
 			tmBar.ReadColor(_T("TextHighlighted"), m_clrToolBarBtnTextHighlighted);
@@ -1116,10 +1116,10 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 	m_brMenuRarelyUsed.DeleteObject();
 	m_brMenuRarelyUsed.CreateSolidBrush(m_clrMenuRarelyUsed);
 
-	m_clrEditBorder            = afxGlobalData.clrWindow;
-	m_clrEditBorderDisabled    = afxGlobalData.clrBtnShadow;
+	m_clrEditBorder            = GetGlobalData()->clrWindow;
+	m_clrEditBorderDisabled    = GetGlobalData()->clrBtnShadow;
 	m_clrEditBorderHighlighted = m_clrMenuItemBorder;
-	m_clrEditSelection         = afxGlobalData.clrHilite;
+	m_clrEditSelection         = GetGlobalData()->clrHilite;
 
 	// edit
 	if (tm.ExcludeTag(_T("EDIT"), strItem))
@@ -1132,17 +1132,17 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 		tmItem.ReadColor(_T("Selection"), m_clrEditSelection);
 	}
 
-	m_clrComboBorder               = afxGlobalData.clrWindow;
-	m_clrComboBorderDisabled       = afxGlobalData.clrBtnShadow;
+	m_clrComboBorder               = GetGlobalData()->clrWindow;
+	m_clrComboBorderDisabled       = GetGlobalData()->clrBtnShadow;
 	m_clrComboBorderHighlighted    = m_clrMenuItemBorder;
 	m_clrComboBorderPressed        = m_clrComboBorderHighlighted;
 	m_clrComboBtnBorder            = m_clrComboBorder;
 	m_clrComboBtnBorderHighlighted = m_clrComboBorderHighlighted;
 	m_clrComboBtnBorderPressed     = m_clrComboBorderHighlighted;
-	m_clrComboSelection            = afxGlobalData.clrHilite;
+	m_clrComboSelection            = GetGlobalData()->clrHilite;
 	m_clrComboBtnStart             = m_clrToolBarGradientDark;
 	m_clrComboBtnFinish            = m_clrToolBarGradientLight;
-	m_clrComboBtnDisabledStart     = afxGlobalData.clrBtnFace;
+	m_clrComboBtnDisabledStart     = GetGlobalData()->clrBtnFace;
 	m_clrComboBtnDisabledFinish    = m_clrComboBtnDisabledStart;
 	m_clrComboBtnHighlightedStart  = m_clrHighlightGradientDark;
 	m_clrComboBtnHighlightedFinish = m_clrHighlightGradientLight;
@@ -1377,10 +1377,10 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 	m_clrRibbonPanelCaptionText            = m_clrRibbonPanelText;
 	m_clrRibbonPanelCaptionTextHighlighted = m_clrRibbonPanelTextHighlighted;
 
-	m_clrRibbonEdit                        = afxGlobalData.clrBarLight;
-	m_clrRibbonEditHighlighted             = afxGlobalData.clrWindow;
+	m_clrRibbonEdit                        = GetGlobalData()->clrBarLight;
+	m_clrRibbonEditHighlighted             = GetGlobalData()->clrWindow;
 	m_clrRibbonEditPressed                 = m_clrRibbonEditHighlighted;
-	m_clrRibbonEditDisabled                = afxGlobalData.clrBtnFace;
+	m_clrRibbonEditDisabled                = GetGlobalData()->clrBtnFace;
 
 	if (tm.ExcludeTag(_T("RIBBON"), strItem))
 	{
@@ -1436,7 +1436,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 					tmCaption.ReadColor(_T("TextNormal"), m_clrRibbonPanelCaptionText);
 					tmCaption.ReadColor(_T("TextHighlighted"), m_clrRibbonPanelCaptionTextHighlighted);
 
-					m_RibbonBtnLaunchIcon.SmoothResize(afxGlobalData.GetRibbonImageScale());
+					m_RibbonBtnLaunchIcon.SmoothResize(GetGlobalData()->GetRibbonImageScale());
 				}
 			}
 
@@ -1480,7 +1480,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 					tmButtons.ReadControlRenderer(_T("BUTTON_MENU_V_M"), m_ctrlRibbonBtnMenuV[1], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_MENU_V_M")));
 					tmButtons.ReadControlRenderer(_T("BUTTON_CHECK"), m_ctrlRibbonBtnCheck, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_CHECK")));
 
-					m_ctrlRibbonBtnCheck.SmoothResize(afxGlobalData.GetRibbonImageScale());
+					m_ctrlRibbonBtnCheck.SmoothResize(GetGlobalData()->GetRibbonImageScale());
 
 					tmButtons.ReadControlRenderer(_T("BUTTON_PNL_T"), m_ctrlRibbonBtnPalette[0], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_PALETTE_T")));
 					tmButtons.ReadControlRenderer(_T("BUTTON_PNL_M"), m_ctrlRibbonBtnPalette[1], MakeResourceID(_T("IDB_OFFICE2007_RIBBON_BTN_PALETTE_M")));
@@ -1641,7 +1641,7 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 
 		if (m_RibbonBtnMain.IsValid())
 		{
-			m_RibbonBtnMain.SmoothResize (afxGlobalData.GetRibbonImageScale());
+			m_RibbonBtnMain.SmoothResize (GetGlobalData()->GetRibbonImageScale());
 		}
 
 		if (tmItem.ExcludeTag(_T("MAIN"), str))
@@ -1673,9 +1673,9 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 				tmSlider.ReadControlRenderer(_T("PLUS"), m_ctrlRibbonSliderBtnPlus, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_SLIDER_BTN_PLUS")));
 				tmSlider.ReadControlRenderer(_T("MINUS"), m_ctrlRibbonSliderBtnMinus, MakeResourceID(_T("IDB_OFFICE2007_RIBBON_SLIDER_BTN_MINUS")));
 
-				m_ctrlRibbonSliderThumb.SmoothResize(afxGlobalData.GetRibbonImageScale());
-				m_ctrlRibbonSliderBtnMinus.SmoothResize(afxGlobalData.GetRibbonImageScale());
-				m_ctrlRibbonSliderBtnPlus.SmoothResize(afxGlobalData.GetRibbonImageScale());
+				m_ctrlRibbonSliderThumb.SmoothResize(GetGlobalData()->GetRibbonImageScale());
+				m_ctrlRibbonSliderBtnMinus.SmoothResize(GetGlobalData()->GetRibbonImageScale());
+				m_ctrlRibbonSliderBtnPlus.SmoothResize(GetGlobalData()->GetRibbonImageScale());
 			}
 
 			CString strProgress;
@@ -1725,12 +1725,12 @@ void CMFCVisualManagerOffice2007::OnUpdateSystemColors()
 			{
 				if (bSystem)
 				{
-					m_clrRibbonKeyTipTextDisabled = afxGlobalData.clrGrayedText;
+					m_clrRibbonKeyTipTextDisabled = GetGlobalData()->clrGrayedText;
 				}
 				else
 				{
 					m_clrRibbonKeyTipTextDisabled = CDrawingManager::PixelAlpha(
-						m_clrRibbonKeyTipTextNormal, afxGlobalData.clrWindow, 50);
+						m_clrRibbonKeyTipTextNormal, GetGlobalData()->clrWindow, 50);
 				}
 			}
 		}
@@ -1827,7 +1827,7 @@ BOOL CMFCVisualManagerOffice2007::OnNcActivate(CWnd* pWnd, BOOL bActive)
 		return FALSE;
 	}
 
-	if (afxGlobalData.DwmIsCompositionEnabled())
+	if (GetGlobalData()->IsDwmCompositionEnabled())
 	{
 		return FALSE;
 	}
@@ -1898,8 +1898,8 @@ void CMFCVisualManagerOffice2007::DrawNcBtn(CDC* pDC, const CRect& rect, UINT nB
 		return;
 	}
 
-	CMFCToolBarImages::ImageAlignHorz horz = afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignHorzStretch : CMFCToolBarImages::ImageAlignHorzCenter;
-	CMFCToolBarImages::ImageAlignVert vert = afxGlobalData.GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignVertStretch : CMFCToolBarImages::ImageAlignVertCenter;
+	CMFCToolBarImages::ImageAlignHorz horz = GetGlobalData()->GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignHorzStretch : CMFCToolBarImages::ImageAlignHorzCenter;
+	CMFCToolBarImages::ImageAlignVert vert = GetGlobalData()->GetRibbonImageScale() != 1. ? CMFCToolBarImages::ImageAlignVertStretch : CMFCToolBarImages::ImageAlignVertCenter;
 
 	CRect rtBtnImage(CPoint(0, 0), pImage->GetImageSize());
 
@@ -1940,7 +1940,7 @@ void CMFCVisualManagerOffice2007::DrawNcText(CDC* pDC, CRect& rect, const CStrin
 	int nOldMode = pDC->SetBkMode(TRANSPARENT);
 	COLORREF clrOldText = pDC->GetTextColor();
 
-	DWORD dwTextStyle = DT_END_ELLIPSIS | DT_SINGLELINE | DT_VCENTER | (bIsRTL ? DT_RTLREADING : 0);
+	DWORD dwTextStyle = DT_END_ELLIPSIS | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | (bIsRTL ? DT_RTLREADING : 0);
 
 	if (strDocument.IsEmpty())
 	{
@@ -2472,7 +2472,7 @@ BOOL CMFCVisualManagerOffice2007::OnSetWindowRegion(CWnd* pWnd, CSize sizeWindow
 		return FALSE;
 	}
 
-	if (afxGlobalData.DwmIsCompositionEnabled())
+	if (GetGlobalData()->IsDwmCompositionEnabled())
 	{
 		return FALSE;
 	}
@@ -2603,9 +2603,9 @@ void CMFCVisualManagerOffice2007::OnDrawCaptionBarInfoArea(CDC* pDC, CMFCCaption
 	ASSERT_VALID(pDC);
 
 	CDrawingManager dm(*pDC);
-	dm.FillGradient(rect, afxGlobalData.clrBarFace, RGB(255, 255, 255));
+	dm.FillGradient(rect, GetGlobalData()->clrBarFace, RGB(255, 255, 255));
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarDkShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarDkShadow);
 }
 
 void CMFCVisualManagerOffice2007::OnFillOutlookPageButton(CDC* pDC, const CRect& rect, BOOL bIsHighlighted, BOOL bIsPressed, COLORREF& clrText)
@@ -2692,7 +2692,7 @@ void CMFCVisualManagerOffice2007::OnDrawOutlookPageButtonBorder(CDC* pDC, CRect&
 		return;
 	}
 
-	pDC->Draw3dRect(rectBtn, afxGlobalData.clrBtnHilite, m_clrToolBarBottomLine);
+	pDC->Draw3dRect(rectBtn, GetGlobalData()->clrBtnHilite, m_clrToolBarBottomLine);
 }
 
 void CMFCVisualManagerOffice2007::OnDrawOutlookBarSplitter(CDC* pDC, CRect rectSplitter)
@@ -3180,7 +3180,7 @@ COLORREF CMFCVisualManagerOffice2007::OnDrawPaneCaption(CDC* pDC, CDockablePane*
 
 	ASSERT_VALID(pDC);
 
-	CPen pen(PS_SOLID, 1, afxGlobalData.clrBarFace);
+	CPen pen(PS_SOLID, 1, GetGlobalData()->clrBarFace);
 	CPen* pOldPen = pDC->SelectObject(&pen);
 
 	rectCaption.bottom += 2;
@@ -3197,9 +3197,9 @@ COLORREF CMFCVisualManagerOffice2007::OnDrawPaneCaption(CDC* pDC, CDockablePane*
 	pDC->SelectObject(pOldPen);
 
 	rectCaption.DeflateRect(1, 1, 1, 0);
-	pDC->FillRect(rectCaption, bActive ? &afxGlobalData.brActiveCaption : &afxGlobalData.brInactiveCaption);
+	pDC->FillRect(rectCaption, bActive ? &(GetGlobalData()->brActiveCaption) : &(GetGlobalData()->brInactiveCaption));
 
-	return bActive ? afxGlobalData.clrCaptionText : afxGlobalData.clrInactiveCaptionText;
+	return bActive ? GetGlobalData()->clrCaptionText : GetGlobalData()->clrInactiveCaptionText;
 }
 
 void CMFCVisualManagerOffice2007::OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* pBar, CRect rectPane, UINT uiID, UINT nStyle)
@@ -3821,14 +3821,14 @@ void CMFCVisualManagerOffice2007::OnDrawMenuCheck(CDC* pDC, CMFCToolBarMenuButto
 		rectImage.OffsetRect(0, size.cy);
 	}
 
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		img.Mirror();
 	}
 
 	img.DrawEx(pDC, rect, 0, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter, rectImage);
 
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		img.Mirror();
 	}
@@ -3855,7 +3855,7 @@ void CMFCVisualManagerOffice2007::OnDrawMenuItemButton(CDC* pDC, CMFCToolBarMenu
 	}
 	else
 	{
-		CBrush br(afxGlobalData.clrBtnShadow);
+		CBrush br(GetGlobalData()->clrBtnShadow);
 
 		rect.DeflateRect(0, 3);
 		rect.right--;
@@ -3898,10 +3898,10 @@ COLORREF CMFCVisualManagerOffice2007::OnFillMiniFrameCaption(CDC* pDC, CRect rec
 		bIsToolBar = TRUE;
 	}
 
-	pDC->FillRect(rectCaption, bActive ? &afxGlobalData.brActiveCaption : &afxGlobalData.brInactiveCaption);
+	pDC->FillRect(rectCaption, bActive ? &(GetGlobalData()->brActiveCaption) : &(GetGlobalData()->brInactiveCaption));
 
 	// get the text color
-	return bActive ? afxGlobalData.clrCaptionText : afxGlobalData.clrInactiveCaptionText;
+	return bActive ? GetGlobalData()->clrCaptionText : GetGlobalData()->clrInactiveCaptionText;
 }
 
 void CMFCVisualManagerOffice2007::OnDrawMiniFrameBorder(CDC* pDC, CPaneFrameWnd* pFrameWnd, CRect rectBorder, CRect rectBorderSize)
@@ -3930,7 +3930,7 @@ void CMFCVisualManagerOffice2007::OnDrawMiniFrameBorder(CDC* pDC, CPaneFrameWnd*
 		rectBorderSize.DeflateRect(2, 2);
 		rectBorder.DeflateRect(2, 2);
 
-		pDC->SelectObject(&afxGlobalData.brBarFace);
+		pDC->SelectObject(&(GetGlobalData()->brBarFace));
 
 		pDC->PatBlt(rectBorder.left, rectBorder.top + 1, rectBorderSize.left, rectBorder.Height() - 1, PATCOPY);
 		pDC->PatBlt(rectBorder.left + 1, rectBorder.top, rectBorder.Width() - 2, rectBorderSize.top, PATCOPY);
@@ -3966,7 +3966,7 @@ void CMFCVisualManagerOffice2007::OnDrawFloatingToolbarBorder(CDC* pDC, CMFCBase
 	rectBorderSize.DeflateRect(2, 2);
 	rectBorder.DeflateRect(2, 2);
 
-	pDC->SelectObject(&afxGlobalData.brBarFace);
+	pDC->SelectObject(&(GetGlobalData()->brBarFace));
 
 	pDC->PatBlt(rectBorder.left, rectBorder.top + 1, rectBorderSize.left, rectBorder.Height() - 1, PATCOPY);
 	pDC->PatBlt(rectBorder.left + 1, rectBorder.top, rectBorder.Width() - 2, rectBorderSize.top, PATCOPY);
@@ -4207,7 +4207,7 @@ void CMFCVisualManagerOffice2007::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, B
 
 		pDC->SelectClipRgn(NULL);
 
-		clrText = afxGlobalData.clrBarText;
+		clrText = GetGlobalData()->clrBarText;
 		pDC->RestoreDC(isave);
 	}
 	else
@@ -4227,7 +4227,7 @@ void CMFCVisualManagerOffice2007::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, B
 
 		if (pTabWnd->IsDialogControl())
 		{
-			clrText = afxGlobalData.clrBtnText;
+			clrText = GetGlobalData()->clrBtnText;
 		}
 	}
 
@@ -4319,7 +4319,7 @@ BOOL CMFCVisualManagerOffice2007::OnEraseTabsFrame(CDC* pDC, CRect rect, const C
 
 	if (pTabWnd->IsFlatTab())
 	{
-		pDC->FillRect(rect, &afxGlobalData.brWindow);
+		pDC->FillRect(rect, &(GetGlobalData()->brWindow));
 
 		if (pTabWnd->GetLocation() != CMFCTabCtrl::LOCATION_BOTTOM)
 		{
@@ -4458,7 +4458,7 @@ void CMFCVisualManagerOffice2007::OnDrawTasksGroupCaption(CDC* pDC, CMFCTasksPan
 	// -----------------------
 	// Draw group caption text
 	// -----------------------
-	CFont* pFontOld = pDC->SelectObject(&afxGlobalData.fontBold);
+	CFont* pFontOld = pDC->SelectObject(&(GetGlobalData()->fontBold));
 	COLORREF clrTextOld = pDC->GetTextColor();
 
 	if (bCanCollapse && bIsHighlighted)
@@ -4506,10 +4506,10 @@ void CMFCVisualManagerOffice2007::OnDrawTasksGroupCaption(CDC* pDC, CMFCTasksPan
 			if (bIsHighlighted)
 			{
 				// Draw button frame
-				CBrush* pBrushOld = (CBrush*) pDC->SelectObject(&afxGlobalData.brBarFace);
+				CBrush* pBrushOld = (CBrush*) pDC->SelectObject(&(GetGlobalData()->brBarFace));
 				COLORREF clrBckOld = pDC->GetBkColor();
 
-				pDC->Draw3dRect(&rectButton, afxGlobalData.clrWindow, afxGlobalData.clrBarShadow);
+				pDC->Draw3dRect(&rectButton, GetGlobalData()->clrWindow, GetGlobalData()->clrBarShadow);
 
 				pDC->SetBkColor(clrBckOld);
 				pDC->SelectObject(pBrushOld);
@@ -4624,14 +4624,14 @@ void CMFCVisualManagerOffice2007::OnDrawCheckBoxEx(CDC *pDC, CRect rect, int nSt
 		index += 1;
 	}
 
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		m_ctrlRibbonBtnCheck.Mirror();
 	}
 
 	m_ctrlRibbonBtnCheck.FillInterior(pDC, rect, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter, index);
 
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		m_ctrlRibbonBtnCheck.Mirror();
 	}
@@ -4718,7 +4718,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* p
 				{
 					const int dxFrame = GetSystemMetrics(SM_CXSIZEFRAME) / 2;
 
-					const int nTop = afxGlobalData.GetRibbonImageScale () != 1. ? -2 : 1;
+					const int nTop = GetGlobalData()->GetRibbonImageScale () != 1. ? -2 : 1;
 					rectQAFrame.DeflateRect (1, nTop, dxFrame, 0);
 				}
 
@@ -5060,7 +5060,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCategoryScroll (
 	pRenderer->Draw (pDC, rect, index);
 	
 	BOOL bIsLeft = pScroll->IsLeftScroll ();
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		bIsLeft = !bIsLeft;
 	}
@@ -5286,7 +5286,6 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonP
 
 	if (!str.IsEmpty())
 	{
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 		if (pPanel->GetLaunchButton().GetID() > 0)
 		{
 			rectCaption.right = pPanel->GetLaunchButton().GetRect().left;
@@ -5295,7 +5294,6 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonP
 			rectCaption.OffsetRect(-1, -1);
 		}
 		else
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 		{
 			rectCaption.DeflateRect(1, 1);
 
@@ -5314,7 +5312,6 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonP
 	}
 }
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 void CMFCVisualManagerOffice2007::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel)
 {
 	if (!CanDrawImage())
@@ -5385,7 +5382,6 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonL
 		m_RibbonBtnLaunchIcon.DrawEx(pDC, rect, index, CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter);
 	}
 }
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 COLORREF CMFCVisualManagerOffice2007::OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButton)
 {
@@ -6167,7 +6163,7 @@ void CMFCVisualManagerOffice2007::OnFillRibbonEdit(CDC* pDC, CMFCRibbonRichEditC
 
 	if (bIsDisabled)
 	{
-		clrText = afxGlobalData.clrGrayedText;
+		clrText = GetGlobalData()->clrGrayedText;
 	}
 	else
 	{
@@ -6307,7 +6303,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonGalleryBorder(CDC* pDC, CMFCRibbon
 	rectBorder.right -= 5;
 
 	ASSERT_VALID(pDC);
-	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 }
 
 COLORREF CMFCVisualManagerOffice2007::OnDrawRibbonCategoryCaption(CDC* pDC, CMFCRibbonContextCaption* pContextCaption)
@@ -6635,7 +6631,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCheckBoxOnList(CDC* pDC, CMFCRibbo
 		return;
 	}
 
-	if (afxGlobalData.GetRibbonImageScale() != 1)
+	if (GetGlobalData()->GetRibbonImageScale() != 1)
 	{
 		rect.DeflateRect(5, 5);
 		img.DrawEx(pDC, rect, 0, CMFCToolBarImages::ImageAlignHorzStretch, CMFCToolBarImages::ImageAlignVertStretch);
@@ -6826,7 +6822,7 @@ COLORREF CMFCVisualManagerOffice2007::OnFillCaptionBarButton(CDC* pDC, CMFCCapti
 
 AFX_SMARTDOCK_THEME CMFCVisualManagerOffice2007::GetSmartDockingTheme()
 {
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() || !afxGlobalData.IsWindowsLayerSupportAvailable() || !afxGlobalData.bIsWindowsVista)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode())
 	{
 		return CMFCVisualManagerOffice2003::GetSmartDockingTheme();
 	}

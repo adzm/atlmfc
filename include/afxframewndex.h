@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -29,7 +29,7 @@ class CMFCMenuBar;
 class CMFCToolBarMenuButton;
 class CMFCToolBarButton;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFrameWndEx frame
 
 class CFrameWndEx : public CFrameWnd
@@ -126,6 +126,8 @@ public:
 		m_Impl.SetControlbarsMenuId(uiViewToolbarsMenuEntryID, bViewMenuShowsToolbarsOnly);
 	}
 
+	UINT GetPaneMenuEntryID() const { return m_Impl.m_uiControlbarsMenuEntryID; }
+
 	void UpdateCaption() { m_Impl.UpdateCaption(); }
 	BOOL IsPrintPreview() { return m_Impl.IsPrintPreview(); }
 
@@ -198,7 +200,6 @@ public:
 	void ActiveItemRecalcLayout();
 	virtual void OnUpdateFrameTitle(BOOL bAddToTitle);
 
-	//{{AFX_MSG(CFrameWndEx)
 	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
 	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 	afx_msg void OnClose();
@@ -224,15 +225,15 @@ public:
 	afx_msg void OnUpdatePaneMenu(CCmdUI* pCmdUI);
 	afx_msg BOOL OnPaneCheck(UINT nID);
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam = 0, LPARAM lParam = 0);
-	LRESULT OnExitSizeMove(WPARAM, LPARAM);
+	afx_msg void OnExitSizeMove();
 	afx_msg LRESULT OnToolbarContextMenu(WPARAM,LPARAM);
 	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnChangeVisualManager(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPostPreviewFrame(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnDWMCompositionChanged(WPARAM,LPARAM);
-	afx_msg LRESULT OnPowerBroadcast(WPARAM wp, LPARAM lp);
+	afx_msg void OnCompositionChanged();
+	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, UINT nEventData);
 	afx_msg void OnSysColorChange();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

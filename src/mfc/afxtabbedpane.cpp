@@ -40,10 +40,8 @@ CTabbedPane::~CTabbedPane()
 }
 
 BEGIN_MESSAGE_MAP(CTabbedPane, CBaseTabbedPane)
-	//{{AFX_MSG_MAP(CTabbedPane)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

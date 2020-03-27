@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCListCtrl window
 
 class CMFCListCtrl : public CListCtrl
@@ -72,15 +72,14 @@ public:
 	virtual ~CMFCListCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCListCtrl)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnColumnClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSysColorChange();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg LRESULT OnStyleChanged(WPARAM wp, LPARAM lp);
-	//}}AFX_MSG
+	afx_msg void OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct);
+
 	DECLARE_MESSAGE_MAP()
 
 	static int CALLBACK CompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);

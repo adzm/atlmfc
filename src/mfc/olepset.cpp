@@ -22,7 +22,7 @@
 
 AFX_STATIC LPVOID AFXAPI _AfxCountPrefixedStringA(LPCSTR lpsz)
 {
-	DWORD cb = (lstrlenA(lpsz) + 1);
+	DWORD cb = AtlStrLen(lpsz) + 1;
 	LPDWORD lp = (LPDWORD)malloc((int)cb + sizeof(DWORD));
 	if (lp)
 	{

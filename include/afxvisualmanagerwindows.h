@@ -94,7 +94,7 @@ public:
 	virtual void OnDrawMiniFrameBorder(CDC* pDC, CPaneFrameWnd* pFrameWnd, CRect rectBorder, CRect rectBorderSize);
 
 	virtual void OnDrawFloatingToolbarBorder(CDC* pDC, CMFCBaseToolBar* pToolBar, CRect rectBorder, CRect rectBorderSize);
-	virtual int GetDockingPaneCaptionExtraHeight() const { return afxGlobalData.bIsWindowsVista ? 0 : 3; }
+	virtual int GetDockingPaneCaptionExtraHeight() const { return 0; }
 
 	// Outlook bar page buttons:
 	virtual void OnFillOutlookPageButton(	CDC* pDC, const CRect& rect, BOOL bIsHighlighted, BOOL bIsPressed, COLORREF& clrText);

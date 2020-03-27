@@ -30,9 +30,7 @@ BEGIN_INTERFACE_MAP(COlePropertyPage, CDialog)
 END_INTERFACE_MAP()
 
 BEGIN_MESSAGE_MAP(COlePropertyPage, CDialog)
-	//{{AFX_MSG_MAP(COlePropertyPage)
 	ON_WM_CTLCOLOR()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -496,7 +494,7 @@ int COlePropertyPage::MessageBox(LPCTSTR lpszText, LPCTSTR lpszCaption,
 		lpszCaption = m_strPageName;
 
 	// start message box on safe owner of the page
-	return ::AfxCtxMessageBox(GetSafeOwner_(m_hWnd, NULL), lpszText, lpszCaption, nType);
+	return ::MessageBox(GetSafeOwner_(m_hWnd, NULL), lpszText, lpszCaption, nType);
 }
 
 /////////////////////////////////////////////////////////////////////////////

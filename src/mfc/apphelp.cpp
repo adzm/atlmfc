@@ -54,7 +54,7 @@ void AFXAPI AfxFormatStrings(CString& rString, LPCTSTR lpszFormat,
 			if (i >= nString)
 				++nTotalLen;
 			else if (rglpsz[i] != NULL)
-				nTotalLen += lstrlen(rglpsz[i]);
+				nTotalLen += static_cast<int>(_tcslen(rglpsz[i]));
 		}
 		else
 		{
@@ -88,7 +88,7 @@ void AFXAPI AfxFormatStrings(CString& rString, LPCTSTR lpszFormat,
 			}
 			else if (rglpsz[i] != NULL)
 			{
-				int nLen = lstrlen(rglpsz[i]);
+				int nLen = static_cast<int>(_tcslen(rglpsz[i]));
 				Checked::tcscpy_s(pchDest, nTotalLen + 1, rglpsz[i]);
 				nTotalLen -= nLen;
 				pchDest += nLen;

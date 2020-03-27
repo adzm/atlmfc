@@ -34,13 +34,10 @@ CMFCWindowsManagerDialog::CMFCWindowsManagerDialog(CMDIFrameWndEx* pMDIFrame, BO
 void CMFCWindowsManagerDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCWindowsManagerDialog)
 	DDX_Control(pDX, IDC_AFXBARRES_LIST, m_wndList);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCWindowsManagerDialog, CDialog)
-	//{{AFX_MSG_MAP(CMFCWindowsManagerDialog)
 	ON_WM_DRAWITEM()
 	ON_WM_HELPINFO()
 	ON_BN_CLICKED(IDC_AFXBARRES_ACTIVATE, &CMFCWindowsManagerDialog::OnActivate)
@@ -53,7 +50,6 @@ BEGIN_MESSAGE_MAP(CMFCWindowsManagerDialog, CDialog)
 	ON_BN_CLICKED(ID_HELP, &CMFCWindowsManagerDialog::OnWindowHelp)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_LIST, &CMFCWindowsManagerDialog::OnSelchangeList)
 	ON_LBN_DBLCLK(IDC_AFXBARRES_LIST, &CMFCWindowsManagerDialog::OnActivate)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -422,8 +418,8 @@ void CMFCWindowsManagerDialog::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDIS)
 		return;
 	}
 
-	CBrush& brFill = (lpDIS->itemState & ODS_SELECTED) ? afxGlobalData.brHilite : afxGlobalData.brWindow;
-	COLORREF clText = (lpDIS->itemState & ODS_SELECTED) ? afxGlobalData.clrTextHilite : afxGlobalData.clrWindowText;
+	CBrush& brFill = (lpDIS->itemState & ODS_SELECTED) ? GetGlobalData()->brHilite : GetGlobalData()->brWindow;
+	COLORREF clText = (lpDIS->itemState & ODS_SELECTED) ? GetGlobalData()->clrTextHilite : GetGlobalData()->clrWindowText;
 	CRect rect = lpDIS->rcItem;
 	CDC* pDC = CDC::FromHandle(lpDIS->hDC);
 

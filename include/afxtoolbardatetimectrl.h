@@ -29,11 +29,10 @@ public:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CMFCToolBarDateTimeCtrlImpl)
 	afx_msg void OnDateTimeChange(NMHDR* pNotifyStruct, LRESULT* pResult);
 	afx_msg void OnDateTimeDropDown(NMHDR* pNotifyStruct, LRESULT* pResult);
 	afx_msg void OnDateTimeCloseUp(NMHDR* pNotifyStruct, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 private:

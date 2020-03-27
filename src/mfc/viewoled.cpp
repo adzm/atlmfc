@@ -479,9 +479,6 @@ void AFXAPI DDX_MonthCalCtrl(CDataExchange* pDX, int nIDC,
 /////////////////////////////////////////////////////////////////////////////
 
 BEGIN_MESSAGE_MAP(COleDBRecordView, CFormView)
-	//{{AFX_MSG_MAP(COleDBRecordView)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
 	ON_COMMAND_EX(ID_RECORD_FIRST, &COleDBRecordView::OnMove)
 	ON_UPDATE_COMMAND_UI(ID_RECORD_FIRST, &COleDBRecordView::OnUpdateRecordFirst)
 	ON_COMMAND_EX(ID_RECORD_PREV, &COleDBRecordView::OnMove)

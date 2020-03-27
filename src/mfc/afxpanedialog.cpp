@@ -52,6 +52,13 @@ BOOL CPaneDialog::Create(LPCTSTR lpszWindowName, CWnd* pParentWnd, BOOL bHasGrip
 		return FALSE;
 	}
 
+	if ((GetStyle() & WS_CHILD) == 0)
+	{
+		TRACE0("CPaneDialog::Create failed: make sure that your dialog has \"Child\" style in resources.\n");
+		ASSERT(FALSE);
+		return FALSE;
+	}
+
 	m_lpszBarTemplateName = NULL;
 	SetOwner(AFXGetTopLevelFrame(this));
 
@@ -68,15 +75,14 @@ void CPaneDialog::OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler)
 	CDockablePane::OnUpdateCmdUI(pTarget, bDisableIfNoHndler);
 }
 
-//{{AFX_MSG_MAP(CPaneDialog)
 BEGIN_MESSAGE_MAP(CPaneDialog, CDockablePane)
 	ON_WM_ERASEBKGND()
 	ON_WM_LBUTTONDBLCLK()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_WINDOWPOSCHANGING()
 	ON_MESSAGE(WM_INITDIALOG, &CPaneDialog::HandleInitDialog)
+	ON_MESSAGE(WM_PRINTCLIENT, &CPaneDialog::OnPrintClient)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 LRESULT CPaneDialog::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 {
@@ -114,7 +120,7 @@ BOOL CPaneDialog::OnEraseBkgnd(CDC* pDC)
 	CRect rectClient;
 	GetClientRect(rectClient);
 
-	pDC->FillRect(rectClient, &afxGlobalData.brBtnFace);
+	pDC->FillRect(rectClient, &(GetGlobalData()->brBtnFace));
 	return TRUE;
 }
 
@@ -174,5 +180,14 @@ void CPaneDialog::OnWindowPosChanging(WINDOWPOS FAR* lpwndpos)
 	}
 }
 
+LRESULT CPaneDialog::OnPrintClient(WPARAM wp, LPARAM lp)
+{
+	DWORD dwFlags = (DWORD)lp;
 
+	if (dwFlags & PRF_ERASEBKGND)
+	{
+		SendMessage(WM_ERASEBKGND, wp);
+	}
 
+	return 0;
+}

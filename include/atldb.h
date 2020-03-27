@@ -63,6 +63,12 @@
 // IColumnsInfo
 // IConvertType
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <oledb.h>
 #include <limits.h>
 #include <oledberr.h>
@@ -653,7 +659,11 @@ struct ATLCOLUMNINFO
 #define INDEX_TYPE_Type VT_I4
 #define INDEX_UNIQUE_Type VT_BOOL
 #define INIT_DATASOURCE_Type VT_BSTR
+#ifdef _WIN64
+#define INIT_HWND_Type VT_I8
+#else
 #define INIT_HWND_Type VT_I4
+#endif
 #define INIT_IMPERSONATION_LEVEL_Type VT_I4
 #define INIT_LCID_Type VT_I4
 #define INIT_LOCATION_Type VT_BSTR
@@ -1569,7 +1579,7 @@ ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(CreateSession)(
 		_In_opt_ IUnknown *pUnkOuter,
 		_In_ REFIID riid,
-		_Deref_out_ IUnknown **ppDBSession)
+		_Outptr_ IUnknown **ppDBSession)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBCreateSessionImpl::CreateSession\n"));
 		if (ppDBSession == NULL)
@@ -1673,7 +1683,7 @@ public:
 		}
 		delete m_pCUtlPropInfo;
 		m_pCUtlPropInfo = NULL;
-		ATLTRY(m_pCUtlPropInfo = new CUtlPropInfo<T>())
+		m_pCUtlPropInfo = _ATL_NEW CUtlPropInfo<T>();
 		if (m_pCUtlPropInfo == NULL)
 		{
 			ATLTRACE(atlTraceDBProvider, 0, _T("IDBInitializeImpl::Initialize Error : OOM\n"));
@@ -1813,7 +1823,7 @@ public:
 		_In_ size_t iColId,
 		_Out_ DWORD* pdwOptions,
 		_Out_ DBID* pColid,
-		_Out_ VARIANT* pvValue)
+		_Inout_ VARIANT* pvValue)
 	{
 		ATLENSURE_RETURN(pdwOptions && pColid && pvValue);
 		ATLASSERT(iColId >= 0 && iColId < GetCount());
@@ -1866,7 +1876,7 @@ public:
 	//Determine the number of description buffers needed
 	ULONG CalcDescripBuffers(
 		_In_ ULONG cPropInfoSet,
-		_In_count_(cPropInfoSet) DBPROPINFOSET* pPropInfoSet)
+		_In_reads_(cPropInfoSet) DBPROPINFOSET* pPropInfoSet)
 	{
 		ULONG	cBuffers = 0;
 
@@ -1977,7 +1987,7 @@ public:
 	HRESULT	GetUPropInfoPtr(
 		_In_ ULONG iPropSetDex,
 		_In_ DBPROPID dwPropertyId,
-		_Deref_out_ UPROPINFO** ppUPropInfo)
+		_Outptr_ UPROPINFO** ppUPropInfo)
 	{
 		// Scan through the property sets looking for matching attributes
 		for(ULONG ulProps=0; ulProps<m_pUPropSet[iPropSetDex].cUPropInfo; ulProps++)
@@ -2033,9 +2043,9 @@ public:
 	}
 	HRESULT	GetPropertyInfo(
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) const DBPROPIDSET rgPropertySets[],
+		_In_reads_(cPropertySets) const DBPROPIDSET rgPropertySets[],
 		_Out_ ULONG* pcPropertyInfoSets,
-		_Out_opt_ _Deref_post_cap_(*pcPropertyInfoSets) DBPROPINFOSET**	prgPropertyInfoSets,
+		_Outptr_result_buffer_(*pcPropertyInfoSets) DBPROPINFOSET**	prgPropertyInfoSets,
 		_Deref_opt_out_z_ WCHAR** ppDescBuffer,
 		_In_ bool bInitialized = true,
 		_In_opt_ const GUID* pGuid = NULL)
@@ -2528,7 +2538,7 @@ EXIT:
 
 	HRESULT	InitAvailUPropSets(
 		_Out_ ULONG* pcUPropSet,
-		_Out_ _Deref_post_opt_cap_(*pcUPropSet) UPROPSET** ppUPropSet,
+		_Outptr_result_buffer_maybenull_(*pcUPropSet) UPROPSET** ppUPropSet,
 		_Out_ ULONG* pcElemPerSupported,
 		_Out_opt_ GUID* pguid)
 	{
@@ -2562,7 +2572,7 @@ EXIT:
 	//Load a localized description
 	int	LoadDescription(
 		_In_ ULONG ids,
-		_Out_z_cap_post_count_(cchBuff, return + 1) PWSTR pwszBuff,
+		_Out_writes_to_(cchBuff, return + 1) PWSTR pwszBuff,
 		_In_ ULONG cchBuff)
 	{
 		USES_CONVERSION_EX;
@@ -2639,6 +2649,7 @@ public:
 		return DB_E_ERRORSOCCURRED;
 	}
 
+	_Success_(return == S_OK)
 	HRESULT	GetIndexofPropIdinPropSet(
 		_In_ ULONG iCurSet,
 		_In_ DBPROPID dwPropertyId,
@@ -2814,7 +2825,7 @@ ATLPREFAST_SUPPRESS(6014)
 			{
 				if( pUPropVal->pCColumnIds == NULL )
 				{
-					ATLTRY(pUPropVal->pCColumnIds = new CColumnIds)
+					pUPropVal->pCColumnIds = _ATL_NEW CColumnIds;
 				}
 
 				if( pUPropVal->pCColumnIds )
@@ -2863,9 +2874,9 @@ ATLPREFAST_UNSUPPRESS()
 	HRESULT	SetProperties(
 		_In_ const DWORD /*dwStatus*/,
 		_In_ const ULONG cPropertySets,
-		_In_count_(cPropertySets) const DBPROPSET rgPropertySets[],
+		_In_reads_(cPropertySets) const DBPROPSET rgPropertySets[],
 		_In_ const ULONG cSelectProps = 1,
-		_In_count_(cSelectProps) const GUID* const ppGuid[] = NULL,
+		_In_reads_(cSelectProps) const GUID* const ppGuid[] = NULL,
 		_In_ bool bIsCreating = false)
 	{
 		DWORD dwState = 0;
@@ -3030,14 +3041,21 @@ ATLPREFAST_UNSUPPRESS()
 				}
 
 				// Check that the property is being set with the correct VARTYPE
-				if( (rgDBProp[ulProp].vValue.vt != pUPropInfo->VarType) &&
+				if( (rgDBProp[ulProp].vValue.vt != pUPropInfo->VarType) && 
 					(rgDBProp[ulProp].vValue.vt != VT_EMPTY) )
 				{
-					dwState |= SETPROP_ERRORS;
-					dwState |= (rgDBProp[ulProp].dwOptions == DBPROPOPTIONS_REQUIRED) ? SETPROP_WAS_REQUIRED : 0;
-					rgDBProp[ulProp].dwStatus = DBPROPSTATUS_BADVALUE;
-					_ATLDUMPPROPERTY(rgDBProp[ulProp].dwPropertyID, rgDBProp[ulProp].dwStatus);
-					continue;
+					// The SQL Native Client OLE DB provider uses different authentication based on the content of the VARIANT.
+					// If the variant is an empty VT_BSTR, Windows Authentication Mode is used to authorize user access to the SQL Server database
+					// If the variant is VT_EMPTY,  SQL Server security is used to authorize user access to the SQL Server database					
+					if (rgDBProp[ulProp].dwPropertyID != DBPROP_AUTH_INTEGRATED && 
+						(rgDBProp[ulProp].vValue.vt != VT_EMPTY && rgDBProp[ulProp].vValue.vt != VT_BSTR))
+					{
+						dwState |= SETPROP_ERRORS;
+						dwState |= (rgDBProp[ulProp].dwOptions == DBPROPOPTIONS_REQUIRED) ? SETPROP_WAS_REQUIRED : 0;
+						rgDBProp[ulProp].dwStatus = DBPROPSTATUS_BADVALUE;
+						_ATLDUMPPROPERTY(rgDBProp[ulProp].dwPropertyID, rgDBProp[ulProp].dwStatus);
+						continue;
+					}
 				}
 
 				// Check that the value is legal
@@ -3126,8 +3144,7 @@ ATLPREFAST_UNSUPPRESS()
 			// Transfer Column Properties
 			if( pUPropVal->pCColumnIds )
 			{
-				rgUPropVal[ul].pCColumnIds=NULL;
-				ATLTRY(rgUPropVal[ul].pCColumnIds = new CColumnIds)
+				rgUPropVal[ul].pCColumnIds = _ATL_NEW CColumnIds;
 ATLPREFAST_SUPPRESS(6385)
 				if( rgUPropVal[ul].pCColumnIds )
 ATLPREFAST_UNSUPPRESS()
@@ -3203,7 +3220,7 @@ EXIT:
 
 	void CopyUPropInfo(
 		_In_ ULONG iPropSet,
-		_Deref_out_ UPROPINFO** rgpUPropInfo)
+		_Outptr_ UPROPINFO** rgpUPropInfo)
 	{
 		ATLASSUME( rgpUPropInfo != NULL );
 		ATLASSUME( iPropSet < m_cUPropSet );
@@ -3350,8 +3367,7 @@ EXIT:
 		}
 
 		// Allocate UPROPS structures for the count of Property sets
-		ATLTRY(m_pUProp.Allocate(m_cUPropSet));
-		if( m_pUProp)
+		if(m_pUProp.Allocate(m_cUPropSet))
 		{
 			memset(m_pUProp, 0, m_cUPropSet * sizeof(UPROP));
 		}
@@ -3437,7 +3453,7 @@ EXIT:
 	//Check the arguments for Set Properties
 	static HRESULT SetPropertiesArgChk(
 		_In_ const ULONG cPropertySets,
-		_In_count_(cPropertySets) const DBPROPSET rgPropertySets[])
+		_In_reads_(cPropertySets) const DBPROPSET rgPropertySets[])
 	{
 		if( cPropertySets > 0 && !rgPropertySets )
 			return E_INVALIDARG;
@@ -3454,11 +3470,11 @@ EXIT:
 	}
 	HRESULT	GetProperties(
 		_In_ const ULONG cPropertySets,
-		_In_count_(cPropertySets) const DBPROPIDSET rgPropertySets[],
+		_In_reads_(cPropertySets) const DBPROPIDSET rgPropertySets[],
 		_Out_ ULONG* pcProperties,
-		_Out_ _Deref_post_opt_cap_(*pcProperties) DBPROPSET** prgProperties,
+		_Outptr_result_buffer_maybenull_(*pcProperties) DBPROPSET** prgProperties,
 		_In_ const ULONG cSelectProps = 1,
-		_In_count_(cSelectProps) const GUID* const ppGuid[] = NULL)
+		_In_reads_(cSelectProps) const GUID* const ppGuid[] = NULL)
 	{
 		UPROPVAL*		pUPropVal;
 		ULONG			ulCurProp;
@@ -3699,7 +3715,9 @@ EXIT:
 				memset(pProp, 0, cProps * sizeof(DBPROP));
 				for(ulProp=0; ulProp<cProps; ulProp++)
 				{
+ATLPREFAST_SUPPRESS(6385)
 					VariantInit(&(pProp[ulProp].vValue));
+ATLPREFAST_UNSUPPRESS()
 					if( dwStatus & GETPROP_NOTSUPPORTED )
 					{
 						// Not supported, thus we need to mark all as NOT_SUPPORTED
@@ -3941,9 +3959,9 @@ NEXT_SET:
 	//Check the arguments for Retrieve Properties
 	HRESULT	GetPropertiesArgChk(
 		_In_ const ULONG cPropertySets,
-		_In_count_(cPropertySets) const DBPROPIDSET rgPropertySets[],
+		_In_reads_(cPropertySets) const DBPROPIDSET rgPropertySets[],
 		_Out_ ULONG* pcProperties,
-		_Out_ _Deref_post_opt_cap_(*pcProperties) DBPROPSET** prgProperties)
+		_Outptr_result_buffer_maybenull_(*pcProperties) DBPROPSET** prgProperties)
 	{
 		// Initialize values
 		if(pcProperties)
@@ -4872,9 +4890,9 @@ class ATL_NO_VTABLE IDBPropertiesImpl :
 public:
 	STDMETHOD(GetProperties)(
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) const DBPROPIDSET rgPropertySets[],
+		_In_reads_(cPropertySets) const DBPROPIDSET rgPropertySets[],
 		_Out_ ULONG *pcProperties,
-		_Out_ _Deref_post_opt_cap_(*pcProperties) DBPROPSET **prgProperties)
+		_Outptr_result_buffer_maybenull_(*pcProperties) DBPROPSET **prgProperties)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBPropertiesImpl::GetProperties\n"));
 		T* pT = (T*)this;
@@ -4957,16 +4975,16 @@ public:
 			}
 		}
 
-		m_dwFlags |= ~ARGCHK_PROPERTIESINERROR;
+		m_dwFlags &= ~ARGCHK_PROPERTIESINERROR;
 		return hr;
 	}
 	
 ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(GetPropertyInfo)(
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) const DBPROPIDSET rgPropertySets[],
+		_In_reads_(cPropertySets) const DBPROPIDSET rgPropertySets[],
 		_Out_ ULONG *pcPropertyInfoSets,
-		_Out_ _Deref_post_opt_cap_(*pcPropertyInfoSets) DBPROPINFOSET **prgPropertyInfoSets,
+		_Outptr_result_buffer_maybenull_(*pcPropertyInfoSets) DBPROPINFOSET **prgPropertyInfoSets,
 		_Deref_opt_out_z_ OLECHAR **ppDescBuffer)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBPropertiesImpl::GetPropertyInfo\n"));
@@ -4980,7 +4998,7 @@ ATLPREFAST_SUPPRESS(6387)
 			ATLTRACE(atlTraceDBProvider, 2, _T("m_pCUtlPropInfo == NULL\n"));
 			delete pT->m_pCUtlPropInfo;
 			pT->m_pCUtlPropInfo = NULL;
-			ATLTRY(pT->m_pCUtlPropInfo = new CUtlPropInfo<T>())
+			pT->m_pCUtlPropInfo = _ATL_NEW CUtlPropInfo<T>();
 			if (pT->m_pCUtlPropInfo == NULL)
 			{
 				ATLTRACE(atlTraceDBProvider, 0, _T("IDBProperties::GetPropertyInfo Error : OOM\n"));
@@ -5052,7 +5070,7 @@ ATLPREFAST_UNSUPPRESS()
 	
 	STDMETHOD(SetProperties)(
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) DBPROPSET rgPropertySets[])
+		_In_reads_(cPropertySets) DBPROPSET rgPropertySets[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBPropertiesImpl::SetProperties\n"));
 		HRESULT	hr;
@@ -5186,15 +5204,15 @@ ATLPREFAST_UNSUPPRESS()
 #define BEGIN_SCHEMA_MAP(SchemaClass) \
 	typedef SchemaClass _SchemaClass; \
 	HRESULT _SchemaSupport( \
-		_Deref_opt_out_opt_ GUID** ppGuid, \
+		_Outptr_opt_result_maybenull_ GUID** ppGuid, \
 		_Inout_opt_ IUnknown *pUnkOuter, \
 		_In_ REFIID rguidSchema, \
 		_In_ ULONG cRestrictions, \
-		_In_opt_count_(cRestrictions) const VARIANT rgRestrictions[], \
+		_In_reads_opt_(cRestrictions) const VARIANT rgRestrictions[], \
 		_In_ REFIID riid, \
 		_In_ ULONG cPropertySets, \
-		_In_opt_count_(cPropertySets) DBPROPSET rgPropertySets[], \
-		_Deref_opt_out_opt_ IUnknown **ppRowset) \
+		_In_reads_opt_(cPropertySets) DBPROPSET rgPropertySets[], \
+		_Outptr_opt_result_maybenull_ IUnknown **ppRowset) \
 	{ \
 	int cGuids = 0; \
 	HRESULT hr = S_OK; \
@@ -5216,12 +5234,11 @@ ATLPREFAST_UNSUPPRESS()
 	{ \
 		if (InlineIsEqualGUID(guid, rguidSchema)) \
 		{ \
-			ATLASSUME(rgRestrictions != NULL); \
 			rowsetClass* pRowset = NULL; \
 			hr = CheckRestrictions(rguidSchema, cRestrictions, rgRestrictions); \
 			if (FAILED(hr)) \
 				return E_INVALIDARG; \
-			hr =  CreateSchemaRowset(pUnkOuter, cRestrictions, \
+			hr = CreateSchemaRowset(pUnkOuter, cRestrictions, \
 							   rgRestrictions, riid, cPropertySets, \
 							   rgPropertySets, ppRowset, pRowset); \
 			return hr; \
@@ -5243,11 +5260,11 @@ public:
 	OUT_OF_LINE HRESULT InternalCreateSchemaRowset(
 		_In_opt_ IUnknown *pUnkOuter,
 		_In_ ULONG cRestrictions,
-		_In_count_(cRestrictions) const VARIANT rgRestrictions[],
+		_In_reads_opt_(cRestrictions) const VARIANT rgRestrictions[],
 		_In_ REFIID riid,
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) DBPROPSET rgPropertySets[],
-		_Deref_opt_out_ IUnknown** ppRowset,
+		_In_reads_(cPropertySets) DBPROPSET rgPropertySets[],
+		_Outptr_opt_ IUnknown** ppRowset,
 		_Inout_ IUnknown* pUnkThis,
 		_Inout_ CUtlPropsBase* pProps,
 		_Inout_opt_ IUnknown* pUnkSession)
@@ -5312,11 +5329,11 @@ ATLPREFAST_SUPPRESS(6387)
 	HRESULT CreateSchemaRowset(
 		_Inout_opt_ IUnknown *pUnkOuter,
 		_In_ ULONG cRestrictions,
-		_In_count_(cRestrictions) const VARIANT rgRestrictions[],
+		_In_reads_opt_(cRestrictions) const VARIANT rgRestrictions[],
 		_In_ REFIID riid,
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) DBPROPSET rgPropertySets[],
-		_Deref_opt_out_ IUnknown** ppRowset,
+		_In_reads_(cPropertySets) DBPROPSET rgPropertySets[],
+		_Outptr_opt_ IUnknown** ppRowset,
 		_Inout_ SchemaRowsetClass*& pSchemaRowset)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBSchemaRowsetImpl::CreateSchemaRowset\n"));
@@ -5354,15 +5371,15 @@ ATLPREFAST_UNSUPPRESS()
 	void SetRestrictions(
 		_In_ ULONG cRestrictions,
 		_In_opt_ GUID* /*rguidSchema*/,
-		_In_count_(cRestrictions) ULONG* rgRestrictions)
+		_In_reads_(cRestrictions) ULONG* rgRestrictions)
 	{
 		memset(rgRestrictions, 0, sizeof(ULONG) * cRestrictions);
 	}
 
 	STDMETHOD(GetSchemas)(
 		_Out_ ULONG* pcSchemas,
-		_Deref_out_ GUID** prgSchemas,
-		_Deref_opt_out_ ULONG** prgRest)
+		_Outptr_ GUID** prgSchemas,
+		_Outptr_opt_ ULONG** prgRest)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBSchemaRowsetImpl::GetSchemas\n"));
 		if (pcSchemas != NULL)
@@ -5415,11 +5432,11 @@ ATLPREFAST_UNSUPPRESS()
 		_Inout_opt_ IUnknown *pUnkOuter,
 		_In_ REFGUID rguidSchema,
 		_In_ ULONG cRestrictions,
-		_In_count_(cRestrictions) const VARIANT rgRestrictions[],
+		_In_reads_(cRestrictions) const VARIANT rgRestrictions[],
 		_In_ REFIID riid,
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) DBPROPSET rgPropertySets[],
-		_Deref_out_ IUnknown **ppRowset)
+		_In_reads_(cPropertySets) DBPROPSET rgPropertySets[],
+		_Outptr_ IUnknown **ppRowset)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBSchemaRowsetImpl::GetRowset\n"));
 		SessionClass* pT = (SessionClass*)this;
@@ -5448,7 +5465,7 @@ ATLPREFAST_UNSUPPRESS()
 	HRESULT CheckRestrictions(
 		_In_ REFGUID rguidSchema,
 		_In_ ULONG cRestrictions,
-		_In_count_(cRestrictions) const VARIANT rgRestrictions[])
+		_In_reads_opt_(cRestrictions) const VARIANT rgRestrictions[])
 	{
 		// Use this function to help check the validity of restrictions
 		// against a schema rowset.
@@ -5514,7 +5531,7 @@ ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(CreateCommand)(
 		_Inout_opt_ IUnknown *pUnkOuter,
 		_In_ REFIID riid,
-		_Deref_out_ IUnknown** ppvCommand)
+		_Outptr_ IUnknown** ppvCommand)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IDBCreateCommandImpl::CreateCommand\n"));
 		T* pT = (T*) this;
@@ -5571,7 +5588,7 @@ class ATL_NO_VTABLE IGetDataSourceImpl :
 public:
 	STDMETHOD(GetDataSource)(
 		_In_ REFIID riid,
-		_Deref_out_ IUnknown **ppDataSource)
+		_Outptr_ IUnknown **ppDataSource)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IGetDataSourceImpl::GetDataSource\n"));
 		if (ppDataSource == NULL)
@@ -5597,8 +5614,8 @@ ATLPREFAST_SUPPRESS(6387)
 		_In_opt_ DBID *pIndexID,
 		_In_ REFIID riid,
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) DBPROPSET rgPropertySets[],
-		_Deref_out_ IUnknown** ppRowset,
+		_In_reads_(cPropertySets) DBPROPSET rgPropertySets[],
+		_Outptr_ IUnknown** ppRowset,
 		_In_ RowsetClass*& pRowsetObj)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IOpenRowsetImpl::CreateRowset\n"));
@@ -5728,7 +5745,7 @@ public:
 	}
 	OUT_OF_LINE HRESULT InternalGetColumnInfo(
 		_Out_ DBORDINAL *pcColumns,
-		_Out_ _Deref_post_cap_(*pcColumns) ATLCOLUMNINFO** ppInfo)
+		_Outptr_result_buffer_(*pcColumns) ATLCOLUMNINFO** ppInfo)
 	{
 		ATLENSURE_RETURN(ppInfo != NULL);
 		T* pT = (T*) this;
@@ -5741,8 +5758,8 @@ public:
 ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(GetColumnInfo)(
 		_Out_ DBORDINAL *pcColumns,
-		_Deref_out_ DBCOLUMNINFO **prgInfo,
-		_Deref_out_z_ OLECHAR **ppStringsBuffer)
+		_Outptr_ DBCOLUMNINFO **prgInfo,
+		_Outptr_result_z_ OLECHAR **ppStringsBuffer)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IColumnsInfoImpl::GetColumnInfo\n"));
 		if (pcColumns == NULL || prgInfo == NULL || ppStringsBuffer == NULL)
@@ -5833,8 +5850,8 @@ ATLPREFAST_UNSUPPRESS()
 	
 	STDMETHOD(MapColumnIDs)(
 		_In_ DBORDINAL cColumnIDs,
-		_In_count_(cColumnIDs) const DBID rgColumnIDs[],
-		_Out_cap_(cColumnIDs) DBORDINAL rgColumns[])
+		_In_reads_(cColumnIDs) const DBID rgColumnIDs[],
+		_Out_writes_(cColumnIDs) DBORDINAL rgColumns[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IColumnsInfoImpl::MapColumnIDs\n"));
 		if ((cColumnIDs != 0 && rgColumnIDs == NULL) || rgColumns == NULL)
@@ -6017,9 +6034,9 @@ public:
 
 	STDMETHOD(GetProperties)(
 		_In_ const ULONG cPropertyIDSets,
-		_In_count_(cPropertyIDSets) const DBPROPIDSET rgPropertyIDSets[],
+		_In_reads_(cPropertyIDSets) const DBPROPIDSET rgPropertyIDSets[],
 		_Out_ ULONG *pcPropertySets,
-		_Out_ _Deref_post_opt_cap_(*pcPropertySets) DBPROPSET **prgPropertySets)
+		_Outptr_result_buffer_maybenull_(*pcPropertySets) DBPROPSET **prgPropertySets)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("ICommandPropertiesImpl::GetProperties\n"));
 
@@ -6067,14 +6084,14 @@ public:
 					rgPropertyIDSets, pcPropertySets, prgPropertySets,
 					ulPropInits, ppGuid);
 		}
-		m_dwFlags |= ~ARGCHK_PROPERTIESINERROR;
+		m_dwFlags &= ~ARGCHK_PROPERTIESINERROR;
 		return hr;
 
 	}
 
 	STDMETHOD(SetProperties)(
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) DBPROPSET rgPropertySets[])
+		_In_reads_(cPropertySets) DBPROPSET rgPropertySets[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("ICommandPropertiesImpl::SetProperties\n"));
 		T* pT = (T*)this;
@@ -6162,7 +6179,7 @@ public:
 	}
 	STDMETHOD(GetDBSession)(
 		_In_ REFIID riid,
-		_Deref_out_ IUnknown** ppSession)
+		_Outptr_ IUnknown** ppSession)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("ICommandImpl::GetDBSession\n"));
 		if( ppSession == NULL )
@@ -6179,7 +6196,7 @@ ATLPREFAST_SUPPRESS(6387)
 		_In_ REFIID riid,
 		_In_ DBPARAMS* pParams,
 		_Out_ DBROWCOUNT* pcRowsAffected,
-		_Deref_opt_out_ IUnknown** ppRowset,
+		_Outptr_opt_ IUnknown** ppRowset,
 		_Inout_ RowsetClass*& pRowsetObj)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("ICommandImpl::CreateRowset\n"));
@@ -6245,7 +6262,7 @@ ATLPREFAST_SUPPRESS(6387)
 			ATLENSURE_RETURN( pPair != NULL );
 			T::_BindType* pBind = NULL;
 			T::_BindType* pBindSrc = NULL;
-			ATLTRY(pBind = new T::_BindType);
+			ATLTRY(pBind = _ATL_NEW T::_BindType);
 			CAutoPtr<T::_BindType> amr(pBind);
 			if (pBind == NULL)
 			{
@@ -6270,8 +6287,7 @@ ATLPREFAST_SUPPRESS(6387)
 			}
 			if (pBindSrc->cBindings)
 			{
-				pBind->pBindings =NULL;
-				ATLTRY(pBind->pBindings = new DBBINDING[pBindSrc->cBindings])
+				pBind->pBindings = _ATL_NEW DBBINDING[pBindSrc->cBindings];
 				if (pBind->pBindings == NULL)
 				{
 					ATLTRACE(atlTraceDBProvider, 2, _T("Failed to Allocate dbbinding Array\n"));
@@ -6343,7 +6359,7 @@ public:
 
 	STDMETHOD(GetCommandText)(
 		_Inout_opt_ GUID* pguidDialect,
-		_Deref_out_z_ LPOLESTR* ppwszCommand)
+		_Outptr_result_z_ LPOLESTR* ppwszCommand)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("ICommandTextImpl::GetCommandText\n"));
 
@@ -6456,9 +6472,9 @@ public:
 
 	STDMETHOD(GetProperties)(
 		_In_ ULONG cPropertyIDSets,
-		_In_count_(cPropertyIDSets) const DBPROPIDSET rgPropertyIDSets[],
+		_In_reads_(cPropertyIDSets) const DBPROPIDSET rgPropertyIDSets[],
 		_Out_ ULONG *pcPropertySets,
-		_Out_ _Deref_post_opt_cap_(*pcPropertySets) DBPROPSET **prgPropertySets)
+		_Outptr_result_buffer_maybenull_(*pcPropertySets) DBPROPSET **prgPropertySets)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("ISessionPropertiesImpl::GetProperties\n"));
 		T* pT;
@@ -6466,7 +6482,7 @@ public:
 
 		// You can't retrieve PROPERTIESINERROR here (it would be processed
 		// like any other property set.  Therefore, turn checking off
-		m_dwFlags |= ~ARGCHK_PROPERTIESINERROR;
+		m_dwFlags &= ~ARGCHK_PROPERTIESINERROR;
 		HRESULT hr = GetPropertiesArgChk(cPropertyIDSets, rgPropertyIDSets,
 			pcPropertySets, prgPropertySets);
 
@@ -6516,7 +6532,7 @@ public:
 
 	STDMETHOD(SetProperties)(
 		_In_ ULONG cPropertySets,
-		_In_count_(cPropertySets) DBPROPSET rgPropertySets[])
+		_In_reads_(cPropertySets) DBPROPSET rgPropertySets[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("ISessionPropertiesImpl::SetProperties"));
 		T* pT;
@@ -6576,10 +6592,10 @@ public:
 	STDMETHOD(CreateAccessor)(
 		_In_ DBACCESSORFLAGS dwAccessorFlags,
 		_In_ DBCOUNTITEM cBindings,
-		_In_count_(cBindings) const DBBINDING rgBindings[],
+		_In_reads_(cBindings) const DBBINDING rgBindings[],
 		_In_ DBLENGTH /*cbRowSize*/,
 		_Out_ HACCESSOR *phAccessor,
-		_Out_cap_(cBindings) DBBINDSTATUS rgStatus[])
+		_Out_writes_(cBindings) DBBINDSTATUS rgStatus[])
 	{
 		if (!(dwAccessorFlags & DBACCESSOR_PARAMETERDATA) && !(dwAccessorFlags & DBACCESSOR_ROWDATA))
 			return DB_E_BADACCESSORFLAGS;
@@ -6596,8 +6612,7 @@ public:
 		}
 		if (cBindings)
 		{
-			pBind->pBindings =NULL;
-			ATLTRY(pBind->pBindings = new DBBINDING[cBindings])
+			pBind->pBindings = _ATL_NEW DBBINDING[cBindings];
 			if (pBind->pBindings == NULL)
 			{
 				return E_OUTOFMEMORY;
@@ -6624,8 +6639,8 @@ public:
 	}
 	HRESULT ValidateBindings(
 		_In_ DBCOUNTITEM cBindings,
-		_In_count_(cBindings) const DBBINDING rgBindings[],
-		_Out_cap_(cBindings) DBBINDSTATUS rgStatus[],
+		_In_reads_(cBindings) const DBBINDING rgBindings[],
+		_Out_writes_(cBindings) DBBINDSTATUS rgStatus[],
 		_In_ bool bHasBookmarks)
 	{
 		HRESULT hr = S_OK;
@@ -6762,12 +6777,12 @@ public:
 		CComPtr<ICommandWithParameters> spCommandWithParameters;
 		T* pT = (T*)this;
 
-		pT->_InternalQueryInterface(IID_ICommand,(void **) &spCommand);
+		pT->_InternalQueryInterface(__uuidof(ICommand),(void **) &spCommand);
 
 		if (spCommand !=NULL)  // It's a command
 		{
 			m_bIsCommand = TRUE;
-			pT->_InternalQueryInterface(IID_ICommandWithParameters, (void **) &spCommandWithParameters);
+			pT->_InternalQueryInterface(__uuidof(ICommandWithParameters), (void **) &spCommandWithParameters);
 			m_bHasParamaters =  spCommandWithParameters != NULL;
 
 		}
@@ -6819,8 +6834,8 @@ public:
 	}
 	OUT_OF_LINE HRESULT ValidateBindingsFromMetaData(
 		_In_ DBCOUNTITEM cBindings,
-		_In_count_(cBindings) const DBBINDING rgBindings[],
-		_Out_cap_(cBindings) DBBINDSTATUS rgStatus[],
+		_In_reads_(cBindings) const DBBINDING rgBindings[],
+		_Out_writes_(cBindings) DBBINDSTATUS rgStatus[],
 		_In_ bool bHasBookmarks)
 	{
 		HRESULT hr = S_OK;
@@ -6873,10 +6888,10 @@ public:
 	STDMETHOD(CreateAccessor)(
 		_In_ DBACCESSORFLAGS dwAccessorFlags,
 		_In_ DBCOUNTITEM cBindings,
-		_In_count_(cBindings) const DBBINDING rgBindings[],
+		_In_reads_(cBindings) const DBBINDING rgBindings[],
 		_In_ DBLENGTH cbRowSize,
 		_Out_ HACCESSOR *phAccessor,
-		_Out_cap_(cBindings) DBBINDSTATUS rgStatus[])
+		_Out_writes_(cBindings) DBBINDSTATUS rgStatus[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IAccessorImpl::CreateAccessor\n"));
 		T* pT = (T*)this;
@@ -6971,7 +6986,7 @@ public:
 		_In_ HACCESSOR hAccessor,
 		_Out_ DBACCESSORFLAGS *pdwAccessorFlags,
 		_Out_ DBCOUNTITEM *pcBindings,
-		_Out_opt_ _Deref_post_opt_cap_(*pcBindings) DBBINDING **prgBindings)
+		_Outptr_opt_result_buffer_maybenull_(*pcBindings) DBBINDING **prgBindings)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IAccessorImpl::GetBindings\n"));
 
@@ -7034,8 +7049,8 @@ public:
 #define BEGIN_PROVIDER_COLUMN_MAP(theClass) \
 	typedef theClass _Class; \
 	template <class T> \
-	_Ret_count_x_(*pcCols) static ATL::ATLCOLUMNINFO* GetColumnInfo( \
-		_In_opt_ _Post_bytecount_x_(sizeof(T)) T* pv, \
+	_Ret_writes_(*pcCols) static ATL::ATLCOLUMNINFO* GetColumnInfo( \
+		_In_opt_ _Post_readable_byte_size_(sizeof(T)) T* pv, \
 		_Out_ DBORDINAL* pcCols) \
 	{ \
 	UNREFERENCED_PARAMETER(pv); \
@@ -7189,7 +7204,7 @@ public:
 
 template <class T>
 inline void SendColumnSetFailureNotification(
-	_Inout_ _Prepost_bytecount_x_(sizeof(T)) T* pT,
+	_Inout_updates_(1) T* pT,
 	_In_ HROW hNotifyRow,
 	_In_ typename T::_BindType* pBinding,
 	_In_ CAtlArray<DBORDINAL>& rgColumns)
@@ -7201,7 +7216,7 @@ inline void SendColumnSetFailureNotification(
 
 template <class T, class RowClass>
 inline void SendRowsFirstChangeFailureNotification(
-	_Inout_ _Prepost_bytecount_x_(sizeof(T)) T* pT,
+	_Inout_updates_(1) T* pT,
 	_In_ RowClass* pRow,
 	_In_ HROW *phNotifyRow,
 	_In_ bool bDeferred)
@@ -7221,7 +7236,7 @@ inline void SendRowsFirstChangeFailureNotification(
 
 template <class T, class RowClass, class MapClass>
 HRESULT TransferData(
-	_In_ _Prepost_bytecount_x_(sizeof(T)) T* pT,
+	_Inout_updates_(1) T* pT,
 	_In_ bool bReading,
 	_In_opt_ void* pData,
 	_In_ RowClass* pRow,
@@ -7681,14 +7696,14 @@ HRESULT TransferData(
 		{
 		case DBTYPE_STR:
 			if (bReading)
-				cbCol = lstrlenA((LPSTR)(((BYTE*)pSrcData) + pColCur->cbOffset));
+				cbCol = static_cast<DBLENGTH>(AtlStrLen((LPSTR)(((BYTE*)pSrcData)) + pColCur->cbOffset));
 			else
 			{
 				// Use the length field when setting data
 				if (pBindCur->dwPart & DBPART_LENGTH)
 					cbCol = *((DBLENGTH*)((BYTE*)(pSrcData) + pBindCur->obLength));
 				else
-					cbCol = lstrlenA((LPSTR)(pSrcTemp));	// was cbDst
+					cbCol = static_cast<DBLENGTH>(AtlStrLen((LPSTR)(pSrcTemp)));	// was cbDst
 
 				if (cbCol >= cbDst)
 				{
@@ -7717,13 +7732,13 @@ HRESULT TransferData(
 		case DBTYPE_WSTR:
 		case DBTYPE_BSTR:
 			if (bReading)
-				cbCol = lstrlenW((LPWSTR)(((BYTE*)pSrcData) + pColCur->cbOffset)) * sizeof(WCHAR);
+				cbCol = static_cast<DBLENGTH>(AtlStrLen((LPWSTR)(((BYTE*)pSrcData) + pColCur->cbOffset))) * sizeof(WCHAR);
 			else
 			{
 				if (pBindCur->dwPart & DBPART_LENGTH)
 					cbCol = *((DBLENGTH*)((BYTE*)(pSrcData) + pBindCur->obLength));
 				else
-					cbCol = lstrlenW((LPWSTR)(pSrcData)) * sizeof(WCHAR);
+					cbCol = static_cast<DBLENGTH>(AtlStrLen((LPWSTR)(pSrcData))) * sizeof(WCHAR);
 
 				if (cbCol >= cbDst)
 				{
@@ -7892,8 +7907,8 @@ public:
 	STDMETHOD (DeleteRows)(
 		_In_ HCHAPTER /*hReserved*/,
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
-		_Out_opt_cap_(cRows) DBROWSTATUS rgRowStatus[])
+		_In_reads_(cRows) const HROW rghRows[],
+		_Out_writes_opt_(cRows) DBROWSTATUS rgRowStatus[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetChangeImpl::DeleteRows"));
 
@@ -8475,9 +8490,9 @@ public:
 	}
 	HRESULT RefRows(
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
-		_Out_opt_cap_(cRows) DBREFCOUNT rgRefCounts[],
-		_Out_opt_cap_(cRows) DBROWSTATUS rgRowStatus[],
+		_In_reads_(cRows) const HROW rghRows[],
+		_Out_writes_opt_(cRows) DBREFCOUNT rgRefCounts[],
+		_Out_writes_opt_(cRows) DBROWSTATUS rgRowStatus[],
 		_In_ BOOL bAdd)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetImpl::AddRefRows\n"));
@@ -8621,9 +8636,9 @@ public:
 
 	STDMETHOD(AddRefRows)(
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
-		_Out_opt_cap_(cRows) DBREFCOUNT rgRefCounts[],
-		_Out_opt_cap_(cRows) DBROWSTATUS rgRowStatus[])
+		_In_reads_(cRows) const HROW rghRows[],
+		_Out_writes_opt_(cRows) DBREFCOUNT rgRefCounts[],
+		_Out_writes_opt_(cRows) DBROWSTATUS rgRowStatus[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetImpl::AddRefRows\n"));
 		if (cRows == 0)
@@ -8631,8 +8646,8 @@ public:
 		return RefRows(cRows, rghRows, rgRefCounts, rgRowStatus, TRUE);
 	}
 	virtual DBSTATUS GetDBStatus(
-		_In_opt_ RowClass*,
-		_In_opt_ ATLCOLUMNINFO*)
+		_In_ RowClass*,
+		_In_ ATLCOLUMNINFO*)
 	{
 		return DBSTATUS_S_OK;
 	}
@@ -8649,7 +8664,7 @@ public:
 	OUT_OF_LINE HRESULT GetDataHelper(
 		_In_ HACCESSOR hAccessor,
 		_Out_ ATLCOLUMNINFO*& rpInfo,
-		_Deref_out_ void** ppBinding,
+		_Outptr_ void** ppBinding,
 		_Out_ void*& rpSrcData,
 		_Out_ DBORDINAL& rcCols,
 		_Inout_ CComPtr<IDataConvert>& rspConvert,
@@ -8699,8 +8714,7 @@ public:
 		bool bFound = m_rgRowHandles.Lookup(key,pRow);
 		if (!bFound || pRow == NULL)
 		{
-			pRow=NULL;
-			ATLTRY(pRow = new RowClass(lRowsOffset))
+			pRow = _ATL_NEW RowClass(lRowsOffset);
 			if (pRow == NULL)
 				return E_OUTOFMEMORY;
 			_ATLTRY
@@ -8726,7 +8740,7 @@ public:
 		_In_ DBROWOFFSET lRowsOffset,
 		_In_ DBROWCOUNT cRows,
 		_Out_ DBCOUNTITEM *pcRowsObtained,
-		_Deref_post_cap_(*pcRowsObtained) HROW **prghRows)
+		_Outptr_result_buffer_(*pcRowsObtained) HROW **prghRows)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetImpl::GetNextRows\n"));
 		T* pT = (T*) this;
@@ -9059,7 +9073,7 @@ public:
 		_In_ DBROWOFFSET lRowsOffset,
 		_In_ DBROWCOUNT cRows,
 		_Out_ DBCOUNTITEM *pcRowsObtained,
-		_Deref_post_cap_(*pcRowsObtained) HROW **prghRows)
+		_Outptr_result_buffer_(*pcRowsObtained) HROW **prghRows)
 	{
 
 		if( m_bRemoveDeleted && m_bIRowsetUpdate )
@@ -9266,10 +9280,10 @@ public:
 
 	STDMETHOD(ReleaseRows)(
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
+		_In_reads_(cRows) const HROW rghRows[],
 		_In_opt_ DBROWOPTIONS rgRowOptions[],
-		_Out_opt_cap_(cRows) DBREFCOUNT rgRefCounts[],
-		_Out_opt_cap_(cRows) DBROWSTATUS rgRowStatus[])
+		_Out_writes_opt_(cRows) DBREFCOUNT rgRefCounts[],
+		_Out_writes_opt_(cRows) DBROWSTATUS rgRowStatus[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetImpl::ReleaseRows\n"));
 
@@ -9492,7 +9506,7 @@ public:
 		_In_ DBROWOFFSET lRowsOffset,
 		_In_ DBROWCOUNT cRows,
 		_Out_ DBCOUNTITEM* pcRowsObtained,
-		_Deref_out_ HROW** prghRows)
+		_Outptr_ HROW** prghRows)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetLocateImpl::GetRowsAt\n"));
 
@@ -9626,10 +9640,10 @@ public:
 	STDMETHOD (GetRowsByBookmark)(
 		_In_ HCHAPTER /*hReserved*/,
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const DBBKMARK rgcbBookmarks[],
-		_In_count_(cRows) const BYTE* rgpBookmarks[],
-		_Out_cap_(cRows) HROW rghRows[],
-		_Out_opt_cap_(cRows) DBROWSTATUS rgRowStatus[])
+		_In_reads_(cRows) const DBBKMARK rgcbBookmarks[],
+		_In_reads_(cRows) const BYTE* rgpBookmarks[],
+		_Out_writes_(cRows) HROW rghRows[],
+		_Out_writes_opt_(cRows) DBROWSTATUS rgRowStatus[])
 	{
 		HRESULT hr = S_OK;
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetLocateImpl::GetRowsByBookmark\n"));
@@ -9745,10 +9759,10 @@ public:
 	STDMETHOD (Hash)(
 		_In_ HCHAPTER /*hReserved*/,
 		_In_ DBBKMARK cBookmarks,
-		_In_count_(cBookmarks) const DBBKMARK rgcbBookmarks[],
-		_In_count_(cBookmarks) const BYTE* rgpBookmarks[],
-		_Out_cap_(cBookmarks) DBHASHVALUE rgHashedValues[],
-		_Out_opt_cap_(cBookmarks) DBROWSTATUS rgBookmarkStatus[])
+		_In_reads_(cBookmarks) const DBBKMARK rgcbBookmarks[],
+		_In_reads_(cBookmarks) const BYTE* rgpBookmarks[],
+		_Out_writes_(cBookmarks) DBHASHVALUE rgHashedValues[],
+		_Out_writes_opt_(cBookmarks) DBROWSTATUS rgBookmarkStatus[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetLocateImpl::Hash\n"));
 
@@ -10038,15 +10052,15 @@ public:
 	}
 	STDMETHOD(GetProperties)(
 		_In_ const ULONG cPropertyIDSets,
-		_In_count_(cPropertyIDSets) const DBPROPIDSET rgPropertyIDSets[],
+		_In_reads_(cPropertyIDSets) const DBPROPIDSET rgPropertyIDSets[],
 		_Out_ ULONG *pcPropertySets,
-		_Out_ _Deref_post_opt_cap_(*pcPropertySets) DBPROPSET **prgPropertySets)
+		_Outptr_result_buffer_maybenull_(*pcPropertySets) DBPROPSET **prgPropertySets)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetInfoImpl::GetProperties\n"));
 
 		// IRowsetInfo can't return PROPERTIESINERROR.  Therefore, disable
 		// checking for it.  Instead, treat it as any normal property set.
-		m_dwFlags |= ~ARGCHK_PROPERTIESINERROR;
+		m_dwFlags &= ~ARGCHK_PROPERTIESINERROR;
 		HRESULT hr = GetPropertiesArgChk(cPropertyIDSets, rgPropertyIDSets,
 			pcPropertySets, prgPropertySets);
 		if(SUCCEEDED(hr))
@@ -10101,7 +10115,7 @@ ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(GetReferencedRowset)(
 		_In_ DBORDINAL iOrdinal,
 		_In_ REFIID riid,
-		_Deref_out_ IUnknown **ppReferencedRowset)
+		_Outptr_ IUnknown **ppReferencedRowset)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetInfoImpl::GetReferencedRowset\n"));
 		DBORDINAL cCols=0;
@@ -10134,7 +10148,7 @@ ATLPREFAST_UNSUPPRESS()
 	
 	STDMETHOD(GetSpecification)(
 		_In_ REFIID riid,
-		_Deref_out_ IUnknown **ppSpecification)
+		_Outptr_ IUnknown **ppSpecification)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetInfoImpl::GetSpecification\n"));
 
@@ -10246,7 +10260,7 @@ public:
 		_Inout_ IRowset* pRowset,
 		_In_ HROW hRow,
 		_In_ DBORDINAL cColumns,
-		_In_count_(cColumns) DBORDINAL* rgColumns,
+		_In_reads_(cColumns) DBORDINAL* rgColumns,
 		_In_ DBREASON eReason,
 		_In_ DBEVENTPHASE ePhase,
 		_In_ BOOL fCantDeny)
@@ -10331,7 +10345,7 @@ public:
 	HRESULT Fire_OnRowChange(
 		_Inout_ IRowset* pRowset,
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
+		_In_reads_(cRows) const HROW rghRows[],
 		_In_ DBREASON eReason,
 		_In_ DBEVENTPHASE ePhase,
 		_In_ BOOL fCantDeny)
@@ -10583,8 +10597,8 @@ public:
 		return hr;
 	}
 
-	_Ret_count_x_(*pcCols) static ATLCOLUMNINFO* GetColumnInfo(
-		_In_opt_ _Pre_opt_bytecount_x_(sizeof(T)) T* pv,
+	_Ret_writes_(*pcCols) static ATLCOLUMNINFO* GetColumnInfo(
+		_In_reads_opt_(1) T* pv,
 		_Out_ DBORDINAL* pcCols)
 	{
 		return Storage::GetColumnInfo(pv,pcCols);
@@ -10809,7 +10823,7 @@ public:
 	STDMETHOD(GetCustomErrorObject)(
 		_In_ ULONG ulRecordNum,
 		_In_ REFIID riid,
-		_Deref_out_ IUnknown **ppObject)
+		_Outptr_ IUnknown **ppObject)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IErrorRecordsImpl::GetCustomErrorObject\n"));
 		if (ppObject == NULL)
@@ -10826,7 +10840,7 @@ public:
 	STDMETHOD(GetErrorInfo)(
 		_In_ ULONG ulRecordNum,
 		_In_ LCID,
-		_Deref_out_ IErrorInfo **ppErrorInfo)
+		_Outptr_ IErrorInfo **ppErrorInfo)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IErrorRecordsImpl::GetErrorInfo\n"));
 
@@ -11318,7 +11332,7 @@ public:
 				if (! m_mapCachedData.Lookup(hRow, pData) )
 				{
 					Storage* pam = NULL;
-					ATLTRY(pam = new Storage);
+					ATLTRY(pam = _ATL_NEW Storage)
 					if (pam == NULL)
 						return E_OUTOFMEMORY;
 					Checked::memcpy_s(pam, sizeof(Storage), &pT->m_rgRowData[pRow->m_iRowset], sizeof(Storage));
@@ -11520,8 +11534,8 @@ public:
 		_In_ HCHAPTER /*hReserved*/,
 		_In_ DBPENDINGSTATUS dwRowStatus,
 		_Out_opt_ DBCOUNTITEM* pcPendingRows,
-		_Deref_opt_out_opt_ HROW** prgPendingRows,
-		_Deref_opt_out_opt_ DBPENDINGSTATUS** prgPendingStatus)
+		_Outptr_opt_result_maybenull_ HROW** prgPendingRows,
+		_Outptr_opt_result_maybenull_ DBPENDINGSTATUS** prgPendingStatus)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetUpdateImpl::GetPendingRows\n"));
 		T* pT = (T*)this;
@@ -11659,8 +11673,8 @@ public:
 	STDMETHOD (GetRowStatus)(
 		_In_ HCHAPTER /*hReserved*/,
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
-		_Out_cap_(cRows) DBPENDINGSTATUS rgPendingStatus[])
+		_In_reads_(cRows) const HROW rghRows[],
+		_Out_writes_(cRows) DBPENDINGSTATUS rgPendingStatus[])
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetUpdateImpl::GetRowStatus\n"));
 		T* pT = (T*)this;
@@ -11709,10 +11723,10 @@ public:
 	STDMETHOD (Undo)(
 		_In_ HCHAPTER /*hReserved*/,
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
+		_In_reads_(cRows) const HROW rghRows[],
 		_Out_ DBCOUNTITEM *pcRowsUndone,
-		_Out_opt_ _Deref_post_opt_cap_(*pcRowsUndone) HROW **prgRowsUndone,
-		_Out_opt_ _Deref_post_opt_cap_(*pcRowsUndone) DBROWSTATUS **prgRowStatus)
+		_Outptr_opt_result_buffer_maybenull_(*pcRowsUndone) HROW **prgRowsUndone,
+		_Outptr_opt_result_buffer_maybenull_(*pcRowsUndone) DBROWSTATUS **prgRowStatus)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetUpdateImpl::Undo\n"));
 
@@ -12204,10 +12218,10 @@ public:
 	STDMETHOD (Update)(
 		_In_ HCHAPTER /*hReserved*/,
 		_In_ DBCOUNTITEM cRows,
-		_In_count_(cRows) const HROW rghRows[],
+		_In_reads_(cRows) const HROW rghRows[],
 		_Out_ DBCOUNTITEM *pcRows,
-		_Out_opt_ _Deref_post_opt_cap_(*pcRows) HROW **prgRows,
-		_Out_opt_ _Deref_post_opt_cap_(*pcRows) DBROWSTATUS **prgRowStatus)
+		_Outptr_opt_result_buffer_maybenull_(*pcRows) HROW **prgRows,
+		_Outptr_opt_result_buffer_maybenull_(*pcRows) DBROWSTATUS **prgRowStatus)
 	{
 		ATLTRACE(atlTraceDBProvider, 2, _T("IRowsetUpdateImpl::Update\n"));
 

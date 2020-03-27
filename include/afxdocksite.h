@@ -24,7 +24,8 @@
 class CDockingPanesRow;
 class CDockingManager;
 
-#pragma warning( disable : 4100 34 )
+#pragma warning(push)
+#pragma warning(disable : 4100 34)
 
 class CDockSite : public CBasePane
 {
@@ -112,14 +113,13 @@ public:
 	virtual ~CDockSite();
 
 protected:
-	//{{AFX_MSG(CDockSite)
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnNcDestroy();
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CDockingPanesRow* RowFromPoint(CPoint pt, bool& bOuterRow) const;
@@ -134,7 +134,7 @@ protected:
 	UINT    m_nDockBarID; // for compatibility with MFC
 };
 
-#pragma warning( default : 4100 34 )
+#pragma warning(pop)
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

@@ -16,6 +16,22 @@
 #error <atldbgmem.h> cannot be used in MFC projects. See AfxEnableMemoryTracking
 #endif
 
+#ifndef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+#ifdef WINAPI_FAMILY
+#include <winapifamily.h>  
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+#endif
+#else // WINAPI_FAMILY
+// Default to Desktop family app
+#define _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+#endif // WINAPI_FAMILY
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY.
+#endif
+
 #ifndef __ATLDBGMEM_H__
 #define __ATLDBGMEM_H__
 
@@ -27,6 +43,7 @@
 #pragma warning(disable: 4127) // conditional expression is constant
 
 #define _MFC_OVERRIDES_NEW
+#define _ATL_DISABLE_NOTHROW_NEW
 #define _CRTDBG_MAP_ALLOC
 #include <new.h>
 #include <stdio.h>
@@ -153,7 +170,7 @@ inline void* __cdecl operator new(
 }
 
 inline void __cdecl operator delete(
-	_Inout_opt_ void* p,
+	_Pre_maybenull_ _Post_invalid_ void* p,
 	_In_ int nType,
 	_In_opt_z_ LPCSTR /* lpszFileName */,
 	_In_ int /* nLine */)
@@ -176,7 +193,7 @@ inline void* __cdecl operator new[](
 }
 
 inline void __cdecl operator delete[](
-	_Inout_opt_ void* p,
+	_Pre_maybenull_ _Post_invalid_ void* p,
 	_In_ int nType,
 	_In_z_ LPCSTR lpszFileName,
 	_In_ int nLine)
@@ -201,7 +218,7 @@ inline void* __cdecl operator new[](
 }
 
 inline void __cdecl operator delete(
-	_Inout_opt_ void* pData,
+	_Pre_maybenull_ _Post_invalid_ void* pData,
 	_In_opt_z_ LPCSTR /* lpszFileName */,
 	_In_ int /* nLine */)
 {
@@ -209,7 +226,7 @@ inline void __cdecl operator delete(
 }
 
 inline void __cdecl operator delete[](
-	_Inout_opt_ void* pData,
+	_Pre_maybenull_ _Post_invalid_ void* pData,
 	_In_opt_z_ LPCSTR /* lpszFileName */,
 	_In_ int /* nLine */)
 {
@@ -233,7 +250,7 @@ inline void* AtlAllocMemoryDebug(
 }
 
 inline void AtlFreeMemoryDebug(
-	_Inout_opt_ void* pbData)
+	_Pre_maybenull_ _Post_invalid_ void* pbData)
 {
 	_free_dbg(pbData, _NORMAL_BLOCK);
 }
@@ -244,7 +261,7 @@ inline void AtlFreeMemoryDebug(
 // allocation failure hook, tracking turn on
 
 inline void _AtlDbgMemTrace(
-	_In_z_count_(nLen) LPCSTR szBuf,
+	_In_reads_z_(nLen) LPCSTR szBuf,
 	_In_ int nLen)
 {
 	ATLTRACE(atlTraceAllocation, 0, szBuf);
@@ -272,6 +289,7 @@ inline void _AtlRecordAllocation(
 	char szBuf[c_nSize];
 	int nLen;
 
+ATLPREFAST_SUPPRESS(6340)
 	if (szFileName)
 	{
 #ifdef _WIN64
@@ -288,6 +306,7 @@ inline void _AtlRecordAllocation(
 		nLen = sprintf_s(szBuf, c_nSize, "Memory operation: %s a %d-byte block (# %ld)\r\n", szAllocType, nSize, nRequest);
 #endif
 	}
+ATLPREFAST_UNSUPPRESS()
 
 
 	if(nLen == -1 || nLen >= c_nSize)
@@ -422,6 +441,7 @@ inline BOOL AtlDumpMemoryStats()
 
 		for (int n=0; n<g_nRecords; n++)
 		{
+ATLPREFAST_SUPPRESS(6340)
 #ifdef _WIN64
 			nLen = sprintf_s(szBuf, nSize, "%s(%d): %d operations of size %I64d\r\n",
 				g_pMemStats[n].szPath,
@@ -436,6 +456,7 @@ inline BOOL AtlDumpMemoryStats()
 				g_pMemStats[n].nAllocations,
 				g_pMemStats[n].nSize);
 #endif
+ATLPREFAST_UNSUPPRESS()
 
 			if(nLen == -1 || nLen >= _countof(szBuf))
 			{
@@ -485,6 +506,7 @@ inline BOOL AtlCheckMemory()
 
 // -- true if block of exact size, allocated on the heap
 // -- set *plRequestNumber to request number (or 0)
+ATLPREFAST_SUPPRESS(6001 6101)
 inline BOOL AtlIsMemoryBlock(
 	_In_ const void* pData,
 	_In_ UINT nBytes,
@@ -495,6 +517,7 @@ inline BOOL AtlIsMemoryBlock(
 	ATLDBG_UNUSED(pData);
 	return _CrtIsMemoryBlock(pData, nBytes, plRequestNumber, NULL, NULL);
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline BOOL AtlDumpMemoryLeaks()
 {
@@ -542,6 +565,7 @@ inline LPVOID __stdcall _AtlHeapAlloc(
 	return p;
 }
 
+ATLPREFAST_SUPPRESS(6001 6101)
 inline LPVOID __stdcall _AtlHeapReAlloc(
 	_In_ HANDLE hHeap,
 	_In_ DWORD dwFlags,
@@ -562,11 +586,12 @@ inline LPVOID __stdcall _AtlHeapReAlloc(
 	_AtlRecordAllocation(lpszFileName, nLine, "HeapReAlloc", nSize);
 	return p;
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline BOOL __stdcall _AtlHeapFree(
 	_In_ HANDLE hHeap,
 	_In_ DWORD dwFlags,
-	_Inout_opt_ LPVOID lpMem,
+	_Pre_maybenull_ _Post_invalid_ LPVOID lpMem,
 	_In_z_ LPCSTR lpszFileName,
 	_In_ int nLine)
 {
@@ -615,6 +640,12 @@ inline LPVOID __stdcall _AtlVirtualAlloc(
 	return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 }
 
+_When_(((dwFreeType&(MEM_RELEASE|MEM_DECOMMIT)))==(MEM_RELEASE|MEM_DECOMMIT),
+    __drv_reportError("Passing both MEM_RELEASE and MEM_DECOMMIT to VirtualFree is not allowed. This results in the failure of this call"))
+_When_(dwFreeType==0,
+    __drv_reportError("Passing zero as the dwFreeType parameter to VirtualFree is not allowed. This results in the failure of this call"))
+_When_(((dwFreeType&MEM_RELEASE))!=0 && dwSize!=0,
+    __drv_reportError("Passing MEM_RELEASE and a non-zero dwSize parameter to VirtualFree is not allowed. This results in the failure of this call"))
 inline BOOL __stdcall _AtlVirtualFree(
 	_In_ LPVOID lpAddress,
 	_In_ SIZE_T dwSize,

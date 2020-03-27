@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -49,7 +49,6 @@ CFrameWndEx::~CFrameWndEx()
 {
 }
 
-//{{AFX_MSG_MAP(CFrameWndEx)
 BEGIN_MESSAGE_MAP(CFrameWndEx, CFrameWnd)
 	ON_WM_MENUCHAR()
 	ON_WM_ACTIVATE()
@@ -70,9 +69,11 @@ BEGIN_MESSAGE_MAP(CFrameWndEx, CFrameWnd)
 	ON_WM_WINDOWPOSCHANGED()
 	ON_WM_ACTIVATEAPP()
 	ON_WM_SYSCOLORCHANGE()
+	ON_WM_EXITSIZEMOVE()
+	ON_WM_POWERBROADCAST()
+	ON_WM_DWMCOMPOSITIONCHANGED()
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CFrameWndEx::OnIdleUpdateCmdUI)
 	ON_MESSAGE(WM_SETTEXT, &CFrameWndEx::OnSetText)
-	ON_MESSAGE(WM_DWMCOMPOSITIONCHANGED, &CFrameWndEx::OnDWMCompositionChanged)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_STATUS_BAR, &CFrameWndEx::OnUpdatePaneMenu)
 	ON_COMMAND_EX(ID_VIEW_STATUS_BAR, &CFrameWndEx::OnPaneCheck)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_TOOLBAR, &CFrameWndEx::OnUpdatePaneMenu)
@@ -84,10 +85,7 @@ BEGIN_MESSAGE_MAP(CFrameWndEx, CFrameWnd)
 	ON_REGISTERED_MESSAGE(AFX_WM_POSTSETPREVIEWFRAME, &CFrameWndEx::OnPostPreviewFrame)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CFrameWndEx::OnToolbarCreateNew)
 	ON_REGISTERED_MESSAGE(AFX_WM_DELETETOOLBAR, &CFrameWndEx::OnToolbarDelete)
-	ON_MESSAGE(WM_POWERBROADCAST, &OnPowerBroadcast)
-	ON_MESSAGE(WM_EXITSIZEMOVE, &CFrameWndEx::OnExitSizeMove)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CFrameWndEx message handlers
@@ -133,9 +131,9 @@ BOOL CFrameWndEx::PreTranslateMessage(MSG* pMsg)
 		}
 
 	case WM_CONTEXTMENU:
-		if (!afxGlobalData.m_bSysUnderlineKeyboardShortcuts && !afxGlobalData.m_bUnderlineKeyboardShortcuts)
+		if (!GetGlobalData()->m_bSysUnderlineKeyboardShortcuts && !GetGlobalData()->m_bUnderlineKeyboardShortcuts)
 		{
-			afxGlobalData.m_bUnderlineKeyboardShortcuts = TRUE;
+			GetGlobalData()->m_bUnderlineKeyboardShortcuts = TRUE;
 			CMFCToolBar::RedrawUnderlines ();
 		}
 
@@ -175,7 +173,7 @@ BOOL CFrameWndEx::PreTranslateMessage(MSG* pMsg)
 				}
 				else
 				{
-					if ((pMsg->lParam &(1 << 29)) == 0)
+					if ((pMsg->wParam == VK_MENU) || ((pMsg->lParam & (1 << 29)) == 0))
 					{
 						m_Impl.m_pMenuBar->SetFocus();
 					}
@@ -306,7 +304,7 @@ BOOL CFrameWndEx::ShowPopupMenu(CMFCPopupMenu* pMenuPopup)
 
 void CFrameWndEx::OnClosePopupMenu(CMFCPopupMenu* pMenuPopup)
 {
-	if (afxGlobalData.IsAccessibilitySupport() && pMenuPopup != NULL)
+	if (GetGlobalData()->IsAccessibilitySupport() && pMenuPopup != NULL)
 	{
 		CMFCPopupMenu* pPopupParent = pMenuPopup->GetParentPopupMenu();
 		CMFCToolBarMenuButton* pParentButton  = pMenuPopup->GetParentButton();
@@ -973,11 +971,10 @@ void CFrameWndEx::OnSize(UINT nType, int cx, int cy)
 	m_bWasMaximized = (nType == SIZE_MAXIMIZED);
 }
 
-LRESULT CFrameWndEx::OnExitSizeMove(WPARAM, LPARAM)
+void CFrameWndEx::OnExitSizeMove()
 {
 	RecalcLayout ();
 	m_dockManager.FixupVirtualRects();
-	return 0;
 }
 
 void CFrameWndEx::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
@@ -995,7 +992,7 @@ void CFrameWndEx::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 
 BOOL CFrameWndEx::OnShowPopupMenu(CMFCPopupMenu* pMenuPopup)
 {
-	if (afxGlobalData.IsAccessibilitySupport() && pMenuPopup != NULL)
+	if (GetGlobalData()->IsAccessibilitySupport() && pMenuPopup != NULL)
 	{
 		::NotifyWinEvent(EVENT_SYSTEM_MENUPOPUPSTART, pMenuPopup->GetSafeHwnd(), OBJID_WINDOW , CHILDID_SELF);
 	}
@@ -1135,10 +1132,9 @@ LRESULT CFrameWndEx::OnPostPreviewFrame(WPARAM, LPARAM)
 	return 0;
 }
 
-LRESULT CFrameWndEx::OnDWMCompositionChanged(WPARAM,LPARAM)
+void CFrameWndEx::OnCompositionChanged()
 {
-	m_Impl.OnDWMCompositionChanged();
-	return 0;
+	m_Impl.OnCompositionChanged();
 }
 
 void CFrameWndEx::OnUpdateFrameTitle(BOOL bAddToTitle)
@@ -1170,16 +1166,16 @@ void CFrameWndEx::OnUpdateFrameTitle(BOOL bAddToTitle)
 	}
 }
 
-LRESULT CFrameWndEx::OnPowerBroadcast(WPARAM wp, LPARAM)
+UINT CFrameWndEx::OnPowerBroadcast(UINT nPowerEvent, UINT /* nEventData */)
 {
 	LRESULT lres = Default();
 
-	if (wp == PBT_APMRESUMESUSPEND)
+	if (nPowerEvent == PBT_APMRESUMESUSPEND)
 	{
-		afxGlobalData.Resume();
+		GetGlobalData()->Resume();
 	}
 
-	return lres;
+	return (UINT)lres;
 }
 
 void CFrameWndEx::OnSysColorChange()

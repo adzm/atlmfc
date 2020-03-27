@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -26,8 +26,6 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-static const CString strRibbonProfile = _T("MFCRibbons");
 
 #define AFX_UM_UPDATE_SHADOWS (WM_USER + 101)
 
@@ -158,7 +156,6 @@ CMFCRibbonStatusBar::~CMFCRibbonStatusBar()
 	RemoveAll();
 }
 
-//{{AFX_MSG_MAP(CMFCRibbonStatusBar)
 BEGIN_MESSAGE_MAP(CMFCRibbonStatusBar, CMFCRibbonBar)
 	ON_WM_SIZE()
 	ON_WM_SYSCOMMAND()
@@ -167,7 +164,6 @@ BEGIN_MESSAGE_MAP(CMFCRibbonStatusBar, CMFCRibbonBar)
 	ON_MESSAGE(AFX_UM_UPDATE_SHADOWS, &CMFCRibbonStatusBar::OnUpdateShadows)
 	ON_WM_SHOWWINDOW()
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonStatusBar message handlers
@@ -205,7 +201,7 @@ BOOL CMFCRibbonStatusBar::CreateEx(CWnd* pParentWnd, DWORD /*dwCtrlStyle*/, DWOR
 		dwStyle |= SBARS_SIZEGRIP;
 	}
 
-	if (!CWnd::Create(afxGlobalData.RegisterWindowClass(_T("Afx:RibbonStatusBar")), NULL, dwStyle | WS_CLIPSIBLINGS, rect, pParentWnd, nID))
+	if (!CWnd::Create(GetGlobalData()->RegisterWindowClass(_T("Afx:RibbonStatusBar")), NULL, dwStyle | WS_CLIPSIBLINGS, rect, pParentWnd, nID))
 	{
 		return FALSE;
 	}
@@ -269,9 +265,9 @@ CSize CMFCRibbonStatusBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 
 	int nMinHeight = 24;
 
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		nMinHeight = (int)(.5 + afxGlobalData.GetRibbonImageScale() * nMinHeight);
+		nMinHeight = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * nMinHeight);
 	}
 
 	return CSize(32767, max(nMinHeight, cyMax));
@@ -906,7 +902,7 @@ CMFCRibbonBaseElement* CMFCRibbonStatusBar::GetDroppedDown()
 
 void CMFCRibbonStatusBar::OnPaneContextMenu(CWnd* /*pParentFrame*/, CPoint point)
 {
-	if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0) // Left mouse button is pressed
+	if ((GetAsyncKeyState(::GetSystemMetrics(SM_SWAPBUTTON) ? VK_RBUTTON : VK_LBUTTON) & 0x8000) != 0) // "Left" mouse button is pressed
 	{
 		return;
 	}
@@ -1000,7 +996,7 @@ void CMFCRibbonStatusBar::CleanUpCustomizeItems()
 
 BOOL CMFCRibbonStatusBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strRibbonProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_RIBBON_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -1060,7 +1056,7 @@ BOOL CMFCRibbonStatusBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT ui
 
 BOOL CMFCRibbonStatusBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strRibbonProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_RIBBON_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{

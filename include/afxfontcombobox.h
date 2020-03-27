@@ -22,7 +22,7 @@
 
 class CMFCFontInfo;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCFontComboBox window
 
 class CMFCFontComboBox : public CComboBox
@@ -53,6 +53,8 @@ protected:
 
 // Overrides
 public:
+	int DeleteString(UINT nIndex);
+
 	virtual int CompareItem(LPCOMPAREITEMSTRUCT lpCompareItemStruct);
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	virtual void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
@@ -66,11 +68,9 @@ public:
 	virtual ~CMFCFontComboBox();
 
 protected:
-	//{{AFX_MSG(CMFCFontComboBox)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 };

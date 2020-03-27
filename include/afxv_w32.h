@@ -243,7 +243,7 @@ AFX_INLINE void WINAPI DrawStatusText(HDC hDC, LPRECT lprc, LPCTSTR szText,
 
 // FreeResource is not required on Win32 platforms
 #undef FreeResource
-AFX_INLINE BOOL WINAPI FreeResource(HGLOBAL) { return TRUE; }
+AFX_INLINE BOOL WINAPI FreeResource(_In_ HGLOBAL) { return TRUE; }
 // UnlockResource is not required on Win32 platforms
 #undef UnlockResource
 AFX_INLINE int WINAPI UnlockResource(HGLOBAL) { return 0; }

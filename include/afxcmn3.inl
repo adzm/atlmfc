@@ -16,40 +16,40 @@
 
 #include <atlchecked.h>
 
-AFX_INLINE HRESULT CToolTipCtrl::SetWindowTheme(LPCWSTR pszSubAppName)
+AFX_INLINE HRESULT CToolTipCtrl::SetWindowTheme(_In_z_ LPCWSTR pszSubAppName)
 	{ ASSERT(::IsWindow(m_hWnd)); return (HRESULT)::SendMessage(m_hWnd, TTM_SETWINDOWTHEME, 0, (LPARAM)pszSubAppName); }
 
-AFX_INLINE HRESULT CComboBoxEx::SetWindowTheme(LPCWSTR pszSubAppName)
+AFX_INLINE HRESULT CComboBoxEx::SetWindowTheme(_In_z_ LPCWSTR pszSubAppName)
 	{ ASSERT(::IsWindow(m_hWnd)); return (HRESULT)::SendMessage(m_hWnd, CBEM_SETWINDOWTHEME, 0, (LPARAM)pszSubAppName); }
 
-AFX_INLINE void CReBarCtrl::GetBandMargins(PMARGINS pMargins) const
+AFX_INLINE void CReBarCtrl::GetBandMargins(_Out_ PMARGINS pMargins) const
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, RB_GETBANDMARGINS, 0, (LPARAM)pMargins); }
 
-AFX_INLINE HRESULT CReBarCtrl::SetWindowTheme(LPCWSTR pszSubAppName)
+AFX_INLINE HRESULT CReBarCtrl::SetWindowTheme(_In_z_ LPCWSTR pszSubAppName)
 	{ ASSERT(::IsWindow(m_hWnd)); return (HRESULT)::SendMessage(m_hWnd, RB_SETWINDOWTHEME, 0, (LPARAM)pszSubAppName); }
 
-AFX_INLINE void CToolBarCtrl::GetMetrics(LPTBMETRICS ptbm) const
+AFX_INLINE void CToolBarCtrl::GetMetrics(_Out_ LPTBMETRICS ptbm) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(ptbm != NULL);
 	::SendMessage(m_hWnd, TB_GETMETRICS, 0, (LPARAM)ptbm);
 }
 
-AFX_INLINE void CToolBarCtrl::SetMetrics(LPTBMETRICS ptbm)
+AFX_INLINE void CToolBarCtrl::SetMetrics(_In_ LPTBMETRICS ptbm)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(ptbm != NULL);
 	::SendMessage(m_hWnd, TB_SETMETRICS, 0, (LPARAM)ptbm);
 }
 
-AFX_INLINE HRESULT CToolBarCtrl::SetWindowTheme(LPCWSTR pszSubAppName)
+AFX_INLINE HRESULT CToolBarCtrl::SetWindowTheme(_In_z_ LPCWSTR pszSubAppName)
 	{ ASSERT(::IsWindow(m_hWnd)); return (HRESULT)::SendMessage(m_hWnd, TB_SETWINDOWTHEME, 0, (LPARAM)pszSubAppName); }
 
 #endif	// _WIN32_WINNT >= 0x0501
 
 #if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
 
-AFX_INLINE CImageList* CToolBarCtrl::SetPressedImageList(int iImageID, CImageList* pImageList)
+AFX_INLINE CImageList* CToolBarCtrl::SetPressedImageList(_In_ int iImageID, _In_ CImageList* pImageList)
 	{ ASSERT(::IsWindow(m_hWnd)); return CImageList::FromHandle((HIMAGELIST) ::SendMessage(m_hWnd, TB_SETPRESSEDIMAGELIST, (WPARAM)iImageID, (LPARAM)pImageList->GetSafeHandle())); }
 
 AFX_INLINE CImageList* CToolBarCtrl::GetPressedImageList() const
@@ -59,12 +59,12 @@ AFX_INLINE CImageList* CToolBarCtrl::GetPressedImageList() const
 
 #if (_WIN32_WINNT >= 0x0501)
 
-AFX_INLINE void CListCtrl::SetSelectedColumn(int iCol)
+AFX_INLINE void CListCtrl::SetSelectedColumn(_In_ int iCol)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_SetSelectedColumn(m_hWnd, iCol); // LVM_SETSELECTEDCOLUMN
 }
-AFX_INLINE DWORD CListCtrl::SetView(int iView)
+AFX_INLINE DWORD CListCtrl::SetView(_In_ int iView)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_SetView(m_hWnd, iView); // LVM_SETVIEW
@@ -74,57 +74,57 @@ AFX_INLINE DWORD CListCtrl::GetView() const
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_GetView(m_hWnd); // LVM_GETVIEW
 }
-AFX_INLINE int CListCtrl::InsertGroup(int index, PLVGROUP pgrp)
+AFX_INLINE int CListCtrl::InsertGroup(_In_ int index, _In_ PLVGROUP pgrp)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_InsertGroup(m_hWnd, index, pgrp); // LVM_INSERTGROUP
 }
-AFX_INLINE int CListCtrl::SetGroupInfo(int iGroupId, PLVGROUP pGroup)
+AFX_INLINE int CListCtrl::SetGroupInfo(_In_ int iGroupId, _In_ PLVGROUP pGroup)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_SetGroupInfo(m_hWnd, iGroupId, pGroup); // LVM_SETGROUPINFO
 }
-AFX_INLINE int CListCtrl::GetGroupInfo(int iGroupId, PLVGROUP pgrp) const
+AFX_INLINE int CListCtrl::GetGroupInfo(_In_ int iGroupId, _Out_ PLVGROUP pgrp) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_GetGroupInfo(m_hWnd, iGroupId, pgrp); // LVM_GETGROUPINFO
 }
-AFX_INLINE int CListCtrl::RemoveGroup(int iGroupId)
+AFX_INLINE int CListCtrl::RemoveGroup(_In_ int iGroupId)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_RemoveGroup(m_hWnd, iGroupId); // LVM_REMOVEGROUP
 }
-AFX_INLINE void CListCtrl::MoveGroup(int iGroupId, int toIndex)
+AFX_INLINE void CListCtrl::MoveGroup(_In_ int iGroupId, _In_ int toIndex)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_MoveGroup(m_hWnd, iGroupId, toIndex); // LVM_MOVEGROUP
 }
-AFX_INLINE void CListCtrl::MoveItemToGroup(int idItemFrom, int idGroupTo)
+AFX_INLINE void CListCtrl::MoveItemToGroup(_In_ int idItemFrom, _In_ int idGroupTo)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_MoveItemToGroup(m_hWnd, idItemFrom, idGroupTo); // LVM_MOVEITEMTOGROUP
 }
-AFX_INLINE void CListCtrl::SetGroupMetrics(PLVGROUPMETRICS pGroupMetrics)
+AFX_INLINE void CListCtrl::SetGroupMetrics(_In_ PLVGROUPMETRICS pGroupMetrics)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_SetGroupMetrics(m_hWnd, pGroupMetrics); // LVM_SETGROUPMETRICS
 }
-AFX_INLINE void CListCtrl::GetGroupMetrics(PLVGROUPMETRICS pGroupMetrics) const
+AFX_INLINE void CListCtrl::GetGroupMetrics(_Out_ PLVGROUPMETRICS pGroupMetrics) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_GetGroupMetrics(m_hWnd, pGroupMetrics); // LVM_GETGROUPMETRICS
 }
-AFX_INLINE int CListCtrl::EnableGroupView(BOOL fEnable)
+AFX_INLINE int CListCtrl::EnableGroupView(_In_ BOOL fEnable)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_EnableGroupView(m_hWnd, fEnable); // LVM_ENABLEGROUPVIEW
 }
-AFX_INLINE BOOL CListCtrl::SortGroups(PFNLVGROUPCOMPARE _pfnGroupCompare, LPVOID _plv)
+AFX_INLINE BOOL CListCtrl::SortGroups(_In_ PFNLVGROUPCOMPARE _pfnGroupCompare, _In_ LPVOID _plv)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_SortGroups(m_hWnd, _pfnGroupCompare, _plv); // LVM_SORTGROUPS
 }
-AFX_INLINE void CListCtrl::InsertGroupSorted(PLVINSERTGROUPSORTED pStructInsert)
+AFX_INLINE void CListCtrl::InsertGroupSorted(_In_ PLVINSERTGROUPSORTED pStructInsert)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_InsertGroupSorted(m_hWnd, pStructInsert); // LVM_INSERTGROUPSORTED
@@ -134,52 +134,52 @@ AFX_INLINE void CListCtrl::RemoveAllGroups()
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_RemoveAllGroups(m_hWnd); // LVM_REMOVEALLGROUPS
 }
-AFX_INLINE BOOL CListCtrl::HasGroup(int iGroupId) const
+AFX_INLINE BOOL CListCtrl::HasGroup(_In_ int iGroupId) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_HasGroup(m_hWnd, iGroupId); // LVM_HASGROUP
 }
-AFX_INLINE BOOL CListCtrl::SetTileViewInfo(PLVTILEVIEWINFO ptvi)
+AFX_INLINE BOOL CListCtrl::SetTileViewInfo(_In_ PLVTILEVIEWINFO ptvi)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_SetTileViewInfo(m_hWnd, ptvi); // LVM_SETTILEVIEWINFO
 }
-AFX_INLINE BOOL CListCtrl::GetTileViewInfo(PLVTILEVIEWINFO ptvi) const
+AFX_INLINE BOOL CListCtrl::GetTileViewInfo(_Out_ PLVTILEVIEWINFO ptvi) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_GetTileViewInfo(m_hWnd, ptvi); // LVM_GETTILEVIEWINFO
 }
-AFX_INLINE BOOL CListCtrl::SetTileInfo(PLVTILEINFO pti)
+AFX_INLINE BOOL CListCtrl::SetTileInfo(_In_ PLVTILEINFO pti)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_SetTileInfo(m_hWnd, pti); // LVM_SETTILEINFO
 }
-AFX_INLINE BOOL CListCtrl::GetTileInfo(PLVTILEINFO pti) const
+AFX_INLINE BOOL CListCtrl::GetTileInfo(_Out_ PLVTILEINFO pti) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_GetTileInfo(m_hWnd, pti); // LVM_GETTILEINFO
 }
-AFX_INLINE BOOL CListCtrl::SetInsertMark(LPLVINSERTMARK lvim)
+AFX_INLINE BOOL CListCtrl::SetInsertMark(_In_ LPLVINSERTMARK lvim)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_SetInsertMark(m_hWnd, lvim); // LVM_SETINSERTMARK
 }
-AFX_INLINE BOOL CListCtrl::GetInsertMark(LPLVINSERTMARK lvim) const
+AFX_INLINE BOOL CListCtrl::GetInsertMark(_Out_ LPLVINSERTMARK lvim) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_GetInsertMark(m_hWnd, lvim); // LVM_GETINSERTMARK
 }
-AFX_INLINE int CListCtrl::InsertMarkHitTest(LPPOINT pPoint, LPLVINSERTMARK lvim) const
+AFX_INLINE int CListCtrl::InsertMarkHitTest(_In_ LPPOINT pPoint, _In_ LPLVINSERTMARK lvim) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_InsertMarkHitTest(m_hWnd, pPoint, lvim); // LVM_INSERTMARKHITTEST
 }
-AFX_INLINE int CListCtrl::GetInsertMarkRect(LPRECT pRect) const
+AFX_INLINE int CListCtrl::GetInsertMarkRect(_Out_ LPRECT pRect) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_GetInsertMarkRect(m_hWnd, pRect); // LVM_GETINSERTMARKRECT
 }
-AFX_INLINE COLORREF CListCtrl::SetInsertMarkColor(COLORREF color)
+AFX_INLINE COLORREF CListCtrl::SetInsertMarkColor(_In_ COLORREF color)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (COLORREF)ListView_SetInsertMarkColor(m_hWnd, color); // LVM_SETINSERTMARKCOLOR
@@ -189,7 +189,7 @@ AFX_INLINE COLORREF CListCtrl::GetInsertMarkColor() const
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_GetInsertMarkColor(m_hWnd); // LVM_GETINSERTMARKCOLOR
 }
-AFX_INLINE BOOL CListCtrl::SetInfoTip(PLVSETINFOTIP plvInfoTip)
+AFX_INLINE BOOL CListCtrl::SetInfoTip(_In_ PLVSETINFOTIP plvInfoTip)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_SetInfoTip(m_hWnd, plvInfoTip); // LVM_SETINFOTIP
@@ -209,7 +209,7 @@ AFX_INLINE COLORREF CListCtrl::GetOutlineColor() const
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_GetOutlineColor(m_hWnd); // LVM_GETOUTLINECOLOR
 }
-AFX_INLINE COLORREF CListCtrl::SetOutlineColor(COLORREF color)
+AFX_INLINE COLORREF CListCtrl::SetOutlineColor(_In_ COLORREF color)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_SetOutlineColor(m_hWnd, color); // LVM_SETOUTLINECOLOR
@@ -236,12 +236,12 @@ AFX_INLINE CString CListCtrl::GetEmptyText() const
 	else
 		return CString();
 }
-AFX_INLINE BOOL CListCtrl::GetItemIndexRect(PLVITEMINDEX pItemIndex, int iColumn, int rectType, LPRECT pRect) const
+AFX_INLINE BOOL CListCtrl::GetItemIndexRect(_In_ PLVITEMINDEX pItemIndex, _In_ int iColumn, _In_ int rectType, _Out_ LPRECT pRect) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_GetItemIndexRect(m_hWnd, pItemIndex, iColumn, rectType, pRect); // LVM_GETITEMINDEXRECT
 }
-AFX_INLINE HRESULT CListCtrl::SetItemIndexState(PLVITEMINDEX pItemIndex, DWORD dwState, DWORD dwMask)
+AFX_INLINE HRESULT CListCtrl::SetItemIndexState(_In_ PLVITEMINDEX pItemIndex, _In_ DWORD dwState, _In_ DWORD dwMask)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	LV_ITEM lvi = {0};
@@ -249,7 +249,7 @@ AFX_INLINE HRESULT CListCtrl::SetItemIndexState(PLVITEMINDEX pItemIndex, DWORD d
 	lvi.state = dwState;
 	return (HRESULT)SNDMSG(m_hWnd, LVM_SETITEMINDEXSTATE, (WPARAM)pItemIndex, (LPARAM)&lvi);
 }
-AFX_INLINE BOOL CListCtrl::GetNextItemIndex(PLVITEMINDEX pItemIndex, int nFlags) const
+AFX_INLINE BOOL CListCtrl::GetNextItemIndex(_In_ PLVITEMINDEX pItemIndex, _In_ int nFlags) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_GetNextItemIndex(m_hWnd, pItemIndex, nFlags); // LVM_GETNEXTITEMINDEX
@@ -259,17 +259,17 @@ AFX_INLINE int CListCtrl::GetGroupCount() const
 	ASSERT(::IsWindow(m_hWnd));
 	return (int)ListView_GetGroupCount(m_hWnd); // LVM_GETGROUPCOUNT
 }
-AFX_INLINE BOOL CListCtrl::GetGroupInfoByIndex(int iIndex, PLVGROUP pGroup) const
+AFX_INLINE BOOL CListCtrl::GetGroupInfoByIndex(_In_ int iIndex, _Out_ PLVGROUP pGroup) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_GetGroupInfoByIndex(m_hWnd, iIndex, pGroup); // LVM_GETGROUPINFOBYINDEX
 }
-AFX_INLINE void CListCtrl::SetGroupState(int iGroupId, DWORD dwMask, DWORD dwState)
+AFX_INLINE void CListCtrl::SetGroupState(_In_ int iGroupId, _In_ DWORD dwMask, _In_ DWORD dwState)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ListView_SetGroupState(m_hWnd, iGroupId, dwMask, dwState); // LVM_SETGROUPINFO
 }
-AFX_INLINE UINT CListCtrl::GetGroupState(int iGroupId, DWORD dwMask) const
+AFX_INLINE UINT CListCtrl::GetGroupState(_In_ int iGroupId, _In_ DWORD dwMask) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_GetGroupState(m_hWnd, iGroupId, dwMask); // LVM_GETGROUPSTATE
@@ -284,17 +284,17 @@ AFX_INLINE BOOL CListCtrl::GetGroupRect(_In_ int iGroupId, _Out_ LPRECT lpRect, 
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_GetGroupRect(m_hWnd, iGroupId, iType, lpRect); // LVM_GETGROUPRECT
 }
-AFX_INLINE UINT CListCtrl::MapIndexToID(UINT index) const
+AFX_INLINE UINT CListCtrl::MapIndexToID(_In_ UINT index) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_MapIndexToID(m_hWnd, index); // LVM_MAPINDEXTOID
 }
-AFX_INLINE UINT CListCtrl::MapIDToIndex(UINT id) const
+AFX_INLINE UINT CListCtrl::MapIDToIndex(_In_ UINT id) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return ListView_MapIDToIndex(m_hWnd, id); // LVM_MAPIDTOINDEX
 }
-AFX_INLINE BOOL CListCtrl::IsItemVisible(int index) const
+AFX_INLINE BOOL CListCtrl::IsItemVisible(_In_ int index) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_IsItemVisible(m_hWnd, index); // LVM_ISITEMVISIBLE
@@ -313,13 +313,13 @@ AFX_INLINE CPagerCtrl::~CPagerCtrl()
 }
 
 // Attributes
-AFX_INLINE void CPagerCtrl::SetChild(HWND hwndChild)
+AFX_INLINE void CPagerCtrl::SetChild(_In_ HWND hwndChild)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return Pager_SetChild(m_hWnd, hwndChild); // PGM_SETCHILD
 }
 
-AFX_INLINE COLORREF CPagerCtrl::SetBkColor(COLORREF clrBk)
+AFX_INLINE COLORREF CPagerCtrl::SetBkColor(_In_ COLORREF clrBk)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return Pager_SetBkColor(m_hWnd, clrBk); // PGM_SETBKCOLOR
@@ -331,7 +331,7 @@ AFX_INLINE COLORREF CPagerCtrl::GetBkColor() const
 	return Pager_GetBkColor(m_hWnd); // PGM_GETBKCOLOR
 }
 
-AFX_INLINE int CPagerCtrl::SetBorder(int iBorder)
+AFX_INLINE int CPagerCtrl::SetBorder(_In_ int iBorder)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return Pager_SetBorder(m_hWnd, iBorder); // PGM_SETBORDER
@@ -343,7 +343,7 @@ AFX_INLINE int CPagerCtrl::GetBorder() const
 	return Pager_GetBorder(m_hWnd); // PGM_GETBORDER
 }
 
-AFX_INLINE void CPagerCtrl::SetScrollPos(int iPos)
+AFX_INLINE void CPagerCtrl::SetScrollPos(_In_ int iPos)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	Pager_SetPos(m_hWnd, iPos); // PGM_SETPOS
@@ -355,7 +355,7 @@ AFX_INLINE int CPagerCtrl::GetScrollPos() const
 	return Pager_GetPos(m_hWnd); // PGM_GETPOS
 }
 
-AFX_INLINE int CPagerCtrl::SetButtonSize(int iButtonSize)
+AFX_INLINE int CPagerCtrl::SetButtonSize(_In_ int iButtonSize)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return Pager_SetButtonSize(m_hWnd, iButtonSize); // PGM_SETBUTTONSIZE
@@ -367,37 +367,37 @@ AFX_INLINE int CPagerCtrl::GetButtonSize() const
 	return Pager_GetButtonSize(m_hWnd); // PGM_GETBUTTONSIZE
 }
 
-AFX_INLINE BOOL CPagerCtrl::IsButtonInvisible(int iButton) const
+AFX_INLINE BOOL CPagerCtrl::IsButtonInvisible(_In_ int iButton) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return(GetButtonState(iButton) == PGF_INVISIBLE);
 }
 
-AFX_INLINE BOOL CPagerCtrl::IsButtonNormal(int iButton) const
+AFX_INLINE BOOL CPagerCtrl::IsButtonNormal(_In_ int iButton) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return((GetButtonState(iButton) & PGF_NORMAL) == PGF_NORMAL);
 }
 
-AFX_INLINE BOOL CPagerCtrl::IsButtonGrayed(int iButton) const
+AFX_INLINE BOOL CPagerCtrl::IsButtonGrayed(_In_ int iButton) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return((GetButtonState(iButton) & PGF_GRAYED) == PGF_GRAYED);
 }
 
-AFX_INLINE BOOL CPagerCtrl::IsButtonDepressed(int iButton) const
+AFX_INLINE BOOL CPagerCtrl::IsButtonDepressed(_In_ int iButton) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return((GetButtonState(iButton) & PGF_DEPRESSED) == PGF_DEPRESSED);
 }
 
-AFX_INLINE BOOL CPagerCtrl::IsButtonHot(int iButton) const
+AFX_INLINE BOOL CPagerCtrl::IsButtonHot(_In_ int iButton) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return((GetButtonState(iButton) & PGF_HOT) == PGF_HOT);
 }
 
-AFX_INLINE DWORD CPagerCtrl::GetButtonState(int iButton) const
+AFX_INLINE DWORD CPagerCtrl::GetButtonState(_In_ int iButton) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return Pager_GetButtonState(m_hWnd, iButton); // PGM_GETBUTTONSTATE
@@ -418,7 +418,7 @@ AFX_INLINE void CPagerCtrl::RecalcSize()
 	return Pager_RecalcSize(m_hWnd); // PGM_RECALCSIZE
 }
 
-AFX_INLINE void CPagerCtrl::ForwardMouse(BOOL bForward)
+AFX_INLINE void CPagerCtrl::ForwardMouse(_In_ BOOL bForward)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return Pager_ForwardMouse(m_hWnd, bForward); // PGM_FORWARDMOUSE
@@ -445,7 +445,7 @@ AFX_INLINE int CLinkCtrl::GetIdealHeight() const
 }
 
 #if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
-AFX_INLINE int CLinkCtrl::GetIdealSize(int cxMaxWidth, SIZE* pSize) const
+AFX_INLINE int CLinkCtrl::GetIdealSize(_In_ int cxMaxWidth, _Out_ SIZE* pSize) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int) ::SendMessage(m_hWnd, LM_GETIDEALSIZE, (WPARAM)cxMaxWidth, (LPARAM)pSize);
@@ -453,18 +453,18 @@ AFX_INLINE int CLinkCtrl::GetIdealSize(int cxMaxWidth, SIZE* pSize) const
 #endif // (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
 
 // operations
-AFX_INLINE BOOL CLinkCtrl::SetItem(PLITEM pItem)
+AFX_INLINE BOOL CLinkCtrl::SetItem(_In_ PLITEM pItem)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pItem != NULL);
 	return (BOOL) ::SendMessage(m_hWnd, LM_SETITEM, 0, (LPARAM)pItem);
 }
 
-AFX_INLINE BOOL CLinkCtrl::SetItemID(int iLink, LPCWSTR szID)
+AFX_INLINE BOOL CLinkCtrl::SetItemID(_In_ int iLink, _In_z_ LPCWSTR szID)
 {
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(lstrlenW(szID) <= MAX_LINKID_TEXT);
-	if (lstrlenW(szID) > MAX_LINKID_TEXT)
+	ASSERT(wcslen(szID) <= MAX_LINKID_TEXT);
+	if (wcslen(szID) > MAX_LINKID_TEXT)
 		return FALSE;
 
 	LITEM item;
@@ -475,11 +475,11 @@ AFX_INLINE BOOL CLinkCtrl::SetItemID(int iLink, LPCWSTR szID)
 	return SetItem(&item);
 }
 
-AFX_INLINE BOOL CLinkCtrl::SetItemUrl(int iLink, LPCWSTR szUrl)
+AFX_INLINE BOOL CLinkCtrl::SetItemUrl(_In_ int iLink, _In_z_ LPCWSTR szUrl)
 {
 	ASSERT(::IsWindow(m_hWnd));
-	ASSERT(lstrlenW(szUrl) <= L_MAX_URL_LENGTH);
-	if (lstrlenW(szUrl) >= L_MAX_URL_LENGTH)
+	ASSERT(wcslen(szUrl) <= L_MAX_URL_LENGTH);
+	if (wcslen(szUrl) >= L_MAX_URL_LENGTH)
 		return FALSE;
 
 	LITEM item;
@@ -490,7 +490,7 @@ AFX_INLINE BOOL CLinkCtrl::SetItemUrl(int iLink, LPCWSTR szUrl)
 	return SetItem(&item);
 }
 
-AFX_INLINE BOOL CLinkCtrl::SetItemState(int iLink, UINT state, UINT stateMask /*= 0xFFFFFFFF*/)
+AFX_INLINE BOOL CLinkCtrl::SetItemState(_In_ int iLink, _In_ UINT state, _In_ UINT stateMask /* = LIS_FOCUSED | LIS_ENABLED | LIS_VISITED */)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	LITEM item;
@@ -502,14 +502,15 @@ AFX_INLINE BOOL CLinkCtrl::SetItemState(int iLink, UINT state, UINT stateMask /*
 	return SetItem(&item);
 }
 
-AFX_INLINE BOOL CLinkCtrl::GetItem(PLITEM pItem) const
+AFX_INLINE BOOL CLinkCtrl::GetItem(_Out_ PLITEM pItem) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pItem != NULL);
 	return (BOOL) ::SendMessage(m_hWnd, LM_GETITEM, 0, (LPARAM)pItem);
 }
 
-AFX_INLINE BOOL CLinkCtrl::GetItemID(int iLink, CString& strID) const
+#if defined(_UNICODE) || !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION)
+_Success_(return != FALSE) AFX_INLINE BOOL CLinkCtrl::GetItemID(_In_ int iLink, _Out_ CString& strID) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	LITEM item;
@@ -522,8 +523,9 @@ AFX_INLINE BOOL CLinkCtrl::GetItemID(int iLink, CString& strID) const
 	strID = item.szID;
 	return TRUE;
 }
+#endif
 
-AFX_INLINE BOOL CLinkCtrl::GetItemID(_In_ int iLink, _Out_z_cap_(cchID) LPWSTR szID, _In_ UINT cchID) const
+AFX_INLINE BOOL CLinkCtrl::GetItemID(_In_ int iLink, _Out_writes_z_(cchID) LPWSTR szID, _In_ UINT cchID) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(szID != NULL);
@@ -546,7 +548,8 @@ AFX_INLINE BOOL CLinkCtrl::GetItemID(_In_ int iLink, _Out_z_cap_(cchID) LPWSTR s
 	return TRUE;
 }
 
-AFX_INLINE BOOL CLinkCtrl::GetItemUrl(int iLink, CString& strUrl) const
+#if defined(_UNICODE) || !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION)
+_Success_(return != FALSE) AFX_INLINE BOOL CLinkCtrl::GetItemUrl(_In_ int iLink, _Out_ CString& strUrl) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	LITEM item;
@@ -559,8 +562,9 @@ AFX_INLINE BOOL CLinkCtrl::GetItemUrl(int iLink, CString& strUrl) const
 	strUrl = item.szUrl;
 	return TRUE;
 }
+#endif
 
-AFX_INLINE BOOL CLinkCtrl::GetItemUrl(_In_ int iLink, _Out_z_cap_(cchUrl) LPWSTR szUrl, _In_ UINT cchUrl) const
+AFX_INLINE BOOL CLinkCtrl::GetItemUrl(_In_ int iLink, _Out_writes_z_(cchUrl) LPWSTR szUrl, _In_ UINT cchUrl) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(szUrl != NULL);
@@ -583,7 +587,7 @@ AFX_INLINE BOOL CLinkCtrl::GetItemUrl(_In_ int iLink, _Out_z_cap_(cchUrl) LPWSTR
 	return TRUE;
 }
 
-AFX_INLINE BOOL CLinkCtrl::GetItemState(int iLink, UINT *pnState, UINT stateMask /*= 0xFFFFFFFF*/) const
+_Success_(return != FALSE) AFX_INLINE BOOL CLinkCtrl::GetItemState(_In_ int iLink, _Out_ UINT *pnState, _In_ UINT stateMask /* = LIS_FOCUSED | LIS_ENABLED | LIS_VISITED */) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pnState != NULL);
@@ -591,7 +595,7 @@ AFX_INLINE BOOL CLinkCtrl::GetItemState(int iLink, UINT *pnState, UINT stateMask
 		return FALSE;
 
 	LITEM item;
-	item.mask = LIF_ITEMINDEX | LIF_URL;
+	item.mask = LIF_ITEMINDEX | LIF_STATE;
 	item.iLink = iLink;
 	item.stateMask = stateMask;
 
@@ -602,8 +606,7 @@ AFX_INLINE BOOL CLinkCtrl::GetItemState(int iLink, UINT *pnState, UINT stateMask
 	return TRUE;
 }
 
-
-AFX_INLINE BOOL CLinkCtrl::HitTest(PLHITTESTINFO phti)  const
+AFX_INLINE BOOL CLinkCtrl::HitTest(_In_ PLHITTESTINFO phti)  const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(phti != NULL);
@@ -626,13 +629,13 @@ AFX_INLINE CNetAddressCtrl::~CNetAddressCtrl()
 }
 
 // Attributes
-AFX_INLINE HRESULT CNetAddressCtrl::GetAddress(PNC_ADDRESS pAddress) const
+AFX_INLINE HRESULT CNetAddressCtrl::GetAddress(_Out_ PNC_ADDRESS pAddress) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return NetAddr_GetAddress(m_hWnd, pAddress); // NCM_GETADDRESS
 }
 
-AFX_INLINE HRESULT CNetAddressCtrl::SetAllowType(DWORD dwAddrMask)
+AFX_INLINE HRESULT CNetAddressCtrl::SetAllowType(_In_ DWORD dwAddrMask)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (HRESULT)NetAddr_SetAllowType(m_hWnd, dwAddrMask); // NCM_SETALLOWTYPE

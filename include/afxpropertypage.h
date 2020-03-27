@@ -23,7 +23,7 @@
 
 class CMFCPropertySheetCategoryInfo;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertyPage window
 
 class CMFCPropertyPage : public CPropertyPage
@@ -53,11 +53,10 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCPropertyPage)
 	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 	afx_msg BOOL OnNcActivate(BOOL bActive);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void SetActiveMenu(CMFCPopupMenu* pMenu);

@@ -32,10 +32,8 @@ CMFCToolBarsKeyboardPropertyPage::CMFCToolBarsKeyboardPropertyPage(CFrameWnd* pP
 {
 	ASSERT_VALID(m_pParentFrame);
 
-	//{{AFX_DATA_INIT(CMFCToolBarsKeyboardPropertyPage)
 	m_strDescription = _T("");
 	m_strAssignedTo = _T("");
-	//}}AFX_DATA_INIT
 
 	m_hAccelTable = NULL;
 	m_lpAccel = NULL;
@@ -56,7 +54,6 @@ CMFCToolBarsKeyboardPropertyPage::~CMFCToolBarsKeyboardPropertyPage()
 void CMFCToolBarsKeyboardPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarsKeyboardPropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_ASSIGNED_TO_TITLE, m_wndAssignedToTitle);
 	DDX_Control(pDX, IDC_AFXBARRES_NEW_SHORTCUT_KEY, m_wndNewKey);
 	DDX_Control(pDX, IDC_AFXBARRES_VIEW_TYPE, m_wndViewTypeList);
@@ -68,11 +65,9 @@ void CMFCToolBarsKeyboardPropertyPage::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_AFXBARRES_ASSIGN, m_wndAssignButton);
 	DDX_Text(pDX, IDC_AFXBARRES_COMMAND_DESCRIPTION, m_strDescription);
 	DDX_Text(pDX, IDC_AFXBARRES_ASSIGNED_TO, m_strAssignedTo);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsKeyboardPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCToolBarsKeyboardPropertyPage)
 	ON_BN_CLICKED(IDC_AFXBARRES_ASSIGN, &CMFCToolBarsKeyboardPropertyPage::OnAssign)
 	ON_BN_CLICKED(IDC_AFXBARRES_REMOVE, &CMFCToolBarsKeyboardPropertyPage::OnRemove)
 	ON_BN_CLICKED(IDC_AFXBARRES_RESET_SHORTCUTS, &CMFCToolBarsKeyboardPropertyPage::OnResetAll)
@@ -81,7 +76,6 @@ BEGIN_MESSAGE_MAP(CMFCToolBarsKeyboardPropertyPage, CPropertyPage)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_COMMANDS_LIST, &CMFCToolBarsKeyboardPropertyPage::OnSelchangeCommandsList)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_CURRENT_KEYS_LIST, &CMFCToolBarsKeyboardPropertyPage::OnSelchangeCurrentKeysList)
 	ON_EN_UPDATE(IDC_AFXBARRES_NEW_SHORTCUT_KEY, &CMFCToolBarsKeyboardPropertyPage::OnUpdateNewShortcutKey)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -343,6 +337,14 @@ void CMFCToolBarsKeyboardPropertyPage::OnRemove()
 {
 	ENSURE(m_pSelEntry != NULL);
 	ENSURE(m_lpAccel != NULL);
+
+	CMFCToolBarsCustomizeDialog* pWndParent = DYNAMIC_DOWNCAST(CMFCToolBarsCustomizeDialog, GetParent());
+	ASSERT_VALID(pWndParent);
+
+	if (!pWndParent->OnRemoveKey(m_pSelEntry))
+	{
+		return;
+	}
 
 	// Create a new entries array:
 	LPACCEL lpAccelOld = m_lpAccel;

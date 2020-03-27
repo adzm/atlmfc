@@ -20,6 +20,12 @@
 #pragma warning(disable: 4571) //catch(...) blocks compiled with /EHs do NOT catch or re-throw Structured Exceptions
 #endif //!_ATL_NO_PRAGMA_WARNINGS
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <urlmon.h>
 #include <mshtml.h>
 #include <mshtmhst.h>
@@ -70,7 +76,7 @@ ATLPREFAST_SUPPRESS(6387)
 static HRESULT CreateNormalizedObject(
 	_In_opt_z_ LPCOLESTR lpszTricsData,
 	_In_ REFIID riid,
-	_Deref_out_ void** ppvObj,
+	_Outptr_ void** ppvObj,
 	_Out_ bool& bWasHTML,
 	_In_opt_z_ BSTR bstrLicKey)
 {
@@ -187,7 +193,7 @@ public:
 		*phwnd = m_hWnd;
 		return S_OK;
 	}
-	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /*fEnterMode*/)
+	STDMETHOD(ContextSensitiveHelp)(BOOL /*fEnterMode*/)
 	{
 		return S_OK;
 	}
@@ -242,14 +248,14 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(EnableModeless)(_In_ BOOL /*fEnable*/)
+	STDMETHOD(EnableModeless)(BOOL /*fEnable*/)
 	{
 		return S_OK;
 	}
 
 	STDMETHOD(TranslateAccelerator)(
 		_In_ LPMSG /*lpMsg*/,
-		_In_ WORD /*wID*/)
+		WORD /*wID*/)
 	{
 		return S_FALSE;
 	}
@@ -294,7 +300,7 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /*fEnterMode*/)
+	STDMETHOD(ContextSensitiveHelp)(BOOL /*fEnterMode*/)
 	{
 		return S_OK;
 	}
@@ -800,7 +806,7 @@ public:
 		_In_z_ LPCOLESTR lpszTricsData,
 		_In_ HWND hWnd,
 		_Inout_opt_ IStream* pStream,
-		_Deref_out_ IUnknown** ppUnk,
+		_Outptr_ IUnknown** ppUnk,
 		_In_ REFIID iidAdvise,
 		_Inout_ IUnknown* punkSink)
 	{
@@ -850,7 +856,7 @@ public:
 ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(QueryControl)(
 		_In_ REFIID riid,
-		_Deref_out_ void** ppvObject)
+		_Outptr_ void** ppvObject)
 	{
 		HRESULT hr = E_POINTER;
 		if (ppvObject)
@@ -898,7 +904,7 @@ ATLPREFAST_SUPPRESS(6387)
 		_In_z_ LPCOLESTR lpszTricsData,
 		_In_ HWND hWnd,
 		_Inout_opt_ IStream* pStream,
-		_Deref_out_ IUnknown** ppUnk,
+		_Outptr_ IUnknown** ppUnk,
 		_In_ REFIID iidAdvise,
 		_Inout_opt_ IUnknown* punkSink,
 		_In_opt_z_ BSTR bstrLic)
@@ -1041,7 +1047,7 @@ ATLPREFAST_UNSUPPRESS()
 		_In_ DWORD dwID,
 		_In_ POINT* pptPosition,
 		_In_ IUnknown* pCommandTarget,
-		_Inout_ IDispatch* pDispatchObjectHit)
+		_In_ IDispatch* pDispatchObjectHit)
 	{
 		HRESULT hr = m_bAllowContextMenu ? S_FALSE : S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1071,10 +1077,10 @@ ATLPREFAST_UNSUPPRESS()
 	// Allows the host to replace the IE4/MSHTML menus and toolbars.
 	STDMETHOD(ShowUI)(
 		_In_ DWORD dwID,
-		_Inout_ IOleInPlaceActiveObject* pActiveObject,
-		_Inout_ IOleCommandTarget* pCommandTarget,
-		_Inout_ IOleInPlaceFrame* pFrame,
-		_Inout_ IOleInPlaceUIWindow* pDoc)
+		_In_ IOleInPlaceActiveObject* pActiveObject,
+		_In_ IOleCommandTarget* pCommandTarget,
+		_In_ IOleInPlaceFrame* pFrame,
+		_In_ IOleInPlaceUIWindow* pDoc)
 	{
 		HRESULT hr = m_bAllowShowUI ? S_FALSE : S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1104,7 +1110,7 @@ ATLPREFAST_UNSUPPRESS()
 		return hr;
 	}
 	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::EnableModeless
-	STDMETHOD(EnableModeless)(_In_ BOOL fEnable)
+	STDMETHOD(EnableModeless)(BOOL fEnable)
 	{
 		HRESULT hr = S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1112,7 +1118,7 @@ ATLPREFAST_UNSUPPRESS()
 		return hr;
 	}
 	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::OnDocWindowActivate
-	STDMETHOD(OnDocWindowActivate)(_In_ BOOL fActivate)
+	STDMETHOD(OnDocWindowActivate)(BOOL fActivate)
 	{
 		HRESULT hr = S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1120,7 +1126,7 @@ ATLPREFAST_UNSUPPRESS()
 		return hr;
 	}
 	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::OnFrameWindowActivate.
-	STDMETHOD(OnFrameWindowActivate)(_In_ BOOL fActivate)
+	STDMETHOD(OnFrameWindowActivate)(BOOL fActivate)
 	{
 		HRESULT hr = S_OK;
 		if (m_spIDocHostUIHandlerDispatch != NULL)
@@ -1130,7 +1136,7 @@ ATLPREFAST_UNSUPPRESS()
 	// Called from the IE4/MSHTML implementation of IOleInPlaceActiveObject::ResizeBorder.
 	STDMETHOD(ResizeBorder)(
 		_In_ LPCRECT prcBorder,
-		_Inout_ IOleInPlaceUIWindow* pUIWindow,
+		_In_ IOleInPlaceUIWindow* pUIWindow,
 		_In_ BOOL fFrameWindow)
 	{
 		HRESULT hr = S_OK;
@@ -1165,8 +1171,8 @@ ATLPREFAST_UNSUPPRESS()
 	// Returns the registry key under which IE4/MSHTML stores user preferences.
 	// Returns S_OK if successful, or S_FALSE otherwise. If S_FALSE, IE4/MSHTML will default to its own user options.
 	STDMETHOD(GetOptionKeyPath)(
-		_Deref_out_opt_z_ LPOLESTR* pchKey,
-		_In_ DWORD dwReserved)
+		_Outptr_result_maybenull_z_ LPOLESTR* pchKey,
+		DWORD dwReserved)
 	{
 		HRESULT hr = S_FALSE;
 		ATLENSURE_RETURN_VAL(pchKey, E_POINTER);
@@ -1189,6 +1195,7 @@ ATLPREFAST_UNSUPPRESS()
 				}
 				if(!ocscpy_s(pStr, cchLength, m_bstrOptionKeyPath.m_str))
 				{
+					CoTaskMemFree(pStr);
 					return E_FAIL;
 				}
 				*pchKey = pStr;
@@ -1197,11 +1204,12 @@ ATLPREFAST_UNSUPPRESS()
 		}
 		return hr;
 	}
+
 ATLPREFAST_SUPPRESS(6387)
 	// Called by IE4/MSHTML when it is being used as a drop target to allow the host to supply an alternative IDropTarget
 	STDMETHOD(GetDropTarget)(
-		_Inout_ IDropTarget* pDropTarget,
-		_Deref_out_ IDropTarget** ppDropTarget)
+		_In_ IDropTarget* pDropTarget,
+		_Outptr_ IDropTarget** ppDropTarget)
 	{
 		ATLASSERT(ppDropTarget != NULL);
 		if (ppDropTarget == NULL)
@@ -1230,7 +1238,7 @@ ATLPREFAST_UNSUPPRESS()
 	
 ATLPREFAST_SUPPRESS(6387)
 	// Called by IE4/MSHTML to obtain the host's IDispatch interface
-	STDMETHOD(GetExternal)(_Deref_out_ IDispatch** ppDispatch)
+	STDMETHOD(GetExternal)(_Outptr_result_maybenull_ IDispatch** ppDispatch)
 	{
 		ATLASSERT(ppDispatch != NULL);
 		if (ppDispatch == NULL)
@@ -1260,9 +1268,9 @@ ATLPREFAST_UNSUPPRESS()
 	
 	// Called by IE4/MSHTML to allow the host an opportunity to modify the URL to be loaded
 	STDMETHOD(TranslateUrl)(
-		_In_ DWORD dwTranslate,
+		DWORD dwTranslate,
 		_In_z_ OLECHAR* pchURLIn,
-		_Deref_out_opt_z_ OLECHAR** ppchURLOut)
+		_Outptr_result_maybenull_z_ OLECHAR** ppchURLOut)
 	{
 		ATLENSURE_RETURN_VAL(ppchURLOut, E_POINTER);
 		*ppchURLOut = NULL;
@@ -1293,7 +1301,7 @@ ATLPREFAST_UNSUPPRESS()
 	// This allows the host to block certain clipboard formats or support additional clipboard formats.
 	STDMETHOD(FilterDataObject)(
 		_Inout_ IDataObject* pDO,
-		_Deref_out_opt_ IDataObject** ppDORet)
+		_Outptr_result_maybenull_ IDataObject** ppDORet)
 	{
 		ATLASSERT(ppDORet != NULL);
 		if (ppDORet == NULL)
@@ -1445,7 +1453,7 @@ ATLPREFAST_UNSUPPRESS()
 		FireAmbientPropertyChange(DISPID_AMBIENT_FONT);
 		return S_OK;
 	}
-	STDMETHOD(get_Font)(_Deref_out_opt_ IFontDisp** pFont)
+	STDMETHOD(get_Font)(_Outptr_result_maybenull_ IFontDisp** pFont)
 	{
 		ATLASSERT(pFont != NULL);
 		if (pFont == NULL)
@@ -1592,7 +1600,7 @@ ATLPREFAST_UNSUPPRESS()
 		m_bstrOptionKeyPath = bstrOptionKeyPath;
 		return S_OK;
 	}
-	STDMETHOD(get_OptionKeyPath)(_Deref_out_opt_z_ BSTR* pbstrOptionKeyPath)
+	STDMETHOD(get_OptionKeyPath)(_Outptr_result_maybenull_z_ BSTR* pbstrOptionKeyPath)
 	{
 		ATLASSERT(pbstrOptionKeyPath != NULL);
 		if (pbstrOptionKeyPath == NULL)
@@ -1632,13 +1640,13 @@ ATLPREFAST_UNSUPPRESS()
 		ATLTRACENOTIMPL(_T("IOleClientSite::SaveObject"));
 	}
 	STDMETHOD(GetMoniker)(
-		_In_ DWORD /*dwAssign*/,
-		_In_ DWORD /*dwWhichMoniker*/,
+		DWORD /*dwAssign*/,
+		DWORD /*dwWhichMoniker*/,
 		_In_opt_ IMoniker** /*ppmk*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleClientSite::GetMoniker"));
 	}
-	STDMETHOD(GetContainer)(_Deref_out_ IOleContainer** ppContainer)
+	STDMETHOD(GetContainer)(_Outptr_ IOleContainer** ppContainer)
 	{
 		ATLTRACE(atlTraceHosting, 2, _T("IOleClientSite::GetContainer\n"));
 		ATLASSERT(ppContainer != NULL);
@@ -1667,7 +1675,7 @@ ATLPREFAST_UNSUPPRESS()
 		CWindowImpl<CAxHostWindow>::ReleaseDC(hdc);
 		return S_OK;
 	}
-	STDMETHOD(OnShowWindow)(_In_ BOOL /*fShow*/)
+	STDMETHOD(OnShowWindow)(BOOL /*fShow*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleClientSite::OnShowWindow"));
 	}
@@ -1683,7 +1691,7 @@ ATLPREFAST_UNSUPPRESS()
 		*phwnd = m_hWnd;
 		return S_OK;
 	}
-	STDMETHOD(ContextSensitiveHelp)(_In_ BOOL /*fEnterMode*/)
+	STDMETHOD(ContextSensitiveHelp)(BOOL /*fEnterMode*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceSite::ContextSensitiveHelp"));
 	}
@@ -1711,8 +1719,8 @@ ATLPREFAST_UNSUPPRESS()
 	}
 ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(GetWindowContext)(
-		_Deref_out_ IOleInPlaceFrame** ppFrame,
-		_Deref_out_ IOleInPlaceUIWindow** ppDoc,
+		_Outptr_opt_result_maybenull_ IOleInPlaceFrame** ppFrame,
+		_Outptr_opt_result_maybenull_ IOleInPlaceUIWindow** ppDoc,
 		_Out_ LPRECT lprcPosRect,
 		_Out_ LPRECT lprcClipRect,
 		_Inout_ LPOLEINPLACEFRAMEINFO pFrameInfo)
@@ -1782,11 +1790,11 @@ ATLPREFAST_SUPPRESS(6387)
 	}
 ATLPREFAST_UNSUPPRESS()
 	
-	STDMETHOD(Scroll)(_In_ SIZE /*scrollExtant*/)
+	STDMETHOD(Scroll)(SIZE /*scrollExtant*/)
 	{
 		ATLTRACENOTIMPL(_T("IOleInPlaceSite::Scroll"));
 	}
-	STDMETHOD(OnUIDeactivate)(_In_ BOOL /*fUndoable*/)
+	STDMETHOD(OnUIDeactivate)(BOOL /*fUndoable*/)
 	{
 		ATLTRACE(atlTraceHosting, 2, _T("IOleInPlaceSite::OnUIDeactivate\n"));
 		m_bUIActive = FALSE;
@@ -1836,7 +1844,7 @@ ATLPREFAST_UNSUPPRESS()
 // IOleInPlaceSiteEx
 	STDMETHOD(OnInPlaceActivateEx)(
 		_In_opt_ BOOL* /*pfNoRedraw*/,
-		_In_ DWORD dwFlags)
+		DWORD dwFlags)
 	{
 		// should only be called once the first time control is inplace-activated
 		ATLASSUME(m_bInPlaceActive == FALSE);
@@ -1859,7 +1867,7 @@ ATLPREFAST_UNSUPPRESS()
 			m_spInPlaceObjectWindowless->SetObjectRects(&m_rcPos, &m_rcPos);
 		return S_OK;
 	}
-	STDMETHOD(OnInPlaceDeactivateEx)(_In_ BOOL /*fNoRedraw*/)
+	STDMETHOD(OnInPlaceDeactivateEx)(BOOL /*fNoRedraw*/)
 	{
 		m_bInPlaceActive = FALSE;
 		m_spInPlaceObjectWindowless.Release();
@@ -1987,8 +1995,8 @@ ATLPREFAST_UNSUPPRESS()
 		return S_OK;
 	}
 	STDMETHOD(ScrollRect)(
-		_In_ INT /*dx*/,
-		_In_ INT /*dy*/,
+		INT /*dx*/,
+		INT /*dy*/,
 		_In_ LPCRECT /*pRectScroll*/,
 		_In_ LPCRECT /*pRectClip*/)
 	{
@@ -2013,11 +2021,11 @@ ATLPREFAST_UNSUPPRESS()
 	{
 		return S_OK;
 	}
-	STDMETHOD(LockInPlaceActive)(_In_ BOOL /*fLock*/)
+	STDMETHOD(LockInPlaceActive)(BOOL /*fLock*/)
 	{
 		return S_OK;
 	}
-	STDMETHOD(GetExtendedControl)(_Deref_out_ IDispatch** ppDisp)
+	STDMETHOD(GetExtendedControl)(_Outptr_ IDispatch** ppDisp)
 	{
 		if (ppDisp == NULL)
 			return E_POINTER;
@@ -2026,17 +2034,17 @@ ATLPREFAST_UNSUPPRESS()
 	STDMETHOD(TransformCoords)(
 		_Inout_ POINTL* /*pPtlHimetric*/,
 		_Inout_ POINTF* /*pPtfContainer*/,
-		_In_ DWORD /*dwFlags*/)
+		DWORD /*dwFlags*/)
 	{
 		ATLTRACENOTIMPL(_T("CAxHostWindow::TransformCoords"));
 	}
 	STDMETHOD(TranslateAccelerator)(
 		_In_ LPMSG /*lpMsg*/,
-		_In_ DWORD /*grfModifiers*/)
+		DWORD /*grfModifiers*/)
 	{
 		return S_FALSE;
 	}
-	STDMETHOD(OnFocus)(_In_ BOOL fGotFocus)
+	STDMETHOD(OnFocus)(BOOL fGotFocus)
 	{
 		m_bHaveFocus = fGotFocus;
 		return S_OK;
@@ -2053,8 +2061,8 @@ ATLPREFAST_UNSUPPRESS()
 	{
 	}
 	STDMETHOD_(void, OnViewChange)(
-		_In_ DWORD /*dwAspect*/,
-		_In_ LONG /*lindex*/)
+		DWORD /*dwAspect*/,
+		LONG /*lindex*/)
 	{
 	}
 	STDMETHOD_(void, OnRename)(_In_opt_ IMoniker* /* pmk */)
@@ -2079,8 +2087,8 @@ ATLPREFAST_UNSUPPRESS()
 	
 ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(EnumObjects)(
-		_In_ DWORD /*grfFlags*/,
-		_Deref_out_ IEnumUnknown** ppenum)
+		DWORD /*grfFlags*/,
+		_Outptr_ IEnumUnknown** ppenum)
 	{
 		if (ppenum == NULL)
 			return E_POINTER;
@@ -2090,7 +2098,7 @@ ATLPREFAST_SUPPRESS(6387)
 
 ATLPREFAST_SUPPRESS(6014)
 		/* prefast noise VSW 489981 */
-		ATLTRY(p = new enumunk);
+		p = _ATL_NEW enumunk;
 ATLPREFAST_UNSUPPRESS()
 	
 		if(p == NULL)
@@ -2106,7 +2114,7 @@ ATLPREFAST_UNSUPPRESS()
 	}
 ATLPREFAST_UNSUPPRESS()
 	
-	STDMETHOD(LockContainer)(_In_ BOOL fLock)
+	STDMETHOD(LockContainer)(BOOL fLock)
 	{
 		m_bLocked = fLock;
 		return S_OK;
@@ -2382,7 +2390,7 @@ ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(QueryService)(
 		_In_ REFGUID rsid,
 		_In_ REFIID riid,
-		_Deref_out_ void** ppvObj)
+		_Outptr_ void** ppvObj)
 	{
 		ATLASSERT(ppvObj != NULL);
 		if (ppvObj == NULL)
@@ -2438,6 +2446,7 @@ static LRESULT CALLBACK AtlAxWindowProc(
 			if (nCreateSize)
 			{
 				HGLOBAL h = GlobalAlloc(GHND, nCreateSize);
+ATLPREFAST_SUPPRESS(6387)
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
@@ -2448,6 +2457,7 @@ static LRESULT CALLBACK AtlAxWindowProc(
 					GlobalUnlock(h);
 					CreateStreamOnHGlobal(h, TRUE, &spStream);
 				}
+ATLPREFAST_UNSUPPRESS()
 			}
 
 			USES_CONVERSION_EX;
@@ -2553,6 +2563,7 @@ static LRESULT CALLBACK AtlAxWindowProc2(
 			if (nCreateSize)
 			{
 				HGLOBAL h = GlobalAlloc(GHND, nCreateSize);
+ATLPREFAST_SUPPRESS(6387)
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
@@ -2563,6 +2574,7 @@ static LRESULT CALLBACK AtlAxWindowProc2(
 					GlobalUnlock(h);
 					CreateStreamOnHGlobal(h, TRUE, &spStream);
 				}
+ATLPREFAST_UNSUPPRESS()
 			}
 
 			CComBSTR bstrLicKey;
@@ -2716,7 +2728,7 @@ typename Helper::ReturnType AtlAxDialogCreateT(
 				{
 					dwLastError = ::GetLastError();
 				}
-				if (lpDialogTemplate != pDlg)
+				if ((lpDialogTemplate != pDlg) && (lpDialogTemplate != NULL))
 					GlobalFree(GlobalHandle(lpDialogTemplate));
 			}
 			else
@@ -2778,7 +2790,7 @@ ATLINLINE ATLAPI AtlAxCreateControl(
 	_In_z_ LPCOLESTR lpszName,
 	_In_ HWND hWnd,
 	_Inout_opt_ IStream* pStream,
-	_Deref_out_ IUnknown** ppUnkContainer)
+	_Outptr_ IUnknown** ppUnkContainer)
 {
 	return AtlAxCreateControlEx(lpszName, hWnd, pStream, ppUnkContainer, NULL, IID_NULL, NULL);
 }
@@ -2787,8 +2799,8 @@ ATLINLINE ATLAPI AtlAxCreateControlEx(
 	_In_z_ LPCOLESTR lpszName,
 	_In_ HWND hWnd,
 	_Inout_opt_ IStream* pStream,
-	_Deref_opt_out_ IUnknown** ppUnkContainer,
-	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_Outptr_opt_ IUnknown** ppUnkContainer,
+	_Outptr_opt_ IUnknown** ppUnkControl,
 	_In_ REFIID iidSink,
 	_Inout_opt_ IUnknown* punkSink)
 {
@@ -2799,7 +2811,7 @@ ATLINLINE ATLAPI AtlAxCreateControlLic(
 	_In_z_ LPCOLESTR lpszName,
 	_In_ HWND hWnd,
 	_Inout_opt_ IStream* pStream,
-	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_Outptr_opt_ IUnknown** ppUnkContainer,
 	_In_opt_z_ BSTR bstrLic)
 {
 	return AtlAxCreateControlLicEx(lpszName, hWnd, pStream, ppUnkContainer, NULL, IID_NULL, NULL, bstrLic);
@@ -2810,8 +2822,8 @@ ATLINLINE ATLAPI AtlAxCreateControlLicEx(
 	_In_z_ LPCOLESTR lpszName,
 	_In_ HWND hWnd,
 	_Inout_opt_ IStream* pStream,
-	_Deref_opt_out_ IUnknown** ppUnkContainer,
-	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_Outptr_opt_ IUnknown** ppUnkContainer,
+	_Outptr_opt_ IUnknown** ppUnkControl,
 	_In_ REFIID iidSink,
 	_Inout_opt_ IUnknown* punkSink,
 	_In_opt_z_ BSTR bstrLic)
@@ -2857,7 +2869,7 @@ ATLPREFAST_SUPPRESS(6387)
 ATLINLINE ATLAPI AtlAxAttachControl(
 	_Inout_ IUnknown* pControl,
 	_In_ HWND hWnd,
-	_Deref_opt_out_ IUnknown** ppUnkContainer)
+	_Outptr_opt_ IUnknown** ppUnkContainer)
 {
 	AtlAxWinInit();
 	if (pControl == NULL)
@@ -2982,7 +2994,7 @@ ATLINLINE ATLAPI_(BOOL) AtlAxWinInit()
 ATLPREFAST_SUPPRESS(6387)
 ATLINLINE ATLAPI AtlAxGetControl(
 	_In_ HWND h,
-	_Deref_out_ IUnknown** pp)
+	_Outptr_ IUnknown** pp)
 {
 	ATLASSERT(WM_ATLGETCONTROL != 0);
 	if (pp == NULL)
@@ -2995,7 +3007,7 @@ ATLPREFAST_UNSUPPRESS()
 ATLPREFAST_SUPPRESS(6387)
 ATLINLINE ATLAPI AtlAxGetHost(
 	_In_ HWND h,
-	_Deref_out_ IUnknown** pp)
+	_Outptr_ IUnknown** pp)
 {
 	ATLASSERT(WM_ATLGETHOST != 0);
 	if (pp == NULL)

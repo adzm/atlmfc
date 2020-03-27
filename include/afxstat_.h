@@ -70,10 +70,10 @@ EXTERN_PROCESS_LOCAL(_AFX_WIN_STATE, _afxWinState)
 #ifndef _AFX_NO_OLE_SUPPORT
 
 struct ITypeInfo;
-typedef ITypeInfo* LPTYPEINFO;
+typedef __RPC_unique_pointer ITypeInfo* LPTYPEINFO;
 
 struct ITypeLib;
-typedef ITypeLib* LPTYPELIB;
+typedef __RPC_unique_pointer ITypeLib* LPTYPELIB;
 
 typedef struct _GUID GUID;
 #ifndef _REFCLSID_DEFINED
@@ -193,7 +193,6 @@ class COleControlLock;
 class _AFX_DAO_STATE;
 #endif
 
-class CDllIsolationWrapperBase;
 #ifndef _AFX_NO_AFXCMN_SUPPORT
 class CComCtlWrapper;
 #endif
@@ -286,14 +285,6 @@ public:
 	// define thread local portions of module state
 	CThreadLocal<AFX_MODULE_THREAD_STATE> m_thread;
 
-	//Fusion: declare pointer to array of pointers to isolation aware dll wrappers (ex: comctl32).
-	CDllIsolationWrapperBase** m_pDllIsolationWrappers;
-	//Defaults to TRUE. When FALSE - MFC will not activate context in AFX_MAINTAIN_STATE2 (used by AFX_MANAGE_STATE).
-	BOOL	m_bSetAmbientActCtx;
-	//Handle of the module context.
-	HANDLE	m_hActCtx;
-	void CreateActivationContext();
-
 	// bool indicating the return value of InitNetworkAddressControl() (from shell32.dll) 
 	BOOL m_bInitNetworkAddressControl;
 	// bool indicating whether or not InitNetworkAddressControl() (from shell32.dll) have been called for CNetAddressCtrl
@@ -343,9 +334,6 @@ protected:
 	AFX_MODULE_STATE* m_pPrevModuleState;
 	_AFX_THREAD_STATE* m_pThreadState;
 #endif
-
-	ULONG_PTR m_ulActCtxCookie;
-	BOOL m_bValidActCtxCookie;
 };
 #define AFX_MANAGE_STATE_NO_INIT_MANAGED(p) AFX_MAINTAIN_STATE2 _ctlState(p);
 #define AFX_MANAGE_STATE(p) _AfxInitManaged(); AFX_MANAGE_STATE_NO_INIT_MANAGED(p)

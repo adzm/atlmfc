@@ -14,6 +14,11 @@
 
 #define new DEBUG_NEW
 
+// Forward declaration
+HRESULT GetCommCtrlVersion(
+	_Out_ LPDWORD pdwMajor,
+	_Out_ LPDWORD pdwMinor);
+
 /////////////////////////////////////////////////////////////////////////////
 // _AFX_CHECKLIST_STATE
 
@@ -78,7 +83,6 @@ public:
 // CCheckListBox
 
 BEGIN_MESSAGE_MAP(CCheckListBox, CListBox)
-	//{{AFX_MSG_MAP(CCheckListBox)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_KEYDOWN()
 	ON_WM_CREATE()
@@ -93,7 +97,6 @@ BEGIN_MESSAGE_MAP(CCheckListBox, CListBox)
 	ON_MESSAGE(LB_SELECTSTRING, &CCheckListBox::OnLBSelectString)
 	ON_MESSAGE(LB_SETITEMDATA, &CCheckListBox::OnLBSetItemData)
 	ON_MESSAGE(LB_SETITEMHEIGHT, &CCheckListBox::OnLBSetItemHeight)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CCheckListBox::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
@@ -269,9 +272,9 @@ bool CCheckListBox::PreDrawItemThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int nC
 {
 	bool bRet = false;
 	// Draw the check boxes using the theme API's only if the app is themed.
-	if (CThemeHelper::IsAppThemed())
+	if (IsAppThemed())
 	{
-		HTHEME hTheme = CThemeHelper::OpenThemeData(m_hWnd, L"Button");
+		HTHEME hTheme = OpenThemeData(m_hWnd, L"Button");
 		if (hTheme != NULL)
 		{
 			int nState = CBS_UNCHECKEDNORMAL;
@@ -281,12 +284,12 @@ bool CCheckListBox::PreDrawItemThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int nC
 				nState = CBS_CHECKEDNORMAL;
 				break;
 			case 2 :
-				nState = CBS_UNCHECKEDDISABLED;
+				nState = CBS_MIXEDNORMAL;
 			}
 
 			SIZE size;
 			
-			if (SUCCEEDED(CThemeHelper::GetThemePartSize(hTheme, pDC->m_hDC, BP_CHECKBOX, nState, NULL, TS_TRUE, &size)))
+			if (SUCCEEDED(GetThemePartSize(hTheme, pDC->m_hDC, BP_CHECKBOX, nState, NULL, TS_TRUE, &size)))
 			{
 				CRect rectCheck = drawItem.rcItem;
 				rectCheck.left += 1;
@@ -300,12 +303,12 @@ bool CCheckListBox::PreDrawItemThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int nC
 				rectItem.right = rectItem.left + size.cx + 2;
 
 				CRect rectCheckBox = OnGetCheckPosition(rectItem, rectCheck);
-				if (SUCCEEDED(CThemeHelper::DrawThemeBackground(hTheme, pDC->m_hDC, BP_CHECKBOX, nState, &rectCheckBox, NULL)))
+				if (SUCCEEDED(DrawThemeBackground(hTheme, pDC->m_hDC, BP_CHECKBOX, nState, &rectCheckBox, NULL)))
 				{
 					bRet = true;
 					drawItem.rcItem.left = drawItem.rcItem.left + size.cx + 3;
 				}
-				CThemeHelper::CloseThemeData(hTheme);
+				CloseThemeData(hTheme);
 			}
 		}
 	}
@@ -392,7 +395,7 @@ void CCheckListBox::PreDrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		{
 			DWORD dwMinor;
 
-			HRESULT hr = AtlGetCommCtrlVersion(&pChecklistState->m_dwVerComCtl32, &dwMinor);
+			HRESULT hr = GetCommCtrlVersion(&pChecklistState->m_dwVerComCtl32, &dwMinor);
 			if (FAILED(hr))
 			{
 				// Could not get comctl32's version. Default to < 6

@@ -23,7 +23,7 @@
 
 class CMFCToolBarButton;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsKeyboardPropertyPage dialog
 
 class CMFCToolBarsKeyboardPropertyPage : public CPropertyPage
@@ -38,7 +38,6 @@ public:
 	void SetAllCategory(LPCTSTR lpszCategory);
 
 // Dialog Data
-	//{{AFX_DATA(CMFCToolBarsKeyboardPropertyPage)
 	enum { IDD = IDD_AFXBARRES_PROPPAGE5 };
 	CStatic    m_wndAssignedToTitle;
 	CMFCAcceleratorKeyAssignCtrl m_wndNewKey;
@@ -51,7 +50,6 @@ public:
 	CButton    m_wndAssignButton;
 	CString    m_strDescription;
 	CString    m_strAssignedTo;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -59,8 +57,8 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarsKeyboardPropertyPage)
 	virtual BOOL OnInitDialog();
+
 	afx_msg void OnAssign();
 	afx_msg void OnSelchangeCategory();
 	afx_msg void OnSelchangeCommandsList();
@@ -69,7 +67,7 @@ protected:
 	afx_msg void OnResetAll();
 	afx_msg void OnSelchangeViewType();
 	afx_msg void OnUpdateNewShortcutKey();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Operations:

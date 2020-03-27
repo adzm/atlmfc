@@ -24,7 +24,7 @@
 class CMFCAutoHideButton;
 class CDockablePane;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCAutoHideBar window
 
 class CMFCAutoHideBar : public CPane
@@ -74,14 +74,12 @@ public:
 	virtual ~CMFCAutoHideBar();
 
 protected:
-	//{{AFX_MSG(CMFCAutoHideBar)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnNcDestroy();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	//}}AFX_MSG
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
+	afx_msg void OnMouseLeave();
 	DECLARE_MESSAGE_MAP()
 
 	CMFCAutoHideButton* ButtonFromPoint (CPoint pt);
@@ -102,7 +100,7 @@ private:
 	BOOL m_bTracked;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

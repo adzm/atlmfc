@@ -37,7 +37,7 @@ class CMFCImageEditorPaletteBar : public CMFCToolBar
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCImageEditorDialog dialog
 
 class CMFCImageEditorDialog : public CDialogEx
@@ -49,13 +49,11 @@ public:
 	CMFCImageEditorDialog(CBitmap* pBitmap, CWnd* pParent = NULL, int nBitsPixel = -1);   // standard constructor
 
 // Dialog Data
-	//{{AFX_DATA(CMFCImageEditorDialog)
 	enum { IDD = IDD_AFXBARRES_IMAGE_EDITOR };
 	CStatic m_wndColorPickerLocation;
 	CStatic m_wndPaletteBarLocation;
 	CStatic m_wndPreview;
 	CMFCImagePaintArea m_wndLargeDrawArea;
-	//}}AFX_DATA
 
 // Operations:
 protected:
@@ -70,7 +68,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCImageEditorDialog)
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
 	afx_msg void OnToolClear();
@@ -91,7 +88,7 @@ protected:
 	afx_msg void OnUpdateToolRect(CCmdUI* pCmdUI);
 	afx_msg LRESULT OnKickIdle(WPARAM, LPARAM);
 	afx_msg void OnColors();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Attributes:

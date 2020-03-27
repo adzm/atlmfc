@@ -42,7 +42,7 @@ struct _AFX_OCC_DIALOG_INFO;
 class COleControlSiteFactory;
 __declspec(selectany) extern const CLSID CLSID_WinFormsControl = 
 {0xb7e7a666,0xd623,0x457f,{0xa3,0x0a,0x6a,0x49,0xa3,0xe5,0xb4,0x70}};
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Control site factory interface - allow instantiation of different control sites
 
 class IControlSiteFactory 
@@ -52,7 +52,7 @@ public:
 		virtual COleControlSite* CreateSite(COleControlContainer* pCtrlCont,const CControlCreationInfo& creationInfo) = 0;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Control site factory collection manager class
 
 class CControlSiteFactoryMgr : public CNoTrackObject {
@@ -84,7 +84,7 @@ public:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Control containment helper functions
 
 DLGTEMPLATE* _AfxSplitDialogTemplate(const DLGTEMPLATE* pTemplate,
@@ -92,7 +92,7 @@ DLGTEMPLATE* _AfxSplitDialogTemplate(const DLGTEMPLATE* pTemplate,
 
 void _AfxZOrderOleControls(CWnd* pWnd, CMapWordToPtr* pOleItemMap);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleControlContainer
 
 class COleControlContainer : public CCmdTarget
@@ -136,7 +136,7 @@ public:
 	virtual CWnd* GetDlgItem(int nID) const;
 	virtual void GetDlgItem(int nID, HWND* phWnd) const;
 	virtual UINT GetDlgItemInt(int nID, BOOL* lpTrans, BOOL bSigned) const;
-	virtual int GetDlgItemText(_In_ int nID, _Out_cap_post_count_(nMaxCount, return + 1) _Pre_notnull_ _Post_z_ LPTSTR lpStr, _In_ int nMaxCount) const;
+	virtual int GetDlgItemText(_In_ int nID, _Out_writes_to_(nMaxCount, return + 1) _Pre_notnull_ _Post_z_ LPTSTR lpStr, _In_ int nMaxCount) const;
 	virtual LRESULT SendDlgItemMessage(int nID, UINT message, WPARAM wParam,
 		LPARAM lParam);
 	virtual void SetDlgItemInt(int nID, UINT nValue, BOOL bSigned);
@@ -199,7 +199,7 @@ public:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleControlSite
 
 #define VT_MFCFORCEPUTREF   0x8000  // force DISPATCH_PROPERTYPUTREF
@@ -396,7 +396,7 @@ public:
 		INIT_INTERFACE_PART(COleControlSite, AmbientProps)
 		STDMETHOD(GetTypeInfoCount)(unsigned int*);
 		STDMETHOD(GetTypeInfo)(unsigned int, LCID, ITypeInfo**);
-		STDMETHOD(GetIDsOfNames)(REFIID, _In_count_(cNames) LPOLESTR*, unsigned int cNames, LCID, DISPID*);
+		STDMETHOD(GetIDsOfNames)(REFIID, _In_reads_(cNames) LPOLESTR*, unsigned int cNames, LCID, DISPID*);
 		STDMETHOD(Invoke)(DISPID, REFIID, LCID, unsigned short, DISPPARAMS*,
 						  VARIANT*, EXCEPINFO*, unsigned int*);
 	END_INTERFACE_PART(AmbientProps)
@@ -411,7 +411,7 @@ public:
 		INIT_INTERFACE_PART(COleControlSite, EventSink)
 		STDMETHOD(GetTypeInfoCount)(unsigned int*);
 		STDMETHOD(GetTypeInfo)(unsigned int, LCID, ITypeInfo**);
-		STDMETHOD(GetIDsOfNames)(REFIID, _In_count_(cNames) LPOLESTR*, unsigned int cNames, LCID, DISPID*);
+		STDMETHOD(GetIDsOfNames)(REFIID, _In_reads_(cNames) LPOLESTR*, unsigned int cNames, LCID, DISPID*);
 		STDMETHOD(Invoke)(DISPID, REFIID, LCID, unsigned short, DISPPARAMS*,
 						  VARIANT*, EXCEPINFO*, unsigned int*);
 	END_INTERFACE_PART(EventSink)
@@ -443,7 +443,7 @@ public:
 	DECLARE_INTERFACE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleControlSiteOrWnd (helper)
 struct COleControlSiteOrWnd
 {
@@ -461,7 +461,7 @@ struct COleControlSiteOrWnd
 
 COleControlSiteOrWnd* AFXAPI _AfxFindSiteOrWnd(CWnd *pWndDlg, CWnd *pWnd);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE control container manager
 
 class COccManager : public CNoTrackObject

@@ -336,6 +336,7 @@ void CFullScreenImpl::RestoreState(CFrameWnd* pFrame)
 	pFrame->SetRedraw(FALSE);
 
 	pApp->m_bLoadUserToolbars = FALSE;
+	pApp->m_bExitingFullScreenMode = TRUE;
 
 	if (pTabbedMDIFrame != NULL)
 	{
@@ -394,7 +395,10 @@ void CFullScreenImpl::RestoreState(CFrameWnd* pFrame)
 	if (m_pImpl != NULL && m_pImpl->m_pRibbonBar != NULL && m_pImpl->m_pRibbonBar->IsWindowVisible() && m_pImpl->m_pRibbonBar->IsReplaceFrameCaption())
 	{
 		m_pImpl->OnChangeVisualManager();
+		m_pImpl->m_pRibbonBar->DWMCompositionChanged();
 	}
+
+	pApp->m_bExitingFullScreenMode = FALSE;
 }
 
 void CFullScreenImpl::ShowFullScreen()
@@ -503,6 +507,11 @@ void CFullScreenImpl::UndockAndHidePanes(CFrameWnd* pFrame)
 		if (CWnd::FromHandlePermanent(pToolBar->m_hWnd) != NULL)
 		{
 			ASSERT_VALID(pToolBar);
+
+			if (pToolBar->GetParentFrame()->GetSafeHwnd() != pFrame->GetSafeHwnd())
+			{
+				continue;
+			}
 
 			// Don't touch dropdown toolbars!
 			if (!pToolBar->IsKindOf(RUNTIME_CLASS(CMFCDropDownToolBar)))

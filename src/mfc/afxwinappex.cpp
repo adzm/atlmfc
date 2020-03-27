@@ -31,22 +31,19 @@
 #include "afxsettingsstore.h"
 #include "afxregpath.h"
 #include "afxrebarstate.h"
-
-#ifndef _MFC_USER_BUILD
 #include "version.h"
-#endif
 
 IMPLEMENT_DYNAMIC(CWinAppEx, CWinApp)
 
-static const CString strRegEntryNameControlBars = _T("\\ControlBars");
-static const CString strWindowPlacementRegSection = _T("WindowPlacement");
-static const CString strRectMainKey = _T("MainWindowRect");
-static const CString strFlagsKey = _T("Flags");
-static const CString strShowCmdKey = _T("ShowCmd");
-static const CString strRegEntryNameSizingBars = _T("\\SizingBars");
-static const CString strRegEntryVersion = _T("ControlBarVersion");
-static const CString strVersionMajorKey = _T("Major");
-static const CString strVersionMinorKey = _T("Minor");
+#define AFX_CONTROL_BARS_REG_ENTRY  _T("\\ControlBars")
+#define AFX_WINDOW_PLACEMENT_REG_SECTION  _T("WindowPlacement")
+#define AFX_MAIN_WINDOW_RECT  _T("MainWindowRect")
+#define AFX_FLAGS_KEY  _T("Flags")
+#define AFX_SHOW_CMD_KEY  _T("ShowCmd")
+#define AFX_SIZING_BARS_REG_ENTRY  _T("\\SizingBars")
+#define AFX_VERSION_REG_ENTRY  _T("ControlBarVersion")
+#define AFX_VERSION_MAJOR_ENTRY  _T("Major")
+#define AFX_VERSION_MINOR_ENTRY  _T("Minor")
 
 extern CObList afxAllToolBars;
 
@@ -76,12 +73,18 @@ CWinAppEx::CWinAppEx(BOOL bResourceSmartUpdate/* = TRUE*/) :
 	m_bForceImageReset = FALSE;
 
 	m_bLoadUserToolbars = TRUE;
+	m_bExitingFullScreenMode = FALSE;
 
 	m_bLoadWindowPlacement = TRUE;
+	m_bDeferShowOnFirstWindowPlacementLoad = FALSE;
 }
 
 int CWinAppEx::ExitInstance() 
 {
+#ifndef _AFXDLL
+	ControlBarCleanUp();
+#endif
+
 	return CWinApp::ExitInstance();
 }
 
@@ -327,10 +330,10 @@ BOOL CWinAppEx::LoadState(LPCTSTR lpszSectionName /*=NULL*/, CFrameImpl* pFrameI
 	CSettingsStoreSP regSP;
 	CSettingsStore& reg = regSP.Create(FALSE, TRUE);
 
-	if (reg.Open(GetRegSectionPath(strRegEntryVersion)))
+	if (reg.Open(GetRegSectionPath(AFX_VERSION_REG_ENTRY)))
 	{
-		reg.Read(strVersionMajorKey, m_iSavedVersionMajor);
-		reg.Read(strVersionMinorKey, m_iSavedVersionMinor);
+		reg.Read(AFX_VERSION_MAJOR_ENTRY, m_iSavedVersionMajor);
+		reg.Read(AFX_VERSION_MINOR_ENTRY, m_iSavedVersionMinor);
 	}
 
 	//--------------------------------------
@@ -400,7 +403,7 @@ BOOL CWinAppEx::LoadState(LPCTSTR lpszSectionName /*=NULL*/, CFrameImpl* pFrameI
 		CDockingManager::m_bDisableRecalcLayout = bPrevDisableRecalcLayout;
 
 		CDockState dockState;
-		dockState.LoadState(m_strRegSection + strRegEntryNameControlBars);
+		dockState.LoadState(m_strRegSection + AFX_CONTROL_BARS_REG_ENTRY);
 
 		if (m_bForceDockStateLoad || pFrameImpl->IsDockStateValid(dockState))
 		{
@@ -478,13 +481,8 @@ BOOL CWinAppEx::LoadState(LPCTSTR lpszSectionName /*=NULL*/, CFrameImpl* pFrameI
 	//----------------------------------------------------------------------
 	// To not confuse internal serialization, set version number to current:
 	//----------------------------------------------------------------------
-#ifndef _MFC_USER_BUILD
 	m_iSavedVersionMajor = rmj;
 	m_iSavedVersionMinor = rmm;
-#else
-	m_iSavedVersionMajor = 9;
-	m_iSavedVersionMinor = 0;
-#endif
 
 	if (pFrameImpl != NULL)
 	{
@@ -573,15 +571,10 @@ BOOL CWinAppEx::SaveState(LPCTSTR lpszSectionName  /*=NULL*/, CFrameImpl* pFrame
 	CSettingsStoreSP regSP;
 	CSettingsStore& reg = regSP.Create(FALSE, FALSE);
 
-	if (reg.CreateKey(GetRegSectionPath(strRegEntryVersion)))
+	if (reg.CreateKey(GetRegSectionPath(AFX_VERSION_REG_ENTRY)))
 	{
-#ifndef _MFC_USER_BUILD
-		reg.Write(strVersionMajorKey, rmj);
-		reg.Write(strVersionMinorKey, rmm);
-#else
-		reg.Write(strVersionMajorKey, 9);
-		reg.Write(strVersionMinorKey, 0);
-#endif
+		reg.Write(AFX_VERSION_MAJOR_ENTRY, rmj);
+		reg.Write(AFX_VERSION_MINOR_ENTRY, rmm);
 	}
 
 	//--------------------------------------
@@ -595,7 +588,7 @@ BOOL CWinAppEx::SaveState(LPCTSTR lpszSectionName  /*=NULL*/, CFrameImpl* pFrame
 		CDockState dockState;
 
 		pFrameImpl->m_pFrame->GetDockState(dockState);
-		dockState.SaveState(m_strRegSection + strRegEntryNameControlBars);
+		dockState.SaveState(m_strRegSection + AFX_CONTROL_BARS_REG_ENTRY);
 
 		pFrameImpl->SaveDockState(strSection);
 
@@ -732,12 +725,15 @@ BOOL CWinAppEx::ReloadWindowPlacement(CFrameWnd* pFrameWnd)
 {
 	ASSERT_VALID(pFrameWnd);
 
+	static BOOL bFirstWindowPlacementLoad = TRUE;
+
 	CCommandLineInfo cmdInfo;
 	AfxGetApp()->ParseCommandLine(cmdInfo);
 	if (cmdInfo.m_bRunEmbedded || cmdInfo.m_bRunAutomated)
 	{
 		//Don't show the main window if Application
 		//was run with /Embedding or /Automation.
+		bFirstWindowPlacementLoad = FALSE;
 		return FALSE;
 	}
 
@@ -754,7 +750,18 @@ BOOL CWinAppEx::ReloadWindowPlacement(CFrameWnd* pFrameWnd)
 		if (pFrameWnd->GetWindowPlacement(&wp))
 		{
 			wp.rcNormalPosition = rectNormal;
-			wp.showCmd = nShowCmd;
+			if (bFirstWindowPlacementLoad && m_bDeferShowOnFirstWindowPlacementLoad)
+			{
+				// Defer the showing of the main window until the call to pMainFrame->ShowWindow at the end
+				// of CXxxApp::InitInstance.  Set CXxxApp::m_bDeferShowOnFirstWindowPlacementLoad to FALSE
+				// (in CXxxApp::InitInstance, before the call to pMainFrame->LoadFrame) to get this behavior.
+				wp.showCmd = SW_HIDE;
+				m_nCmdShow = nShowCmd;
+			}
+			else
+			{
+				wp.showCmd = nShowCmd;
+			}
 
 			RECT rectDesktop;
 			SystemParametersInfo(SPI_GETWORKAREA,0, (PVOID)&rectDesktop,0);
@@ -793,6 +800,7 @@ BOOL CWinAppEx::ReloadWindowPlacement(CFrameWnd* pFrameWnd)
 		pDockingManager->ShowDelayShowMiniFrames(TRUE);
 	}
 
+	bFirstWindowPlacementLoad = FALSE;
 	return bRet;
 }
 
@@ -801,12 +809,12 @@ BOOL CWinAppEx::LoadWindowPlacement(CRect& rectNormalPosition, int& nFlags, int&
 	CSettingsStoreSP regSP;
 	CSettingsStore& reg = regSP.Create(FALSE, TRUE);
 
-	if (!reg.Open(GetRegSectionPath(strWindowPlacementRegSection)))
+	if (!reg.Open(GetRegSectionPath(AFX_WINDOW_PLACEMENT_REG_SECTION)))
 	{
 		return FALSE;
 	}
 
-	return reg.Read(strRectMainKey, rectNormalPosition) && reg.Read(strFlagsKey, nFlags) && reg.Read(strShowCmdKey, nShowCmd);
+	return reg.Read(AFX_MAIN_WINDOW_RECT, rectNormalPosition) && reg.Read(AFX_FLAGS_KEY, nFlags) && reg.Read(AFX_SHOW_CMD_KEY, nShowCmd);
 }
 
 BOOL CWinAppEx::StoreWindowPlacement(const CRect& rectNormalPosition, int nFlags, int nShowCmd)
@@ -814,12 +822,12 @@ BOOL CWinAppEx::StoreWindowPlacement(const CRect& rectNormalPosition, int nFlags
 	CSettingsStoreSP regSP;
 	CSettingsStore& reg = regSP.Create(FALSE, FALSE);
 
-	if (!reg.CreateKey(GetRegSectionPath(strWindowPlacementRegSection)))
+	if (!reg.CreateKey(GetRegSectionPath(AFX_WINDOW_PLACEMENT_REG_SECTION)))
 	{
 		return FALSE;
 	}
 
-	return reg.Write(strRectMainKey, rectNormalPosition) && reg.Write(strFlagsKey, nFlags) && reg.Write(strShowCmdKey, nShowCmd);
+	return reg.Write(AFX_MAIN_WINDOW_RECT, rectNormalPosition) && reg.Write(AFX_FLAGS_KEY, nFlags) && reg.Write(AFX_SHOW_CMD_KEY, nShowCmd);
 }
 
 // These functions load and store values from the "Custom" subkey
@@ -882,7 +890,11 @@ int CWinAppEx::GetSectionInt( LPCTSTR lpszSubSection, LPCTSTR lpszEntry, int nDe
 
 	if (reg.Open(strSection))
 	{
-		reg.Read(lpszEntry, nRet);
+		int nReg = 0;
+		if (reg.Read(lpszEntry, nReg))
+		{
+			nRet = nReg;
+		}
 	}
 	return nRet;
 }
@@ -902,7 +914,11 @@ CString CWinAppEx::GetSectionString( LPCTSTR lpszSubSection, LPCTSTR lpszEntry, 
 
 	if (reg.Open(strSection))
 	{
-		reg.Read(lpszEntry, strRet);
+		CString strReg;
+		if (reg.Read(lpszEntry, strReg))
+		{
+			strRet = strReg;
+		}
 	}
 	return strRet;
 }
@@ -1057,7 +1073,7 @@ BOOL CWinAppEx::IsStateExists(LPCTSTR lpszSectionName /*=NULL*/)
 	CSettingsStoreSP regSP;
 	CSettingsStore& reg = regSP.Create(FALSE, TRUE);
 
-	return reg.Open(GetRegSectionPath(strRegEntryVersion));
+	return reg.Open(GetRegSectionPath(AFX_VERSION_REG_ENTRY));
 }
 
 int CWinAppEx::GetDataVersion() const

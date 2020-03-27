@@ -30,7 +30,7 @@ AFX_STATIC void AFXAPI _AfxFillExceptionInfo(CFileException* pException,LPCTSTR 
 	}
 }
 
-AFX_STATIC BOOL AFXAPI _AfxFullPath2(_Out_z_cap_c_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR lpszFileIn,CFileException* pException);
+AFX_STATIC BOOL AFXAPI _AfxFullPath2(_Out_writes_z_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR lpszFileIn,CFileException* pException);
 
 #define new DEBUG_NEW
 
@@ -540,9 +540,11 @@ HRESULT AFX_COM::GetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 		return REGDB_E_CLASSNOTREG;
 
 	// try to load it
-	hInst = AfxCtxLoadLibrary(strServer);
+	hInst = LoadLibraryEx(strServer, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 	if (hInst == NULL)
-		return REGDB_E_CLASSNOTREG;
+	{
+		return AtlHresultFromLastError();
+	}
 
 #pragma warning(disable:4191)
 	// get its entry point
@@ -602,7 +604,7 @@ BOOL AFXAPI AfxGetInProcServer(LPCTSTR lpszCLSID, CString& str)
 
 
 BOOL AFXAPI AfxResolveShortcut(CWnd* pWnd, LPCTSTR lpszFileIn,
-	_Out_cap_(cchPath) LPTSTR lpszFileOut, int cchPath)
+	_Out_writes_(cchPath) LPTSTR lpszFileOut, int cchPath)
 {
 	AFX_COM com;
 	IShellLink* psl = NULL;
@@ -649,7 +651,7 @@ BOOL AFXAPI AfxResolveShortcut(CWnd* pWnd, LPCTSTR lpszFileIn,
 
 
 // turn a file, relative path or other into an absolute path
-BOOL AFXAPI _AfxFullPath2(_Out_z_cap_c_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR lpszFileIn, CFileException* pException)
+BOOL AFXAPI _AfxFullPath2(_Out_writes_z_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR lpszFileIn, CFileException* pException)
 	// lpszPathOut = buffer of _MAX_PATH
 	// lpszFileIn = file, relative path or absolute path
 	// (both in ANSI character set)
@@ -719,7 +721,7 @@ BOOL AFXAPI _AfxFullPath2(_Out_z_cap_c_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR l
 				FindClose(h);
 				if(lpszFilePart != NULL && lpszFilePart > lpszPathOut)
 				{
-					int nFileNameLen = lstrlen(data.cFileName);
+					int nFileNameLen = AtlStrLen(data.cFileName);
 					int nIndexOfPart = (int)(lpszFilePart - lpszPathOut);
 					if ((nFileNameLen + nIndexOfPart) < _MAX_PATH)
 					{
@@ -786,8 +788,8 @@ BOOL AFXAPI AfxComparePath(LPCTSTR lpszPath1, LPCTSTR lpszPath2)
 	// in particular, the file system is case sensitive with respect to
 	// "full width" roman characters.
 	// (ie. fullwidth-R is different from fullwidth-r).
-	int nLen = lstrlen(lpszPath1);
-	if (nLen != lstrlen(lpszPath2))
+	int nLen = AtlStrLen(lpszPath1);
+	if (nLen != AtlStrLen(lpszPath2))
 		return FALSE;
 	ASSERT(nLen < _MAX_PATH);
 
@@ -825,7 +827,7 @@ BOOL AFXAPI AfxComparePath(LPCTSTR lpszPath1, LPCTSTR lpszPath2)
 	return TRUE; // otherwise file name is truly the same
 }
 
-UINT AFXAPI AfxGetFileTitle(LPCTSTR lpszPathName, _Out_cap_(nMax) LPTSTR lpszTitle, UINT nMax)
+UINT AFXAPI AfxGetFileTitle(LPCTSTR lpszPathName, _Out_writes_(nMax) LPTSTR lpszTitle, UINT nMax)
 {
 	ASSERT(lpszTitle == NULL ||
 		AfxIsValidAddress(lpszTitle, _MAX_FNAME));
@@ -844,7 +846,7 @@ UINT AFXAPI AfxGetFileTitle(LPCTSTR lpszPathName, _Out_cap_(nMax) LPTSTR lpszTit
 		// when ::GetFileTitle fails, use cheap imitation
 		return AfxGetFileName(lpszPathName, lpszTitle, nMax);
 	}
-	return lpszTitle == NULL ? lstrlen(lpszTemp)+1 : 0;
+	return lpszTitle == NULL ? static_cast<UINT>(_tcslen(lpszTemp))+1 : 0;
 }
 
 void AFXAPI AfxGetModuleFileName(HINSTANCE hInst, CString& strFileName)

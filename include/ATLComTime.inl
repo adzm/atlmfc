@@ -96,17 +96,20 @@ ATLCOMTIME_INLINE LONG COleDateTimeSpan::GetDays() const throw()
 
 ATLCOMTIME_INLINE LONG COleDateTimeSpan::GetHours() const throw()
 {
-	return LONG(GetTotalHours()) % 24;
+	double dPartialDayHours = GetTotalHours() - (GetTotalDays() * 24);
+	return LONG(dPartialDayHours) % 24;
 }
 
 ATLCOMTIME_INLINE LONG COleDateTimeSpan::GetMinutes() const throw()
 {
-	return LONG(GetTotalMinutes()) % 60;
+	double dPartialHourMinutes = GetTotalMinutes() - (GetTotalHours() * 60);
+	return LONG(dPartialHourMinutes) % 60;
 }
 
 ATLCOMTIME_INLINE LONG COleDateTimeSpan::GetSeconds() const throw()
 {
-	return LONG(GetTotalSeconds()) % 60;
+	double dPartialMinuteSeconds = GetTotalSeconds() - (GetTotalMinutes() * 60);
+	return LONG(dPartialMinuteSeconds) % 60;
 }
 
 ATLCOMTIME_INLINE COleDateTimeSpan& COleDateTimeSpan::operator=(_In_ double dblSpanSrc) throw()
@@ -345,6 +348,7 @@ ATLCOMTIME_INLINE COleDateTime::COleDateTime(
 	SetDateTime(nYear, nMonth, nDay, nHour, nMin, nSec);
 }
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 ATLCOMTIME_INLINE COleDateTime::COleDateTime(
 	_In_ WORD wDosDate, 
 	_In_ WORD wDosTime) throw()
@@ -352,6 +356,7 @@ ATLCOMTIME_INLINE COleDateTime::COleDateTime(
 	m_status = ::DosDateTimeToVariantTime(wDosDate, wDosTime, &m_dt) ?
 		valid : invalid;
 }
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 ATLCOMTIME_INLINE void COleDateTime::SetStatus(_In_ DateTimeStatus status) throw()
 {
@@ -363,7 +368,7 @@ ATLCOMTIME_INLINE COleDateTime::DateTimeStatus COleDateTime::GetStatus() const t
 	return m_status;
 }
 
-ATLCOMTIME_INLINE bool COleDateTime::GetAsSystemTime(_Out_ SYSTEMTIME& sysTime) const throw()
+ATLCOMTIME_INLINE _Success_(return != false) bool COleDateTime::GetAsSystemTime(_Out_ SYSTEMTIME& sysTime) const throw()
 {
 	return GetStatus() == valid && ::VariantTimeToSystemTime(m_dt, &sysTime);
 }
@@ -456,15 +461,47 @@ ATLCOMTIME_INLINE COleDateTime& COleDateTime::operator=(_In_ const __time32_t& t
     return operator=(static_cast<__time64_t>(timeSrc));
 }
 
+#ifndef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+inline bool GetAsSystemTimeHelper(_In_ const __time64_t& timeSrc, _Out_ SYSTEMTIME& timeDest)
+{
+	struct tm ttm;
+
+	if (_localtime64_s(&ttm, &timeSrc) != 0)
+	{
+		return false;
+	}
+	
+	timeDest.wYear = (WORD) (1900 + ttm.tm_year);
+	timeDest.wMonth = (WORD) (1 + ttm.tm_mon);
+	timeDest.wDayOfWeek = (WORD) ttm.tm_wday;
+	timeDest.wDay = (WORD) ttm.tm_mday;
+	timeDest.wHour = (WORD) ttm.tm_hour;
+	timeDest.wMinute = (WORD) ttm.tm_min;
+	timeDest.wSecond = (WORD) ttm.tm_sec;
+	timeDest.wMilliseconds = 0;
+
+	return true;
+}
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 ATLCOMTIME_INLINE COleDateTime& COleDateTime::operator=(_In_ const __time64_t& timeSrc) throw()
 {
+#ifndef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+	SYSTEMTIME st;
+
+	m_status = GetAsSystemTimeHelper(timeSrc, st) &&
+			   ConvertSystemTimeToVariantTime(st) ? valid : invalid;
+
+#else
 	SYSTEMTIME st;
 	CTime tmp(timeSrc);
 
 	m_status = tmp.GetAsSystemTime(st) &&
-			   ConvertSystemTimeToVariantTime(st) ? valid : invalid;	
+			   ConvertSystemTimeToVariantTime(st) ? valid : invalid;
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	return *this;
 }
+
 
 ATLCOMTIME_INLINE COleDateTime &COleDateTime::operator=(_In_ const SYSTEMTIME &systimeSrc) throw()
 {
@@ -472,6 +509,7 @@ ATLCOMTIME_INLINE COleDateTime &COleDateTime::operator=(_In_ const SYSTEMTIME &s
 	return *this;
 }
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 ATLCOMTIME_INLINE COleDateTime &COleDateTime::operator=(_In_ const FILETIME &filetimeSrc) throw()
 {
 	FILETIME ftl;
@@ -483,12 +521,13 @@ ATLCOMTIME_INLINE COleDateTime &COleDateTime::operator=(_In_ const FILETIME &fil
 
 	return *this;
 }
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 ATLCOMTIME_INLINE BOOL COleDateTime::ConvertSystemTimeToVariantTime(_In_ const SYSTEMTIME& systimeSrc)
 {
 	return AtlConvertSystemTimeToVariantTime(systimeSrc,&m_dt);	
 }
-ATLCOMTIME_INLINE COleDateTime &COleDateTime::operator=(const UDATE &udate) throw()
+ATLCOMTIME_INLINE COleDateTime &COleDateTime::operator=(_In_ const UDATE &udate) throw()
 {
 	m_status = (S_OK == VarDateFromUdate((UDATE*)&udate, 0, &m_dt)) ? valid : invalid;
 

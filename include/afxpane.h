@@ -23,9 +23,12 @@
 #pragma component(minrebuild, off)
 #endif
 
-#pragma warning( disable : 4100 34 )
+#pragma warning(push)
+#pragma warning(disable : 4100 34)
 
-/////////////////////////////////////////////////////////////////////////////
+#define AFX_CONTROL_BAR_PROFILE  _T("Panes")
+
+/*============================================================================*/
 // CPane window
 
 class CDockSite;
@@ -49,7 +52,7 @@ static const DWORD AFX_DEFAULT_PANE_STYLE = AFX_CBRS_FLOAT | AFX_CBRS_CLOSE;
 static const int AFX_DEFAULT_TOOLBAR_STYLE = (WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_HIDE_INPLACE);
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPane window
 
 class CPane : public CBasePane
@@ -74,7 +77,6 @@ public:
 	AFX_IMPORT_DATA static BOOL m_bHandleMinSize;
 
 	void SetMinSize(const CSize& size) { m_sizeMin = size; }
-	virtual int GetMinLength() const { return IsHorizontal() ? 10 : 10; }
 	virtual int GetResizeStep() const { return -1; }
 
 	CPoint GetHotSpot() const { return m_dragFrameImpl.m_ptHot; }
@@ -89,7 +91,6 @@ public:
 	virtual BOOL DoesAllowSiblingBars() const { return !m_bExclusiveRow; }
 
 	bool IsLeftOf(CRect rect, bool bWindowRect = true) const;
-	bool IsLastPaneOnLastRow() const;
 
 	virtual BOOL IsTabbed() const;
 	virtual void CopyState(CPane* pOrgBar);
@@ -98,7 +99,7 @@ public:
 	virtual void GetPaneName(CString& strName) const;
 
 	CDockingPanesRow* GetDockSiteRow() const { return m_pDockBarRow; }
-	void GetDockSiteRow(CDockingPanesRow* pRow) { m_pDockBarRow = pRow; }
+	void SetDockSiteRow(CDockingPanesRow* pRow) { m_pDockBarRow = pRow; }
 
 	void GetVirtualRect(CRect& rectVirtual) const;
 	void SetVirtualRect(const CRect& rect, BOOL bMapToParent = TRUE);
@@ -226,7 +227,6 @@ public:
 	//----------------------------------------------------------------------------------------------
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CPane)
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
@@ -237,7 +237,7 @@ protected:
 	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnDestroy();
 	afx_msg void OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CRect  m_rectVirtual;
@@ -267,7 +267,6 @@ public:
 	BOOL m_bWasFloatingBeforeMove;
 	BOOL m_bWasFloatingBeforeTabbed;
 
-	void SetRecentTabWindowInfo(DWORD dwFrameAlignment, const CList<UINT, UINT&>& lstSiblingBars);
 	void CalcRecentDockedRect();
 
 protected:
@@ -281,7 +280,7 @@ _inline BOOL CPane::CanBeDocked(CBasePane* pDockBar) const
 	return ((GetEnabledAlignment() & pDockBar->GetCurrentAlignment()) != 0);
 }
 
-#pragma warning( default : 4100 34 )
+#pragma warning(pop)
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

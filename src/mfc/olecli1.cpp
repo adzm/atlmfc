@@ -48,6 +48,9 @@ COleClientItem::COleClientItem(COleDocument* pContainerDoc)
 	m_lpNewStorage = NULL;
 	m_bNeedCommit = FALSE;
 
+	m_ClassesAllowedInStorage.rgclsidAllowed = NULL;
+	m_nClassesAllowedInStorage = 0;
+
 	if (pContainerDoc != NULL)
 		pContainerDoc->AddItem(this);
 
@@ -261,10 +264,10 @@ void COleClientItem::GetItemName(_Out_ _Pre_notnull_ _Post_z_ LPTSTR lpszItemNam
 	ASSERT(AfxIsValidAddress(lpszItemName, OLE_MAXITEMNAME));
 
 	GetItemName(lpszItemName, OLE_MAXITEMNAME);
-	ASSERT(lstrlen(lpszItemName) < OLE_MAXITEMNAME);
+	ASSERT(AtlStrLen(lpszItemName) < OLE_MAXITEMNAME);
 }
 
-void COleClientItem::GetItemName(_Out_z_cap_(cchItemName) _Pre_notnull_ _Post_z_ LPTSTR lpszItemName, UINT cchItemName ) const
+void COleClientItem::GetItemName(_Out_writes_z_(cchItemName) _Pre_notnull_ _Post_z_ LPTSTR lpszItemName, UINT cchItemName ) const
 {
 	ASSERT_VALID(this);
 	ASSERT(lpszItemName != NULL);
@@ -782,8 +785,7 @@ BOOL COleClientItem::CreateCloneFrom(const COleClientItem* pSrcItem)
 
 	// then load the new object from the new storage
 	LPOLECLIENTSITE lpClientSite = GetClientSite();
-	sc = ::OleLoad(m_lpStorage, IID_IUnknown,
-		lpClientSite, (LPLP)&m_lpObject);
+	sc = AfxInternalOleLoadFromStorage(m_lpStorage, IID_IUnknown, lpClientSite, (LPLP)&m_lpObject, m_ClassesAllowedInStorage, m_nClassesAllowedInStorage);
 	BOOL bResult = FinishCreate(sc);
 
 	ASSERT_VALID(this);
@@ -909,8 +911,7 @@ void COleClientItem::ReadItemFlat(CArchive& ar)
 
 	// attempt to load the object from the storage
 	LPUNKNOWN lpUnk = NULL;
-	sc = ::OleLoad(m_lpStorage, IID_IUnknown, GetClientSite(),
-		(LPLP)&lpUnk);
+	sc = AfxInternalOleLoadFromStorage(m_lpStorage, IID_IUnknown, GetClientSite(), (LPLP)&lpUnk, m_ClassesAllowedInStorage, m_nClassesAllowedInStorage);
 	CheckGeneral(sc);
 
 	ASSERT(lpUnk != NULL);
@@ -968,7 +969,7 @@ void COleClientItem::WriteItemFlat(CArchive& ar)
 void COleClientItem::GetItemStorageCompound()
 {
 	COleDocument* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
+	ENSURE(pDoc);
 	ASSERT(pDoc->m_bCompoundFile);
 	if (pDoc->m_lpRootStg == NULL)
 	{
@@ -1075,8 +1076,7 @@ void COleClientItem::ReadItemCompound(CArchive& ar)
 
 		// attempt to load the object from the storage
 		LPUNKNOWN lpUnk = NULL;
-		sc = ::OleLoad(m_lpStorage, IID_IUnknown, GetClientSite(),
-			(LPLP)&lpUnk);
+		sc = AfxInternalOleLoadFromStorage(m_lpStorage, IID_IUnknown, GetClientSite(), (LPLP)&lpUnk, m_ClassesAllowedInStorage, m_nClassesAllowedInStorage);
 		CheckGeneral(sc);
 
 		// get IOleObject interface for the newly loaded object
@@ -2011,8 +2011,12 @@ STDMETHODIMP COleClientItem::XOleClientSite::SaveObject()
 	METHOD_PROLOGUE_EX(COleClientItem, OleClientSite)
 	ASSERT_VALID(pThis);
 
-	LPPERSISTSTORAGE lpPersistStorage =
-		QUERYINTERFACE(pThis->m_lpObject, IPersistStorage);
+	if (pThis->m_lpObject == NULL)
+	{
+		return E_UNEXPECTED;
+	}
+
+	LPPERSISTSTORAGE lpPersistStorage = QUERYINTERFACE(pThis->m_lpObject, IPersistStorage);
 	ASSERT(lpPersistStorage != NULL);
 	SCODE sc = S_OK;
 	if (lpPersistStorage->IsDirty() == S_OK)
@@ -2020,24 +2024,31 @@ STDMETHODIMP COleClientItem::XOleClientSite::SaveObject()
 		// S_OK == S_TRUE != S_FALSE, therefore object is dirty!
 		sc = ::OleSave(lpPersistStorage, pThis->m_lpStorage, TRUE);
 		if (sc == S_OK)
+		{
 			sc = lpPersistStorage->SaveCompleted(NULL);
+		}
 
 		// mark the document as dirty, if save sucessful.
 		pThis->m_pDocument->SetModifiedFlag();
 	}
+
 	lpPersistStorage->Release();
 	return sc;
 }
 
-STDMETHODIMP COleClientItem::XOleClientSite::GetMoniker(
-	DWORD dwAssign, DWORD dwWhichMoniker, LPMONIKER* ppMoniker)
+STDMETHODIMP COleClientItem::XOleClientSite::GetMoniker(DWORD dwAssign, DWORD dwWhichMoniker, LPMONIKER* ppMoniker)
 {
 	METHOD_PROLOGUE_EX(COleClientItem, OleClientSite)
 	ASSERT_VALID(pThis);
 
 	COleDocument* pDoc = pThis->GetDocument();
 	ASSERT_VALID(pDoc);
+
 	ASSERT(ppMoniker != NULL);
+		if (ppMoniker == NULL)
+	{
+		return E_POINTER;
+	}
 	*ppMoniker = NULL;
 
 	switch (dwWhichMoniker)
@@ -2073,8 +2084,7 @@ STDMETHODIMP COleClientItem::XOleClientSite::GetMoniker(
 					TCHAR szItemName[OLE_MAXITEMNAME];
 					pThis->GetItemName(szItemName, _countof(szItemName));
 					CStringW strItemName(szItemName);
-					CreateItemMoniker(OLESTDDELIMOLE, strItemName.GetString(),
-						ppMoniker);
+					::CreateItemMoniker(OLESTDDELIMOLE, strItemName.GetString(), ppMoniker);
 
 					// notify the object of the assignment
 					if (dwAssign != OLEGETMONIKER_TEMPFORUSER &&
@@ -2117,8 +2127,7 @@ STDMETHODIMP COleClientItem::XOleClientSite::GetMoniker(
 	return *ppMoniker != NULL ? S_OK : E_FAIL;
 }
 
-STDMETHODIMP COleClientItem::XOleClientSite::GetContainer(
-	LPOLECONTAINER* ppContainer)
+STDMETHODIMP COleClientItem::XOleClientSite::GetContainer(LPOLECONTAINER* ppContainer)
 {
 #ifdef _DEBUG
 	METHOD_PROLOGUE_EX(COleClientItem, OleClientSite)
@@ -2126,9 +2135,19 @@ STDMETHODIMP COleClientItem::XOleClientSite::GetContainer(
 	METHOD_PROLOGUE_EX_(COleClientItem, OleClientSite)
 #endif
 
+	if (ppContainer == NULL)
+	{
+		return E_POINTER;
+	}
+
 	// return the IOleItemContainer interface in the document
 	COleDocument* pDoc = pThis->GetDocument();
 	ASSERT_VALID(pDoc);
+	if (pDoc == NULL)
+	{
+		return E_UNEXPECTED;
+	}
+
 	*ppContainer = pDoc->GetContainer();
 
 	return *ppContainer != NULL ? S_OK : E_NOINTERFACE;

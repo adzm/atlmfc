@@ -15,7 +15,7 @@
 #include "afxdockingmanager.h"
 #include "afxdockablepane.h"
 #include "afxpanedivider.h"
-
+#include "afxwinappex.h"
 #include "afxbasetabbedpane.h"
 
 #ifdef _DEBUG
@@ -37,7 +37,6 @@ CMultiPaneFrameWnd::~CMultiPaneFrameWnd()
 {
 }
 
-//{{AFX_MSG_MAP(CMultiPaneFrameWnd)
 BEGIN_MESSAGE_MAP(CMultiPaneFrameWnd, CPaneFrameWnd)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
@@ -48,7 +47,6 @@ BEGIN_MESSAGE_MAP(CMultiPaneFrameWnd, CPaneFrameWnd)
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CMultiPaneFrameWnd::OnIdleUpdateCmdUI)
 	ON_REGISTERED_MESSAGE(AFX_WM_CHECKEMPTYMINIFRAME, &CMultiPaneFrameWnd::OnCheckEmptyState)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMultiPaneFrameWnd message handlers
@@ -869,14 +867,16 @@ void CMultiPaneFrameWnd::SetDockState(CDockingManager* pDockManager)
 			ASSERT_VALID(pNextBar);
 
 			BOOL bShow = pNextBar->GetRecentVisibleState();
+			CWinAppEx* pApp = DYNAMIC_DOWNCAST(CWinAppEx, AfxGetApp());
+			BOOL bExitingFullScreenMode = (pApp != NULL && pApp->m_bExitingFullScreenMode);
 
-			if (bShow)
+			if (bShow && !bExitingFullScreenMode)
 			{
 				SetDelayShow(TRUE);
 			}
 			
 			// show with delay
-			pNextBar->ShowPane(bShow, TRUE, FALSE);
+			pNextBar->ShowPane(bShow, !bExitingFullScreenMode, FALSE);
 			
 			AddRemovePaneFromGlobalList(pNextBar, TRUE);
 		}

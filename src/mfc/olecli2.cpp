@@ -380,7 +380,9 @@ BOOL COleClientItem::CanActivate()
 {
 	// don't allow in-place activations with iconic aspect items
 	if (m_nDrawAspect == DVASPECT_ICON)
+	{
 		return FALSE;
+	}
 
 	// if no view has been set, attempt to find suitable one.
 	//  (necessary to get links to embeddings to work correctly)
@@ -388,8 +390,7 @@ BOOL COleClientItem::CanActivate()
 	{
 		// only use pActivateView if this item is in same document
 		_AFX_OLE_STATE* pOleState = _afxOleState;
-		if (pOleState->m_pActivateView != NULL &&
-			pOleState->m_pActivateView->GetDocument() != GetDocument())
+		if (pOleState->m_pActivateView != NULL && pOleState->m_pActivateView->GetDocument() != GetDocument())
 		{
 			pOleState->m_pActivateView = NULL;   // not in same document
 		}
@@ -400,7 +401,9 @@ BOOL COleClientItem::CanActivate()
 			// no routing view available - try to use the one with focus
 			CWnd* pWnd = CWnd::GetFocus();
 			while (pWnd != NULL && !pWnd->IsKindOf(RUNTIME_CLASS(CView)))
+			{
 				pWnd = pWnd->GetParent();
+			}
 			pView = STATIC_DOWNCAST(CView, pWnd);
 
 			if (pView == NULL)
@@ -462,14 +465,16 @@ void COleClientItem::OnActivateUI()
 	m_pView->ModifyStyle(0, WS_CLIPCHILDREN);
 
 	// cache the server's HWND for later
-	LPOLEINPLACEOBJECT lpInPlaceObject =
-		QUERYINTERFACE(m_lpObject, IOleInPlaceObject);
+	LPOLEINPLACEOBJECT lpInPlaceObject = QUERYINTERFACE(m_lpObject, IOleInPlaceObject);
 	ASSERT(lpInPlaceObject != NULL);
 
 	// get the HWND for the in-place active object
 	HWND hWnd;
 	if (lpInPlaceObject->GetWindow(&hWnd) != S_OK)
+	{
 		hWnd = NULL;
+	}
+
 	lpInPlaceObject->Release();
 	m_hWndServer = hWnd;
 
@@ -530,16 +535,18 @@ BOOL COleClientItem::OnShowControlBars(CFrameWnd* pFrameWnd, BOOL bShow)
 	return bResult;
 }
 
-BOOL COleClientItem::OnGetWindowContext(
-	CFrameWnd** ppMainFrame, CFrameWnd** ppDocFrame,
-	LPOLEINPLACEFRAMEINFO pFrameInfo)
+BOOL COleClientItem::OnGetWindowContext(CFrameWnd** ppMainFrame, CFrameWnd** ppDocFrame, LPOLEINPLACEFRAMEINFO pFrameInfo)
 {
 	ASSERT(AfxIsValidAddress(ppMainFrame, sizeof(CFrameWnd*)));
 	ASSERT(AfxIsValidAddress(ppDocFrame, sizeof(CFrameWnd*)));
-	ASSERT(pFrameInfo == NULL ||
-		AfxIsValidAddress(pFrameInfo, sizeof(OLEINPLACEFRAMEINFO)));
+	ASSERT(pFrameInfo == NULL || AfxIsValidAddress(pFrameInfo, sizeof(OLEINPLACEFRAMEINFO)));
 	ASSERT_VALID(this);
 	ASSERT_VALID(m_pView);
+
+	if ((ppMainFrame == NULL) || (ppDocFrame == NULL))
+	{
+		return E_POINTER;
+	}
 
 	// get main window of application
 	*ppMainFrame = m_pView->GetTopLevelFrame();
@@ -686,7 +693,10 @@ void COleClientItem::OnDeactivate()
 	{
 		// release in place frame
 		if (m_pInPlaceFrame->m_pFrameWnd->m_pNotifyHook == m_pInPlaceFrame)
-			m_pInPlaceFrame->m_pFrameWnd->m_pNotifyHook =  NULL;
+		{
+			m_pInPlaceFrame->m_pFrameWnd->m_pNotifyHook = NULL;
+			m_pInPlaceFrame->m_pFrameWnd = NULL;
+		}
 		m_pInPlaceFrame->InternalRelease();
 		m_pInPlaceFrame = NULL;
 
@@ -695,7 +705,10 @@ void COleClientItem::OnDeactivate()
 		{
 			// release in place document
 			if (m_pInPlaceDoc->m_pFrameWnd->m_pNotifyHook == m_pInPlaceDoc)
+			{
 				m_pInPlaceDoc->m_pFrameWnd->m_pNotifyHook = NULL;
+				m_pInPlaceDoc->m_pFrameWnd = NULL;
+			}
 			m_pInPlaceDoc->InternalRelease();
 			m_pInPlaceDoc = NULL;
 		}
@@ -1059,10 +1072,14 @@ STDMETHODIMP COleFrameHook::XOleInPlaceFrame::QueryInterface(
 	return pThis->ExternalQueryInterface(&iid, ppvObj);
 }
 
-STDMETHODIMP COleFrameHook::XOleInPlaceFrame::GetWindow(
-	HWND* lphwnd)
+STDMETHODIMP COleFrameHook::XOleInPlaceFrame::GetWindow(HWND* lphwnd)
 {
 	METHOD_PROLOGUE_EX_(COleFrameHook, OleInPlaceFrame)
+
+	if (lphwnd == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*lphwnd = pThis->m_hWnd;
 	return *lphwnd != NULL ? S_OK : E_FAIL;
@@ -1345,8 +1362,7 @@ STDMETHODIMP_(ULONG) COleClientItem::XOleIPSite::Release()
 	return pThis->ExternalRelease();
 }
 
-STDMETHODIMP COleClientItem::XOleIPSite::QueryInterface(
-	REFIID iid, LPVOID* ppvObj)
+STDMETHODIMP COleClientItem::XOleIPSite::QueryInterface(REFIID iid, LPVOID* ppvObj)
 {
 	METHOD_PROLOGUE_EX_(COleClientItem, OleIPSite)
 	return pThis->ExternalQueryInterface(&iid, ppvObj);
@@ -1355,6 +1371,11 @@ STDMETHODIMP COleClientItem::XOleIPSite::QueryInterface(
 STDMETHODIMP COleClientItem::XOleIPSite::GetWindow(HWND* lphwnd)
 {
 	METHOD_PROLOGUE_EX_(COleClientItem, OleIPSite)
+
+	if (lphwnd == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*lphwnd = pThis->m_pView->GetSafeHwnd();
 	return *lphwnd != NULL ? S_OK : E_FAIL;
@@ -1412,14 +1433,16 @@ STDMETHODIMP COleClientItem::XOleIPSite::OnUIActivate()
 	return sc;
 }
 
-STDMETHODIMP COleClientItem::XOleIPSite::GetWindowContext(
-	LPOLEINPLACEFRAME* lplpFrame,
-	LPOLEINPLACEUIWINDOW* lplpDoc,
-	LPRECT lpPosRect, LPRECT lpClipRect,
-	LPOLEINPLACEFRAMEINFO lpFrameInfo)
+STDMETHODIMP COleClientItem::XOleIPSite::GetWindowContext(LPOLEINPLACEFRAME* lplpFrame,
+	LPOLEINPLACEUIWINDOW* lplpDoc, LPRECT lpPosRect, LPRECT lpClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
 {
 	METHOD_PROLOGUE_EX(COleClientItem, OleIPSite)
 	ASSERT_VALID(pThis);
+
+	if ((lplpFrame == NULL) || (lplpDoc == NULL))
+	{
+		return E_POINTER;
+	}
 
 	*lplpFrame = NULL;  // init these in-case of mem-alloc failure
 	*lplpDoc = NULL;

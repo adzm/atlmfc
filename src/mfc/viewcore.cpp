@@ -16,7 +16,6 @@
 // CView
 
 BEGIN_MESSAGE_MAP(CView, CWnd)
-	//{{AFX_MSG_MAP(CView)
 	ON_WM_PAINT()
 	ON_WM_MOUSEACTIVATE()
 	ON_WM_CREATE()
@@ -36,7 +35,6 @@ BEGIN_MESSAGE_MAP(CView, CWnd)
 	ON_MESSAGE_VOID(WM_INITIALUPDATE, CView::OnInitialUpdate)
 
 	ON_MESSAGE(WM_PRINTCLIENT, &CView::OnPrintClient)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

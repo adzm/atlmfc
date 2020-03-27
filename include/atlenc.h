@@ -75,10 +75,12 @@ inline int Base64DecodeGetRequiredLength(_In_ int nSrcLen) throw()
 	return nSrcLen;
 }
 
+ATLPREFAST_SUPPRESS(6054)
+_Success_(return != FALSE)
 inline BOOL Base64Encode(
-	_In_count_(nSrcLen) const BYTE *pbSrcData,
+	_In_reads_(nSrcLen) const BYTE *pbSrcData,
 	_In_ int nSrcLen,
-	_Out_z_cap_post_count_(*pnDestLen, *pnDestLen) LPSTR szDest,
+	_When_(*pnDestLen > 0, _Out_writes_to_(*pnDestLen, *pnDestLen)) LPSTR szDest,
 	_Inout_ int *pnDestLen,
 	_In_ DWORD dwFlags = ATL_BASE64_FLAG_NONE) throw()
 {
@@ -171,6 +173,7 @@ inline BOOL Base64Encode(
 	*pnDestLen = nWritten;
 	return TRUE;
 }
+ATLPREFAST_UNSUPPRESS()
 
 inline int DecodeBase64Char(_In_ unsigned int ch) throw()
 {
@@ -192,9 +195,9 @@ inline int DecodeBase64Char(_In_ unsigned int ch) throw()
 }
 
 inline BOOL Base64Decode(
-	_In_z_count_(nSrcLen) LPCSTR szSrc,
+	_In_reads_z_(nSrcLen) LPCSTR szSrc,
 	_In_ int nSrcLen,
-	_Out_cap_post_count_(*pnDestLen, *pnDestLen) BYTE *pbDest,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) BYTE *pbDest,
 	_Inout_ int *pnDestLen) throw()
 {
 	// walk the source buffer
@@ -338,11 +341,11 @@ T* EnsureNotBeyond(T* p, T* end)
 //encode a chunk of data
 // this warning is bogus
 // Invalid data: accessing 'szDest', the readable size is 'sizeof(("end??"))-1' bytes, but '15' bytes might be read
-ATLPREFAST_SUPPRESS(6385)
+ATLPREFAST_SUPPRESS(6054 6385)
 inline BOOL UUEncode(
-	_In_bytecount_(nSrcLen) const BYTE* pbSrcData,
+	_In_reads_bytes_(nSrcLen) const BYTE* pbSrcData,
 	_In_ int nSrcLen,
-	_Out_z_cap_post_count_(*pnDestLen, *pnDestLen) LPSTR szDestBegin,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) LPSTR szDestBegin,
 	_Inout_ int* pnDestLen,
 	_In_opt_z_ LPCTSTR lpszFile = _T("file"),
 	_In_ DWORD dwFlags = 0) throw()
@@ -475,9 +478,9 @@ ATLPREFAST_UNSUPPRESS()
 #define UUDECODE(ch) (((ch) == '`') ? '\0' : ((ch) - ' ') & 0x3F)
 
 inline BOOL UUDecode(
-	_In_bytecount_(nSrcLen) BYTE* pbSrcData,
+	_In_reads_bytes_(nSrcLen) BYTE* pbSrcData,
 	_In_ int nSrcLen,
-	_Out_cap_post_count_(*pnDestLen, *pnDestLen) BYTE* pbDest,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) BYTE* pbDest,
 	_Inout_ int* pnDestLen)
 {
 	if (!pbSrcData || !pbDest || !pnDestLen)
@@ -617,10 +620,11 @@ inline int QPDecodeGetRequiredLength(_In_ int nSrcLen) throw()
 #define ATLSMTP_QPENCODE_DOT 1
 #define ATLSMTP_QPENCODE_TRAILING_SOFT 2
 
+_Success_(return != FALSE)
 inline BOOL QPEncode(
-	_In_bytecount_(nSrcLen) BYTE* pbSrcData,
+	_In_reads_bytes_(nSrcLen) BYTE* pbSrcData,
 	_In_ int nSrcLen,
-	_Out_cap_post_count_(*pnDestLen, *pnDestLen) CHAR* szDest,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) CHAR* szDest,
 	_Inout_ int* pnDestLen,
 	_In_ DWORD dwFlags = 0) throw()
 {
@@ -689,10 +693,11 @@ inline BOOL QPEncode(
 	return TRUE;
 }
 
+_Success_(return != FALSE)
 inline BOOL QPDecode(
-	_In_bytecount_(nSrcLen) BYTE* pbSrcData,
+	_In_reads_bytes_(nSrcLen) BYTE* pbSrcData,
 	_In_ int nSrcLen,
-	_Out_cap_post_count_(*pnDestLen, *pnDestLen) CHAR* szDest,
+	_When_(*pnDestLen > 0, _Out_writes_to_(*pnDestLen, *pnDestLen)) CHAR* szDest,
 	_Inout_ int* pnDestLen,
 	_In_ DWORD dwFlags = 0)
 {
@@ -749,7 +754,7 @@ inline BOOL QPDecode(
 		nWritten++;
 	}
 
-	*pnDestLen = nWritten-1;
+	*pnDestLen = (nWritten > 0 ) ? nWritten-1 : 0;
 	return TRUE;
 }
 
@@ -764,7 +769,7 @@ inline int IsExtendedChar(_In_ char ch) throw()
 }
 
 inline int GetExtendedChars(
-	_In_z_count_(nSrcLen) LPCSTR szSrc,
+	_In_reads_z_(nSrcLen) LPCSTR szSrc,
 	_In_ int nSrcLen)
 {
 	ATLENSURE( szSrc );
@@ -805,10 +810,10 @@ inline BOOL IsBufferWriteSafe(
 }
 
 //QEncode pbSrcData with the charset specified by pszCharSet
-inline BOOL QEncode(
-	_In_bytecount_(nSrcLen) BYTE* pbSrcData,
+inline _Success_(return != FALSE) BOOL QEncode(
+	_In_reads_bytes_(nSrcLen) BYTE* pbSrcData,
 	_In_ int nSrcLen,
-	_Out_z_cap_post_count_(*pnDestLen, *pnDestLen) LPSTR szDest,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) LPSTR szDest,
 	_Inout_ int* pnDestLen,
 	_In_z_ LPCSTR pszCharSet,
 	_Out_opt_ int* pnNumEncoded = NULL) throw()
@@ -909,10 +914,11 @@ inline int BEncodeGetRequiredLength(
 }
 
 //BEncode pbSrcData with the charset specified by pszCharSet
+_Success_(return != FALSE)
 inline BOOL BEncode(
-	_In_bytecount_(nSrcLen) BYTE* pbSrcData,
+	_In_reads_bytes_(nSrcLen) BYTE* pbSrcData,
 	_In_ int nSrcLen,
-	_Out_z_cap_post_count_(*pnDestLen, *pnDestLen) LPSTR szDest,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) LPSTR szDest,
 	_Inout_ int* pnDestLen,
 	_In_z_ LPCSTR pszCharSet) throw()
 {
@@ -989,9 +995,9 @@ inline BOOL BEncode(
 
 ATL_NOINLINE inline
 int AtlUnicodeToUTF8(
-	_In_count_(nSrc) LPCWSTR wszSrc,
+	_In_reads_(nSrc) LPCWSTR wszSrc,
 	_In_ int nSrc,
-	_Out_opt_z_cap_post_count_(nDest, return + 1) LPSTR szDest,
+	_Out_writes_to_opt_(nDest, return + 1) LPSTR szDest,
 	_In_ int nDest)
 {
 	return(WideCharToMultiByte(CP_UTF8, 0, wszSrc, nSrc, szDest, nDest, NULL, NULL));
@@ -1008,31 +1014,36 @@ int AtlUnicodeToUTF8(
 #define ATL_ESC_FLAG_NONE 0
 #define ATL_ESC_FLAG_ATTR 1 // escape for attribute values
 
+ATLPREFAST_SUPPRESS(6054)
 inline int _AtlCopyNCR(
 	_In_ wchar_t wch,
-	_Out_z_cap_c_(9) wchar_t *wszEsc) throw()
+	_Out_writes_z_(9) wchar_t *wszEsc) throw()
 {
 	wchar_t szHex[9];
 	int nRet = swprintf_s(szHex, _countof(szHex), L"&#x%04X;", wch);
 	Checked::memcpy_s(wszEsc, 9*sizeof(wchar_t), szHex, 8*sizeof(wchar_t));
 	return nRet;
 }
+ATLPREFAST_UNSUPPRESS()
 
+ATLPREFAST_SUPPRESS(6054)
 inline int _AtlCopyNCRPair(
 	_In_ DWORD dw,
-	_Out_z_cap_c_(11) wchar_t *wszEsc) throw()
+	_Out_writes_z_(11) wchar_t *wszEsc) throw()
 {
 	wchar_t szHex[11];
 	int nRet = swprintf_s(szHex, _countof(szHex), L"&#x%06X;", dw);
 	Checked::memcpy_s(wszEsc, 11*sizeof(wchar_t), szHex, 10*sizeof(wchar_t));
 	return nRet;
 }
+ATLPREFAST_UNSUPPRESS()
 
 // wide-char version
+_Success_(return != 0)
 inline int EscapeXML(
-	_In_count_(nSrcLen) const wchar_t *szIn,
+	_In_reads_(nSrcLen) const wchar_t *szIn,
 	_In_ int nSrcLen,
-	_Out_opt_cap_post_count_(nDestLen, return + 1) wchar_t *szEsc,
+	_Out_writes_to_opt_(nDestLen, return + 1) wchar_t *szEsc,
 	_In_ int nDestLen,
 	_In_ DWORD dwFlags = ATL_ESC_FLAG_NONE)
 {
@@ -1209,10 +1220,11 @@ inline int AtlHexDecodeGetRequiredLength(_In_ int nSrcLen) throw()
 	return nSrcLen/2;
 }
 
+ATLPREFAST_SUPPRESS(6054)
 inline BOOL AtlHexEncode(
-	_In_bytecount_(nSrcLen) const BYTE *pbSrcData,
+	_In_reads_bytes_(nSrcLen) const BYTE *pbSrcData,
 	_In_ int nSrcLen,
-	_Out_z_cap_post_count_(*pnDestLen, *pnDestLen) LPSTR szDest,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) LPSTR szDest,
 	_Inout_ int *pnDestLen) throw()
 {
 	static const char s_chHexChars[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -1245,6 +1257,7 @@ inline BOOL AtlHexEncode(
 
 	return TRUE;
 }
+ATLPREFAST_UNSUPPRESS()
 
 #ifdef _CHAR_UNSIGNED
 #define ATL_HEX_INVALID CHAR_MAX
@@ -1266,9 +1279,9 @@ inline char AtlGetHexValue(_In_ char ch) throw()
 }
 
 inline BOOL AtlHexDecode(
-	_In_z_count_(nSrcLen) LPCSTR pSrcData,
+	_In_reads_z_(nSrcLen) LPCSTR pSrcData,
 	_In_ int nSrcLen,
-	_Out_z_cap_post_count_(*pnDestLen, *pnDestLen) LPBYTE pbDest,
+	_Out_writes_to_(*pnDestLen, *pnDestLen) LPBYTE pbDest,
 	_Inout_ int* pnDestLen) throw()
 {
 	if (!pSrcData || !pbDest || !pnDestLen)

@@ -32,7 +32,7 @@
 #define AFX_VSLISTBOX_BTN_UP_ID     (UINT)(-13)
 #define AFX_VSLISTBOX_BTN_DOWN_ID   (UINT)(-14)
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CVSListBoxBase window - edit list control abstract base class
 // 
 
@@ -126,7 +126,6 @@ public:
 	virtual ~CVSListBoxBase();
 
 protected:
-	//{{AFX_MSG(CVSListBoxBase)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -137,11 +136,11 @@ protected:
 	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnGetFont(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CVSListBoxEditCtrl window
 
 class CVSListBoxEditCtrl : public CMFCEditBrowseCtrl
@@ -164,11 +163,10 @@ public:
 	virtual ~CVSListBoxEditCtrl();
 
 protected:
-	//{{AFX_MSG(CVSListBoxEditCtrl)
 	afx_msg void OnWindowPosChanging(WINDOWPOS FAR* lpwndpos);
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	virtual void OnBrowse()
@@ -186,7 +184,7 @@ protected:
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CVSListBox window
 
 class CVSListBox : public CVSListBoxBase
@@ -234,14 +232,12 @@ public:
 	virtual ~CVSListBox();
 
 protected:
-	//{{AFX_MSG(CVSListBox)
 	afx_msg void OnKeyDown(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDblclkList(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 };

@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTabView view
 
 class CTabView : public CView
@@ -68,12 +68,12 @@ protected:
 #endif
 
 protected:
-	//{{AFX_MSG(CTabView)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
-	afx_msg LRESULT OnChangeActiveTab(WPARAM,LPARAM);
-	//}}AFX_MSG
+	afx_msg LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
+	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
+
 	DECLARE_MESSAGE_MAP()
 };
 

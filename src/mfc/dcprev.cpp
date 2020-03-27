@@ -769,7 +769,7 @@ int CPreviewDC::DrawText(LPCTSTR lpszString, int nCount, LPRECT lpRect,
 	return retVal;
 }
 
-int CPreviewDC::DrawTextEx(_In_count_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
+int CPreviewDC::DrawTextEx(_In_reads_(nCount) LPTSTR lpszString, int nCount, LPRECT lpRect,
 	UINT nFormat, LPDRAWTEXTPARAMS lpDTParams)
 {
 	ASSERT(m_hAttribDC != NULL);

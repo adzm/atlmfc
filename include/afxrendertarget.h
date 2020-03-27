@@ -11,7 +11,9 @@
 #pragma once
 
 #include <d2d1.h>
+#include <d2d1helper.h>
 #include <dwrite.h>
+#include <wincodec.h>
 
 class CBitmapRenderTarget;
 
@@ -853,7 +855,6 @@ public:
 	/// <summary>
 	/// Constructs a CD2DBitmapBrush object.</summary>
 	/// <param name="pParentTarget">A pointer to the render target.</param>
-	/// <param name="uiResID">The resource ID number of the resource.</param>
 	/// <param name="pBitmapBrushProperties">A pointer to the extend modes and the interpolation mode of a bitmap brush.</param>
 	/// <param name="pBrushProperties">A pointer to the opacity and transformation of a brush.</param>
 	/// <param name="bAutoDestroy">Indicates that the object will be destroyed by owner (pParentTarget).</param>
@@ -1285,14 +1286,14 @@ public:
 	/// <returns>
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.</returns>
 	/// <param name="pRenderTarget">A pointer to the render target.</param>
-	virtual HRESULT ReCreate(CRenderTarget* /*pRenderTarget*/)	{	return S_OK; }
+	virtual HRESULT ReCreate(CRenderTarget* pRenderTarget) { UNREFERENCED_PARAMETER(pRenderTarget); return S_OK; }
 
 	/// <summary>
 	/// Creates a CD2DTextFormat.</summary>
 	/// <returns>
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.</returns>
 	/// <param name="pRenderTarget">A pointer to the render target.</param>
-	virtual HRESULT Create(CRenderTarget* /*pRenderTarget*/)	{	return S_OK;	}
+	virtual HRESULT Create(CRenderTarget* pRenderTarget) { UNREFERENCED_PARAMETER(pRenderTarget); return S_OK; }
 
 	/// <summary>
 	/// Destroys a CD2DTextFormat object.</summary>
@@ -1362,14 +1363,14 @@ public:
 	/// <returns>
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.</returns>
 	/// <param name="pRenderTarget">A pointer to the render target.</param>
-	virtual HRESULT ReCreate(CRenderTarget* /*pRenderTarget*/)	{	return S_OK; }
+	virtual HRESULT ReCreate(CRenderTarget* pRenderTarget) { UNREFERENCED_PARAMETER(pRenderTarget); return S_OK; }
 
 	/// <summary>
 	/// Creates a CD2DTextLayout.</summary>
 	/// <returns>
 	/// If the method succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code.</returns>
 	/// <param name="pRenderTarget">A pointer to the render target.</param>
-	virtual HRESULT Create(CRenderTarget* /*pRenderTarget*/)	{	return S_OK;	}
+	virtual HRESULT Create(CRenderTarget* pRenderTarget) { UNREFERENCED_PARAMETER(pRenderTarget); return S_OK; }
 
 	/// <summary>
 	/// Destroys a CD2DTextLayout object.</summary>
@@ -1538,7 +1539,7 @@ public:
 	/// <returns> 
 	/// If the method succeeds, it returns TRUE. Otherwise, it returns FALSE.</returns>
 	/// <param name="worldTransform">The transform to apply to this geometry before calculating its bounds.</param>
-	/// <param name="bounds">When this method returns, contains the bounds of this geometry. If the bounds are empty, this will be a rect where bounds.left &gt bounds.right. You must allocate storage for this parameter.</param>
+	/// <param name="bounds">When this method returns, contains the bounds of this geometry. If the bounds are empty, this will be a rect where bounds.left is greater than bounds.right. You must allocate storage for this parameter.</param>
 	BOOL GetBounds(const D2D1_MATRIX_3X2_F& worldTransform, CD2DRectF& bounds) const;
 	
 	/// <summary>
@@ -1991,7 +1992,7 @@ public:
 	/// <summary>
 	/// Converts GDI color and alpha values to the D2D1_COLOR_F object.</summary>
 	/// <param name="color">RGB value.</param>
-	/// <param name="color">Alpha value.</param>
+	/// <param name="nAlpha">Alpha value.</param>
 	/// <returns>
 	/// D2D1_COLOR_F value.</returns>
 	static D2D1_COLOR_F COLORREF_TO_D2DCOLOR(COLORREF color, int nAlpha = 255);
@@ -2064,7 +2065,6 @@ public:
 	/// <summary>
 	/// Draws the specified text using the format information provided by an IDWriteTextFormat object.</summary>
 	/// <param name="strText">A pointer to an array of Unicode characters to draw.</param>
-	/// <param name="stringLength">The number of characters in string.</param>
 	/// <param name="rect">The size and position of the area in which the text is drawn.</param>
 	/// <param name="pForegroundBrush">The brush used to paint the text.</param>
 	/// <param name="textFormat">An object that describes formatting details of the text to draw, such as the font, the font size, and flow direction.</param>
@@ -2411,6 +2411,50 @@ protected:
 	/// </summary>
 	ID2D1BitmapRenderTarget* m_pBitmapRenderTarget;
 };
+
+/*============================================================================*/
+// _AFX_D2D_STATE
+
+typedef HRESULT (WINAPI * D2D1MAKEROTATEMATRIX)(FLOAT angle, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix);
+
+class _AFX_D2D_STATE : public CNoTrackObject
+{
+public:
+	_AFX_D2D_STATE();
+	virtual ~_AFX_D2D_STATE();
+
+	BOOL IsD2DInitialized() const { return m_bD2DInitialized; }
+
+	BOOL InitD2D(D2D1_FACTORY_TYPE d2dFactoryType = D2D1_FACTORY_TYPE_SINGLE_THREADED, DWRITE_FACTORY_TYPE writeFactoryType = DWRITE_FACTORY_TYPE_SHARED);
+	void ReleaseD2DRefs();
+
+	ID2D1Factory* GetDirect2dFactory()	{ InitD2D(); return m_pDirect2dFactory; }
+	IDWriteFactory* GetWriteFactory()	{ InitD2D(); return m_pWriteFactory; }
+	IWICImagingFactory* GetWICFactory()	{ InitD2D(); return m_pWicFactory; }
+
+	HRESULT D2D1MakeRotateMatrix(FLOAT angle, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix)
+	{
+		return m_pfD2D1MakeRotateMatrix == NULL ? E_FAIL : (*m_pfD2D1MakeRotateMatrix)(angle, center, matrix);
+	}
+
+protected:
+	HINSTANCE m_hinstD2DDLL;
+	HINSTANCE m_hinstDWriteDLL;
+
+	ID2D1Factory* m_pDirect2dFactory;
+	IDWriteFactory* m_pWriteFactory;
+	IWICImagingFactory* m_pWicFactory;
+
+	D2D1MAKEROTATEMATRIX m_pfD2D1MakeRotateMatrix;
+
+	BOOL m_bD2DInitialized;
+	BOOL m_bComInitialized;
+};
+
+AFX_DATA EXTERN_PROCESS_LOCAL(_AFX_D2D_STATE, _afxD2DState)
+
+_AFX_D2D_STATE* AFX_CDECL AfxGetD2DState();
+void AFX_CDECL AfxReleaseD2DRefs();
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

@@ -76,13 +76,11 @@ COleCntrFrameWndEx::~COleCntrFrameWndEx()
 
 }
 
-//{{AFX_MSG_MAP(COleCntrFrameWndEx)
 BEGIN_MESSAGE_MAP(COleCntrFrameWndEx, COleCntrFrameWnd)
 	ON_WM_SIZE()
 	ON_WM_SIZING()
 	ON_MESSAGE_VOID(WM_IDLEUPDATECMDUI, COleCntrFrameWndEx::OnIdleUpdateCmdUI)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // COleCntrFrameWndEx message handlers

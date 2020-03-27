@@ -22,7 +22,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CBaseTabbedPane window
 
 class CBaseTabbedPane : public CDockablePane
@@ -138,13 +138,12 @@ public:
 	virtual ~CBaseTabbedPane();
 
 protected:
-	//{{AFX_MSG(CBaseTabbedPane)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnNcDestroy();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg LRESULT OnChangeActiveTab(WPARAM,LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 protected:

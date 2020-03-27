@@ -88,6 +88,8 @@ protected:
 	CString m_strBuffer;
 };
 
+BOOL __stdcall ReadBoolProp(CTagManager& tagManager, LPCTSTR lpszTag, BOOL& bMember);
+
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)
 #endif

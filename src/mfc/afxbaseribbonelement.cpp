@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -621,12 +621,9 @@ CString CMFCRibbonBaseElement::GetToolTipText() const
 	if (m_bQuickAccessMode && strTipText.IsEmpty())
 	{
 		strTipText = m_strText;
-
-		const CString strDummyAmpSeq = _T("\001\001");
-
-		strTipText.Replace(_T("&&"), strDummyAmpSeq);
+		strTipText.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 		strTipText.Remove(_T('&'));
-		strTipText.Replace(strDummyAmpSeq, _T("&"));
+		strTipText.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 	}
 
 	//--------------------
@@ -727,11 +724,9 @@ void CMFCRibbonBaseElement::UpdateTooltipInfo()
 	AfxExtractSubString(m_strDescription, strText, 0);
 	AfxExtractSubString(m_strToolTip, strText, 1, '\n');
 
-	const CString strDummyAmpSeq = _T("\001\001");
-
-	m_strToolTip.Replace(_T("&&"), strDummyAmpSeq);
+	m_strToolTip.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 	m_strToolTip.Remove(_T('&'));
-	m_strToolTip.Replace(strDummyAmpSeq, _T("&"));
+	m_strToolTip.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 }
 
 void CMFCRibbonBaseElement::OnAfterChangeRect(CDC* /*pDC*/)
@@ -896,7 +891,7 @@ int CMFCRibbonBaseElement::AddToListBox(CMFCRibbonCommandsListBox* pWndListBox, 
 
 		ASSERT_VALID(pItem);
 
-		if (pItem->m_nID == m_nID && !pItem->HasMenu ())
+		if (pItem->m_nID == m_nID && (!pItem->HasMenu() || pWndListBox->CommandsOnly()))
 		{
 			// Already exist, don't add it
 			return -1;
@@ -912,11 +907,9 @@ int CMFCRibbonBaseElement::AddToListBox(CMFCRibbonCommandsListBox* pWndListBox, 
 		strText = GetText();
 	}
 
-	const CString strDummyAmpSeq = _T("\001\001");
-
-	strText.Replace(_T("&&"), strDummyAmpSeq);
+	strText.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 	strText.Remove(_T('&'));
-	strText.Replace(strDummyAmpSeq, _T("&"));
+	strText.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 
 	int nIndex = pWndListBox->AddString(strText);
 	pWndListBox->SetItemData(nIndex, (DWORD_PTR) this);
@@ -1059,6 +1052,11 @@ BOOL CMFCRibbonBaseElement::SetACCData(CWnd* pParent, CAccessibilityData& data)
 	}
 
 	return TRUE;
+}
+
+void CMFCRibbonBaseElement::OnAccDefaultAction()
+{
+	NotifyCommand(TRUE);	
 }
 
 void CMFCRibbonBaseElement::OnDrawKeyTip(CDC* pDC, const CRect& rect, BOOL bIsMenu)

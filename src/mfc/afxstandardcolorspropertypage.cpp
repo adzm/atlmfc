@@ -33,20 +33,16 @@ CMFCStandardColorsPropertyPage::CMFCStandardColorsPropertyPage() : CPropertyPage
 void CMFCStandardColorsPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCStandardColorsPropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_HEXPLACEHOLDER, m_hexpicker);
 	DDX_Control(pDX, IDC_AFXBARRES_GREYSCALEPLACEHOLDER, m_hexpicker_greyscale);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCStandardColorsPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCStandardColorsPropertyPage)
 	ON_BN_CLICKED(IDC_AFXBARRES_GREYSCALEPLACEHOLDER, &CMFCStandardColorsPropertyPage::OnGreyscale)
 	ON_BN_CLICKED(IDC_AFXBARRES_HEXPLACEHOLDER, &CMFCStandardColorsPropertyPage::OnHexColor)
 	ON_BN_DOUBLECLICKED(IDC_AFXBARRES_GREYSCALEPLACEHOLDER, &CMFCStandardColorsPropertyPage::OnDoubleClickedColor)
 	ON_BN_DOUBLECLICKED(IDC_AFXBARRES_HEXPLACEHOLDER, &CMFCStandardColorsPropertyPage::OnDoubleClickedColor)
 	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

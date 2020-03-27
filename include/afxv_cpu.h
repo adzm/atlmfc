@@ -12,9 +12,10 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#ifdef _MIPS_
-// specific overrides for MIPS...
-#define _AFX_PACKING    8       // default MIPS alignment (required)
+// Why do we use #pragma pack at all?
+#ifdef _ARM_
+// specific overrides for ARM...
+#define _AFX_PACKING    8       // default ARM alignment (required)
 #endif //_MIPS_
 
 /////////////////////////////////////////////////////////////////////////////

@@ -34,17 +34,15 @@ CMFCListCtrl::~CMFCListCtrl()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCListCtrl)
 BEGIN_MESSAGE_MAP(CMFCListCtrl, CListCtrl)
 	ON_WM_CREATE()
 	ON_WM_ERASEBKGND()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_SIZE()
-	ON_MESSAGE(WM_STYLECHANGED, &CMFCListCtrl::OnStyleChanged)
+	ON_WM_STYLECHANGED()
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CMFCListCtrl::OnCustomDraw)
 	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, &CMFCListCtrl::OnColumnClick)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCListCtrl message handlers
@@ -59,7 +57,7 @@ BOOL CMFCListCtrl::InitList()
 void CMFCListCtrl::InitHeader()
 {
 	// Initialize header control:
-	m_wndHeader.SubclassDlgItem(0, this);
+	GetHeaderCtrl().SubclassDlgItem(0, this);
 }
 
 void CMFCListCtrl::PreSubclassWindow()
@@ -258,11 +256,8 @@ void CMFCListCtrl::InitColors()
 	m_clrSortedColumn = CDrawingManager::PixelAlpha(GetBkColor(), .97, .97, .97);
 }
 
-LRESULT CMFCListCtrl::OnStyleChanged(WPARAM wp, LPARAM lp)
+void CMFCListCtrl::OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct)
 {
-	int nStyleType = (int) wp;
-	LPSTYLESTRUCT lpStyleStruct = (LPSTYLESTRUCT) lp;
-
 	CListCtrl::OnStyleChanged(nStyleType, lpStyleStruct);
 
 	if ((lpStyleStruct->styleNew & LVS_REPORT) && (lpStyleStruct->styleOld & LVS_REPORT) == 0)
@@ -272,17 +267,15 @@ LRESULT CMFCListCtrl::OnStyleChanged(WPARAM wp, LPARAM lp)
 			InitHeader();
 		}
 	}
-
-	return 0;
 }
 
 void CMFCListCtrl::OnSize(UINT nType, int cx, int cy)
 {
 	CListCtrl::OnSize(nType, cx, cy);
 
-	if (m_wndHeader.GetSafeHwnd() != NULL)
+	if (GetHeaderCtrl().GetSafeHwnd() != NULL)
 	{
-		m_wndHeader.RedrawWindow();
+		GetHeaderCtrl().RedrawWindow();
 	}
 }
 

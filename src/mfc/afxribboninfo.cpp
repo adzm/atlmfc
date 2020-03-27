@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -1531,7 +1531,6 @@ BOOL CMFCRibbonInfo::XPanel::Read(CMFCRibbonInfo::XRibbonInfoParser& rParser)
 		delete pElements;
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	CMFCRibbonInfo::XRibbonInfoParser* pButton = NULL;
 	rParser.Read(s_szTag_Button_Launch, &pButton);
 	if (pButton != NULL)
@@ -1539,7 +1538,6 @@ BOOL CMFCRibbonInfo::XPanel::Read(CMFCRibbonInfo::XRibbonInfoParser& rParser)
 		m_btnLaunch.Read(*pButton);
 		delete pButton;
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	rParser.ReadBool(s_szTag_JustifyColumns, m_bJustifyColumns);
 	rParser.ReadBool(s_szTag_CenterColumnVert, m_bCenterColumnVert);
@@ -1564,7 +1562,6 @@ BOOL CMFCRibbonInfo::XPanel::Write(CMFCRibbonInfo::XRibbonInfoParser& rParser)
 	rParser.WriteBool(s_szTag_JustifyColumns, m_bJustifyColumns, FALSE);
 	rParser.WriteBool(s_szTag_CenterColumnVert, m_bCenterColumnVert, FALSE);
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	if (m_btnLaunch.m_ID.m_Value != 0)
 	{
 		CMFCRibbonInfo::XRibbonInfoParser* pButton = NULL;
@@ -1575,7 +1572,6 @@ BOOL CMFCRibbonInfo::XPanel::Write(CMFCRibbonInfo::XRibbonInfoParser& rParser)
 			delete pButton;
 		}
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	if (m_arElements.GetSize() > 0)
 	{

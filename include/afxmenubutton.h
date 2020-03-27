@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCMenuButton window
 
 class CMFCMenuButton : public CMFCButton
@@ -59,7 +59,6 @@ protected:
 	virtual void OnShowMenu();
 
 protected:
-	//{{AFX_MSG(CMFCMenuButton)
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg UINT OnGetDlgCode();
@@ -67,7 +66,7 @@ protected:
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -73,7 +73,7 @@ class COleControlLock;
 #ifndef __AFXPRIV2_H__OLE__
 #define __AFXPRIV2_H__OLE__
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Implementation of event sink handling
 
 struct AFX_EVENT
@@ -126,7 +126,7 @@ AFX_INLINE AFX_EVENT::AFX_EVENT(int eventKind, DISPID dispid,
 	m_nDSCReason = dscNoReason;
 }
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleControlLock
 
 class COleControlLock
@@ -155,7 +155,7 @@ public:
 #ifndef __AFXPRIV2_H__DISP__
 #define __AFXPRIV2_H__DISP__
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CArchiveStream
 
 class CArchiveStream : public IStream
@@ -184,7 +184,7 @@ public:
 	STDMETHOD(Clone)(LPSTREAM*);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Global UNICODE<>ANSI translation helpers
 
 void AFXAPI AfxBSTR2CString(CString* pStr, BSTR bstr);

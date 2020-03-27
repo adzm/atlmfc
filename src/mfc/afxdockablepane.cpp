@@ -50,8 +50,6 @@ static int g_nCaptionHorzMargin = 2;
 
 CSize CDockablePane::m_sizeDragSensitivity = CSize(GetSystemMetrics(SM_CXDRAG), GetSystemMetrics(SM_CYDRAG));
 
-BOOL CDockablePane::m_bCaptionText = FALSE;
-BOOL CDockablePane::m_bHideDisabledButtons = TRUE;
 BOOL CDockablePane::m_bDisableAnimation = FALSE;
 
 IMPLEMENT_SERIAL(CDockablePane, CPane, VERSIONABLE_SCHEMA | 2)
@@ -109,7 +107,6 @@ CDockablePane::~CDockablePane()
 {
 }
 
-//{{AFX_MSG_MAP(CDockablePane)
 BEGIN_MESSAGE_MAP(CDockablePane, CPane)
 	ON_WM_NCCALCSIZE()
 	ON_WM_NCPAINT()
@@ -134,7 +131,6 @@ BEGIN_MESSAGE_MAP(CDockablePane, CPane)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CDockablePane::OnNeedTipText)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CDockablePane::OnUpdateToolTips)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 BOOL CDockablePane::Create(LPCTSTR lpszCaption, CWnd* pParentWnd, const RECT& rect, BOOL bHasGripper,
 	UINT nID, DWORD dwStyle, DWORD dwTabbedStyle, DWORD dwControlBarStyle, CCreateContext* pContext)
@@ -205,7 +201,7 @@ void CDockablePane::EnableGripper(BOOL bEnable)
 {
 	if (bEnable && m_bHasGripper)
 	{
-		m_cyGripper = afxGlobalData.GetTextHeight() + g_nCaptionVertMargin * 2 + 1;
+		m_cyGripper = GetGlobalData()->GetTextHeight() + g_nCaptionVertMargin * 2 + 1;
 	}
 	else
 	{
@@ -292,7 +288,7 @@ void CDockablePane::OnBeforeChangeParent(CWnd* pWndNewParent, BOOL bDelay)
 	}
 }
 
-void CDockablePane::RemoveFromDefaultPaneDividier()
+void CDockablePane::RemoveFromDefaultPaneDivider()
 {
 	ASSERT_VALID(this);
 
@@ -382,12 +378,7 @@ void CDockablePane::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lp
 			ASSERT_VALID(pbtn);
 
 			UINT unHit = pbtn->GetHit();
-
-			BOOL bHide = FALSE;
-			if (m_bHideDisabledButtons)
-			{
-				bHide = bHidePinBtn && unHit == HTMAXBUTTON || !CanBeClosed() && unHit == AFX_HTCLOSE;
-			}
+			BOOL bHide = bHidePinBtn && unHit == HTMAXBUTTON || !CanBeClosed() && unHit == AFX_HTCLOSE;
 
 			if (!CDockingManager::IsDockSiteMenu() && unHit == HTMINBUTTON)
 			{
@@ -805,7 +796,7 @@ void CDockablePane::OnMouseMove(UINT nFlags, CPoint point)
 
 	if ((GetDockingMode() & DT_IMMEDIATE) != 0)
 	{
-		if ((!m_bCaptured && GetCapture() == this || m_bCaptured && GetCapture() != this || (GetAsyncKeyState(VK_LBUTTON) & 0x8000) == 0) && !m_bCaptionButtonsCaptured)
+		if ((!m_bCaptured && GetCapture() == this || m_bCaptured && GetCapture() != this || (GetAsyncKeyState(::GetSystemMetrics(SM_SWAPBUTTON) ? VK_RBUTTON : VK_LBUTTON) & 0x8000) == 0) && !m_bCaptionButtonsCaptured)
 		{
 			ReleaseCapture();
 			m_bCaptured = false;
@@ -1124,7 +1115,7 @@ CMFCAutoHideBar* CDockablePane::SetAutoHideMode(BOOL bMode, DWORD dwAlignment, C
 
 		if (bUseTimer)
 		{
-			m_nAutoHideConditionTimerID = SetTimer(AFX_ID_CHECK_AUTO_HIDE_CONDITION, m_nTimeOutBeforeAutoHide, NULL);
+			m_nAutoHideConditionTimerID = SetTimer(AFX_TIMER_ID_CHECK_AUTO_HIDE_CONDITION, m_nTimeOutBeforeAutoHide, NULL);
 			Slide(FALSE, TRUE);
 			GetDockSiteFrameWnd()->SetFocus();
 		}
@@ -1166,7 +1157,7 @@ void CDockablePane::UnSetAutoHideMode(CDockablePane* pFirstBarInGroup)
 
 	m_pAutoHideBar->RemoveAutoHideWindow(this);
 
-	RemoveFromDefaultPaneDividier();
+	RemoveFromDefaultPaneDivider();
 	// unset autohide mode - make it docked back
 	if (pFirstBarInGroup == NULL)
 	{
@@ -1189,7 +1180,7 @@ void CDockablePane::OnTimer(UINT_PTR nIDEvent)
 
 	switch (nIDEvent)
 	{
-	case AFX_ID_CHECK_AUTO_HIDE_CONDITION:
+	case AFX_TIMER_ID_CHECK_AUTO_HIDE_CONDITION:
 		if (CheckAutoHideCondition())
 		{
 			KillTimer(m_nAutoHideConditionTimerID);
@@ -1197,12 +1188,12 @@ void CDockablePane::OnTimer(UINT_PTR nIDEvent)
 		}
 		return;
 
-	case AFX_AUTO_HIDE_SLIDE_OUT_EVENT:
+	case AFX_TIMER_ID_AUTO_HIDE_SLIDE_OUT_EVENT:
 		bSlideDirection = TRUE;
 		m_bIsHiding = FALSE;
 		break;
 
-	case AFX_AUTO_HIDE_SLIDE_IN_EVENT:
+	case AFX_TIMER_ID_AUTO_HIDE_SLIDE_IN_EVENT:
 		bSlideDirection = FALSE;
 		m_bIsHiding = TRUE;
 		break;
@@ -1235,7 +1226,7 @@ void CDockablePane::OnTimer(UINT_PTR nIDEvent)
 				KillTimer(m_nAutoHideConditionTimerID);
 			}
 
-			m_nAutoHideConditionTimerID = SetTimer(AFX_ID_CHECK_AUTO_HIDE_CONDITION, m_nTimeOutBeforeAutoHide, NULL);
+			m_nAutoHideConditionTimerID = SetTimer(AFX_TIMER_ID_CHECK_AUTO_HIDE_CONDITION, m_nTimeOutBeforeAutoHide, NULL);
 		}
 		else
 		{
@@ -1653,7 +1644,7 @@ void CDockablePane::Slide(BOOL bSlideOut, BOOL bUseTimer)
 	CRect rectWnd;
 	GetWindowRect(rectWnd);
 
-	if (!bUseTimer || m_bDisableAnimation || afxGlobalData.bIsRemoteSession)
+	if (!bUseTimer || m_bDisableAnimation || GetGlobalData()->bIsRemoteSession)
 	{
 		m_nSlideDelta = IsHorizontal() ? rectWnd.Height() : rectWnd.Width();
 	}
@@ -1688,9 +1679,9 @@ void CDockablePane::Slide(BOOL bSlideOut, BOOL bUseTimer)
 		pDockManager->BringBarsToTop();
 	}
 
-	m_nSlideTimer = SetTimer(bSlideOut ? AFX_AUTO_HIDE_SLIDE_OUT_EVENT : AFX_AUTO_HIDE_SLIDE_IN_EVENT, m_nSlideDefaultTimeOut, NULL);
+	m_nSlideTimer = SetTimer(bSlideOut ? AFX_TIMER_ID_AUTO_HIDE_SLIDE_OUT_EVENT : AFX_TIMER_ID_AUTO_HIDE_SLIDE_IN_EVENT, m_nSlideDefaultTimeOut, NULL);
 
-	if (!m_bDisableAnimation && !afxGlobalData.bIsRemoteSession)
+	if (!m_bDisableAnimation && !GetGlobalData()->bIsRemoteSession)
 	{
 		if (m_ahSlideMode == AFX_AHSM_MOVE)
 		{
@@ -2366,7 +2357,7 @@ void CDockablePane::DrawCaption(CDC* pDC, CRect rectCaption)
 	int nOldBkMode = pDC->SetBkMode(TRANSPARENT);
 	COLORREF clrOldText = pDC->SetTextColor(clrCptnText);
 
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 	ENSURE(pOldFont != NULL);
 
 	CString strTitle;
@@ -2401,12 +2392,6 @@ void CDockablePane::RedrawButton(const CMFCCaptionButton* pButton)
 	m_rectRedraw.SetRectEmpty();
 
 	UpdateWindow();
-}
-
-void __stdcall CDockablePane::SetCaptionStyle(BOOL bDrawText, BOOL /*bForceGradient*/, BOOL bHideDisabledButtons)
-{
-	m_bCaptionText = bDrawText;
-	m_bHideDisabledButtons = bHideDisabledButtons;
 }
 
 void CDockablePane::AdjustPaneToPaneContainer(CPaneDivider* pSlider)
@@ -2558,7 +2543,7 @@ void CDockablePane::UndockPane(BOOL bDelay)
 
 	if (pMiniFrame == NULL)
 	{
-		RemoveFromDefaultPaneDividier();
+		RemoveFromDefaultPaneDivider();
 		// remove from dock site
 		RemovePaneFromDockManager(this, FALSE, !bDelay);
 
@@ -2944,10 +2929,6 @@ void CDockablePane::Serialize(CArchive& ar)
 		ar << m_recentDockInfo.m_recentSliderInfo.m_rectDockedRect;
 		ar << m_bRecentFloatingState;
 	}
-}
-
-void CDockablePane::GetRecentSiblingPaneInfo(CList<UINT, UINT&>& /*lstBarIDs*/)
-{
 }
 
 LRESULT CDockablePane::OnSetText(WPARAM, LPARAM lParam)

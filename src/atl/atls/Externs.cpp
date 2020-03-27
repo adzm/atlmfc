@@ -16,23 +16,15 @@
 #pragma warning(disable : 4074)
 #pragma init_seg(compiler)
 
-// if you change data size or data placement in CAtlTraceProcess or CAtlTraceModule 
-// you should also change file mappings name because atltrace uses shared memory to store
-// data and it will be not compatible with previous version
-const char *g_pszUpdateEventName	= "AtlTraceModuleManager_ProcessAddedStatic_100";
-const char *g_pszAllocFileMapName	= "AtlDebugAllocator_FileMappingNameStatic_100";
-
-const char *g_pszKernelObjFmt = "%s_%0x";
-
 CAtlAllocator g_Allocator;
 
 static bool WINAPI Init()
 {
-	char szFileMappingName[MAX_PATH];
+	WCHAR szFileMappingName[MAX_PATH];
 
 	int ret;
-	ATL_CRT_ERRORCHECK_SPRINTF(ret = _snprintf_s(szFileMappingName, _countof(szFileMappingName), _countof(szFileMappingName) - 1, g_pszKernelObjFmt,
-		g_pszAllocFileMapName, GetCurrentProcessId()));
+	ATL_CRT_ERRORCHECK_SPRINTF(ret = _snwprintf_s(szFileMappingName, _countof(szFileMappingName), _countof(szFileMappingName) - 1, KernelObjFmtU,
+		AllocFileMapNameU, GetCurrentProcessId()));
 	
 	if(ret == -1 || ret >= MAX_PATH)
 	{

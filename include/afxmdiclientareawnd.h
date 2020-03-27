@@ -25,7 +25,7 @@ class CMDIFrameWndEx;
 
 extern AFX_IMPORT_DATA UINT AFX_WM_ON_MOVETOTABGROUP;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMDITabInfo
 
 class CMDITabInfo
@@ -46,9 +46,10 @@ public:
 	BOOL m_bFlatFrame;
 	BOOL m_bActiveTabCloseButton;
 	int  m_nTabBorderSize;
+	BOOL m_bReuseRemovedTabGroups;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMDIClientAreaWnd window
 
 class CMDIClientAreaWnd : public CWnd
@@ -99,6 +100,7 @@ protected:
 	CRect m_rectNewTabGroup;
 	CStringList m_lstLoadedTabDocuments;
 	GROUP_ALIGNMENT m_groupAlignment;
+	BOOL m_bInsideDragComplete;
 	// ---- MDITabGroup-
 
 // Operations
@@ -179,7 +181,6 @@ public:
 	virtual ~CMDIClientAreaWnd();
 
 protected:
-	//{{AFX_MSG(CMDIClientAreaWnd)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnStyleChanging(int nStyleType, LPSTYLESTRUCT lpStyleStruct);
 	afx_msg LRESULT OnSetMenu(WPARAM wp, LPARAM);
@@ -193,7 +194,7 @@ protected:
 	afx_msg LRESULT OnCancelTabMove(WPARAM wp, LPARAM lp);
 	afx_msg LRESULT OnMoveTabComplete(WPARAM wp, LPARAM lp);
 	afx_msg LRESULT OnActiveTabChanged(WPARAM wp, LPARAM lp);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 private:

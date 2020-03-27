@@ -32,9 +32,7 @@ CMFCOutlookBarPaneAdapter::~CMFCOutlookBarPaneAdapter()
 }
 
 BEGIN_MESSAGE_MAP(CMFCOutlookBarPaneAdapter, CDockablePaneAdapter)
-	//{{AFX_MSG_MAP(CMFCOutlookBarPaneAdapter)
 	ON_WM_NCDESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

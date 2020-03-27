@@ -47,7 +47,7 @@ extern CObList afxAllToolBars;
 
 class CMFCCustomizeButton;
 
-static const CString strTearOffBarsRegEntry = _T("ControlBars-TearOff");
+#define AFX_TEAROFF_BARS_REG_ENTRY  _T("ControlBars-TearOff")
 
 BOOL CFrameImpl::m_bControlBarExtraPixel = TRUE;
 CList<CFrameWnd*, CFrameWnd*> CFrameImpl::m_lstFrames;
@@ -148,7 +148,7 @@ void CFrameImpl::RestorePosition(CREATESTRUCT& cs)
 		int nFlags = 0;
 		int nShowCmd = SW_SHOWNORMAL;
 
-		if (!pApp->LoadWindowPlacement(rectNormal, nFlags, nShowCmd))
+		if (pApp->m_bLoadWindowPlacement && !pApp->LoadWindowPlacement(rectNormal, nFlags, nShowCmd))
 		{
 			return;
 		}
@@ -224,7 +224,7 @@ void CFrameImpl::OnLoadFrame()
 		m_pRibbonBar->RecalcLayout();
 	}
 
-	afxGlobalData.m_bIsRTL = (m_pFrame->GetExStyle() & WS_EX_LAYOUTRTL);
+	GetGlobalData()->m_bIsRTL = (m_pFrame->GetExStyle() & WS_EX_LAYOUTRTL);
 }
 
 void CFrameImpl::LoadUserToolbars()
@@ -449,7 +449,7 @@ void CFrameImpl::LoadTearOffMenus()
 	CWinAppEx* pApp = DYNAMIC_DOWNCAST(CWinAppEx, AfxGetApp());
 	CString strProfileName = pApp != NULL ? pApp->GetRegSectionPath() : _T("");
 
-	strProfileName += strTearOffBarsRegEntry;
+	strProfileName += AFX_TEAROFF_BARS_REG_ENTRY;
 
 	for (int iIndex = 0;; iIndex++)
 	{
@@ -494,7 +494,7 @@ void CFrameImpl::SaveTearOffMenus(BOOL bFrameBarsOnly)
 	CWinAppEx* pApp = DYNAMIC_DOWNCAST(CWinAppEx, AfxGetApp());
 
 	CString strProfileName = pApp != NULL ? pApp->GetRegSectionPath() : _T("");
-	strProfileName += strTearOffBarsRegEntry;
+	strProfileName += AFX_TEAROFF_BARS_REG_ENTRY;
 
 	int iIndex = 0;
 
@@ -778,7 +778,11 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 
 	if (!CMFCToolBar::IsCustomizeMode() && CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
 	{
-		CMFCPopupMenu::MENUAREA_TYPE clickArea = CMFCPopupMenu::m_pActivePopupMenu->CheckArea(pt);
+		// If CMFCPopupMenu::m_pActivePopupMenu is owned by another UI thread, the CMFCPopupMenu::m_pActivePopupMenu pointer may be set to
+		// NULL in the midst of this processing.  So save the pointer and use the saved value to close the active popup menu and continue.
+		CMFCPopupMenu *pActivePopupMenu = CMFCPopupMenu::m_pActivePopupMenu;
+
+		CMFCPopupMenu::MENUAREA_TYPE clickArea = pActivePopupMenu->CheckArea(pt);
 
 		if (clickArea == CMFCPopupMenu::OUTSIDE)
 		{
@@ -807,7 +811,13 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 
 			// Maybe secondary click on the parent button?
 			CRect rectParentBtn;
-			CWnd* pWndParent = CMFCPopupMenu::m_pActivePopupMenu-> GetParentArea(rectParentBtn);
+			CWnd* pWndParent = NULL;
+
+			// Ensure that the active popup menu is owned by this thread--if not it should be closed below.
+			if ((CMFCPopupMenu::m_pActivePopupMenu != NULL) && ((afxMapHWND()->LookupPermanent(pActivePopupMenu->m_hWnd) != NULL) || (afxMapHWND()->LookupTemporary(pActivePopupMenu->m_hWnd) != NULL)))
+			{
+				pWndParent = pActivePopupMenu->GetParentArea(rectParentBtn);
+			}
 
 			if (pWndParent != NULL)
 			{
@@ -821,12 +831,12 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 					// If user clicks second time on the parent button,
 					// we should close an active menu on the toolbar/menubar
 					// and leave it on the popup menu:
-					if ((pWndParentPopupMenuBar == NULL || pWndParentPopupMenuBar->IsRibbonPanelInRegularMode()) && !CMFCPopupMenu::m_pActivePopupMenu->InCommand())
+					if ((pWndParentPopupMenuBar == NULL || pWndParentPopupMenuBar->IsRibbonPanelInRegularMode()) && !pActivePopupMenu->InCommand())
 					{
 						// Toolbar/menu bar: close an active menu!
-						CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
+						pActivePopupMenu->SendMessage(WM_CLOSE);
 					}
-					else if ((uiMsg == WM_RBUTTONDOWN || uiMsg == WM_RBUTTONUP) && CMFCPopupMenu::m_pActivePopupMenu->GetParentRibbonElement() != NULL)
+					else if ((uiMsg == WM_RBUTTONDOWN || uiMsg == WM_RBUTTONUP) && pActivePopupMenu->GetParentRibbonElement() != NULL)
 					{
 						return FALSE;
 					}
@@ -862,11 +872,12 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 				}
 			}
 
-			if (!CMFCPopupMenu::m_pActivePopupMenu->InCommand())
+			CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::m_pActivePopupMenu;
+			if (pActivePopupMenu != NULL && !pActivePopupMenu->InCommand())
 			{
-				bStopProcessing = !CMFCPopupMenu::m_pActivePopupMenu->DefaultMouseClickOnClose();
+				bStopProcessing = !pActivePopupMenu->DefaultMouseClickOnClose();
 
-				CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
+				pActivePopupMenu->SendMessage(WM_CLOSE);
 
 				CWnd* pWndFocus = CWnd::GetFocus();
 				if (pWndFocus != NULL && pWndFocus->IsKindOf(RUNTIME_CLASS(CMFCToolBar)))
@@ -892,7 +903,7 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 		}
 		else if (clickArea == CMFCPopupMenu::SHADOW_RIGHT || clickArea == CMFCPopupMenu::SHADOW_BOTTOM)
 		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
+			pActivePopupMenu->SendMessage(WM_CLOSE);
 			m_pFrame->SetFocus();
 
 			return TRUE;
@@ -1540,12 +1551,12 @@ BOOL CFrameImpl::OnNcPaint()
 	ASSERT_VALID(m_pFrame);
 
 	BOOL bIsRibbonCaption = FALSE;
-	if (m_pRibbonBar->GetSafeHwnd() != NULL && (m_pRibbonBar->IsWindowVisible() || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
+	if (m_pRibbonBar->GetSafeHwnd() != NULL && ((m_pRibbonBar->IsWindowVisible() || IsFullScreeen()) || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
 	{
-		bIsRibbonCaption = !afxGlobalData.DwmIsCompositionEnabled();
+		bIsRibbonCaption = !GetGlobalData()->IsDwmCompositionEnabled();
 	}
 
-	if ((!IsOwnerDrawCaption() && !bIsRibbonCaption) || afxGlobalData.m_bInSettingChange)
+	if ((!IsOwnerDrawCaption() && !bIsRibbonCaption) || GetGlobalData()->m_bInSettingChange)
 	{
 		return FALSE;
 	}
@@ -1558,10 +1569,25 @@ void CFrameImpl::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 	ASSERT_VALID(m_pFrame);
 	ENSURE(lpMMI != NULL);
 
-	if ((m_pFrame->GetStyle() & WS_CAPTION) == 0 || (m_pFrame->GetStyle() & WS_BORDER) == 0)
+	BOOL bIsRibbonCaption = FALSE;
+
+	if (m_pRibbonBar->GetSafeHwnd() != NULL && ((m_pRibbonBar->IsWindowVisible()|| IsFullScreeen ()) || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
+	{
+		bIsRibbonCaption = TRUE;
+	}
+
+	if ((m_pFrame->GetStyle() & WS_CAPTION) == 0 || (m_pFrame->GetStyle() & WS_BORDER) == 0 || bIsRibbonCaption)
 	{
 		CRect rectWindow;
 		m_pFrame->GetWindowRect(&rectWindow);
+
+		if (m_pFrame->IsIconic())
+		{
+			WINDOWPLACEMENT wp;
+			wp.length = sizeof (WINDOWPLACEMENT);
+			m_pFrame->GetWindowPlacement(&wp);
+			rectWindow = wp.rcNormalPosition;
+		}
 
 		CRect rect(0, 0, 0, 0);
 
@@ -1584,7 +1610,7 @@ void CFrameImpl::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 			::SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
 		}
 
-		int nShellAutohideBars = afxGlobalData.GetShellAutohideBars();
+		int nShellAutohideBars = GetGlobalData()->GetShellAutohideBars();
 
 		if (nShellAutohideBars & AFX_AUTOHIDE_BOTTOM)
 		{
@@ -1611,7 +1637,7 @@ void CFrameImpl::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 		lpMMI->ptMaxSize.x = rect.Width();
 		lpMMI->ptMaxSize.y = rect.Height();
 
-		if (m_pRibbonBar->GetSafeHwnd() != NULL && m_pRibbonBar->IsReplaceFrameCaption() && !afxGlobalData.DwmIsCompositionEnabled())
+		if (m_pRibbonBar->GetSafeHwnd() != NULL && m_pRibbonBar->IsReplaceFrameCaption() && !GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			lpMMI->ptMinTrackSize.x = ::GetSystemMetrics(SM_CXMINTRACK);
 			lpMMI->ptMinTrackSize.y = ::GetSystemMetrics(SM_CYMINTRACK);
@@ -1626,11 +1652,11 @@ BOOL CFrameImpl::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS FAR* l
 
 	BOOL bIsRibbonCaption = FALSE;
 
-	if (m_pRibbonBar->GetSafeHwnd() != NULL && (m_pRibbonBar->IsWindowVisible() || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
+	if (m_pRibbonBar->GetSafeHwnd() != NULL && ((m_pRibbonBar->IsWindowVisible()|| IsFullScreeen ()) || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
 	{
 		bIsRibbonCaption = TRUE;
 
-		if (afxGlobalData.DwmIsCompositionEnabled())
+		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			lpncsp->rgrc[0].bottom -= GetSystemMetrics(SM_CYSIZEFRAME);
 			lpncsp->rgrc[0].left += GetSystemMetrics(SM_CYSIZEFRAME);
@@ -1687,9 +1713,9 @@ void CFrameImpl::OnActivateApp(BOOL bActive)
 		m_pRibbonBar->OnCancelMode();
 	}
 
-	if (!bActive && !afxGlobalData.m_bSysUnderlineKeyboardShortcuts && afxGlobalData.m_bUnderlineKeyboardShortcuts)
+	if (!bActive && !GetGlobalData()->m_bSysUnderlineKeyboardShortcuts && GetGlobalData()->m_bUnderlineKeyboardShortcuts)
 	{
-		afxGlobalData.m_bUnderlineKeyboardShortcuts = FALSE;
+		GetGlobalData()->m_bUnderlineKeyboardShortcuts = FALSE;
 		CMFCToolBar::RedrawUnderlines();
 	}
 }
@@ -1746,7 +1772,7 @@ BOOL CFrameImpl::OnNcActivate(BOOL bActive)
 		m_pFrame->RedrawWindow(CRect(0, 0, 0, 0), NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOCHILDREN);
 	}
 
-	return bRes && !afxGlobalData.DwmIsCompositionEnabled();
+	return bRes && !GetGlobalData()->IsDwmCompositionEnabled();
 }
 
 CRect CFrameImpl::GetCaptionRect()
@@ -1885,9 +1911,11 @@ UINT CFrameImpl::OnNcHitTest(CPoint point)
 {
 	ASSERT_VALID(m_pFrame);
 
-	if (m_pRibbonBar != NULL && m_pRibbonBar->IsWindowVisible() && m_pRibbonBar->IsReplaceFrameCaption() && m_pRibbonBar->IsTransparentCaption() && afxGlobalData.DwmIsCompositionEnabled())
+	if (m_pRibbonBar != NULL && m_pRibbonBar->IsWindowVisible() && m_pRibbonBar->IsReplaceFrameCaption() && m_pRibbonBar->IsTransparentCaption() && GetGlobalData()->IsDwmCompositionEnabled())
 	{
-		return(UINT) afxGlobalData.DwmDefWindowProc(m_pFrame->GetSafeHwnd(), WM_NCHITTEST, 0, MAKELPARAM(point.x, point.y));
+		LRESULT res = 0;
+		_AfxDwmDefWindowProc(m_pFrame->GetSafeHwnd(), WM_NCHITTEST, 0, MAKELPARAM(point.x, point.y), &res);
+		return (UINT)res;
 	}
 
 	if (!IsOwnerDrawCaption())
@@ -2166,7 +2194,7 @@ void CFrameImpl::OnChangeVisualManager()
 		bIsRibbonCaption = TRUE;
 		m_pRibbonBar->RecalcLayout();
 
-		if (afxGlobalData.DwmIsCompositionEnabled())
+		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			return;
 		}
@@ -2254,10 +2282,12 @@ BOOL CFrameImpl::IsPrintPreview()
 	return m_pDockManager != NULL && m_pDockManager->IsPrintPreviewValid();
 }
 
-void CFrameImpl::OnDWMCompositionChanged()
+void CFrameImpl::OnCompositionChanged()
 {
 	if (m_pRibbonBar != NULL && m_pRibbonBar->IsWindowVisible() && m_pRibbonBar->IsReplaceFrameCaption())
 	{
 		m_pRibbonBar->DWMCompositionChanged();
 	}
+
+	OnChangeVisualManager();
 }

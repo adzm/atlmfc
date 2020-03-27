@@ -47,7 +47,7 @@ protected:
 
 	CMDIChildWndEx* m_pRelatedMDIChildFrame;
 };
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMDIChildWndEx frame
 
 class CMDIChildWndEx : public CMDIChildWnd
@@ -206,6 +206,7 @@ public:
 	virtual BOOL CanShowOnMDITabs() { return (GetStyle() & WS_VISIBLE) != 0; }
 	virtual BOOL CanShowOnWindowsList() { return TRUE; }
 	virtual BOOL IsReadOnly() { return FALSE; }
+	virtual BOOL IsTabbedMDIChild();
 
 	/// <summary>
 	/// Updates Windows 7 taskbar tab icon.</summary>
@@ -278,8 +279,8 @@ public:
 
 	/// <summary> 
 	/// Called by the framework when the Taskbar tab thumbnail should process WM_ACTIVATE message.</summary>
-	/// <description>
-	/// The default implementation activates related MDI child frame. </description>
+	/// <remarks>
+	/// The default implementation activates related MDI child frame. </remarks>
 	/// <param name="nState">Specifies whether the CWnd is being activated or deactivated.</param>
 	/// <param name="pWndOther">Pointer to the CWnd being activated or deactivated. The pointer can be NULL, and it may be temporary.</param>
 	/// <param name="bMinimized">Specifies the minimized state of the CWnd being activated or deactivated. A value of TRUE indicates the window is minimized.</param>
@@ -287,8 +288,8 @@ public:
 
 	/// <summary> 
 	/// Called by the framework when the Taskbar tab thumbnail should process WM_MOUSEACTIVATE message.</summary>
-	/// <description>
-	/// The default implementation activates related MDI child frame. </description>
+	/// <remarks>
+	/// The default implementation activates related MDI child frame. </remarks>
 	/// <param name="pDesktopWnd">Specifies a pointer to the top-level parent window of the window being activated. The pointer may be temporary and should not be stored.</param>
 	/// <param name="nHitTest">Specifies the hit-test area code. A hit test is a test that determines the location of the cursor.</param>
 	/// <param name="message">Specifies the mouse message number.</param>
@@ -324,7 +325,6 @@ protected:
 protected:
 	virtual ~CMDIChildWndEx();
 
-	//{{AFX_MSG(CMDIChildWndEx)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -352,7 +352,7 @@ protected:
 	afx_msg void OnSendIconicThumbnail(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnSendIconicLivePreviewBitmap(WPARAM wParam, LPARAM lParam);
 #endif
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void AdjustClientArea();
@@ -366,6 +366,8 @@ protected:
 	/// <param name="lpcszDefaultText"> Specifies a text to set. Current implementation adds this text to application name if the MDI child has FWS_ADDTOTITLE style. </param>
 	virtual void SetTaskbarTabText(LPCTSTR lpcszDefaultText);
 };
+
+extern AFX_IMPORT_DATA UINT AFX_WM_AFTER_TASKBAR_ACTIVATE;
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

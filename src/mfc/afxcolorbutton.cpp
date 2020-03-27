@@ -53,14 +53,12 @@ CMFCColorButton::~CMFCColorButton()
 
 
 BEGIN_MESSAGE_MAP(CMFCColorButton, CMFCButton)
-	//{{AFX_MSG_MAP(CMFCColorButton)
 	ON_WM_KEYDOWN()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_GETDLGCODE()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_MOUSEMOVE()
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCColorButton::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -88,7 +86,7 @@ void CMFCColorButton::OnFillBackground(CDC* pDC, const CRect& rectClient)
 	}
 
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rectClient, &afxGlobalData.brWindow);
+	pDC->FillRect(rectClient, &(GetGlobalData()->brWindow));
 }
 
 void CMFCColorButton::OnDraw(CDC* pDC, const CRect& rect, UINT uiState)
@@ -131,7 +129,7 @@ void CMFCColorButton::OnDraw(CDC* pDC, const CRect& rect, UINT uiState)
 			ENSURE(pOldFont != NULL);
 
 			pDC->SetBkMode(TRANSPARENT);
-			pDC->SetTextColor(afxGlobalData.clrBtnText);
+			pDC->SetTextColor(GetGlobalData()->clrBtnText);
 			pDC->DrawText(m_strAutoColorText, rectText, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
 
 			pDC->SelectObject(pOldFont);
@@ -142,14 +140,14 @@ void CMFCColorButton::OnDraw(CDC* pDC, const CRect& rect, UINT uiState)
 	// Draw color box:
 	//----------------
 	rectColor.DeflateRect(2, 2);
-	pDC->Draw3dRect(rectColor, afxGlobalData.clrBtnHilite, afxGlobalData.clrBtnHilite);
+	pDC->Draw3dRect(rectColor, GetGlobalData()->clrBtnHilite, GetGlobalData()->clrBtnHilite);
 	rectColor.DeflateRect(1, 1);
-	pDC->Draw3dRect(rectColor, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnDkShadow);
+	pDC->Draw3dRect(rectColor, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnDkShadow);
 	rectColor.DeflateRect(1, 1);
 
 	if (color != (COLORREF)-1 &&(uiState & ODS_DISABLED) == 0)
 	{
-		if (afxGlobalData.m_nBitsPerPixel == 8) // 256 colors
+		if (GetGlobalData()->m_nBitsPerPixel == 8) // 256 colors
 		{
 			ASSERT_VALID(m_pPalette);
 			color =  PALETTEINDEX(m_pPalette->GetNearestPaletteIndex(color));
@@ -167,13 +165,13 @@ void CMFCColorButton::OnDraw(CDC* pDC, const CRect& rect, UINT uiState)
 
 	if (!m_bWinXPTheme || !CMFCVisualManager::GetInstance()->DrawComboDropButtonWinXP(pDC, rectArrowWinXP, (uiState & ODS_DISABLED), m_bPushed, m_bHighlighted))
 	{
-		pDC->FillRect(rectArrow, &afxGlobalData.brBtnFace);
+		pDC->FillRect(rectArrow, &(GetGlobalData()->brBtnFace));
 
 		CMenuImages::Draw(pDC, CMenuImages::IdArrowDownLarge, rectArrow, (uiState & ODS_DISABLED) ? CMenuImages::ImageGray : CMenuImages::ImageBlack);
 
-		pDC->Draw3dRect(rectArrow, afxGlobalData.clrBtnLight, afxGlobalData.clrBtnDkShadow);
+		pDC->Draw3dRect(rectArrow, GetGlobalData()->clrBtnLight, GetGlobalData()->clrBtnDkShadow);
 		rectArrow.DeflateRect(1, 1);
-		pDC->Draw3dRect(rectArrow, afxGlobalData.clrBtnHilite, afxGlobalData.clrBtnShadow);
+		pDC->Draw3dRect(rectArrow, GetGlobalData()->clrBtnHilite, GetGlobalData()->clrBtnShadow);
 	}
 
 	if (pCurPalette != NULL)
@@ -189,13 +187,13 @@ void CMFCColorButton::OnDrawBorder(CDC* pDC, CRect& rectClient, UINT /*uiState*/
 
 	if (!m_bWinXPTheme || !CMFCVisualManager::GetInstance()->DrawComboBorderWinXP(pDC, rectClient, !IsWindowEnabled(), FALSE, TRUE))
 	{
-		pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnHilite);
+		pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnHilite);
 
 		rectClient.DeflateRect(1, 1);
 
 		if (m_nFlatStyle == BUTTONSTYLE_3D || m_bHighlighted)
 		{
-			pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnLight);
+			pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnLight);
 		}
 	}
 }
@@ -432,7 +430,7 @@ LRESULT CMFCColorButton::OnInitControl(WPARAM wParam, LPARAM lParam)
 	CTagManager tagManager(strDst);
 
 	BOOL bEnableOtherButton = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCColorButton_EnableOtherButton, bEnableOtherButton))
+	if (ReadBoolProp(tagManager, PS_MFCColorButton_EnableOtherButton, bEnableOtherButton))
 	{
 		if (bEnableOtherButton)
 		{
@@ -445,7 +443,7 @@ LRESULT CMFCColorButton::OnInitControl(WPARAM wParam, LPARAM lParam)
 	}
 
 	BOOL bEnableAutomaticButton = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCColorButton_EnableAutomaticButton, bEnableAutomaticButton))
+	if (ReadBoolProp(tagManager, PS_MFCColorButton_EnableAutomaticButton, bEnableAutomaticButton))
 	{
 		if (bEnableAutomaticButton)
 		{

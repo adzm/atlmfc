@@ -76,7 +76,7 @@ void CDockingPanesRow::AddPane(CPane* pControlBar, AFX_DOCK_METHOD /*dockMethod*
 			nAdditionalBarOffset = CalcLastPaneOffset();
 			if (nAdditionalBarOffset > 0)
 			{
-				nAdditionalBarOffset += afxGlobalData.m_nAutoHideToolBarSpacing;
+				nAdditionalBarOffset += GetGlobalData()->m_nAutoHideToolBarSpacing;
 			}
 		}
 
@@ -207,7 +207,7 @@ void CDockingPanesRow::OnInsertPane(CPane* pControlBar)
 		m_pParentDockBar->ResizeRow(this, nNewRowHeight + m_nExtraSpace);
 	}
 
-	pControlBar->GetDockSiteRow(this);
+	pControlBar->SetDockSiteRow(this);
 	ArrangePanes(pControlBar);
 }
 
@@ -225,7 +225,7 @@ void CDockingPanesRow::RemovePane(CPane* pControlBar)
 
 		m_lstControlBars.RemoveAt(pos);
 
-		pControlBar->GetDockSiteRow(NULL);
+		pControlBar->SetDockSiteRow(NULL);
 
 		if (!m_lstControlBars.IsEmpty())
 		{

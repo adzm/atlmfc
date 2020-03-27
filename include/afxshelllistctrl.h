@@ -25,7 +25,7 @@
 
 class CMFCShellTreeCtrl;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCShellListCtrl window
 
 class CMFCShellListCtrl : public CMFCListCtrl
@@ -100,7 +100,6 @@ public:
 	virtual ~CMFCShellListCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCShellListCtrl)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnDblClk(NMHDR* pNMHDR, LRESULT* pResult);
@@ -108,7 +107,6 @@ protected:
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 

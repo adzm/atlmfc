@@ -46,14 +46,12 @@ CDockSite::~CDockSite()
 }
 
 BEGIN_MESSAGE_MAP(CDockSite, CBasePane)
-	//{{AFX_MSG_MAP(CDockSite)
 	ON_WM_PAINT()
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
 	ON_WM_CONTEXTMENU()
 	ON_WM_NCDESTROY()
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -111,7 +109,7 @@ BOOL CDockSite::CreateEx(DWORD dwStyleEx, DWORD dwStyle, const RECT& rect, CWnd*
 	m_dwControlBarStyle = dwControlBarStyle;
 	m_pDockSite = pParentWnd;
 
-	return CWnd::CreateEx(dwStyleEx, afxGlobalData.RegisterWindowClass(_T("Afx:DockPane")), NULL, dwStyle, rectDockBar, pParentWnd, m_nDockBarID, pContext);
+	return CWnd::CreateEx(dwStyleEx, GetGlobalData()->RegisterWindowClass(_T("Afx:DockPane")), NULL, dwStyle, rectDockBar, pParentWnd, m_nDockBarID, pContext);
 }
 
 void CDockSite::AlignDockSite(const CRect& rectToAlignBy, CRect& rectResult, BOOL bMoveImmediately)

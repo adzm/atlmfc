@@ -90,8 +90,8 @@ public:
 
 	INT_PTR DoModal(_In_ HWND hParent = ::GetActiveWindow());
 
-	static BOOL IsSupported();
-	static INT_PTR ShowDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction, _In_ const CString& strTitle, _In_ int nIDCommandControlsFirst, _In_ int nIDCommandControlsLast,
+	static BOOL __stdcall IsSupported();
+	static INT_PTR __stdcall ShowDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction, _In_ const CString& strTitle, _In_ int nIDCommandControlsFirst, _In_ int nIDCommandControlsLast,
 		_In_ int nCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON, _In_ int nTaskDialogOptions = TDF_ENABLE_HYPERLINKS | TDF_USE_COMMAND_LINKS, _In_ const CString& strFooter = CString());
 
 	friend HRESULT CALLBACK TaskDialogCallback(_In_ HWND hwnd, _In_ UINT uNotification, _In_ WPARAM wParam, _In_ LPARAM lParam, _In_ LONG_PTR dwRefData);

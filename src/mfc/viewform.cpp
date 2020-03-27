@@ -18,11 +18,9 @@
 /////////////////////////////////////////////////////////////////////////////
 
 BEGIN_MESSAGE_MAP(CFormView, CScrollView)
-	//{{AFX_MSG_MAP(CFormView)
 	ON_WM_SETFOCUS()
 	ON_WM_CREATE()
 	ON_MESSAGE(WM_PRINTCLIENT, &CFormView::OnPrintClient)
-	//}}AFX_MSG_MAP
 #ifndef _AFX_NO_OCC_SUPPORT
 	ON_MESSAGE(WM_INITDIALOG, &CFormView::HandleInitDialog)
 #endif

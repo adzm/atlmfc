@@ -25,7 +25,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCTabCtrl window
 
 class CMFCTabInfo;
@@ -117,6 +117,8 @@ public:
 	virtual DROPEFFECT OnDragOver(COleDataObject* pDataObject, DWORD dwKeyState, CPoint point);
 
 	static HICON __stdcall GetDocumentIcon(UINT nCmdID);
+
+	virtual void OnDraw(CDC* pDC);
 
 protected:
 	virtual CWnd* FindTargetWnd(const CPoint& pt);
@@ -283,7 +285,6 @@ public:
 	virtual ~CMFCTabCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCTabCtrl)
 	afx_msg void OnDestroy();
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -302,11 +303,11 @@ protected:
 	afx_msg void OnWindowPosChanged(WINDOWPOS FAR* lpwndpos);
 	afx_msg void OnWindowPosChanging(WINDOWPOS FAR* lpwndpos);
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCTabCtrl notification messages:
 extern AFX_IMPORT_DATA UINT AFX_WM_ON_HSCROLL;
 

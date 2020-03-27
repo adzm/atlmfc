@@ -38,11 +38,10 @@ public:
 
 // Generated message map functions
 protected:
-	//{{AFX_MSG(CScreenWnd)
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CMFCColorDialog* m_pColorDlg;
@@ -54,9 +53,6 @@ protected:
 CMFCColorDialog::CMFCColorDialog(COLORREF clrInit, DWORD /*dwFlags - reserved */, CWnd* pParentWnd, HPALETTE hPal)
 	: CDialogEx(CMFCColorDialog::IDD, pParentWnd)
 {
-	//{{AFX_DATA_INIT(CMFCColorDialog)
-	//}}AFX_DATA_INIT
-
 	m_pColourSheetOne = NULL;
 	m_pColourSheetTwo = NULL;
 
@@ -91,22 +87,18 @@ void CMFCColorDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 
-	//{{AFX_DATA_MAP(CMFCColorDialog)
 	DDX_Control(pDX, IDC_AFXBARRES_COLOR_SELECT, m_btnColorSelect);
 	DDX_Control(pDX, IDC_AFXBARRES_STATICPLACEHOLDER, m_wndStaticPlaceHolder);
 	DDX_Control(pDX, IDC_AFXBARRES_COLOURPLACEHOLDER, m_wndColors);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCColorDialog, CDialogEx)
-	//{{AFX_MSG_MAP(CMFCColorDialog)
 	ON_WM_DESTROY()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_SETCURSOR()
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_BN_CLICKED(IDC_AFXBARRES_COLOR_SELECT, &CMFCColorDialog::OnColorSelect)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -121,7 +113,7 @@ BOOL CMFCColorDialog::OnInitDialog()
 		ModifyStyleEx(0, WS_EX_LAYOUTRTL);
 	}
 
-	if (afxGlobalData.m_nBitsPerPixel < 8) // 16 colors, call standard dialog
+	if (GetGlobalData()->m_nBitsPerPixel < 8) // 16 colors, call standard dialog
 	{
 		CColorDialog dlg(m_CurrentColor, CC_FULLOPEN | CC_ANYCOLOR);
 		int nResult = (int) dlg.DoModal();
@@ -211,7 +203,7 @@ void CMFCColorDialog::SetNewColor(COLORREF rgb)
 {
 	m_NewColor = rgb;
 
-	if (afxGlobalData.m_nBitsPerPixel == 8) // 256 colors
+	if (GetGlobalData()->m_nBitsPerPixel == 8) // 256 colors
 	{
 		ENSURE(m_pPalette != NULL);
 
@@ -231,11 +223,11 @@ void CMFCColorDialog::OnSysColorChange()
 {
 	CDialogEx::OnSysColorChange();
 
-	afxGlobalData.UpdateSysColors();
+	GetGlobalData()->UpdateSysColors();
 
 	if (m_bIsMyPalette)
 	{
-		if (afxGlobalData.m_nBitsPerPixel < 8) // 16 colors, call standard dialog
+		if (GetGlobalData()->m_nBitsPerPixel < 8) // 16 colors, call standard dialog
 		{
 			ShowWindow(SW_HIDE);
 
@@ -397,12 +389,10 @@ CScreenWnd::~CScreenWnd()
 }
 
 BEGIN_MESSAGE_MAP(CScreenWnd, CWnd)
-	//{{AFX_MSG_MAP(CScreenWnd)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_SETCURSOR()
 	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

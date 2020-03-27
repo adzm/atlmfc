@@ -12,7 +12,6 @@
 #include <dde.h>        // for DDE execute shell requests
 
 #include "afxdatarecovery.h"
-#include "afxglobals.h"
 #include <AtlConv.h>
 
 #define new DEBUG_NEW
@@ -28,7 +27,6 @@ const AFX_DATADEF CRect CFrameWnd::rectDefault(
 // CFrameWnd
 
 BEGIN_MESSAGE_MAP(CFrameWnd, CWnd)
-	//{{AFX_MSG_MAP(CFrameWnd)
 	ON_WM_INITMENU()
 	ON_WM_INITMENUPOPUP()
 	ON_WM_MENUSELECT()
@@ -78,7 +76,6 @@ BEGIN_MESSAGE_MAP(CFrameWnd, CWnd)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXTW, 0, 0xFFFF, &CFrameWnd::OnToolTipText)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXTA, 0, 0xFFFF, &CFrameWnd::OnToolTipText)
 	ON_NOTIFY_EX_RANGE(RBN_CHEVRONPUSHED, 0, 0xFFFF, &CFrameWnd::OnChevronPushed)
-	//}}AFX_MSG_MAP
 	// message handling for standard DDE commands
 	ON_MESSAGE(WM_DDE_INITIATE, &CFrameWnd::OnDDEInitiate)
 	ON_MESSAGE(WM_DDE_EXECUTE, &CFrameWnd::OnDDEExecute)
@@ -134,15 +131,30 @@ CFrameWnd::~CFrameWnd()
 {
 	AFX_BEGIN_DESTRUCTOR
 
-		RemoveFrameWnd();
+	RemoveFrameWnd();
 
-		// If we're the current routing frame, pop the routing frame stack
-		_AFX_THREAD_STATE* pThreadState = AfxGetThreadState();
-		while (pThreadState->m_pRoutingFrame == this)
-			pThreadState->m_pPushRoutingFrame->Pop();
+	// If we're the current routing frame, pop the routing frame stack
+	_AFX_THREAD_STATE* pThreadState = AfxGetThreadState();
+	while (pThreadState->m_pRoutingFrame == this)
+	{
+		pThreadState->m_pPushRoutingFrame->Pop();
+	}
 
-		if (m_phWndDisable != NULL)
-			delete[] (void*)m_phWndDisable;
+	if (m_phWndDisable != NULL)
+	{
+		delete[] (void*)m_phWndDisable;
+	}
+
+	if (m_pNotifyHook != NULL)
+	{
+		// Clear the notify hook's pointer back to this frame, in the same way the frame's notify
+		// hook pointer is cleared in the COleFrameHook destructor. Destruction order is not
+		// fixed so the first object destroyed must clear the other object's pointer to itself.
+		if (m_pNotifyHook->m_pFrameWnd == this)
+		{
+			m_pNotifyHook->m_pFrameWnd = NULL;
+		}
+	}
 
 	AFX_END_DESTRUCTOR
 }
@@ -327,15 +339,22 @@ LRESULT CFrameWnd::OnCommandHelp(WPARAM, LPARAM lParam)
 	if (lParam == 0)
 	{
 		if (IsTracking())
-			lParam = HID_BASE_COMMAND+m_nIDTracking;
+		{
+			lParam = HID_BASE_COMMAND + GetTrackingID();
+		}
 		else
-			lParam = HID_BASE_RESOURCE+m_nIDHelp;
+		{
+			lParam = HID_BASE_RESOURCE + m_nIDHelp;
+		}
 	}
+
 	if (lParam != 0)
 	{
 		CWinApp* pApp = AfxGetApp();
 		if (pApp != NULL)
+		{
 			pApp->WinHelpInternal(lParam);
+		}
 		return TRUE;
 	}
 	return FALSE;
@@ -712,7 +731,7 @@ LPCTSTR CFrameWnd::GetIconWndClass(DWORD dwDefaultStyle, UINT nIDResource)
 
 		WNDCLASS wndcls;
 		if (cs.lpszClass != NULL &&
-			AfxCtxGetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wndcls) &&
+			GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wndcls) &&
 			wndcls.hIcon != hIcon)
 		{
 			// register a very similar WNDCLASS
@@ -2238,7 +2257,7 @@ BOOL CFrameWnd::OnEraseBkgnd(CDC* pDC)
 	return CWnd::OnEraseBkgnd(pDC);
 }
 
-BOOL CFrameWnd::OnChevronPushed(UINT id, NMHDR *pnm, LRESULT *pResult) 
+BOOL CFrameWnd::OnChevronPushed(UINT /* id */, NMHDR *pnm, LRESULT *pResult)
 {
 	NMREBARCHEVRON *pnmReBarChevron = (NMREBARCHEVRON *) pnm;
 	CReBar *pReBar;
@@ -2250,7 +2269,7 @@ BOOL CFrameWnd::OnChevronPushed(UINT id, NMHDR *pnm, LRESULT *pResult)
 	// the band in which the chevron is used.  For chevron processing, MFC only handles rebar bands
 	// that contain toolbar controls - any other control will assert.  If you wish to use another
 	// control with the chevron you must provide your own implementation of OnChevronPushed.
-	nLen = ::lstrlen(REBARCLASSNAME) + 1;
+	nLen = static_cast<int>(::_tcslen(REBARCLASSNAME)) + 1;
 	::GetClassName(pnmReBarChevron->hdr.hwndFrom, strClassName.GetBuffer(nLen), nLen);
 	strClassName.ReleaseBuffer();
 	pReBar = (CReBar *) CReBar::FromHandlePermanent(pnmReBarChevron->hdr.hwndFrom);
@@ -2259,8 +2278,10 @@ BOOL CFrameWnd::OnChevronPushed(UINT id, NMHDR *pnm, LRESULT *pResult)
 	{
 		// Make sure it's our rebar
 		CFrameWnd *pFrameWnd = pReBar->GetParentFrame();
-		if(pFrameWnd && this != pFrameWnd)
-			return pFrameWnd->OnChevronPushed(id, pnm, pResult);
+		if (pFrameWnd && (this != pFrameWnd))
+		{
+			return FALSE;
+		}
 
 		// Yep, it's ours
 		REBARBANDINFO BandInfo;
@@ -2283,7 +2304,7 @@ BOOL CFrameWnd::OnChevronPushed(UINT id, NMHDR *pnm, LRESULT *pResult)
 		pReBar->GetReBarCtrl().GetBandInfo(pnmReBarChevron->uBand, &BandInfo);
 		pReBar->GetReBarCtrl().GetRect(pnmReBarChevron->uBand, &rcBand);
 
-		nLen = ::lstrlen(TOOLBARCLASSNAME) + 1;
+		nLen = static_cast<int>(::_tcslen(TOOLBARCLASSNAME)) + 1;
 		::GetClassName(BandInfo.hwndChild, strClassName.GetBuffer(nLen), nLen);
 		strClassName.ReleaseBuffer();
 		pToolBar = (CToolBar *) CToolBar::FromHandlePermanent(BandInfo.hwndChild);
@@ -2371,7 +2392,7 @@ BOOL CFrameWnd::OnChevronPushed(UINT id, NMHDR *pnm, LRESULT *pResult)
 			}
 
 			CRect rc = pnmReBarChevron->rc;
-			ClientToScreen(&rc);
+			pReBar->ClientToScreen(&rc);
 			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, 
 				rc.left, rc.bottom, this);
 
@@ -2624,12 +2645,13 @@ void CFrameWnd::SetProgressBarPosition(int nProgressPos)
 {
 	ASSERT_VALID(this);
 
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return;
 	}
 
-	ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+	ITaskbarList3* pTaskbarList = pApp->GetITaskbarList3();
 	ENSURE(pTaskbarList != NULL);
 
 	pTaskbarList->SetProgressValue(GetSafeHwnd(), nProgressPos - m_nProgressBarRangeMin, 
@@ -2639,12 +2661,13 @@ void CFrameWnd::SetProgressBarState(TBPFLAG tbpFlags)
 {
 	ASSERT(::IsWindow(m_hWnd)); 
 
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return;
 	}
 
-	ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+	ITaskbarList3* pTaskbarList = pApp->GetITaskbarList3();
 	ENSURE(pTaskbarList != NULL);
 
 	pTaskbarList->SetProgressState(GetSafeHwnd(), tbpFlags);
@@ -2653,7 +2676,8 @@ BOOL CFrameWnd::SetTaskbarOverlayIcon(UINT nIDResource, LPCTSTR lpcszDescr)
 {
 	ASSERT(::IsWindow(m_hWnd));
 
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return FALSE;
 	}
@@ -2676,12 +2700,13 @@ BOOL CFrameWnd::SetTaskbarOverlayIcon(HICON hIcon, LPCTSTR lpcszDescr)
 {
 	ASSERT(::IsWindow(m_hWnd));
 
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return FALSE;
 	}
 
-	ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+	ITaskbarList3* pTaskbarList = pApp->GetITaskbarList3();
 	ENSURE(pTaskbarList != NULL);
 
 	// TODO uncomment lpcszDescr for latest SDK

@@ -26,11 +26,9 @@ static const int nHorzMargin = 3;
 static const int nVertMargin = 3;
 
 BEGIN_MESSAGE_MAP(CMFCToolBarDateTimeCtrlImpl, CDateTimeCtrl)
-	//{{AFX_MSG_MAP(CMFCToolBarDateTimeCtrlImpl)
 	ON_NOTIFY_REFLECT(DTN_DATETIMECHANGE, &CMFCToolBarDateTimeCtrlImpl::OnDateTimeChange)
 	ON_NOTIFY_REFLECT(DTN_DROPDOWN, &CMFCToolBarDateTimeCtrlImpl::OnDateTimeDropDown)
 	ON_NOTIFY_REFLECT(DTN_CLOSEUP, &CMFCToolBarDateTimeCtrlImpl::OnDateTimeCloseUp)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 #pragma warning(disable : 4310)
@@ -202,7 +200,7 @@ void CMFCToolBarDateTimeCtrl::OnMove()
 	m_pWndDateTime->GetWindowRect(rectDateTime);
 
 	m_pWndDateTime->SetWindowPos(NULL, m_rect.left + nHorzMargin, m_rect.top +(m_rect.Height() - m_sizeText.cy - rectDateTime.Height()) / 2,
-		m_rect.Width() - 2 * nHorzMargin, afxGlobalData.GetTextHeight() + 2 * nVertMargin, SWP_NOZORDER | SWP_NOACTIVATE);
+		m_rect.Width() - 2 * nHorzMargin, GetGlobalData()->GetTextHeight() + 2 * nVertMargin, SWP_NOZORDER | SWP_NOACTIVATE);
 
 	AdjustRect();
 }
@@ -215,7 +213,7 @@ void CMFCToolBarDateTimeCtrl::OnSize(int iSize)
 	if (m_pWndDateTime->GetSafeHwnd() != NULL && (m_pWndDateTime->GetStyle() & WS_VISIBLE))
 	{
 		m_pWndDateTime->SetWindowPos(NULL, m_rect.left + nHorzMargin, m_rect.top,
-			m_rect.Width() - 2 * nHorzMargin, afxGlobalData.GetTextHeight() + 2 * nVertMargin, SWP_NOZORDER | SWP_NOACTIVATE);
+			m_rect.Width() - 2 * nHorzMargin, GetGlobalData()->GetTextHeight() + 2 * nVertMargin, SWP_NOZORDER | SWP_NOACTIVATE);
 
 		AdjustRect();
 	}
@@ -247,7 +245,7 @@ void CMFCToolBarDateTimeCtrl::OnChangeParentWnd(CWnd* pWndParent)
 
 	CRect rect = m_rect;
 	rect.InflateRect(-2, 0);
-	rect.bottom = rect.top + afxGlobalData.GetTextHeight() + 2 * nVertMargin;
+	rect.bottom = rect.top + GetGlobalData()->GetTextHeight() + 2 * nVertMargin;
 
 	if ((m_pWndDateTime = CreateDateTimeCtrl(pWndParent, rect)) == NULL)
 	{
@@ -257,7 +255,7 @@ void CMFCToolBarDateTimeCtrl::OnChangeParentWnd(CWnd* pWndParent)
 
 	AdjustRect();
 
-	m_pWndDateTime->SetFont(&afxGlobalData.fontRegular);
+	m_pWndDateTime->SetFont(&(GetGlobalData()->fontRegular));
 	if (m_dwTimeStatus == GDT_VALID)
 	{
 		m_pWndDateTime->SetTime(&m_time);
@@ -340,10 +338,10 @@ void CMFCToolBarDateTimeCtrl::OnAddToCustomizePage()
 
 HBRUSH CMFCToolBarDateTimeCtrl::OnCtlColor(CDC* pDC, UINT /*nCtlColor*/)
 {
-	pDC->SetTextColor(afxGlobalData.clrWindowText);
-	pDC->SetBkColor(afxGlobalData.clrWindow);
+	pDC->SetTextColor(GetGlobalData()->clrWindowText);
+	pDC->SetBkColor(GetGlobalData()->clrWindow);
 
-	return(HBRUSH) afxGlobalData.brWindow.GetSafeHandle();
+	return(HBRUSH) GetGlobalData()->brWindow.GetSafeHandle();
 }
 
 void CMFCToolBarDateTimeCtrl::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* pImages,
@@ -360,7 +358,7 @@ void CMFCToolBarDateTimeCtrl::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarIma
 		//--------------------
 		BOOL bDisabled = (bCustomizeMode && !IsEditable()) || (!bCustomizeMode &&(m_nStyle & TBBS_DISABLED));
 
-		pDC->SetTextColor(bDisabled ? afxGlobalData.clrGrayedText : (bHighlight) ? CMFCToolBar::GetHotTextColor() : afxGlobalData.clrBarText);
+		pDC->SetTextColor(bDisabled ? GetGlobalData()->clrGrayedText : (bHighlight) ? CMFCToolBar::GetHotTextColor() : GetGlobalData()->clrBarText);
 		CRect rectText;
 		rectText.left = (rect.left + rect.right - m_sizeText.cx) / 2;
 		rectText.right = (rect.left + rect.right + m_sizeText.cx) / 2;
@@ -393,19 +391,19 @@ int CMFCToolBarDateTimeCtrl::OnDrawOnCustomizeList(CDC* pDC, const CRect& rect, 
 	rectDateTime.left = rectDateTime.right - iDateTimeWidth;
 	rectDateTime.DeflateRect(2, 3);
 
-	pDC->FillSolidRect(rectDateTime, afxGlobalData.clrWindow);
-	pDC->Draw3dRect(&rectDateTime, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarHilite);
+	pDC->FillSolidRect(rectDateTime, GetGlobalData()->clrWindow);
+	pDC->Draw3dRect(&rectDateTime, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
 
 	rectDateTime.DeflateRect(1, 1);
 
-	pDC->Draw3dRect(&rectDateTime, afxGlobalData.clrBarShadow, afxGlobalData.clrBarLight);
+	pDC->Draw3dRect(&rectDateTime, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarLight);
 
 	CRect rectBtn = rectDateTime;
 	rectBtn.left = rectBtn.right - rectBtn.Height();
 	rectBtn.DeflateRect(1, 1);
 
-	pDC->FillSolidRect(rectBtn, afxGlobalData.clrBarFace);
-	pDC->Draw3dRect(&rectBtn, afxGlobalData.clrBarHilite, afxGlobalData.clrBarDkShadow);
+	pDC->FillSolidRect(rectBtn, GetGlobalData()->clrBarFace);
+	pDC->Draw3dRect(&rectBtn, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarDkShadow);
 
 	CMenuImages::Draw(pDC, CMenuImages::IdArrowDown, rectBtn);
 
@@ -606,7 +604,7 @@ void CMFCToolBarDateTimeCtrl::OnGlobalFontsChanged()
 
 	if (m_pWndDateTime->GetSafeHwnd() != NULL)
 	{
-		m_pWndDateTime->SetFont(&afxGlobalData.fontRegular);
+		m_pWndDateTime->SetFont(&(GetGlobalData()->fontRegular));
 	}
 }
 

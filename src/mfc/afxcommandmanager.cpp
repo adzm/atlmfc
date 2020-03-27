@@ -22,7 +22,7 @@
 #define AFX_REG_ENTRY_COMMANDS_WITHOUT_IMAGES _T("CommandsWithoutImages")
 #define AFX_REG_ENTRY_MENU_USER_IMAGES _T("MenuUserImages")
 
-static const CString strToolbarProfile = _T("ToolBars");
+#define AFX_TOOLBAR_PROFILE _T("ToolBars")
 
 //////////////////////////////////////////////////////////////////////
 // One global static CCommandManager Object
@@ -35,7 +35,7 @@ public:
 
 static _STATIC_CREATOR_ STATIC_CREATOR;
 
-CCommandManager* GetCmdMgr()
+CCommandManager* AFX_CDECL GetCmdMgr()
 {
 	return &STATIC_CREATOR.s_TheCmdMgr;
 }
@@ -160,7 +160,7 @@ void CCommandManager::EnableMenuItemImage(UINT uiCmd, BOOL bEnable, int iUserIma
 
 BOOL CCommandManager::LoadState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_TOOLBAR_PROFILE, lpszProfileName);
 
 	CString strSection;
 	strSection.Format(AFX_REG_PARAMS_FMT, (LPCTSTR)strProfileName);
@@ -180,7 +180,7 @@ BOOL CCommandManager::LoadState(LPCTSTR lpszProfileName)
 
 BOOL CCommandManager::SaveState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_TOOLBAR_PROFILE, lpszProfileName);
 
 	CString strSection;
 	strSection.Format(AFX_REG_PARAMS_FMT, (LPCTSTR)strProfileName);

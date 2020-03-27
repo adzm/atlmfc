@@ -33,7 +33,7 @@ BOOL AFXAPI AfxVerifyLicFile(HINSTANCE hInstance, LPCTSTR pszLicFileName,
 	// Attach the file name in pszLicFileName to the szPathName
 	LPTSTR pszFileName = _tcsrchr(szPathName, '\\') + 1;
 	if (pszLicFileName != NULL && pszFileName > szPathName &&
-		lstrlen(pszLicFileName) < (_MAX_PATH - (pszFileName - szPathName)) ) 
+		_tcslen(pszLicFileName) < static_cast<size_t>(_MAX_PATH - (pszFileName - szPathName)) ) 
 		Checked::tcscpy_s(pszFileName, _countof(szPathName) - (pszFileName - szPathName), pszLicFileName);
 	else
 		return FALSE;
@@ -48,7 +48,7 @@ BOOL AFXAPI AfxVerifyLicFile(HINSTANCE hInstance, LPCTSTR pszLicFileName,
 		CFile file(szPathName, CFile::modeRead);
 
 		if (cch == -1)
-			cch = (UINT)wcslen(pszLicFileContents);
+			cch = AtlStrLen(pszLicFileContents);
 
 		pszKey = (char*)_alloca(cch*2 + 1);
 		cch = _wcstombsz(pszKey, pszLicFileContents, cch*2 + 1);

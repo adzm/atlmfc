@@ -54,14 +54,12 @@ CMFCImagePaintArea::~CMFCImagePaintArea()
 }
 
 BEGIN_MESSAGE_MAP(CMFCImagePaintArea, CButton)
-	//{{AFX_MSG_MAP(CMFCImagePaintArea)
 	ON_WM_ERASEBKGND()
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_CANCELMODE()
 	ON_WM_SETCURSOR()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -74,7 +72,7 @@ void CMFCImagePaintArea::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 
 	CRect rectClient = lpDIS->rcItem;
 
-	pDC->FillRect(&rectClient, &afxGlobalData.brBtnFace);
+	pDC->FillRect(&rectClient, &(GetGlobalData()->brBtnFace));
 	rectClient.InflateRect(-1, -1);
 
 	CRect rectDraw = rectClient;
@@ -85,10 +83,10 @@ void CMFCImagePaintArea::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	rectClient = rectDraw;
 	rectClient.InflateRect(1, 1);
 
-	pDC->Draw3dRect(rectDraw, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnHilite);
+	pDC->Draw3dRect(rectDraw, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnHilite);
 
 	// Draw grid:
-	CPen penGrid(PS_SOLID, 1, afxGlobalData.clrBtnShadow);
+	CPen penGrid(PS_SOLID, 1, GetGlobalData()->clrBtnShadow);
 	CPen* pOldPen = (CPen*) pDC->SelectObject(&penGrid);
 
 	int x = 0;
@@ -508,7 +506,7 @@ void CMFCImagePaintArea::SetBitmap(CBitmap* pBitmap)
 		m_penStretch.DeleteObject();
 	}
 
-	m_penStretch.CreatePen(PS_SOLID, min(m_sizeCell.cx, m_sizeCell.cy), afxGlobalData.clrBtnText);
+	m_penStretch.CreatePen(PS_SOLID, min(m_sizeCell.cx, m_sizeCell.cy), GetGlobalData()->clrBtnText);
 }
 
 BOOL CMFCImagePaintArea::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)

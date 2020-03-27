@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -168,6 +168,11 @@ protected:
 		m_bIsCollapsed = FALSE;
 	}
 
+	virtual BOOL HasLargeMode() const
+	{
+		return !m_bIsButtonMode || CMFCRibbonButton::HasLargeMode();
+	}
+
 	virtual void StretchHorizontally()
 	{
 		if (m_bSmallIcons || m_nPanelColumns <= 3)
@@ -242,7 +247,7 @@ protected:
 	void SetNotifyParentID(BOOL bSet);
 };
 
-////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonGalleryIcon
 
 class CMFCRibbonGalleryIcon : public CMFCRibbonButton
@@ -333,7 +338,7 @@ protected:
 	BOOL m_bIsLastInColumn;
 };
 
-////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonGalleryMenuButton
 
 class CMFCRibbonGalleryMenuButton : public CMFCToolBarMenuButton

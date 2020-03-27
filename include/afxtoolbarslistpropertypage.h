@@ -24,7 +24,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsCommandsPropertyPage dialog
 
 class CMFCToolBarButton;
@@ -60,10 +60,9 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarsCommandsPropertyPage)
 	afx_msg void OnSelchangeUserTools();
 	afx_msg void OnSelchangeCategory();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Attributes:
@@ -73,7 +72,7 @@ protected:
 	CString m_strAllCategory;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsListPropertyPage dialog
 
 class CMFCToolBarsListPropertyPage : public CPropertyPage
@@ -107,8 +106,8 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarsListPropertyPage)
 	virtual BOOL OnInitDialog();
+
 	afx_msg void OnSelchangeToolbarList();
 	afx_msg void OnDblClkToolBarList();
 	afx_msg void OnResetToolbar();
@@ -117,7 +116,7 @@ protected:
 	afx_msg void OnNewToolbar();
 	afx_msg void OnRenameToolbar();
 	afx_msg void OnTextLabels();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CMFCToolBar* m_pSelectedToolbar;

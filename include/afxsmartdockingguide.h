@@ -44,11 +44,10 @@ protected:
 
 // Overrides
 protected:
-	//{{AFX_MSG(CSmartDockingStandaloneGuideWnd)
 	afx_msg void OnPaint();
 	afx_msg void OnClose();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

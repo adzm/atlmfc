@@ -35,13 +35,11 @@ IMPLEMENT_DYNCREATE(CMFCToolBarsMenuPropertyPage, CPropertyPage)
 CMFCToolBarsMenuPropertyPage::CMFCToolBarsMenuPropertyPage(CFrameWnd* pParentFrame, BOOL bAutoSet) :
 	CPropertyPage(CMFCToolBarsMenuPropertyPage::IDD), m_pParentFrame(pParentFrame), m_bAutoSet(bAutoSet)
 {
-	//{{AFX_DATA_INIT(CMFCToolBarsMenuPropertyPage)
 	m_strMenuDescr = _T("");
 	m_strContextMenuName = _T("");
 	m_strMenuName = _T("");
 	m_iMenuAnimationType = (int) CMFCPopupMenu::m_AnimationType;
 	m_bMenuShadows = CMFCMenuBar::IsMenuShadows();
-	//}}AFX_DATA_INIT
 
 	m_pMenuBar = NULL;
 	m_hmenuCurr = NULL;
@@ -58,7 +56,6 @@ CMFCToolBarsMenuPropertyPage::~CMFCToolBarsMenuPropertyPage()
 void CMFCToolBarsMenuPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarsMenuPropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_MENU_ANIMATION_LABEL, m_wndMenuAnimationsLabel);
 	DDX_Control(pDX, IDC_AFXBARRES_MENU_ANIMATION, m_wndMenuAnimations);
 	DDX_Control(pDX, IDC_AFXBARRES_MENU_SHADOWS, m_wndMenuShadows);
@@ -74,18 +71,15 @@ void CMFCToolBarsMenuPropertyPage::DoDataExchange(CDataExchange* pDX)
 	DDX_CBString(pDX, IDC_AFXBARRES_MENU_LIST, m_strMenuName);
 	DDX_CBIndex(pDX, IDC_AFXBARRES_MENU_ANIMATION, m_iMenuAnimationType);
 	DDX_Check(pDX, IDC_AFXBARRES_MENU_SHADOWS, m_bMenuShadows);
-	//}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsMenuPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCToolBarsMenuPropertyPage)
 	ON_WM_DESTROY()
 	ON_CBN_SELCHANGE(IDC_AFXBARRES_MENU_LIST, &CMFCToolBarsMenuPropertyPage::OnSelchangeMenuList)
 	ON_CBN_SELCHANGE(IDC_AFXBARRES_CONTEXT_MENU_LIST, &CMFCToolBarsMenuPropertyPage::OnSelchangeContextMenuList)
 	ON_BN_CLICKED(IDC_AFXBARRES_RESET_MENU, &CMFCToolBarsMenuPropertyPage::OnResetMenu)
 	ON_BN_CLICKED(IDC_AFXBARRES_RESET_FRAME_MENU, &CMFCToolBarsMenuPropertyPage::OnResetFrameMenu)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -94,12 +88,6 @@ END_MESSAGE_MAP()
 BOOL CMFCToolBarsMenuPropertyPage::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
-
-	if (m_iMenuAnimationType == (int) CMFCPopupMenu::SYSTEM_DEFAULT_ANIMATION)
-	{
-		m_iMenuAnimationType = m_wndMenuAnimations.GetCount() - 1;
-		UpdateData(FALSE);
-	}
 
 	POSITION pos = NULL;
 
@@ -200,6 +188,11 @@ BOOL CMFCToolBarsMenuPropertyPage::OnInitDialog()
 		m_wndMenuAnimations.InsertString(-1, strAnimation);
 		ENSURE(strAnimation.LoadString(IDS_AFXBARRES_MENU_ANIMATION_DEFAULT));
 		m_wndMenuAnimations.InsertString(-1, strAnimation);
+
+		if (m_iMenuAnimationType == (int) CMFCPopupMenu::SYSTEM_DEFAULT_ANIMATION)
+		{
+			m_iMenuAnimationType = m_wndMenuAnimations.GetCount() - 1;
+		}
 
 		UpdateData(FALSE);
 		OnSelchangeMenuList();

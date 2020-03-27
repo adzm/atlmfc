@@ -24,12 +24,12 @@
 #pragma component(minrebuild, off)
 #endif
 
-#define AFX_TBBS_BREAK 0x20000000
-
 class CAccessibilityData;
 class CMFCToolBar;
 class CMFCToolBarImages;
 class CMFCToolBarMenuButton;
+
+#define AFX_DUMMY_AMPERSAND_SEQUENCE  _T("\001\001")
 
 class CMFCToolBarButton : public CObject
 {
@@ -143,6 +143,7 @@ public:
 	virtual BOOL IsLastInGroup() const;
 
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+	virtual int GetAccCount();
 
 protected:
 	void Initialize();

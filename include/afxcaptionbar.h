@@ -35,7 +35,6 @@ public:
 	BOOL Create(DWORD dwStyle, CWnd* pParentWnd, UINT uID, int nHeight = -1, BOOL bIsMessageBarMode = FALSE);
 
 protected:
-	//{{AFX_MSG(CMFCCaptionBar)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -50,10 +49,10 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
 	afx_msg LRESULT OnGetFont(WPARAM, LPARAM);
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
+	afx_msg void OnMouseLeave();
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 //Attributes

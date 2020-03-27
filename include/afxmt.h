@@ -47,7 +47,7 @@ class CMultiLock;
 #undef AFX_DATA
 #define AFX_DATA AFX_CORE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Basic synchronization object
 
 class CSyncObject : public CObject
@@ -81,7 +81,7 @@ public:
 	friend class CMultiLock;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSemaphore
 
 class CSemaphore : public CSyncObject
@@ -90,7 +90,7 @@ class CSemaphore : public CSyncObject
 
 // Constructor
 public:
-	/* explicit */ CSemaphore(LONG lInitialCount = 1, LONG lMaxCount = 1,
+	explicit CSemaphore(LONG lInitialCount = 1, LONG lMaxCount = 1,
 		LPCTSTR pstrName=NULL, LPSECURITY_ATTRIBUTES lpsaAttributes = NULL);
 
 // Implementation
@@ -100,7 +100,7 @@ public:
 	virtual BOOL Unlock(LONG lCount, LPLONG lprevCount = NULL);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMutex
 
 class CMutex : public CSyncObject
@@ -109,7 +109,7 @@ class CMutex : public CSyncObject
 
 // Constructor
 public:
-	/* explicit */ CMutex(BOOL bInitiallyOwn = FALSE, LPCTSTR lpszName = NULL,
+	explicit CMutex(BOOL bInitiallyOwn = FALSE, LPCTSTR lpszName = NULL,
 		LPSECURITY_ATTRIBUTES lpsaAttribute = NULL);
 
 // Implementation
@@ -118,7 +118,7 @@ public:
 	BOOL Unlock();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CEvent
 
 class CEvent : public CSyncObject
@@ -130,7 +130,7 @@ private:
 
 // Constructor
 public:
-	/* explicit */ CEvent(BOOL bInitiallyOwn = FALSE, BOOL bManualReset = FALSE,
+	explicit CEvent(BOOL bInitiallyOwn = FALSE, BOOL bManualReset = FALSE,
 		LPCTSTR lpszNAme = NULL, LPSECURITY_ATTRIBUTES lpsaAttribute = NULL);
 
 // Operations
@@ -145,7 +145,7 @@ public:
 	virtual ~CEvent();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CCriticalSection
 
 class CCriticalSection : public CSyncObject
@@ -178,7 +178,7 @@ private:
 	HRESULT Init();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSingleLock
 
 class CSingleLock
@@ -204,7 +204,7 @@ protected:
 	BOOL    m_bAcquired;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMultiLock
 
 class CMultiLock
@@ -235,7 +235,7 @@ protected:
 	DWORD   m_dwCount;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Inline function declarations
 
 #ifdef _AFX_PACKING

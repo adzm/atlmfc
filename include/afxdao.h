@@ -31,7 +31,13 @@
 	#include <daogetrw.h>
 #endif
 #ifndef _DBDAOID_H_
+#ifndef INITGUID
+#define INITGUID
 	#include <dbdaoid.h>
+#undef INITGUID
+#else
+	#include <dbdaoid.h>
+#endif
 #endif
 #ifndef _DBDAOERR_H_
 	#include <dbdaoerr.h>
@@ -48,35 +54,6 @@
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
 #endif 
-
-#if defined(_MFC_DLL_BLD)
-
-#include <initguid.h>
-
-// Privately define DAO CLSIDs and GUIDs so we don't have to link against
-// DAOUUID.LIB.  That library was not built with the current compiler and
-// linker so it triggers BinScope warnings against the MFC DLLs.
-DEFINE_DAOGUID(CLSID_CDAODBEngine,   0x00000100);
-DEFINE_DAOGUID(IID_IDAODBEngine,     0x00000020);
-DEFINE_DAOGUID(IID_IDAODBEngineW,    0x00000021);
-DEFINE_OLEGUID(IID_ICDAORecordset,   0x00025e31, 0, 0);
-DEFINE_DAOGUID(IID_IDAOField,        0x00000050);
-DEFINE_DAOGUID(IID_IDAOFieldW,       0x00000051);
-DEFINE_DAOGUID(IID_IDAOIndexFields,  0x0000005C);
-DEFINE_DAOGUID(IID_IDAOIndexFieldsW, 0x0000005D);
-
-#else // _MFC_DLL_BLD
-
-#ifndef _AFX_NOFORCE_LIBS
-
-/////////////////////////////////////////////////////////////////////////////
-// Win32 libraries
-
-#pragma comment(lib, "daouuid.lib")
-
-#endif //!_AFX_NOFORCE_LIBS
-
-#endif // _MFC_DLL_BLD
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -117,7 +94,7 @@ DEFINE_DAOGUID(IID_IDAOIndexFieldsW, 0x0000005D);
 #undef AFX_DATA
 #define AFX_DATA AFX_DB_DATA
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Data caching structures
 struct CDaoFieldCache
 {
@@ -126,7 +103,7 @@ struct CDaoFieldCache
 	BYTE m_nDataType;       // Type of data cached.
 };
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Info structures
 
 struct CDaoErrorInfo
@@ -331,7 +308,7 @@ struct CDaoParameterInfo
 #endif
 };
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // DAO Helpers
 //
 
@@ -414,7 +391,7 @@ void AFXAPI AfxDaoTrace(SCODE scode, LPCSTR lpszDaoCall,
 #define DAO_TRACE(f)            f
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoFieldExchange - for field exchange
 class CDaoFieldExchange
 {
@@ -486,7 +463,7 @@ public:
 #endif //_DEBUG
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Standard RecordSet Field Exchange routines
 
 // variable length data
@@ -518,7 +495,7 @@ void AFXAPI DFX_Double(CDaoFieldExchange* pFX, LPCTSTR lpszName,
 void AFXAPI DFX_DateTime(CDaoFieldExchange* pFX, LPCTSTR lpszName,
 	COleDateTime& value, DWORD dwBindOptions = AFX_DAO_ENABLE_FIELD_CACHE);
 
-//////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Database Dialog Data Exchange cover routines
 // Cover routines provide database semantics on top of DDX routines
 
@@ -543,7 +520,7 @@ void AFXAPI DDX_FieldText(CDataExchange* pDX, int nIDC, COleDateTime& value,
 	CDaoRecordset* pRecordset);
 void AFXAPI DDX_FieldText(CDataExchange* pDX, int nIDC, CString& value,
 	CDaoRecordset* pRecordset);
-void AFXAPI DDX_FieldText(_In_ CDataExchange* pDX, _In_ int nIDC, _Out_z_cap_(nMaxLen) LPTSTR pstrValue,
+void AFXAPI DDX_FieldText(_In_ CDataExchange* pDX, _In_ int nIDC, _Out_writes_z_(nMaxLen) LPTSTR pstrValue,
 	_In_ int nMaxLen, _In_ CDaoRecordset* pRecordset);
 
 // special control types
@@ -572,7 +549,7 @@ void AFXAPI DDX_FieldScroll(CDataExchange* pDX, int nIDC, int& value,
 void AFXAPI DDX_FieldSlider(CDataExchange* pDX, int nIDC, int& value,
 	CDaoRecordset* pRecordset);
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoWorkspace - a DAO Workspace
 
 class CDaoWorkspace : public CObject
@@ -674,7 +651,7 @@ protected:
 	virtual void ThrowDaoException(int nError = NO_AFX_DAO_ERROR);
 };
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoException - DAO error trapping mechanism
 class CDaoException : public CException
 {
@@ -703,7 +680,7 @@ public:
 	DAOError* m_pDAOError;
 	DAOErrors* m_pDAOErrors;
 
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 
 protected:
@@ -715,7 +692,7 @@ void AFXAPI AfxThrowDaoException(int nAfxDaoError = NO_AFX_DAO_ERROR,
 	SCODE scode = S_OK);
 
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoDatabase - a DAO Database
 
 class CDaoDatabase : public CObject
@@ -724,7 +701,7 @@ class CDaoDatabase : public CObject
 
 // Constructors
 public:
-	/* explicit */ CDaoDatabase(CDaoWorkspace* pWorkspace = NULL);
+	explicit CDaoDatabase(CDaoWorkspace* pWorkspace = NULL);
 
 	virtual void Create(LPCTSTR lpszName,
 		LPCTSTR lpszLocale = dbLangGeneral, int dwOptions = 0);
@@ -822,7 +799,7 @@ protected:
 };
 
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoTableDef - a DAO TableDef
 
 class CDaoTableDef : public CObject
@@ -831,7 +808,7 @@ class CDaoTableDef : public CObject
 
 // Constructors
 public:
-	/* explicit */ CDaoTableDef(CDaoDatabase* pDatabase);
+	explicit CDaoTableDef(CDaoDatabase* pDatabase);
 
 	virtual void Create(LPCTSTR lpszName, long lAttributes = 0,
 		LPCTSTR lpszSrcTable = NULL, LPCTSTR lpszConnect = NULL);
@@ -916,7 +893,7 @@ protected:
 };
 
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoQueryDef - a DAO QueryDef
 
 class CDaoQueryDef : public CObject
@@ -925,7 +902,7 @@ class CDaoQueryDef : public CObject
 
 // Constructors
 public:
-	/* explicit */ CDaoQueryDef(CDaoDatabase* pDatabase);
+	explicit CDaoQueryDef(CDaoDatabase* pDatabase);
 
 	virtual void Create(LPCTSTR lpszName = NULL,
 		LPCTSTR lpszSQL = NULL);
@@ -1012,7 +989,7 @@ protected:
 };
 
 
-////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoRecordset - the result of a query or base table browse
 
 class CDaoRecordset : public CObject
@@ -1021,7 +998,7 @@ class CDaoRecordset : public CObject
 
 // Constructor
 public:
-	/* explicit */ CDaoRecordset(CDaoDatabase* pDatabase = NULL);
+	explicit CDaoRecordset(CDaoDatabase* pDatabase = NULL);
 
 	virtual void Open(int nOpenType = AFX_DAO_USE_DEFAULT_TYPE,
 		LPCTSTR lpszSQL = NULL, int nOptions = 0);
@@ -1263,7 +1240,7 @@ protected:
 	friend class CDaoRecordView;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDaoRecordView - form for viewing data records
 
 class AFX_NOVTABLE CDaoRecordView : public CFormView
@@ -1301,18 +1278,16 @@ protected:
 	COleVariant m_varBookmarkFirst;
 	COleVariant m_varBookmarkLast;
 
-	//{{AFX_MSG(CDaoRecordView)
 	afx_msg void OnUpdateRecordFirst(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordPrev(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordNext(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordLast(CCmdUI* pCmdUI);
-	//}}AFX_MSG
 	afx_msg void OnMove(int cx, int cy);
 
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // DAODBEngine helpers - implementation specific and undocumented
 void AFXAPI AfxDaoInit();
 DAODBEngine* AFXAPI AfxDaoGetEngine();

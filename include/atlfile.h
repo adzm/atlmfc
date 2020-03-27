@@ -15,6 +15,10 @@
 
 #include <atlbase.h>
 
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
@@ -85,7 +89,7 @@ public:
 	}
 
 	HRESULT Read(
-		_Out_bytecap_(nBufSize) LPVOID pBuffer,
+		_Out_writes_bytes_(nBufSize) LPVOID pBuffer,
 		_In_ DWORD nBufSize) throw()
 	{
 		ATLASSUME(m_h != NULL);
@@ -101,7 +105,7 @@ public:
 	}
 
 	HRESULT Read(
-		_Out_bytecap_(nBufSize) LPVOID pBuffer,
+		_Out_writes_bytes_(nBufSize) LPVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Out_ DWORD& nBytesRead) throw()
 	{
@@ -117,7 +121,7 @@ public:
 	// this function will usually return HRESULT_FROM_WIN32(ERROR_IO_PENDING)
 	// indicating succesful queueing of the operation
 	HRESULT Read(
-		_Out_bytecap_(nBufSize) LPVOID pBuffer,
+		_Out_writes_bytes_(nBufSize) LPVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Inout_opt_ LPOVERLAPPED pOverlapped) throw()
 	{
@@ -131,7 +135,7 @@ public:
 	}
 
 	HRESULT Read(
-		_In_bytecount_(nBufSize) LPVOID pBuffer,
+		_In_reads_bytes_(nBufSize) LPVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Inout_ LPOVERLAPPED pOverlapped,
 		_In_ LPOVERLAPPED_COMPLETION_ROUTINE pfnCompletionRoutine) throw()
@@ -146,7 +150,7 @@ public:
 	}
 
 	HRESULT Write(
-		_In_bytecount_(nBufSize) LPCVOID pBuffer,
+		_In_reads_bytes_(nBufSize) LPCVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Out_opt_ DWORD* pnBytesWritten = NULL) throw()
 	{
@@ -165,7 +169,7 @@ public:
 	// this function will usually return HRESULT_FROM_WIN32(ERROR_IO_PENDING)
 	// indicating succesful queueing of the operation
 	HRESULT Write(
-		_In_bytecount_(nBufSize) LPCVOID pBuffer,
+		_In_reads_bytes_(nBufSize) LPCVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Inout_opt_ LPOVERLAPPED pOverlapped) throw()
 	{
@@ -179,7 +183,7 @@ public:
 	}
 
 	HRESULT Write(
-		_In_bytecount_(nBufSize) LPCVOID pBuffer,
+		_In_reads_bytes_(nBufSize) LPCVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Inout_ LPOVERLAPPED pOverlapped,
 		_In_opt_ LPOVERLAPPED_COMPLETION_ROUTINE pfnCompletionRoutine) throw()
@@ -463,7 +467,7 @@ public:
 	}
 
 	HRESULT Read(
-		_Out_bytecap_(nBufSize) LPVOID pBuffer,
+		_Out_writes_bytes_(nBufSize) LPVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Out_ DWORD& nBytesRead) throw()
 	{
@@ -471,7 +475,7 @@ public:
 	}
 
 	HRESULT Write(
-		_In_bytecount_(nBufSize) LPCVOID pBuffer,
+		_In_reads_bytes_(nBufSize) LPCVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Out_opt_ DWORD* pnBytesWritten = NULL) throw()
 	{
@@ -610,7 +614,11 @@ public:
 		nSize.QuadPart = nMappingSize;
 		m_hMapping = ::CreateFileMapping(INVALID_HANDLE_VALUE, lpsa, dwMappingProtection, nSize.HighPart, nSize.LowPart, szName);
 		if (m_hMapping == NULL)
-			return AtlHresultFromLastError();
+		{
+			HRESULT hr = AtlHresultFromLastError();
+			_Analysis_assume_(FAILED(hr));
+			return hr;
+		}
 
 		if (pbAlreadyExisted != NULL)
 			*pbAlreadyExisted = (GetLastError() == ERROR_ALREADY_EXISTS);

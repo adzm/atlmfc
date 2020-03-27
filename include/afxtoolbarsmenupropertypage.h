@@ -24,7 +24,7 @@
 class CMFCMenuBar;
 class CMFCPopupMenu;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsMenuPropertyPage dialog
 
 class CMFCToolBarsMenuPropertyPage : public CPropertyPage
@@ -42,7 +42,6 @@ public:
 	BOOL SelectMenu(CDocTemplate* pTemplate, BOOL bSaveCurr = TRUE);
 
 // Dialog Data
-	//{{AFX_DATA(CMFCToolBarsMenuPropertyPage)
 	enum { IDD = IDD_AFXBARRES_PROPPAGE3 };
 	CStatic   m_wndMenuAnimationsLabel;
 	CStatic   m_wndContextHint;
@@ -59,7 +58,6 @@ public:
 	CString   m_strMenuName;
 	int       m_iMenuAnimationType;
 	BOOL      m_bMenuShadows;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -67,14 +65,14 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarsMenuPropertyPage)
 	virtual BOOL OnInitDialog();
+
 	afx_msg void OnSelchangeMenuList();
 	afx_msg void OnDestroy();
 	afx_msg void OnSelchangeContextMenuList();
 	afx_msg void OnResetMenu();
 	afx_msg void OnResetFrameMenu();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 protected:

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -394,10 +394,10 @@ CMFCRibbonGallery::CMFCRibbonGallery(UINT nID, LPCTSTR lpszText, int nSmallImage
 		GetObject(m_imagesPalette.GetImageWell(), sizeof(BITMAP), &bmp);
 		m_imagesPalette.SetImageSize(CSize(cxPaletteImage, bmp.bmHeight), TRUE);
 
-		const double dblScale = afxGlobalData.GetRibbonImageScale();
+		const double dblScale = GetGlobalData()->GetRibbonImageScale();
 		if (dblScale != 1.0)
 		{
-			m_imagesPalette.SetTransparentColor(afxGlobalData.clrBtnFace);
+			m_imagesPalette.SetTransparentColor(GetGlobalData()->clrBtnFace);
 			m_imagesPalette.SmoothResize(dblScale);
 		}
 
@@ -442,10 +442,10 @@ void CMFCRibbonGallery::AddGroup(LPCTSTR lpszGroupName, UINT uiImagesPaletteResI
 
 	imagesGroup.SetImageSize(CSize(cxPaletteImage, bmp.bmHeight), TRUE);
 
-	const double dblScale = afxGlobalData.GetRibbonImageScale();
+	const double dblScale = GetGlobalData()->GetRibbonImageScale();
 	if (dblScale != 1.0)
 	{
-		imagesGroup.SetTransparentColor(afxGlobalData.clrBtnFace);
+		imagesGroup.SetTransparentColor(GetGlobalData()->clrBtnFace);
 		imagesGroup.SmoothResize(dblScale);
 	}
 
@@ -768,7 +768,7 @@ void CMFCRibbonGallery::OnDraw(CDC* pDC)
 
 	if (m_imagesPalette.GetCount() > 0)
 	{
-		m_imagesPalette.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_imagesPalette.SetTransparentColor(GetGlobalData()->clrBtnFace);
 		m_imagesPalette.PrepareDrawImage(ds, sizeImage);
 	}
 
@@ -1282,6 +1282,8 @@ void CMFCRibbonGallery::OnShowPopupMenu()
 
 	pMenu->Create(pWndOwner, x, y, (HMENU) NULL);
 	pMenuButton->SetDroppedDown(pMenu);
+
+	m_bOnBeforeShowItemMenuIsSent = FALSE;
 
 	if (pMenu->HasBeenResized())
 	{

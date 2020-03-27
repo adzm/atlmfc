@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -18,7 +18,6 @@
 #include "afxpopupmenu.h"
 #include "afxcolordialog.h"
 #include "afxcolorbutton.h"
-#include "afxtrackmouse.h"
 #include "afxvisualmanager.h"
 #include "afxpropertygridctrl.h"
 #include "afxribboncolorbutton.h"
@@ -178,7 +177,7 @@ void CMFCToolBarColorButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImag
 			if (!bDisabled)
 			{
 				CBrush br(PALETTERGB(GetRValue(m_Color), GetGValue(m_Color), GetBValue(m_Color)));
-				CPen pen(PS_SOLID, 1, afxGlobalData.clrBarShadow);
+				CPen pen(PS_SOLID, 1, GetGlobalData()->clrBarShadow);
 
 				CBrush* pOldBrush = pDC->SelectObject(&br);
 				CPen* pOldPen = pDC->SelectObject(&pen);
@@ -190,16 +189,16 @@ void CMFCToolBarColorButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImag
 			}
 			else
 			{
-				pDC->Draw3dRect(rectColor, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+				pDC->Draw3dRect(rectColor, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 				rectColor.OffsetRect(1, 1);
-				pDC->Draw3dRect(rectColor, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+				pDC->Draw3dRect(rectColor, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 			}
 
 			rectText.left = rectColor.right + afxData.cxBorder2;
 		}
 
 		// Draw label:
-		pDC->SetTextColor((m_nStyle & TBBS_DISABLED) && !m_bIsLabel ? afxGlobalData.clrGrayedText : afxGlobalData.clrBarText);
+		pDC->SetTextColor((m_nStyle & TBBS_DISABLED) && !m_bIsLabel ? GetGlobalData()->clrGrayedText : GetGlobalData()->clrBarText);
 
 		UINT nFormat = DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS;
 		if (!m_bIsLabel)
@@ -210,7 +209,7 @@ void CMFCToolBarColorButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImag
 		CFont* pCurrFont = NULL;
 		if (!bHorz)
 		{
-			pCurrFont = pDC->SelectObject(&afxGlobalData.fontRegular);
+			pCurrFont = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 			ENSURE(pCurrFont != NULL);
 		}
 
@@ -227,7 +226,7 @@ void CMFCToolBarColorButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImag
 		CBrush br(PALETTERGB(GetRValue(m_Color), GetGValue(m_Color), GetBValue(m_Color)));
 
 		CBrush* pOldBrush = pDC->SelectObject(&br);
-		CPen* pOldPen = (CPen*) pDC->SelectObject(&afxGlobalData.penBarShadow);
+		CPen* pOldPen = (CPen*) pDC->SelectObject(&(GetGlobalData()->penBarShadow));
 
 		rectFrame.right--;
 		rectFrame.bottom--;
@@ -243,13 +242,13 @@ void CMFCToolBarColorButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImag
 	{
 		if (!bDisabled)
 		{
-			pDC->Draw3dRect(rectFrame, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+			pDC->Draw3dRect(rectFrame, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 		}
 		else
 		{
-			pDC->Draw3dRect(rectFrame, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+			pDC->Draw3dRect(rectFrame, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 			rectFrame.OffsetRect(1, 1);
-			pDC->Draw3dRect(rectFrame, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+			pDC->Draw3dRect(rectFrame, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 		}
 	}
 
@@ -588,7 +587,6 @@ int CMFCColorBar::GetExtraHeight(int nNumColumns) const
 	return nExtraHeight;
 }
 
-//{{AFX_MSG_MAP(CMFCColorBar)
 BEGIN_MESSAGE_MAP(CMFCColorBar, CMFCPopupMenuBar)
 	ON_WM_CREATE()
 	ON_WM_QUERYNEWPALETTE()
@@ -600,9 +598,8 @@ BEGIN_MESSAGE_MAP(CMFCColorBar, CMFCPopupMenuBar)
 	ON_WM_LBUTTONUP()
 	ON_WM_LBUTTONDBLCLK()
 	ON_WM_DESTROY()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCColorBar::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCColorBar message handlers
@@ -1492,17 +1489,16 @@ void CMFCColorBar::OnChangeHot(int iHot)
 	}
 }
 
-afx_msg LRESULT CMFCColorBar::OnMouseLeave(WPARAM wp,LPARAM lp)
+void CMFCColorBar::OnMouseLeave()
 {
 	if (m_pParentBtn == NULL && m_pWndPropList == NULL)
 	{
-		return CMFCToolBar::OnMouseLeave(wp, lp);
+		return CMFCToolBar::OnMouseLeave();
 	}
 
-	if (m_hookMouseHelp != NULL ||
-		(m_bMenuMode && !IsCustomizeMode() && GetDroppedDownMenu() != NULL))
+	if (m_hookMouseHelp != NULL || (m_bMenuMode && !IsCustomizeMode() && GetDroppedDownMenu() != NULL))
 	{
-		return 0;
+		return;
 	}
 
 	m_bTracked = FALSE;
@@ -1526,8 +1522,6 @@ afx_msg LRESULT CMFCColorBar::OnMouseLeave(WPARAM wp,LPARAM lp)
 			m_pParentRibbonBtn->NotifyHighlightListItem(-1);
 		}
 	}
-
-	return 0;
 }
 
 BOOL __stdcall CMFCColorBar::CreatePalette(const CArray<COLORREF, COLORREF>& arColors, CPalette& palette)
@@ -1538,7 +1532,7 @@ BOOL __stdcall CMFCColorBar::CreatePalette(const CArray<COLORREF, COLORREF>& arC
 		ENSURE(palette.GetSafeHandle() == NULL);
 	}
 
-	if (afxGlobalData.m_nBitsPerPixel != 8)
+	if (GetGlobalData()->m_nBitsPerPixel != 8)
 	{
 		return FALSE;
 	}
@@ -1585,7 +1579,7 @@ CPalette* CMFCColorBar::SelectPalette(CDC* pDC)
 {
 	ASSERT_VALID(pDC);
 
-	if (afxGlobalData.m_nBitsPerPixel != 8)
+	if (GetGlobalData()->m_nBitsPerPixel != 8)
 	{
 		if (m_Palette.GetSafeHandle() != NULL)
 		{

@@ -62,7 +62,7 @@ LPMONIKER COleLinkingDoc::GetMoniker(OLEGETMONIKER nAssign)
 
 	// return file moniker based on current path name
 	LPMONIKER lpMoniker;
-	CreateFileMoniker(CStringW(m_strMoniker), &lpMoniker);
+	::CreateFileMoniker(CStringW(m_strMoniker), &lpMoniker);
 	return lpMoniker;
 }
 
@@ -85,7 +85,7 @@ BOOL COleLinkingDoc::Register(COleObjectFactory* pFactory, LPCTSTR lpszPathName)
 	m_strMoniker.Empty();
 	if (lpszPathName != NULL)
 	{
-		if (CreateFileMoniker(CStringW(lpszPathName), &m_lpMonikerROT) != S_OK)
+		if (::CreateFileMoniker(CStringW(lpszPathName), &m_lpMonikerROT) != S_OK)
 			bResult = FALSE;
 	}
 
@@ -94,7 +94,7 @@ BOOL COleLinkingDoc::Register(COleObjectFactory* pFactory, LPCTSTR lpszPathName)
 	{
 		// see if the object is already running in the ROT
 		LPRUNNINGOBJECTTABLE lpROT = NULL;
-		VERIFY(GetRunningObjectTable(0, &lpROT) == S_OK);
+		VERIFY(::GetRunningObjectTable(0, &lpROT) == S_OK);
 		ASSERT(lpROT != NULL);
 		LPUNKNOWN lpUnk;
 		if (lpROT->GetObject(m_lpMonikerROT, &lpUnk) == S_OK)
@@ -137,7 +137,7 @@ void COleLinkingDoc::Revoke()
 	if (m_dwRegister != 0)
 	{
 		LPRUNNINGOBJECTTABLE lpROT = NULL;
-		GetRunningObjectTable(0, &lpROT);
+		::GetRunningObjectTable(0, &lpROT);
 		if (lpROT != NULL)
 		{
 			lpROT->Revoke(m_dwRegister);
@@ -277,7 +277,7 @@ void COleLinkingDoc::SaveToStorage(CObject* pObject)
 	if (m_pFactory != NULL)
 	{
 		ASSERT(m_lpRootStg != NULL);
-		WriteClassStg(m_lpRootStg, m_pFactory->GetClassID());
+		::WriteClassStg(m_lpRootStg, m_pFactory->GetClassID());
 	}
 	COleDocument::SaveToStorage(pObject);
 }
@@ -539,8 +539,7 @@ STDMETHODIMP COleLinkingDoc::XPersistFile::Load(
 	return sc;
 }
 
-STDMETHODIMP COleLinkingDoc::XPersistFile::Save(
-	LPCOLESTR lpszFileName, BOOL fRemember)
+STDMETHODIMP COleLinkingDoc::XPersistFile::Save(LPCOLESTR lpszFileName, BOOL fRemember)
 {
 	METHOD_PROLOGUE_EX(COleLinkingDoc, PersistFile)
 	ASSERT_VALID(pThis);
@@ -552,10 +551,11 @@ STDMETHODIMP COleLinkingDoc::XPersistFile::Save(
 		// delegate to file-based Save/Save As implementation
 		ASSERT(pThis->m_bRemember);
 		pThis->m_bRemember = fRemember;
-		pThis->OnSaveDocument(CString(lpszFileName));
+		pThis->OnSaveDocument(lpszFileName == NULL ? (LPCTSTR)NULL : CString(lpszFileName));
 		sc = S_OK;
 	}
 	END_TRY
+
 	sc = pThis->EndDeferErrors(sc);
 
 	ASSERT_VALID(pThis);
@@ -569,8 +569,11 @@ STDMETHODIMP COleLinkingDoc::XPersistFile::SaveCompleted(LPCOLESTR lpszFileName)
 
 	TRY
 	{
-		// set the path name, but don't add to MRU list
-		pThis->SetPathName(CString(lpszFileName), FALSE);
+		if (lpszFileName != NULL)
+		{
+			// set the path name, but don't add to MRU list
+			pThis->SetPathName(CString(lpszFileName), FALSE);
+		}
 	}
 	END_TRY
 
@@ -582,20 +585,31 @@ STDMETHODIMP COleLinkingDoc::XPersistFile::GetCurFile(LPOLESTR* lplpszFileName)
 {
 	METHOD_PROLOGUE_EX_(COleLinkingDoc, PersistFile)
 
+	if (lplpszFileName == NULL)
+	{
+		return E_POINTER;
+	}
+
 	*lplpszFileName = NULL;
 
 	// use title if no document
 	LPCTSTR lpszResult;
 	if (pThis->m_strPathName.IsEmpty())
+	{
 		lpszResult = pThis->m_strTitle;
+	}
 	else
+	{
 		lpszResult = pThis->m_strPathName;
+	}
 	ASSERT(lpszResult != NULL);
 
 	// allocate memory for the file name
 	*lplpszFileName = AtlAllocTaskOleString(lpszResult);
 	if (*lplpszFileName == NULL)
+	{
 		return E_OUTOFMEMORY;
+	}
 
 	ASSERT_VALID(pThis);
 	return S_OK;
@@ -631,10 +645,14 @@ STDMETHODIMP COleLinkingDoc::XOleItemContainer::EnumObjects(
 	return E_NOTIMPL;
 }
 
-STDMETHODIMP COleLinkingDoc::XOleItemContainer::ParseDisplayName(LPBC lpbc,
-	LPOLESTR lpszDisplayName, ULONG* cchEaten, LPMONIKER* ppMoniker)
+STDMETHODIMP COleLinkingDoc::XOleItemContainer::ParseDisplayName(LPBC lpbc, LPOLESTR lpszDisplayName, ULONG* cchEaten, LPMONIKER* ppMoniker)
 {
 	METHOD_PROLOGUE_EX_(COleLinkingDoc, OleItemContainer)
+
+	if ((cchEaten == NULL) || (ppMoniker == NULL))
+	{
+		return E_POINTER;
+	}
 
 	// reset all OUT parameters
 	*ppMoniker = NULL;
@@ -650,7 +668,9 @@ STDMETHODIMP COleLinkingDoc::XOleItemContainer::ParseDisplayName(LPBC lpbc,
 		*lpszSrc == ':' || *lpszSrc == '!' || *lpszSrc == '['))
 	{
 		if (_istlead(*lpszSrc))
+		{
 			++lpszSrc, ++cEaten;
+		}
 		++lpszSrc;
 		++cEaten;
 	}
@@ -661,23 +681,27 @@ STDMETHODIMP COleLinkingDoc::XOleItemContainer::ParseDisplayName(LPBC lpbc,
 		cEaten < OLE_MAXNAMESIZE-1)
 	{
 		if (_istlead(*lpszSrc))
+		{
 			*lpszDest++ = *lpszSrc++, ++cEaten;
+		}
 		*lpszDest++ = *lpszSrc++;
 		++cEaten;
 	}
+
 	*cchEaten = cEaten;
 	*lpszDest = 0;
 
 	// attempt to get the object
 	LPUNKNOWN lpUnknown;
-	SCODE sc = GetObject((LPOLESTR)CStringW(szItemName).GetString(), BINDSPEED_INDEFINITE, lpbc,
-		IID_IUnknown, (LPLP)&lpUnknown);
+	SCODE sc = GetObject((LPOLESTR)CStringW(szItemName).GetString(), BINDSPEED_INDEFINITE, lpbc, IID_IUnknown, (LPLP)&lpUnknown);
 	if (sc != S_OK)
+	{
 		return sc;
+	}
 
 	// item name found -- create item moniker for it
 	lpUnknown->Release();
-	return CreateItemMoniker(OLESTDDELIMOLE, CStringW(szItemName), ppMoniker);
+	return ::CreateItemMoniker(OLESTDDELIMOLE, CStringW(szItemName), ppMoniker);
 }
 
 STDMETHODIMP COleLinkingDoc::XOleItemContainer::LockContainer(BOOL fLock)
@@ -688,12 +712,15 @@ STDMETHODIMP COleLinkingDoc::XOleItemContainer::LockContainer(BOOL fLock)
 	return S_OK;
 }
 
-STDMETHODIMP COleLinkingDoc::XOleItemContainer::GetObject(
-	LPOLESTR lpszItem, DWORD dwSpeedNeeded, LPBINDCTX /*pbc*/, REFIID riid,
-	LPVOID* ppvObject)
+STDMETHODIMP COleLinkingDoc::XOleItemContainer::GetObject(LPOLESTR lpszItem, DWORD dwSpeedNeeded, LPBINDCTX /*pbc*/, REFIID riid, LPVOID* ppvObject)
 {
 	METHOD_PROLOGUE_EX(COleLinkingDoc, OleItemContainer)
 	ASSERT_VALID(pThis);
+
+	if (ppvObject == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*ppvObject = NULL;
 
@@ -713,11 +740,13 @@ STDMETHODIMP COleLinkingDoc::XOleItemContainer::GetObject(
 			{
 				// should not run the object if bind-speed is immediate
 				if (dwSpeedNeeded != BINDSPEED_INDEFINITE)
+				{
 					sc = MK_E_EXCEEDEDDEADLINE;
+				}
 				else
 				{
 					// bind speed is not immediate -- so run the object
-					sc = OleRun(pClientItem->m_lpObject);
+					sc = ::OleRun(pClientItem->m_lpObject);
 				}
 			}
 
@@ -750,17 +779,23 @@ STDMETHODIMP COleLinkingDoc::XOleItemContainer::GetObject(
 	return sc;
 }
 
-STDMETHODIMP COleLinkingDoc::XOleItemContainer::GetObjectStorage(
-	LPOLESTR lpszItem, LPBINDCTX /*pbc*/, REFIID riid, LPVOID* ppvStorage)
+STDMETHODIMP COleLinkingDoc::XOleItemContainer::GetObjectStorage(LPOLESTR lpszItem, LPBINDCTX /*pbc*/, REFIID riid, LPVOID* ppvStorage)
 {
 	METHOD_PROLOGUE_EX(COleLinkingDoc, OleItemContainer)
 	ASSERT_VALID(pThis);
+
+	if (ppvStorage == NULL)
+	{
+		return E_POINTER;
+	}
 
 	*ppvStorage = NULL;
 
 	// only IStorage is supported
 	if (riid != IID_IStorage)
+	{
 		return E_UNEXPECTED;
+	}
 
 	// check for link to embedding
 	COleClientItem* pClientItem = pThis->OnFindEmbeddedItem(CString(lpszItem));
@@ -777,6 +812,7 @@ STDMETHODIMP COleLinkingDoc::XOleItemContainer::GetObjectStorage(
 			return S_OK;
 		}
 	}
+
 	return MK_E_NOSTORAGE;
 }
 

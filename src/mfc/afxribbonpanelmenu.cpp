@@ -4,13 +4,12 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
 
 #include "stdafx.h"
-#include "afxtrackmouse.h"
 #include "afxribbonpanelmenu.h"
 #include "afxribbonpanel.h"
 #include "afxribboncategory.h"
@@ -26,9 +25,6 @@
 #define new DEBUG_NEW
 #endif
 
-static const int nPopupTimerEvent = 1;
-static const int nRemovePopupTimerEvent = 2;
-static const UINT IdAutoCommand = 3;
 static const int nScrollBarID = 1;
 
 /////////////////////////////////////////////////////////////////////////////
@@ -52,9 +48,7 @@ CMFCRibbonPanelMenuBar::CMFCRibbonPanelMenuBar(CMFCRibbonPanel* pPanel)
 	m_pPanelOrigin = pPanel;
 
 	m_pPanel->m_pParentMenuBar = this;
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_pPanel->m_btnLaunch.SetParentMenu(this);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	for (int i = 0; i < m_pPanel->m_arElements.GetSize(); i++)
 	{
@@ -110,9 +104,7 @@ CMFCRibbonPanelMenuBar::CMFCRibbonPanelMenuBar(CMFCRibbonCategory* pCategory, CS
 		ASSERT_VALID(pPanel);
 
 		pPanel->m_pParentMenuBar = this;
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 		pPanel->m_btnLaunch.SetParentMenu(this);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 		pPanel->m_btnDefault.SetParentMenu(this);
 
 		for (int i = 0; i < pPanel->m_arElements.GetSize(); i++)
@@ -263,7 +255,6 @@ CMFCRibbonPanelMenuBar::~CMFCRibbonPanelMenuBar()
 	}
 }
 
-//{{AFX_MSG_MAP(CMFCRibbonPanelMenuBar)
 BEGIN_MESSAGE_MAP(CMFCRibbonPanelMenuBar, CMFCPopupMenuBar)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONUP()
@@ -275,11 +266,10 @@ BEGIN_MESSAGE_MAP(CMFCRibbonPanelMenuBar, CMFCPopupMenuBar)
 	ON_WM_CONTEXTMENU()
 	ON_WM_VSCROLL()
 	ON_WM_LBUTTONDBLCLK()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCRibbonPanelMenuBar::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCRibbonPanelMenuBar::OnUpdateToolTips)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCRibbonPanelMenuBar::OnNeedTipText)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 void CMFCRibbonPanelMenuBar::AdjustLocations()
 {
@@ -560,7 +550,7 @@ void CMFCRibbonPanelMenuBar::OnMouseMove(UINT nFlags, CPoint point)
 {
 	CMFCPopupMenuBar::OnMouseMove(nFlags, point);
 
-	if (m_pPanel != NULL && afxGlobalData.IsAccessibilitySupport())
+	if (m_pPanel != NULL && GetGlobalData()->IsAccessibilitySupport())
 	{
 		int nIndex = m_pPanel->HitTestEx(point);
 		if (nIndex != -1)
@@ -568,7 +558,7 @@ void CMFCRibbonPanelMenuBar::OnMouseMove(UINT nFlags, CPoint point)
 			if (nIndex != m_iAccHotItem)
 			{
 				m_iAccHotItem = nIndex;
-				SetTimer(AFX_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_TIMER_DELAY, NULL);
+				SetTimer(AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_TIMER_DELAY, NULL);
 			}
 		}
 	}
@@ -610,8 +600,7 @@ void CMFCRibbonPanelMenuBar::OnMouseMove(UINT nFlags, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 
 		CMFCRibbonBaseElement* pPressed = NULL;
 
@@ -646,7 +635,7 @@ void CMFCRibbonPanelMenuBar::OnMouseMove(UINT nFlags, CPoint point)
 	}
 }
 
-LRESULT CMFCRibbonPanelMenuBar::OnMouseLeave(WPARAM,LPARAM)
+void CMFCRibbonPanelMenuBar::OnMouseLeave()
 {
 	CPoint point;
 	::GetCursorPos(&point);
@@ -669,14 +658,13 @@ LRESULT CMFCRibbonPanelMenuBar::OnMouseLeave(WPARAM,LPARAM)
 	}
 
 	m_bTracked = FALSE;
-	return 0;
 }
 
 void CMFCRibbonPanelMenuBar::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	if (m_bAutoCommandTimer)
 	{
-		KillTimer(IdAutoCommand);
+		KillTimer(AFX_TIMER_ID_RIBBONPANEL_AUTO_COMMAND);
 		m_bAutoCommandTimer = FALSE;
 		m_pPressed = NULL;
 		m_rectAutoCommand.SetRectEmpty();
@@ -753,7 +741,7 @@ void CMFCRibbonPanelMenuBar::OnLButtonDown(UINT nFlags, CPoint point)
 
 		if (m_pPressed->IsAutoRepeatMode(nDelay))
 		{
-			SetTimer(IdAutoCommand, nDelay, NULL);
+			SetTimer(AFX_TIMER_ID_RIBBONPANEL_AUTO_COMMAND, nDelay, NULL);
 			m_bAutoCommandTimer = TRUE;
 			m_rectAutoCommand = m_pPressed->GetRect();
 		}
@@ -874,7 +862,7 @@ void CMFCRibbonPanelMenuBar::OnChangeHighlighted(CMFCRibbonBaseElement* pHot)
 
 			if (CMFCToolBar::IsCustomizeMode() || (pMsg != NULL && pMsg->message == WM_KEYDOWN))
 			{
-				KillTimer(nRemovePopupTimerEvent);
+				KillTimer(AFX_TIMER_ID_RIBBONPANEL_REMOVE);
 				m_pDelayedCloseButton = NULL;
 
 				pDroppedDown->ClosePopupMenu();
@@ -889,7 +877,7 @@ void CMFCRibbonPanelMenuBar::OnChangeHighlighted(CMFCRibbonBaseElement* pHot)
 				m_pDelayedCloseButton = pDroppedDown;
 				m_pDelayedCloseButton->m_bToBeClosed = TRUE;
 
-				SetTimer(nRemovePopupTimerEvent, max(0, m_uiPopupTimerDelay - 1), NULL);
+				SetTimer(AFX_TIMER_ID_RIBBONPANEL_REMOVE, max(0, m_uiPopupTimerDelay - 1), NULL);
 
 				pDroppedDown->Redraw();
 			}
@@ -899,7 +887,7 @@ void CMFCRibbonPanelMenuBar::OnChangeHighlighted(CMFCRibbonBaseElement* pHot)
 		{
 			if (m_pDelayedButton != NULL)
 			{
-				KillTimer(nPopupTimerEvent);
+				KillTimer(AFX_TIMER_ID_RIBBONPANEL_POPUP);
 			}
 
 			if ((m_pDelayedButton = pHotButton) != NULL)
@@ -931,7 +919,7 @@ void CMFCRibbonPanelMenuBar::OnChangeHighlighted(CMFCRibbonBaseElement* pHot)
 				}
 				else
 				{
-					SetTimer(nPopupTimerEvent, m_uiPopupTimerDelay, NULL);
+					SetTimer(AFX_TIMER_ID_RIBBONPANEL_POPUP, m_uiPopupTimerDelay, NULL);
 				}
 			}
 		}
@@ -955,7 +943,7 @@ void CMFCRibbonPanelMenuBar::OnChangeHighlighted(CMFCRibbonBaseElement* pHot)
 		m_pDelayedCloseButton->m_bToBeClosed = FALSE;
 		m_pDelayedCloseButton = NULL;
 
-		KillTimer(nRemovePopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_RIBBONPANEL_REMOVE);
 	}
 
 	if (pHot == NULL)
@@ -1265,9 +1253,9 @@ void CMFCRibbonPanelMenuBar::OnTimer(UINT_PTR nIDEvent)
 	::GetCursorPos(&ptCursor);
 	ScreenToClient(&ptCursor);
 
-	if (nIDEvent == nPopupTimerEvent)
+	if (nIDEvent == AFX_TIMER_ID_RIBBONPANEL_POPUP)
 	{
-		KillTimer(nPopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_RIBBONPANEL_POPUP);
 
 		// Remove current tooltip(if any):
 		if (m_pToolTip->GetSafeHwnd() != NULL)
@@ -1290,9 +1278,9 @@ void CMFCRibbonPanelMenuBar::OnTimer(UINT_PTR nIDEvent)
 			pDelayedPopupMenuButton->OnShowPopupMenu();
 		}
 	}
-	else if (nIDEvent == nRemovePopupTimerEvent)
+	else if (nIDEvent == AFX_TIMER_ID_RIBBONPANEL_REMOVE)
 	{
-		KillTimer(nRemovePopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_RIBBONPANEL_REMOVE);
 
 		if (m_pDelayedCloseButton != NULL)
 		{
@@ -1315,9 +1303,9 @@ void CMFCRibbonPanelMenuBar::OnTimer(UINT_PTR nIDEvent)
 			}
 		}
 	}
-	else if (nIDEvent == AFX_ACCELERATOR_NOTIFY_EVENT)
+	else if (nIDEvent == AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT)
 	{
-		KillTimer(AFX_ACCELERATOR_NOTIFY_EVENT);
+		KillTimer(AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT);
 
 		CRect rc;
 		GetClientRect(&rc);
@@ -1339,12 +1327,12 @@ void CMFCRibbonPanelMenuBar::OnTimer(UINT_PTR nIDEvent)
 			}
 		}
 	}
-	else if (nIDEvent == IdAutoCommand)
+	else if (nIDEvent == AFX_TIMER_ID_RIBBONPANEL_AUTO_COMMAND)
 	{
 		if (!m_rectAutoCommand.PtInRect(ptCursor))
 		{
 			m_pPressed = NULL;
-			KillTimer(IdAutoCommand);
+			KillTimer(AFX_TIMER_ID_RIBBONPANEL_AUTO_COMMAND);
 			m_rectAutoCommand.SetRectEmpty();
 		}
 		else
@@ -1357,7 +1345,7 @@ void CMFCRibbonPanelMenuBar::OnTimer(UINT_PTR nIDEvent)
 				{
 					if (!m_pPressed->OnAutoRepeat())
 					{
-						KillTimer(IdAutoCommand);
+						KillTimer(AFX_TIMER_ID_RIBBONPANEL_AUTO_COMMAND);
 					}
 				}
 			}
@@ -1373,7 +1361,7 @@ void CMFCRibbonPanelMenuBar::CloseDelayedSubMenu()
 	{
 		ASSERT_VALID(m_pDelayedCloseButton);
 
-		KillTimer(nRemovePopupTimerEvent);
+		KillTimer(AFX_TIMER_ID_RIBBONPANEL_REMOVE);
 
 		m_pDelayedCloseButton->ClosePopupMenu();
 		m_pDelayedCloseButton = NULL;
@@ -1417,7 +1405,7 @@ void CMFCRibbonPanelMenuBar::RestoreDelayedSubMenu()
 
 	m_pDelayedCloseButton = NULL;
 
-	KillTimer(nRemovePopupTimerEvent);
+	KillTimer(AFX_TIMER_ID_RIBBONPANEL_REMOVE);
 
 	if (bUpdate)
 	{
@@ -1497,7 +1485,7 @@ void CMFCRibbonPanelMenuBar::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 
 	if (m_bAutoCommandTimer)
 	{
-		KillTimer(IdAutoCommand);
+		KillTimer(AFX_TIMER_ID_RIBBONPANEL_AUTO_COMMAND);
 		m_bAutoCommandTimer = FALSE;
 		m_pPressed = NULL;
 		m_rectAutoCommand.SetRectEmpty();
@@ -1510,7 +1498,7 @@ void CMFCRibbonPanelMenuBar::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 			return;
 		}
 
-		if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0) // Left mouse button is pressed
+		if ((GetAsyncKeyState(::GetSystemMetrics(SM_SWAPBUTTON) ? VK_RBUTTON : VK_LBUTTON) & 0x8000) != 0) // "Left" mouse button is pressed
 		{
 			return;
 		}
@@ -1526,7 +1514,7 @@ void CMFCRibbonPanelMenuBar::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 
 		if (m_pDelayedButton != NULL)
 		{
-			KillTimer(nPopupTimerEvent);
+			KillTimer(AFX_TIMER_ID_RIBBONPANEL_POPUP);
 		}
 
 		if (point == CPoint(-1, -1))
@@ -1780,12 +1768,10 @@ CMFCRibbonPanelMenu::~CMFCRibbonPanelMenu()
 }
 
 BEGIN_MESSAGE_MAP(CMFCRibbonPanelMenu, CMFCPopupMenu)
-	//{{AFX_MSG_MAP(CMFCRibbonPanelMenu)
 	ON_WM_KEYDOWN()
 	ON_WM_MOUSEWHEEL()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 CMFCRibbonPanelMenuBar* CMFCRibbonPanelMenu::GetParentRibbonMenuBar() const

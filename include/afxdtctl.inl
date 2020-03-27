@@ -12,6 +12,9 @@
 
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable: 6001)
+
 /////////////////////////////////////////////////////////////////////////////
 // Date/Time common control inlines
 
@@ -122,6 +125,8 @@ _AFXDTCTL_INLINE BOOL CMonthCalCtrl::SetCenturyView() // REVIEW: do we need this
 _AFXDTCTL_INLINE BOOL CMonthCalCtrl::SetCurrentView(_In_ DWORD dwNewView)
 	{ ASSERT(m_hWnd != NULL); return MonthCal_SetCurrentView(m_hWnd, dwNewView); } // MCM_SETCURRENTVIEW
 #endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+
+#pragma warning(pop)
 
 #endif //_AFXDTCTL_INLINE
 /////////////////////////////////////////////////////////////////////////////

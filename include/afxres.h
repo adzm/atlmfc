@@ -23,7 +23,7 @@
 #endif
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "100"
+#define _MFC_FILENAME_VER "110"
 #endif
 
 #ifdef RC_INVOKED
@@ -120,6 +120,7 @@
 #define AFX_IDW_RESIZE_BAR              0xE803  // OLE in-place resize bar
 #define AFX_IDW_REBAR                   0xE804  // COMCTL32 "rebar" Bar
 #define AFX_IDW_DIALOGBAR               0xE805  // CDialogBar
+#define AFX_IDW_MENUBAR                 0xE806  // CMFCMenuBar
 
 // Note: If your application supports docking toolbars, you should
 //  not use the following IDs for your own toolbars.  The IDs chosen
@@ -145,6 +146,40 @@
 #define AFX_IDW_SIZE_BOX                0xEA20  // size box for splitters
 #define AFX_IDW_PANE_SAVE               0xEA21  // to shift AFX_IDW_PANE_FIRST
 #endif //!RC_INVOKED
+
+// MFC timer IDs
+#define AFX_TIMER_ID_FIRST                      0xEC00
+#define AFX_TIMER_ID_DISPLAY_AHWND_EVENT        0xEC00
+#define AFX_TIMER_ID_AUTO_HIDE_SLIDE_IN_EVENT   0xEC01
+#define AFX_TIMER_ID_AUTO_HIDE_SLIDE_OUT_EVENT  0xEC02
+#define AFX_TIMER_ID_CHECK_AUTO_HIDE_CONDITION  0xEC03
+#define AFX_TIMER_ID_DOCK_EVENT                 0xEC04
+#define AFX_TIMER_ID_CHECK_ROLL_STATE           0xEC05
+#define AFX_TIMER_ID_VISIBILITY_TIMER           0xEC06
+#define AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT   0xEC07
+#define AFX_TIMER_ID_TIMER_TRACKING             0xEC08
+#define AFX_TIMER_ID_TIMER_WAIT                 0xEC09  // timer while waiting to show status
+#define AFX_TIMER_ID_TIMER_CHECK                0xEC0A  // timer to check for removal of status
+#define AFX_TIMER_ID_TASK_ANIMATION             0xEC0B
+#define AFX_TIMER_ID_TASK_SCROLL                0xEC0C
+#define AFX_TIMER_ID_AUTOCOMMAND                0xEC0D
+#define AFX_TIMER_ID_ALERT_CLOSE_POPUP          0xEC0E
+#define AFX_TIMER_ID_ALERT_ANIMATION            0xEC0F
+#define AFX_TIMER_ID_ALERT_CHECK_ACTIVITY       0xEC10
+#define AFX_TIMER_ID_TB_SHOW_DROPDOWN           0xEC11
+#define AFX_TIMER_ID_MENU_SHOW_ALL_ITEMS        0xEC12
+#define AFX_TIMER_ID_OUTLOOK_BAR_SCRL_UP        0xEC13
+#define AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN        0xEC14
+#define AFX_TIMER_ID_MENU_POPUP_ANIMATION       0xEC15
+#define AFX_TIMER_ID_MENU_POPUP_SCROLL          0xEC16
+#define AFX_TIMER_ID_MENUBAR_POPUP              0xEC17
+#define AFX_TIMER_ID_MENUBAR_REMOVE             0xEC18
+#define AFX_TIMER_ID_RIBBONBAR_AUTO_COMMAND     0xEC19
+#define AFX_TIMER_ID_RIBBONBAR_SHOW_KEYTIPS     0xEC1A
+#define AFX_TIMER_ID_RIBBONPANEL_POPUP          0xEC1B
+#define AFX_TIMER_ID_RIBBONPANEL_REMOVE         0xEC1C
+#define AFX_TIMER_ID_RIBBONPANEL_AUTO_COMMAND   0xEC1D
+#define AFX_TIMER_ID_LAST                       0xEC1F
 
 #ifndef APSTUDIO_INVOKED
 
@@ -265,6 +300,7 @@
 #ifndef RC_INVOKED      // code only
 #define ID_OLE_VERB_LAST                0xE21F
 #endif //!RC_INVOKED
+#define ID_OLE_VERB_POPUP               0xE220
 
 // for print preview dialog bar
 #define AFX_ID_PREVIEW_CLOSE            0xE300

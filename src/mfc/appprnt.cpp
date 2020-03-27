@@ -106,7 +106,7 @@ INT_PTR CWinApp::DoPrintDialog(CPrintDialog* pPD)
 	// if OK or Cancel is selected we need to update cached devMode/Names
 	while (nResponse != IDOK && nResponse != IDCANCEL)
 	{
-		switch (::AfxCtxCommDlgExtendedError())
+		switch (CommDlgExtendedError())
 		{
 		// CommDlg cannot give these errors after NULLing these handles
 		case PDERR_PRINTERNOTFOUND:

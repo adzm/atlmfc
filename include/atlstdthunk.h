@@ -16,6 +16,13 @@
 #pragma push_macro("new")
 #undef new
 
+
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 namespace ATL
 {
 
@@ -51,7 +58,7 @@ struct _stdcallthunk
 	{
 		return this;
 	}
-	_Ret_opt_bytecount_x_(sizeof(_stdcallthunk)) void* operator new(_In_ size_t)
+	_Ret_maybenull_ _Post_writable_byte_size_(sizeof(_stdcallthunk)) void* operator new(_In_ size_t)
 	{
         return __AllocStdCallThunk();
     }
@@ -63,8 +70,8 @@ struct _stdcallthunk
 #pragma pack(pop)
 
 #elif defined(_M_AMD64)
-PVOID __AllocStdCallThunk(VOID);
-VOID  __FreeStdCallThunk(PVOID);
+PVOID __stdcall __AllocStdCallThunk(VOID);
+VOID  __stdcall __FreeStdCallThunk(PVOID);
 #pragma pack(push,2)
 struct _stdcallthunk
 {
@@ -90,7 +97,7 @@ struct _stdcallthunk
 	{
 		return this;
 	}
-	_Ret_opt_bytecount_x_(sizeof(_stdcallthunk)) void* operator new(_In_ size_t)
+	_Ret_maybenull_ _Post_writable_byte_size_(sizeof(_stdcallthunk)) void* operator new(_In_ size_t)
 	{
         return __AllocStdCallThunk();
     }
@@ -168,6 +175,44 @@ struct _stdcallthunk
 	}
 };
 #pragma pack(pop)
+#elif defined (_M_THUMB)
+// note this case must be before _M_ARM because _M_ARM is also defined
+PVOID __stdcall __AllocStdCallThunk(VOID);
+VOID  __stdcall __FreeStdCallThunk(PVOID);
+#pragma pack(push,2)
+struct _stdcallthunk
+{
+	USHORT	m_mov_r0[2];	// mov	r0, pThis
+	USHORT	m_mov_pc[2];	// mov	pc, pFunc
+	DWORD	m_pThis;
+	DWORD	m_pFunc;
+	BOOL Init(DWORD_PTR proc, void* pThis)
+	{
+		m_mov_r0[0] = 0xF8DF;
+		m_mov_r0[1] = 0x0004;
+ 		m_mov_pc[0] = 0xF8DF;
+		m_mov_pc[1] = 0xF004;
+		m_pThis = (DWORD)pThis;
+		m_pFunc = (DWORD)proc;
+		// write block from data cache and
+		//  flush from instruction cache
+		FlushInstructionCache(GetCurrentProcess(), this, sizeof(_stdcallthunk));
+		return TRUE;
+	}
+	void* GetCodeAddress()
+	{
+		return (void *)((ULONG_PTR)this | 1);
+	}
+	void* operator new(size_t)
+	{
+		return __AllocStdCallThunk();
+    }
+	void operator delete(void* pThunk)
+	{
+		__FreeStdCallThunk(pThunk);
+	}
+};
+#pragma pack(pop)
 #elif defined(_ARM_)
 #pragma pack(push,4)
 struct _stdcallthunk // this should come out to 16 bytes
@@ -232,7 +277,7 @@ struct _stdcallthunk
 #endif
 
 
-#if defined(_M_IX86) || defined (_M_AMD64)
+#if defined(_M_IX86) || defined (_M_AMD64) || defined(_M_ARM)
 
 #pragma pack(push,8)
 class CDynamicStdCallThunk
@@ -279,7 +324,7 @@ public:
 typedef CDynamicStdCallThunk CStdCallThunk;
 #else
 typedef _stdcallthunk CStdCallThunk;
-#endif  // _M_IX86 || _M_AMD64
+#endif  // _M_IX86 || _M_AMD64 || _M_ARM
 
 }   // namespace ATL
 

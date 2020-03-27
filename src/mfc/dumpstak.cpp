@@ -86,7 +86,7 @@ CTraceClipboardData::~CTraceClipboardData()
 void CTraceClipboardData::SendOut(LPCSTR pszData)
 {
 	int nLength;
-	if (pszData == NULL || (nLength = lstrlenA(pszData)) == 0)
+	if (pszData == NULL || (nLength = static_cast<int>(strlen(pszData))) == 0)
 		return;
 
 	// send it to TRACE (can be redirected)

@@ -18,7 +18,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCColorPropertySheet
 
 class CMFCColorPropertySheet : public CPropertySheet
@@ -49,9 +49,8 @@ protected:
 
 	void ResizeControl();
 
-	//{{AFX_MSG(CMFCColorPropertySheet)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

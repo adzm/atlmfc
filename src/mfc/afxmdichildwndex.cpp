@@ -19,8 +19,6 @@
 #include "afxdockablepane.h"
 #include "afxdatarecovery.h"
 
-#include <dwmapi.h>
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -28,6 +26,8 @@
 BOOL CMDIChildWndEx::m_bEnableFloatingBars = FALSE;
 DWORD CMDIChildWndEx::m_dwExcludeStyle = WS_CAPTION | WS_BORDER | WS_THICKFRAME;
 DWORD CMDIChildWndEx::m_dwDefaultTaskbarTabPropertyFlags = STPF_USEAPPTHUMBNAILWHENACTIVE | STPF_USEAPPPEEKWHENACTIVE;
+
+UINT AFX_WM_AFTER_TASKBAR_ACTIVATE = ::RegisterWindowMessage (_T("AFX_WM_AFTER_TASKBAR_ACTIVATE"));
 
 typedef HRESULT (STDAPICALLTYPE *PFNSETWINDOWATTRIBUTE)(HWND, DWORD, LPCVOID, DWORD);
 typedef HRESULT (STDAPICALLTYPE *PFNSETICONICTHUMBNAIL)(HWND, HBITMAP, DWORD);
@@ -66,7 +66,6 @@ CMDIChildWndEx::~CMDIChildWndEx()
 {
 }
 
-//{{AFX_MSG_MAP(CMDIChildWndEx)
 BEGIN_MESSAGE_MAP(CMDIChildWndEx, CMDIChildWnd)
 	ON_WM_CREATE()
 	ON_WM_MDIACTIVATE()
@@ -92,7 +91,6 @@ BEGIN_MESSAGE_MAP(CMDIChildWndEx, CMDIChildWnd)
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CMDIChildWndEx::OnIdleUpdateCmdUI)
 	ON_REGISTERED_MESSAGE(AFX_WM_CHANGEVISUALMANAGER, &CMDIChildWndEx::OnChangeVisualManager)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMDIChildWndEx message handlers
@@ -189,7 +187,7 @@ void CMDIChildWndEx::RegisterTaskbarTab(CMDIChildWndEx* pWndBefore)
 	m_tabProxyWnd.SetRelatedMDIChildFrame(this);
 	CRect rect(CPoint(-32000, -32000), CSize(10, 10));
 
-	CString strClassName = afxGlobalData.RegisterWindowClass(_T("AFX_SUPERBAR_TAB"));
+	CString strClassName = GetGlobalData()->RegisterWindowClass(_T("AFX_SUPERBAR_TAB"));
 	CString strWindowText;
 	GetWindowText(strWindowText);
 
@@ -200,7 +198,7 @@ void CMDIChildWndEx::RegisterTaskbarTab(CMDIChildWndEx* pWndBefore)
 		return;
 	}
 
-	ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+	ITaskbarList3* pTaskbarList3 = GetGlobalData()->GetITaskbarList3();
 	if (pTaskbarList3)
 	{
 		CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
@@ -238,16 +236,8 @@ void CMDIChildWndEx::RegisterTaskbarTab(CMDIChildWndEx* pWndBefore)
 		// Set the appropriate DWM properties on the MDI child window
 		BOOL bHasIconicBitmap = TRUE;
 
-		HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
-		if (hDWMAPI != NULL)
-		{
-			PFNSETWINDOWATTRIBUTE pfnSetWindowAttribute = (PFNSETWINDOWATTRIBUTE)GetProcAddress(hDWMAPI, "DwmSetWindowAttribute");
-			if (pfnSetWindowAttribute)
-			{
-				pfnSetWindowAttribute(m_tabProxyWnd.GetSafeHwnd(), DWMWA_HAS_ICONIC_BITMAP, &bHasIconicBitmap, sizeof(BOOL));
-				pfnSetWindowAttribute(m_tabProxyWnd.GetSafeHwnd(), DWMWA_FORCE_ICONIC_REPRESENTATION, &bHasIconicBitmap, sizeof(BOOL));
-			}
-		}
+		_AfxDwmSetWindowAttribute(m_tabProxyWnd.GetSafeHwnd(), DWMWA_HAS_ICONIC_BITMAP, &bHasIconicBitmap, sizeof(BOOL));
+		_AfxDwmSetWindowAttribute(m_tabProxyWnd.GetSafeHwnd(), DWMWA_FORCE_ICONIC_REPRESENTATION, &bHasIconicBitmap, sizeof(BOOL));
 
 		SetTaskbarTabProperties(m_dwDefaultTaskbarTabPropertyFlags);
 		SetTaskbarTabText(strWindowText);
@@ -285,7 +275,7 @@ BOOL CMDIChildWndEx::IsTaskbarTabsSupportEnabled()
 
 	ASSERT_VALID(pApp);
 
-	if (!pApp->IsTaskbarInteractionEnabled() || !CanShowOnTaskBarTabs() || !afxGlobalData.bIsWindows7 || (GetStyle () & WS_SYSMENU) != 0)
+	if (!pApp->IsTaskbarInteractionEnabled() || !CanShowOnTaskBarTabs() || !GetGlobalData()->bIsWindows7 || (GetStyle () & WS_SYSMENU) != 0)
 	{
 		return FALSE;
 	}
@@ -309,17 +299,7 @@ BOOL CMDIChildWndEx::InvalidateIconicBitmaps()
 
 	SetTaskbarThumbnailClipRect(rectThumbnailClip);
 
-#if (WINVER >= 0x0601)
-	HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
-	if (hDWMAPI != NULL)
-	{
-		PFNINVALIDATEICONICBITMAPS pfnInvalidateIconicBitmaps = (PFNINVALIDATEICONICBITMAPS)GetProcAddress(hDWMAPI, "DwmInvalidateIconicBitmaps");
-		if (pfnInvalidateIconicBitmaps != NULL)
-		{
-			pfnInvalidateIconicBitmaps(m_tabProxyWnd.GetSafeHwnd());
-		}
-	}
-#endif
+	_AfxDwmInvalidateIconicBitmaps(m_tabProxyWnd.GetSafeHwnd());
 
 	return TRUE;
 }
@@ -342,7 +322,7 @@ void CMDIChildWndEx::SetTaskbarTabOrder(CMDIChildWndEx* pWndBefore)
 	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
 	{
 #if (WINVER >= 0x0601)
-		ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+		ITaskbarList3* pTaskbarList = GetGlobalData()->GetITaskbarList3();
 		ASSERT(pTaskbarList != NULL);
 
 		HWND hWndBefore = pWndBefore != NULL ? pWndBefore->GetTabProxyWnd()->GetSafeHwnd() : NULL;
@@ -365,7 +345,7 @@ void CMDIChildWndEx::SetTaskbarTabProperties(DWORD dwFlags)
 #if (WINVER >= 0x0601)
 	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
 	{
-		ITaskbarList3* pTaskbarList = afxGlobalData.GetITaskbarList3();
+		ITaskbarList3* pTaskbarList = GetGlobalData()->GetITaskbarList3();
 		ASSERT(pTaskbarList != NULL);
 
 		CComQIPtr<ITaskbarList4> spTaskbarList4 = pTaskbarList;
@@ -395,7 +375,7 @@ void CMDIChildWndEx::SetTaskbarTabActive()
 	if (!IsTaskbarTabsSupportEnabled())
 		return;
 
-	ITaskbarList3 *pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+	ITaskbarList3 *pTaskbarList3 = GetGlobalData()->GetITaskbarList3();
 	if (pTaskbarList3)
 	{
 		CMDIFrameWndEx* pParentFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
@@ -889,10 +869,20 @@ void CMDIChildWndEx::RecalcLayout(BOOL bNotify)
 					CRect rectClient;
 
 					CFrameWnd* pFrame = pView->GetParentFrame();
-					if (pFrame != NULL)
+					if (pFrame->GetSafeHwnd() != NULL)
 					{
 						pFrame->GetClientRect(rectClient);
-						pView->SetWindowPos(NULL, 0, 0, rectClient.Width(), rectClient.Height(), SWP_NOZORDER  | SWP_NOACTIVATE);
+
+						CWnd* pChildWnd = m_dockManager.IsPrintPreviewValid() ? GetDlgItem (AFX_IDW_PANE_SAVE) : GetDlgItem (AFX_IDW_PANE_FIRST);
+
+						if (pChildWnd->GetSafeHwnd() != NULL && pChildWnd->IsKindOf(RUNTIME_CLASS(CSplitterWnd)))
+						{
+							pChildWnd->SetWindowPos(NULL, 0, 0, rectClient.Width(), rectClient.Height(), SWP_NOZORDER  | SWP_NOACTIVATE);
+						}
+						else
+						{
+							pView->SetWindowPos(NULL, 0, 0, rectClient.Width(), rectClient.Height(), SWP_NOZORDER  | SWP_NOACTIVATE);
+						}
 					}
 				}
 				else
@@ -931,7 +921,7 @@ void CMDIChildWndEx::UnregisterTaskbarTab(BOOL bCheckRegisteredMDIChildCount)
 	// wants the behavior, remove the MDI child from the task bar tab list.
 	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
 	{
-		ITaskbarList3 *pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+		ITaskbarList3 *pTaskbarList3 = GetGlobalData()->GetITaskbarList3();
 		if (pTaskbarList3)
 		{
 			pTaskbarList3->UnregisterTab(m_tabProxyWnd.GetSafeHwnd());
@@ -947,7 +937,7 @@ void CMDIChildWndEx::UnregisterTaskbarTab(BOOL bCheckRegisteredMDIChildCount)
 			CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
 			if (pTopLevel != NULL && pTopLevel->GetRegisteredWithTaskBarMDIChildCount() == 0)
 			{
-				ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+				ITaskbarList3* pTaskbarList3 = GetGlobalData()->GetITaskbarList3();
 				if (pTaskbarList3 != NULL)
 				{
 					pTaskbarList3->SetThumbnailClip(pTopLevel->GetSafeHwnd(), NULL);
@@ -1269,15 +1259,7 @@ void CMDIChildWndEx::OnSendIconicThumbnail(WPARAM, LPARAM)
 	PrintClient(&dcThumbnail, PRF_CLIENT);
 
 	HBITMAP hBitmap = (HBITMAP)(dcThumbnail.GetCurrentBitmap()->m_hObject);
-	HMODULE hDWMAPI = GetModuleHandleW(L"DWMAPI");
-	if (hDWMAPI != NULL)
-	{
-		PFNSETICONICTHUMBNAIL pfnSetIconicThumbnail = (PFNSETICONICTHUMBNAIL)GetProcAddress(hDWMAPI, "DwmSetIconicThumbnail");
-		if (pfnSetIconicThumbnail)
-		{
-			pfnSetIconicThumbnail(GetSafeHwnd(), hBitmap, DWM_SIT_DISPLAYFRAME);
-		}
-	}
+	_AfxDwmSetIconicThumbnail(GetSafeHwnd(), hBitmap, DWM_SIT_DISPLAYFRAME);
 }
 
 void CMDIChildWndEx::OnSendIconicLivePreviewBitmap(WPARAM, LPARAM)
@@ -1292,15 +1274,7 @@ void CMDIChildWndEx::OnSendIconicLivePreviewBitmap(WPARAM, LPARAM)
 	ptClient.y = rectClient.top;
 
 	HBITMAP hBitmap = (HBITMAP)(dcThumbnail.GetCurrentBitmap()->m_hObject);
-	HMODULE hDWMAPI = GetModuleHandleW(L"DWMAPI");
-	if (hDWMAPI != NULL)
-	{
-		PFNSETICONICLIVEPRBMP pfnSetIconicLivePreviewBitmap = (PFNSETICONICLIVEPRBMP)GetProcAddress(hDWMAPI, "DwmSetIconicLivePreviewBitmap");
-		if (pfnSetIconicLivePreviewBitmap)
-		{
-			pfnSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, DWM_SIT_DISPLAYFRAME);
-		}
-	}
+	_AfxDwmSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, DWM_SIT_DISPLAYFRAME);
 }
 #endif
 
@@ -1495,7 +1469,7 @@ CRect CMDIChildWndEx::GetTaskbarThumbnailClipRect() const
 
 BOOL CMDIChildWndEx::SetTaskbarThumbnailClipRect(CRect rect)
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!GetGlobalData()->bIsWindows7)
 	{
 		return FALSE;
 	}
@@ -1511,7 +1485,7 @@ BOOL CMDIChildWndEx::SetTaskbarThumbnailClipRect(CRect rect)
 		pTopLevel->ScreenToClient(rect);
 	}
 	
-	ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+	ITaskbarList3* pTaskbarList3 = GetGlobalData()->GetITaskbarList3();
 	if (pTaskbarList3 == NULL)
 	{
 		TRACE0("Warning: ITaskbarList3 is NULL.");
@@ -1539,6 +1513,12 @@ void CMDIChildWndEx::ActivateTopLevelFrame()
 
 	ActivateFrame();
 	pTopLevel->SetForegroundWindow();
+
+	BOOL bIsMinimized = pTopLevel->IsIconic();
+
+	pTopLevel->ShowWindow(bIsMinimized ? SW_RESTORE : SW_SHOW);
+	pTopLevel->PostMessage(AFX_WM_AFTER_TASKBAR_ACTIVATE, (WPARAM)bIsMinimized, (LPARAM)GetSafeHwnd());
+
 	if (pTopLevel->IsIconic())
 	{
 		pTopLevel->ShowWindow(SW_RESTORE);
@@ -1548,6 +1528,12 @@ void CMDIChildWndEx::ActivateTopLevelFrame()
 		pTopLevel->ShowWindow(SW_SHOW);
 	}
 }
+
+BOOL CMDIChildWndEx::IsTabbedMDIChild()
+{
+	return m_pMDIFrame != NULL && m_pMDIFrame->AreMDITabs();
+}
+
 //////////////////////////////////////////////////
 /// CMDITabProxyWnd
 
@@ -1690,27 +1676,14 @@ LRESULT CMDITabProxyWnd::OnSendIconicThumbnail(WPARAM wParam, LPARAM lParam)
 	int nWidth = HIWORD(lParam); 
 	int nHeight = LOWORD(lParam);
 
-	HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
-	if (hDWMAPI != NULL)
+	HBITMAP hBitmap = m_pRelatedMDIChildFrame->OnGetIconicThumbnail(nWidth, nHeight); 
+	if (hBitmap == NULL)
 	{
-		PFNSETICONICTHUMBNAIL pfnSetIconicThumbnail = (PFNSETICONICTHUMBNAIL)GetProcAddress(hDWMAPI, "DwmSetIconicThumbnail");
-		if (pfnSetIconicThumbnail)
-		{
-			HBITMAP hBitmap = m_pRelatedMDIChildFrame->OnGetIconicThumbnail(nWidth, nHeight); 
-			if (hBitmap == NULL)
-			{
-				hBitmap = GetClientBitmap(nWidth, nHeight, TRUE);
-			}
-			
-			HRESULT hr = pfnSetIconicThumbnail(GetSafeHwnd(), hBitmap, 0);
-			if (FAILED(hr))
-			{
-				// trace error code
-				TRACE1("pfnSetIconicThumbnail failed with code %x", hr);
-			}
-			DeleteObject(hBitmap);
-		}
+		hBitmap = GetClientBitmap(nWidth, nHeight, TRUE);
 	}
+
+	_AfxDwmSetIconicThumbnail(GetSafeHwnd(), hBitmap, 0);
+	DeleteObject(hBitmap);
 
 	return Default();
 }
@@ -1748,15 +1721,7 @@ LRESULT CMDITabProxyWnd::OnSendIconicLivePreviewBitmap(WPARAM wParam, LPARAM lPa
 		hBitmap = GetClientBitmap(rectWnd.Width(), rectWnd.Height(), FALSE);
 	}
 
-	HMODULE hDWMAPI = GetModuleHandle(_T("DWMAPI"));
-	if (hDWMAPI != NULL)
-	{
-		PFNSETICONICLIVEPRBMP pfnSetIconicLivePreviewBitmap = (PFNSETICONICLIVEPRBMP)GetProcAddress(hDWMAPI, "DwmSetIconicLivePreviewBitmap");
-		if (pfnSetIconicLivePreviewBitmap)
-		{
-			pfnSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, 0);
-		}
-	}
+	_AfxDwmSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, 0);
 	DeleteObject(hBitmap);
 	return 0;
 }

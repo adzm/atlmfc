@@ -17,12 +17,12 @@
 // MFC-enabled compilation. Use MFC memory management and exceptions;
 // also, use MFC module state.
 
-LPWSTR AFXAPI AfxA2WHelper(_Out_z_cap_(nChars) LPWSTR lpw, _In_z_ LPCSTR lpa, _In_ int nChars)
+LPWSTR AFXAPI AfxA2WHelper(_Out_writes_z_(nChars) LPWSTR lpw, _In_z_ LPCSTR lpa, _In_ int nChars)
 {
 	return AtlA2WHelper(lpw, lpa, nChars,CP_ACP);
 }
 
-LPSTR AFXAPI AfxW2AHelper(_Out_z_cap_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, _In_ int nChars)
+LPSTR AFXAPI AfxW2AHelper(_Out_writes_z_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, _In_ int nChars)
 {
 	return AtlW2AHelper(lpa, lpw, nChars, CP_ACP);
 }
@@ -36,7 +36,7 @@ template<> UINT AFXAPI HashKey<CComBSTR> (CComBSTR key)
 	// (algorithm copied from STL string hash in xfunctional)
 	UINT uHashVal = 2166136261U;
 	UINT uFirst = 0;
-	UINT uLast = (UINT)wcslen(key);
+	UINT uLast = AtlStrLen(key);
 	UINT uStride = 1 + uLast / 10;
 
 	for(; uFirst < uLast; uFirst += uStride)

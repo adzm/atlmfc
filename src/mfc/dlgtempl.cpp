@@ -228,7 +228,7 @@ UINT AFX_CDECL CDialogTemplate::GetTemplateSize(const DLGTEMPLATE* pTemplate)
 	{
 		// Skip font size and name
 		pb += FontAttrSize(bDialogEx);  // Skip font size, weight, (italic, charset)
-		pb += 2 * (wcslen((WCHAR*)pb) + 1);
+		pb += 2 * (AtlStrLen((WCHAR*)pb) + 1);
 	}
 
 	WORD nCtrl = bDialogEx ? (WORD)((DLGTEMPLATEEX*)pTemplate)->cDlgItems :
@@ -313,7 +313,7 @@ BOOL CDialogTemplate::SetFont(LPCTSTR lpFaceName, WORD nFontSize)
 	else
 		pTemplate->style |= DS_SETFONT;
 
-	int nFaceNameLen = lstrlen(lpFaceName);
+	int nFaceNameLen = AtlStrLen(lpFaceName);
 	if( nFaceNameLen >= LF_FACESIZE )
 	{
 		// Name too long
@@ -333,7 +333,7 @@ BOOL CDialogTemplate::SetFont(LPCTSTR lpFaceName, WORD nFontSize)
 		return FALSE;
 	}
 	BYTE* pb = GetFontSizeField(pTemplate);
-	int cbOld = (int)(bHasFont ? cbFontAttr + 2 * (wcslen((WCHAR*)(pb + cbFontAttr)) + 1) : 0);
+	int cbOld = (int)(bHasFont ? cbFontAttr + 2 * (AtlStrLen((WCHAR*)(pb + cbFontAttr)) + 1) : 0);
 
 	BYTE* pOldControls = (BYTE*)(((DWORD_PTR)pb + cbOld + 3) & ~DWORD_PTR(3));
 	BYTE* pNewControls = (BYTE*)(((DWORD_PTR)pb + cbNew + 3) & ~DWORD_PTR(3));

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -22,7 +22,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonMiniToolBar window
 
 class CMFCRibbonMiniToolBar : public CMFCRibbonPanelMenu
@@ -62,10 +62,9 @@ public:
 	virtual ~CMFCRibbonMiniToolBar();
 
 protected:
-	//{{AFX_MSG(CMFCRibbonMiniToolBar)
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	BOOL UpdateTransparency();

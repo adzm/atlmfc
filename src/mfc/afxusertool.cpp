@@ -76,8 +76,8 @@ void CUserTool::DrawToolIcon(CDC* pDC, const CRect& rectImage)
 {
 	ASSERT_VALID(pDC);
 
-	int cx = afxGlobalData.m_sizeSmallIcon.cx;
-	int cy = afxGlobalData.m_sizeSmallIcon.cy;
+	int cx = GetGlobalData()->m_sizeSmallIcon.cx;
+	int cy = GetGlobalData()->m_sizeSmallIcon.cy;
 
 	int x = max(0, (rectImage.Width() - cx) / 2);
 	int y = max(0, (rectImage.Height() - cy) / 2);
@@ -91,8 +91,8 @@ BOOL CUserTool::CopyIconToClipboard()
 	{
 		CWindowDC dc(NULL);
 
-		int cx = afxGlobalData.m_sizeSmallIcon.cx;
-		int cy = afxGlobalData.m_sizeSmallIcon.cy;
+		int cx = GetGlobalData()->m_sizeSmallIcon.cx;
+		int cy = GetGlobalData()->m_sizeSmallIcon.cy;
 
 		//----------------------
 		// Create a bitmap copy:
@@ -110,7 +110,7 @@ BOOL CUserTool::CopyIconToClipboard()
 		CBitmap* pOldBitmapDest = memDCDest.SelectObject(&bitmapCopy);
 
 		CRect rectIcon(0, 0, cx, cy);
-		memDCDest.FillRect(rectIcon, &afxGlobalData.brBtnFace);
+		memDCDest.FillRect(rectIcon, &(GetGlobalData()->brBtnFace));
 
 		DrawToolIcon(&memDCDest, rectIcon);
 
@@ -199,19 +199,19 @@ HICON CUserTool::SetToolIcon()
 
 HICON CUserTool::LoadDefaultIcon()
 {
-	if (afxGlobalData.m_hiconTool == NULL)
+	if (GetGlobalData()->m_hiconTool == NULL)
 	{
-		afxGlobalData.m_hiconTool = (HICON) ::LoadImageW(
+		GetGlobalData()->m_hiconTool = (HICON) ::LoadImageW(
 			AfxFindResourceHandle(MAKEINTRESOURCE(IDI_AFXRES_TOOL), RT_GROUP_ICON),
-			MAKEINTRESOURCEW(IDI_AFXRES_TOOL), IMAGE_ICON, afxGlobalData.m_sizeSmallIcon.cx, afxGlobalData.m_sizeSmallIcon.cy, LR_SHARED);
+			MAKEINTRESOURCEW(IDI_AFXRES_TOOL), IMAGE_ICON, GetGlobalData()->m_sizeSmallIcon.cx, GetGlobalData()->m_sizeSmallIcon.cy, LR_SHARED);
 	}
 
-	return afxGlobalData.m_hiconTool;
+	return GetGlobalData()->m_hiconTool;
 }
 
 void CUserTool::DeleteIcon()
 {
-	if (m_hIcon != NULL && m_hIcon != afxGlobalData.m_hiconTool)
+	if (m_hIcon != NULL && m_hIcon != GetGlobalData()->m_hiconTool)
 	{
 		::DestroyIcon(m_hIcon);
 	}

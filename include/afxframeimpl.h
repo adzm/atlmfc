@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -205,7 +205,7 @@ protected:
 	void OnTrackCaptionButtons(CPoint point);
 	void StopCaptionButtonsTracking();
 	void RedrawCaptionButton(CMFCCaptionButtonEx* pBtn);
-	void OnDWMCompositionChanged();
+	void OnCompositionChanged();
 
 	AFX_IMPORT_DATA static CList<CFrameWnd*, CFrameWnd*> m_lstFrames;
 };

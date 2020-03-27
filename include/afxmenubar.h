@@ -27,9 +27,7 @@ class CMFCToolBarMenuButtonsButton;
 class CMFCToolBarComboBoxButton;
 class CMFCToolBarsMenuPropertyPage;
 
-#define AFX_IDW_MENUBAR               0xE806  // CMFCMenuBar
-
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCMenuBar window
 
 class CMFCMenuBar : public CMFCToolBar
@@ -152,14 +150,10 @@ public:
 	virtual BOOL AllowShowOnPaneMenu() const { return FALSE; }
 
 	virtual void OnDefaultMenuLoaded(HMENU) {};
-	virtual BOOL RestoreOriginalstate();
+	virtual BOOL RestoreOriginalState();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
-	virtual int GetRowHeight() const
-	{
-		return max(afxGlobalData.GetTextHeight(GetCurrentAlignment() & CBRS_ORIENT_HORZ),
-			m_bHaveButtons ? GetButtonSize().cy : m_sizeMenuButton.cy <= 0 ? m_sizeButton.cy - 2 : m_sizeMenuButton.cy - 2);
-	}
+	virtual int GetRowHeight() const;
 
 	virtual int GetColumnWidth() const
 	{
@@ -184,15 +178,13 @@ public:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CMFCMenuBar)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
-	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -46,7 +46,6 @@ CMFCMenuButton::~CMFCMenuButton()
 }
 
 BEGIN_MESSAGE_MAP(CMFCMenuButton, CMFCButton)
-	//{{AFX_MSG_MAP(CMFCMenuButton)
 	ON_WM_KEYDOWN()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_GETDLGCODE()
@@ -54,7 +53,6 @@ BEGIN_MESSAGE_MAP(CMFCMenuButton, CMFCButton)
 	ON_WM_KILLFOCUS()
 	ON_WM_LBUTTONDBLCLK()
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCMenuButton::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -105,7 +103,7 @@ void CMFCMenuButton::OnDraw(CDC* pDC, const CRect& rect, UINT uiState)
 			rectSeparator.top += m_sizePushOffset.cy;
 		}
 
-		pDC->Draw3dRect(rectSeparator, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnHilite);
+		pDC->Draw3dRect(rectSeparator, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnHilite);
 	}
 }
 
@@ -313,31 +311,31 @@ LRESULT CMFCMenuButton::OnInitControl(WPARAM wParam, LPARAM lParam)
 	CTagManager tagManager(strDst);
 
 	BOOL bOSMenu = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_OSMenu, bOSMenu))
+	if (ReadBoolProp(tagManager, PS_MFCMenuButton_OSMenu, bOSMenu))
 	{
 		m_bOSMenu = bOSMenu;
 	}
 
 	BOOL bRightArrow = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_RightArrow, bRightArrow))
+	if (ReadBoolProp(tagManager, PS_MFCMenuButton_RightArrow, bRightArrow))
 	{
 		m_bRightArrow = bRightArrow;
 	}
 
 	BOOL bStayPressed = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_StayPressed, bStayPressed))
+	if (ReadBoolProp(tagManager, PS_MFCMenuButton_StayPressed, bStayPressed))
 	{
 		m_bStayPressed = bStayPressed;
 	}
 
 	BOOL bDefaultClick = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_DefaultClick, bDefaultClick))
+	if (ReadBoolProp(tagManager, PS_MFCMenuButton_DefaultClick, bDefaultClick))
 	{
 		m_bDefaultClick = bDefaultClick;
 	}
 
 	BOOL bAutosize = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCMenuButton_Autosize, bAutosize))
+	if (ReadBoolProp(tagManager, PS_MFCMenuButton_Autosize, bAutosize))
 	{
 		if (bAutosize)
 		{

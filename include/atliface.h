@@ -120,8 +120,10 @@ typedef interface IAccessibleServer IAccessibleServer;
 extern "C"{
 #endif 
 
-void * __RPC_USER MIDL_user_allocate(size_t);
-void __RPC_USER MIDL_user_free( void * ); 
+_Must_inspect_result_
+_Ret_maybenull_ _Post_writable_byte_size_(size)
+void * __RPC_USER MIDL_user_allocate(size_t size);
+void __RPC_USER MIDL_user_free(_Pre_maybenull_ _Post_invalid_ void *);
 
 /* interface __MIDL_itf_atliface_0000 */
 /* [local] */ 
@@ -260,36 +262,36 @@ EXTERN_C const IID IID_IRegistrar;
 	{
 	public:
 		virtual HRESULT STDMETHODCALLTYPE ResourceRegisterSz( 
-			/* [in] */ LPCOLESTR resFileName,
-			/* [in] */ LPCOLESTR szID,
-			/* [in] */ LPCOLESTR szType) = 0;
+			/* [in] */ _In_z_ LPCOLESTR resFileName,
+			/* [in] */ _In_z_ LPCOLESTR szID,
+			/* [in] */ _In_z_ LPCOLESTR szType) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE ResourceUnregisterSz( 
-			/* [in] */ LPCOLESTR resFileName,
-			/* [in] */ LPCOLESTR szID,
-			/* [in] */ LPCOLESTR szType) = 0;
+			/* [in] */ _In_z_ LPCOLESTR resFileName,
+			/* [in] */ _In_z_ LPCOLESTR szID,
+			/* [in] */ _In_z_ LPCOLESTR szType) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE FileRegister( 
-			/* [in] */ LPCOLESTR fileName) = 0;
+			/* [in] */ _In_z_ LPCOLESTR fileName) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE FileUnregister( 
-			/* [in] */ LPCOLESTR fileName) = 0;
+			/* [in] */ _In_z_ LPCOLESTR fileName) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE StringRegister( 
-			/* [in] */ LPCOLESTR data) = 0;
+			/* [in] */ _In_z_ LPCOLESTR data) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE StringUnregister( 
-			/* [in] */ LPCOLESTR data) = 0;
+			/* [in] */ _In_z_ LPCOLESTR data) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE ResourceRegister( 
-			/* [in] */ LPCOLESTR resFileName,
-			/* [in] */ UINT nID,
-			/* [in] */ LPCOLESTR szType) = 0;
+			/* [in] */ _In_z_ LPCOLESTR resFileName,
+			/* [in] */ _In_ UINT nID,
+			/* [in] */ _In_z_ LPCOLESTR szType) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE ResourceUnregister( 
-			/* [in] */ LPCOLESTR resFileName,
-			/* [in] */ UINT nID,
-			/* [in] */ LPCOLESTR szType) = 0;
+			/* [in] */ _In_z_ LPCOLESTR resFileName,
+			/* [in] */ _In_ UINT nID,
+			/* [in] */ _In_z_ LPCOLESTR szType) = 0;
 
 	};
 
@@ -665,7 +667,7 @@ EXTERN_C const IID IID_IDocHostUIHandlerDispatch;
 		HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
 			IDocHostUIHandlerDispatch * This,
 			/* [in] */ REFIID riid,
-			/* [size_is][in] */ _In_count_(cNames) LPOLESTR *rgszNames,
+			/* [size_is][in] */ _In_reads_(cNames) LPOLESTR *rgszNames,
 			/* [in] */ UINT cNames,
 			/* [in] */ LCID lcid,
 			/* [size_is][out] */ DISPID *rgDispId);
@@ -1079,31 +1081,31 @@ EXTERN_C const IID IID_IAxWinHostWindow;
 	{
 	public:
 		virtual HRESULT STDMETHODCALLTYPE CreateControl( 
-			/* [in] */ LPCOLESTR lpTricsData,
-			/* [in] */ HWND hWnd,
-			/* [in] */ IStream *pStream) = 0;
+			_In_z_ LPCOLESTR lpTricsData,
+			_In_ HWND hWnd,
+			_Inout_opt_ IStream *pStream) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE CreateControlEx( 
-			/* [in] */ LPCOLESTR lpTricsData,
-			/* [in] */ HWND hWnd,
-			/* [in] */ IStream *pStream,
-			/* [out] */ IUnknown **ppUnk,
-			/* [in] */ REFIID riidAdvise,
-			/* [in] */ IUnknown *punkAdvise) = 0;
+			_In_z_ LPCOLESTR lpszTricsData,
+			_In_ HWND hWnd,
+			_Inout_opt_ IStream* pStream,
+			_Outptr_ IUnknown** ppUnk,
+			_In_ REFIID iidAdvise,
+			_Inout_ IUnknown* punkSink) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE AttachControl( 
-			/* [in] */ IUnknown *pUnkControl,
-			/* [in] */ HWND hWnd) = 0;
+			_Inout_ IUnknown* pUnkControl,
+			_In_ HWND hWnd) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE QueryControl( 
-			/* [in] */ REFIID riid,
-			/* [iid_is][out] */ void **ppvObject) = 0;
+			_In_ REFIID riid,
+			_Outptr_ void** ppvObject) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE SetExternalDispatch( 
-			/* [in] */ IDispatch *pDisp) = 0;
+			_In_opt_ IDispatch *pDisp) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE SetExternalUIHandler( 
-			/* [in] */ IDocHostUIHandlerDispatch *pDisp) = 0;
+			_In_opt_ IDocHostUIHandlerDispatch *pDisp) = 0;
 
 	};
 
@@ -1306,19 +1308,19 @@ EXTERN_C const IID IID_IAxWinHostWindowLic;
 	{
 	public:
 		virtual HRESULT STDMETHODCALLTYPE CreateControlLic( 
-			/* [in] */ LPCOLESTR lpTricsData,
-			/* [in] */ HWND hWnd,
-			/* [in] */ IStream *pStream,
-			/* [in] */ BSTR bstrLic) = 0;
+			_In_z_ LPCOLESTR lpTricsData,
+			_In_ HWND hWnd,
+			_Inout_opt_ IStream* pStream,
+			_In_opt_z_ BSTR bstrLic) = 0;
 
 		virtual HRESULT STDMETHODCALLTYPE CreateControlLicEx( 
-			/* [in] */ LPCOLESTR lpTricsData,
-			/* [in] */ HWND hWnd,
-			/* [in] */ IStream *pStream,
-			/* [out] */ IUnknown **ppUnk,
-			/* [in] */ REFIID riidAdvise,
-			/* [in] */ IUnknown *punkAdvise,
-			/* [in] */ BSTR bstrLic) = 0;
+			_In_z_ LPCOLESTR lpszTricsData,
+			_In_ HWND hWnd,
+			_Inout_opt_ IStream* pStream,
+			_Outptr_ IUnknown** ppUnk,
+			_In_ REFIID iidAdvise,
+			_Inout_opt_ IUnknown* punkSink,
+			_In_opt_z_ BSTR bstrLic) = 0;
 
 	};
 
@@ -1497,88 +1499,88 @@ EXTERN_C const IID IID_IAxWinAmbientDispatch;
 	{
 	public:
 		virtual /* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_AllowWindowlessActivation( 
-			/* [in] */ VARIANT_BOOL bCanWindowlessActivate) = 0;
+			_In_ VARIANT_BOOL bCanWindowlessActivate) = 0;
 
 		virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_AllowWindowlessActivation( 
-			/* [retval][out] */ VARIANT_BOOL *pbCanWindowlessActivate) = 0;
+			_Out_ VARIANT_BOOL *pbCanWindowlessActivate) = 0;
 
 		virtual /* [id][helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_BackColor( 
-			/* [in] */ OLE_COLOR clrBackground) = 0;
+			_In_ OLE_COLOR clrBackground) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_BackColor( 
-			/* [retval][out] */ OLE_COLOR *pclrBackground) = 0;
+			_Out_ OLE_COLOR *pclrBackground) = 0;
 
 		virtual /* [id][helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_ForeColor( 
-			/* [in] */ OLE_COLOR clrForeground) = 0;
+			_In_ OLE_COLOR clrForeground) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_ForeColor( 
-			/* [retval][out] */ OLE_COLOR *pclrForeground) = 0;
+			_Out_ OLE_COLOR *pclrForeground) = 0;
 
 		virtual /* [id][helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_LocaleID( 
-			/* [in] */ LCID lcidLocaleID) = 0;
+			_In_ LCID lcidLocaleID) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_LocaleID( 
-			/* [retval][out] */ LCID *plcidLocaleID) = 0;
+			_Out_ LCID *plcidLocaleID) = 0;
 
 		virtual /* [id][helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_UserMode( 
-			/* [in] */ VARIANT_BOOL bUserMode) = 0;
+			_In_ VARIANT_BOOL bUserMode) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_UserMode( 
-			/* [retval][out] */ VARIANT_BOOL *pbUserMode) = 0;
+			_Out_ VARIANT_BOOL *pbUserMode) = 0;
 
 		virtual /* [id][helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_DisplayAsDefault( 
-			/* [in] */ VARIANT_BOOL bDisplayAsDefault) = 0;
+			_In_ VARIANT_BOOL bDisplayAsDefault) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_DisplayAsDefault( 
-			/* [retval][out] */ VARIANT_BOOL *pbDisplayAsDefault) = 0;
+			_Out_ VARIANT_BOOL *pbDisplayAsDefault) = 0;
 
 		virtual /* [id][helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_Font( 
-			/* [in] */ IFontDisp *pFont) = 0;
+			_In_ IFontDisp *pFont) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_Font( 
-			/* [retval][out] */ IFontDisp **pFont) = 0;
+			_Out_ IFontDisp **pFont) = 0;
 
 		virtual /* [id][helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_MessageReflect( 
-			/* [in] */ VARIANT_BOOL bMsgReflect) = 0;
+			_In_ VARIANT_BOOL bMsgReflect) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_MessageReflect( 
-			/* [retval][out] */ VARIANT_BOOL *pbMsgReflect) = 0;
+			_Out_ VARIANT_BOOL *pbMsgReflect) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_ShowGrabHandles( 
-			/* [retval][out] */ VARIANT_BOOL *pbShowGrabHandles) = 0;
+			_Out_ VARIANT_BOOL *pbShowGrabHandles) = 0;
 
 		virtual /* [id][helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_ShowHatching( 
-			/* [retval][out] */ VARIANT_BOOL *pbShowHatching) = 0;
+			_Out_ VARIANT_BOOL *pbShowHatching) = 0;
 
 		virtual /* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_DocHostFlags( 
-			/* [in] */ DWORD dwDocHostFlags) = 0;
+			_In_ DWORD dwDocHostFlags) = 0;
 
 		virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_DocHostFlags( 
-			/* [retval][out] */ DWORD *pdwDocHostFlags) = 0;
+			_Out_ DWORD *pdwDocHostFlags) = 0;
 
 		virtual /* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_DocHostDoubleClickFlags( 
-			/* [in] */ DWORD dwDocHostDoubleClickFlags) = 0;
+			_In_ DWORD dwDocHostDoubleClickFlags) = 0;
 
 		virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_DocHostDoubleClickFlags( 
-			/* [retval][out] */ DWORD *pdwDocHostDoubleClickFlags) = 0;
+			_Out_ DWORD *pdwDocHostDoubleClickFlags) = 0;
 
 		virtual /* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_AllowContextMenu( 
-			/* [in] */ VARIANT_BOOL bAllowContextMenu) = 0;
+			_In_ VARIANT_BOOL bAllowContextMenu) = 0;
 
 		virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_AllowContextMenu( 
-			/* [retval][out] */ VARIANT_BOOL *pbAllowContextMenu) = 0;
+			_Out_ VARIANT_BOOL *pbAllowContextMenu) = 0;
 
 		virtual /* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_AllowShowUI( 
-			/* [in] */ VARIANT_BOOL bAllowShowUI) = 0;
+			_In_ VARIANT_BOOL bAllowShowUI) = 0;
 
 		virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_AllowShowUI( 
-			/* [retval][out] */ VARIANT_BOOL *pbAllowShowUI) = 0;
+			_Out_ VARIANT_BOOL *pbAllowShowUI) = 0;
 
 		virtual /* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_OptionKeyPath( 
-			/* [in] */ BSTR bstrOptionKeyPath) = 0;
+			_In_ BSTR bstrOptionKeyPath) = 0;
 
 		virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_OptionKeyPath( 
-			/* [retval][out] */ BSTR *pbstrOptionKeyPath) = 0;
+			_Out_ BSTR *pbstrOptionKeyPath) = 0;
 
 	};
 
@@ -1612,7 +1614,7 @@ EXTERN_C const IID IID_IAxWinAmbientDispatch;
 		HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
 			IAxWinAmbientDispatch * This,
 			/* [in] */ REFIID riid,
-			/* [size_is][in] */ _In_count_(cNames) LPOLESTR *rgszNames,
+			/* [size_is][in] */ _In_reads_(cNames) LPOLESTR *rgszNames,
 			/* [in] */ UINT cNames,
 			/* [in] */ LCID lcid,
 			/* [size_is][out] */ DISPID *rgDispId);
@@ -2223,7 +2225,7 @@ EXTERN_C const IID IID_IAxWinAmbientDispatchEx;
 	{
 	public:
 		virtual /* [id] */ HRESULT STDMETHODCALLTYPE SetAmbientDispatch( 
-			/* [in] */ IDispatch *pDispatch) = 0;
+			_In_ IDispatch *pDispatch) = 0;
 
 	};
 
@@ -2257,7 +2259,7 @@ EXTERN_C const IID IID_IAxWinAmbientDispatchEx;
 		HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
 			IAxWinAmbientDispatchEx * This,
 			/* [in] */ REFIID riid,
-			/* [size_is][in] */ _In_count_(cNames) LPOLESTR *rgszNames,
+			/* [size_is][in] */ _In_reads_(cNames) LPOLESTR *rgszNames,
 			/* [in] */ UINT cNames,
 			/* [in] */ LCID lcid,
 			/* [size_is][out] */ DISPID *rgDispId);
@@ -2695,7 +2697,7 @@ ATLAPI AtlAxCreateControl(
 	_In_z_ LPCOLESTR lpszName, 
 	_In_ HWND hWnd, 
 	_Inout_opt_ IStream* pStream, 
-	_Deref_out_ IUnknown** ppUnkContainer);
+	_Outptr_ IUnknown** ppUnkContainer);
 
 #ifdef __cplusplus
 
@@ -2703,8 +2705,8 @@ ATLAPI AtlAxCreateControlEx(
 	_In_z_ LPCOLESTR lpszName, 
 	_In_ HWND hWnd, 
 	_Inout_opt_ IStream* pStream,
-	_Deref_opt_out_ IUnknown** ppUnkContainer,
-	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_Outptr_opt_ IUnknown** ppUnkContainer,
+	_Outptr_opt_ IUnknown** ppUnkControl,
 	_In_ REFIID iidSink=IID_NULL, 
 	_Inout_opt_ IUnknown* punkSink=NULL);
 
@@ -2712,15 +2714,15 @@ ATLAPI AtlAxCreateControlLic(
 	_In_z_ LPCOLESTR lpszName,
 	_In_ HWND hWnd,
 	_Inout_opt_ IStream* pStream, 
-	_Deref_opt_out_ IUnknown** ppUnkContainer, 
+	_Outptr_opt_ IUnknown** ppUnkContainer, 
 	_In_opt_z_ BSTR bstrLic = NULL);
 
 ATLAPI AtlAxCreateControlLicEx(
 	_In_z_ LPCOLESTR lpszName,
 	_In_ HWND hWnd, 
 	_Inout_opt_ IStream* pStream, 
-	_Deref_opt_out_ IUnknown** ppUnkContainer, 
-	_Deref_opt_out_ IUnknown** ppUnkControl, 
+	_Outptr_opt_ IUnknown** ppUnkContainer, 
+	_Outptr_opt_ IUnknown** ppUnkControl, 
 	_In_ REFIID iidSink=IID_NULL, 
 	_Inout_opt_ IUnknown* punkSink=NULL, 
 	_In_opt_z_ BSTR bstrLic = NULL);
@@ -2731,8 +2733,8 @@ ATLAPI AtlAxCreateControlEx(
 	_In_z_ LPCOLESTR lpszName, 
 	_In_ HWND hWnd, 
 	_Inout_opt_ IStream* pStream, 
-	_Deref_opt_out_ IUnknown** ppUnkContainer,
-	_Deref_opt_out_ IUnknown** ppUnkControl,
+	_Outptr_opt_ IUnknown** ppUnkContainer,
+	_Outptr_opt_ IUnknown** ppUnkControl,
 	_In_ REFIID iidSink, 
 	_Inout_opt_ IUnknown* punkSink);
 
@@ -2740,15 +2742,15 @@ ATLAPI AtlAxCreateControlLic(
 	_In_z_ LPCOLESTR lpszName,
 	_In_ HWND hWnd, 
 	_Inout_opt_ IStream* pStream, 
-	_Deref_opt_out_ IUnknown** ppUnkContainer,
+	_Outptr_opt_ IUnknown** ppUnkContainer,
 	_In_opt_z_ BSTR bstrLic);
 
 ATLAPI AtlAxCreateControlLicEx(
 	_In_z_ LPCOLESTR lpszName, 
 	_Inout_ HWND hWnd, 
 	_In_opt_ IStream* pStream, 
-	_Deref_opt_out_ IUnknown** ppUnkContainer, 
-	_Deref_opt_out_ IUnknown** ppUnkControl, 
+	_Outptr_opt_ IUnknown** ppUnkContainer, 
+	_Outptr_opt_ IUnknown** ppUnkControl, 
 	_In_ REFIID iidSink,
 	_Inout_opt_ IUnknown* punkSink,
 	_In_opt_z_ BSTR bstrLic);
@@ -2758,17 +2760,17 @@ ATLAPI AtlAxCreateControlLicEx(
 ATLAPI AtlAxAttachControl(
 	_Inout_ IUnknown* pControl,
 	_In_ HWND hWnd, 
-	_Deref_opt_out_ IUnknown** ppUnkContainer);
+	_Outptr_opt_ IUnknown** ppUnkContainer);
 
 ATLAPI_(BOOL) AtlAxWinInit();
 
 ATLAPI AtlAxGetHost(
 	_In_ HWND h, 
-	_Deref_out_ IUnknown** pp);
+	_Outptr_ IUnknown** pp);
 
 ATLAPI AtlAxGetControl(
 	_In_ HWND h, 
-	_Deref_out_ IUnknown** pp);
+	_Outptr_ IUnknown** pp);
 
 }; //namespace ATL
 #pragma pack(pop)
@@ -2792,8 +2794,8 @@ EXTERN_C const IID IID_IAccessibleProxy;
 	{
 	public:
 		virtual HRESULT STDMETHODCALLTYPE SetServer( 
-			/* [in] */ IAccessible *pAccessible,
-			/* [in] */ IAccessibleServer *pServer) = 0;
+			/* [in] */ _In_ IAccessible *pAccessible,
+			/* [in] */ _In_ IAccessibleServer *pServer) = 0;
 
 	};
 
@@ -3005,15 +3007,15 @@ void __RPC_STUB IAccessibleServer_GetEnumVariant_Stub(
 
 /* Additional Prototypes for ALL interfaces */
 
-unsigned long             __RPC_USER  BSTR_UserSize(     unsigned long *, unsigned long            , BSTR * ); 
-unsigned char * __RPC_USER  BSTR_UserMarshal(  unsigned long *, unsigned char *, BSTR * ); 
-unsigned char * __RPC_USER  BSTR_UserUnmarshal(unsigned long *, unsigned char *, BSTR * ); 
-void                      __RPC_USER  BSTR_UserFree(     unsigned long *, BSTR * ); 
+unsigned long             __RPC_USER  BSTR_UserSize(     __RPC__in unsigned long *, unsigned long            , __RPC__in BSTR * ); 
+unsigned char * __RPC_USER  BSTR_UserMarshal(  __RPC__in unsigned long *, __RPC__inout_xcount(0) unsigned char *, __RPC__in BSTR * ); 
+unsigned char * __RPC_USER  BSTR_UserUnmarshal(__RPC__in unsigned long *, __RPC__in_xcount(0) unsigned char *, __RPC__out BSTR * ); 
+void                      __RPC_USER  BSTR_UserFree(     __RPC__in unsigned long *, __RPC__in BSTR * ); 
 
-unsigned long             __RPC_USER  HWND_UserSize(     unsigned long *, unsigned long            , HWND * ); 
-unsigned char * __RPC_USER  HWND_UserMarshal(  unsigned long *, unsigned char *, HWND * ); 
-unsigned char * __RPC_USER  HWND_UserUnmarshal(unsigned long *, unsigned char *, HWND * ); 
-void                      __RPC_USER  HWND_UserFree(     unsigned long *, HWND * ); 
+unsigned long             __RPC_USER  HWND_UserSize(     __RPC__in unsigned long *, unsigned long            , __RPC__in HWND * ); 
+unsigned char * __RPC_USER  HWND_UserMarshal(  __RPC__in unsigned long *, __RPC__inout_xcount(0) unsigned char *, __RPC__in HWND * ); 
+unsigned char * __RPC_USER  HWND_UserUnmarshal(__RPC__in unsigned long *, __RPC__in_xcount(0) unsigned char *, __RPC__out HWND * ); 
+void                      __RPC_USER  HWND_UserFree(     __RPC__in unsigned long *, __RPC__in HWND * ); 
 
 /* end of Additional Prototypes */
 

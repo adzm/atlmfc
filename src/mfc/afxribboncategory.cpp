@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -237,6 +237,13 @@ void CMFCRibbonTab::OnLButtonDown(CPoint /*point*/)
 	m_pParent->GetParentRibbonBar()->SetActiveCategory(m_pParent);
 }
 
+void CMFCRibbonTab::OnAccDefaultAction()
+{
+	ASSERT_VALID (this);
+	ASSERT_VALID (m_pParent);
+
+	m_pParent->GetParentRibbonBar ()->SetActiveCategory(m_pParent);
+}
 void CMFCRibbonTab::OnLButtonDblClk(CPoint /*point*/)
 {
 	ASSERT_VALID(this);
@@ -418,7 +425,7 @@ void CMFCRibbonCategory::CommonInit(CMFCRibbonBar* pParentRibbonBar, LPCTSTR lps
 		}
 	}
 
-	const double dblScale = afxGlobalData.GetRibbonImageScale();
+	const double dblScale = GetGlobalData()->GetRibbonImageScale();
 	if (dblScale != 1.0)
 	{
 		if (sizeSmallImage == CSize(16, 16))
@@ -538,9 +545,7 @@ CMFCRibbonPanel* CMFCRibbonCategory::AddPanel(LPCTSTR lpszPanelName, HICON hIcon
 	m_arPanels.Add(pPanel);
 
 	pPanel->m_pParent = this;
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	pPanel->m_btnLaunch.m_pParent = this;
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	pPanel->m_btnDefault.m_pParent = this;
 
 	m_nLastCategoryWidth = -1;
@@ -800,7 +805,7 @@ void CMFCRibbonCategory::UpdateScrollButtons()
 
 	CRect rectScrollRightOld = m_ScrollRight.GetRect();
 
-	const int cxScrollWidth = (int)(afxGlobalData.GetRibbonImageScale() * 13);
+	const int cxScrollWidth = (int)(GetGlobalData()->GetRibbonImageScale() * 13);
 
 	CRect rectScrollLeft(0, 0, 0, 0);
 	CRect rectScrollRight(0, 0, 0, 0);
@@ -1173,7 +1178,10 @@ void CMFCRibbonCategory::SetActive(BOOL bIsActive)
 		return;
 	}
 
-	ShowElements();
+	if (!m_pParentRibbonBar->m_bIsPrintPreview || !GetGlobalData()->IsDwmCompositionEnabled())
+	{
+		ShowElements();
+	}
 
 	m_bIsActive = bIsActive;
 
@@ -1379,7 +1387,7 @@ BOOL CMFCRibbonCategory::OnDrawImage(CDC* pDC, CRect rect, CMFCRibbonBaseElement
 		ptImage.Offset(max(0, (rect.Width() - sizeImage.cx) / 2), max(0, (rect.Height() - sizeImage.cy) / 2));
 	}
 
-	image.SetTransparentColor(afxGlobalData.clrBtnFace);
+	image.SetTransparentColor(GetGlobalData()->clrBtnFace);
 	image.PrepareDrawImage(ds, sizeImage);
 
 	image.Draw(pDC, ptImage.x, ptImage.y, nImageIndex, FALSE, pElement->IsDisabled());

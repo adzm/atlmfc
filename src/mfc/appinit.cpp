@@ -9,9 +9,10 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
+#ifdef _AFXDLL
+#include "afxglobals.h"
+#endif
 #include "sal.h"
-
-
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +20,6 @@ BOOL AFXAPI AfxWinInit(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	_In_z_ LPTSTR lpCmdLine, _In_ int nCmdShow)
 {
 	ASSERT(hPrevInstance == NULL);
-
 
 	// handle critical errors and avoid Windows message boxes
 	SetErrorMode(SetErrorMode(0) |
@@ -29,7 +29,6 @@ BOOL AFXAPI AfxWinInit(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	AFX_MODULE_STATE* pModuleState = AfxGetModuleState();
 	pModuleState->m_hCurrentInstanceHandle = hInstance;
 	pModuleState->m_hCurrentResourceHandle = hInstance;
-	pModuleState->CreateActivationContext();
 
 	// fill in the initial state for the application
 	CWinApp* pApp = AfxGetApp();
@@ -184,7 +183,7 @@ void CWinApp::SetCurrentHandles()
 #undef AfxGetFileName
 #endif
 
-UINT AFXAPI AfxGetFileName(LPCTSTR lpszPathName, _Out_opt_cap_(nMax) LPTSTR lpszTitle, UINT nMax)
+UINT AFXAPI AfxGetFileName(LPCTSTR lpszPathName, _Out_writes_opt_(nMax) LPTSTR lpszTitle, UINT nMax)
 {
 	ASSERT(lpszTitle == NULL ||
 		AfxIsValidAddress(lpszTitle, nMax));
@@ -197,7 +196,7 @@ UINT AFXAPI AfxGetFileName(LPCTSTR lpszPathName, _Out_opt_cap_(nMax) LPTSTR lpsz
 
 	// lpszTitle can be NULL which just returns the number of bytes
 	if (lpszTitle == NULL)
-		return lstrlen(lpszTemp)+1;
+		return static_cast<UINT>(_tcslen(lpszTemp))+1;
 
 	// otherwise copy it into the buffer provided
 	Checked::tcsncpy_s(lpszTitle, nMax, lpszTemp, _TRUNCATE);

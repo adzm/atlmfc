@@ -25,7 +25,7 @@ class CMDIFrameWndEx;
 
 extern AFX_IMPORT_DATA UINT AFX_WM_WINDOW_HELP;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCWindowsManagerDialog dialog
 
 class CMFCWindowsManagerDialog : public CDialog
@@ -56,7 +56,6 @@ protected:
 	CList<HWND,HWND>    m_lstCloseDisabled;
 	CList<HWND,HWND>    m_lstSaveDisabled;
 
-	//{{AFX_MSG(CMFCWindowsManagerDialog)
 	afx_msg void OnActivate();
 	afx_msg void OnSave();
 	afx_msg void OnClose();
@@ -68,7 +67,7 @@ protected:
 	afx_msg void OnWindowHelp();
 	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

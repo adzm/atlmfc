@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -24,7 +24,7 @@
 
 class CMFCRibbonComboBox;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCDropDownListBox window
 
 class CMFCDropDownListBox : public CMFCPopupMenu
@@ -75,9 +75,8 @@ public:
 	virtual ~CMFCDropDownListBox();
 
 protected:
-	//{{AFX_MSG(CMFCDropDownListBox)
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void HighlightItem(int nIndex);

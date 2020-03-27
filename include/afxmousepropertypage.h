@@ -20,7 +20,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCMousePropertyPage dialog
 
 class CMFCMousePropertyPage : public CPropertyPage
@@ -43,13 +43,11 @@ protected:
 	CImageList m_ViewsImages;
 
 // Dialog Data
-	//{{AFX_DATA(CMFCMousePropertyPage)
 	enum { IDD = IDD_AFXBARRES_PROPPAGE4 };
 	CListCtrl m_wndListOfViews;
 	CListBox  m_wndListOfCommands;
 	CStatic   m_wndCommandDescription;
 	CString   m_strCommandDescription;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -57,12 +55,11 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCMousePropertyPage)
 	afx_msg void OnNoDblcliick();
 	afx_msg void OnUseDblcliick();
 	afx_msg void OnSelchangeListOfCommands();
 	afx_msg void OnItemchangedListViews(NMHDR* pNMHDR, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	virtual BOOL OnInitDialog();

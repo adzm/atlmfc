@@ -31,12 +31,11 @@ CTabView::~CTabView()
 }
 
 BEGIN_MESSAGE_MAP(CTabView, CView)
-	//{{AFX_MSG_MAP(CTabView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_MOUSEACTIVATE()
 	ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, &CTabView::OnChangeActiveTab)
-	//}}AFX_MSG_MAP
+	ON_MESSAGE(WM_PRINTCLIENT, &CTabView::OnPrintClient)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -254,4 +253,19 @@ void CTabView::OnInitialUpdate()
 	OnChangeActiveTab(m_nFirstActiveTab, 0);
 }
 
+LRESULT CTabView::OnPrintClient(WPARAM wp, LPARAM lp)
+{
+	if (lp & PRF_CLIENT)
+	{
+		CDC* pDC = CDC::FromHandle((HDC) wp);
+		ASSERT_VALID(pDC);
+
+		CRect rect;
+		GetClientRect(rect);
+
+		m_wndTabs.OnDraw(pDC);
+	}
+
+	return 0;
+}
 

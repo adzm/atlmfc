@@ -37,7 +37,6 @@ COleDocIPFrameWndEx::~COleDocIPFrameWndEx()
 {
 }
 
-//{{AFX_MSG_MAP(COleDocIPFrameWndEx)
 BEGIN_MESSAGE_MAP(COleDocIPFrameWndEx, COleDocIPFrameWnd)
 	ON_WM_MENUCHAR()
 	ON_WM_ACTIVATE()
@@ -54,7 +53,6 @@ BEGIN_MESSAGE_MAP(COleDocIPFrameWndEx, COleDocIPFrameWnd)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &COleDocIPFrameWndEx::OnToolbarCreateNew)
 	ON_REGISTERED_MESSAGE(AFX_WM_DELETETOOLBAR, &COleDocIPFrameWndEx::OnToolbarDelete)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // COleDocIPFrameWndEx message handlers
@@ -577,7 +575,6 @@ BOOL COleDocIPFrameWndEx::OnShowPanes(BOOL bShow)
 COleCntrFrameWndEx* COleDocIPFrameWndEx::GetContainerFrameWindow()
 {
 	COleCntrFrameWndEx* pNewFrame = DYNAMIC_DOWNCAST(COleCntrFrameWndEx, m_pMainFrame);
-	ASSERT_VALID(pNewFrame);
 	return pNewFrame;
 }
 

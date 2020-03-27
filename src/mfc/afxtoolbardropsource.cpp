@@ -50,8 +50,6 @@ CMFCToolBarDropSource::~CMFCToolBarDropSource()
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarDropSource, COleDropSource)
-	//{{AFX_MSG_MAP(CMFCToolBarDropSource)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

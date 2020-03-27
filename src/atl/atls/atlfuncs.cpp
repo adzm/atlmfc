@@ -10,12 +10,6 @@
 
 #include "stdafx.h"
 
-#undef ATLINLINE
-#define ATLINLINE
-#ifdef _DEBUG
-#include <atlbase.inl>
-#endif
-
 // C4740 - flow in or out of inline asm code suppresses global optimization
 #pragma warning( disable: 4740 )
 

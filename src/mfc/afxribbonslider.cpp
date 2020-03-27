@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -115,7 +115,7 @@ CSize CMFCRibbonSlider::GetRegularSize(CDC* /*pDC*/)
 
 	CSize size(m_nWidth, cySliderHeight);
 
-	double dblScale = afxGlobalData.GetRibbonImageScale();
+	double dblScale = GetGlobalData()->GetRibbonImageScale();
 
 	if (dblScale > 1.)
 	{
@@ -195,7 +195,7 @@ void CMFCRibbonSlider::OnAfterChangeRect(CDC* pDC)
 
 	int nThumbWidth = cxThumbWidth;
 
-	double dblScale = afxGlobalData.GetRibbonImageScale();
+	double dblScale = GetGlobalData()->GetRibbonImageScale();
 
 	if (dblScale > 1.)
 	{
@@ -225,7 +225,7 @@ void CMFCRibbonSlider::SetThumbRect()
 
 	int nThumbWidth = cxThumbWidth;
 
-	double dblScale = afxGlobalData.GetRibbonImageScale();
+	double dblScale = GetGlobalData()->GetRibbonImageScale();
 
 	if (dblScale > 1.)
 	{

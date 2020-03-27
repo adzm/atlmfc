@@ -62,10 +62,8 @@ CMFCToolBarButtonCustomizeDialog::CMFCToolBarButtonCustomizeDialog(CMFCToolBarBu
 		m_bText = pButton->m_bText;
 	}
 
-	//{{AFX_DATA_INIT(CMFCToolBarButtonCustomizeDialog)
 	m_strButtonText = _T("");
 	m_strButtonDescr = _T("");
-	//}}AFX_DATA_INIT
 }
 
 CMFCToolBarButtonCustomizeDialog::~CMFCToolBarButtonCustomizeDialog()
@@ -79,7 +77,6 @@ CMFCToolBarButtonCustomizeDialog::~CMFCToolBarButtonCustomizeDialog()
 void CMFCToolBarButtonCustomizeDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarButtonCustomizeDialog)
 	DDX_Control(pDX, IDC_AFXBARRES_DEFAULT_IMAGE, m_wndDefautImageBtn);
 	DDX_Control(pDX, IDC_AFXBARRES_USER_IMAGE, m_wndUserImageBtn);
 	DDX_Control(pDX, IDC_AFXBARRES_DEFAULT_IMAGE_AREA, m_wndDefaultImageArea);
@@ -89,11 +86,9 @@ void CMFCToolBarButtonCustomizeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_AFXBARRES_EDIT_IMAGE, m_wndEditImage);
 	DDX_Text(pDX, IDC_AFXBARRES_BUTTON_TEXT, m_strButtonText);
 	DDX_Text(pDX, IDC_AFXBARRES_BUTTON_DESCR, m_strButtonDescr);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarButtonCustomizeDialog, CDialog)
-	//{{AFX_MSG_MAP(CMFCToolBarButtonCustomizeDialog)
 	ON_BN_CLICKED(IDC_AFXBARRES_ADD_IMAGE, &CMFCToolBarButtonCustomizeDialog::OnAddImage)
 	ON_BN_CLICKED(IDC_AFXBARRES_EDIT_IMAGE, &CMFCToolBarButtonCustomizeDialog::OnEditImage)
 	ON_BN_CLICKED(IDC_AFXBARRES_IMAGE_LIST, &CMFCToolBarButtonCustomizeDialog::OnImageList)
@@ -103,7 +98,6 @@ BEGIN_MESSAGE_MAP(CMFCToolBarButtonCustomizeDialog, CDialog)
 	ON_BN_CLICKED(IDC_AFXBARRES_USER_IMAGE, &CMFCToolBarButtonCustomizeDialog::OnUserImage)
 	ON_BN_CLICKED(IDC_AFXBARRES_DEFAULT_IMAGE, &CMFCToolBarButtonCustomizeDialog::OnDefaultImage)
 	ON_WM_PAINT()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -133,7 +127,7 @@ void CMFCToolBarButtonCustomizeDialog::OnAddImage()
 		CBitmap* pOldBitmap = memDC.SelectObject(&bitmap);
 
 		CRect rect(0, 0, sizeImage.cx, sizeImage.cy);
-		memDC.FillRect(CRect(0, 0, sizeImage.cx, sizeImage.cy), &afxGlobalData.brBtnFace);
+		memDC.FillRect(CRect(0, 0, sizeImage.cx, sizeImage.cy), &(GetGlobalData()->brBtnFace));
 
 		memDC.SelectObject(pOldBitmap);
 

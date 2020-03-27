@@ -147,4 +147,10 @@ void COleDocument::OnUpdateObjectVerbMenu(CCmdUI* pCmdUI)
 		ID_OLE_VERB_FIRST, ID_OLE_VERB_LAST, nConvertID);
 }
 
+void COleDocument::OnUpdateObjectVerbPopup(CCmdUI* pCmdUI) 
+{
+	pCmdUI->m_pParentMenu = pCmdUI->m_pMenu;
+	OnUpdateObjectVerbMenu(pCmdUI);
+}
+
 /////////////////////////////////////////////////////////////////////////////

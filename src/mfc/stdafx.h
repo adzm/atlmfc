@@ -16,6 +16,8 @@
 #undef _WIN32_WINNT
 #define _WIN32_WINNT _WIN32_WINNT_MAXVER
 
+#undef NTDDI_VERSION
+
 #include <sdkddkver.h>
 
 // turn off warnings for /W4 (just for MFC implementation)
@@ -102,7 +104,6 @@
 #include "afxole.h"
 #include "afxdtctl.h"
 #include "afxocc.h"
-#include "afxthemehelper.h"
 
 #include "afxdocob.h"
 

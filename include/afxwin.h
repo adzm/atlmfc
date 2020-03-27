@@ -12,7 +12,7 @@
 #ifndef RC_INVOKED
 #define __AFXWIN_H__
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Make sure 'afx.h' is included first
 
 #ifndef __AFX_H__
@@ -66,9 +66,7 @@
 #endif
 #endif 
 
-#ifndef __ATL_SO__
-	#include <atlhandler.h> // for IFilterChunkValue and IDocument
-#endif
+#include <atlhandler.h> // for IFilterChunkValue and IDocument
 
 #if (_WIN32_WINNT >= 0x601)
 #ifndef __tpcshrd_h__
@@ -87,24 +85,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #endif
 #endif
 
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-#ifdef _AFX_PACKING
-#pragma pack(push, _AFX_PACKING)
-#endif
-#include <afxcomctl32.h>
-#ifdef _AFX_PACKING
-#pragma pack(pop)
-#endif
-#endif
-
-#if (_WIN32_WINNT >= 0x501)
-
-#if ((NTDDI_VERSION >= NTDDI_LONGHORN || defined(__VSSYM32_H__)) && !defined(SCHEMA_VERIFY_VSSYM32))
 #include <vssym32.h>
-#else
-#include <tmschema.h>
-#endif
-#endif	// (_WIN32_WINNT >= 0x501)
 
 #if (_WIN32_WINNT >= 0x600)
 #ifndef _WINSOCK2API_
@@ -122,8 +103,10 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 	#include <windns.h>
 #endif
 
+#ifndef IPV6STRICT
 #ifndef __IPHLPAPI_H__
 	#include <iphlpapi.h>
+#endif
 #endif
 #endif	// (_WIN32_WINNT >= 0x600)
 
@@ -134,6 +117,8 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #ifndef _AFX_NOFORCE_LIBS
 #pragma comment(lib, "uuid.lib")
 #endif
+
+#include <dwmapi.h>
 
 #ifdef _INC_WINDOWSX
 // The following names from WINDOWSX.H collide with names in this header
@@ -147,6 +132,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #pragma pack(push, _AFX_PACKING)
 #endif
 
+
 #ifndef __UIAnimation_h__
 	#include <UIAnimation.h> // Windows Animation API interfaces
 	#include "afxanimationcontroller.h" // animation controller - MFC Windows Animation API implementation
@@ -157,7 +143,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 
 using ATL::CAtlTransactionManager;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Classes declared in this file
 
 //CObject
@@ -232,7 +218,7 @@ class CControlCreationInfo; //Used in CWnd::CreateControl overloads.
 
 class CVariantBoolConverter;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 enum AFX_HELP_TYPE
 {
@@ -286,7 +272,7 @@ protected:\
 
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Standard exceptions
 
 class CResourceException : public CSimpleException    // resource failure
@@ -323,7 +309,7 @@ void AFXAPI AfxDrawGrayBitmap(CDC *pDC, int x, int y, const CBitmap &rSrc, COLOR
 void AFXAPI AfxGetDitheredBitmap(const CBitmap &rSrc, CBitmap *pDest, COLORREF cr1, COLORREF cr2);
 void AFXAPI AfxDrawDitheredBitmap(CDC *pDC, int x, int y, const CBitmap &rSrc, COLORREF cr1, COLORREF cr2);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CGdiObject abstract class for CDC SelectObject
 
 class CGdiObject : public CObject
@@ -366,7 +352,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CGdiObject subclasses (drawing tools)
 
 class CPen : public CGdiObject
@@ -573,7 +559,7 @@ public:
 	virtual ~CRgn();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // The device context
 
 class CDC : public CObject
@@ -893,7 +879,7 @@ public:
 			int nCount, int x, int y, int nWidth, int nHeight);
 	UINT GetTextAlign() const;
 	UINT SetTextAlign(UINT nFlags);
-	int GetTextFace(_In_ int nCount, _Out_z_cap_post_count_(nCount, return) LPTSTR lpszFacename) const;
+	int GetTextFace(_In_ int nCount, _Out_writes_to_(nCount, return) LPTSTR lpszFacename) const;
 	int GetTextFace(CString& rString) const;
 #pragma push_macro("GetTextMetrics")
 #undef GetTextMetrics
@@ -954,9 +940,9 @@ public:
 
 // Printer/Device Escape Functions
 	virtual int Escape(_In_ int nEscape, _In_ int nCount,
-		_In_bytecount_(nCount) LPCSTR lpszInData, _In_ LPVOID lpOutData);
-	int Escape(_In_ int nEscape, _In_ int nInputSize, _In_bytecount_(nInputSize) LPCSTR lpszInputData,
-		_In_ int nOutputSize, _Out_bytecap_(nOutputSize) LPSTR lpszOutputData);
+		_In_reads_bytes_(nCount) LPCSTR lpszInData, _In_ LPVOID lpOutData);
+	int Escape(_In_ int nEscape, _In_ int nInputSize, _In_reads_bytes_(nInputSize) LPCSTR lpszInputData,
+		_In_ int nOutputSize, _Out_writes_bytes_(nOutputSize) LPSTR lpszOutputData);
 	int DrawEscape(int nEscape, int nInputSize, LPCSTR lpszInputData);
 
 	// Escape helpers
@@ -1017,7 +1003,7 @@ protected:
 	static CGdiObject* PASCAL SelectGdiObject(HDC hDC, HGDIOBJ h);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDC Helpers
 
 class CPaintDC : public CDC
@@ -1085,7 +1071,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CImageList
 
 class CImageList : public CObject
@@ -1164,7 +1150,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMenu
 
 class CMenu : public CObject
@@ -1217,7 +1203,7 @@ public:
 	int GetMenuItemCount() const;
 	UINT GetMenuItemID(int nPos) const;
 	UINT GetMenuState(UINT nID, UINT nFlags) const;
-	int GetMenuString(_In_ UINT nIDItem, _Out_z_cap_(nMaxCount) LPTSTR lpString, _In_ int nMaxCount,
+	int GetMenuString(_In_ UINT nIDItem, _Out_writes_z_(nMaxCount) LPTSTR lpString, _In_ int nMaxCount,
 					_In_ UINT nFlags) const;
 	int GetMenuString(UINT nIDItem, CString& rString, UINT nFlags) const;
 	BOOL GetMenuItemInfo(UINT uItem, LPMENUITEMINFO lpMenuItemInfo,
@@ -1260,7 +1246,7 @@ public:
 	static CMenu* PASCAL CMenu::FromHandlePermanent(HMENU hMenu);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Window message map handling
 
 struct AFX_MSGMAP_ENTRY;       // declared below after CWnd
@@ -1314,7 +1300,7 @@ protected: \
 // Message map signature values and macros in separate header
 #include <afxmsg_.h>
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Dialog data exchange (DDX_) and validation (DDV_)
 
 class COleControlSite;
@@ -1345,22 +1331,22 @@ public:
 
 #include <afxdd_.h>     // standard DDX_ and DDV_ routines
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE types
 
-typedef LONG HRESULT;
+typedef _Return_type_success_(return >= 0) LONG HRESULT;
 
 struct IUnknown;
 typedef IUnknown* LPUNKNOWN;
 
 struct IDispatch;
-typedef IDispatch* LPDISPATCH;
+typedef /* [unique] */ __RPC_unique_pointer IDispatch* LPDISPATCH;
 
 struct IConnectionPoint;
 typedef IConnectionPoint* LPCONNECTIONPOINT;
 
 struct IEnumOLEVERB;
-typedef IEnumOLEVERB* LPENUMOLEVERB;
+typedef /* [unique] */ __RPC_unique_pointer IEnumOLEVERB* LPENUMOLEVERB;
 
 typedef struct _GUID GUID;
 typedef GUID IID;
@@ -1374,7 +1360,7 @@ typedef unsigned short VARTYPE;
 typedef long SCODE;
 
 typedef WCHAR OLECHAR;
-typedef OLECHAR* BSTR;
+typedef _Null_terminated_ OLECHAR* BSTR;
 
 struct tagDISPPARAMS;
 typedef tagDISPPARAMS DISPPARAMS;
@@ -1383,10 +1369,10 @@ struct tagVARIANT;
 typedef tagVARIANT VARIANT;
 
 struct ITypeInfo;
-typedef ITypeInfo* LPTYPEINFO;
+typedef /* [unique] */ __RPC_unique_pointer ITypeInfo* LPTYPEINFO;
 
 struct ITypeLib;
-typedef ITypeLib* LPTYPELIB;
+typedef /* [unique] */ __RPC_unique_pointer ITypeLib* LPTYPELIB;
 
 struct IAccessible;
 struct IAccessibleProxy;
@@ -1397,7 +1383,7 @@ struct tagEXCEPINFO;
 typedef tagEXCEPINFO EXCEPINFO;
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CCmdTarget
 
 // private structures
@@ -1405,7 +1391,7 @@ struct AFX_CMDHANDLERINFO;  // info about where the command is handled
 struct AFX_EVENT;           // info about an event
 class CTypeLibCache;        // cache for OLE type libraries
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE interface map handling (more in AFXDISP.H)
 
 #ifndef _AFX_NO_OLE_SUPPORT
@@ -1446,7 +1432,7 @@ protected: \
 
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE COM (Component Object Model) implementation infrastructure
 //      - data driven QueryInterface
 //      - standard implementation of aggregate AddRef and Release
@@ -1590,7 +1576,7 @@ struct CInterfacePlaceHolder
 
 #endif //!_AFX_NO_OLE_SUPPORT
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE dispatch map handling (more in AFXDISP.H)
 
 #ifndef _AFX_NO_OLE_SUPPORT
@@ -1634,7 +1620,7 @@ protected: \
 
 #endif //!_AFX_NO_OLE_SUPPORT
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE Document Object command target handling
 
 #ifndef _AFX_NO_DOCOBJECT_SUPPORT
@@ -1705,7 +1691,7 @@ class COleCmdUI;
 
 #endif //!_AFX_NO_DOCOBJECT_SUPPORT
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE event sink map handling (more in AFXDISP.H)
 
 #ifndef _AFX_NO_OCC_SUPPORT
@@ -1746,7 +1732,7 @@ protected: \
 
 #endif //!_AFX_NO_OCC_SUPPORT
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // OLE connection map handling (more in AFXDISP.H)
 
 #ifndef _AFX_NO_OLE_SUPPORT
@@ -1788,7 +1774,7 @@ protected: \
 
 #endif //!_AFX_NO_OLE_SUPPORT
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CCmdTarget proper
 
 #ifndef _AFX_NO_OCC_SUPPORT
@@ -2041,7 +2027,8 @@ enum AFX_DISPMAP_FLAGS
 	afxDispStock = 1
 };
 
-#pragma warning( disable: 4121 )
+#pragma warning(push)
+#pragma warning(disable: 4121)
 struct AFX_DISPMAP_ENTRY
 {
 	LPCTSTR lpszName;       // member/property name
@@ -2053,7 +2040,7 @@ struct AFX_DISPMAP_ENTRY
 	size_t nPropOffset;     // property offset
 	AFX_DISPMAP_FLAGS flags;// flags (e.g. stock/custom)
 };
-#pragma warning( default: 4121 )
+#pragma warning(pop)
 
 struct AFX_EVENTSINKMAP_ENTRY
 {
@@ -2087,7 +2074,7 @@ enum DSCREASON
 	dscMove
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWnd implementation
 
 #if (WINVER >= 0x0601)
@@ -2216,7 +2203,7 @@ protected:
 #endif
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWnd implementation
 
 #include "afxrendertarget.h"
@@ -2241,7 +2228,7 @@ struct AFX_MSGMAP_ENTRY
 	AFX_PMSG pfn;    // routine to call (or special value)
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWnd - a Microsoft Windows application window
 
 class COleDropTarget;   // for more information see AFXOLE.H
@@ -2303,7 +2290,7 @@ public:
 	BOOL ModifyStyleEx(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0);
 
 	CWnd* GetOwner() const;
-	void SetOwner(CWnd* pOwnerWnd);
+	void SetOwner(_In_ CWnd* pOwnerWnd);
 
 
 #if(WINVER >= 0x0500)
@@ -2432,7 +2419,7 @@ public:
 
 // Window Text Functions
 	void SetWindowText(LPCTSTR lpszString);
-	int GetWindowText(_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpszStringBuf, _In_ int nMaxCount) const;
+	int GetWindowText(_Out_writes_to_(nMaxCount, return + 1) LPTSTR lpszStringBuf, _In_ int nMaxCount) const;
 	void GetWindowText(CString& rString) const;
 	int GetWindowTextLength() const;
 	void SetFont(CFont* pFont, BOOL bRedraw = TRUE);
@@ -2589,15 +2576,15 @@ public:
 	int DlgDirListComboBox(_Inout_z_ LPTSTR lpPathSpec, _In_ int nIDComboBox,
 					_In_ int nIDStaticPath, _In_ UINT nFileType);
 	AFX_DEPRECATED("CWnd::DlgDirSelect(lpszOut, nControlId) is no longer supported. Instead, use CWnd::DlgDirSelect(lpszOut, nSize, nControlId)")
-		BOOL DlgDirSelect(_Out_z_cap_c_(_MAX_PATH) LPTSTR lpString, _In_ int nIDListBox);
-	BOOL DlgDirSelect(_Out_z_cap_(nSize) LPTSTR lpString, _In_ int nSize, _In_ int nIDListBox);
+		BOOL DlgDirSelect(_Out_writes_z_(_MAX_PATH) LPTSTR lpString, _In_ int nIDListBox);
+	BOOL DlgDirSelect(_Out_writes_z_(nSize) LPTSTR lpString, _In_ int nSize, _In_ int nIDListBox);
 	AFX_DEPRECATED("CWnd::DlgDirSelectComboBox(lpszOut, nControlId) is no longer supported. Instead, use CWnd::DlgDirSelectComboBox(lpszOut, nSize, nControlId)")
-		BOOL DlgDirSelectComboBox(_Out_z_cap_c_(_MAX_PATH) LPTSTR lpString, _In_ int nIDComboBox);
-	BOOL DlgDirSelectComboBox(_Out_z_cap_(nSize) LPTSTR lpString, _In_ int nSize, _In_ int nIDComboBox);
+		BOOL DlgDirSelectComboBox(_Out_writes_z_(_MAX_PATH) LPTSTR lpString, _In_ int nIDComboBox);
+	BOOL DlgDirSelectComboBox(_Out_writes_z_(nSize) LPTSTR lpString, _In_ int nSize, _In_ int nIDComboBox);
 
 	UINT GetDlgItemInt(int nID, BOOL* lpTrans = NULL,
 					BOOL bSigned = TRUE) const;
-	int GetDlgItemText(_In_ int nID, _Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpStr, _In_ int nMaxCount) const;
+	int GetDlgItemText(_In_ int nID, _Out_writes_to_(nMaxCount, return + 1) LPTSTR lpStr, _In_ int nMaxCount) const;
 	int GetDlgItemText(int nID, CString& rString) const;
 	CWnd* GetNextDlgGroupItem(CWnd* pWndCtl, BOOL bPrevious = FALSE) const;
 	COleControlSiteOrWnd* GetNextDlgGroupItem(COleControlSiteOrWnd *pCurSiteOrWnd = NULL) const;
@@ -2645,7 +2632,7 @@ public:
 	CWnd* ChildWindowFromPoint(POINT point) const;
 	CWnd* ChildWindowFromPoint(POINT point, UINT nFlags) const;
 	static CWnd* PASCAL FindWindow(LPCTSTR lpszClassName, LPCTSTR lpszWindowName);
-	static CWnd* FindWindowEx(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszClass, LPCTSTR lpszWindow);
+	static CWnd* PASCAL FindWindowEx(HWND hwndParent, HWND hwndChildAfter, LPCTSTR lpszClass, LPCTSTR lpszWindow);
 
 	CWnd* GetNextWindow(UINT nFlag = GW_HWNDNEXT) const;
 	CWnd* GetTopWindow() const;
@@ -2696,7 +2683,7 @@ public:
 
 // Icon Functions
 	HICON SetIcon(HICON hIcon, BOOL bBigIcon);
-	HICON GetIcon(BOOL bBigIcon) const;
+	HICON GetIcon(_In_ BOOL bBigIcon) const;
 
 // Context Help Functions
 	BOOL SetWindowContextHelpId(DWORD dwContextHelpId);
@@ -2754,11 +2741,11 @@ public :
 	/// <summary>
 	/// Called by the framework when it needs to obtain a bitmap to be displayed on Windows 7 tab thumbnail, 
 	/// or on the client for application peek. </summary>
-	/// <description>
+	/// <remarks>
 	/// Override this method in a derived class and draw on the specified device context in order to customize thumbnail and peek.
 	/// If bThumbnail is TRUE, szRequiredThumbnailSize can be ignored. In this case you should be aware 
 	/// that you draw full sized bitmap (e.g. a bitmap that cover the whole client area). The device context (dc) comes with selected 32 bits bitmap. 
-	/// The default implementation sends WM_PRINT to this window with PRF_CLIENT, PRF_CHILDREN and PRF_NONCLIENT flags.</description>
+	/// The default implementation sends WM_PRINT to this window with PRF_CLIENT, PRF_CHILDREN and PRF_NONCLIENT flags.</remarks>
 	/// <param name="dc"> Specifies the device context.</param>
 	/// <param name="rect"> Specifies the bounding rectangle of area to render.</param>
 	/// <param name="szRequiredThumbnailSize"> Specifies the size of target thumbnail. Should be ignored if bIsThumbnail is FALSE.</param>
@@ -3011,7 +2998,7 @@ protected:
 	afx_msg void OnUnInitMenuPopup(CMenu* pPopupMenu, UINT nFlags);
 
 // Clipboard message handler member functions
-	afx_msg void OnAskCbFormatName(_In_ UINT nMaxCount, _Out_z_cap_(nMaxCount) LPTSTR lpszString);
+	afx_msg void OnAskCbFormatName(_In_ UINT nMaxCount, _Out_writes_z_(nMaxCount) LPTSTR lpszString);
 	afx_msg void OnChangeCbChain(HWND hWndRemove, HWND hWndAfter);
 	afx_msg void OnDestroyClipboard();
 	afx_msg void OnDrawClipboard();
@@ -3274,8 +3261,8 @@ protected:
 
 	// for creating dialogs and dialog-like windows
 	BOOL CreateDlg(LPCTSTR lpszTemplateName, CWnd* pParentWnd);
-	BOOL CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate, CWnd* pParentWnd,
-		HINSTANCE hInst);
+	BOOL CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate, CWnd* pParentWnd, HINSTANCE hInst);
+	BOOL CreateRunDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate, CWnd* pParentWnd, HINSTANCE hInst);
 
 #ifndef _AFX_NO_OCC_SUPPORT
 	COleControlContainer* m_pCtrlCont;  // for containing OLE controls
@@ -3382,8 +3369,6 @@ protected:
 		return EnlargeBufferGetText<TReturnType, UINT>(errCode, pszText, pcch, 256, INT_MAX, uMsg, wParam, lParam, strOut);
 	}
 
-	//{{AFX_MSG(CWnd)
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
 private:
@@ -3408,6 +3393,16 @@ public:
 	/// Pointer to the render target or NULL.</returns>
 	CHwndRenderTarget* GetRenderTarget();
 
+	/// <summary>
+	/// Get a render target associated with this window, leaving the render target critical section locked</summary>
+	/// <returns> 
+	/// Pointer to the render target or NULL.</returns>
+	CHwndRenderTarget* LockRenderTarget();
+
+	/// <summary>
+	/// Unlock the render target critical section</summary>
+	void UnlockRenderTarget();
+
 protected:
 	BOOL DoD2DPaint();
 };
@@ -3423,6 +3418,10 @@ BOOL AFXAPI AfxInitRichEdit();
 // helper to initialize rich edit 2.0 control
 BOOL AFXAPI AfxInitRichEdit2();
 
+#ifdef _UNICODE
+// helper to initialize rich edit 4.1 control
+BOOL AFXAPI AfxInitRichEdit5();
+#endif
 // Implementation
 LRESULT CALLBACK AfxWndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -3435,7 +3434,7 @@ typedef void (AFX_MSG_CALL CWnd::*AFX_PMSGW)(void);
 typedef void (AFX_MSG_CALL CWinThread::*AFX_PMSGT)(void);
 	// like 'AFX_PMSG' but for CWinThread-derived classes only
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDialog - a modal or modeless dialog
 class CDialog : public CWnd
 {
@@ -3529,7 +3528,6 @@ protected:
 		HINSTANCE hInst);
 
 protected:
-	//{{AFX_MSG(CDialog)
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnHelpHitTest(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
@@ -3537,14 +3535,14 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg BOOL OnQueryEndSession();
 	afx_msg void OnEndSession(BOOL bEnding);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
 // all CModalDialog functionality is now in CDialog
 #define CModalDialog    CDialog
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Standard Windows controls
 
 class CStatic : public CWnd
@@ -3613,7 +3611,7 @@ public:
 
 #if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
 	CString GetNote() const;
-	_Check_return_ BOOL GetNote(_Out_z_cap_(*pcchNote) LPTSTR lpszNote, _Inout_ UINT* pcchNote) const;
+	_Check_return_ BOOL GetNote(_Out_writes_z_(*pcchNote) LPTSTR lpszNote, _Inout_ UINT* pcchNote) const;
 	BOOL SetNote(_In_z_ LPCTSTR lpszNote);
 	UINT GetNoteLength() const;
 	BOOL GetSplitInfo(_Out_ PBUTTON_SPLITINFO pInfo) const;
@@ -3820,7 +3818,6 @@ protected:
 
 	// Message map functions
 protected:
-	//{{AFX_MSG(CCheckListBox)
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -3835,7 +3832,7 @@ protected:
 	afx_msg LRESULT OnLBSelectString(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnLBSetItemData(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnLBSetItemHeight(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
@@ -3881,14 +3878,14 @@ public:
 
 	// REVIEW: Retrieves the cue banner text displayed in the edit control of the combo box.
 	CString GetCueBanner() const;
-	BOOL GetCueBanner(_Out_z_cap_(cchText) LPTSTR lpszText, _In_ int cchText) const;
+	BOOL GetCueBanner(_Out_writes_z_(cchText) LPTSTR lpszText, _In_ int cchText) const;
 #endif  // CB_SETCUEBANNER
 #endif  // (_WIN32_WINNT >= 0x501) && defined(UNICODE)
 
 	// for edit control
 	DWORD GetEditSel() const;
 	BOOL LimitText(int nMaxChars);
-	BOOL SetEditSel(int nStartChar, int nEndChar);
+	BOOL SetEditSel(_In_ int nStartChar, _In_ int nEndChar);
 
 	// for combobox item
 	DWORD_PTR GetItemData(int nIndex) const;
@@ -3914,12 +3911,12 @@ public:
 	// manipulating listbox items
 	int AddString(LPCTSTR lpszString);
 	int DeleteString(UINT nIndex);
-	int InsertString(int nIndex, LPCTSTR lpszString);
+	int InsertString(_In_ int nIndex, _In_z_ LPCTSTR lpszString);
 	void ResetContent();
-	int Dir(UINT attr, LPCTSTR lpszWildCard);
+	int Dir(_In_ UINT attr, _In_ LPCTSTR lpszWildCard);
 
 	// selection helpers
-	int FindString(int nStartAfter, LPCTSTR lpszString) const;
+	int FindString(_In_ int nStartAfter, _In_z_ LPCTSTR lpszString) const;
 	int SelectString(int nStartAfter, LPCTSTR lpszString);
 
 	// Clipboard operations
@@ -3975,11 +3972,11 @@ public:
 	// NOTE: may not return null character
 	int GetLine(_In_ int nIndex, _Out_ LPTSTR lpszBuffer) const;
 	// NOTE: may not return null character
-	int GetLine(_In_ int nIndex, _Out_cap_post_count_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const;
+	int GetLine(_In_ int nIndex, _Out_writes_to_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const;
 
 #if (_WIN32_WINNT >= 0x501)
 	AFX_ANSI_DEPRECATED BOOL SetCueBanner(_In_z_ LPCWSTR lpszText, _In_ BOOL fDrawIfFocused = FALSE);
-	AFX_ANSI_DEPRECATED BOOL GetCueBanner(_Out_z_cap_(cchText) LPWSTR lpszText, _In_ int cchText) const;
+	AFX_ANSI_DEPRECATED BOOL GetCueBanner(_Out_writes_z_(cchText) LPWSTR lpszText, _In_ int cchText) const;
 
 #if defined(UNICODE)
 	CString GetCueBanner() const;
@@ -4169,7 +4166,7 @@ protected:
 	ATL::IDocument* m_pDocument;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFrameWnd - base class for SDI and other frame windows
 
 // Frame window styles
@@ -4241,7 +4238,7 @@ public:
 	BOOL m_bAutoMenuEnable;
 		// TRUE => menu items without handlers will be disabled
 
-	BOOL IsTracking() const;
+	BOOL IsTracking();
 
 // Operations
 	virtual void RecalcLayout(BOOL bNotify = TRUE);
@@ -4251,6 +4248,7 @@ public:
 	CString GetTitle() const;
 	virtual CMenu* GetMenu() const;
 	virtual BOOL SetMenu(CMenu* pMenu);
+	virtual UINT GetTrackingID() { return m_nIDTracking; }
 
 	// set/get menu bar visibility style
 	virtual void SetMenuBarVisibility(DWORD dwStyle);
@@ -4447,7 +4445,6 @@ protected:
 	friend class CWnd;  // for access to m_bModalDisable
 	friend class CReBar; // for access to m_bInRecalcLayout
 
-	//{{AFX_MSG(CFrameWnd)
 	// Windows messages
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDestroy();
@@ -4485,17 +4482,16 @@ protected:
 	afx_msg void OnHelp();
 	afx_msg void OnUpdateContextHelp(CCmdUI* pCmdUI);
 	afx_msg BOOL OnChevronPushed(UINT id, NMHDR *pnm, LRESULT *result);
-	//}}AFX_MSG
-protected:
 	afx_msg LRESULT OnDDEInitiate(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDDEExecute(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDDETerminate(WPARAM wParam, LPARAM lParam);
+
 	DECLARE_MESSAGE_MAP()
 
 	friend class CWinApp;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // MDI Support
 
 class CMDIFrameWnd : public CFrameWnd
@@ -4556,7 +4552,6 @@ protected:
 	virtual LRESULT DefWindowProc(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 
-	//{{AFX_MSG(CMDIFrameWnd)
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnUpdateMDIWindowCmd(CCmdUI* pCmdUI);
@@ -4565,7 +4560,7 @@ protected:
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnIdleUpdateCmdUI();
 	afx_msg LRESULT OnMenuChar(UINT nChar, UINT, CMenu*);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
@@ -4593,6 +4588,7 @@ public:
 	void MDIMaximize();
 	void MDIRestore();
 	void SetHandles(HMENU hMenu, HACCEL hAccel);
+	virtual UINT GetTrackingID();
 
 // Implementation
 protected:
@@ -4613,6 +4609,8 @@ public:
 	virtual void ActivateFrame(int nCmdShow = -1);
 	virtual void OnUpdateFrameMenu(BOOL bActive, CWnd* pActivateWnd,
 		HMENU hMenuAlt);
+	
+	virtual BOOL IsTabbedMDIChild() { return FALSE; }
 
 	BOOL m_bPseudoInactive;     // TRUE if window is MDI active according to
 								//  windows, but not according to MFC...
@@ -4623,7 +4621,6 @@ protected:
 	virtual LRESULT DefWindowProc(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	BOOL UpdateClientEdge(LPRECT lpRect = NULL);
 
-	//{{AFX_MSG(CMDIChildWnd)
 	afx_msg void OnMDIActivate(BOOL bActivate, CWnd*, CWnd*);
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -4633,11 +4630,11 @@ protected:
 	afx_msg BOOL OnNcActivate(BOOL bActive);
 	afx_msg void OnDestroy();
 	afx_msg BOOL OnToolTipText(UINT nID, NMHDR* pNMHDR, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMiniFrameWnd
 
 // MiniFrame window styles
@@ -4669,7 +4666,6 @@ public:
 public:
 	~CMiniFrameWnd();
 
-	//{{AFX_MSG(CMiniFrameWnd)
 	afx_msg BOOL OnNcActivate(BOOL bActive);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -4677,7 +4673,7 @@ public:
 	afx_msg LRESULT OnFloatStatus(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnQueryCenterWnd(WPARAM wParam, LPARAM lParam);
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT lpcs);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 public:
@@ -4696,7 +4692,7 @@ protected:
 
 #pragma warning( pop )
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // class CView is the client area UI for a document
 
 class CPrintDialog;     // forward reference (see afxdlgs.h)
@@ -4812,7 +4808,6 @@ protected:
 	friend class COleServerDoc;
 	friend class CDocObjectServer;
 
-	//{{AFX_MSG(CView)
 	afx_msg int OnCreate(LPCREATESTRUCT lpcs);
 	afx_msg void OnDestroy();
 	afx_msg void OnPaint();
@@ -4830,11 +4825,11 @@ protected:
 	// not mapped commands - must be mapped in derived class
 	afx_msg void OnFilePrint();
 	afx_msg void OnFilePrintPreview();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // class CCtrlView allows almost any control to be a view
 
 class AFX_NOVTABLE CCtrlView : public CView
@@ -4868,7 +4863,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // class CScrollView supports simple scrolling and scaling
 
 class _AFX_MOUSEANCHORWND;
@@ -4952,19 +4947,17 @@ public:
 	virtual BOOL OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll = TRUE);
 	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
 
-	//{{AFX_MSG(CScrollView)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg BOOL OnMouseWheel(UINT fFlags, short zDelta, CPoint point);
-//	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
-	//}}AFX_MSG
 	afx_msg LRESULT HandleMButtonDown(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPrintClient(WPARAM wParam, LPARAM lParam);
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWinThread
 
 typedef UINT (AFX_CDECL *AFX_THREADPROC)(LPVOID);
@@ -5074,7 +5067,7 @@ void AFXAPI AfxEndThread(UINT nExitCode, BOOL bDelete = TRUE);
 void AFXAPI AfxInitThread();
 void AFXAPI AfxTermThread(HINSTANCE hInstTerm = NULL);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Global functions for access to the one and only CWinApp
 
 #define afxCurrentWinApp    AfxGetModuleState()->m_pCurrentWinApp
@@ -5083,25 +5076,10 @@ void AFXAPI AfxTermThread(HINSTANCE hInstTerm = NULL);
 #define afxCurrentAppName   AfxGetModuleState()->m_lpszCurrentAppName
 #define afxContextIsDLL     AfxGetModuleState()->m_bDLL
 #define afxRegisteredClasses    AfxGetModuleState()->m_fRegisteredClasses
-#define afxAmbientActCtx    AfxGetModuleState()->m_bSetAmbientActCtx
 
 #ifndef _AFX_NO_OCC_SUPPORT
 #define afxOccManager   AfxGetModuleState()->m_pOccManager
 #endif
-
-//Fusion: Access macros for WinSxS dynamic wrappers.
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-#define _AFX_COMCTL32_ISOLATION_WRAPPER_INDEX 0
-#define afxComCtlWrapper static_cast<CComCtlWrapper*>(AfxGetModuleState()->m_pDllIsolationWrappers[_AFX_COMCTL32_ISOLATION_WRAPPER_INDEX])
-#endif
-
-#define _AFX_COMMDLG_ISOLATION_WRAPPER_INDEX 1
-#define afxCommDlgWrapper static_cast<CCommDlgWrapper*>(AfxGetModuleState()->m_pDllIsolationWrappers[_AFX_COMMDLG_ISOLATION_WRAPPER_INDEX])
-
-#define _AFX_SHELL_ISOLATION_WRAPPER_INDEX 2
-#define afxShellWrapper static_cast<CShellWrapper*>(AfxGetModuleState()->m_pDllIsolationWrappers[_AFX_SHELL_ISOLATION_WRAPPER_INDEX])
-
-#define _AFX_ISOLATION_WRAPPER_ARRAY_SIZE 3
 
 // Advanced initialization: for overriding default WinMain
 BOOL AFXAPI AfxWinInit(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
@@ -5148,7 +5126,7 @@ class CDataRecoveryHandler;     // forward reference (see afxdatarecovery.h)
 // access to message filter in CWinApp
 COleMessageFilter* AFXAPI AfxOleGetMessageFilter();
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CCommandLineInfo
 
 class CCommandLineInfo : public CObject
@@ -5192,7 +5170,7 @@ protected:
 	void ParseLast(BOOL bLast);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDocManager
 
 class CDocManager : public CObject
@@ -5244,7 +5222,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CWinApp - the root of all Windows applications
 
 #define _AFX_MRU_COUNT   4      // default support for 4 entries in file MRU
@@ -5292,7 +5270,7 @@ class CWinApp : public CWinThread
 public:
 
 // Constructor
-	/* explicit */ CWinApp(LPCTSTR lpszAppName = NULL);     // app name defaults to EXE name
+	explicit CWinApp(LPCTSTR lpszAppName = NULL);     // app name defaults to EXE name
 
 // Attributes
 	// Startup args (do not change)
@@ -5351,6 +5329,9 @@ public:
 
 	// help mode used by the app
 	AFX_HELP_TYPE m_eHelpType;
+
+	// Returns TRUE is application is running under Windows 7 or higher
+	BOOL IsWindows7();
 
 // Initialization Operations - should be done in InitInstance
 protected:
@@ -5589,6 +5570,24 @@ public: // public for implementation access
 	/// <param name="bEnable"> Specifies whether interaction with Windows 7 taskbar should be enabled (TRUE), or disabled (FALSE).</param>
 	BOOL EnableTaskbarInteraction(BOOL bEnable = TRUE);
 
+#if (NTDDI_VERSION >= NTDDI_WIN7)
+	/// <summary>
+	/// Creates and stores in the global data a pointer to ITaskBarList interface.</summary>
+	/// <returns>A pointer to ITaskbarList interface if creation of a task bar list object succeeds, or NULL if creation fails or current
+	/// Operation System is less than Windows 7.</returns>
+	ITaskbarList  *GetITaskbarList();
+
+	/// <summary>
+	/// Creates and stores in the global data a pointer to ITaskBarList3 interface.</summary>
+	/// <returns>A pointer to ITaskbarList3 interface if creation creation of a task bar list object succeeds, or NULL if creation fails or current
+	/// Operation System is less than Windows 7.</returns>
+	ITaskbarList3 *GetITaskbarList3();
+
+	/// <summary>
+	/// Releases interfaces obtained through GetITaskbarList and GetITaskbarList3 methods.</summary>
+	void ReleaseTaskBarRefs();
+#endif
+
 	// helpers for standard commdlg dialogs
 	BOOL DoPromptFileName(CString& fileName, UINT nIDSTitle,
 			DWORD lFlags, BOOL bOpenFileDialog, CDocTemplate* pTemplate);
@@ -5642,11 +5641,10 @@ public:
 	BOOL EnableD2DSupport(D2D1_FACTORY_TYPE d2dFactoryType = D2D1_FACTORY_TYPE_SINGLE_THREADED, DWRITE_FACTORY_TYPE writeFactoryType = DWRITE_FACTORY_TYPE_SHARED);
 
 protected:
-	//{{AFX_MSG(CWinApp)
 	afx_msg void OnAppExit();
 	afx_msg void OnUpdateRecentFileMenu(CCmdUI* pCmdUI);
 	afx_msg BOOL OnOpenRecentFile(UINT nID);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 public :
 	// System Policy Settings
@@ -5661,9 +5659,15 @@ protected :
 	int   m_nAutosaveInterval;            // How frequently are documents autosaved? (value in milliseconds)
 
 	BOOL m_bTaskbarInteractionEnabled;
+	BOOL m_bIsWindows7;
+
+	BOOL m_bComInitialized;
+	BOOL m_bTaskBarInterfacesAvailable;
+	IUnknown* m_pTaskbarList;
+	IUnknown* m_pTaskbarList3;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // class CWaitCursor
 
 class CWaitCursor
@@ -5678,7 +5682,7 @@ public:
 	void Restore();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // class CDocTemplate creates documents
 
 class AFX_NOVTABLE CDocTemplate : public CCmdTarget
@@ -5886,7 +5890,7 @@ protected:  // standard implementation
 	UINT m_nUntitledCount;   // start at 0, for "Document1" title
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // class CDocument is the main document data abstraction
 
 class AFX_NOVTABLE CDocument : public CCmdTarget
@@ -5932,7 +5936,7 @@ public:
 		/// S_OK if succeeds; otherwise failed HRESULT.</returns>
 		/// <param name="pStream">A pointer to a stream. This stream is supplied by the Shell.</param>
 		/// <param name="grfMode">Access mode to the stream.</param>
-		virtual HRESULT LoadFromStream(IStream* pStream, DWORD grfMode)
+		virtual HRESULT LoadFromStream(_Inout_ IStream* pStream, _In_ DWORD grfMode)
 		{
 			ASSERT_VALID(m_pParentDoc);
 			if (m_pParentDoc == NULL)
@@ -5976,7 +5980,7 @@ public:
 		/// <returns> 
 		/// Nonzero if succeeds. Otherwise 0.</returns>
 		/// <param name="pValue"> Specifies a chunk value to set.</param>
-		virtual BOOL SetChunkValue(ATL::IFilterChunkValue* pValue)
+		virtual BOOL SetChunkValue(_In_ ATL::IFilterChunkValue* pValue)
 		{
 			ASSERT_VALID(m_pParentDoc);
 			if (m_pParentDoc == NULL)
@@ -6005,7 +6009,7 @@ public:
 		/// <returns> 
 		/// Nonzero if succeeds. Otherwise 0.</returns>
 		/// <param name="ppValue"> Output parameter. When the function returns ppValue contains the value.</param>
-		virtual BOOL ReadNextChunkValue(ATL::IFilterChunkValue** ppValue)
+		virtual _Success_(return != FALSE) BOOL ReadNextChunkValue(_Outptr_result_maybenull_ ATL::IFilterChunkValue** ppValue)
 		{
 			ASSERT_VALID(m_pParentDoc);
 			if (m_pParentDoc == NULL)
@@ -6020,7 +6024,7 @@ public:
 		/// Removes a chunk with specified GUID </summary>
 		/// <param name="guid> Specifies GUID of a chunk to be removed.</param>
 		/// <param name="pid> Specifies PID of a chunk to be removed.</param>
-		virtual void RemoveChunk(REFCLSID guid, DWORD pid)
+		virtual void RemoveChunk(_In_ REFCLSID guid, _In_ DWORD pid)
 		{
 			ASSERT_VALID(m_pParentDoc);
 			if (m_pParentDoc == NULL)
@@ -6037,7 +6041,7 @@ public:
 		/// Position in the internal chunk list if succeeds. Otherwise NULL.</returns>
 		/// <param name="guid> Specifies GUID of a chunk to find.</param>
 		/// <param name="pid> Specifies PID of a chunk to find.</param>
-		virtual POSITION FindChunk(REFCLSID guid, DWORD pid)
+		virtual POSITION FindChunk(_In_ REFCLSID guid, _In_ DWORD pid)
 		{
 			ASSERT_VALID(m_pParentDoc);
 			if (m_pParentDoc == NULL)
@@ -6062,7 +6066,7 @@ public:
 		/// <param name="cx">Specifies width and height of the bitmap.</param>
 		/// <param name="phbmp">Should contain a handle to a bitmap, when the function returns. </param>
 		/// <param name="pdwAlpha">Should contain a DWORD specifying alpha channel value, when the function returns.</param>
-		virtual BOOL GetThumbnail(UINT cx, HBITMAP* phbmp, WTS_ALPHATYPE* pdwAlpha)
+		virtual _Success_(return != FALSE) BOOL GetThumbnail(_In_ UINT cx, _Out_ HBITMAP* phbmp, _Out_ WTS_ALPHATYPE* pdwAlpha)
 		{
 			ASSERT_VALID(m_pParentDoc);
 			if (m_pParentDoc == NULL)
@@ -6367,14 +6371,13 @@ public:
 
 protected:
 	// file menu commands
-	//{{AFX_MSG(CDocument)
 	afx_msg void OnFileClose();
 	afx_msg void OnFileSave();
 	afx_msg void OnFileSaveAs();
-	//}}AFX_MSG
 	// mail enabling
 	afx_msg void OnFileSendMail();
 	afx_msg void OnUpdateFileSendMail(CCmdUI* pCmdUI);
+
 	DECLARE_MESSAGE_MAP()
 
 #if WINVER >= 0x0600
@@ -6666,7 +6669,7 @@ private:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Extra diagnostic tracing options
 
 #ifdef _DEBUG
@@ -6690,7 +6693,7 @@ DECLARE_AFX_TRACE_CATEGORY( traceMemory )		// generic non-kernel memory traces
 DECLARE_AFX_TRACE_CATEGORY( traceHtml )			// Html traces
 DECLARE_AFX_TRACE_CATEGORY( traceSocket )		// Socket traces
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // MessageBox helpers
 
 void AFXAPI AfxFormatString1(CString& rString, UINT nIDS, LPCTSTR lpsz1);
@@ -6709,7 +6712,7 @@ void AFXAPI AfxFormatStrings(CString& rString, LPCTSTR lpszFormat,
 BOOL AFXAPI AfxExtractSubString(CString& rString, LPCTSTR lpszFullString,
 				int iSubString, TCHAR chSep = '\n');
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Special target variant APIs
 
 #ifdef _AFXDLL
@@ -6725,7 +6728,7 @@ BOOL AFXAPI AfxExtractSubString(CString& rString, LPCTSTR lpszFullString,
 void AFXAPI AfxLockTempMaps();
 BOOL AFXAPI AfxUnlockTempMaps(BOOL bDeleteTemps = TRUE);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Special OLE related functions (see OLELOCK.CPP)
 
 void AFXAPI AfxOleOnReleaseAllObjects();
@@ -6744,12 +6747,12 @@ BOOL AFXAPI AfxOleUnlockControl(LPCTSTR lpszProgID);
 void AFXAPI AfxOleUnlockAllControls();
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Use version 1.0 of the RichEdit control
 
 #define _RICHEDIT_VER 0x0210
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Inline function declarations
 
 #ifndef GET_X_LPARAM
@@ -6762,8 +6765,6 @@ void AFXAPI AfxOleUnlockAllControls();
 #ifdef _AFX_PACKING
 #pragma pack(pop)
 #endif
-
-#include <afxcomctl32.inl>
 
 #ifdef _AFX_ENABLE_INLINES
 #define _AFXWIN_INLINE AFX_INLINE
@@ -6781,7 +6782,7 @@ void AFXAPI AfxOleUnlockAllControls();
 #pragma component(minrebuild, on)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 #else //RC_INVOKED
 #include <afxres.h>     // standard resource IDs
@@ -6797,6 +6798,6 @@ void AFXAPI AfxOleUnlockAllControls();
 
 #endif //__AFXWIN_H__
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -272,6 +272,7 @@ public:
 	CMFCRibbonBaseElement*	GetOriginal() const { return m_pOriginal; }
 
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+	virtual void OnAccDefaultAction();
 
 	/// <summary>
 	/// Indicates whether the parent element has keyboard focus</summary>

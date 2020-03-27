@@ -22,7 +22,7 @@
 
 class CMFCColorDialog;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCStandardColorsPropertyPage dialog
 
 class CMFCStandardColorsPropertyPage : public CPropertyPage
@@ -36,11 +36,9 @@ public:
 	CMFCColorDialog* m_pDialog;
 
 // Dialog Data
-	//{{AFX_DATA(CMFCStandardColorsPropertyPage)
 	enum { IDD = IDD_AFXBARRES_COLOR_PAGE_ONE };
 	CMFCColorPickerCtrl m_hexpicker;
 	CMFCColorPickerCtrl m_hexpicker_greyscale;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -54,14 +52,13 @@ protected:
 	friend void hexgreyscalefunc(COLORREF ref,DWORD ClientData);
 	friend void hexgreyscalefunc(COLORREF ref,void *ClientData);
 
-	// Generated message map functions
-	//{{AFX_MSG(CMFCStandardColorsPropertyPage)
 	virtual BOOL OnInitDialog();
+
 	afx_msg void OnGreyscale();
 	afx_msg void OnHexColor();
 	afx_msg void OnDoubleClickedColor();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 private:

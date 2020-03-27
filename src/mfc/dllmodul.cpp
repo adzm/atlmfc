@@ -45,6 +45,7 @@ public:
 };
 
 static _AFX_DLL_MODULE_STATE afxModuleState;
+static AFX_MODULE_STATE *pafxModuleStatePrev;
 
 #undef AfxWndProc
 LRESULT CALLBACK
@@ -85,9 +86,6 @@ BOOL WINAPI InternalDllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpRese
 		AfxCoreInitModule();
 #endif
 
-		_AFX_THREAD_STATE* pState = AfxGetThreadState();
-		AFX_MODULE_STATE* pPrevModState = pState->m_pPrevModuleState;
-
 		// Initialize DLL's instance(/module) not the app's
 		if (!AfxWinInit(hInstance, NULL, _T(""), 0))
 		{
@@ -104,7 +102,6 @@ BOOL WINAPI InternalDllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpRese
 			goto Cleanup;       // Init Failed
 		}
 
-		pState->m_pPrevModuleState = pPrevModState;
 #ifdef _AFXDLL
 		// wire up this DLL into the resource chain
 		VERIFY(AfxInitExtensionModule(controlDLL, hInstance));
@@ -128,12 +125,9 @@ BOOL WINAPI InternalDllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpRese
 		bResult = TRUE;
 
 Cleanup:
-		pState->m_pPrevModuleState = pPrevModState;
 #ifdef _AFXDLL
 		// restore previously-saved module state
-		VERIFY(AfxSetModuleState(AfxGetThreadState()->m_pPrevModuleState) ==
-			&afxModuleState);
-		DEBUG_ONLY(AfxGetThreadState()->m_pPrevModuleState = NULL);
+		VERIFY(AfxSetModuleState(pafxModuleStatePrev) == &afxModuleState);
 #endif
 		return bResult;
 	}
@@ -141,9 +135,7 @@ Cleanup:
 	{
 #ifdef _AFXDLL
 		// set module state for cleanup
-		ASSERT(AfxGetThreadState()->m_pPrevModuleState == NULL);
-		AfxGetThreadState()->m_pPrevModuleState =
-			AfxSetModuleState(&afxModuleState);
+		pafxModuleStatePrev = AfxSetModuleState(&afxModuleState);
 #endif
 
 		CWinApp* pApp = AfxGetApp();
@@ -169,10 +161,7 @@ Cleanup:
 		if (__mixedModuleStartup)
 		{
 			// restore module state after cleanup
-			_AFX_THREAD_STATE* pState = AfxGetThreadState();
-			VERIFY(AfxSetModuleState(pState->m_pPrevModuleState) ==
-				&afxModuleState);
-			DEBUG_ONLY(pState->m_pPrevModuleState = NULL);
+			VERIFY(AfxSetModuleState(pafxModuleStatePrev) == &afxModuleState);
 		}
 #else
 		AfxTermLocalData(hInstance, TRUE);
@@ -221,16 +210,12 @@ BOOL WINAPI RawDllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID)
 		LocalFree(pMinHeap);
 
 		// set module state before initialization
-		_AFX_THREAD_STATE* pState = AfxGetThreadState();
-		pState->m_pPrevModuleState = AfxSetModuleState(&afxModuleState);
+		pafxModuleStatePrev = AfxSetModuleState(&afxModuleState);
 	}
 	else if (dwReason == DLL_PROCESS_DETACH && !__mixedModuleStartup)
 	{
 		// restore module state after cleanup
-		_AFX_THREAD_STATE* pState = AfxGetThreadState();
-		VERIFY(AfxSetModuleState(pState->m_pPrevModuleState) ==
-			&afxModuleState);
-		DEBUG_ONLY(pState->m_pPrevModuleState = NULL);
+		VERIFY(AfxSetModuleState(pafxModuleStatePrev) == &afxModuleState);
 
 #endif //_AFXDLL
 	}
@@ -250,9 +235,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			pModuleState->m_hCurrentInstanceHandle = hInstance;
 #ifdef _AFXDLL
 			// restore previously-saved module state
-			VERIFY(AfxSetModuleState(AfxGetThreadState()->m_pPrevModuleState) ==
-				&afxModuleState);
-			DEBUG_ONLY(AfxGetThreadState()->m_pPrevModuleState = NULL);
+			VERIFY(AfxSetModuleState(pafxModuleStatePrev) == &afxModuleState);
 #endif
 			return TRUE;
 		}

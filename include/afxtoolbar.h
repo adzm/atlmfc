@@ -69,7 +69,6 @@ extern AFX_IMPORT_DATA UINT AFX_WM_RESETKEYBOARD;
 extern AFX_IMPORT_DATA UINT AFX_WM_RESETRPROMPT;
 
 extern const UINT AFX_ACCELERATOR_TIMER_DELAY;
-extern const UINT AFX_ACCELERATOR_NOTIFY_EVENT;
 
 #define AFX_TOOLBAR_LINE_OFFSET 5
 
@@ -161,15 +160,7 @@ public:
 	static void __stdcall AddCommandUsage(UINT uiCommand);
 	static BOOL __stdcall SetCommandUsageOptions(UINT nStartCount, UINT nMinUsagePercentage = 5);
 
-	virtual int GetRowHeight() const
-	{
-		if (m_bDrawTextLabels)
-		{
-			ASSERT(m_nMaxBtnHeight > 0);
-			return m_nMaxBtnHeight;
-		}
-		return max(afxGlobalData.GetTextHeight(m_dwStyle & CBRS_ORIENT_HORZ), (m_bMenuMode ? (m_sizeMenuButton.cy > 0 ? m_sizeMenuButton.cy : m_sizeButton.cy) : GetButtonSize().cy));
-	}
+	virtual int GetRowHeight() const;
 
 	virtual int GetColumnWidth() const
 	{
@@ -425,7 +416,7 @@ public:
 	virtual BOOL CanBeRestored() const;
 	virtual BOOL CanBeClosed() const { return !m_bPermament; }
 
-	virtual BOOL RestoreOriginalstate();
+	virtual BOOL RestoreOriginalState();
 	virtual void OnReset() {}
 
 	static void __stdcall ResetAll();
@@ -518,6 +509,16 @@ protected:
 	virtual void OnBeforeChangeParent(CWnd* pWndNewParent, BOOL bDelay = FALSE);
 
 	virtual void AccNotifyObjectFocusEvent(int iButton);
+	virtual int AccGetButtonsCount();
+
+	CMFCToolBarButton* AccGetButtonByChildId(long lVal);
+	int AccGetChildIdByButtonIndex(int nButtonIndex);
+
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT get_accChild(VARIANT varChild, IDispatch **ppdispChild);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
 
 protected:
 	friend class CWinAppEx;
@@ -706,7 +707,6 @@ protected:
 	BOOL RemoveResetStateButton(UINT uiCmdId);
 	int  InsertResetStateButton(const CMFCToolBarButton& button, int iInsertAt);
 
-	//{{AFX_MSG(CMFCToolBar)
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnCancelMode();
 	afx_msg void OnSysColorChange();
@@ -738,7 +738,7 @@ protected:
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd*, CPoint point);
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
+	afx_msg void OnMouseLeave();
 	afx_msg LRESULT OnHelpHitTest(WPARAM,LPARAM);
 	afx_msg LRESULT OnGetButtonCount(WPARAM,LPARAM);
 	afx_msg LRESULT OnGetItemRect(WPARAM,LPARAM);
@@ -748,8 +748,8 @@ protected:
 	afx_msg LRESULT OnPromptReset(WPARAM, LPARAM);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
+
 	DECLARE_MESSAGE_MAP()
-	//}}AFX_MSG
 };
 
 #ifdef _AFX_MINREBUILD

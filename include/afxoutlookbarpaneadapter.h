@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCOutlookBarPaneAdapter window
 
 class CMFCOutlookBarPaneAdapter : public CDockablePaneAdapter
@@ -36,9 +36,8 @@ public:
 	virtual ~CMFCOutlookBarPaneAdapter();
 
 protected:
-	//{{AFX_MSG(CMFCOutlookBarPaneAdapter)
 	afx_msg void OnNcDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

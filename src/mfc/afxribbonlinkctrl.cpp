@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -105,7 +105,7 @@ void CMFCRibbonLinkCtrl::OnDraw(CDC* pDC)
 	}
 
 	// Set font:
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontUnderline);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontUnderline));
 	ENSURE(pOldFont != NULL);
 
 	COLORREF clrTextOld = pDC->SetTextColor(CMFCVisualManager::GetInstance()->GetRibbonHyperlinkTextColor(this));
@@ -153,7 +153,7 @@ void CMFCRibbonLinkCtrl::OnMouseMove(CPoint point)
 {
 	ASSERT_VALID(this);
 	CMFCRibbonButton::OnMouseMove(point);
-	::SetCursor(afxGlobalData.GetHandCursor());
+	::SetCursor(GetGlobalData()->GetHandCursor());
 }
 
 void CMFCRibbonLinkCtrl::OnSetIcon()
@@ -162,14 +162,14 @@ void CMFCRibbonLinkCtrl::OnSetIcon()
 
 	if (m_hIcon == NULL)
 	{
-		if (afxGlobalData.m_hiconLink == NULL)
+		if (GetGlobalData()->m_hiconLink == NULL)
 		{
-			afxGlobalData.m_hiconLink = (HICON) ::LoadImageW(
+			GetGlobalData()->m_hiconLink = (HICON) ::LoadImageW(
 				AfxFindResourceHandle(MAKEINTRESOURCE(IDI_AFXRES_LINK), RT_GROUP_ICON),
 				MAKEINTRESOURCEW(IDI_AFXRES_LINK), IMAGE_ICON, 16, 16, LR_SHARED);
 		}
 
-		m_hIcon = afxGlobalData.m_hiconLink;
+		m_hIcon = GetGlobalData()->m_hiconLink;
 	}
 }
 

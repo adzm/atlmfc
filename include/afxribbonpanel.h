@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -28,9 +28,7 @@ class CMFCRibbonBaseElement;
 class CMFCRibbonPanel;
 class CMFCRibbonGallery;
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
-
-//////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonLaunchButton
 
 class CMFCRibbonLaunchButton : public CMFCRibbonButton
@@ -48,9 +46,7 @@ class CMFCRibbonLaunchButton : public CMFCRibbonButton
 	CMFCRibbonPanel* m_pParentPanel;
 };
 
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
-
-//////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonDefaultPanelButton
 
 class CMFCRibbonDefaultPanelButton : public CMFCRibbonButton
@@ -73,10 +69,10 @@ class CMFCRibbonDefaultPanelButton : public CMFCRibbonButton
 	{
 		CSize sizeIcon(16, 16);
 
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			sizeIcon.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cx);
-			sizeIcon.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cy);
+			sizeIcon.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cx);
+			sizeIcon.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cy);
 		}
 
 		return sizeIcon;
@@ -96,7 +92,7 @@ class CMFCRibbonDefaultPanelButton : public CMFCRibbonButton
 	CMFCRibbonPanel* m_pPanel;
 };
 
-//////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonPanel
 
 class CMFCRibbonPanel : public CObject  
@@ -126,10 +122,8 @@ public:
 	LPCTSTR GetName() const { return m_strName; }
 	CMFCRibbonButton& GetDefaultButton() { return m_btnDefault; }
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	void EnableLaunchButton(UINT uiCmdID, int nIconIndex = -1, LPCTSTR lpszKeys = NULL);
 	CMFCRibbonButton& GetLaunchButton() { return m_btnLaunch; }
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	BOOL IsHighlighted() const { return m_bIsHighlighted; }
 	BOOL IsCollapsed() const; 	BOOL IsMenuMode() const { return m_bMenuMode; }
@@ -292,6 +286,7 @@ protected:
 	BOOL m_bSizeIsLocked;
 	BOOL m_bScrollDnAvailable;
 	BOOL m_bTruncateCaption;
+	BOOL m_bMouseIsDown;
 
 	int m_nCurrWidthIndex; // Index of the current width
 	int m_nFullWidth;      // Full width
@@ -312,9 +307,7 @@ protected:
 	CMFCRibbonCategory*          m_pParent;        // Parent category
 	CMFCRibbonPanelMenuBar*      m_pParentMenuBar; // Parent menu bar
 	CMFCRibbonGallery*     m_pPaletteButton;
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	CMFCRibbonLaunchButton       m_btnLaunch;
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	CMFCRibbonBaseElement*       m_pHighlighted;   // Highlighted 
 	CMFCRibbonDefaultPanelButton m_btnDefault;     // Default panel button
 

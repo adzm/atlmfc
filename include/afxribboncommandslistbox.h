@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -26,14 +26,14 @@ class CMFCRibbonBaseElement;
 class CMFCRibbonCategory;
 class CMFCRibbonSeparator;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonCommandsListBox window
 
 class CMFCRibbonCommandsListBox : public CListBox
 {
 // Construction
 public:
-	CMFCRibbonCommandsListBox(	CMFCRibbonBar* pRibbonBar, BOOL bIncludeSeparator = TRUE, BOOL bDrawDefaultIcon = FALSE);
+	CMFCRibbonCommandsListBox(	CMFCRibbonBar* pRibbonBar, BOOL bIncludeSeparator = TRUE, BOOL bDrawDefaultIcon = FALSE, BOOL bCommandsOnly = FALSE);
 
 // Attributes
 public:
@@ -41,11 +41,14 @@ public:
 	CMFCRibbonBaseElement* GetCommand(int nIndex) const;
 	int GetCommandIndex(UINT uiID) const;
 
+	BOOL CommandsOnly() const { return m_bCommandsOnly; }
+
 protected:
-	int               m_nTextOffset;
-	BOOL              m_bDrawDefaultIcon;
-	CMFCRibbonBar*       m_pRibbonBar;
-	CMFCRibbonSeparator* m_pSeparator;
+	int						m_nTextOffset;
+	BOOL					m_bDrawDefaultIcon;
+	BOOL					m_bCommandsOnly;
+	CMFCRibbonBar*			m_pRibbonBar;
+	CMFCRibbonSeparator*	m_pSeparator;
 
 // Operations
 public:
@@ -61,10 +64,8 @@ public:
 	virtual ~CMFCRibbonCommandsListBox();
 
 protected:
-	//{{AFX_MSG(CMFCRibbonCommandsListBox)
 	afx_msg void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 };

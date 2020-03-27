@@ -13,9 +13,9 @@
 #include "afxrebar.h"
 #include "afxrebarstate.h"
 
-static const CString strRebarKeyFmt = _T("Rebar-%ld");
-static const CString strRebarKey = _T("RBI");
-static const CString strRebarId = _T("IDs");
+#define AFX_REBAR_FORMAT_KEY  _T("Rebar-%ld")
+#define AFX_REBAR_KEY  _T("RBI")
+#define AFX_REBAR_ID_KEY  _T("IDs")
 
 BOOL CMFCReBarState::LoadRebarStateProc(HWND hwnd, LPARAM lParam)
 {
@@ -33,7 +33,7 @@ BOOL CMFCReBarState::LoadRebarStateProc(HWND hwnd, LPARAM lParam)
 	CString strRegSection = reinterpret_cast<LPCTSTR>(lParam);
 
 	CString strRebar;
-	strRebar.Format(strRebarKeyFmt, GetWindowLong(rc.GetSafeHwnd(), GWL_ID));
+	strRebar.Format(AFX_REBAR_FORMAT_KEY, GetWindowLong(rc.GetSafeHwnd(), GWL_ID));
 
 	strRegSection += strRebar;
 
@@ -50,7 +50,7 @@ BOOL CMFCReBarState::LoadRebarStateProc(HWND hwnd, LPARAM lParam)
 	// attempt to load this rebar:
 
 	REBARBANDINFO* aBandInfo = NULL;
-	if (!reg.Read(strRebarKey, reinterpret_cast<BYTE**>(&aBandInfo), &nBands))
+	if (!reg.Read(AFX_REBAR_KEY, reinterpret_cast<BYTE**>(&aBandInfo), &nBands))
 	{
 		if (aBandInfo != NULL)
 		{
@@ -61,7 +61,7 @@ BOOL CMFCReBarState::LoadRebarStateProc(HWND hwnd, LPARAM lParam)
 	}
 
 	LONG_PTR* aBandIds = NULL;
-	if (!reg.Read(strRebarId, reinterpret_cast<BYTE**>(&aBandIds),  &nBands))
+	if (!reg.Read(AFX_REBAR_ID_KEY, reinterpret_cast<BYTE**>(&aBandIds),  &nBands))
 	{
 		delete [] aBandInfo;
 
@@ -135,7 +135,7 @@ BOOL CMFCReBarState::SaveRebarStateProc(HWND hwnd, LPARAM lParam)
 	CString strRegSection = reinterpret_cast<LPCTSTR>(lParam);
 
 	CString strRebar;
-	strRebar.Format(strRebarKeyFmt, GetWindowLong(rc.GetSafeHwnd(), GWL_ID));
+	strRebar.Format(AFX_REBAR_FORMAT_KEY, GetWindowLong(rc.GetSafeHwnd(), GWL_ID));
 
 	strRegSection += strRebar;
 
@@ -174,8 +174,8 @@ BOOL CMFCReBarState::SaveRebarStateProc(HWND hwnd, LPARAM lParam)
 		rbi.fMask ^= RBBIM_CHILD;
 	}
 
-	reg.Write(strRebarKey, reinterpret_cast<BYTE*>(aBandInfo), nBands * sizeof(REBARBANDINFO));
-	reg.Write(strRebarId, reinterpret_cast<BYTE*>(aBandIds),  nBands * sizeof(LONG_PTR));
+	reg.Write(AFX_REBAR_KEY, reinterpret_cast<BYTE*>(aBandInfo), nBands * sizeof(REBARBANDINFO));
+	reg.Write(AFX_REBAR_ID_KEY, reinterpret_cast<BYTE*>(aBandIds),  nBands * sizeof(LONG_PTR));
 
 	delete [] aBandIds;
 	delete [] aBandInfo;

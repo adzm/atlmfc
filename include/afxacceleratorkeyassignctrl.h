@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCAcceleratorKeyAssignCtrl window
 
 class CMFCAcceleratorKeyAssignCtrl : public CEdit
@@ -58,9 +58,7 @@ public:
 	virtual ~CMFCAcceleratorKeyAssignCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCAcceleratorKeyAssignCtrl)
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -98,6 +98,7 @@ enum AfxSig
 	AfxSig_v_h_h,				// void (HANDLE, HANDLE)
 	AfxSig_v_v_v,				// void ()
 	AfxSig_v_u_v,				// void (UINT)
+	AfxSig_v_up_v,				// void (UINT_PTR)
 	AfxSig_v_u_u,				// void (UINT, UINT)
 	AfxSig_v_uu_v,				// void (UINT, UINT)
 	AfxSig_v_v_ii,				// void (int, int)
@@ -882,7 +883,7 @@ enum AfxSig
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, DWORD) > ( &ThisClass :: OnTCard)) },
 
 #define ON_WM_TIMER() \
-	{ WM_TIMER, 0, 0, 0, AfxSig_vw, \
+	{ WM_TIMER, 0, 0, 0, AfxSig_v_up_v, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT_PTR) > ( &ThisClass :: OnTimer)) },
 

@@ -217,7 +217,7 @@ CRuntimeClass* PASCAL CRuntimeClass::Load(CArchive& ar, UINT* pwSchemaNum)
 void CRuntimeClass::Store(CArchive& ar) const
 	// stores a runtime class description
 {
-	WORD nLen = (WORD)lstrlenA(m_lpszClassName);
+	WORD nLen = (WORD)AtlStrLen(m_lpszClassName);
 	ar << (WORD)m_wSchema << nLen;
 	ar.Write(m_lpszClassName, nLen*sizeof(char));
 }
@@ -700,10 +700,10 @@ DWORD_PTR CArchive::ReadCount()
 void CArchive::WriteString(LPCTSTR lpsz)
 {
 	ASSERT(AfxIsValidString(lpsz));
-	Write(lpsz, lstrlen(lpsz) * sizeof(TCHAR));
+	Write(lpsz, AtlStrLen(lpsz) * sizeof(TCHAR));
 }
 
-LPTSTR CArchive::ReadString(_Out_z_cap_(nMax+1) LPTSTR lpsz, _In_ UINT nMax)
+LPTSTR CArchive::ReadString(_Out_writes_z_(nMax+1) LPTSTR lpsz, _In_ UINT nMax)
 {
 	// if nMax is negative (such a large number doesn't make sense given today's
 	// 2gb address space), then assume it to mean "keep the newline".
@@ -768,7 +768,7 @@ BOOL CArchive::ReadString(CString& rString)
 
 		// if string is read completely or EOF
 		if (lpszResult == NULL ||
-			(nLen = (int)lstrlen(lpsz)) < nMaxSize ||
+			(nLen = AtlStrLen(lpsz)) < nMaxSize ||
 			lpsz[nLen-1] == '\n')
 		{
 			break;

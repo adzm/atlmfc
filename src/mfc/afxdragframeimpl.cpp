@@ -48,7 +48,7 @@ CMFCDragFrameImpl::CMFCDragFrameImpl()
 	m_rectDrag.SetRectEmpty();
 	m_rectExpectedDocked.SetRectEmpty();
 	m_ptHot.x = m_ptHot.y = 0;
-	m_nOldThickness = afxGlobalData.m_nDragFrameThicknessFloat;
+	m_nOldThickness = GetGlobalData()->m_nDragFrameThicknessFloat;
 	m_pDraggedWnd = NULL;
 	m_pDockManager = NULL;
 	m_pTargetBar = NULL;
@@ -231,7 +231,7 @@ void CMFCDragFrameImpl::MoveDragFrame(BOOL bForceMove)
 
 	m_rectExpectedDocked = rectExpected;
 
-	int nNewThickness = m_rectExpectedDocked.IsRectEmpty()? afxGlobalData.m_nDragFrameThicknessFloat : afxGlobalData.m_nDragFrameThicknessDock;
+	int nNewThickness = m_rectExpectedDocked.IsRectEmpty()? GetGlobalData()->m_nDragFrameThicknessFloat : GetGlobalData()->m_nDragFrameThicknessDock;
 
 	CRect rectDocked;
 	if (m_rectExpectedDocked.IsRectEmpty())
@@ -271,21 +271,21 @@ void CMFCDragFrameImpl::DrawFrameTab(CDockablePane* pTargetBar, BOOL bErase)
 		bSDockingIsOn = TRUE;
 	}
 
-	int nThikness = afxGlobalData.m_nDragFrameThicknessDock;
+	int nThikness = GetGlobalData()->m_nDragFrameThicknessDock;
 	CRect rectSmallTab = rectWnd;
 	// to be changed to tab height
 
 	if (CTabbedPane::m_bTabsAlwaysTop)
 	{
-		rectWnd.top += afxGlobalData.GetTextHeight();
-		rectSmallTab.bottom = rectSmallTab.top + afxGlobalData.GetTextHeight();
+		rectWnd.top += GetGlobalData()->GetTextHeight();
+		rectSmallTab.bottom = rectSmallTab.top + GetGlobalData()->GetTextHeight();
 		rectSmallTab.left += 10;
 		rectSmallTab.right = rectSmallTab.left + 40;
 	}
 	else
 	{
-		rectWnd.bottom -= afxGlobalData.GetTextHeight();
-		rectSmallTab.top = rectSmallTab.bottom - afxGlobalData.GetTextHeight();
+		rectWnd.bottom -= GetGlobalData()->GetTextHeight();
+		rectSmallTab.top = rectSmallTab.bottom - GetGlobalData()->GetTextHeight();
 		rectSmallTab.left += 10;
 		rectSmallTab.right = rectSmallTab.left + 40;
 	}

@@ -50,19 +50,25 @@ AfxLoadSysColorBitmap(HINSTANCE hInst, HRSRC hRsrc, BOOL bMono)
 {
 	HGLOBAL hglb;
 	if ((hglb = LoadResource(hInst, hRsrc)) == NULL)
+	{
 		return NULL;
+	}
 
 	LPBITMAPINFOHEADER lpBitmap = (LPBITMAPINFOHEADER)LockResource(hglb);
-	if (lpBitmap == NULL)
+	if ((lpBitmap == NULL) || (lpBitmap->biBitCount > 8))
+	{
 		return NULL;
+	}
 
 	// make copy of BITMAPINFOHEADER so we can modify the color table
 	const int nColorTableSize = 16;
 	UINT nSize = lpBitmap->biSize + nColorTableSize * sizeof(RGBQUAD);
 	LPBITMAPINFOHEADER lpBitmapInfo = (LPBITMAPINFOHEADER)::malloc(nSize);
 	if (lpBitmapInfo == NULL)
+	{
 		return NULL;
-	
+	}
+
 	Checked::memcpy_s(lpBitmapInfo, nSize, lpBitmap, nSize);
 
 	// color table is in RGBQUAD DIB format
@@ -139,7 +145,7 @@ DWORD AFXAPI _AfxGetComCtlVersion()
 		return _afxComCtlVersion;
 
 	// otherwise determine comctl32.dll version via DllGetVersion
-	HINSTANCE hInst = afxComCtlWrapper->GetModuleHandle();
+	HINSTANCE hInst = LoadLibraryW(L"comctl32.dll");
 	ASSERT(hInst != NULL);
 	AFX_DLLGETVERSIONPROC pfn;
 	pfn = (AFX_DLLGETVERSIONPROC)GetProcAddress(hInst, "DllGetVersion");
@@ -1132,7 +1138,7 @@ BOOL CToolBar::SetButtonText(int nIndex, LPCTSTR lpszText)
 			m_pStringMap = new CMapStringToPtr;
 
 		// add new string to toolbar list
-		CString strTemp(lpszText, lstrlen(lpszText)+1);
+		CString strTemp(lpszText, AtlStrLen(lpszText)+1);
 		nString = (INT_PTR)DefWindowProc(TB_ADDSTRING, 0, (LPARAM)(LPCTSTR)strTemp);
 		if (nString == -1)
 			return FALSE;
@@ -1186,7 +1192,6 @@ void CToolBar::GetButtonText(int nIndex, CString& rString) const
 // CToolBar message handlers
 
 BEGIN_MESSAGE_MAP(CToolBar, CControlBar)
-	//{{AFX_MSG_MAP(CToolBar)
 	ON_WM_NCHITTEST()
 	ON_WM_NCPAINT()
 	ON_WM_PAINT()
@@ -1202,7 +1207,6 @@ BEGIN_MESSAGE_MAP(CToolBar, CControlBar)
 	ON_MESSAGE(TB_SETHOTIMAGELIST, &CToolBar::OnPreserveSizingPolicyHelper)
 	ON_MESSAGE(TB_SETIMAGELIST, &CToolBar::OnPreserveSizingPolicyHelper)
 	ON_WM_SYSCOLORCHANGE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CToolBar::OnEraseBkgnd(CDC*)

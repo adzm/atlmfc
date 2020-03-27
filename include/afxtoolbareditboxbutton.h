@@ -102,7 +102,7 @@ protected:
 	AFX_IMPORT_DATA static BOOL m_bFlat;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarEditCtrl
 
 class CMFCToolBarEditCtrl : public CMFCEditBrowseCtrl
@@ -125,13 +125,12 @@ public:
 	virtual ~CMFCToolBarEditCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCToolBarEditCtrl)
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
-	//}}AFX_MSG
+	afx_msg void OnMouseLeave();
+
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -30,7 +30,7 @@
 class CMFCRibbonBar;
 class CMFCRibbonCustomizeCategory;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonCustomizePropertyPage dialog
 
 class CMFCRibbonCustomizePropertyPage : public CMFCPropertyPage
@@ -45,7 +45,6 @@ public:
 	void AddCustomCategory(LPCTSTR lpszName, const CList<UINT, UINT>& lstIDS);
 
 // Dialog Data
-	//{{AFX_DATA(CMFCRibbonCustomizePropertyPage)
 	enum { IDD = IDD_AFXBARRES_PROPPAGE8 };
 	CButton m_wndAdd;
 	CButton m_wndRemove;
@@ -56,7 +55,6 @@ public:
 	CMFCRibbonCommandsListBox m_wndQATList;
 	int  m_nCategory;
 	BOOL m_bQAToolbarOnBottom;
-	//}}AFX_DATA
 
 // Overrides
 public:
@@ -67,7 +65,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCRibbonCustomizePropertyPage)
 	afx_msg void OnSelendokCategoryCombo();
 	afx_msg void OnAdd();
 	afx_msg void OnRemove();
@@ -78,7 +75,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnCustomizeKeyboard();
 	afx_msg void OnSelchangeCommandsList();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void MoveItem(BOOL bMoveUp);

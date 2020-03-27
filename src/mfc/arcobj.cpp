@@ -309,11 +309,15 @@ void CArchive::MapObject(const CObject* pOb)
 			ASSERT(wNullTag == 0);
 			m_pLoadArray->SetAt(wNullTag, NULL);
 			m_nMapCount = 1;
+		}
 
+		if (NULL == m_pSchemaMap)
+		{
 			CArray<LoadArrayObjType>* pObjTypeArray = NULL;
 			EnsureSchemaMapExists(&pObjTypeArray);
 			pObjTypeArray->InsertAt(wNullTag, typeUndefined);
 		}
+
 		if (pOb != NULL)
 		{
 			CheckCount();

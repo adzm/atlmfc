@@ -35,8 +35,8 @@ LPTEXTMETRICA AFXAPI AfxTextMetricW2A(LPTEXTMETRICA lptmA, LPTEXTMETRICW lptmW);
 
 #endif //_WINGDI
 
-LPWSTR AFXAPI AfxA2WHelper(_Out_z_cap_(nChars) LPWSTR lpw, _In_z_ LPCSTR lpa, _In_ int nChars);
-LPSTR AFXAPI AfxW2AHelper(_Out_z_cap_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, _In_ int nChars);
+LPWSTR AFXAPI AfxA2WHelper(_Out_writes_z_(nChars) LPWSTR lpw, _In_z_ LPCSTR lpa, _In_ int nChars);
+LPSTR AFXAPI AfxW2AHelper(_Out_writes_z_(nChars) LPSTR lpa, _In_z_ LPCWSTR lpw, _In_ int nChars);
 
 #ifndef ATLA2WHELPER
 #define ATLA2WHELPER AfxA2WHelper

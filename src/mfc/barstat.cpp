@@ -484,7 +484,6 @@ CSize CStatusBar::CalcFixedLayout(BOOL, BOOL bHorz)
 // CStatusBar message handlers
 
 BEGIN_MESSAGE_MAP(CStatusBar, CControlBar)
-	//{{AFX_MSG_MAP(CStatusBar)
 	ON_WM_NCHITTEST()
 	ON_WM_NCPAINT()
 	ON_WM_PAINT()
@@ -495,7 +494,6 @@ BEGIN_MESSAGE_MAP(CStatusBar, CControlBar)
 	ON_MESSAGE(WM_GETTEXT, &CStatusBar::OnGetText)
 	ON_MESSAGE(WM_GETTEXTLENGTH, &CStatusBar::OnGetTextLength)
 	ON_MESSAGE(SB_SETMINHEIGHT, &CStatusBar::OnSetMinHeight)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 LRESULT CStatusBar::OnNcHitTest(CPoint)

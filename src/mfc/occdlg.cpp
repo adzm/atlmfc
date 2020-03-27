@@ -432,7 +432,11 @@ CWnd* AFXAPI _AfxFindDlgItem(CWnd* pWndParent, DWORD id)
 		return pWndChild;
 
 	pWndOrig = _AfxNextControl(pWndParent, NULL, CWP_SKIPINVISIBLE);
+
 	if (pWndOrig == pWndParent)
+		return NULL;
+
+	if (pWndOrig == NULL)
 		return NULL;
 
 	pWndChild = pWndOrig;
@@ -755,7 +759,13 @@ BOOL COccManager::IsDialogMessage(CWnd* pWndDlg, LPMSG lpMsg)
 						// If the new control is an auto-check radio button, set
 						// the check.
 						if(pSiteOrWnd->m_bAutoRadioButton)
+						{
+							DWORD dwID = ::GetWindowLong(pWndNext->GetSafeHwnd(), GWL_ID);
 							pWndNext->SendMessage(BM_SETCHECK, BST_CHECKED, 0);
+							pWndDlg->SendMessage(WM_COMMAND, MAKEWPARAM(dwID, BN_CLICKED), LPARAM(pWndNext->GetSafeHwnd()));
+							_AfxDlgSetFocus(pWndNext);
+						}
+
 						bResult = TRUE;
 					}
 				}

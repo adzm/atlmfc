@@ -22,7 +22,7 @@ extern "C" {
 
 #define LPDBSTR                     LPWSTR
 #define DBCHAR                      WCHAR
-#define ldbstrlen(str)              wcslen(str)
+#define ldbstrlen(str)              AtlStrLen(str)
 #define ldbstrcpy(a, b)             wcscpy((a), (b))
 #define ldbstrcpy_s(a, sa, b)       wcscpy_s((a), (sa), (b))
 #define ldbstrcpyn(a, b, n)         wcsncpy((a), (b), (n))
@@ -37,7 +37,7 @@ extern "C" {
 
 #define LPDBSTR                     LPSTR
 #define DBCHAR                      char
-#define ldbstrlen(str)              lstrlen(str)
+#define ldbstrlen(str)              AtlStrLen(str)
 #define ldbstrcpy(a, b)             lstrcpy((a), (b))
 #define ldbstrcpy_s(a, sa, b)       lstrcpy((a), (b))
 #define ldbstrcpyn(a, b, n)         lstrcpyn((a), (b), (n))

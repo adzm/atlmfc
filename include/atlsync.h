@@ -36,12 +36,18 @@ public:
 	~CCriticalSection() throw();
 
 	// Acquire the critical section
+	_Acquires_lock_(*this)
 	void Enter();
 	// Release the critical section
+	_Releases_lock_(*this)
 	void Leave() throw();
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// Set the spin count for the critical section
 	ULONG SetSpinCount(_In_ ULONG nSpinCount) throw();
+#endif
 	// Attempt to acquire the critical section
+	_When_(return != 0, _Acquires_lock_(*this))
 	BOOL TryEnter() throw();
 };
 
@@ -72,8 +78,10 @@ public:
 		_In_ DWORD dwAccess,
 		_In_ BOOL bInheritHandle,
 		_In_z_ LPCTSTR pszName) throw();
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// Pulse the event (signals waiting objects, then resets)
 	BOOL Pulse() throw();
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// Set the event to the non-signaled state
 	BOOL Reset() throw();
 	// Set the event to the signaled state
@@ -104,6 +112,7 @@ public:
 		_In_ BOOL bInheritHandle,
 		_In_z_ LPCTSTR pszName) throw();
 	// Release ownership of the mutex
+	_Releases_lock_(this->m_h)
 	BOOL Release() throw();
 };
 
@@ -143,12 +152,19 @@ public:
 class CMutexLock
 {
 public:
+	_Post_same_lock_(mtx, this->m_mtx)
+	_When_(bInitialLock != 0, _Acquires_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked != 0))
+	_When_(bInitialLock == 0, _Post_satisfies_(this->m_bLocked == 0))
 	CMutexLock(
 		_Inout_ CMutex& mtx,
 		_In_ bool bInitialLock = true);
+	_When_(this->m_bLocked != 0, _Requires_lock_held_(this->m_mtx) _Releases_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked == 0))
 	~CMutexLock() throw();
 
+	_Acquires_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked != 0)
 	void Lock();
+
+	_Releases_lock_(this->m_mtx) _Post_satisfies_(this->m_bLocked == 0)
 	void Unlock() throw();
 
 // Implementation

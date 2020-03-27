@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -16,7 +16,6 @@
 #include "afxribbonbar.h"
 #include "afxribbonpanel.h"
 #include "afxtoolbarcomboboxbutton.h"
-#include "afxtrackmouse.h"
 #include "afxpopupmenu.h"
 #include "afxspinbuttonctrl.h"
 #include "afxdrawmanager.h"
@@ -60,9 +59,8 @@ class CMFCRibbonSpinButtonCtrl : public CMFCSpinButtonCtrl
 		CMFCToolBarImages::m_bIsDrawOnGlass = bIsDrawOnGlass;
 	}
 
-	//{{AFX_MSG(CMFCRibbonSpinButtonCtrl)
 	afx_msg void OnDeltapos(NMHDR* pNMHDR, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	BOOL m_bQuickAccessMode;
@@ -70,9 +68,7 @@ class CMFCRibbonSpinButtonCtrl : public CMFCSpinButtonCtrl
 };
 
 BEGIN_MESSAGE_MAP(CMFCRibbonSpinButtonCtrl, CMFCSpinButtonCtrl)
-	//{{AFX_MSG_MAP(CMFCRibbonSpinButtonCtrl)
 	ON_NOTIFY_REFLECT(UDN_DELTAPOS, &CMFCRibbonSpinButtonCtrl::OnDeltapos)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CMFCRibbonSpinButtonCtrl::OnDeltapos(NMHDR* /*pNMHDR*/, LRESULT* pResult)
@@ -142,9 +138,9 @@ CSize CMFCRibbonEdit::GetIntermediateSize(CDC* pDC)
 	ASSERT_VALID(pDC);
 
 	int cx = m_bFloatyMode ? m_nWidthFloaty : m_nWidth;
-	if (afxGlobalData.GetRibbonImageScale() > 1.)
+	if (GetGlobalData()->GetRibbonImageScale() > 1.)
 	{
-		cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * cx);
+		cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * cx);
 	}
 
 	TEXTMETRIC tm;
@@ -313,9 +309,9 @@ void CMFCRibbonEdit::OnDraw(CDC* pDC)
 	CRect rectCommandSaved = m_rectCommand;
 
 	int cx = m_bFloatyMode ? m_nWidthFloaty : m_nWidth;
-	if (afxGlobalData.GetRibbonImageScale() > 1.)
+	if (GetGlobalData()->GetRibbonImageScale() > 1.)
 	{
-		cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * cx);
+		cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * cx);
 	}
 
 	m_rectCommand.left = m_rect.left = m_rect.right - cx;
@@ -592,9 +588,9 @@ void CMFCRibbonEdit::RepositionRibbonEditCtrl()
 		CRect rectEdit = m_rectCommand;
 
 		int cx = m_bFloatyMode ? m_nWidthFloaty : m_nWidth;
-		if (afxGlobalData.GetRibbonImageScale() > 1.)
+		if (GetGlobalData()->GetRibbonImageScale() > 1.)
 		{
-			cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * cx);
+			cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * cx);
 		}
 
 		rectEdit.left = rectEdit.right - cx;
@@ -721,6 +717,11 @@ void CMFCRibbonEdit::OnSetFocus(BOOL bSet)
 	{
 		if (bSet)
 		{
+			if (m_pWndEdit == CWnd::GetFocus())
+			{
+				return;
+			}
+
 			m_pWndEdit->SetFocus();
 			m_pWndEdit->SetSel(0, -1);
 		}
@@ -731,8 +732,11 @@ void CMFCRibbonEdit::OnSetFocus(BOOL bSet)
 			{
 				ASSERT_VALID(pRibbonBar);
 				
-				pRibbonBar->m_bDontSetKeyTips = TRUE;
-				pRibbonBar->SetFocus();
+				if (pRibbonBar != CWnd::GetFocus())
+				{
+					pRibbonBar->m_bDontSetKeyTips = TRUE;
+					pRibbonBar->SetFocus();
+				}
 			}
 			else
 			{
@@ -741,7 +745,7 @@ void CMFCRibbonEdit::OnSetFocus(BOOL bSet)
 				{
 					ASSERT_VALID(pMenuBar);
 
-					if (pMenuBar->GetParent() != NULL)
+					if (pMenuBar->GetParent() != NULL && pMenuBar->GetParent() != CWnd::GetFocus())
 					{
 						pMenuBar->GetParent()->SetFocus();
 					}
@@ -906,16 +910,14 @@ CMFCRibbonRichEditCtrl::~CMFCRibbonRichEditCtrl()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCRibbonRichEditCtrl)
 BEGIN_MESSAGE_MAP(CMFCRibbonRichEditCtrl, CRichEditCtrl)
 	ON_WM_SETFOCUS()
 	ON_WM_KILLFOCUS()
 	ON_WM_PAINT()
 	ON_WM_CONTEXTMENU()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCRibbonRichEditCtrl::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 	ON_CONTROL_REFLECT(EN_CHANGE, &CMFCRibbonRichEditCtrl::OnChange)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonRichEditCtrl message handlers
@@ -939,7 +941,7 @@ BOOL CMFCRibbonRichEditCtrl::PreTranslateMessage(MSG* pMsg)
 
 	if (pMsg->message == WM_MOUSEMOVE && !m_edit.IsDisabled())
 	{
-		if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0 && GetFocus() != this)
+		if ((GetAsyncKeyState(::GetSystemMetrics(SM_SWAPBUTTON) ? VK_RBUTTON : VK_LBUTTON) & 0x8000) != 0 && GetFocus() != this)
 		{
 			return TRUE;
 		}
@@ -952,9 +954,7 @@ BOOL CMFCRibbonRichEditCtrl::PreTranslateMessage(MSG* pMsg)
 			trackmouseevent.cbSize = sizeof(trackmouseevent);
 			trackmouseevent.dwFlags = TME_LEAVE;
 			trackmouseevent.hwndTrack = GetSafeHwnd();
-			trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-
-			::AFXTrackMouse(&trackmouseevent);
+			TrackMouseEvent(&trackmouseevent);
 
 			RedrawWindow();
 		}
@@ -1100,6 +1100,7 @@ void CMFCRibbonRichEditCtrl::OnSetFocus(CWnd* pOldWnd)
 
 	m_edit.m_bIsEditFocused = TRUE;
 	m_edit.m_bNotifyCommand = TRUE;
+	m_edit.OnSetFocus(TRUE);
 	m_edit.Redraw();
 
 	GetWindowText(m_strOldText);
@@ -1123,6 +1124,8 @@ void CMFCRibbonRichEditCtrl::OnKillFocus(CWnd* pNewWnd)
 		m_edit.NotifyCommand(TRUE); 
 		m_edit.m_bNotifyCommand = TRUE;
 	}
+
+	m_edit.OnSetFocus(FALSE);
 }
 
 void CMFCRibbonRichEditCtrl::OnPaint()
@@ -1149,7 +1152,7 @@ void CMFCRibbonRichEditCtrl::OnPaint()
 	}
 }
 
-LRESULT CMFCRibbonRichEditCtrl::OnMouseLeave(WPARAM,LPARAM)
+void CMFCRibbonRichEditCtrl::OnMouseLeave()
 {
 	if (m_edit.GetParentWnd() != NULL)
 	{
@@ -1163,7 +1166,6 @@ LRESULT CMFCRibbonRichEditCtrl::OnMouseLeave(WPARAM,LPARAM)
 	}
 
 	m_bTracked = FALSE;
-	return 0;
 }
 
 void CMFCRibbonRichEditCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)

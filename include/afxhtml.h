@@ -79,7 +79,7 @@
 #undef AFX_DATA
 #define AFX_DATA AFX_OLE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CHtmlView
 
 class CHtmlView : public CFormView
@@ -183,9 +183,7 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
-	//{{AFX_MSG(CHtmlView)
 	afx_msg void OnFilePrint();
-	//}}AFX_MSG
 
 	// DocHostUIHandler overrideables
 	virtual HRESULT OnShowContextMenu(DWORD dwID, LPPOINT ppt,
@@ -239,8 +237,8 @@ public:
 	/// <summary>
 	/// Called by the framework when it needs to obtain a bitmap to be displayed on Windows 7 tab thumbnail, 
 	/// or on the client for application peek. </summary>
-	/// <description>
-	/// Calls OleDraw to display HTML elements.</description>
+	/// <remarks>
+	/// Calls OleDraw to display HTML elements.</remarks>
 	/// <param name="dc"> Specifies the device context.</param>
 	/// <param name="rect"> Specifies the bounding rectangle of area to render.</param>
 	/// <param name="szRequiredThumbnailSize"> Specifies the size of target thumbnail. Should be ignored if bIsThumbnail is FALSE.</param>
@@ -271,9 +269,7 @@ protected:
 	virtual void NavigateError(LPDISPATCH pDisp, VARIANT* pvURL,
 		VARIANT* pvFrame, VARIANT* pvStatusCode, VARIANT_BOOL* pvbCancel);
 
-// Generated message map functions
 protected:
-	//{{AFX_MSG(CHtmlView)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnPaint();
 	afx_msg void OnDestroy();
@@ -283,7 +279,7 @@ protected:
 	afx_msg void OnUpdateEditCut(CCmdUI* pCmdUI);
 	afx_msg void OnEditPaste();
 	afx_msg void OnUpdateEditPaste(CCmdUI* pCmdUI);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
@@ -330,7 +326,7 @@ public:
 	}
 
 // Implementation
-	STDMETHOD(QueryInterface)(REFIID iid, void **ppUnk)
+	STDMETHOD(QueryInterface)(REFIID iid, __RPC__deref_out void **ppUnk)
 	{
 		if (ppUnk == NULL) 
 		{ 
@@ -357,7 +353,8 @@ public:
 		return (ULONG)1;
 	}
 
-	STDMETHOD(Read)(void *pv, ULONG cb, ULONG *pcbRead)
+#if !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION)
+	STDMETHOD(Read)(_Out_writes_bytes_to_(cb, *pcbRead) void *pv, ULONG cb, _Out_opt_ ULONG *pcbRead)
 	{
 		if (pcbRead)
 			*pcbRead = 0;
@@ -403,7 +400,7 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(Write)(const void *pv, ULONG cb, ULONG *pcbWritten)
+	STDMETHOD(Write)(_In_reads_bytes_(cb) const void *pv, ULONG cb, _Out_opt_ ULONG *pcbWritten)
 	{
 		if (pcbWritten)
 			*pcbWritten = 0;
@@ -456,19 +453,25 @@ public:
 		}
 		return S_OK;
 	}
+#endif
 
-	STDMETHOD(Seek)(LARGE_INTEGER , DWORD , ULARGE_INTEGER *)
+	STDMETHOD(Seek)(LARGE_INTEGER , DWORD , _Out_opt_ ULARGE_INTEGER *plibNewPosition)
 	{
-		return E_NOTIMPL;
+		if (plibNewPosition)
+		{
+			plibNewPosition->QuadPart = 0;
+		}
+
+		return S_OK;
 	}
 
 	STDMETHOD(SetSize)(ULARGE_INTEGER )
 	{
-		return E_NOTIMPL;
+		return S_OK;
 	}
 
-	STDMETHOD(CopyTo)(IStream *, ULARGE_INTEGER , ULARGE_INTEGER *,
-		ULARGE_INTEGER *)
+	STDMETHOD(CopyTo)(_In_ IStream *, ULARGE_INTEGER , _Out_opt_ ULARGE_INTEGER *,
+		_Out_opt_ ULARGE_INTEGER *)
 	{
 		return E_NOTIMPL;
 	}
@@ -494,12 +497,12 @@ public:
 		return E_NOTIMPL;
 	}
 
-	STDMETHOD(Stat)(STATSTG *, DWORD )
+	STDMETHOD(Stat)(__RPC__out STATSTG *, DWORD )
 	{
 		return E_NOTIMPL;
 	}
 
-	STDMETHOD(Clone)(IStream **)
+	STDMETHOD(Clone)(__RPC__deref_out_opt IStream **)
 	{
 		return E_NOTIMPL;
 	}
@@ -511,7 +514,7 @@ protected:
 
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CHtmlEditCtrlBase
 
 template <class T>
@@ -725,23 +728,27 @@ public:
 		if (lStatus & OLECMDF_ENABLED || lStatus & OLECMDF_LATCHED)
 		{
 			if (S_OK == ExecCommand(IDM_GETBLOCKFMTS, OLECMDEXECOPT_DODEFAULT, NULL, &vaRet))
-			{						 
+			{
 				if(vaRet.vt & VT_ARRAY)
 				{
+					// IHTMLDocument should be returning VT_ARRAY | VT_BSTR in the variant, so that it can
+					// be properly cleared.  Assume if VT_ARRAY is set, that VT_BSTR should be set also.
+					vaRet.vt |= VT_BSTR;
+
 					SAFEARRAY *psa = vaRet.parray;
-					
+
 					long lBound = 0,uBound = 0;
 					if(S_OK == SafeArrayGetLBound(psa,1,&lBound) &&
 					   S_OK == SafeArrayGetUBound(psa,1,&uBound) )
 					{
 						for(long i=lBound; i<=uBound; i++)
-						{	
+						{
 							CComBSTR bstrElem;
 							if( (S_OK == SafeArrayGetElement(psa, &i, &bstrElem) ))
 							{
 								sa.Add(CString(bstrElem));
 							}
-						}		
+						}
 						hr = S_OK;
 					}
 				}
@@ -1549,7 +1556,7 @@ public:
 	}
 }; //CHtmlEditCtrlBase
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CHtmlEditCtrl
 class CHtmlEditCtrl:
 	public CWnd,
@@ -1584,7 +1591,7 @@ protected:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CHtmlEditView
 #define AFX_INVALID_DHTML_CMD_ID 0xFFFFFFFF
 #define AFX_UI_ELEMTYPE_NORMAL	0

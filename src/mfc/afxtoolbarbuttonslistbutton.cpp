@@ -46,7 +46,6 @@ CMFCToolBarButtonsListButton::~CMFCToolBarButtonsListButton()
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarButtonsListButton, CButton)
-	//{{AFX_MSG_MAP(CMFCToolBarButtonsListButton)
 	ON_WM_ERASEBKGND()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_VSCROLL()
@@ -56,7 +55,6 @@ BEGIN_MESSAGE_MAP(CMFCToolBarButtonsListButton, CButton)
 	ON_WM_CTLCOLOR()
 	ON_WM_KEYDOWN()
 	ON_WM_GETDLGCODE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -67,7 +65,7 @@ BOOL CMFCToolBarButtonsListButton::OnEraseBkgnd(CDC* pDC)
 	CRect rectClient; // Client area rectangle
 	GetClientRect(&rectClient);
 
-	pDC->FillSolidRect(&rectClient, IsWindowEnabled() ? afxGlobalData.clrWindow : afxGlobalData.clrBtnFace);
+	pDC->FillSolidRect(&rectClient, IsWindowEnabled() ? GetGlobalData()->clrWindow : GetGlobalData()->clrBtnFace);
 	return TRUE;
 }
 
@@ -83,7 +81,7 @@ void CMFCToolBarButtonsListButton::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 
 	if (m_pImages != NULL)
 	{
-		m_pImages->SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_pImages->SetTransparentColor(GetGlobalData()->clrBtnFace);
 
 		CAfxDrawState ds;
 		if (!m_pImages->PrepareDrawImage(ds))

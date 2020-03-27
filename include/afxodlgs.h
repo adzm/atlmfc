@@ -61,7 +61,7 @@
 #undef AFX_DATA
 #define AFX_DATA AFX_OLE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleUILinkInfo -- used internally to implement
 // IOleUILinkInfo and IOleUILinkContainer
 // used by COleLinksDialog and COleChangeSourceDialog
@@ -89,8 +89,8 @@ public:
 	STDMETHOD_(DWORD,GetNextLink)(DWORD);
 	STDMETHOD(SetLinkUpdateOptions)(DWORD, DWORD);
 	STDMETHOD(GetLinkUpdateOptions)(DWORD, LPDWORD);
-	STDMETHOD(SetLinkSource)(DWORD, _In_count_(_LenFileName) LPTSTR, ULONG _LenFileName, ULONG*, BOOL);
-	STDMETHOD(GetLinkSource)(DWORD, _Deref_out_ LPTSTR*, ULONG*, _Deref_out_ LPTSTR*, _Deref_out_ LPTSTR*, BOOL*,
+	STDMETHOD(SetLinkSource)(DWORD, _In_reads_(_LenFileName) LPTSTR, ULONG _LenFileName, ULONG*, BOOL);
+	STDMETHOD(GetLinkSource)(DWORD, _Outptr_ LPTSTR*, ULONG*, _Outptr_ LPTSTR*, _Outptr_ LPTSTR*, BOOL*,
 		BOOL*);
 	STDMETHOD(OpenLinkSource)(DWORD);
 	STDMETHOD(UpdateLink)(DWORD, BOOL, BOOL);
@@ -102,7 +102,7 @@ private:
 	COleClientItem* GetLinkItem(DWORD dwLink);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Wrappers for OLE UI dialogs
 
 class AFX_NOVTABLE COleDialog : public CCommonDialog
@@ -126,7 +126,7 @@ protected:
 	UINT m_nLastError;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleInsertDialog
 
 class COleInsertDialog : public COleDialog
@@ -138,7 +138,7 @@ public:
 	OLEUIINSERTOBJECT m_io; // structure for OleUIInsertObject
 
 // Constructors
-	/* explicit */ COleInsertDialog(DWORD dwFlags = IOF_SELECTCREATENEW,
+	explicit COleInsertDialog(DWORD dwFlags = IOF_SELECTCREATENEW,
 		CWnd* pParentWnd = NULL);
 
 // Operations
@@ -180,7 +180,7 @@ protected:
 		int& nBufferLen, LPCLSID pNewID);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleConvertDialog
 
 class COleConvertDialog : public COleDialog
@@ -218,7 +218,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleChangeIconDialog
 
 class COleChangeIconDialog : public COleDialog
@@ -249,7 +249,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COlePasteSpecialDialog
 
 class COlePasteSpecialDialog : public COleDialog
@@ -261,7 +261,7 @@ public:
 	OLEUIPASTESPECIAL m_ps; // structure for OleUIPasteSpecial
 
 // Constructors
-	/* explicit */ COlePasteSpecialDialog(DWORD dwFlags = PSF_SELECTPASTE,
+	explicit COlePasteSpecialDialog(DWORD dwFlags = PSF_SELECTPASTE,
 		COleDataObject* pDataObject = NULL, CWnd *pParentWnd = NULL);
 
 // Operations
@@ -299,7 +299,7 @@ public:
 		// size limit imposed by MFCUIx32.DLL library
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleLinksDialog
 
 class COleLinksDialog : public COleDialog
@@ -329,7 +329,7 @@ public:
 	COleUILinkInfo m_xLinkInfo; // implements IOleUILinkContainer
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleUpdateDialog
 
 class COleUpdateDialog : public COleLinksDialog
@@ -356,7 +356,7 @@ protected:
 	CString m_strCaption;   // caption for the dialog
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleBusyDialog - useful in managing concurrency
 
 class COleBusyDialog : public COleDialog
@@ -388,7 +388,7 @@ protected:
 	Selection m_selection;  // selection after DoModal returns IDOK
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleEditProperties
 
 class COlePropertiesDialog : public COleDialog
@@ -445,7 +445,7 @@ public:
 	COleUILinkInfo m_xLinkInfo; // implements IOleUILinkContainer
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleChangeSourceDialog
 
 class COleChangeSourceDialog : public COleDialog
@@ -483,7 +483,7 @@ public:
 	virtual void PreInitDialog();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Inline function declarations
 
 #ifdef _AFX_PACKING

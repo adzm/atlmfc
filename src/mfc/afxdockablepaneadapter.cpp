@@ -19,8 +19,6 @@
 #define new DEBUG_NEW
 #endif
 
-static const CString strControlBarProfile = _T("Panes");
-
 #define AFX_REG_SECTION_FMT _T("%sDockablePaneAdapter-%d")
 #define AFX_REG_SECTION_FMT_EX _T("%sDockablePaneAdapter-%d%x")
 
@@ -41,9 +39,7 @@ CDockablePaneAdapter::~CDockablePaneAdapter()
 }
 
 BEGIN_MESSAGE_MAP(CDockablePaneAdapter, CDockablePane)
-	//{{AFX_MSG_MAP(CDockablePaneAdapter)
 	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -88,7 +84,7 @@ BOOL CDockablePaneAdapter::SetWrappedWnd(CWnd* pWnd)
 //------------------------------------------------------------------------------------
 BOOL CDockablePaneAdapter::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strControlBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_CONTROL_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -120,7 +116,7 @@ BOOL CDockablePaneAdapter::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT u
 //------------------------------------------------------------------------------------
 BOOL CDockablePaneAdapter::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strControlBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_CONTROL_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{

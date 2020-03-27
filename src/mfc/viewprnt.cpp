@@ -18,9 +18,7 @@
 class CPrintingDialog : public CDialog
 {
 public:
-	//{{AFX_DATA(CPrintingDialog)
 	enum { IDD = AFX_IDD_PRINTDLG };
-	//}}AFX_DATA
 	CPrintingDialog::CPrintingDialog(CWnd* pParent)
 		{
 			Create(CPrintingDialog::IDD, pParent);      // modeless !

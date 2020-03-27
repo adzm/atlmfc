@@ -16,7 +16,6 @@
 #endif
 
 #include <AtlConv.h>
-#include "afxglobals.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // lpszCanon = C:\MYAPP\DEBUGS\C\TESWIN.C
@@ -41,7 +40,7 @@ AFX_STATIC void AFXAPI _AfxAbbreviateName(_Inout_z_ LPTSTR lpszCanon, int cchMax
 	const TCHAR* lpszFileName;
 
 	lpszBase = lpszCanon;
-	cchFullPath = lstrlen(lpszCanon);
+	cchFullPath = AtlStrLen(lpszCanon);
 
 	cchFileName = AfxGetFileName(lpszCanon, NULL, 0) - 1;
 	lpszFileName = lpszBase + (cchFullPath-cchFileName);
@@ -106,8 +105,8 @@ AFX_STATIC void AFXAPI _AfxAbbreviateName(_Inout_z_ LPTSTR lpszCanon, int cchMax
 	// Assert that the whole filename doesn't fit -- this should have been
 	// handled earlier.
 
-	ASSERT(cchVolName + (int)lstrlen(lpszCur) > cchMax);
-	while (cchVolName + 4 + (int)lstrlen(lpszCur) > cchMax)
+	ASSERT(cchVolName + AtlStrLen(lpszCur) > cchMax);
+	while (cchVolName + 4 + AtlStrLen(lpszCur) > cchMax)
 	{
 		do
 		{
@@ -159,7 +158,7 @@ void CRecentFileList::Add(LPCTSTR lpszPathName)
 
 	// fully qualify the path name
 	TCHAR szTemp[_MAX_PATH];
-	if ( lpszPathName == NULL || lstrlen(lpszPathName) >= _MAX_PATH )
+	if ( lpszPathName == NULL || _tcslen(lpszPathName) >= _MAX_PATH )
 	{
 		ASSERT(FALSE);
 		// MFC requires paths with length < _MAX_PATH
@@ -196,7 +195,8 @@ void CRecentFileList::Add(LPCTSTR lpszPathName)
 
 void CRecentFileList::Add(LPCTSTR lpszPathName, LPCTSTR lpszAppID)
 {
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		Add(lpszPathName);
 		return;
@@ -213,12 +213,12 @@ void CRecentFileList::Add(LPCTSTR lpszPathName, LPCTSTR lpszAppID)
 	CComPtr<IShellItem> psi = NULL;
 
 #ifdef UNICODE
-	hr = afxGlobalData.ShellCreateItemFromParsingName(lpszPathName, NULL, IID_IShellItem, reinterpret_cast<void**>(&psi));
+	hr = _AfxSHCreateItemFromParsingName(lpszPathName, NULL, IID_IShellItem, reinterpret_cast<void**>(&psi));
 #else
 	{
 		USES_CONVERSION;
 		LPOLESTR lpWPath = A2W(lpszPathName);
-		hr = afxGlobalData.ShellCreateItemFromParsingName(lpWPath, NULL, IID_IShellItem, (LPVOID*)&psi);
+		hr = _AfxSHCreateItemFromParsingName(lpWPath, NULL, IID_IShellItem, (LPVOID*)&psi);
 	}
 #endif
 
@@ -229,7 +229,8 @@ void CRecentFileList::Add(LPCTSTR lpszPathName, LPCTSTR lpszAppID)
 }
 void CRecentFileList::Add(IShellItem* pItem, LPCTSTR lpszAppID)
 {
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return;
 	}
@@ -262,7 +263,8 @@ void CRecentFileList::Add(IShellItem* pItem, LPCTSTR lpszAppID)
 
 void CRecentFileList::Add(IShellLink* pLink, LPCTSTR lpszAppID)
 {
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return;
 	}
@@ -298,7 +300,8 @@ void CRecentFileList::Add(IShellLink* pLink, LPCTSTR lpszAppID)
 
 void CRecentFileList::Add(PIDLIST_ABSOLUTE pidl, LPCTSTR lpszAppID)
 {
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return;
 	}
@@ -415,7 +418,7 @@ void CRecentFileList::UpdateMenu(CCmdUI* pCmdUI)
 	if( dwDirLen == 0 || dwDirLen >= _MAX_PATH )
 		return;	// Path too long
 
-	int nCurDir = lstrlen(szCurDir);
+	int nCurDir = AtlStrLen(szCurDir);
 	ASSERT(nCurDir >= 0);
 	szCurDir[nCurDir] = '\\';
 	szCurDir[++nCurDir] = '\0';

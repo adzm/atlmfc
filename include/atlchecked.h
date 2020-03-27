@@ -61,34 +61,34 @@ namespace Checked
 #endif
 
 inline void __cdecl memcpy_s(
-	_Out_bytecap_post_bytecount_(_S1max,_N)  void *_S1,
+	_Out_writes_bytes_to_(_S1max,_N)  void *_S1,
 	_In_ size_t _S1max,
-	_In_bytecount_(_N) const void *_S2,
+	_In_reads_bytes_(_N) const void *_S2,
 	_In_ size_t _N)
 {
 	ATLMFC_CRT_ERRORCHECK(::memcpy_s(_S1, _S1max, _S2, _N));
 }
 
 inline void __cdecl wmemcpy_s(
-	_Out_cap_post_count_(_N1,_N) wchar_t *_S1,
+	_Out_writes_to_(_N1,_N) wchar_t *_S1,
 	_In_ size_t _N1,
-	_In_count_(_N) const wchar_t *_S2,
+	_In_reads_(_N) const wchar_t *_S2,
 	_In_ size_t _N)
 {
 	ATLMFC_CRT_ERRORCHECK(::wmemcpy_s(_S1, _N1, _S2, _N));
 }
 
 inline void __cdecl memmove_s(
-	_Out_bytecap_post_bytecount_(_S1max,_N) void *_S1,
+	_Out_writes_bytes_to_(_S1max,_N) void *_S1,
 	_In_ size_t _S1max,
-	_In_bytecount_(_N) const void *_S2,
+	_In_reads_bytes_(_N) const void *_S2,
 	_In_ size_t _N)
 {
 	ATLMFC_CRT_ERRORCHECK(::memmove_s(_S1, _S1max, _S2, _N));
 }
 
 inline void __cdecl strcpy_s(
-	_Out_z_cap_(_S1max) char *_S1,
+	_Out_writes_z_(_S1max) char *_S1,
 	_In_ size_t _S1max,
 	_In_z_ const char *_S2)
 {
@@ -96,7 +96,7 @@ inline void __cdecl strcpy_s(
 }
 
 inline void __cdecl wcscpy_s(
-	_Out_z_cap_(_S1max) wchar_t *_S1,
+	_Out_writes_z_(_S1max) wchar_t *_S1,
 	_In_ size_t _S1max,
 	_In_z_ const wchar_t *_S2)
 {
@@ -104,7 +104,7 @@ inline void __cdecl wcscpy_s(
 }
 
 inline void __cdecl tcscpy_s(
-	_Out_z_cap_(_SizeInChars) TCHAR * _Dst,
+	_Out_writes_z_(_SizeInChars) TCHAR * _Dst,
 	_In_ size_t _SizeInChars,
 	_In_z_ const TCHAR * _Src)
 {
@@ -112,7 +112,7 @@ inline void __cdecl tcscpy_s(
 }
 
 inline errno_t __cdecl strncpy_s(
-	_Out_z_cap_(_SizeInChars) char *_Dest,
+	_Out_writes_z_(_SizeInChars) char *_Dest,
 	_In_ size_t _SizeInChars,
 	_In_z_ const char *_Source,
 	_In_ size_t _Count)
@@ -121,7 +121,7 @@ inline errno_t __cdecl strncpy_s(
 }
 
 inline errno_t __cdecl wcsncpy_s(
-	_Out_z_cap_(_SizeInChars) wchar_t *_Dest,
+	_Out_writes_z_(_SizeInChars) wchar_t *_Dest,
 	_In_ size_t _SizeInChars,
 	_In_z_ const wchar_t *_Source,
 	_In_ size_t _Count)
@@ -130,7 +130,7 @@ inline errno_t __cdecl wcsncpy_s(
 }
 
 inline errno_t __cdecl tcsncpy_s(
-	_Out_z_cap_(_SizeInChars) TCHAR *_Dest,
+	_Out_writes_z_(_SizeInChars) TCHAR *_Dest,
 	_In_ size_t _SizeInChars,
 	_In_z_ const TCHAR *_Source,
 	_In_ size_t _Count)
@@ -139,7 +139,7 @@ inline errno_t __cdecl tcsncpy_s(
 }
 
 inline void __cdecl strcat_s(
-	_Inout_z_cap_(_SizeInChars) char * _Dst,
+	_Inout_updates_z_(_SizeInChars) char * _Dst,
 	_In_ size_t _SizeInChars,
 	_In_z_ const char * _Src)
 {
@@ -147,7 +147,7 @@ inline void __cdecl strcat_s(
 }
 
 inline void __cdecl wcscat_s(
-	_Inout_z_cap_(_SizeInChars) wchar_t * _Dst,
+	_Inout_updates_z_(_SizeInChars) wchar_t * _Dst,
 	_In_ size_t _SizeInChars,
 	_In_z_ const wchar_t * _Src)
 {
@@ -155,7 +155,7 @@ inline void __cdecl wcscat_s(
 }
 
 inline void __cdecl tcscat_s(
-	_Inout_z_cap_(_SizeInChars) TCHAR * _Dst,
+	_Inout_updates_z_(_SizeInChars) TCHAR * _Dst,
 	_In_ size_t _SizeInChars,
 	_In_z_ const TCHAR * _Src)
 {
@@ -163,56 +163,60 @@ inline void __cdecl tcscat_s(
 }
 
 inline void __cdecl strlwr_s(
-	_Inout_z_cap_(_SizeInChars) char * _Str,
+	_Inout_updates_z_(_SizeInChars) char * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_strlwr_s(_Str, _SizeInChars));
 }
 
 inline void __cdecl wcslwr_s(
-	_Inout_z_cap_(_SizeInChars) wchar_t * _Str,
+	_Inout_updates_z_(_SizeInChars) wchar_t * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_wcslwr_s(_Str, _SizeInChars));
 }
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 inline void __cdecl mbslwr_s(
-	_Inout_z_bytecap_(_SizeInChars) unsigned char * _Str,
+	_Inout_updates_z_(_SizeInChars) unsigned char * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_mbslwr_s(_Str, _SizeInChars));
 }
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 inline void __cdecl tcslwr_s(
-	_Inout_z_cap_(_SizeInChars) TCHAR * _Str,
+	_Inout_updates_z_(_SizeInChars) TCHAR * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_tcslwr_s(_Str, _SizeInChars));
 }
 
 inline void __cdecl strupr_s(
-	_Inout_z_cap_(_SizeInChars) char * _Str,
+	_Inout_updates_z_(_SizeInChars) char * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_strupr_s(_Str, _SizeInChars));
 }
 
 inline void __cdecl wcsupr_s(
-	_Inout_z_cap_(_SizeInChars) wchar_t * _Str,
+	_Inout_updates_z_(_SizeInChars) wchar_t * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_wcsupr_s(_Str, _SizeInChars));
 }
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 inline void __cdecl mbsupr_s(
 	_Inout_z_bytecap_(_SizeInChars) unsigned char * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_mbsupr_s(_Str, _SizeInChars));
 }
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 inline void __cdecl tcsupr_s(
-	_Inout_z_cap_(_SizeInChars) TCHAR * _Str,
+	_Inout_updates_z_(_SizeInChars) TCHAR * _Str,
 	_In_ size_t _SizeInChars)
 {
 	ATLMFC_CRT_ERRORCHECK(::_tcsupr_s(_Str, _SizeInChars));
@@ -220,7 +224,7 @@ inline void __cdecl tcsupr_s(
 
 inline void __cdecl itoa_s(
 	_In_ int _Val,
-	_Out_z_cap_(_SizeInChars) char *_Buf,
+	_Out_writes_z_(_SizeInChars) char *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -229,7 +233,7 @@ inline void __cdecl itoa_s(
 
 inline void __cdecl itot_s(
 	_In_ int _Val,
-	_Out_z_cap_(_SizeInChars) TCHAR *_Buf,
+	_Out_writes_z_(_SizeInChars) TCHAR *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -238,7 +242,7 @@ inline void __cdecl itot_s(
 
 inline void __cdecl ltoa_s(
 	_In_ long _Val,
-	_Out_z_cap_(_SizeInChars) char *_Buf,
+	_Out_writes_z_(_SizeInChars) char *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -247,7 +251,7 @@ inline void __cdecl ltoa_s(
 
 inline void __cdecl ltot_s(
 	_In_ long _Val,
-	_Out_z_cap_(_SizeInChars) TCHAR *_Buf,
+	_Out_writes_z_(_SizeInChars) TCHAR *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -256,7 +260,7 @@ inline void __cdecl ltot_s(
 
 inline void __cdecl ultoa_s(
 	_In_ unsigned long _Val,
-	_Out_z_cap_(_SizeInChars) char *_Buf,
+	_Out_writes_z_(_SizeInChars) char *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -265,7 +269,7 @@ inline void __cdecl ultoa_s(
 
 inline void __cdecl ultow_s(
 	_In_ unsigned long _Val,
-	_Out_z_cap_(_SizeInChars) wchar_t *_Buf,
+	_Out_writes_z_(_SizeInChars) wchar_t *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -274,7 +278,7 @@ inline void __cdecl ultow_s(
 
 inline void __cdecl ultot_s(
 	_In_ unsigned long _Val,
-	_Out_z_cap_(_SizeInChars) TCHAR *_Buf,
+	_Out_writes_z_(_SizeInChars) TCHAR *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -283,7 +287,7 @@ inline void __cdecl ultot_s(
 
 inline void __cdecl i64toa_s(
 	_In_ __int64 _Val,
-	_Out_z_cap_(_SizeInChars) char *_Buf,
+	_Out_writes_z_(_SizeInChars) char *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -292,7 +296,7 @@ inline void __cdecl i64toa_s(
 
 inline void __cdecl i64tow_s(
 	_In_ __int64 _Val,
-	_Out_z_cap_(_SizeInChars) wchar_t *_Buf,
+	_Out_writes_z_(_SizeInChars) wchar_t *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -301,7 +305,7 @@ inline void __cdecl i64tow_s(
 
 inline void __cdecl ui64toa_s(
 	_In_ unsigned __int64 _Val,
-	_Out_z_cap_(_SizeInChars) char *_Buf,
+	_Out_writes_z_(_SizeInChars) char *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -310,7 +314,7 @@ inline void __cdecl ui64toa_s(
 
 inline void __cdecl ui64tow_s(
 	_In_ unsigned __int64 _Val,
-	_Out_z_cap_(_SizeInChars) wchar_t *_Buf,
+	_Out_writes_z_(_SizeInChars) wchar_t *_Buf,
 	_In_ size_t _SizeInChars,
 	_In_ int _Radix)
 {
@@ -318,7 +322,7 @@ inline void __cdecl ui64tow_s(
 }
 
 inline void __cdecl gcvt_s(
-	_Out_z_cap_(_SizeInChars) char *_Buffer,
+	_Out_writes_z_(_SizeInChars) char *_Buffer,
 	_In_ size_t _SizeInChars,
 	_In_ double _Value,
 	_In_ int _Ndec)
@@ -328,20 +332,20 @@ inline void __cdecl gcvt_s(
 
 inline void __cdecl tsplitpath_s(
 	_In_z_ const TCHAR *_Path,
-	_Out_opt_z_cap_(_Drive_len) TCHAR *_Drive,
+	_Out_writes_opt_z_(_Drive_len) TCHAR *_Drive,
 	_In_ size_t _Drive_len,
-	_Out_opt_z_cap_(_Dir_len) TCHAR *_Dir,
+	_Out_writes_opt_z_(_Dir_len) TCHAR *_Dir,
 	_In_ size_t _Dir_len,
-	_Out_opt_z_cap_(_Fname_len) TCHAR *_Fname,
+	_Out_writes_opt_z_(_Fname_len) TCHAR *_Fname,
 	_In_ size_t _Fname_len,
-	_Out_opt_z_cap_(_Ext_len) TCHAR *_Ext,
+	_Out_writes_opt_z_(_Ext_len) TCHAR *_Ext,
 	_In_ size_t _Ext_len)
 {
 	ATLMFC_CRT_ERRORCHECK(::_tsplitpath_s(_Path, _Drive, _Drive_len, _Dir, _Dir_len, _Fname, _Fname_len, _Ext, _Ext_len));
 }
 
 inline void __cdecl tmakepath_s(
-	_Out_z_cap_(_SizeInChars) TCHAR *_Path,
+	_Out_writes_z_(_SizeInChars) TCHAR *_Path,
 	_In_ size_t _SizeInChars,
 	_In_z_ const TCHAR *_Drive,
 	_In_z_ const TCHAR *_Dir,
@@ -352,21 +356,21 @@ inline void __cdecl tmakepath_s(
 }
 
 inline size_t __cdecl strnlen(
-	_In_z_count_(_Maxsize) const char *_Str,
+	_In_reads_z_(_Maxsize) const char *_Str,
 	_In_ size_t _Maxsize)
 {
 	return ::strnlen(_Str, _Maxsize);
 }
 
 inline size_t __cdecl wcsnlen(
-	_In_z_count_(_Maxsize) const wchar_t *_Wcs,
+	_In_reads_z_(_Maxsize) const wchar_t *_Wcs,
 	_In_ size_t _Maxsize)
 {
 	return ::wcsnlen(_Wcs, _Maxsize);
 }
 
 inline size_t __cdecl tcsnlen(
-	_In_z_count_(_Maxsize) const TCHAR *_Str,
+	_In_reads_z_(_Maxsize) const TCHAR *_Str,
 	_In_ size_t _Maxsize)
 {
 	return ::_tcsnlen(_Str, _Maxsize);

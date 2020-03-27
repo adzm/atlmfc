@@ -39,7 +39,7 @@ static const int nTopEdgeHeight = 4;
 
 void CMFCOutlookBarScrollButton::OnFillBackground(CDC* pDC, const CRect& rectClient)
 {
-	CMFCVisualManager::GetInstance()->OnFillOutlookPageButton(pDC, rectClient, m_bHighlighted, m_bPushed, afxGlobalData.clrBarText);
+	CMFCVisualManager::GetInstance()->OnFillOutlookPageButton(pDC, rectClient, m_bHighlighted, m_bPushed, GetGlobalData()->clrBarText);
 }
 
 void CMFCOutlookBarScrollButton::OnDrawBorder(CDC* pDC, CRect& rectClient, UINT /*uiState*/)
@@ -126,11 +126,9 @@ CMFCOutlookBarToolBar::CMFCOutlookBarToolBar(CMFCOutlookBarTabCtrl* pParentBar) 
 }
 
 BEGIN_MESSAGE_MAP(CMFCOutlookBarToolBar, CMFCToolBar)
-	//{{AFX_MSG_MAP(CMFCOutlookBarToolBar)
 	ON_WM_SETCURSOR()
 	ON_WM_NCCALCSIZE()
 	ON_WM_NCPAINT()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CMFCOutlookBarToolBar::OnSendCommand(const CMFCToolBarButton* pButton)
@@ -182,7 +180,7 @@ BOOL CMFCOutlookBarToolBar::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 	if (HitTest(ptCursor) >= 0)
 	{
-		::SetCursor(afxGlobalData.GetHandCursor());
+		::SetCursor(GetGlobalData()->GetHandCursor());
 		return TRUE;
 	}
 
@@ -197,7 +195,7 @@ BOOL CMFCOutlookBarToolBar::OnUserToolTip(CMFCToolBarButton* pButton, CString& s
 
 void CMFCOutlookBarToolBar::AdjustLocations()
 {
-	const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+	const double dblImageScale = GetGlobalData()->GetRibbonImageScale();
 
 	CSize sizeImage = GetImageSize();
 	if (sizeImage == CSize(0, 0))
@@ -320,7 +318,6 @@ CMFCOutlookBarTabCtrl::~CMFCOutlookBarTabCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCOutlookBarTabCtrl, CMFCBaseTabCtrl)
-	//{{AFX_MSG_MAP(CMFCOutlookBarTabCtrl)
 	ON_WM_SIZE()
 	ON_WM_PAINT()
 	ON_WM_SETCURSOR()
@@ -332,7 +329,6 @@ BEGIN_MESSAGE_MAP(CMFCOutlookBarTabCtrl, CMFCBaseTabCtrl)
 	ON_WM_CANCELMODE()
 	ON_COMMAND_RANGE(idShowMoreButtons, idShowMoreButtons + 10, &CMFCOutlookBarTabCtrl::OnToolbarCommand)
 	ON_UPDATE_COMMAND_UI_RANGE(idShowMoreButtons, idShowMoreButtons + 10, &CMFCOutlookBarTabCtrl::OnUpdateToolbarCommand)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -421,7 +417,7 @@ void CMFCOutlookBarTabCtrl::RecalcLayout()
 			sizeImage.cy = 16;
 		}
 
-		const double dblImageScale = afxGlobalData.GetRibbonImageScale();
+		const double dblImageScale = GetGlobalData()->GetRibbonImageScale();
 
 		int nVertMargin = 6 + 2 * nToolbarMarginHeight - 2;
 		if (dblImageScale != 1.)
@@ -461,7 +457,7 @@ void CMFCOutlookBarTabCtrl::RecalcLayout()
 		int nVisiblePageButtons = min(m_nMaxVisiblePageButtons, m_nVisiblePageButtons);
 
 		m_rectCaption = rectClient;
-		m_rectCaption.bottom = m_rectCaption.top + afxGlobalData.GetTextHeight() + 2 * CMFCBaseTabCtrl::AFX_TAB_TEXT_MARGIN;
+		m_rectCaption.bottom = m_rectCaption.top + GetGlobalData()->GetTextHeight() + 2 * CMFCBaseTabCtrl::AFX_TAB_TEXT_MARGIN;
 		m_rectCaption.top += nTopEdgeHeight - 1;
 
 		m_rectSplitter = rectClient;
@@ -654,7 +650,7 @@ BOOL CMFCOutlookBarTabCtrl::SetActiveTab(int iTab)
 		bAnimate = FALSE;
 	}
 
-	if (afxGlobalData.bIsRemoteSession)
+	if (GetGlobalData()->bIsRemoteSession)
 	{
 		// Disable animation in Terminal Services Environment
 		bAnimate = FALSE;
@@ -737,7 +733,7 @@ BOOL CMFCOutlookBarTabCtrl::SetActiveTab(int iTab)
 
 		CClientDC dc(this);
 
-		CFont* pOldFont = (CFont*) dc.SelectObject(&afxGlobalData.fontRegular);
+		CFont* pOldFont = (CFont*) dc.SelectObject(&(GetGlobalData()->fontRegular));
 		dc.SetBkMode(TRANSPARENT);
 
 		int nStartBtnIdx = bMoveDown ? m_iActiveTab + 1 : iOldActiveTab + 1;
@@ -764,7 +760,7 @@ BOOL CMFCOutlookBarTabCtrl::SetActiveTab(int iTab)
 				DrawTabButton(dc, j, FALSE);
 			}
 
-			dc.FillRect(rectOld, &afxGlobalData.brBarFace);
+			dc.FillRect(rectOld, &(GetGlobalData()->brBarFace));
 			rectOld.OffsetRect(0, dy);
 
 			Sleep(10);
@@ -918,14 +914,14 @@ void CMFCOutlookBarTabCtrl::OnPaint()
 	CRect rectClient;
 	GetClientRect(rectClient);
 
-	dc.FillRect(rectClient, &afxGlobalData.brBarFace);
+	dc.FillRect(rectClient, &(GetGlobalData()->brBarFace));
 
 	//-------------
 	// Draw border:
 	//-------------
 	if (m_nBorderSize > 0)
 	{
-		CBrush* pOldBrush = dc.SelectObject(&afxGlobalData.brBarFace);
+		CBrush* pOldBrush = dc.SelectObject(&(GetGlobalData()->brBarFace));
 		ENSURE(pOldBrush != NULL);
 
 		dc.PatBlt(rectClient.left, rectClient.top, m_nBorderSize, rectClient.Height(), PATCOPY);
@@ -938,9 +934,9 @@ void CMFCOutlookBarTabCtrl::OnPaint()
 		rectClient.DeflateRect(m_nBorderSize, m_nBorderSize);
 	}
 
-	dc.Draw3dRect(rectClient, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	dc.Draw3dRect(rectClient, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 
-	CPen penDrak(PS_SOLID, 1, afxGlobalData.clrBarShadow);
+	CPen penDrak(PS_SOLID, 1, GetGlobalData()->clrBarShadow);
 	CPen* pOldPen = (CPen*) dc.SelectObject(&penDrak);
 	ENSURE(pOldPen != NULL);
 
@@ -949,7 +945,7 @@ void CMFCOutlookBarTabCtrl::OnPaint()
 
 	CMFCOutlookBar* pOutlookBar = DYNAMIC_DOWNCAST(CMFCOutlookBar, GetParent());
 
-	CFont* pOldFont = (CFont*) dc.SelectObject( pOutlookBar != NULL && pOutlookBar->GetButtonsFont() != NULL ? pOutlookBar->GetButtonsFont() : &afxGlobalData.fontRegular);
+	CFont* pOldFont = (CFont*) dc.SelectObject( pOutlookBar != NULL && pOutlookBar->GetButtonsFont() != NULL ? pOutlookBar->GetButtonsFont() : &(GetGlobalData()->fontRegular));
 	dc.SetBkMode(TRANSPARENT);
 
 	if (nVisibleTabsNum > 1 || !IsHideSingleTab())
@@ -969,9 +965,9 @@ void CMFCOutlookBarTabCtrl::OnPaint()
 		rectTop.top -= nTopEdgeHeight + 1;
 		rectTop.bottom = rectTop.top + nTopEdgeHeight + 1;
 
-		dc.FillRect(rectTop, &afxGlobalData.brBarFace);
+		dc.FillRect(rectTop, &(GetGlobalData()->brBarFace));
 
-		COLORREF clrText = afxGlobalData.clrBarText;
+		COLORREF clrText = GetGlobalData()->clrBarText;
 		CMFCVisualManager::GetInstance()->OnFillOutlookBarCaption(&dc, m_rectCaption, clrText);
 
 		CString strActivePage;
@@ -1000,7 +996,7 @@ void CMFCOutlookBarTabCtrl::OnPaint()
 			CRect rectFill = rectClient;
 			rectFill.top = rectFill.bottom - m_nTabsHeight;
 
-			dc.FillRect(rectFill, &afxGlobalData.brBarFace);
+			dc.FillRect(rectFill, &(GetGlobalData()->brBarFace));
 		}
 	}
 
@@ -1029,7 +1025,7 @@ void CMFCOutlookBarTabCtrl::DrawTabButton(CDC& dc, int iButtonIdx, BOOL bDrawPre
 		bIsPressed = TRUE;
 	}
 
-	COLORREF clrBtnText = afxGlobalData.clrBarText;
+	COLORREF clrBtnText = GetGlobalData()->clrBarText;
 
 	CMFCVisualManager::GetInstance()->OnFillOutlookPageButton(&dc, rectBtn, bIsHighlighted, bIsPressed, clrBtnText);
 
@@ -1197,7 +1193,7 @@ BOOL CMFCOutlookBarTabCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 	if (GetTabFromPoint(ptCursor) >= 0)
 	{
-		::SetCursor(afxGlobalData.GetHandCursor());
+		::SetCursor(GetGlobalData()->GetHandCursor());
 		return TRUE;
 	}
 
@@ -1528,9 +1524,12 @@ void CMFCOutlookBarTabCtrl::RebuildToolBar()
 			HICON hIcon = NULL;
 			UINT uiIcon = GetTabIcon(i);
 
+			BOOL bDestroyIcon = FALSE;
+
 			if (m_imagesToolbar.GetSafeHandle() != NULL)
 			{
 				hIcon = m_imagesToolbar.ExtractIcon(uiIcon);
+				bDestroyIcon = hIcon != NULL;
 			}
 			else
 			{
@@ -1543,11 +1542,18 @@ void CMFCOutlookBarTabCtrl::RebuildToolBar()
 					if (pImageList != NULL && uiIcon != (UINT)-1)
 					{
 						hIcon = pImageList->ExtractIcon(uiIcon);
+						bDestroyIcon = hIcon != NULL;
 					}
 				}
 			}
 
 			m_wndToolBar.m_ImagesLocked.AddIcon(hIcon);
+
+			if (bDestroyIcon && hIcon != NULL)
+			{
+				::DestroyIcon(hIcon);
+			}
+
 			nButtonNum++;
 		}
 	}
@@ -1690,27 +1696,20 @@ public:
 	COutlookOptionsDlg(CMFCOutlookBarTabCtrl& parentBar);   // standard constructor
 
 	// Dialog Data
-	//{{AFX_DATA(COutlookOptionsDlg)
 	enum { IDD = IDD_AFXBARRES_OUTLOOKBAR_OPTIONS };
 	CButton m_btnMoveUp;
 	CButton m_wndMoveDown;
 	CButton m_wndReset;
 	CMFCToolBarsListCheckBox m_wndList;
-	//}}AFX_DATA
-
 
 	// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(COutlookOptionsDlg)
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
 
 	// Implementation
 protected:
 
 	// Generated message map functions
-	//{{AFX_MSG(COutlookOptionsDlg)
 	afx_msg void OnSelchange();
 	afx_msg void OnDblclkList();
 	afx_msg void OnMoveDown();
@@ -1718,7 +1717,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	virtual void OnOK();
 	afx_msg void OnReset();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CMFCOutlookBarTabCtrl& m_parentBar;
@@ -1734,22 +1733,18 @@ COutlookOptionsDlg::COutlookOptionsDlg(CMFCOutlookBarTabCtrl& parentBar)
 void COutlookOptionsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(COutlookOptionsDlg)
 	DDX_Control(pDX, IDC_AFXBARRES_MOVEUP, m_btnMoveUp);
 	DDX_Control(pDX, IDC_AFXBARRES_MOVEDOWN, m_wndMoveDown);
 	DDX_Control(pDX, IDC_AFXBARRES_LIST, m_wndList);
 	DDX_Control(pDX, IDC_AFXBARRES_RESET, m_wndReset);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(COutlookOptionsDlg, CDialog)
-	//{{AFX_MSG_MAP(COutlookOptionsDlg)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_LIST, &COutlookOptionsDlg::OnSelchange)
 	ON_LBN_DBLCLK(IDC_AFXBARRES_LIST, &COutlookOptionsDlg::OnDblclkList)
 	ON_BN_CLICKED(IDC_AFXBARRES_MOVEDOWN, &COutlookOptionsDlg::OnMoveDown)
 	ON_BN_CLICKED(IDC_AFXBARRES_MOVEUP, &COutlookOptionsDlg::OnMoveUp)
 	ON_BN_CLICKED(IDC_AFXBARRES_RESET, &COutlookOptionsDlg::OnReset)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

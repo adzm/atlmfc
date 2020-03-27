@@ -128,7 +128,6 @@ const AFX_EVENTMAP COleControl::eventMap = { NULL, NULL };
 
 BEGIN_MESSAGE_MAP(COleControl, CWnd)
 	ON_WM_PAINT_SPECIAL()
-	//{{AFX_MSG_MAP(COleControl)
 	ON_WM_ERASEBKGND()
 	ON_WM_NCCREATE()
 	ON_WM_NCCALCSIZE()
@@ -173,7 +172,6 @@ BEGIN_MESSAGE_MAP(COleControl, CWnd)
 	ON_WM_SETCURSOR()
 	ON_WM_GETDLGCODE()
 	ON_MESSAGE(WM_SETMESSAGESTRING, &COleControl::OnSetMessageString)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

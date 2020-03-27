@@ -67,7 +67,7 @@
 #undef AFX_DATA
 #define AFX_DATA AFX_OLE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRichEditView
 
 class _AFX_RICHEDIT_STATE;  // private to implementation
@@ -123,8 +123,15 @@ public:
 	void AdjustDialogPosition(CDialog* pDlg);
 	HRESULT InsertItem(CRichEditCntrItem* pItem);
 	void InsertFileAsObject(LPCTSTR lpszFileName);
-	BOOL FindText(LPCTSTR lpszFind, BOOL bCase = TRUE, BOOL bWord = TRUE,
-		BOOL bNext = TRUE);
+
+#pragma push_macro("FindTextA")
+#pragma push_macro("FindTextW")
+#undef FindTextA
+#undef FindTextW
+	BOOL FindText(LPCTSTR lpszFind, BOOL bCase = TRUE, BOOL bWord = TRUE, BOOL bNext = TRUE);
+#pragma pop_macro("FindTextA")
+#pragma pop_macro("FindTextW")
+
 	BOOL FindTextSimple(LPCTSTR lpszFind, BOOL bCase = TRUE,
 		BOOL bWord = TRUE, BOOL bNext = TRUE);
 	long PrintInsideRect(CDC* pDC, RECT& rectLayout, long nIndexStart,
@@ -172,7 +179,13 @@ public:
 	BOOL m_bChangeFindRange;
 
 	void TextNotFound(LPCTSTR lpszFind);
+#pragma push_macro("FindTextA")
+#pragma push_macro("FindTextW")
+#undef FindTextA
+#undef FindTextW
 	BOOL FindText(_AFX_RICHEDIT_STATE* pEditState);
+#pragma pop_macro("FindTextA")
+#pragma pop_macro("FindTextW")
 	BOOL FindTextSimple(_AFX_RICHEDIT_STATE* pEditState);
 	long FindAndSelect(DWORD dwFlags, FINDTEXTEX& ft);
 	void Stream(CArchive& ar, BOOL bSelection);
@@ -215,7 +228,6 @@ protected:
 
 	// special overrides for implementation
 
-	//{{AFX_MSG(CRichEditView)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnUpdateNeedSel(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateNeedClip(CCmdUI* pCmdUI);
@@ -260,7 +272,6 @@ protected:
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnDevModeChange(_In_z_ LPTSTR lpDeviceName);
-	//}}AFX_MSG
 	afx_msg LRESULT OnFindReplaceCmd(WPARAM, LPARAM lParam);
 	afx_msg void OnSelChange(NMHDR* pNMHDR, LRESULT* pResult);
 
@@ -287,7 +298,7 @@ public:
 	DECLARE_INTERFACE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRichEditDoc
 
 class AFX_NOVTABLE CRichEditDoc : public COleServerDoc
@@ -333,7 +344,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRichEditCntrItem
 
 class CRichEditCntrItem : public COleClientItem
@@ -342,7 +353,7 @@ class CRichEditCntrItem : public COleClientItem
 
 // Constructors
 public:
-	/* explicit */ CRichEditCntrItem(REOBJECT* preo = NULL, CRichEditDoc* pContainer = NULL);
+	explicit CRichEditCntrItem(REOBJECT* preo = NULL, CRichEditDoc* pContainer = NULL);
 		// Note: pContainer is allowed to be NULL to enable IMPLEMENT_SERIAL.
 		//  IMPLEMENT_SERIAL requires the class have a constructor with
 		//  zero arguments.  Normally, OLE items are constructed with a

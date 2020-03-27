@@ -31,7 +31,7 @@ BOOL CMFCToolBarImages::m_bIsDrawOnGlass = FALSE;
 BYTE CMFCToolBarImages::m_nDisabledImageAlpha = 127;
 BYTE CMFCToolBarImages::m_nFadedImageAlpha = 150;
 BOOL CMFCToolBarImages::m_bIsRTL = FALSE;
-CString CMFCToolBarImages::m_strPngResType = _T("PNG");
+#define AFX_PNG_RESOURCE_TYPE  _T("PNG")
 
 // globals for fast drawing(shared globals)
 static HDC hDCGlyphs = NULL;
@@ -426,12 +426,12 @@ void CMFCZoomKernel::Create(long sizeSrc, long sizeDst, long originSrc, long wid
 			long pixel = j + originSrc;
 			if (pixel < 0)
 			{
-				pixel = -pixel;
+				pixel = (long)(pixel / widthSrc) * widthSrc - pixel;
 				bCross = true;
 			}
 			else if (pixel >= widthSrc)
 			{
-				pixel = 2 * widthSrc - pixel - 1;
+				pixel = widthSrc - (pixel - (long)(pixel / widthSrc) * widthSrc) - 1;
 				bCross = true;
 			}
 
@@ -808,6 +808,17 @@ static const _AFX_TOOLBAR_TERM toolbarTerm;
 
 CMFCToolBarImages::CMFCToolBarImages()
 {
+	CommonInit(FALSE);
+}
+
+CMFCToolBarImages::CMFCToolBarImages(BOOL fDelayInitialize)
+{
+	CommonInit(fDelayInitialize);
+}
+
+void CMFCToolBarImages::CommonInit(BOOL fDelayInitialize)
+{
+	m_bInitialized = FALSE;
 	m_bModified = FALSE;
 	m_bReadOnly = FALSE;
 	m_bIsTemporary = FALSE;
@@ -820,6 +831,19 @@ CMFCToolBarImages::CMFCToolBarImages()
 	m_hbmImageShadow = NULL;
 
 	m_bUserImagesList = FALSE;
+
+	if (!fDelayInitialize)
+	{
+		Initialize();
+	}
+}
+
+void CMFCToolBarImages::Initialize()
+{
+	if (m_bInitialized)
+	{
+		return;
+	}
 
 	// initialize the toolbar drawing engine
 	static BOOL bInitialized;
@@ -860,6 +884,8 @@ CMFCToolBarImages::CMFCToolBarImages()
 	m_dblScale = 1.0;
 
 	OnSysColorChange();
+
+	m_bInitialized = TRUE;
 }
 
 CMFCToolBarImages::~CMFCToolBarImages()
@@ -925,7 +951,7 @@ BOOL CMFCToolBarImages::LoadStr(LPCTSTR lpszResourceName, HINSTANCE hinstRes, BO
 		}
 
 		UINT uiLoadImageFlags = LR_CREATEDIBSECTION;
-		if (m_bMapTo3DColors && !afxGlobalData.m_bIsBlackHighContrast)
+		if (m_bMapTo3DColors && !GetGlobalData()->m_bIsBlackHighContrast)
 		{
 			uiLoadImageFlags |= LR_LOADMAP3DCOLORS;
 		}
@@ -958,7 +984,7 @@ BOOL CMFCToolBarImages::LoadStr(LPCTSTR lpszResourceName, HINSTANCE hinstRes, BO
 	{
 		PreMultiplyAlpha(hbmp);
 	}
-	else if ((bmp.bmBitsPixel > 8 && m_bMapTo3DColors) || afxGlobalData.m_bIsBlackHighContrast)
+	else if ((bmp.bmBitsPixel > 8 && m_bMapTo3DColors) || GetGlobalData()->m_bIsBlackHighContrast)
 	{
 		// LR_LOADMAP3DCOLORS don't support > 8bpp images,
 		// we should convert it now:
@@ -1123,7 +1149,7 @@ BOOL CMFCToolBarImages::PrepareDrawImage(CAfxDrawState& ds, CSize sizeImageDest,
 		UpdateInternalImage(AFX_IMAGE_LIGHT);
 	}
 
-	if (m_nBitsPerPixel < 32 && m_hbmImageShadow == NULL && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !afxGlobalData.IsHighContrastMode())
+	if (m_nBitsPerPixel < 32 && m_hbmImageShadow == NULL && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !GetGlobalData()->IsHighContrastMode())
 	{
 		UpdateInternalImage(AFX_IMAGE_SHADOW);
 	}
@@ -1247,14 +1273,14 @@ void CMFCToolBarImages::CreateMask(int iImage, BOOL bHilite, BOOL bHiliteShadow)
 
 	// create mask based on color bitmap
 	// convert this to 1's
-	SetBkColor(hDCGlyphs, clrTransparent != -1 ? clrTransparent : afxGlobalData.clrBtnFace);
+	SetBkColor(hDCGlyphs, clrTransparent != -1 ? clrTransparent : GetGlobalData()->clrBtnFace);
 
 	::BitBlt(hDCMono, 0, 0, m_sizeImage.cx, m_sizeImage.cy, hDCGlyphs, iImage * m_sizeImage.cx, 0, SRCCOPY);
 
 	if (bHilite)
 	{
 		// convert this to 1's
-		SetBkColor(hDCGlyphs, afxGlobalData.clrBtnHilite);
+		SetBkColor(hDCGlyphs, GetGlobalData()->clrBtnHilite);
 
 		// OR in the new 1's
 		::BitBlt(hDCMono, 0, 0, m_sizeImage.cx, m_sizeImage.cy, hDCGlyphs, iImage * m_sizeImage.cx, 0, SRCPAINT);
@@ -1301,7 +1327,7 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 		return FALSE;
 	}
 
-	if (bShadow && afxGlobalData.m_nBitsPerPixel <= 8)
+	if (bShadow && GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		return TRUE;
 	}
@@ -1351,17 +1377,17 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 	{
 		CRect rectImage(CPoint(0, 0), m_sizeImage);
 
-		if (bIsTransparent && clrTransparent != afxGlobalData.clrBtnFace)
+		if (bIsTransparent && clrTransparent != GetGlobalData()->clrBtnFace)
 		{
 			CBrush brBackgr(clrTransparent);
 			pDC->FillRect(rectImage, &brBackgr);
 		}
 		else
 		{
-			pDC->FillRect(rectImage, &afxGlobalData.brBtnFace);
+			pDC->FillRect(rectImage, &(GetGlobalData()->brBtnFace));
 		}
 
-		if (bDisabled && afxGlobalData.m_nBitsPerPixel == 16)
+		if (bDisabled && GetGlobalData()->m_nBitsPerPixel == 16)
 		{
 			clrTransparentDisabled = pDC->GetPixel(rectImage.TopLeft());
 		}
@@ -1485,7 +1511,7 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 			if (bDisabledTrueColor)
 			{
 				CDrawingManager dm(*pDC);
-				dm.GrayRect(CRect(x, y, x + nWidth + 2, y + nHeight + 2), -1, clrTransparentDisabled == -1 ? afxGlobalData.clrBtnFace : clrTransparentDisabled, CMFCVisualManager::GetInstance()->GetToolbarDisabledColor());
+				dm.GrayRect(CRect(x, y, x + nWidth + 2, y + nHeight + 2), -1, clrTransparentDisabled == -1 ? GetGlobalData()->clrBtnFace : clrTransparentDisabled, CMFCVisualManager::GetInstance()->GetToolbarDisabledColor());
 			}
 		}
 	}
@@ -1511,7 +1537,7 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 			if (bDisabled && CMFCVisualManager::GetInstance()->IsEmbossDisabledImage())
 			{
 				// disabled - draw the hilighted shadow
-				HGDIOBJ hbrOld = pDC->SelectObject(afxGlobalData.hbrBtnHilite);
+				HGDIOBJ hbrOld = pDC->SelectObject(GetGlobalData()->hbrBtnHilite);
 				if (hbrOld != NULL)
 				{
 					// draw hilight color where we have 0's in the mask
@@ -1523,7 +1549,7 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 
 			//BLOCK: always draw the shadow
 			{
-				HGDIOBJ hbrOld = pDC->SelectObject(afxGlobalData.hbrBtnShadow);
+				HGDIOBJ hbrOld = pDC->SelectObject(GetGlobalData()->hbrBtnShadow);
 				if (hbrOld != NULL)
 				{
 					// draw the shadow color where we have 0's in the mask
@@ -1537,7 +1563,7 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 		// if it is checked do the dither brush avoiding the glyph
 		if (bHilite || bIndeterminate)
 		{
-			CBrush* pBrOld = pDC->SelectObject(&afxGlobalData.brLight);
+			CBrush* pBrOld = pDC->SelectObject(&(GetGlobalData()->brLight));
 			if (pBrOld != NULL)
 			{
 				CreateMask(iImage, !bIndeterminate, bDisabled);
@@ -1555,7 +1581,7 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 
 	if (m_bStretch)
 	{
-		TransparentBlt(pDCDest->GetSafeHdc(), xDest, yDest, nWidth, nHeight, pDC, 0, 0, bIsTransparent ? clrTransparent : afxGlobalData.clrBtnFace, m_sizeImageDest.cx, m_sizeImageDest.cy);
+		TransparentBlt(pDCDest->GetSafeHdc(), xDest, yDest, nWidth, nHeight, pDC, 0, 0, bIsTransparent ? clrTransparent : GetGlobalData()->clrBtnFace, m_sizeImageDest.cx, m_sizeImageDest.cy);
 	}
 	else if (bIsTransparent)
 	{
@@ -1720,7 +1746,7 @@ BOOL CMFCToolBarImages::DrawEx(CDC* pDC, CRect rect, int iImageIndex, ImageAlign
 void __stdcall CMFCToolBarImages::FillDitheredRect(CDC* pDC, const CRect& rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(&rect, &afxGlobalData.brLight);
+	pDC->FillRect(&rect, &(GetGlobalData()->brLight));
 }
 
 void CMFCToolBarImages::OnSysColorChange()
@@ -1793,7 +1819,7 @@ void CMFCToolBarImages::OnSysColorChange()
 				{
 					UINT uiLoadImageFlags = LR_CREATEDIBSECTION;
 
-					if (m_bMapTo3DColors && !afxGlobalData.IsHighContrastMode())
+					if (m_bMapTo3DColors && !GetGlobalData()->IsHighContrastMode())
 					{
 						uiLoadImageFlags |= LR_LOADMAP3DCOLORS;
 					}
@@ -1813,7 +1839,7 @@ void CMFCToolBarImages::OnSysColorChange()
 				{
 					PreMultiplyAlpha(hbmp);
 				}
-				else if ((bmp.bmBitsPixel > 8 && m_bMapTo3DColors) || afxGlobalData.m_bIsBlackHighContrast)
+				else if ((bmp.bmBitsPixel > 8 && m_bMapTo3DColors) || GetGlobalData()->m_bIsBlackHighContrast)
 				{
 					// LR_LOADMAP3DCOLORS don't support > 8bpp images, // we should convert it now:
 					MapBmpTo3dColors(hbmp, FALSE);
@@ -1845,7 +1871,7 @@ void CMFCToolBarImages::OnSysColorChange()
 		GrayImages(m_nGrayImageLuminancePercentage);
 	}
 
-	m_clrImageShadow = afxGlobalData.clrBtnShadow;
+	m_clrImageShadow = GetGlobalData()->clrBtnShadow;
 }
 
 void CMFCToolBarImages::UpdateCount()
@@ -2069,8 +2095,8 @@ int CMFCToolBarImages::AddImage(const CMFCToolBarImages& imageList, int nIndex)
 		bi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
 		bi.bmiHeader.biWidth       = imageList.m_sizeImage.cx;
 		bi.bmiHeader.biHeight      = imageList.m_sizeImage.cy;
-		bi.bmiHeader.biPlanes      = ds.dsBmih.biPlanes;
-		bi.bmiHeader.biBitCount    = ds.dsBmih.biBitCount;
+		bi.bmiHeader.biPlanes      = ds.dsBm.bmPlanes;
+		bi.bmiHeader.biBitCount    = ds.dsBm.bmBitsPixel;
 		bi.bmiHeader.biCompression = BI_RGB;
 
 		COLORREF* pBits = NULL;
@@ -2148,7 +2174,7 @@ int CMFCToolBarImages::AddIcon(HICON hIcon, BOOL bAlphaBlend/* = FALSE*/)
 
 	if (!bAlphaBlend)
 	{
-		dcMem.FillRect(CRect(0, 0, sizeIcon.cx, sizeIcon.cy), &afxGlobalData.brBtnFace);
+		dcMem.FillRect(CRect(0, 0, sizeIcon.cx, sizeIcon.cy), &(GetGlobalData()->brBtnFace));
 	}
 
 	if (hIcon != NULL)
@@ -2328,7 +2354,7 @@ HICON CMFCToolBarImages::ExtractIcon(int nIndex)
 
 	HBITMAP hbmImageWellCopy = (HBITMAP) ::CopyImage(m_hbmImageWell, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 
-	images.Add(CBitmap::FromHandle(hbmImageWellCopy), m_clrTransparent == -1 ? afxGlobalData.clrBtnFace : m_clrTransparent);
+	images.Add(CBitmap::FromHandle(hbmImageWellCopy), m_clrTransparent == -1 ? GetGlobalData()->clrBtnFace : m_clrTransparent);
 
 	AfxDeleteObject((HGDIOBJ*)&hbmImageWellCopy);
 
@@ -2357,7 +2383,7 @@ COLORREF __stdcall CMFCToolBarImages::MapToSysColor(COLORREF color, BOOL bUseRGB
 	{
 		if (color == sysColorMap[i].rgbqFrom)
 		{
-			return bUseRGBQUAD ? AFX_CLR_TO_RGBQUAD(afxGlobalData.GetColor(sysColorMap[i].iSysColorTo)) : afxGlobalData.GetColor(sysColorMap[i].iSysColorTo);
+			return bUseRGBQUAD ? AFX_CLR_TO_RGBQUAD(GetGlobalData()->GetColor(sysColorMap[i].iSysColorTo)) : GetGlobalData()->GetColor(sysColorMap[i].iSysColorTo);
 		}
 	}
 
@@ -2377,7 +2403,7 @@ COLORREF __stdcall CMFCToolBarImages::MapToSysColorAlpha(COLORREF color)
 		return color;
 	}
 
-	return CDrawingManager::PixelAlpha(afxGlobalData.clrBarFace, 1. +((double) r - 192) / 255, 1. +((double) g - 192) / 255, 1. +((double) b - 192) / 255);
+	return CDrawingManager::PixelAlpha(GetGlobalData()->clrBarFace, 1. +((double) r - 192) / 255, 1. +((double) g - 192) / 255, 1. +((double) b - 192) / 255);
 }
 
 COLORREF __stdcall CMFCToolBarImages::MapFromSysColor(COLORREF color, BOOL bUseRGBQUAD)
@@ -2400,7 +2426,7 @@ COLORREF __stdcall CMFCToolBarImages::MapFromSysColor(COLORREF color, BOOL bUseR
 	// look for matching RGBQUAD color in original
 	for (int i = 0; i < nMaps; i++)
 	{
-		COLORREF clrSystem = afxGlobalData.GetColor(sysColorMap[i].iSysColorFrom);
+		COLORREF clrSystem = GetGlobalData()->GetColor(sysColorMap[i].iSysColorFrom);
 
 		if (bUseRGBQUAD)
 		{
@@ -2716,7 +2742,7 @@ BOOL CMFCToolBarImages::CopyImageToClipboard(int iImage)
 
 		CBitmap* pOldBitmapDest = memDCDest.SelectObject(&bitmapCopy);
 
-		memDCDest.FillRect(CRect(0, 0, m_sizeImage.cx, m_sizeImage.cy), &afxGlobalData.brBtnFace);
+		memDCDest.FillRect(CRect(0, 0, m_sizeImage.cx, m_sizeImage.cy), &(GetGlobalData()->brBtnFace));
 
 		CAfxDrawState ds;
 		PrepareDrawImage(ds, FALSE);
@@ -2770,87 +2796,72 @@ BOOL CMFCToolBarImages::CopyTo(CMFCToolBarImages& dest)
 		dest.Clear();
 	}
 
-	if (afxGlobalData.bIsWindowsVista)
+	BITMAP bmp;
+	if (::GetObject(m_hbmImageWell, sizeof(BITMAP), &bmp) == sizeof(BITMAP))
 	{
-		BITMAP bmp;
-		if (::GetObject(m_hbmImageWell, sizeof(BITMAP), &bmp) == sizeof(BITMAP))
+		CSize sizeImage (bmp.bmWidth, abs(bmp.bmHeight));
+
+		// Create memory source DC and select an original bitmap:
+		CDC memDCSrc;
+		memDCSrc.CreateCompatibleDC(NULL);
+
+		HBITMAP hOldBitmapSrc = (HBITMAP)memDCSrc.SelectObject(m_hbmImageWell);
+		if (hOldBitmapSrc != NULL)
 		{
-			CSize sizeImage (bmp.bmWidth, abs(bmp.bmHeight));
+			// Create a new bitmap compatible with the source memory DC
+			// (original bitmap SHOULD BE ALREADY SELECTED!):
+			HBITMAP hNewBitmap = NULL;
 
-			// Create memory source DC and select an original bitmap:
-			CDC memDCSrc;
-			memDCSrc.CreateCompatibleDC(NULL);
-
-			HBITMAP hOldBitmapSrc = (HBITMAP)memDCSrc.SelectObject(m_hbmImageWell);
-			if (hOldBitmapSrc != NULL)
+			DIBSECTION ds = {0};
+			if (bmp.bmBitsPixel >= 24 && ::GetObject (m_hbmImageWell, sizeof (DIBSECTION), &ds) != 0)
 			{
-				// Create a new bitmap compatible with the source memory DC
-				// (original bitmap SHOULD BE ALREADY SELECTED!):
-				HBITMAP hNewBitmap = NULL;
+				BITMAPINFO bi = {0};
+				bi.bmiHeader.biSize        = sizeof (BITMAPINFOHEADER);
+				bi.bmiHeader.biWidth       = bmp.bmWidth;
+				bi.bmiHeader.biHeight      = bmp.bmHeight;
+				bi.bmiHeader.biPlanes      = bmp.bmPlanes;
+				bi.bmiHeader.biBitCount    = bmp.bmBitsPixel;
+				bi.bmiHeader.biCompression = BI_RGB;
 
-				DIBSECTION ds = {0};
-				if (bmp.bmBitsPixel >= 24 && ::GetObject (m_hbmImageWell, sizeof (DIBSECTION), &ds) != 0)
+				COLORREF* pBits = NULL;
+				hNewBitmap = ::CreateDIBSection (
+					memDCSrc, &bi, DIB_RGB_COLORS, (void **)&pBits,
+					NULL, NULL);
+			}
+			else
+			{
+				hNewBitmap = (HBITMAP) ::CreateCompatibleBitmap (memDCSrc,
+					sizeImage.cx, sizeImage.cy);
+			}
+
+			if (hNewBitmap != NULL)
+			{
+				//------------------------------------------------------
+				// Create memory destination DC and select a new bitmap:
+				//------------------------------------------------------
+				CDC memDCDst;
+				memDCDst.CreateCompatibleDC (&memDCSrc);
+
+				HBITMAP hOldBitmapDst = (HBITMAP) memDCDst.SelectObject (hNewBitmap);
+				if (hOldBitmapDst != NULL)
 				{
-					BITMAPINFO bi = {0};
-					bi.bmiHeader.biSize        = sizeof (BITMAPINFOHEADER);
-					bi.bmiHeader.biWidth       = bmp.bmWidth;
-					bi.bmiHeader.biHeight      = bmp.bmHeight;
-					bi.bmiHeader.biPlanes      = bmp.bmPlanes;
-					bi.bmiHeader.biBitCount    = bmp.bmBitsPixel;
-					bi.bmiHeader.biCompression = BI_RGB;
+					//-----------------------------
+					// Copy original bitmap to new:
+					//-----------------------------
+					memDCDst.BitBlt (0, 0, sizeImage.cx, sizeImage.cy,
+						&memDCSrc, 0, 0, SRCCOPY);
 
-					COLORREF* pBits = NULL;
-					hNewBitmap = ::CreateDIBSection (
-						memDCSrc, &bi, DIB_RGB_COLORS, (void **)&pBits,
-						NULL, NULL);
+					memDCDst.SelectObject (hOldBitmapDst);
+
+					dest.m_hbmImageWell = hNewBitmap;
 				}
 				else
 				{
-					hNewBitmap = (HBITMAP) ::CreateCompatibleBitmap (memDCSrc,
-						sizeImage.cx, sizeImage.cy);
+					::DeleteObject (hNewBitmap);
 				}
-
-				if (hNewBitmap != NULL)
-				{
-					//------------------------------------------------------
-					// Create memory destination DC and select a new bitmap:
-					//------------------------------------------------------
-					CDC memDCDst;
-					memDCDst.CreateCompatibleDC (&memDCSrc);
-
-					HBITMAP hOldBitmapDst = (HBITMAP) memDCDst.SelectObject (hNewBitmap);
-					if (hOldBitmapDst != NULL)
-					{
-						//-----------------------------
-						// Copy original bitmap to new:
-						//-----------------------------
-						memDCDst.BitBlt (0, 0, sizeImage.cx, sizeImage.cy,
-							&memDCSrc, 0, 0, SRCCOPY);
-
-						memDCDst.SelectObject (hOldBitmapDst);
-
-						dest.m_hbmImageWell = hNewBitmap;
-					}
-					else
-					{
-						::DeleteObject (hNewBitmap);
-					}
-				}
-
-				memDCSrc.SelectObject (hOldBitmapSrc);
 			}
-		}
-	}
-	else
-	{
-		dest.m_hbmImageWell = (HBITMAP) ::CopyImage(m_hbmImageWell, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-		if (m_hbmImageLight != NULL)
-		{
-			dest.m_hbmImageLight = (HBITMAP) ::CopyImage(m_hbmImageLight, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-		}
-		if (m_hbmImageShadow != NULL)
-		{
-			dest.m_hbmImageShadow = (HBITMAP) ::CopyImage(m_hbmImageShadow, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+			memDCSrc.SelectObject (hOldBitmapSrc);
 		}
 	}
 
@@ -2866,6 +2877,7 @@ BOOL CMFCToolBarImages::CopyTo(CMFCToolBarImages& dest)
 	dest.m_bFadeInactive = m_bFadeInactive;
 	dest.m_nBitsPerPixel = m_nBitsPerPixel;
 	dest.m_dblScale = m_dblScale;
+	dest.m_sizeImageOriginal = m_sizeImageOriginal;
 
 	for (POSITION pos = m_lstOrigResIds.GetHeadPosition(); pos != NULL;)
 	{
@@ -3130,7 +3142,7 @@ BOOL CMFCToolBarImages::UpdateInternalImage(int nIndex)
 		return TRUE;
 	}
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		return TRUE;
 	}
@@ -3200,14 +3212,14 @@ BOOL CMFCToolBarImages::UpdateInternalImage(int nIndex)
 	{
 		CDrawingManager dm(memDCDst);
 
-		dm.HighlightRect(CRect(0, 0, iBitmapWidth, iBitmapHeight), m_nLightPercentage, clrTransparent == -1 ? afxGlobalData.clrBtnFace : clrTransparent);
+		dm.HighlightRect(CRect(0, 0, iBitmapWidth, iBitmapHeight), m_nLightPercentage, clrTransparent == -1 ? GetGlobalData()->clrBtnFace : clrTransparent);
 	}
 	else
 	{
-		COLORREF clrTr = clrTransparent == -1 ? afxGlobalData.clrBtnFace : clrTransparent;
+		COLORREF clrTr = clrTransparent == -1 ? GetGlobalData()->clrBtnFace : clrTransparent;
 
 		COLORREF clrHL = CMFCVisualManager::GetInstance()->GetToolbarHighlightColor();
-		COLORREF clrShadow = afxGlobalData.m_nBitsPerPixel <= 8 ? afxGlobalData.clrBtnShadow : CDrawingManager::PixelAlpha(clrHL, 67);
+		COLORREF clrShadow = GetGlobalData()->m_nBitsPerPixel <= 8 ? GetGlobalData()->clrBtnShadow : CDrawingManager::PixelAlpha(clrHL, 67);
 
 		for (int x = 0; x < iBitmapWidth; x++)
 		{
@@ -3333,7 +3345,7 @@ BOOL CMFCToolBarImages::GrayImages(int nGrayImageLuminancePercentage)
 		return TRUE;
 	}
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		return TRUE;
 	}
@@ -3440,7 +3452,7 @@ BOOL CMFCToolBarImages::GrayImages(int nGrayImageLuminancePercentage)
 	{
 		CDrawingManager dm(memDCDst);
 
-		dm.GrayRect(CRect(0, 0, iBitmapWidth, iBitmapHeight), nPercentage, m_clrTransparent == -1 ? afxGlobalData.clrBtnFace : m_clrTransparent);
+		dm.GrayRect(CRect(0, 0, iBitmapWidth, iBitmapHeight), nPercentage, m_clrTransparent == -1 ? GetGlobalData()->clrBtnFace : m_clrTransparent);
 	}
 
 	memDCDst.SelectObject(hOldBitmapDst);
@@ -3808,7 +3820,7 @@ void CMFCToolBarImages::AdaptColors(COLORREF clrBase, COLORREF clrTone)
 	// Copy original bitmap to new:
 	memDCDst.BitBlt(0, 0, iBitmapWidth, iBitmapHeight, &memDCSrc, 0, 0, SRCCOPY);
 
-	COLORREF clrTransparent = m_clrTransparent == (COLORREF)-1 ? afxGlobalData.clrBtnFace : m_clrTransparent;
+	COLORREF clrTransparent = m_clrTransparent == (COLORREF)-1 ? GetGlobalData()->clrBtnFace : m_clrTransparent;
 
 	for (int x = 0; x < iBitmapWidth; x ++)
 	{
@@ -3949,10 +3961,10 @@ BOOL CPngImage::Load(LPCTSTR lpszResourceName, HINSTANCE hinstRes)
 {
 	if (hinstRes == NULL)
 	{
-		hinstRes = AfxFindResourceHandle(lpszResourceName, CMFCToolBarImages::m_strPngResType);
+		hinstRes = AfxFindResourceHandle(lpszResourceName, AFX_PNG_RESOURCE_TYPE);
 	}
 
-	HRSRC hRsrc = ::FindResource(hinstRes, lpszResourceName, CMFCToolBarImages::m_strPngResType);
+	HRSRC hRsrc = ::FindResource(hinstRes, lpszResourceName, AFX_PNG_RESOURCE_TYPE);
 	if (hRsrc == NULL)
 	{
 		return FALSE;
@@ -4060,11 +4072,6 @@ HBITMAP CMFCToolBarImages::Copy(HBITMAP hbmpSrc)
 	{
 		ASSERT (FALSE);
 		return NULL;
-	}
-
-	if (!afxGlobalData.bIsWindowsVista)
-	{
-		return (HBITMAP) ::CopyImage(hbmpSrc, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 	}
 
 	//-------------------------------------------------------
@@ -4326,7 +4333,10 @@ BOOL CMFCToolBarImages::SmoothResize(double dblImageScale)
 	SetImageSize(sizeNew);
 	m_clrTransparentOriginal = m_clrTransparent;
 	m_clrTransparent = (COLORREF)-1;
+
+	AfxDeleteObject((HGDIOBJ*)&m_hbmImageWell);
 	m_hbmImageWell = hBmpDst;
+
 	m_iCount = nOldCount;
 	m_nBitsPerPixel = 32;
 	UpdateInternalImage(AFX_IMAGE_LIGHT);

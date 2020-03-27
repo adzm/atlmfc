@@ -13,6 +13,12 @@
 
 #pragma once
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <filter.h>
 
 #ifndef REFPROPERTYKEY
@@ -50,7 +56,7 @@ public:
 
 	virtual void Clear () = 0;
 	virtual BOOL IsValid() const = 0;
-	virtual HRESULT GetValue(_Deref_out_ PROPVARIANT **ppPropVariant) = 0;
+	virtual HRESULT GetValue(_Outptr_ PROPVARIANT **ppPropVariant) = 0;
 	virtual PROPVARIANT GetValueNoAlloc () = 0;
 	virtual CString& GetString() = 0;
 	virtual HRESULT CopyChunk(_Inout_ STAT_CHUNK *pStatChunk) = 0;
@@ -190,7 +196,7 @@ public:
 	virtual void InitializeSearchContent() = 0;
 	virtual void BeginReadChunks() = 0;
 
-	virtual BOOL GetThumbnail(
+	virtual _Success_(return != NULL) BOOL GetThumbnail(
 		_In_ UINT cx,
 		_Out_ HBITMAP* phbmp,
 		_Out_ WTS_ALPHATYPE* pdwAlpha) = 0;
@@ -198,8 +204,8 @@ public:
 	virtual void ClearChunkList() = 0;
 	virtual BOOL SetChunkValue(
 		_In_ IFilterChunkValue* value) = 0;
-	virtual BOOL ReadNextChunkValue(
-		_Deref_out_opt_ IFilterChunkValue** value) = 0;
+	virtual _Success_(return != FALSE) BOOL ReadNextChunkValue(
+		_Outptr_result_maybenull_ IFilterChunkValue** value) = 0;
 	virtual void RemoveChunk(
 		_In_ REFCLSID guid,
 		_In_ DWORD pid) = 0;

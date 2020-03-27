@@ -63,6 +63,8 @@ typedef tagVARIANT VARIANT;
 #if defined(_AFX)
 #pragma push_macro("FormatMessage")
 #undef FormatMessage
+#pragma push_macro("GetEnvironmentVariable")
+#undef GetEnvironmentVariable
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -102,7 +104,7 @@ template <class StringType,int t_nChars> struct CConstFixedStringT
 // inline helpers
 
 inline int _wcstombsz(
-	_Out_cap_(count) char* mbstr,
+	_Out_writes_(count) char* mbstr,
 	_In_z_ const wchar_t* wcstr,
 	_In_ ULONG count) throw()
 {
@@ -117,7 +119,7 @@ inline int _wcstombsz(
 }
 
 inline int _mbstowcsz(
-	_Out_cap_(count) wchar_t* wcstr,
+	_Out_writes_(count) wchar_t* wcstr,
 	_In_z_ const char* mbstr,
 	_In_ ULONG count)
 {
@@ -138,6 +140,7 @@ inline int _mbstowcsz(
 
 /////////////////////////////////////////////////////////////////////////////
 //
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 template< typename _CharType = char >
 class ChTraitsCRT :
@@ -257,7 +260,7 @@ public:
 	}
 
 	static LPSTR __cdecl StringUppercase(
-		_Inout_z_cap_(size) LPSTR psz,
+		_Inout_updates_z_(size) LPSTR psz,
 		_In_ size_t size) throw()
 	{
 		Checked::mbsupr_s(reinterpret_cast< unsigned char* >( psz ), size);
@@ -265,7 +268,7 @@ public:
 	}
 
 	static LPSTR __cdecl StringLowercase(
-		_Inout_z_cap_(size) LPSTR psz,
+		_Inout_updates_z_(size) LPSTR psz,
 		_In_ size_t size) throw()
 	{
 		Checked::mbslwr_s( reinterpret_cast< unsigned char* >( psz ), size );
@@ -296,7 +299,7 @@ public:
 #pragma warning (pop)
 	}
 	static int __cdecl Format(
-		_Out_z_cap_post_count_(nlength, return) LPSTR pszBuffer,
+		_Out_writes_to_(nlength, return) LPSTR pszBuffer,
 		_In_ size_t nlength,
 		_In_z_ _Printf_format_string_ LPCSTR pszFormat, va_list args ) throw()
 	{
@@ -306,11 +309,11 @@ public:
 	static int __cdecl GetBaseTypeLength(_In_z_ LPCSTR pszSrc) throw()
 	{
 		// Returns required buffer length in XCHARs
-		return int( strlen( pszSrc ) );
+		return AtlStrLen( pszSrc );
 	}
 
 	static int __cdecl GetBaseTypeLength(
-		_In_z_count_(nLength) LPCSTR pszSrc,
+		_In_reads_z_(nLength) LPCSTR pszSrc,
 		_In_ int nLength) throw()
 	{
 		(void)pszSrc;
@@ -325,7 +328,7 @@ public:
 	}
 
 	static int __cdecl GetBaseTypeLength(
-		_In_count_(nLength) LPCWSTR pszSource,
+		_In_reads_(nLength) LPCWSTR pszSource,
 		_In_ int nLength) throw()
 	{
 		// Returns required buffer length in XCHARs
@@ -333,7 +336,7 @@ public:
 	}
 
 	static void __cdecl ConvertToBaseType(
-		_Out_cap_(nDestLength) LPSTR pszDest,
+		_Out_writes_(nDestLength) LPSTR pszDest,
 		_In_ int nDestLength,
 		_In_z_ LPCSTR pszSrc,
 		_In_ int nSrcLength = -1) throw()
@@ -345,7 +348,7 @@ public:
 	}
 
 	static void __cdecl ConvertToBaseType(
-		_Out_cap_(nDestLength) LPSTR pszDest,
+		_Out_writes_(nDestLength) LPSTR pszDest,
 		_In_ int nDestLength,
 		_In_ LPCWSTR pszSrc,
 		_In_ int nSrcLength = -1) throw()
@@ -371,7 +374,7 @@ public:
 	}
 
 	static void ConvertToOem(
-		_Inout_cap_(size) _CharType* pstrString,
+		_Inout_updates_(size) _CharType* pstrString,
 		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
@@ -388,7 +391,7 @@ public:
 	}
 
 	static void ConvertToAnsi(
-		_Inout_cap_(size) _CharType* pstrString,
+		_Inout_updates_(size) _CharType* pstrString,
 		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
@@ -407,14 +410,14 @@ public:
 	static void __cdecl FloodCharacters(
 		_In_ char ch,
 		_In_ int nLength,
-		_Out_capcount_(nLength) char* pch) throw()
+		_Out_writes_all_(nLength) char* pch) throw()
 	{
 		// nLength is in XCHARs
 		memset( pch, ch, nLength );
 	}
 
-	static BSTR __cdecl AllocSysString(
-		_In_count_(nDataLength) const char* pchData,
+	static _Ret_maybenull_z_ BSTR __cdecl AllocSysString(
+		_In_reads_(nDataLength) const char* pchData,
 		_In_ int nDataLength) throw()
 	{
 		int nLen = ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength,
@@ -430,7 +433,7 @@ public:
 	}
 
 	static BOOL __cdecl ReAllocSysString(
-		_In_count_(nDataLength) const char* pchData,
+		_In_reads_(nDataLength) const char* pchData,
 		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
 		_In_ int nDataLength) throw()
 	{
@@ -449,7 +452,7 @@ public:
 		_In_opt_ LPCVOID pSource,
 		_In_ DWORD dwMessageID,
 		_In_ DWORD dwLanguageID,
-		_Out_z_cap_(nSize) LPSTR pszBuffer,
+		_Out_writes_z_(nSize) LPSTR pszBuffer,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* pArguments) throw()
 	{
@@ -463,7 +466,7 @@ public:
 		_In_opt_ LPCVOID pSource,
 		_In_ DWORD dwMessageID,
 		_In_ DWORD dwLanguageID,
-		_Out_z_cap_(nSize) LPSTR pszBuffer,
+		_Out_writes_z_(nSize) LPSTR pszBuffer,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* pArguments) throw()
 	{
@@ -496,28 +499,39 @@ public:
 		return int( _mbclen( reinterpret_cast< const unsigned char* >( pch ) ) );
 	}
 
-	static DWORD __cdecl GetEnvironmentVariable(
+	static DWORD __cdecl _AFX_FUNCNAME(GetEnvironmentVariable)(
 		_In_z_ LPCSTR pszVar,
-		_Out_opt_z_cap_(dwSize) LPSTR pszBuffer,
+		_Out_writes_opt_z_(dwSize) LPSTR pszBuffer,
 		_In_ DWORD dwSize) throw()
 	{
-		return ::GetEnvironmentVariableA( pszVar, pszBuffer, dwSize );
+		return ::GetEnvironmentVariableA(pszVar, pszBuffer, dwSize);
 	}
+
+#if defined(_AFX)
+	static DWORD __cdecl GetEnvironmentVariable(
+		_In_z_ LPCSTR pszVar,
+		_Out_writes_opt_z_(dwSize) LPSTR pszBuffer,
+		_In_ DWORD dwSize) throw()
+	{
+		return _AFX_FUNCNAME(GetEnvironmentVariable)(pszVar, pszBuffer, dwSize);
+	}
+#endif
 };
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+
 // specialization for wchar_t
+#ifndef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+template< typename _CharType = wchar_t >
+class ChTraitsCRT :
+	public ChTraitsBase< _CharType >
+#else
 template<>
 class ChTraitsCRT< wchar_t > :
 	public ChTraitsBase< wchar_t >
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 {
-	static DWORD __cdecl _GetEnvironmentVariableW(
-		_In_z_ LPCWSTR pszName,
-		_Out_opt_z_cap_post_count_(nSize, return) LPWSTR pszBuffer,
-		_In_ DWORD nSize) throw()
-	{
-		return ::GetEnvironmentVariableW( pszName, pszBuffer, nSize );
-	}
-
 public:
 	static LPWSTR __cdecl CharNext(_In_ LPCWSTR psz) throw()
 	{
@@ -630,7 +644,7 @@ public:
 	}
 
 	static LPWSTR __cdecl StringUppercase(
-		_Inout_cap_(size) LPWSTR psz,
+		_Inout_updates_(size) LPWSTR psz,
 		_In_ size_t size) throw()
 	{
 		errno_t err = _wcsupr_s( psz, size );
@@ -638,7 +652,7 @@ public:
 	}
 
 	static LPWSTR __cdecl StringLowercase(
-		_Inout_cap_(size) LPWSTR psz,
+		_Inout_updates_(size) LPWSTR psz,
 		_In_ size_t size) throw()
 	{
 		errno_t err = _wcslwr_s( psz, size );
@@ -664,13 +678,14 @@ public:
 #pragma warning (push)
 #pragma warning(disable : 4995)
 #pragma warning(disable : 4996)
+#pragma warning(disable : 28719)
 		return vswprintf( pszBuffer, pszFormat, args );
 #pragma warning (pop)
 	}
 	static int __cdecl Format(
-		_Out_cap_(nLength) LPWSTR pszBuffer,
+		_Out_writes_(nLength) LPWSTR pszBuffer,
 		_In_ size_t nLength,
-		_In_z_ __format_string LPCWSTR pszFormat, va_list args) throw()
+		_In_ _Printf_format_string_ LPCWSTR pszFormat, va_list args) throw()
 	{
 		return vswprintf_s( pszBuffer, nLength, pszFormat, args );
 	}
@@ -682,7 +697,7 @@ public:
 	}
 
 	static int __cdecl GetBaseTypeLength(
-		_In_count_(nLength) LPCSTR pszSrc,
+		_In_reads_(nLength) LPCSTR pszSrc,
 		_In_ int nLength) throw()
 	{
 		// Returns required buffer size in wchar_ts
@@ -692,11 +707,11 @@ public:
 	static int __cdecl GetBaseTypeLength(_In_z_ LPCWSTR pszSrc) throw()
 	{
 		// Returns required buffer size in wchar_ts
-		return (int)wcslen( pszSrc );
+		return AtlStrLen( pszSrc );
 	}
 
 	static int __cdecl GetBaseTypeLength(
-		_In_count_(nLength) LPCWSTR pszSrc,
+		_In_reads_(nLength) LPCWSTR pszSrc,
 		_In_ int nLength) throw()
 	{
 		(void)pszSrc;
@@ -705,7 +720,7 @@ public:
 	}
 
 	static void __cdecl ConvertToBaseType(
-		_Out_cap_(nDestLength) LPWSTR pszDest,
+		_Out_writes_(nDestLength) LPWSTR pszDest,
 		_In_ int nDestLength,
 		_In_ LPCSTR pszSrc,
 		_In_ int nSrcLength = -1) throw()
@@ -715,7 +730,7 @@ public:
 	}
 
 	static void __cdecl ConvertToBaseType(
-		_Out_cap_(nDestLength) LPWSTR pszDest,
+		_Out_writes_(nDestLength) LPWSTR pszDest,
 		_In_ int nDestLength,
 		_In_ LPCWSTR pszSrc,
 		_In_ int nSrcLength = -1 ) throw()
@@ -728,7 +743,7 @@ public:
 	static void __cdecl FloodCharacters(
 		_In_ wchar_t ch,
 		_In_ int nLength,
-		_Out_capcount_(nLength) LPWSTR psz) throw()
+		_Out_writes_all_(nLength) WCHAR *psz) throw()
 	{
 		// nLength is in XCHARs
 		for( int i = 0; i < nLength; i++ )
@@ -737,15 +752,15 @@ public:
 		}
 	}
 
-	_Ret_opt_z_ static BSTR __cdecl AllocSysString(
-		_In_count_(nDataLength) const wchar_t* pchData,
+	_Ret_maybenull_z_ static BSTR __cdecl AllocSysString(
+		_In_reads_(nDataLength) const wchar_t* pchData,
 		_In_ int nDataLength) throw()
 	{
 		return ::SysAllocStringLen( pchData, nDataLength );
 	}
 
 	static BOOL __cdecl ReAllocSysString(
-		_In_count_(nDataLength) const wchar_t* pchData,
+		_In_reads_(nDataLength) const wchar_t* pchData,
 		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
 		_In_ int nDataLength) throw()
 	{
@@ -777,13 +792,24 @@ public:
 		return (int)( _mbclen( reinterpret_cast< const unsigned char* >( pch ) ) );
 	}
 
-	static DWORD __cdecl GetEnvironmentVariable(
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP	
+	static DWORD __cdecl _AFX_FUNCNAME(GetEnvironmentVariable)(
 		_In_z_ LPCWSTR pszVar,
-		_Out_opt_z_cap_(dwSize) LPWSTR pszBuffer,
+		_Out_writes_opt_z_(dwSize) LPWSTR pszBuffer,
 		_In_ DWORD dwSize) throw()
 	{
-		return _GetEnvironmentVariableW( pszVar, pszBuffer, dwSize );
+		return ::GetEnvironmentVariableW(pszVar, pszBuffer, dwSize);
 	}
+
+#if defined(_AFX)
+	static DWORD __cdecl GetEnvironmentVariable(
+		_In_z_ LPCWSTR pszVar,
+		_Out_writes_opt_z_(dwSize) LPWSTR pszBuffer,
+		_In_ DWORD dwSize) throw()
+	{
+		return _AFX_FUNCNAME(GetEnvironmentVariable)(pszVar, pszBuffer, dwSize);
+	}
+#endif
 
 	static void __cdecl ConvertToOem(_In_opt_z_ LPWSTR /*psz*/)
 	{
@@ -796,7 +822,7 @@ public:
 	}
 
 	static void __cdecl ConvertToOem(
-		_In_count_(nLen) LPWSTR /*psz*/,
+		_In_reads_(nLen) LPWSTR /*psz*/,
 		_In_ size_t nLen)
 	{
 		UNREFERENCED_PARAMETER(nLen);
@@ -804,7 +830,7 @@ public:
 	}
 
 	static void __cdecl ConvertToAnsi(
-		_In_count_(nLen) LPWSTR /*psz*/,
+		_In_reads_(nLen) LPWSTR /*psz*/,
 		_In_ size_t nLen)
 	{
 		UNREFERENCED_PARAMETER(nLen);
@@ -818,7 +844,7 @@ public:
 		_In_opt_ LPCVOID pSource,
 		_In_ DWORD dwMessageID,
 		_In_ DWORD dwLanguageID,
-		_Out_z_cap_(nSize) LPWSTR pszBuffer,
+		_Out_writes_z_(nSize) LPWSTR pszBuffer,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* pArguments) throw()
 	{
@@ -832,7 +858,7 @@ public:
 		_In_opt_ LPCVOID pSource,
 		_In_ DWORD dwMessageID,
 		_In_ DWORD dwLanguageID,
-		_Out_z_cap_(nSize) LPWSTR pszBuffer,
+		_Out_writes_z_(nSize) LPWSTR pszBuffer,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* pArguments) throw()
 	{
@@ -846,7 +872,7 @@ public:
 		_In_opt_ LPCVOID /*pSource*/,
 		_In_ DWORD /*dwMessageID*/,
 		_In_ DWORD /*dwLanguageID*/,
-		_Out_z_cap_(nSize) LPWSTR /*pszBuffer*/,
+		_Out_writes_z_(nSize) LPWSTR /*pszBuffer*/,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* /*pArguments*/)
 	{
@@ -861,7 +887,7 @@ public:
 		_In_opt_ LPCVOID pSource,
 		_In_ DWORD dwMessageID,
 		_In_ DWORD dwLanguageID,
-		_Out_z_cap_(nSize) LPWSTR pszBuffer,
+		_Out_writes_z_(nSize) LPWSTR pszBuffer,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* pArguments)
 	{
@@ -870,6 +896,8 @@ public:
 #endif
 
 #endif
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 };
 
@@ -1152,14 +1180,14 @@ public:
 #endif // ndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 
 	CStringT(
-			_In_count_(nLength) const XCHAR* pch,
+			_In_reads_(nLength) const XCHAR* pch,
 			_In_ int nLength) :
 		CThisSimpleString( pch, nLength, StringTraits::GetDefaultManager() )
 	{
 	}
 
 	CStringT(
-			_In_count_(nLength) const XCHAR* pch,
+			_In_reads_(nLength) const XCHAR* pch,
 			_In_ int nLength,
 			_In_ IAtlStringMgr* pStringMgr) :
 		CThisSimpleString( pch, nLength, pStringMgr )
@@ -1168,7 +1196,7 @@ public:
 
 #ifndef _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 	CStringT(
-			_In_count_(nLength) const YCHAR* pch,
+			_In_reads_(nLength) const YCHAR* pch,
 			_In_ int nLength) :
 		CThisSimpleString( StringTraits::GetDefaultManager() )
 	{
@@ -1187,7 +1215,7 @@ public:
 	}
 
 	CStringT(
-			_In_count_(nLength) const YCHAR* pch,
+			_In_reads_(nLength) const YCHAR* pch,
 			_In_ int nLength,
 			_In_ IAtlStringMgr* pStringMgr) :
 		CThisSimpleString( pStringMgr )
@@ -1360,14 +1388,14 @@ public:
 	int Compare(_In_z_ PCXSTR psz) const
 	{
 		ATLENSURE( AtlIsValidString( psz ) );
-		__analysis_assume(psz); // AtlIsValidString guarantees that psz != NULL
+		_Analysis_assume_(psz); // AtlIsValidString guarantees that psz != NULL
 		return( StringTraits::StringCompare( GetString(), psz ) );
 	}
 
 	int CompareNoCase(_In_z_ PCXSTR psz) const
 	{
 		ATLENSURE( AtlIsValidString( psz ) );
-		__analysis_assume(psz); // AtlIsValidString guarantees that psz != NULL
+		_Analysis_assume_(psz); // AtlIsValidString guarantees that psz != NULL
 		return( StringTraits::StringCompareIgnore( GetString(), psz ) );
 	}
 
@@ -1982,6 +2010,7 @@ public:
 		return( *this );
 	}
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// Convert the string to the OEM character set
 	void AnsiToOem()
 	{
@@ -2000,6 +2029,7 @@ public:
 		StringTraits::ConvertToAnsi( pszBuffer, nLength+1 );
 		ReleaseBufferSetLength( nLength );
 	}
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 	// Very simple sub-string extraction
 
@@ -2095,7 +2125,7 @@ public:
  	}
 
 	// Format data using format string 'pszFormat'
-	void __cdecl Format(_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, ...);
+	void __cdecl Format(_In_z_ _Printf_format_string_ PCXSTR pszFormat, ...);
 
 	// Format data using format string loaded from resource 'nFormatID'
 	void __cdecl Format(_In_ _FormatMessage_format_string_ UINT nFormatID, ...);
@@ -2104,10 +2134,10 @@ public:
 	void __cdecl AppendFormat(_In_ _FormatMessage_format_string_ UINT nFormatID, ...);
 
 	// Append formatted data using format string 'pszFormat'
-	void __cdecl AppendFormat(_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, ...);
+	void __cdecl AppendFormat(_In_z_ _Printf_format_string_ PCXSTR pszFormat, ...);
 
 	void AppendFormatV(
-		_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+		_In_z_ _Printf_format_string_ PCXSTR pszFormat, 
 		_In_ va_list args)
 	{
 		ATLASSERT( AtlIsValidString( pszFormat ) );
@@ -2127,7 +2157,7 @@ public:
 	}
 
 	void FormatV(
-		_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+		_In_z_ _Printf_format_string_ PCXSTR pszFormat, 
 		_In_ va_list args)
 	{
 		ATLASSERT( AtlIsValidString( pszFormat ) );
@@ -2172,11 +2202,11 @@ public:
 		DWORD dwLastError = ::GetLastError();
 		::SetLastError(0);
 
-		StringTraits::_AFX_FUNCNAME(FormatMessage)( FORMAT_MESSAGE_FROM_STRING|
+		DWORD dwResult = StringTraits::_AFX_FUNCNAME(FormatMessage)( FORMAT_MESSAGE_FROM_STRING|
 			FORMAT_MESSAGE_ALLOCATE_BUFFER, pszFormat, 0, 0, reinterpret_cast< PXSTR >( &pszTemp ),
 			0, pArgList );
 
-		if( ::GetLastError() != 0 )
+		if ((dwResult == 0) && (::GetLastError() != 0))
 		{
 			ThrowMemoryException();
 		}
@@ -2184,11 +2214,9 @@ public:
 
 		*this = pszTemp;
 	}
-
 	// OLE BSTR support
-
 	// Allocate a BSTR containing a copy of the string
-	_Ret_opt_z_ BSTR AllocSysString() const
+	_Ret_z_ BSTR AllocSysString() const
 	{
 		BSTR bstrResult = StringTraits::AllocSysString( GetString(), GetLength() );
 
@@ -2199,7 +2227,7 @@ public:
 		return( bstrResult );
 	}
 
-	BSTR SetSysString(_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr) const
+	_Ret_maybenull_z_ BSTR SetSysString(_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr) const
 	{
 		ATLASSERT( AtlIsValidAddress( pbstr, sizeof( BSTR ) ) );
 
@@ -2214,8 +2242,9 @@ public:
 		return( *pbstr );
 	}
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// Set the string to the value of environment variable 'pszVar'
-	_Check_return_ BOOL GetEnvironmentVariable(_In_z_ PCXSTR pszVar)
+	_Check_return_ BOOL _AFX_FUNCNAME(GetEnvironmentVariable)(_In_z_ PCXSTR pszVar)
 	{
 		ULONG nLength = StringTraits::GetEnvironmentVariable( pszVar, NULL, 0 );
 		BOOL bRetVal = FALSE;
@@ -2234,6 +2263,13 @@ public:
 
 		return( bRetVal );
 	}
+
+#if defined(_AFX)
+	_Check_return_ BOOL GetEnvironmentVariable(_In_z_ PCXSTR pszVar)
+	{
+		return _AFX_FUNCNAME(GetEnvironmentVariable)(pszVar);
+	}
+#endif
 
 	// Load the string from resource 'nID'
 	_Check_return_ BOOL LoadString(_In_ UINT nID)
@@ -2285,6 +2321,7 @@ public:
 
 		return( TRUE );
 	}
+#endif  //  _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 	friend CStringT operator+(
 		_In_ const CStringT& str1,
@@ -2577,11 +2614,16 @@ private:
 		if( (pv != NULL) && IS_INTRESOURCE( pv ) )
 		{
 			UINT nID = LOWORD( reinterpret_cast< DWORD_PTR >( pv ) );
+			(nID);
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 			if( !LoadString( nID ) )
 			{
 				ATLTRACE( atlTraceString, 2, _T( "Warning: implicit LoadString(%u) failed\n" ), nID );
 			}
 			bRet = true;
+#else
+			ATLTRACE( atlTraceString, 2, _T( "Warning: LoadString(%u) not supported under the current WINAPI_FAMILY.\n" ), nID );
+#endif
 		}
 
 		return( bRet );
@@ -2593,12 +2635,14 @@ private:
 #define _CSTRING_BUFFER_SIZE(_CStringObj) ((_CStringObj).GetAllocLength() + 1)
 #endif
 
+
 #pragma warning(push)
 #pragma warning(disable : 4793)
+
 // Format data using format string 'pszFormat'
 template< typename BaseType, class StringTraits >
 inline void __cdecl CStringT<BaseType, StringTraits>::Format(
-	_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat,
+	_In_z_ _Printf_format_string_ PCXSTR pszFormat,
 	...)
 {
 	ATLASSERT( AtlIsValidString( pszFormat ) );
@@ -2645,7 +2689,7 @@ inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat(
 // Append formatted data using format string 'pszFormat'
 template< typename BaseType, class StringTraits >
 inline void __cdecl CStringT<BaseType, StringTraits>::AppendFormat(
-	_In_z_ _FormatMessage_format_string_ PCXSTR pszFormat, 
+	_In_z_ _Printf_format_string_ PCXSTR pszFormat, 
 	...)
 {
 	ATLASSERT( AtlIsValidString( pszFormat ) );
@@ -2775,6 +2819,7 @@ public:
 
 // IAtlStringMgr
 public:
+	_Ret_maybenull_ _Post_writable_byte_size_(sizeof(CStringData) + nChars*nCharSize)
 	virtual CStringData* Allocate(
 		_In_ int nChars,
 		_In_ int nCharSize) throw()
@@ -2826,6 +2871,7 @@ public:
 		m_pData->nDataLength = 0;
 		*static_cast< wchar_t* >( m_pData->data() ) = 0;
 	}
+	_Ret_maybenull_ _Post_writable_byte_size_(sizeof(CStringData) + nChars*nCharSize)
 	virtual CStringData* Reallocate(
 		_Inout_ CStringData* pData,
 		_In_ int nChars,
@@ -2943,7 +2989,7 @@ public:
 	{
 	}
 
-	CFixedStringT(_In_count_(nLength) const typename StringType::XCHAR* psz, _In_ int nLength) :
+	CFixedStringT(_In_reads_(nLength) const typename StringType::XCHAR* psz, _In_ int nLength) :
 		CFixedStringMgr( &m_data, t_nChars, StrTraits::GetDefaultManager() ),
 		StringType( psz, nLength, static_cast< CFixedStringMgr* >( this ) )
 	{
@@ -3048,8 +3094,8 @@ public:
 	typedef T& OUTARGTYPE;
 
 	static void __cdecl CopyElements(
-		_Out_capcount_(nElements) T* pDest,
-		_In_count_(nElements) const T* pSrc,
+		_Out_writes_all_(nElements) T* pDest,
+		_In_reads_(nElements) const T* pSrc,
 		_In_ size_t nElements)
 	{
 		for( size_t iElement = 0; iElement < nElements; iElement++ )
@@ -3059,8 +3105,8 @@ public:
 	}
 
 	static void __cdecl RelocateElements(
-		_Out_capcount_(nElements) T* pDest,
-		_In_count_(nElements) T* pSrc,
+		_Out_writes_all_(nElements) T* pDest,
+		_In_reads_(nElements) T* pSrc,
 		_In_ size_t nElements)
 	{
 		Checked::memmove_s( pDest, nElements*sizeof( T ), pSrc, nElements*sizeof( T ) );
@@ -3099,6 +3145,7 @@ public:
 
 #if defined(_AFX)
 #pragma pop_macro("FormatMessage")
+#pragma pop_macro("GetEnvironmentVariable")
 #endif
 
 };  // namespace ATL

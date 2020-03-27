@@ -13,7 +13,13 @@
 
 #pragma once
 
-#include <msxml2.h>
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
+#include <msxml6.h>
 
 #pragma warning (push)
 #pragma pack(push,_ATL_PACKING)
@@ -176,7 +182,7 @@ public:
 
 	HRESULT SelectNodes(
 		_In_z_ LPCTSTR pszSelect,
-		_Deref_out_opt_ IXMLDOMNodeList** nodes)
+		_Outptr_result_maybenull_ IXMLDOMNodeList** nodes)
 	{
 		IF_NOT_VALID_RETURN_EPTR;
 		IF_NULL_RETURN_INVALID(pszSelect);
@@ -391,7 +397,7 @@ public:
 	}
 
 	HRESULT Load(
-		_In_bytecount_(size) LPBYTE lpBuffer,
+		_In_reads_bytes_(size) LPBYTE lpBuffer,
 		_In_ UINT size)
 	{
 		EmptyErrorInfo();
@@ -500,7 +506,7 @@ ATLPREFAST_UNSUPPRESS()
 	}
 
 	HRESULT Save(
-		_Out_ _Deref_post_opt_cap_(size) LPBYTE* lpBuffer,
+		_Outptr_result_buffer_maybenull_(size) LPBYTE* lpBuffer,
 		_Out_ UINT& size)
 	{
 		IF_NOT_VALID_RETURN_EPTR;
@@ -524,12 +530,19 @@ ATLPREFAST_UNSUPPRESS()
 					size = (UINT)stat.cbSize.QuadPart;
 					if (size > 0)
 					{
-						*lpBuffer = new BYTE[size];
-						LARGE_INTEGER dlibMove = {0};
-						pStream->Seek(dlibMove, STREAM_SEEK_SET, NULL);
-						pStream->Read(*lpBuffer, size, NULL);
+						*lpBuffer = _ATL_NEW BYTE[size];
+						if (*lpBuffer != NULL)
+						{
+							LARGE_INTEGER dlibMove = {0};
+							pStream->Seek(dlibMove, STREAM_SEEK_SET, NULL);
+							pStream->Read(*lpBuffer, size, NULL);
 
-						hr = S_OK;
+							hr = S_OK;
+						}
+						else 
+						{
+							hr = E_OUTOFMEMORY;
+						}
 					}
 				}
 			}
@@ -624,7 +637,7 @@ protected:
 		{
 			m_bComInitialized = TRUE;
 
-			hr = Get().CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER);
+			hr = Get().CoCreateInstance(CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER);
 			IF_HR_INVALID_RETURN_HR(hr);
 
 			hr = Get()->put_async(VARIANT_FALSE);

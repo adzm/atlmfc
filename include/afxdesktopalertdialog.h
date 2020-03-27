@@ -23,7 +23,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCDesktopAlertWndInfo
 
 class CMFCDesktopAlertWndInfo
@@ -50,7 +50,7 @@ public:
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCDesktopAlertDialog window
 
 class CMFCDesktopAlertWnd;
@@ -97,7 +97,6 @@ public:
 	virtual ~CMFCDesktopAlertDialog();
 
 protected:
-	//{{AFX_MSG(CMFCDesktopAlertDialog)
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnPaint();
@@ -106,7 +105,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	virtual void OnDraw(CDC* pDC);

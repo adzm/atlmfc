@@ -1026,3 +1026,25 @@ BOOL CTagManager::ReadToolTipInfo(const CString& strValue, CMFCToolTipInfo& valu
 
 	return FALSE;
 }
+
+////////////////////////////////////////////////////////////////////////////
+// Accessing dialog DLGINIT helpers
+
+BOOL __stdcall ReadBoolProp(CTagManager& tagManager, LPCTSTR lpszTag, BOOL& bMember)
+{
+	if (lpszTag == NULL)
+	{
+		return FALSE;
+	}
+
+	CString str;
+	tagManager.ExcludeTag(lpszTag, str);
+
+	if (str.IsEmpty())
+	{
+		return FALSE;
+	}
+
+	bMember = (str.CompareNoCase(PS_True) == 0);
+	return TRUE;
+}

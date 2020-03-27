@@ -28,7 +28,7 @@ void CDumpContext::OutputString(LPCTSTR lpsz)
 	if( lpsz == NULL )
 		AfxThrowUserException();
 	// otherwise, write the string to the file
-	m_pFile->Write(lpsz, lstrlen(lpsz)*sizeof(TCHAR));
+	m_pFile->Write(lpsz, static_cast<UINT>(_tcslen(lpsz))*sizeof(TCHAR));
 }
 
 CDumpContext::CDumpContext(CFile* pFile)
@@ -79,7 +79,7 @@ CDumpContext& CDumpContext::operator<<(LPCTSTR lpsz)
 		return *this;
 	}
 
-	m_pFile->Write(lpsz, lstrlen(lpsz)*sizeof(TCHAR));
+	m_pFile->Write(lpsz, static_cast<UINT>(_tcslen(lpsz))*sizeof(TCHAR));
 	return *this;
 }
 

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -27,7 +27,7 @@
 // CMFCRibbonKeyboardCustomizeDialog dialog
 
 CMFCRibbonKeyboardCustomizeDialog::CMFCRibbonKeyboardCustomizeDialog(CMFCRibbonBar* pRibbonBar, CWnd* pParent /*=NULL*/)
-	: CDialogEx(CMFCRibbonKeyboardCustomizeDialog::IDD, pParent), m_wndCommandsList(pRibbonBar, FALSE /* Don't include separator */)
+	: CDialogEx(CMFCRibbonKeyboardCustomizeDialog::IDD, pParent), m_wndCommandsList(pRibbonBar, FALSE /* Don't include separator */, FALSE, TRUE /* Commands only */)
 {
 	ASSERT_VALID(pRibbonBar);
 
@@ -55,7 +55,6 @@ CMFCRibbonKeyboardCustomizeDialog::~CMFCRibbonKeyboardCustomizeDialog()
 void CMFCRibbonKeyboardCustomizeDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCRibbonKeyboardCustomizeDialog)
 	DDX_Control(pDX, IDC_AFXBARRES_ASSIGNED_TO_TITLE, m_wndAssignedToTitle);
 	DDX_Control(pDX, IDC_AFXBARRES_NEW_SHORTCUT_KEY, m_wndNewKey);
 	DDX_Control(pDX, IDC_AFXBARRES_VIEW_TYPE, m_wndViewTypeList);
@@ -67,11 +66,9 @@ void CMFCRibbonKeyboardCustomizeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_AFXBARRES_ASSIGN, m_wndAssignButton);
 	DDX_Text(pDX, IDC_AFXBARRES_COMMAND_DESCRIPTION, m_strDescription);
 	DDX_Text(pDX, IDC_AFXBARRES_ASSIGNED_TO, m_strAssignedTo);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCRibbonKeyboardCustomizeDialog, CDialogEx)
-	//{{AFX_MSG_MAP(CMFCRibbonKeyboardCustomizeDialog)
 	ON_BN_CLICKED(IDC_AFXBARRES_ASSIGN, &CMFCRibbonKeyboardCustomizeDialog::OnAssign)
 	ON_BN_CLICKED(IDC_AFXBARRES_REMOVE, &CMFCRibbonKeyboardCustomizeDialog::OnRemove)
 	ON_BN_CLICKED(IDC_AFXBARRES_RESET_SHORTCUTS, &CMFCRibbonKeyboardCustomizeDialog::OnResetAll)
@@ -80,7 +77,6 @@ BEGIN_MESSAGE_MAP(CMFCRibbonKeyboardCustomizeDialog, CDialogEx)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_CURRENT_KEYS_LIST, &CMFCRibbonKeyboardCustomizeDialog::OnSelchangeCurrentKeysList)
 	ON_CBN_SELCHANGE(IDC_AFXBARRES_VIEW_TYPE, &CMFCRibbonKeyboardCustomizeDialog::OnSelchangeViewType)
 	ON_EN_UPDATE(IDC_AFXBARRES_NEW_SHORTCUT_KEY, &CMFCRibbonKeyboardCustomizeDialog::OnUpdateNewShortcutKey)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

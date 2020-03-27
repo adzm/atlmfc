@@ -379,7 +379,7 @@ CFrameWnd* CDocTemplate::CreatePreviewFrame(CWnd* pParentWnd, CDocument* pDoc)
 		cs.lpszClass = _afxWndFrameOrView;  // COLOR_WINDOW background
 
 		WNDCLASS wndcls;
-		if (cs.lpszClass != NULL && AfxCtxGetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wndcls))
+		if (cs.lpszClass != NULL && GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wndcls))
 		{
 			// register a very similar WNDCLASS
 			LPCTSTR lpcszClassName = AfxRegisterWndClass(wndcls.style, wndcls.hCursor, wndcls.hbrBackground);

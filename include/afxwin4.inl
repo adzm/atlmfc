@@ -29,13 +29,13 @@ AFX_INLINE BOOL CDC::GetCharABCWidthsI(UINT giFirst, UINT cgi, LPWORD pgi, LPABC
 AFX_INLINE BOOL CDC::GetCharWidthI(UINT giFirst, UINT cgi, LPWORD pgi, LPINT lpBuffer) const
 	{ ENSURE(m_hDC != NULL); return ::GetCharWidthI(m_hDC, giFirst, cgi, pgi, lpBuffer); }
 
-AFX_INLINE BOOL CDC::GetTextExtentExPointI(LPWORD pgiIn, int cgi, int nMaxExtent, LPINT lpnFit, LPINT alpDx, LPSIZE lpSize) const
+AFX_INLINE BOOL CDC::GetTextExtentExPointI(LPWORD pgiIn, int cgi, int nMaxExtent, LPINT lpnFit, LPINT alpDx, _Out_opt_ LPSIZE lpSize) const
 {
 	ENSURE(lpSize != NULL);
 	ENSURE(m_hDC != NULL);
 	return ::GetTextExtentExPointI(m_hDC, pgiIn, cgi, nMaxExtent, lpnFit, alpDx, lpSize);
 }
-AFX_INLINE BOOL CDC::GetTextExtentPointI(LPWORD pgiIn, int cgi, LPSIZE lpSize) const
+AFX_INLINE BOOL CDC::GetTextExtentPointI(LPWORD pgiIn, int cgi, _Out_opt_ LPSIZE lpSize) const
 {
 	ENSURE(lpSize != NULL);
 	ENSURE(m_hDC != NULL);
@@ -136,7 +136,7 @@ AFX_INLINE CString CComboBox::GetCueBanner() const
 		return CString();
 }
 
-AFX_INLINE BOOL CComboBox::GetCueBanner(_Out_z_cap_(cchText) LPWSTR lpszText, _In_ int cchText) const
+AFX_INLINE BOOL CComboBox::GetCueBanner(_Out_writes_z_(cchText) LPWSTR lpszText, _In_ int cchText) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(lpszText != NULL);
@@ -195,7 +195,7 @@ AFX_INLINE BOOL CEdit::SetCueBanner(_In_z_ LPCWSTR lpszText, _In_ BOOL fDrawWhen
 #endif
 }
 
-AFX_INLINE BOOL CEdit::GetCueBanner(_Out_z_cap_(cchText) LPWSTR lpszText, _In_ int cchText) const
+AFX_INLINE BOOL CEdit::GetCueBanner(_Out_writes_z_(cchText) LPWSTR lpszText, _In_ int cchText) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(lpszText != NULL);
@@ -281,40 +281,46 @@ AFX_INLINE BOOL CEdit::GetHighlight(_Out_ int* pichStart, _Out_ int* pichEnd) co
 
 #if (_WIN32_WINNT >= 0x501)
 
+#pragma warning(push)
+#pragma warning(disable: 6001)
 AFX_INLINE BOOL CButton::GetIdealSize(_Out_ SIZE* psize) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(psize != NULL);
 	return Button_GetIdealSize(m_hWnd, psize); // BCM_GETIDEALSIZE
 }
+#pragma warning(pop)
 
-AFX_INLINE BOOL CButton::SetImageList(PBUTTON_IMAGELIST pbuttonImagelist)
+AFX_INLINE BOOL CButton::SetImageList(_In_ PBUTTON_IMAGELIST pbuttonImagelist)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pbuttonImagelist != NULL);
 	return Button_SetImageList(m_hWnd, pbuttonImagelist); // BCM_SETIMAGELIST
 }
 
-AFX_INLINE BOOL CButton::GetImageList(PBUTTON_IMAGELIST pbuttonImagelist) const
+AFX_INLINE BOOL CButton::GetImageList(_In_ PBUTTON_IMAGELIST pbuttonImagelist) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pbuttonImagelist != NULL);
 	return Button_GetImageList(m_hWnd, pbuttonImagelist); // BCM_GETIMAGELIST
 }
 
-AFX_INLINE BOOL CButton::SetTextMargin(RECT* pmargin)
+AFX_INLINE BOOL CButton::SetTextMargin(_In_ RECT* pmargin)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pmargin != NULL);
 	return Button_SetTextMargin(m_hWnd, pmargin); // BCM_SETTEXTMARGIN
 }
 
-AFX_INLINE BOOL CButton::GetTextMargin(RECT* pmargin) const
+#pragma warning(push)
+#pragma warning(disable: 6001)
+AFX_INLINE BOOL CButton::GetTextMargin(_Out_ RECT* pmargin) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pmargin != NULL);
 	return Button_GetTextMargin(m_hWnd, pmargin); // BCM_GETTEXTMARGIN
 }
+#pragma warning(pop)
 
 #endif	// _WIN32_WINNT >= 0x0501
 
@@ -346,13 +352,16 @@ AFX_INLINE CString CButton::GetNote() const
 	return str;
 }
 
-_Check_return_ AFX_INLINE BOOL CButton::GetNote(_Out_z_cap_(*pcchNote) LPTSTR lpszNote, _Inout_ UINT* pcchNote) const
+#pragma warning(push)
+#pragma warning(disable: 6054)
+_Check_return_ AFX_INLINE BOOL CButton::GetNote(_Out_writes_z_(*pcchNote) LPTSTR lpszNote, _Inout_ UINT* pcchNote) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(lpszNote != NULL);
 	ASSERT(pcchNote != NULL);
 	return Button_GetNote(m_hWnd, lpszNote, pcchNote); // BCM_GETNOTE
 }
+#pragma warning(pop)
 
 AFX_INLINE BOOL CButton::SetNote(_In_z_ LPCTSTR lpszNote)
 {
@@ -366,11 +375,14 @@ AFX_INLINE UINT CButton::GetNoteLength() const
 	return (UINT)Button_GetNoteLength(m_hWnd); // BCM_GETNOTELENGTH
 }
 
+#pragma warning(push)
+#pragma warning(disable: 6001)
 AFX_INLINE BOOL CButton::GetSplitInfo(_Out_ PBUTTON_SPLITINFO pInfo) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return Button_GetSplitInfo(m_hWnd, pInfo); // BCM_GETSPLITINFO
 }
+#pragma warning(pop)
 
 AFX_INLINE BOOL CButton::SetSplitInfo(_In_ PBUTTON_SPLITINFO pInfo)
 {
@@ -441,7 +453,10 @@ AFX_INLINE TCHAR CButton::GetSplitGlyph() const
 	BUTTON_SPLITINFO buttonSplitInfo = {0};
 	buttonSplitInfo.mask = BCSIF_GLYPH;
 	Button_GetSplitInfo(m_hWnd, &buttonSplitInfo);
-	return (WCHAR)buttonSplitInfo.himlGlyph;
+#pragma warning(push)
+#pragma warning(disable: 4302) // 'type cast' : truncation from 'HIMAGELIST' to 'WCHAR'
+	return (TCHAR)buttonSplitInfo.himlGlyph;
+#pragma warning(pop)
 }
 
 AFX_INLINE BOOL CButton::SetSplitGlyph(_In_ TCHAR chGlyph)

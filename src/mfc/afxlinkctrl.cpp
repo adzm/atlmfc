@@ -44,10 +44,8 @@ CMFCLinkCtrl::~CMFCLinkCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCLinkCtrl, CMFCButton)
-	//{{AFX_MSG_MAP(CMFCLinkCtrl)
 	ON_CONTROL_REFLECT_EX(BN_CLICKED, &CMFCLinkCtrl::OnClicked)
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCLinkCtrl::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -62,7 +60,7 @@ void CMFCLinkCtrl::OnDraw(CDC* pDC, const CRect& rect, UINT /*uiState*/)
 
 	if (m_bAlwaysUnderlineText || m_bHover)
 	{
-		pOldFont = pDC->SelectObject(&afxGlobalData.fontDefaultGUIUnderline);
+		pOldFont = pDC->SelectObject(&(GetGlobalData()->fontDefaultGUIUnderline));
 	}
 	else
 	{
@@ -72,7 +70,7 @@ void CMFCLinkCtrl::OnDraw(CDC* pDC, const CRect& rect, UINT /*uiState*/)
 	ENSURE(pOldFont != NULL);
 
 	// Set text parameters:
-	pDC->SetTextColor(m_bHover ? afxGlobalData.clrHotLinkHoveredText : (m_bVisited ? afxGlobalData.clrHotLinkVisitedText : afxGlobalData.clrHotLinkNormalText));
+	pDC->SetTextColor(m_bHover ? GetGlobalData()->clrHotLinkHoveredText : (m_bVisited ? GetGlobalData()->clrHotLinkVisitedText : GetGlobalData()->clrHotLinkNormalText));
 	pDC->SetBkMode(TRANSPARENT);
 
 	// Obtain label:
@@ -155,7 +153,7 @@ CSize CMFCLinkCtrl::SizeToContent(BOOL bVCenter, BOOL bHCenter)
 	CClientDC dc(this);
 
 	// Set font:
-	CFont* pOldFont = dc.SelectObject(&afxGlobalData.fontDefaultGUIUnderline);
+	CFont* pOldFont = dc.SelectObject(&(GetGlobalData()->fontDefaultGUIUnderline));
 	ENSURE(pOldFont != NULL);
 
 	// Obtain label:

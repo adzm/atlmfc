@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarNameDialog dialog
 
 class CMFCToolBarNameDialog : public CDialog
@@ -42,9 +42,8 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarNameDialog)
 	afx_msg void OnUpdateToolbarName();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

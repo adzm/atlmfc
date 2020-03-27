@@ -9,7 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-
+#include "afxglobals.h"
 
 
 #define new DEBUG_NEW
@@ -169,14 +169,9 @@ CChevronOwnerDrawMenu::CChevronOwnerDrawMenu()
 		LOGFONT lfMessageFont;
 	};
 
-	const UINT cbProperSize = (_AfxGetComCtlVersion() < MAKELONG(1, 6))
-		? sizeof(AFX_OLDNONCLIENTMETRICS) : sizeof(NONCLIENTMETRICS);
-
-	NONCLIENTMETRICS NonClientMetrics;
-	NonClientMetrics.cbSize = cbProperSize;
-
-	::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, cbProperSize, &NonClientMetrics, 0);
-
+	NONCLIENTMETRICS NonClientMetrics = {};
+	NonClientMetrics.cbSize = sizeof(AFX_OLDNONCLIENTMETRICS);
+	::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NonClientMetrics), &NonClientMetrics, 0);
 	m_MenuFont.CreateFontIndirect(&NonClientMetrics.lfMenuFont);
 }
 

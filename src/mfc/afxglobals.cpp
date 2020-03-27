@@ -32,22 +32,11 @@ extern CObList afxAllToolBars;
 
 BOOL CMemDC::m_bUseMemoryDC = TRUE;
 
-static const CString strOfficeFontName = _T("Tahoma");
-static const CString strOffice2007FontName = _T("Segoe UI");
-static const CString strDefaultFontName = _T("MS Sans Serif");
-static const CString strVertFontName = _T("Arial");
-static const CString strMarlettFontName = _T("Marlett");
-
-HINSTANCE AFX_GLOBAL_DATA::m_hinstD2DDLL = NULL;
-HINSTANCE AFX_GLOBAL_DATA::m_hinstDWriteDLL = NULL;
-
-ID2D1Factory* AFX_GLOBAL_DATA::m_pDirect2dFactory = NULL;
-IDWriteFactory* AFX_GLOBAL_DATA::m_pWriteFactory = NULL;
-IWICImagingFactory* AFX_GLOBAL_DATA::m_pWicFactory = NULL;
-
-D2D1MAKEROTATEMATRIX AFX_GLOBAL_DATA::m_pfD2D1MakeRotateMatrix = NULL;
-
-BOOL AFX_GLOBAL_DATA::m_bD2DInitialized = FALSE;
+#define AFX_FONT_NAME_OFFICE       _T("Tahoma")
+#define AFX_FONT_NAME_OFFICE_2007  _T("Segoe UI")
+#define AFX_FONT_NAME_DEFAULT      _T("MS Sans Serif")
+#define AFX_FONT_NAME_VERT         _T("Arial")
+#define AFX_FONT_NAME_MARLETT      _T("Marlett")
 
 CMemDC::CMemDC(CDC& dc, CWnd* pWnd) :
 	m_dc(dc), m_bMemDC(FALSE), m_hBufferedPaint(NULL), m_pOldBmp(NULL)
@@ -59,23 +48,20 @@ CMemDC::CMemDC(CDC& dc, CWnd* pWnd) :
 	m_rect.right += pWnd->GetScrollPos(SB_HORZ);
 	m_rect.bottom += pWnd->GetScrollPos(SB_VERT);
 
-	if (afxGlobalData.m_pfBeginBufferedPaint != NULL && afxGlobalData.m_pfEndBufferedPaint != NULL)
+	HDC hdcPaint = NULL;
+
+	if (!GetGlobalData()->m_bBufferedPaintInited)
 	{
-		HDC hdcPaint = NULL;
+		_AfxBufferedPaintInit();
+		GetGlobalData()->m_bBufferedPaintInited = TRUE;
+	}
 
-		if (!afxGlobalData.m_bBufferedPaintInited && afxGlobalData.m_pfBufferedPaintInit != NULL && afxGlobalData.m_pfBufferedPaintUnInit != NULL)
-		{
-			afxGlobalData.m_pfBufferedPaintInit();
-			afxGlobalData.m_bBufferedPaintInited = TRUE;
-		}
+	m_hBufferedPaint = _AfxBeginBufferedPaint(dc.GetSafeHdc(), m_rect, BPBF_TOPDOWNDIB, NULL, &hdcPaint);
 
-		m_hBufferedPaint = (*afxGlobalData.m_pfBeginBufferedPaint)(dc.GetSafeHdc(), m_rect, AFX_BPBF_TOPDOWNDIB, NULL, &hdcPaint);
-
-		if (m_hBufferedPaint != NULL && hdcPaint != NULL)
-		{
-			m_bMemDC = TRUE;
-			m_dcMem.Attach(hdcPaint);
-		}
+	if (m_hBufferedPaint != NULL && hdcPaint != NULL)
+	{
+		m_bMemDC = TRUE;
+		m_dcMem.Attach(hdcPaint);
 	}
 	else
 	{
@@ -95,23 +81,20 @@ CMemDC::CMemDC(CDC& dc, const CRect& rect) :
 {
 	ASSERT(!m_rect.IsRectEmpty());
 
-	if (afxGlobalData.m_pfBeginBufferedPaint != NULL && afxGlobalData.m_pfEndBufferedPaint != NULL)
+	HDC hdcPaint = NULL;
+
+	if (!GetGlobalData()->m_bBufferedPaintInited)
 	{
-		HDC hdcPaint = NULL;
+		_AfxBufferedPaintInit();
+		GetGlobalData()->m_bBufferedPaintInited = TRUE;
+	}
 
-		if (!afxGlobalData.m_bBufferedPaintInited && afxGlobalData.m_pfBufferedPaintInit != NULL && afxGlobalData.m_pfBufferedPaintUnInit != NULL)
-		{
-			afxGlobalData.m_pfBufferedPaintInit();
-			afxGlobalData.m_bBufferedPaintInited = TRUE;
-		}
+	m_hBufferedPaint = _AfxBeginBufferedPaint(dc.GetSafeHdc(), m_rect, BPBF_TOPDOWNDIB, NULL, &hdcPaint);
 
-		m_hBufferedPaint = (*afxGlobalData.m_pfBeginBufferedPaint)(dc.GetSafeHdc(), m_rect, AFX_BPBF_TOPDOWNDIB, NULL, &hdcPaint);
-
-		if (m_hBufferedPaint != NULL && hdcPaint != NULL)
-		{
-			m_bMemDC = TRUE;
-			m_dcMem.Attach(hdcPaint);
-		}
+	if (m_hBufferedPaint != NULL && hdcPaint != NULL)
+	{
+		m_bMemDC = TRUE;
+		m_dcMem.Attach(hdcPaint);
 	}
 	else
 	{
@@ -131,7 +114,7 @@ CMemDC::~CMemDC()
 	if (m_hBufferedPaint != NULL)
 	{
 		m_dcMem.Detach();
-		(*afxGlobalData.m_pfEndBufferedPaint)(m_hBufferedPaint, TRUE);
+		_AfxEndBufferedPaint(m_hBufferedPaint, TRUE);
 	}
 	else if (m_bMemDC)
 	{
@@ -155,40 +138,13 @@ CMemDC::~CMemDC()
 	}
 }
 
-static int CALLBACK FontFamalyProcFonts(const LOGFONT FAR* lplf, const TEXTMETRIC FAR* /*lptm*/, ULONG /*ulFontType*/, LPARAM lParam)
+static int CALLBACK FontFamilyProcFonts(const LOGFONT FAR* lplf, const TEXTMETRIC FAR* /*lptm*/, ULONG /*ulFontType*/, LPARAM lParam)
 {
 	ENSURE(lplf != NULL);
 	ENSURE(lParam != NULL);
 
 	CString strFont = lplf->lfFaceName;
 	return strFont.CollateNoCase((LPCTSTR) lParam) == 0 ? 0 : 1;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// DLL Load Helper
-
-inline HMODULE AfxLoadSystemLibraryUsingFullPath(_In_z_ const WCHAR *pszLibrary)
-{
-	WCHAR wszLoadPath[MAX_PATH+1];
-	if (::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath)) == 0)
-	{
-		return NULL;
-	}
-
-	if (wszLoadPath[wcslen(wszLoadPath)-1] != L'\\')
-	{
-		if (wcscat_s(wszLoadPath, _countof(wszLoadPath), L"\\") != 0)
-		{
-			return NULL;
-		}
-	}
-
-	if (wcscat_s(wszLoadPath, _countof(wszLoadPath), pszLibrary) != 0)
-	{
-		return NULL;
-	}
-
-	return(::AfxCtxLoadLibraryW(wszLoadPath));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -200,67 +156,19 @@ AFX_GLOBAL_DATA afxGlobalData;
 DWORD g_dwAfxGlobalDataRef = 0;
 #endif
 
-// Initialization code
+// Use a global flag to determine whether IsDwmCompositionEnabled
+// needs to be called, because it is checked very often at runtime.
+static BOOL g_bCheckCompositionEnableSucceeded = FALSE;
+
 AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 {
-	// Detect the kind of OS:
-	OSVERSIONINFO osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-	::GetVersionEx(&osvi);
-
-	bIsRemoteSession = GetSystemMetrics(SM_REMOTESESSION);
-
-	bIsWindowsVista = (osvi.dwMajorVersion >= 6);
-	bIsWindows7 = (osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1) || (osvi.dwMajorVersion > 6) ;
-	bDisableAero = FALSE;
-
+	m_bInitialized = FALSE;
 	m_bIsRibbonImageScale = TRUE;
 
 	// Cached system values(updated in CWnd::OnSysColorChange)
 	hbrBtnShadow = NULL;
 	hbrBtnHilite = NULL;
 	hbrWindow = NULL;
-
-	UpdateSysColors();
-
-	m_hinstUXThemeDLL = ::AfxCtxLoadLibraryW(L"UxTheme.dll");
-	if (m_hinstUXThemeDLL != NULL)
-	{
-		m_pfDrawThemeBackground = (DRAWTHEMEPARENTBACKGROUND)::GetProcAddress(m_hinstUXThemeDLL, "DrawThemeParentBackground");
-		m_pfDrawThemeTextEx = (DRAWTHEMETEXTEX)::GetProcAddress(m_hinstUXThemeDLL, "DrawThemeTextEx");
-
-		m_pfBufferedPaintInit = (BUFFEREDPAINTINIT)::GetProcAddress(m_hinstUXThemeDLL, "BufferedPaintInit");
-		m_pfBufferedPaintUnInit = (BUFFEREDPAINTUNINIT)::GetProcAddress(m_hinstUXThemeDLL, "BufferedPaintUnInit");
-
-		m_pfBeginBufferedPaint = (BEGINBUFFEREDPAINT)::GetProcAddress(m_hinstUXThemeDLL, "BeginBufferedPaint");
-		m_pfEndBufferedPaint = (ENDBUFFEREDPAINT)::GetProcAddress(m_hinstUXThemeDLL, "EndBufferedPaint");
-	}
-	else
-	{
-		m_pfDrawThemeBackground = NULL;
-		m_pfDrawThemeTextEx = NULL;
-
-		m_pfBufferedPaintInit = NULL;
-		m_pfBufferedPaintUnInit = NULL;
-
-		m_pfBeginBufferedPaint = NULL;
-		m_pfEndBufferedPaint = NULL;
-	}
-
-	m_hinstDwmapiDLL = AfxLoadSystemLibraryUsingFullPath(L"dwmapi.dll");
-	if (m_hinstDwmapiDLL != NULL)
-	{
-		m_pfDwmExtendFrameIntoClientArea = (DWMEXTENDFRAMEINTOCLIENTAREA)::GetProcAddress(m_hinstDwmapiDLL, "DwmExtendFrameIntoClientArea");
-		m_pfDwmDefWindowProc = (DWMDEFWINDOWPROC) ::GetProcAddress(m_hinstDwmapiDLL, "DwmDefWindowProc");
-		m_pfDwmIsCompositionEnabled = (DWMISCOMPOSITIONENABLED)::GetProcAddress(m_hinstDwmapiDLL, "DwmIsCompositionEnabled");
-	}
-	else
-	{
-		m_pfDwmExtendFrameIntoClientArea = NULL;
-		m_pfDwmDefWindowProc = NULL;
-		m_pfDwmIsCompositionEnabled = NULL;
-	}
 
 	m_hcurStretch = NULL;
 	m_hcurStretchVert = NULL;
@@ -273,10 +181,8 @@ AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 	m_hcurNoMoveTab = NULL;
 
 	m_bUseSystemFont = FALSE;
+	m_bDontReduceFontHeight = FALSE;
 	m_bInSettingChange = FALSE;
-
-	UpdateFonts();
-	OnSettingChange();
 
 	m_bIsRTL = FALSE;
 	m_bBufferedPaintInited = FALSE;
@@ -295,12 +201,31 @@ AFX_GLOBAL_DATA::AFX_GLOBAL_DATA()
 
 	m_bUseBuiltIn32BitIcons = TRUE;
 
-	m_bComInitialized = FALSE;
+#ifndef _AFXDLL
+	Initialize();
+#endif
+}
 
-	m_pTaskbarList = NULL;
-	m_pTaskbarList3 = NULL;
-	m_bTaskBarInterfacesAvailable = TRUE;
+// Initialization code
+void AFX_GLOBAL_DATA::Initialize()
+{
+	if (m_bInitialized)
+	{
+		return;
+	}
 
+	OSVERSIONINFOEX osvi = { sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7) };
+
+	// The condition mask specifies to test for the OS major/minor versions using greater than or equal.
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+
+	bIsWindows7 = VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+
+	bIsRemoteSession = GetSystemMetrics(SM_REMOTESESSION);
+
+	UpdateSysColors();
+	UpdateFonts();
+	OnSettingChange();
 	EnableAccessibilitySupport();
 }
 
@@ -392,7 +317,7 @@ void AFX_GLOBAL_DATA::UpdateFonts()
 	{
 		nFontHeight = 11;
 	}
-	else
+	else if (!m_bDontReduceFontHeight)
 	{
 		nFontHeight--;
 	}
@@ -406,21 +331,21 @@ void AFX_GLOBAL_DATA::UpdateFonts()
 	if (!fUseSystemFont)
 	{
 		// Check for "Segoe UI" or "Tahoma" font existance:
-		if (::EnumFontFamilies(dc.GetSafeHdc(), NULL, FontFamalyProcFonts, (LPARAM)(LPCTSTR) strOffice2007FontName) == 0)
+		if (::EnumFontFamilies(dc.GetSafeHdc(), NULL, FontFamilyProcFonts, (LPARAM)(LPCTSTR) AFX_FONT_NAME_OFFICE_2007) == 0)
 		{
 			// Found! Use MS Office 2007 font!
-			lstrcpy(lf.lfFaceName, strOffice2007FontName);
+			lstrcpy(lf.lfFaceName, AFX_FONT_NAME_OFFICE_2007);
 			lf.lfQuality = 5 /*CLEARTYPE_QUALITY*/;
 		}
-		else if (::EnumFontFamilies(dc.GetSafeHdc(), NULL, FontFamalyProcFonts, (LPARAM)(LPCTSTR) strOfficeFontName) == 0)
+		else if (::EnumFontFamilies(dc.GetSafeHdc(), NULL, FontFamilyProcFonts, (LPARAM)(LPCTSTR) AFX_FONT_NAME_OFFICE) == 0)
 		{
 			// Found! Use MS Office font!
-			lstrcpy(lf.lfFaceName, strOfficeFontName);
+			lstrcpy(lf.lfFaceName, AFX_FONT_NAME_OFFICE);
 		}
 		else
 		{
 			// Not found. Use default font:
-			lstrcpy(lf.lfFaceName, strDefaultFontName);
+			lstrcpy(lf.lfFaceName, AFX_FONT_NAME_DEFAULT);
 		}
 	}
 	
@@ -465,7 +390,7 @@ void AFX_GLOBAL_DATA::UpdateFonts()
 	lf.lfCharSet = SYMBOL_CHARSET;
 	lf.lfWeight = 0;
 	lf.lfHeight = ::GetSystemMetrics(SM_CYMENUCHECK) - 1;
-	lstrcpy(lf.lfFaceName, strMarlettFontName);
+	lstrcpy(lf.lfFaceName, AFX_FONT_NAME_MARLETT);
 
 	fontMarlett.CreateFontIndirect(&lf);
 	lf.lfCharSet = bCharSet; // Restore charset
@@ -484,7 +409,7 @@ void AFX_GLOBAL_DATA::UpdateFonts()
 			lf.lfItalic = info.lfMenuFont.lfItalic;
 
 			{
-				lstrcpy(lf.lfFaceName, strVertFontName);
+				lstrcpy(lf.lfFaceName, AFX_FONT_NAME_VERT);
 			}
 
 			fontVert.CreateFontIndirect(&lf);
@@ -555,6 +480,9 @@ void AFX_GLOBAL_DATA::OnSettingChange()
 	{
 		::SystemParametersInfo(SPI_GETWORKAREA, 0, &m_rectVirtual, 0);
 	}
+
+	// Reset flag so IsDwmCompositionEnabled is re-checked after setting change.
+	g_bCheckCompositionEnableSucceeded = FALSE;
 
 	// Get system menu animation type:
 	m_bMenuAnimation = FALSE;
@@ -808,88 +736,29 @@ HBITMAP AFX_GLOBAL_DATA::CreateDitherBitmap(HDC hDC)
 	return hbm;
 }
 
-#if (WINVER >= 0x0601)
 ITaskbarList* AFX_GLOBAL_DATA::GetITaskbarList()
 {
-	HRESULT hr = S_OK;
-
-	if (!bIsWindows7 || !m_bTaskBarInterfacesAvailable)
+	// Backward-compatibility wrapper
+	CWinApp* pApp = AfxGetApp();
+	if (pApp != NULL)
 	{
-		return NULL;
+		return pApp->GetITaskbarList();
 	}
 
-	if (m_pTaskbarList != NULL)
-	{
-		return m_pTaskbarList;
-	}
-
-	if (!m_bComInitialized)
-	{
-		hr = CoInitialize(NULL);
-		if (SUCCEEDED(hr))
-		{
-			m_bComInitialized = TRUE;
-		}
-	}
-
-	if (SUCCEEDED(hr))
-	{
-		hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pTaskbarList));
-	}
-
-	ASSERT(SUCCEEDED(hr));
-	return m_pTaskbarList;
+	return NULL;
 }
 
 ITaskbarList3* AFX_GLOBAL_DATA::GetITaskbarList3()
 {
-	HRESULT hr = S_OK;
-
-	if (!bIsWindows7 || !m_bTaskBarInterfacesAvailable)
+	// Backward-compatibility wrapper
+	CWinApp* pApp = AfxGetApp();
+	if (pApp != NULL)
 	{
-		return NULL;
+		return pApp->GetITaskbarList3();
 	}
 
-	if (m_pTaskbarList3 != NULL)
-	{
-		return m_pTaskbarList3;
-	}
-
-	if (!m_bComInitialized)
-	{
-		hr = CoInitialize(NULL);
-		if (SUCCEEDED(hr))
-		{
-			m_bComInitialized = TRUE;
-		}
-	}
-
-	if (SUCCEEDED(hr))
-	{
-		hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pTaskbarList3));
-	}
-
-	ASSERT(SUCCEEDED(hr));
-	return m_pTaskbarList3;
+	return NULL;
 }
-
-void AFX_GLOBAL_DATA::ReleaseTaskBarRefs()
-{
-	m_bTaskBarInterfacesAvailable = FALSE;
-
-	if (m_pTaskbarList != NULL)
-	{
-		RELEASE(m_pTaskbarList);
-		m_pTaskbarList = NULL;
-	}
-
-	if (m_pTaskbarList3 != NULL)
-	{
-		RELEASE(m_pTaskbarList3);
-		m_pTaskbarList3 = NULL;
-	}
-}
-#endif
 
 void AFX_GLOBAL_DATA::CleanUp()
 {
@@ -906,19 +775,10 @@ void AFX_GLOBAL_DATA::CleanUp()
 	fontVertCaption.DeleteObject();
 	fontTooltip.DeleteObject();
 
-	ReleaseTaskBarRefs();
-	ReleaseD2DRefs();
-
-	if (m_bBufferedPaintInited && m_pfBufferedPaintUnInit != NULL)
+	if (m_bBufferedPaintInited)
 	{
-		m_pfBufferedPaintUnInit();
+		_AfxBufferedPaintUnInit();
 		m_bBufferedPaintInited = FALSE;
-	}
-
-	if (m_hinstUXThemeDLL != NULL)
-	{
-		::FreeLibrary(m_hinstUXThemeDLL);
-		m_hinstUXThemeDLL = NULL;
 	}
 
 	if (m_hinstDwmapiDLL != NULL)
@@ -928,17 +788,14 @@ void AFX_GLOBAL_DATA::CleanUp()
 	}
 
 	m_bEnableAccessibility = FALSE;
-
-	if (m_bComInitialized)
-	{
-		CoUninitialize();
-		m_bComInitialized = FALSE;
-	}
 }
 
 void ControlBarCleanUp()
 {
-	afxGlobalData.CleanUp();
+	if (afxGlobalData.m_bInitialized)
+	{
+		afxGlobalData.CleanUp();
+	}
 
 	afxMenuHash.CleanUp();
 
@@ -960,12 +817,12 @@ void ControlBarCleanUp()
 #ifdef _AFXDLL
 void AfxGlobalsAddRef()
 {
-	g_dwAfxGlobalDataRef++;
+	InterlockedIncrement(&g_dwAfxGlobalDataRef);
 }
 
 void AfxGlobalsRelease()
 {
-	g_dwAfxGlobalDataRef--;
+	InterlockedDecrement(&g_dwAfxGlobalDataRef);
 	if (g_dwAfxGlobalDataRef == 0)
 	{
 		ControlBarCleanUp();
@@ -992,10 +849,7 @@ BOOL AFX_GLOBAL_DATA::DrawParentBackground(CWnd* pWnd, CDC* pDC, LPRECT rectClip
 
 	// In Windows XP, we need to call DrawThemeParentBackground function to implement
 	// transparent controls
-	if (m_pfDrawThemeBackground != NULL)
-	{
-		bRes = (*m_pfDrawThemeBackground)(pWnd->GetSafeHwnd(), pDC->GetSafeHdc(), rectClip) == S_OK;
-	}
+	bRes = DrawThemeParentBackground(pWnd->GetSafeHwnd(), pDC->GetSafeHdc(), rectClip) == S_OK;
 
 	if (!bRes)
 	{
@@ -1013,7 +867,7 @@ BOOL AFX_GLOBAL_DATA::DrawParentBackground(CWnd* pWnd, CDC* pDC, LPRECT rectClip
 	return bRes;
 }
 
-CFrameWnd* AFXGetParentFrame(const CWnd* pWnd)
+CFrameWnd* AFX_CDECL AFXGetParentFrame(const CWnd* pWnd)
 {
 	if (pWnd->GetSafeHwnd() == NULL)
 	{
@@ -1220,62 +1074,30 @@ BOOL AFX_GLOBAL_DATA::ExcludeTag(CString& strBuffer, LPCTSTR lpszTag, CString& s
 	return TRUE;
 }
 
-BOOL AFX_GLOBAL_DATA::DwmExtendFrameIntoClientArea(HWND hWnd, AFX_MARGINS* pMargins)
+BOOL AFX_GLOBAL_DATA::IsDwmCompositionEnabled()
 {
-	if (m_pfDwmExtendFrameIntoClientArea == NULL)
+	// It appears that DwmIsCompositionEnabled can fail if called and
+	// then called again after a very short time, so use a static var
+	// so the last obtained value is returned if the method fails.
+	static BOOL bEnabled = FALSE;
+
+	if (g_bCheckCompositionEnableSucceeded)
 	{
-		return FALSE;
+		return bEnabled;
 	}
 
-	HRESULT hres = (*m_pfDwmExtendFrameIntoClientArea)(hWnd, pMargins);
-	return hres == S_OK;
-}
-
-LRESULT AFX_GLOBAL_DATA::DwmDefWindowProc(HWND hWnd, UINT message, WPARAM wp, LPARAM lp)
-{
-	if (m_pfDwmDefWindowProc == NULL)
+	HRESULT hr = _AfxDwmIsCompositionEnabled(&bEnabled);
+	if (hr == S_OK)
 	{
-		return(LRESULT)-1;
+		g_bCheckCompositionEnableSucceeded = TRUE;
 	}
 
-	LRESULT lres = 0;
-	(*m_pfDwmDefWindowProc)(hWnd, message, wp, lp, &lres);
-
-	return lres;
-}
-
-BOOL AFX_GLOBAL_DATA::DwmIsCompositionEnabled()
-{
-	if (m_pfDwmIsCompositionEnabled == NULL || bDisableAero)
-	{
-		return FALSE;
-	}
-
-	BOOL bEnabled = FALSE;
-
-	(*m_pfDwmIsCompositionEnabled)(&bEnabled);
 	return bEnabled;
 }
 
 BOOL AFX_GLOBAL_DATA::DrawTextOnGlass(HTHEME hTheme, CDC* pDC, int iPartId, int iStateId, CString strText, CRect rect, DWORD dwFlags, int nGlowSize, COLORREF clrText)
 {
-	//---- bits used in dwFlags of DTTOPTS ----
-#define AFX_DTT_TEXTCOLOR    (1UL << 0)      // crText has been specified
-#define AFX_DTT_BORDERCOLOR  (1UL << 1)      // crBorder has been specified
-#define AFX_DTT_SHADOWCOLOR  (1UL << 2)      // crShadow has been specified
-#define AFX_DTT_SHADOWTYPE   (1UL << 3)      // iTextShadowType has been specified
-#define AFX_DTT_SHADOWOFFSET (1UL << 4)      // ptShadowOffset has been specified
-#define AFX_DTT_BORDERSIZE   (1UL << 5)      // nBorderSize has been specified
-#define AFX_DTT_FONTPROP     (1UL << 6)      // iFontPropId has been specified
-#define AFX_DTT_COLORPROP    (1UL << 7)      // iColorPropId has been specified
-#define AFX_DTT_STATEID      (1UL << 8)      // IStateId has been specified
-#define AFX_DTT_CALCRECT     (1UL << 9)      // Use pRect as and in/out parameter
-#define AFX_DTT_APPLYOVERLAY (1UL << 10)     // fApplyOverlay has been specified
-#define AFX_DTT_GLOWSIZE     (1UL << 11)     // iGlowSize has been specified
-#define AFX_DTT_CALLBACK     (1UL << 12)     // pfnDrawTextCallback has been specified
-#define AFX_DTT_COMPOSITED   (1UL << 13)     // Draws text with antialiased alpha(needs a DIB section)
-
-	if (hTheme == NULL || m_pfDrawThemeTextEx == NULL || !DwmIsCompositionEnabled())
+	if (hTheme == NULL || !IsDwmCompositionEnabled())
 	{
 		pDC->DrawText(strText, rect, dwFlags);
 		return FALSE;
@@ -1286,24 +1108,24 @@ BOOL AFX_GLOBAL_DATA::DrawTextOnGlass(HTHEME hTheme, CDC* pDC, int iPartId, int 
 	wchar_t* wbuf = new wchar_t[bstmp.Length() + 1];
 	wcscpy_s(wbuf, bstmp.Length() + 1, bstmp);
 
-	AFX_DTTOPTS dto;
-	memset(&dto, 0, sizeof(AFX_DTTOPTS));
-	dto.dwSize = sizeof(AFX_DTTOPTS);
-	dto.dwFlags = AFX_DTT_COMPOSITED;
+	DTTOPTS dto;
+	memset(&dto, 0, sizeof(DTTOPTS));
+	dto.dwSize = sizeof(DTTOPTS);
+	dto.dwFlags = DTT_COMPOSITED;
 
 	if (nGlowSize > 0)
 	{
-		dto.dwFlags |= AFX_DTT_GLOWSIZE;
+		dto.dwFlags |= DTT_GLOWSIZE;
 		dto.iGlowSize = nGlowSize;
 	}
 
 	if (clrText != (COLORREF)-1)
 	{
-		dto.dwFlags |= AFX_DTT_TEXTCOLOR;
+		dto.dwFlags |= DTT_TEXTCOLOR;
 		dto.crText = clrText;
 	}
 
-	(*m_pfDrawThemeTextEx)(hTheme, pDC->GetSafeHdc(), iPartId, iStateId, wbuf, -1, dwFlags, rect, &dto);
+	_AfxDrawThemeTextEx(hTheme, pDC->GetSafeHdc(), iPartId, iStateId, wbuf, -1, dwFlags, rect, &dto);
 
 	delete [] wbuf;
 
@@ -1314,7 +1136,10 @@ HCURSOR AFX_GLOBAL_DATA::GetHandCursor()
 {
 	if (m_hcurHand == NULL)
 	{
+#pragma warning(push)
+#pragma warning(disable: 4302) // 'type cast' : truncation from 'LPSTR' to 'WORD'
 		m_hcurHand = ::LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_HAND));
+#pragma warning(pop)
 	}
 
 	return m_hcurHand;
@@ -1322,42 +1147,17 @@ HCURSOR AFX_GLOBAL_DATA::GetHandCursor()
 
 BOOL AFX_GLOBAL_DATA::Resume()
 {
-	m_hinstUXThemeDLL = ::AfxCtxLoadLibraryW(L"UxTheme.dll");
-
-	if (m_hinstUXThemeDLL != NULL)
-	{
-		m_pfDrawThemeBackground = (DRAWTHEMEPARENTBACKGROUND)::GetProcAddress (m_hinstUXThemeDLL, "DrawThemeParentBackground");
-		m_pfDrawThemeTextEx = (DRAWTHEMETEXTEX)::GetProcAddress (m_hinstUXThemeDLL, "DrawThemeTextEx");
-		m_pfBeginBufferedPaint = (BEGINBUFFEREDPAINT)::GetProcAddress (m_hinstUXThemeDLL, "BeginBufferedPaint");
-		m_pfEndBufferedPaint = (ENDBUFFEREDPAINT)::GetProcAddress (m_hinstUXThemeDLL, "EndBufferedPaint");
-	}
-	else
-	{
-		m_pfDrawThemeBackground = NULL;
-		m_pfDrawThemeTextEx = NULL;
-		m_pfBeginBufferedPaint = NULL;
-		m_pfEndBufferedPaint = NULL;
-	}
-
-	if (m_hinstDwmapiDLL != NULL)
-	{
-		m_hinstDwmapiDLL = AfxLoadSystemLibraryUsingFullPath(L"dwmapi.dll");
-		ENSURE(m_hinstDwmapiDLL != NULL);
-
-		m_pfDwmExtendFrameIntoClientArea = (DWMEXTENDFRAMEINTOCLIENTAREA)::GetProcAddress (m_hinstDwmapiDLL, "DwmExtendFrameIntoClientArea");
-		m_pfDwmDefWindowProc = (DWMDEFWINDOWPROC) ::GetProcAddress (m_hinstDwmapiDLL, "DwmDefWindowProc");
-		m_pfDwmIsCompositionEnabled = (DWMISCOMPOSITIONENABLED)::GetProcAddress (m_hinstDwmapiDLL, "DwmIsCompositionEnabled");
-	}
-
 	if (m_bEnableAccessibility)
 	{
 		EnableAccessibilitySupport();
 	}
 
+	CMFCVisualManagerOffice2007::Style style = CMFCVisualManagerOffice2007::GetStyle();
 	CMFCVisualManagerOffice2007::CleanStyle ();
 
 	if (CMFCVisualManager::m_pRTIDefault != NULL)
 	{
+		CMFCVisualManagerOffice2007::SetStyle(style);
 		CMFCVisualManager::SetDefaultManager (CMFCVisualManager::m_pRTIDefault);
 	}
 
@@ -1385,7 +1185,7 @@ BOOL AFX_GLOBAL_DATA::GetNonClientMetrics (NONCLIENTMETRICS& info)
 		LOGFONT lfMessageFont;
 	};
 
-	if (_AfxGetComCtlVersion() < MAKELONG(1, 6))
+	if (!bIsWindows7)
 	{
 		info.cbSize = sizeof(AFX_OLDNONCLIENTMETRICS);
 	}
@@ -1433,118 +1233,6 @@ BOOL AFXAPI AfxIsMFCToolBar(CWnd* pWnd)
 
 HRESULT AFX_GLOBAL_DATA::ShellCreateItemFromParsingName(PCWSTR pszPath, IBindCtx *pbc, REFIID riid, void **ppv)
 {
-	static HMODULE hShellDll = AfxCtxLoadLibrary(_T("Shell32.dll"));
-	ENSURE(hShellDll != NULL);
-
-	typedef	HRESULT (__stdcall *PFNSHCREATEITEMFROMPARSINGNAME)(
-		PCWSTR,
-		IBindCtx*,
-		REFIID,
-		void**
-		);
-
-	PFNSHCREATEITEMFROMPARSINGNAME pSHCreateItemFromParsingName =
-		(PFNSHCREATEITEMFROMPARSINGNAME)GetProcAddress(hShellDll, "SHCreateItemFromParsingName");
-	if (pSHCreateItemFromParsingName == NULL)
-	{
-		return E_FAIL;
-	}
-
-	return (*pSHCreateItemFromParsingName)(pszPath, pbc, riid, ppv);
+	return _AfxSHCreateItemFromParsingName(pszPath, pbc, riid, ppv);
 }
 
-BOOL AFX_GLOBAL_DATA::InitD2D(D2D1_FACTORY_TYPE d2dFactoryType, DWRITE_FACTORY_TYPE writeFactoryType)
-{
-	if (m_bD2DInitialized)
-	{
-		return TRUE;
-	}
-
-	HRESULT hr = S_OK;
-
-	if (!m_bComInitialized)
-	{
-		hr = CoInitialize(NULL);
-		if (FAILED(hr))
-		{
-			return FALSE;
-		}
-	}
-
-	m_bComInitialized = TRUE;
-
-	if ((m_hinstD2DDLL = AfxLoadSystemLibraryUsingFullPath(L"D2D1.dll")) == NULL)
-	{
-		return FALSE;
-	}
-
-	typedef HRESULT (WINAPI * D2D1CREATEFACTORY)(D2D1_FACTORY_TYPE factoryType, REFIID riid, CONST D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
-	typedef HRESULT (WINAPI * DWRITECREATEFACTORY)(DWRITE_FACTORY_TYPE factoryType, REFIID riid, IUnknown **factory);
-
-	D2D1CREATEFACTORY pfD2D1CreateFactory = (D2D1CREATEFACTORY)::GetProcAddress(m_hinstD2DDLL, "D2D1CreateFactory");
-	if (pfD2D1CreateFactory != NULL)
-	{
-		hr = (*pfD2D1CreateFactory)(d2dFactoryType, __uuidof(ID2D1Factory),
-			NULL, reinterpret_cast<void **>(&m_pDirect2dFactory));
-		if (FAILED(hr))
-		{
-			m_pDirect2dFactory = NULL;
-			return FALSE;
-		}
-	}
-
-	m_pfD2D1MakeRotateMatrix = (D2D1MAKEROTATEMATRIX)::GetProcAddress(m_hinstD2DDLL, "D2D1MakeRotateMatrix");
-
-	m_hinstDWriteDLL = AfxLoadSystemLibraryUsingFullPath(L"DWrite.dll");
-	if (m_hinstDWriteDLL != NULL)
-	{
-		DWRITECREATEFACTORY pfD2D1CreateFactory = (DWRITECREATEFACTORY)::GetProcAddress(m_hinstDWriteDLL, "DWriteCreateFactory");
-		if (pfD2D1CreateFactory != NULL)
-		{
-			hr = (*pfD2D1CreateFactory)(writeFactoryType, __uuidof(IDWriteFactory), (IUnknown**)&m_pWriteFactory);
-		}
-	}
-
-	hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)&m_pWicFactory);
-
-	m_bD2DInitialized = TRUE;
-	return TRUE;
-}
-
-void AFX_GLOBAL_DATA::ReleaseD2DRefs()
-{
-	if (!m_bD2DInitialized)
-	{
-		return;
-	}
-
-	if (m_pDirect2dFactory != NULL)
-	{
-		m_pDirect2dFactory->Release();
-		m_pDirect2dFactory = NULL;
-	}
-
-	if (m_pWriteFactory != NULL)
-	{
-		m_pWriteFactory->Release();
-		m_pWriteFactory = NULL;
-	}
-
-	if (m_pWicFactory != NULL)
-	{
-		m_pWicFactory->Release();
-		m_pWicFactory = NULL;
-	}
-
-	if (m_hinstD2DDLL != NULL)
-	{
-		::FreeLibrary(m_hinstD2DDLL);
-	}
-
-	if (m_hinstDWriteDLL != NULL)
-	{
-		::FreeLibrary(m_hinstDWriteDLL);
-	}
-
-	m_bD2DInitialized = FALSE;
-}

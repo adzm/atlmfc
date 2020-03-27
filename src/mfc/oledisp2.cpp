@@ -92,7 +92,7 @@ BOOL COleDispatchDriver::CreateDispatch(REFCLSID clsid, COleException* pError)
 		goto Failed;
 
 	// make sure it is running
-	sc = OleRun(lpUnknown);
+	sc = ::OleRun(lpUnknown);
 	if (FAILED(sc))
 		goto Failed;
 
@@ -198,7 +198,10 @@ void COleDispatchDriver::InvokeHelperV(DISPID dwDispID, WORD wFlags,
 
 	// determine number of arguments
 	if (pbParamInfo != NULL)
-		dispparams.cArgs = lstrlenA((LPCSTR)pbParamInfo);
+	{
+		// Number of elements will never be biger than MAX_UINT thus casting
+		dispparams.cArgs = static_cast<unsigned int>(strlen((LPCSTR)pbParamInfo));
+	}
 
 	DISPID dispidNamed = DISPID_PROPERTYPUT;
 	if (wFlags & (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF))

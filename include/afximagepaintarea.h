@@ -22,7 +22,7 @@
 
 class CMFCImageEditorDialog;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCImagePaintArea window
 
 class CMFCImagePaintArea : public CButton
@@ -93,14 +93,12 @@ public:
 	virtual ~CMFCImagePaintArea();
 
 protected:
-	//{{AFX_MSG(CMFCImagePaintArea)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnCancelMode();
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
-	//}}AFX_MSG
 
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDIS);
 	void DrawPixel(POINT point);

@@ -178,7 +178,7 @@ AFX_STATIC BOOL AFXAPI _AfxParseURLWorker(LPCTSTR pstrURL,
 	if(bUnescape)
 	{
 		// Length of buffer passed to UrlUnescape cannot be larger than INTERNET_MAX_URL_LENGTH characters.
-		if (_tcslen(lpComponents->lpszUrlPath) >= INTERNET_MAX_URL_LENGTH || 
+		if (AtlStrLen(lpComponents->lpszUrlPath) >= INTERNET_MAX_URL_LENGTH || 
 			FAILED(UrlUnescape(lpComponents->lpszUrlPath,NULL,NULL,URL_UNESCAPE_INPLACE | URL_DONT_UNESCAPE_EXTRA_INFO)))
 		{
 			if (bMustFree)
@@ -187,7 +187,7 @@ AFX_STATIC BOOL AFXAPI _AfxParseURLWorker(LPCTSTR pstrURL,
 			return FALSE;
 		}
 		
-		lpComponents->dwUrlPathLength = lstrlen(lpComponents->lpszUrlPath);
+		lpComponents->dwUrlPathLength = static_cast<DWORD>(AtlStrLen(lpComponents->lpszUrlPath));
 	}
 	
 	if (bMustFree)
@@ -725,7 +725,7 @@ BOOL CInternetSession::SetCookie(LPCTSTR pstrUrl, LPCTSTR pstrCookieName, LPCTST
 	return InternetSetCookie(pstrUrl, pstrCookieName, pstrCookieData);
 }
 
-BOOL CInternetSession::GetCookie(_In_z_ LPCTSTR pstrUrl, _In_z_ LPCTSTR pstrCookieName, _Out_z_cap_(dwBufLen) LPTSTR pstrCookieData, _In_ DWORD dwBufLen)
+BOOL CInternetSession::GetCookie(_In_z_ LPCTSTR pstrUrl, _In_z_ LPCTSTR pstrCookieName, _Out_writes_z_(dwBufLen) LPTSTR pstrCookieData, _In_ DWORD dwBufLen)
 {
 	ASSERT(AfxIsValidString(pstrUrl));
 	ASSERT(AfxIsValidString(pstrCookieName));
@@ -1210,10 +1210,10 @@ void CInternetFile::WriteString(LPCTSTR pstr)
 	if (m_bReadMode == TRUE)
 		AfxThrowInternetException(m_dwContext, ERROR_INVALID_HANDLE);
 
-	Write(pstr, lstrlen(pstr) * sizeof(TCHAR));
+	Write(pstr, static_cast<UINT>(AtlStrLen(pstr)) * sizeof(TCHAR));
 }
 
-LPTSTR CInternetFile::ReadString(_Out_z_cap_(nMax) LPTSTR pstr, _In_ UINT nMax)
+LPTSTR CInternetFile::ReadString(_Out_writes_z_(nMax) LPTSTR pstr, _In_ UINT nMax)
 {
 	ASSERT_VALID(this);
 	ASSERT(m_hFile != NULL);
@@ -1295,7 +1295,7 @@ BOOL CInternetFile::ReadString(CString& rString)
 
 		// if string is read completely or EOF
 		if (pstrResult == NULL ||
-			(nLen = lstrlen(pstrPlace)) < (nMaxSize-1) ||
+			(nLen = AtlStrLen(pstrPlace)) < (nMaxSize-1) ||
 			pstrPlace[nLen-1] == '\n')
 			break;
 
@@ -1599,7 +1599,7 @@ BOOL CFtpConnection::SetCurrentDirectory(LPCTSTR pstrDirName)
 	return FtpSetCurrentDirectory(m_hConnection, pstrDirName);
 }
 
-BOOL CFtpConnection::GetCurrentDirectory(_Out_z_cap_post_count_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName, 
+BOOL CFtpConnection::GetCurrentDirectory(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName, 
 	_Inout_ LPDWORD lpdwLen) const
 {
 	ASSERT_VALID(this);
@@ -1626,7 +1626,7 @@ BOOL CFtpConnection::GetCurrentDirectoryAsURL(CString& strDirName) const
 	return TRUE;
 }
 
-BOOL CFtpConnection::GetCurrentDirectoryAsURL(_Out_z_cap_post_count_(*lpdwLen, *lpdwLen) LPTSTR pstrName, 
+BOOL CFtpConnection::GetCurrentDirectoryAsURL(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrName, 
 	_Inout_ LPDWORD lpdwLen) const
 {
 	ASSERT(lpdwLen != NULL);
@@ -1821,7 +1821,7 @@ CGopherConnection::CGopherConnection(CInternetSession* pSession,
 
 CGopherLocator CGopherConnection::CreateLocator(LPCTSTR pstrLocator)
 {
-	CGopherLocator ret(pstrLocator, lstrlen(pstrLocator));
+	CGopherLocator ret(pstrLocator, AtlStrLen(pstrLocator));
 	return ret;
 }
 
@@ -2174,7 +2174,7 @@ BOOL CHttpFile::AddRequestHeaders(LPCTSTR pstrHeaders,
 		if (pstrHeaders == NULL)
 			dwHeadersLen = 0;
 		else
-			dwHeadersLen = lstrlen(pstrHeaders);
+			dwHeadersLen = static_cast<DWORD>(_tcslen(pstrHeaders));
 
 	return HttpAddRequestHeaders(m_hFile, pstrHeaders, dwHeadersLen,
 		dwModifiers);
@@ -2448,7 +2448,7 @@ BOOL CFtpFileFind::FindFile(LPCTSTR pstrName /* = NULL */,
 	if (m_pConnection == NULL)
 		return FALSE;
 
-	if ( lstrlen(pstrName) >= MAX_PATH )
+	if ( AtlStrLen(pstrName) >= MAX_PATH )
 		return FALSE; // WIN32_FIND_DATA.cFileName is MAX_PATH in length
 	Close();
 	m_pNextInfo = new WIN32_FIND_DATA;
@@ -2840,7 +2840,7 @@ void AFXAPI AfxThrowInternetException(DWORD_PTR dwContext, DWORD dwError /* = 0 
 }
 
 
-BOOL CInternetException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR pstrError, _In_ UINT nMaxError,
+BOOL CInternetException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR pstrError, _In_ UINT nMaxError,
 	_Out_opt_ PUINT pnHelpContext) const
 {
 	ASSERT(pstrError != NULL && AfxIsValidString(pstrError, nMaxError));
@@ -2854,7 +2854,13 @@ BOOL CInternetException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR pstrError
 	BOOL bRet = TRUE;
 
 	HINSTANCE hWinINetLibrary;
-	hWinINetLibrary = ::AfxCtxLoadLibraryW(L"WININET.DLL");
+	hWinINetLibrary = LoadLibraryExW(L"WININET.DLL", NULL, LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+
+	if (hWinINetLibrary == NULL)
+	{
+		// if library load failed using flags only valid on Vista+, fall back to using flags valid on XP
+		hWinINetLibrary = LoadLibraryExW(L"WININET.DLL", NULL, LOAD_LIBRARY_AS_DATAFILE);
+	}
 
 	if (hWinINetLibrary == NULL ||
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,

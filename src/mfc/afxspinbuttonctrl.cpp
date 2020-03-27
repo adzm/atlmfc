@@ -10,8 +10,6 @@
 
 #include "stdafx.h"
 #include "afxcontrolbarutil.h"
-#include "afxtrackmouse.h"
-
 #include "afxvisualmanager.h"
 #include "afxglobals.h"
 #include "afxspinbuttonctrl.h"
@@ -32,15 +30,14 @@ CMFCSpinButtonCtrl::CMFCSpinButtonCtrl()
 	m_bIsButtonPressedUp = FALSE;
 	m_bIsButtonPressedDown = FALSE;
 
-	m_bIsButtonHighligtedUp = FALSE;
-	m_bIsButtonHighligtedDown = FALSE;
+	m_bIsButtonHighlightedUp = FALSE;
+	m_bIsButtonHighlightedDown = FALSE;
 }
 
 CMFCSpinButtonCtrl::~CMFCSpinButtonCtrl()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCSpinButtonCtrl)
 BEGIN_MESSAGE_MAP(CMFCSpinButtonCtrl, CSpinButtonCtrl)
 	ON_WM_PAINT()
 	ON_WM_LBUTTONDOWN()
@@ -48,9 +45,8 @@ BEGIN_MESSAGE_MAP(CMFCSpinButtonCtrl, CSpinButtonCtrl)
 	ON_WM_CANCELMODE()
 	ON_WM_MOUSEMOVE()
 	ON_WM_ERASEBKGND()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCSpinButtonCtrl::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCSpinButtonCtrl message handlers
@@ -74,11 +70,11 @@ void CMFCSpinButtonCtrl::OnDraw(CDC* pDC)
 	if (CMFCToolBarImages::m_bIsDrawOnGlass)
 	{
 		CDrawingManager dm(*pDC);
-		dm.DrawRect(rectClient, afxGlobalData.clrWindow, (COLORREF)-1);
+		dm.DrawRect(rectClient, GetGlobalData()->clrWindow, (COLORREF)-1);
 	}
 	else
 	{
-		pDC->FillRect(rectClient, &afxGlobalData.brWindow);
+		pDC->FillRect(rectClient, &(GetGlobalData()->brWindow));
 	}
 
 	int nState = 0;
@@ -93,12 +89,12 @@ void CMFCSpinButtonCtrl::OnDraw(CDC* pDC)
 		nState |= AFX_SPIN_PRESSEDDOWN;
 	}
 
-	if (m_bIsButtonHighligtedUp)
+	if (m_bIsButtonHighlightedUp)
 	{
 		nState |= AFX_SPIN_HIGHLIGHTEDUP;
 	}
 
-	if (m_bIsButtonHighligtedDown)
+	if (m_bIsButtonHighlightedDown)
 	{
 		nState |= AFX_SPIN_HIGHLIGHTEDDOWN;
 	}
@@ -133,8 +129,8 @@ void CMFCSpinButtonCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 	m_bIsButtonPressedUp = FALSE;
 	m_bIsButtonPressedDown = FALSE;
 
-	m_bIsButtonHighligtedUp = FALSE;
-	m_bIsButtonHighligtedDown = FALSE;
+	m_bIsButtonHighlightedUp = FALSE;
+	m_bIsButtonHighlightedDown = FALSE;
 
 	CSpinButtonCtrl::OnLButtonUp(nFlags, point);
 }
@@ -146,14 +142,14 @@ void CMFCSpinButtonCtrl::OnCancelMode()
 	m_bIsButtonPressedUp = FALSE;
 	m_bIsButtonPressedDown = FALSE;
 
-	m_bIsButtonHighligtedUp = FALSE;
-	m_bIsButtonHighligtedDown = FALSE;
+	m_bIsButtonHighlightedUp = FALSE;
+	m_bIsButtonHighlightedDown = FALSE;
 }
 
 void CMFCSpinButtonCtrl::OnMouseMove(UINT nFlags, CPoint point)
 {
-	BOOL bIsButtonHighligtedUp = m_bIsButtonHighligtedUp;
-	BOOL bIsButtonHighligtedDown = m_bIsButtonHighligtedDown;
+	BOOL bIsButtonHighlightedUp = m_bIsButtonHighlightedUp;
+	BOOL bIsButtonHighlightedDown = m_bIsButtonHighlightedDown;
 
 	CRect rect;
 	GetClientRect(rect);
@@ -164,18 +160,18 @@ void CMFCSpinButtonCtrl::OnMouseMove(UINT nFlags, CPoint point)
 	CRect rectDown = rect;
 	rectDown.top = rectUp.bottom;
 
-	m_bIsButtonHighligtedUp = rectUp.PtInRect(point);
-	m_bIsButtonHighligtedDown = rectDown.PtInRect(point);
+	m_bIsButtonHighlightedUp = rectUp.PtInRect(point);
+	m_bIsButtonHighlightedDown = rectDown.PtInRect(point);
 
 	if (nFlags & MK_LBUTTON)
 	{
-		m_bIsButtonPressedUp = m_bIsButtonHighligtedUp;
-		m_bIsButtonPressedDown = m_bIsButtonHighligtedDown;
+		m_bIsButtonPressedUp = m_bIsButtonHighlightedUp;
+		m_bIsButtonPressedDown = m_bIsButtonHighlightedDown;
 	}
 
 	CSpinButtonCtrl::OnMouseMove(nFlags, point);
 
-	if (bIsButtonHighligtedUp != m_bIsButtonHighligtedUp || bIsButtonHighligtedDown != m_bIsButtonHighligtedDown)
+	if (bIsButtonHighlightedUp != m_bIsButtonHighlightedUp || bIsButtonHighlightedDown != m_bIsButtonHighlightedDown)
 	{
 		RedrawWindow();
 	}
@@ -188,24 +184,21 @@ void CMFCSpinButtonCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 }
 
-LRESULT CMFCSpinButtonCtrl::OnMouseLeave(WPARAM,LPARAM)
+void CMFCSpinButtonCtrl::OnMouseLeave()
 {
 	m_bTracked = FALSE;
 
-	if (m_bIsButtonPressedUp || m_bIsButtonPressedDown || m_bIsButtonHighligtedUp || m_bIsButtonHighligtedDown)
+	if (m_bIsButtonPressedUp || m_bIsButtonPressedDown || m_bIsButtonHighlightedUp || m_bIsButtonHighlightedDown)
 	{
-		m_bIsButtonHighligtedUp = FALSE;
-		m_bIsButtonHighligtedDown = FALSE;
+		m_bIsButtonHighlightedUp = FALSE;
+		m_bIsButtonHighlightedDown = FALSE;
 
 		RedrawWindow();
 	}
-
-	return 0;
 }
 
 BOOL CMFCSpinButtonCtrl::OnEraseBkgnd(CDC* /*pDC*/)

@@ -40,6 +40,7 @@
 #include "afxcustomizebutton.h"
 
 #include "afxtooltipmanager.h"
+#include "afxwinappex.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -110,7 +111,6 @@ CPaneFrameWnd::~CPaneFrameWnd()
 	RemoveAllCaptionButtons();
 }
 
-//{{AFX_MSG_MAP(CPaneFrameWnd)
 BEGIN_MESSAGE_MAP(CPaneFrameWnd, CWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
@@ -142,14 +142,13 @@ BEGIN_MESSAGE_MAP(CPaneFrameWnd, CWnd)
 	ON_WM_SETFOCUS()
 	ON_WM_CANCELMODE()
 	ON_WM_SETTINGCHANGE()
-	ON_MESSAGE(WM_EXITSIZEMOVE, &CPaneFrameWnd::OnExitSizeMove)
+	ON_WM_EXITSIZEMOVE()
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CPaneFrameWnd::OnIdleUpdateCmdUI)
 	ON_MESSAGE(WM_FLOATSTATUS, &CPaneFrameWnd::OnFloatStatus)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CPaneFrameWnd::OnNeedTipText)
 	ON_REGISTERED_MESSAGE(AFX_WM_CHECKEMPTYMINIFRAME, &CPaneFrameWnd::OnCheckEmptyState)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CPaneFrameWnd::OnUpdateToolTips)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CPaneFrameWnd message handlers
@@ -170,7 +169,7 @@ BOOL CPaneFrameWnd::CreateEx(DWORD dwStyleEx, LPCTSTR lpszWindowName, DWORD dwSt
 
 	m_hParentWnd = pParentWnd != NULL ? pParentWnd->m_hWnd : NULL;
 
-	if (!CWnd::CreateEx(dwStyleEx, afxGlobalData.RegisterWindowClass(_T("Afx:MiniFrame")), lpszWindowName, dwStyle, rect, pParentWnd, 0, pContext))
+	if (!CWnd::CreateEx(dwStyleEx, GetGlobalData()->RegisterWindowClass(_T("Afx:MiniFrame")), lpszWindowName, dwStyle, rect, pParentWnd, 0, pContext))
 	{
 		return FALSE;
 	}
@@ -927,7 +926,7 @@ void CPaneFrameWnd::SetRollUpTimer()
 {
 	if (m_nRollTimerID == 0)
 	{
-		m_nRollTimerID = (UINT) SetTimer(AFX_CHECK_ROLL_STATE, m_nRollTimeOut, NULL);
+		m_nRollTimerID = (UINT) SetTimer(AFX_TIMER_ID_CHECK_ROLL_STATE, m_nRollTimeOut, NULL);
 		SetCaptionButtons(m_dwCaptionButtons | AFX_CAPTION_BTN_PIN);
 	}
 }
@@ -1179,7 +1178,7 @@ void CPaneFrameWnd::OnNcPaint()
 	pDC->SetBkMode(TRANSPARENT);
 	pDC->SetTextColor(clrText);
 
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 	ASSERT_VALID(pOldFont);
 
 	CString strCaption = GetCaptionText();
@@ -1257,7 +1256,7 @@ void CPaneFrameWnd::OnDrawBorder(CDC* pDC)
 
 	if (pToolBar != NULL)
 	{
-		pDC->FillRect(rectBorder, &afxGlobalData.brBtnFace);
+		pDC->FillRect(rectBorder, &(GetGlobalData()->brBtnFace));
 
 		CMFCVisualManager::GetInstance()->OnDrawFloatingToolbarBorder(pDC, pToolBar, rectBorder, rectBorderSize);
 		return;
@@ -1827,14 +1826,14 @@ void CPaneFrameWnd::OnTimer(UINT_PTR nIDEvent)
 {
 	switch (nIDEvent)
 	{
-	case AFX_DOCK_EVENT:
+	case AFX_TIMER_ID_DOCK_EVENT:
 		{
 			CDockingManager* pDockManager = m_pDockManager != NULL ? m_pDockManager : afxGlobalUtils.GetDockingManager(GetParent());
 			ASSERT_VALID(pDockManager);
 			pDockManager->OnMoveMiniFrame(this);
 			return;
 		}
-	case AFX_CHECK_ROLL_STATE:
+	case AFX_TIMER_ID_CHECK_ROLL_STATE:
 		OnCheckRollState();
 		break;
 	}
@@ -2581,7 +2580,7 @@ void CPaneFrameWnd::SetDockingTimer(UINT nTimeOut)
 	{
 		KillDockingTimer();
 	}
-	m_nDockTimerID = (UINT) SetTimer(AFX_DOCK_EVENT, nTimeOut, NULL);
+	m_nDockTimerID = (UINT) SetTimer(AFX_TIMER_ID_DOCK_EVENT, nTimeOut, NULL);
 }
 
 void CPaneFrameWnd::KillDockingTimer()
@@ -2830,14 +2829,16 @@ void CPaneFrameWnd::SetDockState(CDockingManager* pDockManager)
 				SetWindowPos(NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED  | SWP_NOACTIVATE);
 
 				BOOL bShow = pBar->GetRecentVisibleState();
+				CWinAppEx* pApp = DYNAMIC_DOWNCAST(CWinAppEx, AfxGetApp());
+				BOOL bExitingFullScreenMode = (pApp != NULL && pApp->m_bExitingFullScreenMode);
 
-				if (bShow)
+				if (bShow && !bExitingFullScreenMode)
 				{
 					SetDelayShow(TRUE);
 				}
 				
 				// Show with delay
-				pBar->ShowPane(bShow, TRUE, FALSE);
+				pBar->ShowPane(bShow, !bExitingFullScreenMode, FALSE);
 
 				SetCaptionButtons(m_dwCaptionButtons);
 				return;
@@ -3204,14 +3205,13 @@ void CPaneFrameWnd::OnSetFocus(CWnd* pOldWnd)
 	}
 }
 
-LRESULT CPaneFrameWnd::OnExitSizeMove(WPARAM, LPARAM)
+void CPaneFrameWnd::OnExitSizeMove()
 {
 	if (m_hLastFocusWnd != NULL && IsWindow(m_hLastFocusWnd))
 	{
 		::SetFocus(m_hLastFocusWnd);
 		m_hLastFocusWnd = NULL;
 	}
-	return 0;
 }
 
 BOOL CPaneFrameWnd::OnBeforeDock()

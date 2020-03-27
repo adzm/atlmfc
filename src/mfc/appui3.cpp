@@ -9,8 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include "afxglobals.h"
-
+#include "afxrendertarget.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CWinApp Settings Helpers
@@ -331,7 +330,7 @@ BOOL CWinApp::WriteProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry,
 			if (hSecKey == NULL)
 				return FALSE;
 			lResult = RegSetValueEx(hSecKey, lpszEntry, NULL, REG_SZ,
-				(LPBYTE)lpszValue, (lstrlen(lpszValue)+1)*sizeof(TCHAR));
+				(LPBYTE)lpszValue, (static_cast<DWORD>(_tcslen(lpszValue))+1)*sizeof(TCHAR));
 			RegCloseKey(hSecKey);
 		}
 		return lResult == ERROR_SUCCESS;
@@ -339,7 +338,7 @@ BOOL CWinApp::WriteProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry,
 	else
 	{
 		ASSERT(m_pszProfileName != NULL);
-		ASSERT(lstrlen(m_pszProfileName) < 4095); // can't read in bigger
+		ASSERT(AtlStrLen(m_pszProfileName) < 4095); // can't read in bigger
 		return ::WritePrivateProfileString(lpszSection, lpszEntry, lpszValue,
 			m_pszProfileName);
 	}
@@ -393,19 +392,111 @@ BOOL CWinApp::EnableTaskbarInteraction(BOOL bEnable)
 
 BOOL CWinApp::IsTaskbarInteractionEnabled() 
 { 
-	return afxGlobalData.bIsWindows7 && m_bTaskbarInteractionEnabled; 
+	return m_bIsWindows7 && m_bTaskbarInteractionEnabled; 
+}
+
+BOOL CWinApp::IsWindows7() 
+{ 
+	return m_bIsWindows7; 
 }
 
 BOOL CWinApp::EnableD2DSupport(D2D1_FACTORY_TYPE d2dFactoryType, DWRITE_FACTORY_TYPE writeFactoryType)
 {
-	if (afxGlobalData.IsD2DInitialized())
+	_AFX_D2D_STATE* pD2DState = AfxGetD2DState();
+	if (pD2DState == NULL)
+	{
+		return FALSE;
+	}
+
+	if (pD2DState->IsD2DInitialized())
 	{
 		ASSERT(FALSE);
 		TRACE0("D2D is already initialized. Please call this method before creation of main window\n");
 		return FALSE;
 	}
 
-	return afxGlobalData.InitD2D(d2dFactoryType, writeFactoryType);
+	return pD2DState->InitD2D(d2dFactoryType, writeFactoryType);
+}
+
+ITaskbarList* CWinApp::GetITaskbarList()
+{
+	HRESULT hr = S_OK;
+
+	if (!m_bIsWindows7 || !m_bTaskbarInteractionEnabled)
+	{
+		return NULL;
+	}
+
+	if (m_pTaskbarList != NULL)
+	{
+		return static_cast<ITaskbarList*>(m_pTaskbarList);
+	}
+
+	if (!m_bComInitialized)
+	{
+		hr = CoInitialize(NULL);
+		if (SUCCEEDED(hr))
+		{
+			m_bComInitialized = TRUE;
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, __uuidof(ITaskbarList), reinterpret_cast<void**>(&m_pTaskbarList));
+	}
+
+	ASSERT(SUCCEEDED(hr));
+	return static_cast<ITaskbarList*>(m_pTaskbarList);
+}
+
+ITaskbarList3* CWinApp::GetITaskbarList3()
+{
+	HRESULT hr = S_OK;
+
+	if (!m_bIsWindows7 || !m_bTaskbarInteractionEnabled)
+	{
+		return NULL;
+	}
+
+	if (m_pTaskbarList3 != NULL)
+	{
+		return static_cast<ITaskbarList3*>(m_pTaskbarList3);
+	}
+
+	if (!m_bComInitialized)
+	{
+		hr = CoInitialize(NULL);
+		if (SUCCEEDED(hr))
+		{
+			m_bComInitialized = TRUE;
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, __uuidof(ITaskbarList3), reinterpret_cast<void**>(&m_pTaskbarList3));
+	}
+
+	ASSERT(SUCCEEDED(hr));
+	return static_cast<ITaskbarList3*>(m_pTaskbarList3);
+}
+
+void CWinApp::ReleaseTaskBarRefs()
+{
+	m_bTaskbarInteractionEnabled = FALSE;
+
+	if (m_pTaskbarList != NULL)
+	{
+		RELEASE(m_pTaskbarList);
+		m_pTaskbarList = NULL;
+	}
+
+	if (m_pTaskbarList3 != NULL)
+	{
+		RELEASE(m_pTaskbarList3);
+		m_pTaskbarList3 = NULL;
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -69,7 +69,7 @@ protected:
 	DWORD   m_dwUserData;
 };
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSettingsStoreSP - Helper class that manages "safe" CSettingsStore pointer
 
 class CSettingsStoreSP

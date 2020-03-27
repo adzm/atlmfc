@@ -8,13 +8,6 @@
 // See these sources for detailed information regarding the	
 // Active Template Library product.
 
-#pragma warning(push)
-#pragma warning(disable: 4005)		// disable macro redefinition warning for _WIN32_WINNT
-
-#define _WIN32_WINNT 0x0502
-
-#pragma warning(pop)
-
 #define _ATL_FREE_THREADED
 #define _ATL_DLL_IMPL
 

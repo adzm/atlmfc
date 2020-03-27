@@ -80,7 +80,7 @@ UINT CMFCCmdUsageCount::GetCount(UINT uiCmd) const
 	return uiCount;
 }
 
-BOOL CMFCCmdUsageCount::IsFreqeuntlyUsedCmd(UINT uiCmd) const
+BOOL CMFCCmdUsageCount::IsFrequentlyUsedCmd(UINT uiCmd) const
 {
 	// I say, that the specific command is frequently used,
 	// if the command usage percentage is more than 20%

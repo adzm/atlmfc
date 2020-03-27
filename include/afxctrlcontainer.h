@@ -11,13 +11,11 @@
 #pragma component(minrebuild, off)
 #endif
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 void AfxRegisterMFCCtrlClasses();
 
-class CTagManager;
-
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCControlContainer
 
 class CMFCControlContainer : public CObject
@@ -39,7 +37,6 @@ public:
 	void ClearControlData();
 
 	static int __stdcall UTF8ToString(LPCSTR lpSrc, CString& strDst, int nLength);
-	static BOOL __stdcall ReadBoolProp(CTagManager& tagManager, LPCTSTR lpszTag, BOOL& bMember);
 
 // Attributes
 	CWnd* m_pWnd;
@@ -54,7 +51,7 @@ protected:
 	void PreUnsubclassControl(CWnd* pControl);
 };
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 // wParam - DWORD dwSize
 // lParam - BYTE* pbInitData

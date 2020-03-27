@@ -22,12 +22,10 @@
 const size_t MAX_TIP_TEXT_LENGTH = 1024;
 
 BEGIN_MESSAGE_MAP(CToolTipCtrl, CWnd)
-	//{{AFX_MSG_MAP(CToolTipCtrl)
 	ON_MESSAGE(WM_DISABLEMODAL, &CToolTipCtrl::OnDisableModal)
 	ON_MESSAGE(TTM_WINDOWFROMPOINT, &CToolTipCtrl::OnWindowFromPoint)
 	ON_MESSAGE(TTM_ADDTOOL, &CToolTipCtrl::OnAddTool)
 	ON_WM_ENABLE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 CToolTipCtrl::CToolTipCtrl()
@@ -80,7 +78,9 @@ BOOL CToolTipCtrl::DestroyToolTipCtrl()
 
 LRESULT CToolTipCtrl::OnAddTool(WPARAM wParam, LPARAM lParam)
 {
-	TOOLINFO ti = *(LPTOOLINFO)lParam;
+	TOOLINFO ti;
+	LPTOOLINFO lpti = (LPTOOLINFO)lParam;
+	memcpy_s(&ti, sizeof(TOOLINFO), lpti, lpti->cbSize);
 	if ((ti.hinst == NULL) && (ti.lpszText != LPSTR_TEXTCALLBACK)
 		&& (ti.lpszText != NULL))
 	{
@@ -257,7 +257,7 @@ void CToolTipCtrl::UpdateTipText(LPCTSTR lpszText, CWnd* pWnd, UINT_PTR nIDTool)
 	
 	if(lpszText != LPSTR_TEXTCALLBACK)
 	{
-		ENSURE_ARG(_tcslen(lpszText) <= MAX_TIP_TEXT_LENGTH);	
+		ENSURE_ARG(AtlStrLen(lpszText) <= MAX_TIP_TEXT_LENGTH);	
 	}
 	
 	TOOLINFO ti;

@@ -97,7 +97,7 @@ void AFXAPI AfxThrowInternetException(DWORD_PTR dwContext, DWORD dwError = 0);
 class CInternetSession : public CObject
 {
 public:
-	/* explicit */ CInternetSession(LPCTSTR pstrAgent = NULL,
+	explicit CInternetSession(LPCTSTR pstrAgent = NULL,
 		DWORD_PTR dwContext = 1,
 		DWORD dwAccessType = PRE_CONFIG_INTERNET_ACCESS,
 		LPCTSTR pstrProxyName = NULL,
@@ -141,7 +141,7 @@ public:
 
 	// cookies
 	static BOOL SetCookie(LPCTSTR pstrUrl, LPCTSTR pstrCookieName, LPCTSTR pstrCookieData);
-	static BOOL GetCookie(_In_z_ LPCTSTR pstrUrl, _In_z_ LPCTSTR pstrCookieName, _Out_z_cap_(dwBufLen) LPTSTR pstrCookieData, _In_ DWORD dwBufLen);
+	static BOOL GetCookie(_In_z_ LPCTSTR pstrUrl, _In_z_ LPCTSTR pstrCookieName, _Out_writes_z_(dwBufLen) LPTSTR pstrCookieData, _In_ DWORD dwBufLen);
 	static DWORD GetCookieLength(LPCTSTR pstrUrl, LPCTSTR pstrCookieName);
 	static BOOL GetCookie(LPCTSTR pstrUrl, LPCTSTR pstrCookieName, CString& strCookieData);
 
@@ -166,7 +166,7 @@ public:
 };
 
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Internet File Access Wrapper
 
 class CInternetFile : public CStdioFile
@@ -210,7 +210,7 @@ public:
 	virtual ULONGLONG GetLength() const;
 
 	virtual BOOL ReadString(CString& rString);
-	virtual LPTSTR ReadString(_Out_z_cap_(nMax) LPTSTR pstr, _In_ UINT nMax);
+	virtual LPTSTR ReadString(_Out_writes_z_(nMax) LPTSTR pstr, _In_ UINT nMax);
 	virtual void WriteString(LPCTSTR pstr);
 
 	// Not supported by CInternetFile
@@ -326,7 +326,7 @@ protected:
 // class CGopherFile is declared after CGopherLocator, below
 
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Connection types
 
 class CInternetConnection : public CObject
@@ -396,9 +396,15 @@ public:
 	BOOL SetCurrentDirectory(LPCTSTR pstrDirName);
 #pragma pop_macro("SetCurrentDirectory")
 
+#pragma push_macro("GetCurrentDirectory")
+#undef GetCurrentDirectory
+	BOOL _AFX_FUNCNAME(GetCurrentDirectory)(CString& strDirName) const;
 	BOOL GetCurrentDirectory(CString& strDirName) const;
-	BOOL GetCurrentDirectory(_Out_z_cap_post_count_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName, _Inout_ LPDWORD lpdwLen) const;
-	BOOL GetCurrentDirectoryAsURL(_Out_z_cap_post_count_(*lpdwLen, *lpdwLen) LPTSTR pstrName, _Inout_ LPDWORD lpdwLen) const;
+	BOOL _AFX_FUNCNAME(GetCurrentDirectory)(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName, _Inout_ LPDWORD lpdwLen) const;
+	BOOL GetCurrentDirectory(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName, _Inout_ LPDWORD lpdwLen) const;
+#pragma pop_macro("GetCurrentDirectory")
+
+	BOOL GetCurrentDirectoryAsURL(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrName, _Inout_ LPDWORD lpdwLen) const;
 	BOOL GetCurrentDirectoryAsURL(CString& strDirName) const;
 
 	BOOL RemoveDirectory(LPCTSTR pstrDirName);
@@ -535,7 +541,7 @@ public:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFtpFileFind
 
 class CFtpFileFind : public CFileFind
@@ -565,7 +571,7 @@ public:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CGopherLocator
 
 class CGopherLocator : public CObject
@@ -588,7 +594,7 @@ private:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CGopherFile
 
 class CGopherFile : public CInternetFile
@@ -622,7 +628,7 @@ public:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CGopherFileFind
 
 class CGopherFileFind : public CFileFind
@@ -673,7 +679,7 @@ public:
 };
 
 
-///////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CInternetException
 
 class CInternetException : public CException
@@ -692,7 +698,7 @@ public:
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
 #endif
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpstrError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpstrError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 	DECLARE_DYNAMIC(CInternetException)
 };

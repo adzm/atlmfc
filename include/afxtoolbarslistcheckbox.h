@@ -20,7 +20,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsListCheckBox window
 
 class CMFCToolBarsListCheckBox : public CCheckListBox
@@ -43,15 +43,15 @@ public:
 	virtual ~CMFCToolBarsListCheckBox();
 
 protected:
-	//{{AFX_MSG(CMFCToolBarsListCheckBox)
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+
 	LRESULT OnLBAddString(WPARAM wParam, LPARAM lParam);
 	LRESULT OnLBInsertString(WPARAM wParam, LPARAM lParam);
 	LRESULT OnLBResetContent(WPARAM wParam, LPARAM lParam);
 	LRESULT OnLBDeleteString(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void OnNewString(int iIndex);

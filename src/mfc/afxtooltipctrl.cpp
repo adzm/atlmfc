@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -59,13 +59,11 @@ CMFCToolTipCtrl::~CMFCToolTipCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolTipCtrl, CToolTipCtrl)
-	//{{AFX_MSG_MAP(CMFCToolTipCtrl)
 	ON_WM_PAINT()
 	ON_WM_CREATE()
 	ON_WM_ERASEBKGND()
 	ON_NOTIFY_REFLECT(TTN_SHOW, &CMFCToolTipCtrl::OnShow)
 	ON_NOTIFY_REFLECT(TTN_POP, &CMFCToolTipCtrl::OnPop)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -285,6 +283,8 @@ void CMFCToolTipCtrl::OnShow(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 
 		SetWindowRgn(rgn, FALSE);
 	}
+
+	SetWindowPos(&wndTop, -1, -1, -1, -1, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOSIZE);
 }
 
 void CMFCToolTipCtrl::OnPop(NMHDR* /*pNMHDR*/, LRESULT* pResult)
@@ -298,13 +298,13 @@ void CMFCToolTipCtrl::OnPop(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 	*pResult = 0;
 }
 
-void CMFCToolTipCtrl::OnFillBackground(CDC* pDC, CRect rect, COLORREF& /*clrText*/, COLORREF& /*clrLine*/)
+void CMFCToolTipCtrl::OnFillBackground(CDC* pDC, CRect rect, COLORREF& clrText, COLORREF& clrLine)
 {
 	ASSERT_VALID(pDC);
 
 	if (m_Params.m_clrFill == (COLORREF)-1)
 	{
-		::FillRect(pDC->GetSafeHdc(), rect, ::GetSysColorBrush(COLOR_INFOBK));
+		CMFCVisualManager::GetInstance ()->OnFillToolTip(pDC, this, rect, clrText, clrLine);
 	}
 	else
 	{
@@ -468,7 +468,7 @@ CSize CMFCToolTipCtrl::OnDrawLabel(CDC* pDC, CRect rect, BOOL bCalcOnly)
 
 	BOOL bDrawDescr = m_Params.m_bDrawDescription && !m_strDescription.IsEmpty();
 
-	CFont* pOldFont = (CFont*) pDC->SelectObject(m_Params.m_bBoldLabel && bDrawDescr ? &afxGlobalData.fontBold : &afxGlobalData.fontTooltip);
+	CFont* pOldFont = (CFont*) pDC->SelectObject(m_Params.m_bBoldLabel && bDrawDescr ? &(GetGlobalData()->fontBold) : &(GetGlobalData()->fontTooltip));
 
 	if (strText.Find(_T('\n')) >= 0) // Multi-line text
 	{
@@ -527,7 +527,7 @@ CSize CMFCToolTipCtrl::OnDrawDescription(CDC* pDC, CRect rect, BOOL bCalcOnly)
 		return sizeText;
 	}
 
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontTooltip);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontTooltip));
 	int nFixedWidth = GetFixedWidth ();
 
 	if (nFixedWidth > 0 && m_sizeImage.cx <= 32)
@@ -682,7 +682,7 @@ int CMFCToolTipCtrl::GetFixedWidth()
 {
 	ASSERT_VALID(this);
 
-	if (m_sizeImage.cx <= (int)(afxGlobalData.GetRibbonImageScale() * 32))
+	if (m_sizeImage.cx <= (int)(GetGlobalData()->GetRibbonImageScale() * 32))
 	{
 		return m_nFixedWidthRegular;
 	}

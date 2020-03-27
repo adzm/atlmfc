@@ -138,9 +138,9 @@ void AFXAPI DumpElements(CDumpContext& dc, const TYPE* pElements, INT_PTR nCount
 	ENSURE(nCount == 0 || pElements != NULL);
 	ASSERT(nCount == 0 ||
 		AfxIsValidAddress(pElements, (size_t)nCount * sizeof(TYPE), FALSE));
-	UNREFERENCED_PARAMETER(dc); // not used
-	UNREFERENCED_PARAMETER(pElements);  // not used
-	UNREFERENCED_PARAMETER(nCount); // not used
+	(dc); // not used
+	(pElements);  // not used
+	(nCount); // not used
 
 	// default does nothing
 }
@@ -197,7 +197,7 @@ template<> UINT AFXAPI HashKey<const struct tagVARIANT&> (const struct tagVARIAN
 
 #define new DEBUG_NEW
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CArray<TYPE, ARG_TYPE>
 
 template<class TYPE, class ARG_TYPE = const TYPE&>
@@ -261,7 +261,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CArray<TYPE, ARG_TYPE> inline functions
 
 template<class TYPE, class ARG_TYPE>
@@ -338,7 +338,7 @@ template<class TYPE, class ARG_TYPE>
 AFX_INLINE TYPE& CArray<TYPE, ARG_TYPE>::operator[](INT_PTR nIndex)
 	{ return ElementAt(nIndex); }
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CArray<TYPE, ARG_TYPE> out-of-line functions
 
 template<class TYPE, class ARG_TYPE>
@@ -680,7 +680,7 @@ void CArray<TYPE, ARG_TYPE>::AssertValid() const
 }
 #endif //_DEBUG
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CList<TYPE, ARG_TYPE>
 
 template<class TYPE, class ARG_TYPE = const TYPE&>
@@ -695,7 +695,7 @@ protected:
 	};
 public:
 // Construction
-	/* explicit */ CList(INT_PTR nBlockSize = 10);
+	explicit CList(INT_PTR nBlockSize = 10);
 
 // Attributes (head and tail)
 	// count of elements
@@ -770,7 +770,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CList<TYPE, ARG_TYPE> inline functions
 
 template<class TYPE, class ARG_TYPE>
@@ -878,7 +878,7 @@ CList<TYPE, ARG_TYPE>::~CList()
 	ASSERT(m_nCount == 0);
 }
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Node helpers
 //
 // Implementation note: CNode's are stored in CPlex blocks and
@@ -1238,7 +1238,7 @@ void CList<TYPE, ARG_TYPE>::AssertValid() const
 }
 #endif //_DEBUG
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
@@ -1267,7 +1267,7 @@ protected:
 
 public:
 // Construction
-	/* explicit */ CMap(INT_PTR nBlockSize = 10);
+	explicit CMap(INT_PTR nBlockSize = 10);
 
 // Attributes
 	// number of elements
@@ -1328,7 +1328,7 @@ public:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMap<KEY, ARG_KEY, VALUE, ARG_VALUE> inline functions
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
@@ -1393,7 +1393,7 @@ template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
 AFX_INLINE UINT CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::GetHashTableSize() const
 	{ return m_nHashTableSize; }
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMap<KEY, ARG_KEY, VALUE, ARG_VALUE> out-of-line functions
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
@@ -1451,8 +1451,6 @@ void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::RemoveAll()
 			  pAssoc = pAssoc->pNext)
 			{
 				pAssoc->CAssoc::~CAssoc();
-				//DestructElements<VALUE>(&pAssoc->value, 1);
-				//DestructElements<KEY>((KEY*)&pAssoc->key, 1);
 			}
 		}
 		
@@ -1508,8 +1506,6 @@ CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::NewAssoc(ARG_KEY key)
 #undef new
 	::new(pAssoc) CMap::CAssoc(key);
 #pragma pop_macro("new")
-//	ConstructElements<KEY>(&pAssoc->key, 1);
-//	ConstructElements<VALUE>(&pAssoc->value, 1);   // special construct values
 	return pAssoc;
 }
 
@@ -1517,8 +1513,6 @@ template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
 void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::FreeAssoc(CAssoc* pAssoc)
 {
 	pAssoc->CAssoc::~CAssoc();
-//	DestructElements<VALUE>(&pAssoc->value, 1);
-//	DestructElements<KEY>(&pAssoc->key, 1);
 	pAssoc->pNext = m_pFreeList;
 	m_pFreeList = pAssoc;
 	m_nCount--;
@@ -1756,23 +1750,25 @@ void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::Serialize(CArchive& ar)
 			return;  // nothing more to do
 
 		ASSERT(m_pHashTable != NULL);
-		for (UINT nHash = 0; nHash < m_nHashTableSize; nHash++)
+		if (m_pHashTable != NULL)
 		{
-			CAssoc* pAssoc;
-			for (pAssoc = m_pHashTable[nHash]; pAssoc != NULL;
-			  pAssoc = pAssoc->pNext)
+			for (UINT nHash = 0; nHash < m_nHashTableSize; nHash++)
 			{
-				KEY* pKey;
-				VALUE* pValue;
-				/* 
-				 * in some cases the & operator might be overloaded, and we cannot use it to 
-				 * obtain the address of a given object.  We then use the following trick to 
-				 * get the address
-				 */
-				pKey = reinterpret_cast< KEY* >( &reinterpret_cast< int& >( const_cast< KEY& > ( static_cast< const KEY& >( pAssoc->key ) ) ) );
-				pValue = reinterpret_cast< VALUE* >( &reinterpret_cast< int& >( static_cast< VALUE& >( pAssoc->value ) ) );
-				SerializeElements<KEY>(ar, pKey, 1);
-				SerializeElements<VALUE>(ar, pValue, 1);
+				CAssoc* pAssoc;
+				for (pAssoc = m_pHashTable[nHash]; pAssoc != NULL; pAssoc = pAssoc->pNext)
+				{
+					KEY* pKey;
+					VALUE* pValue;
+					/* 
+					* in some cases the & operator might be overloaded, and we cannot use it to 
+					* obtain the address of a given object.  We then use the following trick to 
+					* get the address
+					*/
+					pKey = reinterpret_cast< KEY* >( &reinterpret_cast< int& >( const_cast< KEY& > ( static_cast< const KEY& >( pAssoc->key ) ) ) );
+					pValue = reinterpret_cast< VALUE* >( &reinterpret_cast< int& >( static_cast< VALUE& >( pAssoc->value ) ) );
+					SerializeElements<KEY>(ar, pKey, 1);
+					SerializeElements<VALUE>(ar, pValue, 1);
+				}
 			}
 		}
 	}
@@ -1828,7 +1824,7 @@ void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::AssertValid() const
 }
 #endif //_DEBUG
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTypedPtrArray<BASE_CLASS, TYPE>
 
 template<class BASE_CLASS, class TYPE>
@@ -1866,7 +1862,7 @@ public:
 		{ return (TYPE&)BASE_CLASS::operator[](nIndex); }
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTypedPtrList<BASE_CLASS, TYPE>
 
 template<class BASE_CLASS, class TYPE>
@@ -2037,7 +2033,7 @@ public:
 		{ _CTypedPtrList<CPtrList, CPtrList*>::AddTail(pNewList); }
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTypedPtrMap<BASE_CLASS, KEY, VALUE>
 
 template<class BASE_CLASS, class KEY, class VALUE>

@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCButton window
 
 class CMFCButton : public CButton
@@ -186,7 +186,6 @@ protected:
 	virtual int GetVertMargin() const;
 
 protected:
-	//{{AFX_MSG(CMFCButton)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnCancelMode();
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
@@ -207,7 +206,6 @@ protected:
 	afx_msg LRESULT OnGetImage(WPARAM, LPARAM);
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 

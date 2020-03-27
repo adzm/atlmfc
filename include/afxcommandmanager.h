@@ -25,7 +25,7 @@
 
 class CCommandManager;
 
-CCommandManager* GetCmdMgr();
+CCommandManager* AFX_CDECL GetCmdMgr();
 #define afxCommandManager GetCmdMgr()
 
 class CCommandManager

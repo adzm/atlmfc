@@ -110,11 +110,9 @@ void CDialogBar::OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler)
 
 #ifndef _AFX_NO_OCC_SUPPORT
 
-//{{AFX_MSG_MAP(CDialogBar)
 BEGIN_MESSAGE_MAP(CDialogBar, CControlBar)
 	ON_MESSAGE(WM_INITDIALOG,&CDialogBar::HandleInitDialog)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 LRESULT CDialogBar::HandleInitDialog(WPARAM, LPARAM)
 {

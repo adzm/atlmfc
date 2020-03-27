@@ -23,12 +23,14 @@
 namespace ATL
 {
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 class CComHeap :
 	public IAtlMemMgr
 {
 // IAtlMemMgr
 public:
-	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	virtual _Ret_maybenull_ _Post_writable_byte_size_(nBytes) void* Allocate(_In_ size_t nBytes) throw()
 	{
 #ifdef _WIN64
 		if( nBytes > INT_MAX )
@@ -42,7 +44,7 @@ public:
 	{
 		::CoTaskMemFree( p );
 	}
-	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+	virtual _Ret_maybenull_ _Post_writable_byte_size_(nBytes) void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -66,6 +68,8 @@ public:
 	}
 };
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 /////////////////////////////////////////////////////////////////////////////
 // OLE task memory allocation support
 
@@ -76,7 +80,20 @@ inline LPWSTR AtlAllocTaskWideString(
 	{
 		return NULL;
 	}
-	UINT nSize = (UINT)((wcslen(lpszString)+1) * sizeof(WCHAR));
+
+	size_t nSize = 0;
+	HRESULT hr = ::ATL::AtlAdd<size_t>(&nSize, wcslen(lpszString), 1);
+	if (FAILED(hr))
+	{
+		return NULL;
+	}
+
+	hr = ::ATL::AtlMultiply(&nSize, nSize, sizeof(wchar_t));
+	if (FAILED(hr))
+	{
+		return NULL;
+	}
+
 	LPWSTR lpszResult = (LPWSTR)CoTaskMemAlloc(nSize);
 	if (lpszResult == NULL)
 	{
@@ -96,12 +113,34 @@ inline LPWSTR AtlAllocTaskWideString(
 	_In_opt_z_ LPCSTR lpszString) throw()
 {
 	if (lpszString == NULL)
+	{
 		return NULL;
-	UINT nLen = lstrlenA(lpszString)+1;
-	LPWSTR lpszResult = (LPWSTR)::ATL::AtlCoTaskMemCAlloc(nLen, static_cast<ULONG>(sizeof(WCHAR)));
+	}
+
+	size_t strLen = strlen(lpszString);
+	if (strLen > ::ATL::AtlLimits<int>::_Max)
+	{
+		return NULL;
+	}
+
+	int cch = 0;
+	HRESULT hr = ::ATL::AtlAdd<int>(&cch, static_cast<int>(strLen), 1);
+	if (FAILED(hr))
+	{
+		return NULL;
+	}
+
+	size_t cb = 0;
+	hr = ::ATL::AtlMultiply<size_t>(&cb, cch, sizeof(wchar_t));
+	if (FAILED(hr))
+	{
+		return NULL;
+	}
+
+	LPWSTR lpszResult = (LPWSTR)CoTaskMemAlloc(cb);
 	if (lpszResult != NULL)
 	{
-		int nRet = MultiByteToWideChar(CP_ACP, 0, lpszString, -1, lpszResult, nLen);
+		int nRet = MultiByteToWideChar(CP_ACP, 0, lpszString, -1, lpszResult, cch);
 		ATLASSERT(nRet != 0);
 		if (nRet == 0)
 		{
@@ -116,8 +155,29 @@ inline LPSTR AtlAllocTaskAnsiString(
 	_In_opt_z_ LPCWSTR lpszString) throw()
 {
 	if (lpszString == NULL)
+	{	
 		return NULL;
-	UINT nBytes = (UINT)((wcslen(lpszString)+1)*2);
+	}
+
+	size_t nStrLen = wcslen(lpszString);
+	if (nStrLen > ::ATL::AtlLimits<int>::_Max)
+	{
+		return NULL;
+	}
+	
+	int nBytes = 0;
+	HRESULT hr = ::ATL::AtlAdd<int>(&nBytes, static_cast<int>(nStrLen), 1);
+	if (FAILED(hr))
+	{
+		return NULL;
+	}
+
+	hr = ::ATL::AtlMultiply<int>(&nBytes, nBytes, sizeof(wchar_t));
+	if (FAILED(hr))
+	{
+		return NULL;
+	}	
+
 	LPSTR lpszResult = (LPSTR)CoTaskMemAlloc(nBytes);
 	if (lpszResult != NULL)
 	{
@@ -139,7 +199,14 @@ inline LPSTR AtlAllocTaskAnsiString(
 	{
 		return NULL;
 	}
-	UINT nSize = lstrlenA(lpszString)+1;
+
+	size_t nSize = 0;
+	HRESULT hr = ::ATL::AtlAdd<size_t>(&nSize, strlen(lpszString), 1);
+	if (FAILED(hr))
+	{
+		return NULL;
+	}
+
 	LPSTR lpszResult = (LPSTR)CoTaskMemAlloc(nSize);
 	if (lpszResult == NULL)
 	{

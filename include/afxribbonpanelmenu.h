@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -28,7 +28,7 @@ class CMFCRibbonButton;
 class CMFCRibbonGallery;
 class CMFCRibbonCategory;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonPanelMenuBar window
 
 class CMFCRibbonPanelMenuBar : public CMFCPopupMenuBar
@@ -136,7 +136,6 @@ public:
 	virtual ~CMFCRibbonPanelMenuBar();
 
 protected:
-	//{{AFX_MSG(CMFCRibbonPanelMenuBar)
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -147,17 +146,17 @@ protected:
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-	afx_msg LRESULT OnMouseLeave(WPARAM,LPARAM);
+	afx_msg void OnMouseLeave();
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void AddButtons(CMFCRibbonBar* pRibbonBar, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>&	arButtons, BOOL bFloatyMode);
 	void SetPreferedSize(CSize size);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonPanelMenu window
 
 class CMFCRibbonPanelMenu : public CMFCPopupMenu
@@ -222,12 +221,11 @@ public:
 	virtual ~CMFCRibbonPanelMenu();
 
 protected:
-	//{{AFX_MSG(CMFCRibbonPanelMenu)
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -27,12 +27,10 @@
 // CScrollView
 
 BEGIN_MESSAGE_MAP(CScrollView, CView)
-	//{{AFX_MSG_MAP(CScrollView)
 	ON_WM_SIZE()
 	ON_WM_HSCROLL()
 	ON_WM_VSCROLL()
 	ON_WM_MOUSEWHEEL()
-	//}}AFX_MSG_MAP
 	ON_MESSAGE(WM_MBUTTONDOWN, &CScrollView::HandleMButtonDown)
 	ON_MESSAGE(WM_PRINTCLIENT, &CScrollView::OnPrintClient)
 END_MESSAGE_MAP()
@@ -71,8 +69,6 @@ UINT PASCAL _AfxGetMouseScrollLines()
 /////////////////////////////////////////////////////////////////////////////
 //
 
-#define ID_TIMER_TRACKING	0xE000
-
 class _AFX_MOUSEANCHORWND : public CWnd
 {
 private:
@@ -91,7 +87,7 @@ public:
 	UINT m_nAnchorID;
 	HCURSOR m_hAnchorCursor;
 
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 
 	afx_msg void OnPaint();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
@@ -112,12 +108,9 @@ _AFX_MOUSEANCHORWND::~_AFX_MOUSEANCHORWND()
 {
 }
 
-BOOL _AFX_MOUSEANCHORWND::PreTranslateMessage(MSG* pMsg)
+LRESULT _AFX_MOUSEANCHORWND::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
-	ENSURE_ARG(pMsg != NULL);
-	BOOL bRetVal = FALSE;
-
-	switch (pMsg->message)
+	switch (message)
 	{
 	// any of these messages cause us to quit scrolling
 	case WM_MOUSEWHEEL:
@@ -132,28 +125,26 @@ BOOL _AFX_MOUSEANCHORWND::PreTranslateMessage(MSG* pMsg)
 	case WM_RBUTTONUP:
 	case WM_MBUTTONDOWN:
 		m_bQuitTracking = TRUE;
-		bRetVal = TRUE;
 		break;
 
 	// Button up message depend on the position of cursor
 	// This enables the user to click and drag for a quick pan.
 	case WM_MBUTTONUP:
 		{
-			CPoint pt(pMsg->lParam);
+			CPoint pt(lParam);
 			ClientToScreen(&pt);
 			if (!PtInRect(&m_rectDrag, pt))
 				m_bQuitTracking = TRUE;
-			bRetVal = TRUE;
 		}
 		break;
 	}
 
-	return bRetVal;
+	return CWnd::WindowProc(message, wParam, lParam);
 }
 
 void _AFX_MOUSEANCHORWND::OnTimer(UINT_PTR nIDEvent)
 {
-	ASSERT(nIDEvent == ID_TIMER_TRACKING);
+	ASSERT(nIDEvent == AFX_TIMER_ID_TIMER_TRACKING);
 	UNUSED(nIDEvent);
 
 	int nCursor = -1;
@@ -206,7 +197,7 @@ void _AFX_MOUSEANCHORWND::OnTimer(UINT_PTR nIDEvent)
 		// destroy the window, and make sure that CScrollView knows the
 		// window isn't valid anymore.
 
-		KillTimer(ID_TIMER_TRACKING);
+		KillTimer(AFX_TIMER_ID_TIMER_TRACKING);
 		ReleaseCapture();
 		SetCursor(NULL);
 		CScrollView* pView = (CScrollView*) GetOwner();
@@ -324,7 +315,7 @@ BOOL _AFX_MOUSEANCHORWND::Create(CScrollView* pParent)
 
 		// fire timer ever 50ms
 		SetCapture();
-		SetTimer(ID_TIMER_TRACKING, 50, NULL);
+		SetTimer(AFX_TIMER_ID_TIMER_TRACKING, 50, NULL);
 	}
 #ifdef _DEBUG
 	else

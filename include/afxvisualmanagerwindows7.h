@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -41,7 +41,7 @@ protected:
 
 	BOOL CanDrawImage() const
 	{
-		return afxGlobalData.m_nBitsPerPixel > 8 && !afxGlobalData.IsHighContrastMode() && m_bLoaded;
+		return GetGlobalData()->m_nBitsPerPixel > 8 && !GetGlobalData()->IsHighContrastMode() && m_bLoaded;
 	}
 
 public:
@@ -79,15 +79,16 @@ public:
 	virtual void OnDrawRibbonCategory(CDC* pDC, CMFCRibbonCategory* pCategory, CRect rectCategory);
 
 	virtual void OnDrawRibbonGalleryButton(CDC* pDC, CMFCRibbonGalleryIcon* pButton);
+
+	virtual COLORREF OnDrawRibbonCategoryCaption(CDC* pDC, CMFCRibbonContextCaption* pContextCaption);
 	virtual COLORREF OnDrawRibbonStatusBarPane(CDC* pDC, CMFCRibbonStatusBar* pBar, CMFCRibbonStatusBarPane* pPane);
 
 	virtual COLORREF OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTab, BOOL bIsActive);
 	virtual COLORREF OnDrawRibbonPanel(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectPanel, CRect rectCaption);
 
 	virtual void OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectCaption);
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	virtual void OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
+	virtual void OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScroll* pScroll);
 
 	virtual COLORREF OnDrawRibbonTabsFrame(CDC* pDC, CMFCRibbonBar* pWndRibbonBar, CRect rectTab);
 	virtual void OnDrawRibbonSliderZoomButton(CDC* pDC, CMFCRibbonSlider* pSlider, CRect rect, BOOL bIsZoomOut, BOOL bIsHighlighted, BOOL bIsPressed, BOOL bIsDisabled);
@@ -152,9 +153,15 @@ protected:
 	CMFCControlRenderer m_ctrlMenuHighlighted[2];
 
 	CMFCControlRenderer m_ctrlRibbonCaptionQA;
+
+	COLORREF            m_clrRibbonCategoryText;
+	COLORREF            m_clrRibbonCategoryTextHighlighted;
+	COLORREF            m_clrRibbonCategoryTextDisabled;
 	CMFCControlRenderer m_ctrlRibbonCategoryBack;
 	CMFCControlRenderer m_ctrlRibbonCategoryTab;
 	CMFCControlRenderer m_ctrlRibbonCategoryTabSep;
+	CMFCControlRenderer m_ctrlRibbonCategoryBtnPage[2];
+	CMFCControlRenderer m_ctrlRibbonPanelBack;
 	CMFCControlRenderer m_ctrlRibbonPanelBackSep;
 	CMFCControlRenderer m_ctrlRibbonMainPanel;
 	CMFCControlRenderer m_ctrlRibbonBtnMainPanel;
@@ -181,8 +188,32 @@ protected:
 	CMFCControlRenderer m_ctrlRibbonBtnPalette[3];
 
 	CMFCControlRenderer m_ctrlRibbonBorder_QAT;
+	CMFCControlRenderer m_ctrlRibbonBorder_Panel;
+
+	struct CMFCRibbonContextCategory
+	{
+		CMFCControlRenderer          m_ctrlCaption;
+		CMFCControlRenderer          m_ctrlBack;
+		CMFCControlRenderer          m_ctrlTab;
+		CMFCVisualManagerBitmapCache m_cacheBack;
+		COLORREF                     m_clrCaptionText;
+		COLORREF                     m_clrText;
+		COLORREF                     m_clrTextHighlighted;
+
+		void CleanUp()
+		{
+			m_ctrlCaption.CleanUp();
+			m_ctrlBack.CleanUp();
+			m_ctrlTab.CleanUp();
+			m_cacheBack.Clear();
+		}
+	};
+
+	CMFCControlRenderer       m_ctrlRibbonContextSeparator;
+	CMFCRibbonContextCategory m_ctrlRibbonContextCategory[AFX_RIBBON_CATEGORY_COLOR_COUNT];
 
 	CMFCVisualManagerBitmapCache m_cacheRibbonCategoryBack;
+	CMFCVisualManagerBitmapCache m_cacheRibbonPanelBack;
 	CMFCVisualManagerBitmapCache m_cacheRibbonBtnGroup_S;
 	CMFCVisualManagerBitmapCache m_cacheRibbonBtnGroup_F;
 	CMFCVisualManagerBitmapCache m_cacheRibbonBtnGroup_M;

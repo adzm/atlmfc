@@ -39,7 +39,6 @@ CVSListBoxEditCtrl::~CVSListBoxEditCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CVSListBoxEditCtrl, CMFCEditBrowseCtrl)
-	//{{AFX_MSG_MAP(CVSListBoxEditCtrl)
 	ON_WM_WINDOWPOSCHANGING()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
@@ -49,7 +48,6 @@ BEGIN_MESSAGE_MAP(CVSListBoxEditCtrl, CMFCEditBrowseCtrl)
 	ON_WM_NCHITTEST()
 	ON_WM_WINDOWPOSCHANGED()
 	ON_WM_KEYDOWN()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -113,7 +111,6 @@ CVSListBoxBase::~CVSListBoxBase()
 	}
 }
 
-//{{AFX_MSG_MAP(CVSListBoxBase)
 BEGIN_MESSAGE_MAP(CVSListBoxBase, CStatic)
 	ON_WM_CREATE()
 	ON_WM_PAINT()
@@ -126,7 +123,6 @@ BEGIN_MESSAGE_MAP(CVSListBoxBase, CStatic)
 	ON_MESSAGE(WM_GETFONT, &CVSListBoxBase::OnGetFont)
 	ON_MESSAGE(WM_SETTEXT, &CVSListBoxBase::OnSetText)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CVSListBoxBase message handlers
@@ -175,25 +171,25 @@ BOOL CVSListBoxBase::SetStandardButtons(UINT uiBtns)
 	if (uiBtns & AFX_VSLISTBOX_BTN_NEW)
 	{
 		ENSURE(strButton.LoadString(IDS_AFXBARRES_NEW));
-		ENSURE(AddButton(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_NEW32 : IDB_AFXBARRES_NEW, strButton, VK_INSERT,0,AFX_VSLISTBOX_BTN_NEW_ID));
+		ENSURE(AddButton(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_NEW32 : IDB_AFXBARRES_NEW, strButton, VK_INSERT,0,AFX_VSLISTBOX_BTN_NEW_ID));
 	}
 
 	if (uiBtns & AFX_VSLISTBOX_BTN_DELETE)
 	{
 		ENSURE(strButton.LoadString(IDS_AFXBARRES_DELETE));
-		ENSURE(AddButton(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_DELETE32 : IDB_AFXBARRES_DELETE, strButton, VK_DELETE, 0, AFX_VSLISTBOX_BTN_DELETE_ID));
+		ENSURE(AddButton(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_DELETE32 : IDB_AFXBARRES_DELETE, strButton, VK_DELETE, 0, AFX_VSLISTBOX_BTN_DELETE_ID));
 	}
 
 	if (uiBtns & AFX_VSLISTBOX_BTN_UP)
 	{
 		ENSURE(strButton.LoadString(IDS_AFXBARRES_MOVEUP));
-		ENSURE(AddButton(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_UP32 : IDB_AFXBARRES_UP, strButton, VK_UP, FALT, AFX_VSLISTBOX_BTN_UP_ID));
+		ENSURE(AddButton(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_UP32 : IDB_AFXBARRES_UP, strButton, VK_UP, FALT, AFX_VSLISTBOX_BTN_UP_ID));
 	}
 
 	if (uiBtns & AFX_VSLISTBOX_BTN_DOWN)
 	{
 		ENSURE(strButton.LoadString(IDS_AFXBARRES_MOVEDN));
-		ENSURE(AddButton(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_DOWN32 : IDB_AFXBARRES_DOWN, strButton, VK_DOWN, FALT, AFX_VSLISTBOX_BTN_DOWN_ID));
+		ENSURE(AddButton(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_DOWN32 : IDB_AFXBARRES_DOWN, strButton, VK_DOWN, FALT, AFX_VSLISTBOX_BTN_DOWN_ID));
 	}
 
 	m_uiStandardBtns |= uiBtns;
@@ -287,14 +283,14 @@ void CVSListBoxBase::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 
-	dc.FillRect(m_rectCaption, &afxGlobalData.brBtnFace);
-	dc.Draw3dRect(m_rectCaption, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnHilite);
+	dc.FillRect(m_rectCaption, &(GetGlobalData()->brBtnFace));
+	dc.Draw3dRect(m_rectCaption, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnHilite);
 
 	CRect rectText = m_rectCaption;
 	rectText.DeflateRect(nTextMargin, 0);
 
 	dc.SetBkMode(TRANSPARENT);
-	dc.SetTextColor(IsWindowEnabled() ? afxGlobalData.clrBtnText : afxGlobalData.clrGrayedText);
+	dc.SetTextColor(IsWindowEnabled() ? GetGlobalData()->clrBtnText : GetGlobalData()->clrGrayedText);
 
 	CFont* pOldFont = NULL;
 
@@ -773,14 +769,12 @@ CVSListBox::~CVSListBox()
 }
 
 BEGIN_MESSAGE_MAP(CVSListBox, CVSListBoxBase)
-	//{{AFX_MSG_MAP(CVSListBox)
 	ON_NOTIFY(LVN_KEYDOWN, nListId, &CVSListBox::OnKeyDown)
 	ON_NOTIFY(NM_DBLCLK, nListId, &CVSListBox::OnDblclkList)
 	ON_NOTIFY(LVN_GETDISPINFO, nListId, &CVSListBox::OnGetdispinfo)
 	ON_NOTIFY(LVN_ENDLABELEDIT, nListId, &CVSListBox::OnEndLabelEdit)
 	ON_NOTIFY(LVN_ITEMCHANGED, nListId, &CVSListBox::OnItemChanged)
 	ON_MESSAGE(WM_MFC_INITCTRL, &CVSListBox::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1194,7 +1188,7 @@ LRESULT CVSListBox::OnInitControl(WPARAM wParam, LPARAM lParam)
 	CTagManager tagManager(strDst);
 
 	BOOL bBrowseButton = TRUE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_BrowseButton, bBrowseButton))
+	if (ReadBoolProp(tagManager, PS_MFCVSListbox_BrowseButton, bBrowseButton))
 	{
 		EnableBrowseButton(bBrowseButton);
 	}
@@ -1202,7 +1196,7 @@ LRESULT CVSListBox::OnInitControl(WPARAM wParam, LPARAM lParam)
 	UINT uiBtns = 0;
 
 	BOOL bNewButton = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_NewButton, bNewButton))
+	if (ReadBoolProp(tagManager, PS_MFCVSListbox_NewButton, bNewButton))
 	{
 		if (bNewButton && GetButtonNum(AFX_VSLISTBOX_BTN_NEW_ID) == -1)
 		{
@@ -1211,7 +1205,7 @@ LRESULT CVSListBox::OnInitControl(WPARAM wParam, LPARAM lParam)
 	}
 
 	BOOL bRemoveButton = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_RemoveButton, bRemoveButton))
+	if (ReadBoolProp(tagManager, PS_MFCVSListbox_RemoveButton, bRemoveButton))
 	{
 		if (bRemoveButton && GetButtonNum(AFX_VSLISTBOX_BTN_DELETE_ID) == -1)
 		{
@@ -1220,7 +1214,7 @@ LRESULT CVSListBox::OnInitControl(WPARAM wParam, LPARAM lParam)
 	}
 
 	BOOL bUpButton = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_UpButton, bUpButton))
+	if (ReadBoolProp(tagManager, PS_MFCVSListbox_UpButton, bUpButton))
 	{
 		if (bUpButton && GetButtonNum(AFX_VSLISTBOX_BTN_UP_ID) == -1)
 		{
@@ -1229,7 +1223,7 @@ LRESULT CVSListBox::OnInitControl(WPARAM wParam, LPARAM lParam)
 	}
 
 	BOOL bDownButton = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCVSListbox_DownButton, bDownButton))
+	if (ReadBoolProp(tagManager, PS_MFCVSListbox_DownButton, bDownButton))
 	{
 		if (bDownButton && GetButtonNum(AFX_VSLISTBOX_BTN_DOWN_ID) == -1)
 		{

@@ -189,26 +189,20 @@ void AFXAPI AfxTermExtensionModule(AFX_EXTENSION_MODULE& state, BOOL bAll)
 HINSTANCE AFXAPI AfxLoadLibrary(LPCTSTR lpszModuleName)
 {
 	ASSERT(lpszModuleName != NULL);
-	AfxLockGlobals(CRIT_LOCKSHARED);
- 	HINSTANCE hInstLib = AfxCtxLoadLibrary(lpszModuleName);
-	AfxUnlockGlobals(CRIT_LOCKSHARED);
+	HINSTANCE hInstLib = LoadLibrary(lpszModuleName);
 	return hInstLib;
 }
 
 HINSTANCE AFXAPI AfxLoadLibraryEx(LPCTSTR lpFileName, HANDLE hFile, DWORD dwFlags)
 {
 	ASSERT(lpFileName != NULL);
-	AfxLockGlobals(CRIT_LOCKSHARED);
-	HINSTANCE hInstLib = AfxCtxLoadLibraryEx(lpFileName,hFile,dwFlags);
-	AfxUnlockGlobals(CRIT_LOCKSHARED);
+	HINSTANCE hInstLib = LoadLibraryEx(lpFileName,hFile,dwFlags);
 	return hInstLib;
 }
 
 BOOL AFXAPI AfxFreeLibrary(HINSTANCE hInstLib)
 {
-	AfxLockGlobals(CRIT_LOCKSHARED);
 	BOOL bResult = FreeLibrary(hInstLib);
-	AfxUnlockGlobals(CRIT_LOCKSHARED);
 	return bResult;
 }
 
@@ -453,7 +447,7 @@ HINSTANCE AFXAPI AfxFindStringResourceHandle(UINT nID)
 
 // AfxLoadString must not only check for the appropriate string segment
 //   in the resource file, but also that the string is non-zero
-int AFXAPI AfxLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nMaxBuf, return + 1) LPWSTR lpszBuf, _In_ UINT nMaxBuf)
+int AFXAPI AfxLoadString(_In_ UINT nID, _Out_writes_to_(nMaxBuf, return + 1) LPWSTR lpszBuf, _In_ UINT nMaxBuf)
 {
 	ASSERT(AfxIsValidAddress(lpszBuf, nMaxBuf*sizeof(WCHAR)));
 	if( lpszBuf == NULL || nMaxBuf == 0)
@@ -481,7 +475,7 @@ int AFXAPI AfxLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nMaxBuf, return +
 	return nCharsToCopy;
 }
 
-int AFXAPI AfxLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nMaxBuf, return + 1) LPSTR lpszBuf, _In_ UINT nMaxBuf)
+int AFXAPI AfxLoadString(_In_ UINT nID, _Out_writes_to_(nMaxBuf, return + 1) LPSTR lpszBuf, _In_ UINT nMaxBuf)
 {
 	ASSERT(AfxIsValidAddress(lpszBuf, nMaxBuf*sizeof(CHAR)));
 	if( lpszBuf == NULL || nMaxBuf == 0)

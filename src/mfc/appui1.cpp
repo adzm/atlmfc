@@ -125,8 +125,7 @@ int CWinApp::ShowAppMessageBox(CWinApp *pApp, LPCTSTR lpszPrompt, UINT nType, UI
 			szAppName[_MAX_PATH - 1] = '\0';
 	}
 
-	int nResult =
-		::AfxCtxMessageBox(hWnd, lpszPrompt, pszAppName, nType);
+	int nResult = MessageBox(hWnd, lpszPrompt, pszAppName, nType);
 
 	// restore prompt context if possible
 	if (pdwContext != NULL)

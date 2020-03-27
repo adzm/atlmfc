@@ -41,8 +41,6 @@
 #define new DEBUG_NEW
 #endif
 
-static const CString strControlBarProfile = _T("Panes");
-
 int CPane::m_bHandleMinSize = FALSE;
 
 #define AFX_REG_SECTION_FMT _T("%sPane-%d")
@@ -103,7 +101,6 @@ CPane::~CPane()
 }
 
 BEGIN_MESSAGE_MAP(CPane, CBasePane)
-	//{{AFX_MSG_MAP(CPane)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
@@ -114,7 +111,6 @@ BEGIN_MESSAGE_MAP(CPane, CBasePane)
 	ON_WM_CHAR()
 	ON_WM_DESTROY()
 	ON_WM_STYLECHANGED()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -136,7 +132,7 @@ BOOL CPane::CreateEx(DWORD dwStyleEx, LPCTSTR lpszClassName, DWORD dwStyle, cons
 
 	if (lpszClassName == NULL)
 	{
-		strClassName = afxGlobalData.RegisterWindowClass(_T("Afx:ControlBar"));
+		strClassName = GetGlobalData()->RegisterWindowClass(_T("Afx:ControlBar"));
 	}
 	else
 	{
@@ -1016,16 +1012,6 @@ bool CPane::IsLeftOf(CRect rect, bool bWindowRect) const
 	}
 }
 
-bool CPane::IsLastPaneOnLastRow() const
-{
-	ASSERT_VALID(this);
-	if (m_pParentDockBar->IsLastRow(m_pDockBarRow))
-	{
-		return(m_pDockBarRow->GetPaneCount() == 1);
-	}
-	return false;
-}
-
 AFX_CS_STATUS CPane::IsChangeState(int nOffset, CBasePane** ppTargetBar) const
 {
 	ASSERT_VALID(this);
@@ -1447,7 +1433,7 @@ void CPane::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 
 BOOL CPane::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strControlBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_CONTROL_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -1491,7 +1477,7 @@ BOOL CPane::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 
 BOOL CPane::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strControlBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_CONTROL_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -1680,7 +1666,7 @@ void CPane::OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct)
 
 void CPane::OnRTLChanged(BOOL bIsRTL)
 {
-	afxGlobalData.m_bIsRTL = bIsRTL;
+	GetGlobalData()->m_bIsRTL = bIsRTL;
 
 	if (GetParentDockSite() != NULL && IsHorizontal())
 	{
@@ -1728,6 +1714,14 @@ BOOL CPane::OnShowControlBarMenu(CPoint point)
 		menu.AppendMenu(MF_STRING, idHide, strItem);
 	}
 
+	BOOL bIsSingleFloatingPane = FALSE;
+
+	CPaneFrameWnd* pMiniFrame = GetParentMiniFrame();
+	if (pMiniFrame->GetSafeHwnd() != NULL && pMiniFrame->GetVisiblePaneCount() == 1)
+	{
+		bIsSingleFloatingPane = TRUE;
+	}
+
 	if (!CanFloat())
 	{
 		menu.EnableMenuItem(idFloating, MF_GRAYED);
@@ -1759,7 +1753,7 @@ BOOL CPane::OnShowControlBarMenu(CPoint point)
 		menu.CheckMenuItem(idTabbed, MF_CHECKED);
 	}
 
-	if (IsFloating())
+	if (IsFloating() || bIsSingleFloatingPane)
 	{
 		menu.CheckMenuItem(idFloating, MF_CHECKED);
 	}
@@ -1801,7 +1795,7 @@ BOOL CPane::OnShowControlBarMenu(CPoint point)
 	switch(nMenuResult)
 	{
 	case idDocking:
-		if (IsFloating())
+		if (IsFloating() || bIsSingleFloatingPane)
 		{
 			CPaneFrameWnd* pMiniFrame = GetParentMiniFrame();
 			if (pMiniFrame != NULL)
@@ -1844,7 +1838,7 @@ BOOL CPane::OnShowControlBarMenu(CPoint point)
 				}
 			}
 
-			if (!bWasFloated)
+			if (!bWasFloated && !bIsSingleFloatingPane)
 			{
 				FloatPane(m_recentDockInfo.m_rectRecentFloatingRect);
 			}

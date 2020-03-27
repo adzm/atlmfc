@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -69,18 +69,13 @@ class CMFCShadowWnd : public CMiniFrameWnd
 
 	void Repos();
 
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMFCShadowWnd)
-	public:
+public:
 	virtual BOOL Create();
-	//}}AFX_VIRTUAL
 
-	// Generated message map functions
 protected:
-	//{{AFX_MSG(CMFCShadowWnd)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CMFCPopupMenu* m_pOwner;
@@ -90,17 +85,15 @@ protected:
 };
 
 BEGIN_MESSAGE_MAP(CMFCShadowWnd, CMiniFrameWnd)
-	//{{AFX_MSG_MAP(CMFCShadowWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CMFCShadowWnd::Create ()
 {
 	ASSERT_VALID (m_pOwner);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		ASSERT (FALSE);
 		return FALSE;
@@ -214,8 +207,6 @@ void CMFCShadowWnd::Repos()
 // CMFCPopupMenu
 
 static const int nFadeStep = 10;
-static const int nAnimTimerId = 1;
-static const int nScrollTimerId = 2;
 static const int nScrollTimerDuration = 80;
 static const int nMenuBarId = 1;
 static const int nTearOffBarHeight = 10;
@@ -249,7 +240,12 @@ CMFCPopupMenu::CMFCPopupMenu(CMFCToolBarsMenuPropertyPage* pCustPage, LPCTSTR lp
 
 void CMFCPopupMenu::Initialize()
 {
-	if (afxGlobalData.bIsRemoteSession)
+	if (GetGlobalData()->IsAccessibilitySupport())
+	{
+		EnableActiveAccessibility();
+	}
+
+	if (GetGlobalData()->bIsRemoteSession)
 	{
 		m_AnimationType = NO_ANIMATION;
 	}
@@ -285,11 +281,11 @@ void CMFCPopupMenu::Initialize()
 	m_bIsAnimRight = TRUE;
 	m_bIsAnimDown = TRUE;
 
-	m_iShadowSize = CMFCMenuBar::IsMenuShadows() && !CMFCToolBar::IsCustomizeMode() && afxGlobalData.m_nBitsPerPixel > 8 ? // Don't draw shadows in 256 colors or less
+	m_iShadowSize = CMFCMenuBar::IsMenuShadows() && !CMFCToolBar::IsCustomizeMode() && GetGlobalData()->m_nBitsPerPixel > 8 ? // Don't draw shadows in 256 colors or less
 		CMFCVisualManager::GetInstance()->GetMenuShadowDepth() : 0;
 
 	m_iFadePercent = 0;
-	if (GetAnimationType() == FADE && afxGlobalData.m_nBitsPerPixel <= 8)
+	if (GetAnimationType() == FADE && GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		m_AnimationType = NO_ANIMATION;
 		m_bAnimationIsDone = TRUE;
@@ -342,7 +338,6 @@ CMFCPopupMenu::~CMFCPopupMenu()
 	}
 }
 
-//{{AFX_MSG_MAP(CMFCPopupMenu)
 BEGIN_MESSAGE_MAP(CMFCPopupMenu, CMiniFrameWnd)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
@@ -364,7 +359,6 @@ BEGIN_MESSAGE_MAP(CMFCPopupMenu, CMiniFrameWnd)
 	ON_WM_ACTIVATEAPP()
 	ON_WM_WINDOWPOSCHANGED()
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCPopupMenu message handlers
@@ -479,7 +473,7 @@ BOOL CMFCPopupMenu::Create(CWnd* pWndParent, int x, int y, HMENU hMenu, BOOL bLo
 			pMenuBar->ShowWindow(SW_HIDE);
 		}
 
-		SetTimer(nAnimTimerId, m_AnimationSpeed, NULL);
+		SetTimer(AFX_TIMER_ID_MENU_POPUP_ANIMATION, m_AnimationSpeed, NULL);
 		nLastAnimTime = clock();
 	}
 
@@ -697,10 +691,24 @@ void CMFCPopupMenu::RecalcLayout(BOOL /*bNotify*/)
 		size = pMenuBar->CalcSize(TRUE);
 	};
 
+	BOOL bScrollSizeAdded = FALSE;
+
 	if (!m_bResizeTracking && !m_bWasResized)
 	{
 		size.cx += nBorderSize * 2;
 		size.cy += nBorderSize * 2;
+
+		if (m_bScrollable && m_bShowScrollBar)
+		{
+			size.cx += ::GetSystemMetrics(SM_CXVSCROLL);
+
+			if (!m_rectResize.IsRectEmpty())
+			{
+				m_rectResize.right += ::GetSystemMetrics(SM_CXVSCROLL);
+			}
+
+			bScrollSizeAdded = TRUE;
+		}
 
 		switch (m_nLogoLocation)
 		{
@@ -730,9 +738,9 @@ void CMFCPopupMenu::RecalcLayout(BOOL /*bNotify*/)
 		{
 			m_wndToolTip.Create(this);
 			m_wndToolTip.Activate(TRUE);
-			if (afxGlobalData.m_nMaxToolTipWidth != -1)
+			if (GetGlobalData()->m_nMaxToolTipWidth != -1)
 			{
-				m_wndToolTip.SetMaxTipWidth(afxGlobalData.m_nMaxToolTipWidth);
+				m_wndToolTip.SetMaxTipWidth(GetGlobalData()->m_nMaxToolTipWidth);
 			}
 
 			m_wndToolTip.AddTool(this, IDS_AFX_TEAR_OFF, m_rectTearOffCaption, 1);
@@ -1077,7 +1085,7 @@ void CMFCPopupMenu::RecalcLayout(BOOL /*bNotify*/)
 		}
 	}
 
-	if (m_bScrollable && m_bShowScrollBar && !m_bResizeTracking && !m_bWasResized)
+	if (!bScrollSizeAdded && m_bScrollable && m_bShowScrollBar && !m_bResizeTracking && !m_bWasResized)
 	{
 		size.cx += ::GetSystemMetrics(SM_CXVSCROLL);
 
@@ -1200,7 +1208,7 @@ void CMFCPopupMenu::OnDestroy()
 			{
 				CMFCRibbonMiniToolBar* pFloaty = DYNAMIC_DOWNCAST(CMFCRibbonMiniToolBar, pParentMenu);
 
-				if (pFloaty != NULL && !pFloaty->IsContextMenuMode())
+				if (pFloaty != NULL)
 				{
 					m_bAutoDestroyParent = FALSE;
 				}
@@ -1817,7 +1825,7 @@ void CMFCPopupMenu::OnTimer(UINT_PTR nIDEvent)
 
 	switch (nIDEvent)
 	{
-	case nAnimTimerId:
+	case AFX_TIMER_ID_MENU_POPUP_ANIMATION:
 		if (!m_bAnimationIsDone)
 		{
 			clock_t nCurrAnimTime = clock();
@@ -1851,7 +1859,7 @@ void CMFCPopupMenu::OnTimer(UINT_PTR nIDEvent)
 				m_AnimSize.cx = m_FinalSize.cx + m_iShadowSize;
 				m_AnimSize.cy = m_FinalSize.cy + m_iShadowSize;
 
-				KillTimer(nAnimTimerId);
+				KillTimer(AFX_TIMER_ID_MENU_POPUP_ANIMATION);
 
 				pMenuBar->SetWindowPos(NULL,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOREDRAW|SWP_NOZORDER|SWP_SHOWWINDOW | SWP_NOACTIVATE);
 				pMenuBar->ValidateRect(NULL);
@@ -1870,7 +1878,7 @@ void CMFCPopupMenu::OnTimer(UINT_PTR nIDEvent)
 		}
 		break;
 
-	case nScrollTimerId:
+	case AFX_TIMER_ID_MENU_POPUP_SCROLL:
 		{
 			CPoint point;
 			::GetCursorPos(&point);
@@ -1896,7 +1904,7 @@ void CMFCPopupMenu::OnTimer(UINT_PTR nIDEvent)
 			}
 			else
 			{
-				KillTimer(nScrollTimerId);
+				KillTimer(AFX_TIMER_ID_MENU_POPUP_SCROLL);
 				m_iScrollMode = 0;
 				InvalidateRect(m_rectScrollDn);
 				InvalidateRect(m_rectScrollUp);
@@ -1947,7 +1955,7 @@ void CMFCPopupMenu::OnMouseMove(UINT nFlags, CPoint point)
 
 	if (m_iScrollMode != 0)
 	{
-		SetTimer(nScrollTimerId, nScrollTimerDuration, NULL);
+		SetTimer(AFX_TIMER_ID_MENU_POPUP_SCROLL, nScrollTimerDuration, NULL);
 	}
 }
 
@@ -2124,7 +2132,7 @@ BOOL CMFCPopupMenu::InitMenuBar()
 				TCHAR szCurDir [_MAX_PATH];
 				::GetCurrentDirectory(_MAX_PATH, szCurDir);
 
-				int nCurDir = lstrlen(szCurDir);
+				int nCurDir = AtlStrLen(szCurDir);
 				ASSERT(nCurDir >= 0);
 
 				szCurDir [nCurDir] = _T('\\');
@@ -2385,20 +2393,17 @@ void CMFCPopupMenu::DoPaint(CDC* pPaintDC)
 			}
 		}
 
-		if (afxGlobalData.bIsWindowsVista)
+		CClientDC dcDesktop(NULL);
+
+		CRect rectMenu;
+		GetWindowRect(rectMenu);
+
+		pPaintDC->BitBlt(0, 0, rectMenu.Width(), rectMenu.Height(), &dcDesktop, rectMenu.left, rectMenu.top, SRCCOPY);
+
+		if (bRTL)
 		{
-			CClientDC dcDesktop(NULL);
-
-			CRect rectMenu;
-			GetWindowRect(rectMenu);
-
-			pPaintDC->BitBlt(0, 0, rectMenu.Width(), rectMenu.Height(), &dcDesktop, rectMenu.left, rectMenu.top, SRCCOPY);
-
-			if (bRTL)
-			{
-				CDrawingManager dm(*pPaintDC);
-				dm.MirrorRect(CRect(0, 0, rectMenu.Width(), rectMenu.Height()));
-			}
+			CDrawingManager dm(*pPaintDC);
+			dm.MirrorRect(CRect(0, 0, rectMenu.Width(), rectMenu.Height()));
 		}
 
 		CMFCVisualManager::GetInstance()->OnDrawMenuShadow(pPaintDC, rectClient, rectParentBtn, m_iShadowSize, iMinBrightness, iMaxBrightness, &m_bmpShadowBottom, &m_bmpShadowRight, bRTL);
@@ -2537,7 +2542,7 @@ void CMFCPopupMenu::DrawFade(CDC* pPaintDC)
 	{
 		CBitmap* pBmpOld = NULL;
 
-		if (GetAnimationType() == FADE || afxGlobalData.m_nBitsPerPixel > 8)
+		if (GetAnimationType() == FADE || GetGlobalData()->m_nBitsPerPixel > 8)
 		{
 			// Fill in the BITMAPINFOHEADER
 			BITMAPINFOHEADER bih;
@@ -2754,7 +2759,7 @@ BOOL CMFCPopupMenu::AdjustScroll(BOOL bForceMenuBarResize)
 	{
 		uiSWPFlags |= SWP_NOREDRAW;
 
-		KillTimer(nScrollTimerId);
+		KillTimer(AFX_TIMER_ID_MENU_POPUP_SCROLL);
 		m_iScrollMode = 0;
 	}
 
@@ -2796,8 +2801,6 @@ BOOL CMFCPopupMenu::AdjustScroll(BOOL bForceMenuBarResize)
 
 CMFCPopupMenu::MENUAREA_TYPE CMFCPopupMenu::CheckArea(const CPoint& ptScreen) const
 {
-	ASSERT_VALID(this);
-
 	CRect rectWindow;
 	GetClientRect(rectWindow);
 	ClientToScreen(rectWindow);
@@ -3432,12 +3435,12 @@ BOOL CMFCPopupMenu::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 	if (m_rectTearOffCaption.PtInRect(ptCursor))
 	{
-		if (afxGlobalData.m_hcurSizeAll == NULL)
+		if (GetGlobalData()->m_hcurSizeAll == NULL)
 		{
-			afxGlobalData.m_hcurSizeAll = AfxGetApp()->LoadStandardCursor(IDC_SIZEALL);
+			GetGlobalData()->m_hcurSizeAll = AfxGetApp()->LoadStandardCursor(IDC_SIZEALL);
 		}
 
-		SetCursor(afxGlobalData.m_hcurSizeAll);
+		SetCursor(GetGlobalData()->m_hcurSizeAll);
 		return TRUE;
 	}
 
@@ -3570,7 +3573,19 @@ void CMFCPopupMenu::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	m_wndScrollBarVert.GetScrollInfo(&scrollInfo);
 
 	int iOffset = pMenuBar->GetOffset();
+
 	int nMaxOffset = scrollInfo.nMax;
+	if (nMaxOffset <= 0)
+	{
+		const int nMenuRowHeight = pMenuBar->GetRowHeight();
+		const int nMenuTotalItems = pMenuBar->GetCount();
+
+		if (nMenuTotalItems > 0 && nMenuRowHeight > 0)
+		{
+			nMaxOffset = max(0, (nMenuTotalItems * nMenuRowHeight - m_nMenuBarHeight) / nMenuRowHeight + 1);
+		}
+	}
+
 	int nPage = scrollInfo.nPage;
 
 	switch (nSBCode)
@@ -3958,3 +3973,142 @@ void CMFCPopupMenu::OnWindowPosChanged(WINDOWPOS FAR* lpwndpos)
 		}
 	}
 }
+
+HRESULT CMFCPopupMenu::get_accName(VARIANT varChild, BSTR *pszName)
+{
+    if (pszName == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF && m_pParentBtn != NULL)
+	{
+		CString str = m_pParentBtn->m_strText;
+		str.Remove (_T('&'));
+
+		if (!str.IsEmpty())
+		{
+			*pszName = str.AllocSysString ();
+			return S_OK;
+		}
+	
+		return S_FALSE;
+	}
+
+	CMFCPopupMenuBar* pMenuBar = GetMenuBar();
+	if (pMenuBar != NULL)
+	{
+		return pMenuBar->get_accName(varChild, pszName);
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCPopupMenu::get_accParent(IDispatch **ppdispParent)
+{
+    if (ppdispParent == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispParent = NULL;
+
+	CMFCToolBarMenuButton* pMenuBtn = GetParentButton();
+	if (pMenuBtn == NULL)
+	{
+		return S_FALSE;
+	}
+
+	CMFCToolBar* pWndParentBar = DYNAMIC_DOWNCAST(CMFCToolBar, pMenuBtn->GetParentWnd());
+	if (pWndParentBar->GetSafeHwnd())
+	{
+		return AccessibleObjectFromWindow(pWndParentBar->GetSafeHwnd(), (DWORD)OBJID_CLIENT,
+					   IID_IAccessible, (void**)ppdispParent);
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCPopupMenu::get_accChildCount(long *pcountChildren)
+{
+	if( !pcountChildren )
+    {
+        return E_INVALIDARG;
+    }
+
+	CMFCPopupMenuBar* pMenuBar = GetMenuBar();
+	if (pMenuBar != NULL)
+	{
+		return pMenuBar->get_accChildCount(pcountChildren);
+	}
+
+	*pcountChildren = 0;
+	return S_FALSE;
+}
+
+HRESULT CMFCPopupMenu::get_accChild(VARIANT varChild, IDispatch **ppdispChild)
+{
+	if( !ppdispChild )
+    {
+        return E_INVALIDARG;
+    }
+
+	if (varChild.vt == VT_I4 && varChild.lVal != CHILDID_SELF)
+	{
+		CMFCPopupMenuBar* pMenuBar = GetMenuBar ();
+		if (pMenuBar != NULL)
+		{
+			return pMenuBar->get_accChild(varChild, ppdispChild);
+		}
+	}
+
+	*ppdispChild = NULL;
+	return S_FALSE;
+}
+
+HRESULT CMFCPopupMenu::get_accRole(VARIANT varChild, VARIANT *pvarRole)
+{
+	if( !pvarRole )
+    {
+        return E_INVALIDARG;
+    }
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		pvarRole->vt = VT_I4;
+		pvarRole->lVal = ROLE_SYSTEM_MENUPOPUP;//ROLE_SYSTEM_MENUBAR;// ROLE_SYSTEM_MENUPOPUP;
+		return S_OK;
+	}
+
+	CMFCPopupMenuBar* pMenuBar = GetMenuBar ();
+	if (pMenuBar != NULL)
+	{
+		return pMenuBar->get_accRole(varChild, pvarRole);
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCPopupMenu::get_accState(VARIANT varChild, VARIANT *pvarState)
+{
+	if( !pvarState )
+    {
+        return E_INVALIDARG;
+    }
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		pvarState->vt = VT_I4;
+		pvarState->lVal = STATE_SYSTEM_FOCUSED |STATE_SYSTEM_FOCUSABLE;
+		return S_OK;
+	}
+
+	CMFCPopupMenuBar* pMenuBar = GetMenuBar ();
+	if (pMenuBar != NULL)
+	{
+		return pMenuBar->get_accState(varChild, pvarState);
+	}
+
+	return S_FALSE;
+}
+

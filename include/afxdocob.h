@@ -62,7 +62,7 @@ class CDocObjectServer;
 class COleDocIPFrameWnd;
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleCmdUI
 
 class COleCmdUI : public CCmdUI
@@ -138,7 +138,7 @@ public:
 	ON_OLECMD(NULL, OLECMDID_CLEARSELECTION, ID_EDIT_CLEAR)
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDocObjectServer class
 
 class CDocObjectServer : public CCmdTarget
@@ -189,11 +189,8 @@ protected:
 
    // Overrides
 protected:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CDocObjectServer)
 	public:
 	virtual void OnCloseDocument();
-	//}}AFX_VIRTUAL
 
 	// Implementation Data
 protected:
@@ -208,16 +205,11 @@ protected:
 	// View Data
 	LPOLEINPLACESITE  m_pViewSite;
 
-   // Implementation Helpers
+	// Implementation Helpers
 protected:
 	void OnSetItemRects(LPRECT lprcPosRect, LPRECT lprcClipRect);
-//  LPUNKNOWN GetInterfaceHook(const void* iid);
 
-	// Generated message map functions
 protected:
-	//{{AFX_MSG(CDocObjectServer)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
 // Interface Maps
@@ -289,7 +281,7 @@ public:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleDocIPFrameWnd class
 
 class COleDocIPFrameWnd : public COleIPFrameWnd
@@ -318,9 +310,6 @@ public:
 #endif
 
 	// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(COleDocIPFrameWnd)
-	//}}AFX_VIRTUAL
 protected:
 	virtual void OnRequestPositionChange(LPCRECT lpRect);
 	virtual void RecalcLayout(BOOL bNotify = TRUE);
@@ -329,10 +318,6 @@ protected:
 	virtual BOOL BuildSharedMenu();
 	virtual void DestroySharedMenu();
 
-	// Generated message map functions
-	//{{AFX_MSG(COleDocIPFrameWnd)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
 
@@ -361,15 +346,11 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
-   // Overrides
+	// Overrides
 protected:
-   virtual void OnDoVerb(LONG iVerb);
-   virtual void OnHide();
-   virtual void OnShow();
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CDocObjectServerItem)
-	//}}AFX_VIRTUAL
-
+	virtual void OnDoVerb(LONG iVerb);
+	virtual void OnHide();
+	virtual void OnShow();
 };
 
 /////////////////////////////////////////////////////////////////////////////

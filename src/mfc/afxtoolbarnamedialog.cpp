@@ -22,26 +22,20 @@
 CMFCToolBarNameDialog::CMFCToolBarNameDialog(CWnd* pParent /*=NULL*/)
 	: CDialog(CMFCToolBarNameDialog::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(CMFCToolBarNameDialog)
 	m_strToolbarName = _T("");
-	//}}AFX_DATA_INIT
 }
 
 
 void CMFCToolBarNameDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarNameDialog)
 	DDX_Control(pDX, IDOK, m_btnOk);
 	DDX_Text(pDX, IDC_AFXBARRES_TOOLBAR_NAME, m_strToolbarName);
-	//}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(CMFCToolBarNameDialog, CDialog)
-	//{{AFX_MSG_MAP(CMFCToolBarNameDialog)
 	ON_EN_UPDATE(IDC_AFXBARRES_TOOLBAR_NAME, &CMFCToolBarNameDialog::OnUpdateToolbarName)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

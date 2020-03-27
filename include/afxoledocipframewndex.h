@@ -31,7 +31,7 @@ class CMFCMenuBar;
 class CMFCToolBarMenuButton;
 class CMFCToolBarButton;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleDocIPFrameWndEx frame
 
 class COleDocIPFrameWndEx : public COleDocIPFrameWnd
@@ -165,7 +165,6 @@ public:
 	virtual BOOL OnCloseDockingPane(CDockablePane* /*pWnd*/) { return TRUE; }
 
 protected:
-	//{{AFX_MSG(COleDocIPFrameWndEx)
 	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
 	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 	afx_msg void OnClose();
@@ -178,7 +177,7 @@ protected:
 	afx_msg BOOL OnPaneCheck(UINT nID);
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
 	afx_msg LRESULT OnToolbarContextMenu(WPARAM,LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

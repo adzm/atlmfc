@@ -17,7 +17,7 @@
 #include "sal.h"
 
 #include "afxctrlcontainer.h"
-#include "afxglobals.h"
+#include "afxrendertarget.h"
 
 // for dll builds we just delay load it
 #ifndef _AFXDLL
@@ -50,6 +50,39 @@ CCriticalSection g_RenderTargetCriticalSection;
 // D2D notification messages:
 UINT AFX_WM_DRAW2D = ::RegisterWindowMessage(_T("AFX_WM_DRAW2D"));
 UINT AFX_WM_RECREATED2DRESOURCES = ::RegisterWindowMessage(_T("AFX_WM_RECREATED2DRESOURCES"));
+
+/////////////////////////////////////////////////////////////////////////////
+
+template <class Base>
+HRESULT WINAPI AccessibilityCreateInstance(_COM_Outptr_ CComObjectNoLock<Base>** pp) throw()
+{
+	ATLASSERT(pp != NULL);
+	if (pp == NULL)
+		return E_POINTER;
+	*pp = NULL;
+
+	HRESULT hRes = E_OUTOFMEMORY;
+	CComObjectNoLock<Base>* p = NULL;
+	ATLTRY(p = _ATL_NEW CComObjectNoLock<Base>());
+	if (p != NULL)
+	{
+		p->SetVoid(NULL);
+		p->InternalFinalConstructAddRef();
+		hRes = p->_AtlInitialConstruct();
+		if (SUCCEEDED(hRes))
+			hRes = p->FinalConstruct();
+		if (SUCCEEDED(hRes))
+			hRes = p->_AtlFinalConstruct();
+		p->InternalFinalConstructRelease();
+		if (hRes != S_OK)
+		{
+			delete p;
+			p = NULL;
+		}
+	}
+	*pp = p; 
+	return hRes;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CWnd construction
@@ -536,7 +569,10 @@ _AfxCbtFilterHook(int code, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				szClassName[0] = '\0';
+#pragma warning(push)
+#pragma warning(disable: 4302) // 'type cast' : truncation from 'LPCSTR' to 'ATOM'
 				GlobalGetAtomName((ATOM)lpcs->lpszClass, szClassName, _countof(szClassName));
+#pragma warning(pop)
 				pszClassName = szClassName;
 			}
 
@@ -585,7 +621,7 @@ _AfxCbtFilterHook(int code, WPARAM wParam, LPARAM lParam)
 				WNDCLASSEX wc;
 				memset(&wc, 0, sizeof(WNDCLASSEX));
 				wc.cbSize = sizeof(WNDCLASSEX);
-				s_atomMenu = (ATOM)::AfxCtxGetClassInfoEx(NULL, _T("#32768"), &wc);
+				s_atomMenu = (ATOM)GetClassInfoEx(NULL, _T("#32768"), &wc);
 			}
 
 			// Do not subclass menus.
@@ -720,7 +756,7 @@ BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 	}
 
 	AfxHookWindowCreate(this);
-	HWND hWnd = ::AfxCtxCreateWindowEx(cs.dwExStyle, cs.lpszClass,
+	HWND hWnd = CreateWindowEx(cs.dwExStyle, cs.lpszClass,
 			cs.lpszName, cs.style, cs.x, cs.y, cs.cx, cs.cy,
 			cs.hwndParent, cs.hMenu, cs.hInstance, cs.lpCreateParams);
 
@@ -772,6 +808,15 @@ BOOL CWnd::Create(LPCTSTR lpszClassName,
 	ASSERT(pParentWnd != NULL);
 	ASSERT((dwStyle & WS_POPUP) == 0);
 
+	if (((dwStyle & WS_TABSTOP) == WS_TABSTOP) && (nID == 0))
+	{
+		// Warn about nID == 0.  A zero ID will be overridden in CWnd::PreCreateWindow when the
+		// check is done for (cs.hMenu == NULL).  This will cause the dialog control ID to be
+		// different than passed in, so ::GetDlgItem(nID) will not return the control HWND.
+		TRACE(traceAppMsg, 0, _T("Warning: creating a dialog control with nID == 0; ")
+			_T("nID will overridden in CWnd::PreCreateWindow and GetDlgItem with nID == 0 will fail.\n"));
+	}
+
 	return CreateEx(0, lpszClassName, lpszWindowName,
 		dwStyle | WS_CHILD,
 		rect.left, rect.top,
@@ -819,9 +864,15 @@ void CWnd::OnDestroy()
 
 	// Active Accessibility
 	if (m_pProxy != NULL)
+	{
 		m_pProxy->SetServer(NULL, NULL);
+	}
+
 	if (m_pStdObject != NULL)
+	{
 		m_pStdObject->Release();
+		m_pStdObject = NULL;
+	}
 
 	if (m_bIsTouchWindowRegistered)
 	{
@@ -839,6 +890,7 @@ void CWnd::OnDestroy()
 	}
 
 	g_RenderTargetCriticalSection.Unlock();
+
 	Default();
 }
 
@@ -1412,14 +1464,14 @@ void CWnd::OnMeasureItem(int /*nIDCtl*/, LPMEASUREITEMSTRUCT lpMeasureItemStruct
 BOOL AFXAPI AfxRegisterClass(WNDCLASS* lpWndClass)
 {
 	WNDCLASS wndcls;		
-	if (AfxCtxGetClassInfo(lpWndClass->hInstance, lpWndClass->lpszClassName,
+	if (GetClassInfo(lpWndClass->hInstance, lpWndClass->lpszClassName,
 		&wndcls))
 	{
 		// class already registered
 		return TRUE;
 	}
 
-	if (!::AfxCtxRegisterClass(lpWndClass))
+	if (!RegisterClass(lpWndClass))
 	{
 		TRACE(traceAppMsg, 0, _T("Can't register window class named %s\n"),
 			lpWndClass->lpszClassName);
@@ -1473,7 +1525,7 @@ LPCTSTR AFXAPI AfxRegisterWndClass(UINT nClassStyle,
 	
 	// see if the class already exists
 	WNDCLASS wndcls;
-	if (::AfxCtxGetClassInfo(hInst, lpszName, &wndcls))
+	if (GetClassInfo(hInst, lpszName, &wndcls))
 	{
 		// already registered, assert everything is good
 		ASSERT(wndcls.style == nClassStyle);
@@ -1534,11 +1586,11 @@ BOOL CWnd::RegisterTouchWindow(BOOL bRegister, ULONG ulFlags)
 {
 	m_bIsTouchWindowRegistered = FALSE;
 	
-	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
-	typedef	BOOL (__stdcall *PFNREGISTERTOUCHWINDOW)(HWND, ULONG);
-	typedef	BOOL (__stdcall *PFNUNREGISTERTOUCHWINDOW)(HWND);
+	typedef BOOL (__stdcall *PFNREGISTERTOUCHWINDOW)(HWND, ULONG);
+	typedef BOOL (__stdcall *PFNUNREGISTERTOUCHWINDOW)(HWND);
 
 	static PFNREGISTERTOUCHWINDOW pfRegister = (PFNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "RegisterTouchWindow");
 	static PFNUNREGISTERTOUCHWINDOW pfUnregister = (PFNUNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "UnregisterTouchWindow");
@@ -1559,7 +1611,7 @@ BOOL CWnd::RegisterTouchWindow(BOOL bRegister, ULONG ulFlags)
 
 BOOL CWnd::IsTouchWindow() const
 {
-	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *PFNISTOUCHWINDOW)(HWND);
@@ -1596,7 +1648,7 @@ LRESULT CWnd::OnTouchMessage(WPARAM wParam, LPARAM lParam)
 		return Default();
 	}
 
-	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *PFNGETTOUCHINPUTINFO)(HANDLE, UINT, PTOUCHINPUT, int);
@@ -1664,7 +1716,7 @@ BOOL CWnd::SetGestureConfig(CGestureConfig* pConfig)
 	GESTURECONFIG* pConfigs = pConfig->m_pConfigs;
 	UINT cIDs = (UINT)pConfig->m_nConfigs;
 
-	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *SETGESTURECONFIG)(HWND, DWORD, UINT, PGESTURECONFIG, UINT);
@@ -1685,14 +1737,14 @@ BOOL CWnd::GetGestureConfig(CGestureConfig* pConfig)
 	if (!m_bGestureInited)
 	{
 		CGestureConfig configDefault;
-		SetGestureConfig(&configDefault);
 		m_bGestureInited = TRUE;
+		SetGestureConfig(&configDefault);
 	}
 
 	GESTURECONFIG* pConfigs = pConfig->m_pConfigs;
 	UINT cIDs = (UINT)pConfig->m_nConfigs;
 
-	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *GETGESTURECONFIG)(HWND, DWORD, DWORD, PUINT, PGESTURECONFIG, UINT);
@@ -1707,7 +1759,7 @@ BOOL CWnd::GetGestureConfig(CGestureConfig* pConfig)
 
 LRESULT CWnd::OnGesture(WPARAM /*wParam*/, LPARAM lParam)
 {
-	static HMODULE hUserDll = AfxCtxLoadLibrary(_T("user32.dll"));
+	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *GETGESTUREINFO)(HGESTUREINFO, PGESTUREINFO);
@@ -1911,7 +1963,7 @@ HWND WINAPI AfxHtmlHelp(HWND hWnd, LPCTSTR szHelpFilePath, UINT nCmd, DWORD_PTR 
 	{
 		// load the library
 		ASSERT(!pState->m_hInstHtmlHelp);
-		pState->m_hInstHtmlHelp = AfxCtxLoadLibraryW(L"hhctrl.ocx");
+		pState->m_hInstHtmlHelp = AtlLoadSystemLibraryUsingFullPath(L"hhctrl.ocx");
 		if (!pState->m_hInstHtmlHelp)
 			return NULL;
 		pState->m_pfnHtmlHelp = (HTMLHELPPROC *) GetProcAddress(pState->m_hInstHtmlHelp, _HTMLHELP_ENTRY);
@@ -1961,8 +2013,7 @@ BEGIN_MESSAGE_MAP(CWnd, CCmdTarget)
 	ON_MESSAGE(WM_CTLCOLORDLG, &CWnd::OnNTCtlColor)
 	ON_MESSAGE(WM_CTLCOLORMSGBOX, &CWnd::OnNTCtlColor)
 	ON_MESSAGE(WM_CTLCOLORSCROLLBAR, &CWnd::OnNTCtlColor)
-	//{{AFX_MSG_MAP(CWnd)
-    ON_WM_SETFOCUS()
+	ON_WM_SETFOCUS()
 	ON_WM_DRAWITEM()
 	ON_WM_MEASUREITEM()
 	ON_WM_CTLCOLOR()
@@ -1979,7 +2030,6 @@ BEGIN_MESSAGE_MAP(CWnd, CCmdTarget)
 	ON_WM_DEVMODECHANGE()
 	ON_WM_HELPINFO()
 	ON_WM_SETTINGCHANGE()
-	//}}AFX_MSG_MAP
 #ifndef _AFX_NO_OCC_SUPPORT
 	ON_WM_DESTROY()
 #endif
@@ -2149,12 +2199,13 @@ BOOL CWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult
 	{
 	case WM_SIZE:
 		{
-			CHwndRenderTarget* pRenderTarget = GetRenderTarget();
+			CHwndRenderTarget* pRenderTarget = LockRenderTarget();
 			if (pRenderTarget != NULL && pRenderTarget->IsValid())
 			{
 				pRenderTarget->Resize(CD2DSizeU(UINT32(LOWORD(lParam)), UINT32(HIWORD(lParam))));
 				RedrawWindow();
 			}
+			UnlockRenderTarget();
 		}
 		break;
 
@@ -2168,8 +2219,10 @@ BOOL CWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult
 
 	case WM_ERASEBKGND:
 		{
-			CHwndRenderTarget* pRenderTarget = GetRenderTarget();
-			if (pRenderTarget != NULL && pRenderTarget->IsValid())
+			CHwndRenderTarget* pRenderTarget = LockRenderTarget();
+			BOOL fValid = (pRenderTarget != NULL) && pRenderTarget->IsValid();
+			UnlockRenderTarget();
+			if (fValid)
 			{
 				lResult = 1;
 				goto LReturnTrue;
@@ -2410,6 +2463,10 @@ LDispatch:
 		(this->*mmf.pfn_v_u)(static_cast<UINT>(wParam));
 		break;
 
+	case AfxSig_v_up_v:
+		(this->*mmf.pfn_v_up)(static_cast<UINT_PTR>(wParam));
+		break;
+
 	case AfxSig_v_u_u:
 		(this->*mmf.pfn_v_u_u)(static_cast<UINT>(wParam), static_cast<UINT>(lParam));
 		break;
@@ -2608,7 +2665,7 @@ LDispatch:
 		lResult = TRUE;
 		break;
 	case AfxSig_INPUTDEVICECHANGE:
-		(this->*mmf.pfn_INPUTDEVICECHANGE)(GET_DEVICE_CHANGE_LPARAM(wParam), reinterpret_cast<HANDLE>(lParam));
+		(this->*mmf.pfn_INPUTDEVICECHANGE)(LOWORD(wParam), reinterpret_cast<HANDLE>(lParam));
 		break;
 	case AfxSig_v_u_hkl:
 		(this->*mmf.pfn_v_u_h)(static_cast<UINT>(wParam), reinterpret_cast<HKL>(lParam));
@@ -2890,7 +2947,7 @@ int CWnd::MessageBox(LPCTSTR lpszText, LPCTSTR lpszCaption, UINT nType)
 {
 	if (lpszCaption == NULL)
 		lpszCaption = AfxGetAppName();
-	int nResult = ::AfxCtxMessageBox(GetSafeHwnd(), lpszText, lpszCaption, nType);
+	int nResult = ::MessageBox(GetSafeHwnd(), lpszText, lpszCaption, nType);
 	return nResult;
 }
 
@@ -3609,82 +3666,6 @@ LRESULT CWnd::OnGetObject(WPARAM wParam, LPARAM lParam)
 	return lRet;
 }
 
-//Helper class for Active Accesibility Proxy
-//Base is the user's class that derives from CComObjectRoot and whatever
-//interfaces the user wants to support on the object
-void AFXAPI AfxOleLockApp();
-void AFXAPI AfxOleUnlockApp();
-
-template <class Base>
-class CMFCComObject : public Base
-{
-public:
-	typedef Base _BaseClass;
-	CMFCComObject(void* = NULL)
-	{
-		AfxOleLockApp();
-	}
-	// Set refcount to -(LONG_MAX/2) to protect destruction and 
-	// also catch mismatched Release in debug builds
-	~CMFCComObject()
-	{
-		m_dwRef = -(LONG_MAX/2);
-		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
-		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
-#endif
-		AfxOleUnlockApp();
-	}
-	//If InternalAddRef or InternalRelease is undefined then your class
-	//doesn't derive from CComObjectRoot
-	STDMETHOD_(ULONG, AddRef)() throw() {return InternalAddRef();}
-	STDMETHOD_(ULONG, Release)() throw()
-	{
-		ULONG l = InternalRelease();
-		if (l == 0)
-			delete this;
-		return l;
-	}
-	//if _InternalQueryInterface is undefined then you forgot BEGIN_COM_MAP
-	STDMETHOD(QueryInterface)(REFIID iid, void ** ppvObject) throw()
-	{return _InternalQueryInterface(iid, ppvObject);}
-	template <class Q>
-	HRESULT STDMETHODCALLTYPE QueryInterface(Q** pp)
-	{
-		return QueryInterface(__uuidof(Q), (void**)pp);
-	}
-
-	static HRESULT WINAPI CreateInstance(CMFCComObject<Base>** pp)
-	{
-		ATLASSERT(pp != NULL);
-		if (pp == NULL)
-			return E_POINTER;
-		*pp = NULL;
-
-		HRESULT hRes = E_OUTOFMEMORY;
-		CMFCComObject<Base>* p = NULL;
-		ATLTRY(p = new CMFCComObject<Base>())
-		if (p != NULL)
-		{
-			p->SetVoid(NULL);
-			p->InternalFinalConstructAddRef();
-			hRes = p->_AtlInitialConstruct();
-			if (SUCCEEDED(hRes))
-				hRes = p->FinalConstruct();
-			if (SUCCEEDED(hRes))
-				hRes = p->_AtlFinalConstruct();
-			p->InternalFinalConstructRelease();
-			if (hRes != S_OK)
-			{
-				delete p;
-				p = NULL;
-			}
-		}
-		*pp = p;
-		return hRes;
-	}	
-};
-
 BEGIN_INTERFACE_MAP(CWnd, CCmdTarget)
 //	INTERFACE_PART(CWnd, __uuidof(IAccessible), Accessible)
 //	INTERFACE_PART(CWnd, __uuidof(IAccessibleServer), AccessibleServer)
@@ -4074,12 +4055,12 @@ HRESULT CWnd::CreateAccessibleProxy(WPARAM wParam, LPARAM lParam, LRESULT *pResu
 		{
 			if (m_pProxy == NULL)
 			{
-				CMFCComObject<CAccessibleProxy> *p;
-				hr = CMFCComObject<CAccessibleProxy>::CreateInstance(&p);
+				CComObjectNoLock<CAccessibleProxy> *p;
+				hr = AccessibilityCreateInstance(&p);
 				if (SUCCEEDED(hr))
 				{
 					CComPtr<IAccessibleProxy> spProx;
-					hr = p->QueryInterface(&spProx);
+					hr = p->QueryInterface(__uuidof(IAccessibleProxy), (void **)&spProx);
 					if (SUCCEEDED(hr))
 					{
 						m_pProxy = spProx;
@@ -4545,105 +4526,6 @@ BOOL CWnd::ExecuteDlgInit(LPCTSTR lpszResourceName)
 	return bResult;
 }
 
-BOOL CWnd::ExecuteDlgInit(LPVOID lpResource)
-{
-	// Subclass Feature Pack controls: 
-	if (m_pMFCCtrlContainer == NULL)
-	{
-		m_pMFCCtrlContainer = new CMFCControlContainer (this);
-		m_pMFCCtrlContainer->SubclassDlgControls ();
-	}
-
-	BOOL bSuccess = TRUE;
-	if (lpResource != NULL)
-	{
-		UNALIGNED WORD* lpnRes = (WORD*)lpResource;
-		while (bSuccess && *lpnRes != 0)	
-		{
-			WORD nIDC = *lpnRes++;
-			WORD nMsg = *lpnRes++;
-			DWORD dwLen = *((UNALIGNED DWORD*&)lpnRes)++;
-
-			// In Win32 the WM_ messages have changed.  They have
-			// to be translated from the 16-bit values to 32-bit
-			// values here.
-
-			#define WIN16_LB_ADDSTRING  0x0401
-			#define WIN16_CB_ADDSTRING  0x0403
-			#define AFX_CB_ADDSTRING	0x1234
-
-			// unfortunately, WIN16_CB_ADDSTRING == CBEM_INSERTITEM
-			if (nMsg == AFX_CB_ADDSTRING)
-				nMsg = CBEM_INSERTITEM;
-			else if (nMsg == WIN16_LB_ADDSTRING)
-				nMsg = LB_ADDSTRING;
-			else if (nMsg == WIN16_CB_ADDSTRING)
-				nMsg = CB_ADDSTRING;
-
-			// check for invalid/unknown message types
-#ifdef _AFX_NO_OCC_SUPPORT
-			ASSERT(nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING ||
-				nMsg == CBEM_INSERTITEM || nMsg == WM_MFC_INITCTRL);
-#else
-			ASSERT(nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING ||
-				nMsg == CBEM_INSERTITEM || nMsg == WM_MFC_INITCTRL ||
-				nMsg == WM_OCC_LOADFROMSTREAM ||
-				nMsg == WM_OCC_LOADFROMSTREAM_EX ||
-				nMsg == WM_OCC_LOADFROMSTORAGE ||
-				nMsg == WM_OCC_LOADFROMSTORAGE_EX ||
-				nMsg == WM_OCC_INITNEW);
-#endif
-
-#ifdef _DEBUG
-			// For AddStrings, the count must exactly delimit the
-			// string, including the NULL termination.  This check
-			// will not catch all mal-formed ADDSTRINGs, but will
-			// catch some.
-			if (nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING || nMsg == CBEM_INSERTITEM)
-				ASSERT(*((LPBYTE)lpnRes + (UINT)dwLen - 1) == 0);
-#endif
-
-			if (nMsg == CBEM_INSERTITEM)
-			{
-				COMBOBOXEXITEM item = {0};
-				item.mask = CBEIF_TEXT;
-				item.iItem = -1;
-				CString strText(reinterpret_cast<LPTSTR>(lpnRes));				
-				item.pszText = const_cast<LPTSTR>(strText.GetString());
-				if (::SendDlgItemMessage(m_hWnd, nIDC, nMsg, 0, (LPARAM) &item) == -1)
-					bSuccess = FALSE;
-			}
-			else if (nMsg == WM_MFC_INITCTRL)
-			{
-				if (::SendDlgItemMessage(m_hWnd, nIDC, nMsg, (WPARAM)dwLen, (LPARAM) lpnRes) == -1)
-					bSuccess = FALSE;
-				if (m_pMFCCtrlContainer != NULL)
-				{
-					m_pMFCCtrlContainer->SetControlData(nIDC, dwLen, (BYTE*) lpnRes);
-				}
-			}
-#ifndef _AFX_NO_OCC_SUPPORT
-			else if (nMsg == LB_ADDSTRING || nMsg == CB_ADDSTRING)
-#endif // !_AFX_NO_OCC_SUPPORT
-			{
-				// List/Combobox returns -1 for error
-				if (::SendDlgItemMessageA(m_hWnd, nIDC, nMsg, 0, (LPARAM) lpnRes) == -1)
-					bSuccess = FALSE;
-			}
-
-
-			// skip past data
-			lpnRes = (WORD*)((LPBYTE)lpnRes + (UINT)dwLen);
-		}
-	}
-
-	// send update message to all controls after all other siblings loaded
-	if (bSuccess)
-		SendMessageToDescendants(WM_INITIALUPDATE, 0, 0, FALSE, FALSE);
-
-	return bSuccess;
-}
-
 void CWnd::UpdateDialogControls(CCmdTarget* pTarget, BOOL bDisableIfNoHndler)
 {
 	CCmdUI state;
@@ -4857,25 +4739,14 @@ AFX_STATIC BOOL AFXAPI _AfxRegisterWithIcon(WNDCLASS* pWndCls,
 LONG AFXAPI _AfxInitCommonControls(LPINITCOMMONCONTROLSEX lpInitCtrls, LONG fToRegister)
 {
 	ASSERT(fToRegister != 0);
-
 	LONG lResult = 0;
-	if (AFX_COMCTL32_IF_EXISTS(InitCommonControlsEx))
+
+	if (InitCommonControlsEx(lpInitCtrls))
 	{
-		if (AfxInitCommonControlsEx(lpInitCtrls))
-		{
-			// InitCommonControlsEx was successful so return the full mask
-			lResult = fToRegister;
-		}
+		// InitCommonControlsEx was successful so return the full mask
+		lResult = fToRegister;
 	}
-	else
-	{
-		// not there, so call InitCommonControls if possible
-		if ((fToRegister & AFX_WIN95CTLS_MASK) == fToRegister)
-		{
-			AfxInitCommonControls();
-			lResult = AFX_WIN95CTLS_MASK;
-		}
-	}
+
 	return lResult;
 }
 
@@ -5039,20 +4910,7 @@ BOOL AFXAPI AfxInitNetworkAddressControl()
 	ENSURE(pModuleState);
 	if (pModuleState->m_bInitNetworkAddressControlCalled == FALSE)
 	{
-		OSVERSIONINFO vi;
-		ZeroMemory(&vi, sizeof(OSVERSIONINFO));
-		vi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		BOOL b = ::GetVersionEx(&vi);
-		ENSURE(b);
-
-		// if running under Vista
-		if (vi.dwMajorVersion >= 6)
-		{
-			// Only try to GetProcAddress and call InitNetworkAddressControl if we are vista and higher.
-			// If we call this on OS lower than Vista, this will throw.  We don't want it to throw.
-			pModuleState->m_bInitNetworkAddressControl = AfxCtxInitNetworkAddressControl();
-		}
-
+		pModuleState->m_bInitNetworkAddressControl = _AfxInitNetworkAddressControl();
 		pModuleState->m_bInitNetworkAddressControlCalled = TRUE;
 	}
 	return pModuleState->m_bInitNetworkAddressControl;
@@ -5071,11 +4929,10 @@ BOOL CFrameWnd::IsFrameWnd() const
 	return TRUE;
 }
 
-BOOL CFrameWnd::IsTracking() const
+BOOL CFrameWnd::IsTracking()
 {
-	return m_nIDTracking != 0 &&
-		m_nIDTracking != AFX_IDS_HELPMODEMESSAGE &&
-		m_nIDTracking != AFX_IDS_IDLEMESSAGE;
+	UINT nIDTracking = GetTrackingID();
+	return nIDTracking != 0 && nIDTracking != AFX_IDS_HELPMODEMESSAGE && nIDTracking != AFX_IDS_IDLEMESSAGE;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -5187,7 +5044,8 @@ void CWnd::EnableD2DSupport(BOOL bEnable)
 {
 	if (bEnable)
 	{
-		if (!afxGlobalData.InitD2D())
+		_AFX_D2D_STATE* pD2DState = AfxGetD2DState();
+		if (pD2DState == NULL || !pD2DState->InitD2D())
 		{
 			// D2D is not supported by system
 			return;
@@ -5232,9 +5090,7 @@ CHwndRenderTarget* CWnd::GetRenderTarget()
 	CHwndRenderTarget* pRenderTarget = NULL;
 
 	g_RenderTargetCriticalSection.Lock();
-
 	BOOL bRes = g_RenderTargets.Lookup(this, pRenderTarget);
-
 	g_RenderTargetCriticalSection.Unlock();
 
 	if (bRes)
@@ -5246,11 +5102,33 @@ CHwndRenderTarget* CWnd::GetRenderTarget()
 	return NULL;
 }
 
+CHwndRenderTarget* CWnd::LockRenderTarget()
+{
+	CHwndRenderTarget* pRenderTarget = NULL;
+
+	g_RenderTargetCriticalSection.Lock();
+	BOOL bRes = g_RenderTargets.Lookup(this, pRenderTarget);
+
+	if (bRes)
+	{
+		ASSERT_VALID(pRenderTarget);
+		return pRenderTarget;
+	}
+
+	return NULL;
+}
+
+void CWnd::UnlockRenderTarget()
+{
+	g_RenderTargetCriticalSection.Unlock();
+}
+
 BOOL CWnd::DoD2DPaint()
 {
-	CHwndRenderTarget* pRenderTarget = GetRenderTarget();
+	CHwndRenderTarget* pRenderTarget = LockRenderTarget();
 	if (pRenderTarget == NULL)
 	{
+		UnlockRenderTarget();
 		return FALSE;
 	}
 
@@ -5276,10 +5154,12 @@ BOOL CWnd::DoD2DPaint()
 		if (bD2DIsReady)
 		{
 			ValidateRect(NULL);
+			UnlockRenderTarget();
 			return TRUE;
 		}
 	}
 
+	UnlockRenderTarget();
 	return FALSE;
 }
 
@@ -5303,7 +5183,7 @@ CGestureConfig::CGestureConfig()
 	for (int i = 0; i < m_nConfigs; i++)
 	{
 		m_pConfigs[i].dwID = GID_ZOOM + i;
-		m_pConfigs[i].dwWant = GC_ALLGESTURES;
+		m_pConfigs[i].dwWant = (m_pConfigs[i].dwID == GID_PAN) ? 0 : GC_ALLGESTURES;
 		m_pConfigs[i].dwBlock = 0;
 	}
 
@@ -5311,7 +5191,7 @@ CGestureConfig::CGestureConfig()
 	EnableRotate(FALSE);
 
 	// By default Pan supports Gutter, Inertia only and Single Finger Vertically:
-	EnablePan(TRUE,  GC_PAN_WITH_GUTTER | GC_PAN_WITH_INERTIA | GC_PAN_WITH_SINGLE_FINGER_VERTICALLY);
+	EnablePan(TRUE, GC_PAN_WITH_GUTTER | GC_PAN_WITH_INERTIA | GC_PAN_WITH_SINGLE_FINGER_VERTICALLY);
 }
 
 CGestureConfig::~CGestureConfig()
@@ -5403,14 +5283,19 @@ void CGestureConfig::EnablePan(BOOL bEnable, DWORD dwFlags)
 {
 	if (!bEnable)
 	{
-		Modify(GID_PAN, 0, GC_PAN);	// Disable all pan features
+		Modify(GID_PAN, 0, GC_PAN_WITH_SINGLE_FINGER_VERTICALLY | GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY | GC_PAN_WITH_GUTTER | GC_PAN_WITH_INERTIA);	// Disable all pan features
 		return;
 	}
 
-	DWORD dwWant = GC_PAN;
+	DWORD dwWant = 0;
 	DWORD dwBlock = 0;
 
 	DWORD dwAllFlags[] = { GC_PAN_WITH_SINGLE_FINGER_VERTICALLY, GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY, GC_PAN_WITH_GUTTER, GC_PAN_WITH_INERTIA };
+
+	if ((dwFlags & GC_PAN) == GC_PAN)
+	{
+		dwFlags = GC_PAN_WITH_SINGLE_FINGER_VERTICALLY | GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY | GC_PAN_WITH_GUTTER | GC_PAN_WITH_INERTIA;
+	}
 
 	for (int i = 0; i < sizeof(dwAllFlags) / sizeof(DWORD); i++)
 	{

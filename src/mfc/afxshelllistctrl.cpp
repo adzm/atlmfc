@@ -13,6 +13,7 @@
 #include "afxshelltreectrl.h"
 #include "afxtagmanager.h"
 #include "afxctrlcontainer.h"
+#include "afxribbonres.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -43,7 +44,6 @@ CMFCShellListCtrl::~CMFCShellListCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCShellListCtrl, CMFCListCtrl)
-	//{{AFX_MSG_MAP(CMFCShellListCtrl)
 	ON_WM_CREATE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_DESTROY()
@@ -51,7 +51,6 @@ BEGIN_MESSAGE_MAP(CMFCShellListCtrl, CMFCListCtrl)
 	ON_NOTIFY_REFLECT(NM_DBLCLK, &CMFCShellListCtrl::OnDblClk)
 	ON_NOTIFY_REFLECT(NM_RETURN, &CMFCShellListCtrl::OnReturn)
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCShellListCtrl::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -716,14 +715,21 @@ void CMFCShellListCtrl::OnSetColumns()
 		DeleteColumn(0);
 	}
 
-	const TCHAR* szName [] = {
-		_T("Name"), _T("Size"), _T("Type"), _T("Modified"), };
+	int arColumnNameIDs[] =
+	{
+		IDS_AFX_SHELLLISTCTRL_NAME,
+		IDS_AFX_SHELLLISTCTRL_SIZE,
+		IDS_AFX_SHELLLISTCTRL_TYPE,
+		IDS_AFX_SHELLLISTCTRL_MODIFIED,
+	};
 
-		for (int iColumn = 0; iColumn < 4; iColumn++)
+		for (int iColumn = AFX_ShellList_ColumnName; iColumn <= AFX_ShellList_ColumnModified; iColumn++)
 		{
+			CString strColumnName;
+			strColumnName.LoadString(arColumnNameIDs[iColumn]);
 			int nFormat = (iColumn == AFX_ShellList_ColumnSize) ? LVCFMT_RIGHT : LVCFMT_LEFT;
-
-			InsertColumn(iColumn, szName [iColumn], nFormat, 100, iColumn);
+			int nWidth = (iColumn == AFX_ShellList_ColumnSize) ? 75 : 140;
+			InsertColumn(iColumn, strColumnName, nFormat, nWidth, iColumn);
 		}
 }
 
@@ -775,42 +781,11 @@ BOOL CMFCShellListCtrl::InitList()
 
 void CMFCShellListCtrl::OnFormatFileSize(__int64 lFileSize, CString& str)
 {
-	str.Empty();
+	// Convert number to the system format:
+	TCHAR szNumOut[256];
+	StrFormatKBSize(lFileSize, szNumOut, 255);
 
-	if (lFileSize == 0)
-	{
-		str = _T("0");
-	}
-	else
-	{
-		lFileSize = lFileSize / 1024 + 1;
-		str.Format(_T("%I64d"), lFileSize);
-
-		// Convert number to the system format:
-		TCHAR szNumOut [256];
-		GetNumberFormat(LOCALE_USER_DEFAULT, LOCALE_NOUSEROVERRIDE, str, NULL, szNumOut, 255);
-
-		str = szNumOut;
-
-		// Truncate trailing fractal digits:
-		TCHAR szDec [10];
-		GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, szDec, 10);
-
-		int nDecLen = lstrlen(szDec);
-		if (nDecLen > 0)
-		{
-			for (int i = str.GetLength() - nDecLen - 1; i >= 0; i--)
-			{
-				if (str.Mid(i, nDecLen) == szDec)
-				{
-					str = str.Left(i);
-					break;
-				}
-			}
-		}
-	}
-
-	str += _T(" KB");
+	str = szNumOut;
 }
 
 void CMFCShellListCtrl::OnFormatFileDate(const CTime& tmFile, CString& str)

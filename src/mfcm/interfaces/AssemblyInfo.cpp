@@ -17,6 +17,8 @@
 
 using namespace System::Reflection;
 
+[assembly: System::Security::SecurityTransparent];
+
 #ifdef BUILD_PREBUILT
 //
 // General Information about an assembly is controlled through the following 

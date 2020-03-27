@@ -20,7 +20,6 @@
 #include "afxmenubar.h"
 #include "afxsound.h"
 #include "afxtoolbarmenubutton.h"
-#include "afxtrackmouse.h"
 #include "afxvisualmanager.h"
 #include "afxdrawmanager.h"
 #include "afxribbonres.h"
@@ -29,7 +28,6 @@
 #define new DEBUG_NEW
 #endif
 
-static const UINT uiShowBarTimerId = 1;
 static const int nArrowSize = 7;
 
 UINT CMFCDropDownToolbarButton::m_uiShowBarDelay = 500; // ms
@@ -67,10 +65,8 @@ void CMFCDropDownToolBar::OnUpdateCmdUI(CFrameWnd* /*pTarget*/, BOOL bDisableIfN
 }
 
 BEGIN_MESSAGE_MAP(CMFCDropDownToolBar, CMFCToolBar)
-	//{{AFX_MSG_MAP(CMFCDropDownToolBar)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONUP()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CMFCDropDownToolBar::OnMouseMove(UINT /*nFlags*/, CPoint point)
@@ -100,8 +96,7 @@ void CMFCDropDownToolBar::OnMouseMove(UINT /*nFlags*/, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 
 	if (iPrevHighlighted != m_iHighlighted)
@@ -230,14 +225,12 @@ CMFCDropDownFrame::~CMFCDropDownFrame()
 }
 
 BEGIN_MESSAGE_MAP(CMFCDropDownFrame, CMiniFrameWnd)
-	//{{AFX_MSG_MAP(CMFCDropDownFrame)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_PAINT()
 	ON_WM_MOUSEACTIVATE()
 	ON_WM_DESTROY()
 	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
 	ON_WM_ACTIVATEAPP()
 END_MESSAGE_MAP()
 
@@ -359,9 +352,9 @@ void CMFCDropDownFrame::OnPaint()
 	CRect rectClient; // Client area rectangle
 	GetClientRect(&rectClient);
 
-	dc.Draw3dRect(rectClient, afxGlobalData.clrBarLight, afxGlobalData.clrBarDkShadow);
+	dc.Draw3dRect(rectClient, GetGlobalData()->clrBarLight, GetGlobalData()->clrBarDkShadow);
 	rectClient.DeflateRect(1, 1);
-	dc.Draw3dRect(rectClient, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+	dc.Draw3dRect(rectClient, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 }
 
 int CMFCDropDownFrame::OnMouseActivate(CWnd* /*pDesktopWnd*/, UINT /*nHitTest*/, UINT /*message*/)
@@ -512,7 +505,7 @@ BOOL CMFCDropDownFrame::OnEraseBkgnd(CDC* pDC)
 	CRect rectClient; // Client area rectangle
 	GetClientRect(&rectClient);
 
-	pDC->FillSolidRect(rectClient, afxGlobalData.clrBarFace);
+	pDC->FillSolidRect(rectClient, GetGlobalData()->clrBarFace);
 	return TRUE;
 }
 
@@ -691,9 +684,9 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 	FillInterior(pDC, rect, bHighlight);
 
 	int nCurrArrowSize = nArrowSize;
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		nCurrArrowSize = (int) (afxGlobalData.GetRibbonImageScale() * nCurrArrowSize);
+		nCurrArrowSize = (int) (GetGlobalData()->GetRibbonImageScale() * nCurrArrowSize);
 	}
 	
 	int nActualArrowSize = CMFCToolBar::IsLargeIcons() ? nCurrArrowSize * 2 : nCurrArrowSize;
@@ -710,9 +703,9 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 		m_bInternalDraw = TRUE;
 
 		CSize sizeDest = m_pToolBar->GetImageSize();
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			double dblImageScale = afxGlobalData.GetRibbonImageScale();
+			double dblImageScale = GetGlobalData()->GetRibbonImageScale();
 			sizeDest = CSize((int)(.5 + sizeDest.cx * dblImageScale), (int)(.5 + sizeDest.cy * dblImageScale));
 		}
 
@@ -720,12 +713,12 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 
 		if (!m_bLocalUserButton)
 		{
-			images.SetTransparentColor(afxGlobalData.clrBtnFace);
+			images.SetTransparentColor(GetGlobalData()->clrBtnFace);
 			images.PrepareDrawImage (ds, sizeDest);
 		}
 		else
 		{
-			m_pToolBar->m_pUserImages->SetTransparentColor(afxGlobalData.clrBtnFace);
+			m_pToolBar->m_pUserImages->SetTransparentColor(GetGlobalData()->clrBtnFace);
 			m_pToolBar->m_pUserImages->PrepareDrawImage (ds, sizeDest);
 		}
 
@@ -774,7 +767,7 @@ void CMFCDropDownToolbarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 	CPen* pOldPen = (CPen*) pDC->SelectStockObject(NULL_PEN);
 	ENSURE(pOldPen != NULL);
 
-	CBrush* pOldBrush = (CBrush*) pDC->SelectObject(&afxGlobalData.brBlack);
+	CBrush* pOldBrush = (CBrush*) pDC->SelectObject(&(GetGlobalData()->brBlack));
 	ENSURE(pOldBrush != NULL);
 
 	pDC->Polygon(triang, 3);
@@ -828,7 +821,7 @@ BOOL CMFCDropDownToolbarButton::OnClick(CWnd* pWnd, BOOL bDelay)
 	{
 		if (m_pWndParent != NULL)
 		{
-			m_uiTimer = (UINT) m_pWndParent->SetTimer(uiShowBarTimerId, m_uiShowBarDelay, TimerProc);
+			m_uiTimer = (UINT) m_pWndParent->SetTimer(AFX_TIMER_ID_TB_SHOW_DROPDOWN, m_uiShowBarDelay, TimerProc);
 		}
 
 		g_pButtonDown = this;
@@ -1028,9 +1021,9 @@ SIZE CMFCDropDownToolbarButton::OnCalculateSize(CDC* pDC, const CSize& sizeDefau
 	m_bImage = bImage;
 
 	int nCurrArrowSize = nArrowSize;
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		nCurrArrowSize = (int) (afxGlobalData.GetRibbonImageScale() * nCurrArrowSize);
+		nCurrArrowSize = (int) (GetGlobalData()->GetRibbonImageScale() * nCurrArrowSize);
 	}
 
 	int nArrowWidth = CMFCToolBar::IsLargeIcons() ? nCurrArrowSize + 2 : nCurrArrowSize / 2 + 1;

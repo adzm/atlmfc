@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -24,7 +24,7 @@
 
 class CMFCRibbonBaseElement;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonStatusBar window
 
 class CMFCRibbonStatusBar : public CMFCRibbonBar
@@ -120,14 +120,13 @@ public:
 	virtual ~CMFCRibbonStatusBar();
 
 protected:
-	//{{AFX_MSG(CMFCRibbonStatusBar)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg LRESULT OnUpdateShadows(WPARAM,LPARAM);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void CleanUpCustomizeItems();

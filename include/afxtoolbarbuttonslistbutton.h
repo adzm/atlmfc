@@ -21,7 +21,7 @@
 class CMFCToolBarButton;
 class CMFCToolBarImages;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarButtonsListButton window
 
 class CMFCToolBarButtonsListButton : public CButton
@@ -76,7 +76,6 @@ public:
 	virtual ~CMFCToolBarButtonsListButton();
 
 protected:
-	//{{AFX_MSG(CMFCToolBarButtonsListButton)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
@@ -86,7 +85,6 @@ protected:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg UINT OnGetDlgCode();
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 };

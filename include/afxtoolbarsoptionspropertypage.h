@@ -18,7 +18,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsOptionsPropertyPage dialog
 
 class CMFCToolBarsOptionsPropertyPage : public CPropertyPage
@@ -31,7 +31,6 @@ public:
 	~CMFCToolBarsOptionsPropertyPage();
 
 // Dialog Data
-	//{{AFX_DATA(CMFCToolBarsOptionsPropertyPage)
 	enum { IDD = IDD_AFXBARRES_PROPPAGE6 };
 	CButton m_wndLargeIcons;
 	CButton m_wndRUMenus;
@@ -46,7 +45,6 @@ public:
 	BOOL    m_bRecentlyUsedMenus;
 	BOOL    m_bShowAllMenusDelay;
 	BOOL    m_bLargeIcons;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -54,15 +52,15 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarsOptionsPropertyPage)
 	virtual BOOL OnInitDialog();
+
 	afx_msg void OShowTooltipsWithKeys();
 	afx_msg void OnShowTooltips();
 	afx_msg void OnResetUsageData();
 	afx_msg void OnShowRecentlyUsedMenus();
 	afx_msg void OnShowMenusDelay();
 	afx_msg void OnLargeIcons();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Attributes:

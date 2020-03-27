@@ -33,10 +33,8 @@ CMFCToolBarsCommandsListBox::~CMFCToolBarsCommandsListBox()
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsCommandsListBox, CListBox)
-	//{{AFX_MSG_MAP(CMFCToolBarsCommandsListBox)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

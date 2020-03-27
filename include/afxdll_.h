@@ -41,7 +41,7 @@ struct AFX_EXTENSION_MODULE
 	COleObjectFactory* pFirstSharedFactory;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDynLinkLibrary - for implementation of MFC Extension DLLs
 
 class COleObjectFactory;

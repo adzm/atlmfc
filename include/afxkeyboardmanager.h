@@ -20,8 +20,6 @@
 #pragma component(minrebuild, off)
 #endif
 
-static CString _afxDefaultAcceleratorDelimiter = _T("; ");
-
 class CKeyboardManager : public CObject
 {
 // Constructor/Destructor:
@@ -44,7 +42,7 @@ public:
 	static UINT __stdcall TranslateCharToUpper(const UINT nChar);
 	static BOOL __stdcall IsKeyHandled(WORD nKey, BYTE fVirt, CFrameWnd* pWndFrame, BOOL bIsDefaultFrame);
 
-	static void __stdcall ShowAllAccelerators(BOOL bShowAll = TRUE, LPCTSTR lpszDelimiter = _afxDefaultAcceleratorDelimiter);
+	static void __stdcall ShowAllAccelerators(BOOL bShowAll = TRUE);
 	static BOOL __stdcall IsShowAllAccelerators() { return m_bAllAccelerators; }
 
 	static void __stdcall CleanUp();
@@ -62,10 +60,9 @@ protected:
 	AFX_IMPORT_DATA static HACCEL  m_hAccelDefaultLast;
 	AFX_IMPORT_DATA static HACCEL  m_hAccelLast;
 	AFX_IMPORT_DATA static BOOL    m_bAllAccelerators;
-	AFX_IMPORT_DATA static CString m_strDelimiter;
 };
 
-extern CKeyboardManager* afxKeyboardManager;
+AFX_IMPORT_DATA extern CKeyboardManager* afxKeyboardManager;
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

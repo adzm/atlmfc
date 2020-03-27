@@ -33,7 +33,6 @@ char _afxEditviewTerm = 0;
 #endif //_UNICODE
 
 BEGIN_MESSAGE_MAP(CEditView, CCtrlView)
-	//{{AFX_MSG_MAP(CEditView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, &CEditView::OnUpdateNeedSel)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, &CEditView::OnUpdateNeedClip)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, &CEditView::OnUpdateNeedText)
@@ -56,7 +55,6 @@ BEGIN_MESSAGE_MAP(CEditView, CCtrlView)
 	ON_COMMAND(ID_EDIT_REPLACE, &CEditView::OnEditReplace)
 	ON_COMMAND(ID_EDIT_REPEAT, &CEditView::OnEditRepeat)
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 	// Special registered message for Find and Replace
 	ON_REGISTERED_MESSAGE(_afxMsgFindReplace, &CEditView::OnFindReplaceCmd)
 	// Standard Print commands (print only - not preview)
@@ -876,7 +874,7 @@ UINT CEditView::GetBufferLength() const
 	ASSERT_VALID(this);
 	ASSERT(m_hWnd != NULL);
 	LPCTSTR lpszText = LockBuffer();
-	UINT nLen = lstrlen(lpszText);
+	UINT nLen = AtlStrLen(lpszText);
 	UnlockBuffer();
 	return nLen;
 }
@@ -912,6 +910,11 @@ void CEditView::OnEditReplace()
 	OnEditFindReplace(FALSE);
 	ASSERT_VALID(this);
 }
+
+#pragma push_macro("FindTextA")
+#pragma push_macro("FindTextW")
+#undef FindTextA
+#undef FindTextW
 
 void CEditView::OnEditRepeat()
 {
@@ -1104,7 +1107,7 @@ typedef int (WINAPI* AFX_COMPARE_PROC)(LPCTSTR str1, LPCTSTR str2);
 BOOL CEditView::SameAsSelected(LPCTSTR lpszCompare, BOOL bCase)
 {
 	// check length first
-	size_t nLen = lstrlen(lpszCompare);
+	size_t nLen = AtlStrLen(lpszCompare);
 	int nStartChar, nEndChar;
 	GetEditCtrl().GetSel(nStartChar, nEndChar);
 	if (nLen != (size_t)(nEndChar - nStartChar))
@@ -1151,7 +1154,7 @@ BOOL CEditView::FindText(LPCTSTR lpszFind, BOOL bNext, BOOL bCase)
 	}
 
 	// handle search with nStart past end of buffer
-	UINT nLenFind = lstrlen(lpszFind);
+	UINT nLenFind = AtlStrLen(lpszFind);
 	if (nStart+nLenFind-1 >= nLen)
 	{
 		if (iDir < 0 && nLen >= nLenFind)
@@ -1271,6 +1274,9 @@ BOOL CEditView::FindText(LPCTSTR lpszFind, BOOL bNext, BOOL bCase)
 	ASSERT_VALID(this);
 	return FALSE;
 }
+
+#pragma pop_macro("FindTextA")
+#pragma pop_macro("FindTextW")
 
 void CEditView::OnTextNotFound(LPCTSTR)
 {

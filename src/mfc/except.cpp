@@ -79,7 +79,7 @@ void CException::Delete()
 	}
 }
 
-BOOL CException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL CException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext /* = NULL */ ) const
 {
 	if (pnHelpContext != NULL)
@@ -91,7 +91,7 @@ BOOL CException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ U
 	return FALSE;
 }
 
-BOOL CException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL CException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext /* = NULL */ )
 {
 	// Call the const version of GetErrorMessage
@@ -188,7 +188,7 @@ void CSimpleException::InitString()
 		m_szMessage, _countof(m_szMessage)) != 0);
 }
 
-BOOL CSimpleException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL CSimpleException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext) const
 {
 	ASSERT(lpszError != NULL && AfxIsValidString(lpszError, nMaxError));

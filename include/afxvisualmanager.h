@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -56,9 +56,7 @@ class CMFCRibbonButton;
 class CMFCRibbonTab;
 class CMFCRibbonCaptionButton;
 class CMFCRibbonButtonsGroup;
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 class CMFCRibbonLaunchButton;
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 class CMFCRibbonRichEditCtrl;
 class CMFCRibbonMainPanel;
 class CMFCRibbonLabel;
@@ -80,6 +78,7 @@ class CMFCRibbonCheckBox;
 class CMFCRibbonLinkCtrl;
 class CMFCRibbonColorButton;
 class CRibbonCategoryScroll;
+class CMFCToolTipCtrl;
 
 #define	AFX_SPIN_PRESSEDUP       0x0001
 #define	AFX_SPIN_PRESSEDDOWN     0x0002
@@ -155,17 +154,9 @@ protected:
 	HTHEME m_hThemeTaskBar;
 	HTHEME m_hThemeSpin;
 	HTHEME m_hThemeTab;
+	HTHEME m_hThemeToolTip;
 	HTHEME m_hThemeTrack;
 	HTHEME m_hThemeMenu;
-
-	HINSTANCE           m_hinstUXDLL;
-	OPENTHEMEDATA       m_pfOpenThemeData;
-	CLOSETHEMEDATA      m_pfCloseThemeData;
-	DRAWTHEMEBACKGROUND m_pfDrawThemeBackground;
-	GETTHEMECOLOR       m_pfGetThemeColor;
-	GETTHEMESYSCOLOR    m_pfGetThemeSysColor;
-	GETCURRENTTHEMENAME m_pfGetCurrentThemeName;
-	GETWINDOWTHEME      m_pfGetWindowTheme;
 };
 
 class CMFCVisualManager : public CMFCBaseVisualManager
@@ -286,6 +277,7 @@ public:
 	virtual COLORREF GetTabTextColor(const CMFCBaseTabCtrl* /*pTabWnd*/, int /*iTab*/, BOOL /*bIsActive*/) { return (COLORREF)-1; }
 	virtual int GetTabHorzMargin(const CMFCBaseTabCtrl* /*pTabWnd*/) { return 0; }
 	virtual void OnDrawTabResizeBar(CDC* pDC, CMFCBaseTabCtrl* pWndTab, BOOL bIsVert, CRect rect, CBrush* pbrFace, CPen* pPen);
+	virtual void AdjustTabTextRect(CRect& /* rectTabText */) { }
 
 	virtual int GetMDITabsBordersSize() { return -1; /* Default */ }
 	virtual int GetDockingTabsBordersSize() { return -1; /* Default */ }
@@ -387,9 +379,7 @@ public:
 	virtual void OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScroll* pScroll);
 	virtual COLORREF OnDrawRibbonPanel(CDC* pDC,CMFCRibbonPanel* pPanel, CRect rectPanel, CRect rectCaption);
 	virtual void OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectCaption);
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	virtual void OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	virtual void OnDrawRibbonDefaultPaneButton(CDC* pDC, CMFCRibbonButton* pButton);
 	virtual void OnDrawRibbonDefaultPaneButtonContext(CDC* pDC, CMFCRibbonButton* pButton);
 	virtual void OnDrawRibbonDefaultPaneButtonIndicator(CDC* pDC, CMFCRibbonButton* pButton, CRect rect, BOOL bIsSelected, BOOL bHighlighted);
@@ -464,6 +454,7 @@ public:
 
 	// ToolTip
 	virtual BOOL GetToolTipInfo(CMFCToolTipInfo& params, UINT nType = (UINT)(-1));
+	virtual void OnFillToolTip (CDC* pDC, CMFCToolTipCtrl* pToolTip, CRect rect, COLORREF& clrText, COLORREF& clrLine);
 
 // Attributes:
 public:

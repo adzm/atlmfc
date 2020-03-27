@@ -28,7 +28,7 @@
 
 CKeyboardManager* afxKeyboardManager = NULL;
 
-static const CString strKbProfile = _T("KeyboardManager");
+#define AFX_KEYBOARD_MANAGER_PROFILE  _T("KeyboardManager")
 
 LPACCEL CKeyboardManager::m_lpAccel = NULL;
 LPACCEL CKeyboardManager::m_lpAccelDefault = NULL;
@@ -37,7 +37,6 @@ int CKeyboardManager::m_nAccelSize = 0;
 HACCEL CKeyboardManager::m_hAccelDefaultLast = NULL;
 HACCEL CKeyboardManager::m_hAccelLast = NULL;
 BOOL CKeyboardManager::m_bAllAccelerators = FALSE;
-CString CKeyboardManager::m_strDelimiter = _T("; ");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -211,7 +210,7 @@ BOOL CKeyboardManager::LoadAcceleratorState(LPCTSTR lpszProfileName, UINT uiResI
 
 BOOL CKeyboardManager::LoadState(LPCTSTR lpszProfileName, CFrameWnd* pDefaultFrame)
 {
-	CString strProfileName = ::AFXGetRegPath(strKbProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_KEYBOARD_MANAGER_PROFILE, lpszProfileName);
 
 	CDocManager* pDocManager = AfxGetApp()->m_pDocManager;
 	if (pDocManager != NULL)
@@ -261,7 +260,7 @@ BOOL CKeyboardManager::LoadState(LPCTSTR lpszProfileName, CFrameWnd* pDefaultFra
 
 BOOL CKeyboardManager::SaveState(LPCTSTR lpszProfileName, CFrameWnd* pDefaultFrame)
 {
-	CString strProfileName = ::AFXGetRegPath(strKbProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_KEYBOARD_MANAGER_PROFILE, lpszProfileName);
 
 	CDocManager* pDocManager = AfxGetApp()->m_pDocManager;
 	if (pDocManager != NULL)
@@ -410,7 +409,7 @@ BOOL __stdcall CKeyboardManager::FindDefaultAccelerator(UINT uiCmd, CString& str
 
 			if (!str.IsEmpty())
 			{
-				str += m_strDelimiter;
+				str += _T("; ");
 			}
 
 			str += strKey;
@@ -569,19 +568,7 @@ BOOL __stdcall CKeyboardManager::IsKeyHandled(WORD nKey, BYTE fVirt, CFrameWnd* 
 	return FALSE;
 }
 
-void __stdcall CKeyboardManager::ShowAllAccelerators(BOOL bShowAll, LPCTSTR lpszDelimiter)
+void __stdcall CKeyboardManager::ShowAllAccelerators(BOOL bShowAll)
 {
-	if (bShowAll)
-	{
-		m_bAllAccelerators = TRUE;
-
-		if (lpszDelimiter != NULL)
-		{
-			m_strDelimiter = lpszDelimiter;
-		}
-	}
-	else
-	{
-		m_bAllAccelerators = FALSE;
-	}
+	m_bAllAccelerators = bShowAll;
 }

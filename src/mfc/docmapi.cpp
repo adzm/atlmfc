@@ -50,7 +50,7 @@ void CDocument::OnFileSendMail()
 
 	_AFX_MAIL_STATE* pMailState = _afxMailState;
 	if (pMailState->m_hInstMail == NULL)
-		pMailState->m_hInstMail = ::AfxCtxLoadLibraryW(L"MAPI32.DLL");
+		pMailState->m_hInstMail = AtlLoadSystemLibraryUsingFullPath(L"MAPI32.DLL");
 
 	if (pMailState->m_hInstMail == NULL)
 	{
@@ -113,7 +113,7 @@ void CDocument::OnFileSendMail()
 			if (pTemplate != NULL &&
 				pTemplate->GetDocString(strExt, CDocTemplate::filterExt))
 			{
-				if( lstrlen(szTitle) + lstrlen(strExt) < _countof(szTitle) )
+				if( _tcslen(szTitle) + _tcslen(strExt) < _countof(szTitle) )
 				{
 					Checked::tcscat_s(szTitle, _countof(szTitle), strExt);
 				}

@@ -49,18 +49,22 @@
 /////////////////////////////////////////////////////////////////////////////
 // Version stamp for this .DLL
 
+#ifdef RC_INVOKED
+
 #include "winver.h"
+#include "verstamp.h"
 
-#define VER_FILETYPE	VFT_DLL
+#define VER_FILETYPE    VFT_DLL
+#define VER_FILESUBTYPE VFT_UNKNOWN
 
-#define VER_FILEDESCRIPTION_STR	"MFC Language Specific Resources"
-
-#define VER_INTERNALNAME_STR		"MFC" _MFC_FILENAME_VER QUOTELANG(LANG) ".DLL"
-
-#define VER_ORIGINALFILENAME_STR	VER_INTERNALNAME_STR
+#define VER_FILEDESCRIPTION_STR "MFC Language Specific Resources"
+#define VER_ORIGINALFILENAME_STR "MFC" _MFC_FILENAME_VER QUOTELANG(LANG) ".DLL"
+#define VER_INTERNALNAME_STR     VER_ORIGINALFILENAME_STR
 
 #define VER_COPYRIGHTSTARTYEAR_STR	"1993"
 
-#include "ver_.rc"
+#include <common.ver>
+
+#endif
 
 /////////////////////////////////////////////////////////////////////////////

@@ -21,20 +21,20 @@
 #include <propkey.h>
 #include <atlconv.h>
 #include <propvarutil.h>
-
-#include "afxglobals.h"
+#include <shobjidl.h>
 
 #if (WINVER >= 0x0601)
 CJumpList::CJumpList(BOOL bAutoCommit) 
 {
 	m_bInitialized = FALSE;
+	m_bIsSupported = FALSE;
 	m_nMaxSlots = 0;
 	m_bAutoCommit = bAutoCommit;
 }
 
 CJumpList::~CJumpList()
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return;
 	}
@@ -58,12 +58,18 @@ CJumpList::~CJumpList()
 
 void CJumpList::ClearAll()
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return;
 	}
 
 	ClearAllDestinations();
+	
+	if (m_destListPtr != NULL)	
+	{
+		m_destListPtr.Detach()->Release();
+	}
+
 	ReleaseObjectArray(m_tasksPtr.Detach());
 	ReleaseObjectArray(m_removedItemsPtr.Detach());
 
@@ -72,10 +78,15 @@ void CJumpList::ClearAll()
 
 BOOL CJumpList::InitializeList()
 {
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	ASSERT(pApp != NULL);
+
+	if (!pApp->IsWindows7())
 	{
 		return FALSE;
 	}
+
+	m_bIsSupported = TRUE;
 
 	HRESULT hr = S_OK;
 	if (m_destListPtr == NULL)
@@ -104,8 +115,6 @@ BOOL CJumpList::InitializeList()
 		if (strAppID.IsEmpty ())
 		{
 			// try WinApp
-			CWinApp* pApp = AfxGetApp();
-			ASSERT(pApp != NULL);
 			strAppID = pApp->m_pszAppID;
 		}
 
@@ -134,7 +143,7 @@ BOOL CJumpList::InitializeList()
 
 UINT CJumpList::GetMaxSlots() const
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return 0;
 	}
@@ -258,7 +267,7 @@ BOOL CJumpList::AddTaskSeparator()
 
 BOOL CJumpList::AddTask(IShellLink* pShellLink)
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return FALSE;
 	}
@@ -303,7 +312,7 @@ BOOL CJumpList::AddTasks(IObjectArray* pObjectCollection)
 
 BOOL CJumpList::AddDestination(LPCTSTR lpcszCategoryName, LPCTSTR lpcszDestinationPath)
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return FALSE;
 	}
@@ -326,11 +335,11 @@ BOOL CJumpList::AddDestination(LPCTSTR lpcszCategoryName, LPCTSTR lpcszDestinati
 
 	IShellItem* psi = NULL;
 #ifdef UNICODE
-	HRESULT hr = afxGlobalData.ShellCreateItemFromParsingName(lpcszDestinationPath, NULL, IID_IShellItem, (LPVOID*)&psi);
+	HRESULT hr = _AfxSHCreateItemFromParsingName(lpcszDestinationPath, NULL, IID_IShellItem, (LPVOID*)&psi);
 #else
 	USES_CONVERSION;
 	LPWSTR lpDestPath = A2W(lpcszDestinationPath);
-	HRESULT hr = afxGlobalData.ShellCreateItemFromParsingName(lpDestPath, NULL, IID_IShellItem, (LPVOID*)&psi);
+	HRESULT hr = _AfxSHCreateItemFromParsingName(lpDestPath, NULL, IID_IShellItem, (LPVOID*)&psi);
 #endif
 
 	if (FAILED(hr))
@@ -353,7 +362,7 @@ BOOL CJumpList::AddDestination(LPCTSTR lpcszCategoryName, LPCTSTR lpcszDestinati
 
 BOOL CJumpList::AddDestination(LPCTSTR lpcszCategoryName, IShellItem* pShellItem)
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return FALSE;
 	}
@@ -385,7 +394,7 @@ BOOL CJumpList::AddDestination(LPCTSTR lpcszCategoryName, IShellItem* pShellItem
 
 BOOL CJumpList::AddDestination(LPCTSTR lpcszCategoryName, IShellLink* pShellLink)
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return FALSE;
 	}
@@ -417,7 +426,7 @@ BOOL CJumpList::AddDestination(LPCTSTR lpcszCategoryName, IShellLink* pShellLink
 
 IObjectCollection* CJumpList::GetObjectCollection(LPCTSTR lpcszCategoryName)
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return NULL;
 	}
@@ -529,7 +538,7 @@ BOOL CJumpList::CommitList()
 
 IObjectCollection* CJumpList::CheckRemovedItems(IObjectCollection* pColl)
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return NULL;
 	}
@@ -601,7 +610,7 @@ IObjectCollection* CJumpList::CheckRemovedItems(IObjectCollection* pColl)
 
 void CJumpList::ClearAllDestinations()
 {
-	if (!afxGlobalData.bIsWindows7)
+	if (!m_bIsSupported)
 	{
 		return;
 	}
@@ -712,7 +721,8 @@ BOOL CAppDestinations::RemoveAllDestinations()
 
 BOOL CAppDestinations::Init()
 {
-	if (!afxGlobalData.bIsWindows7)
+	CWinApp* pApp = AfxGetApp();
+	if (pApp == NULL || !pApp->IsWindows7())
 	{
 		return FALSE;
 	}

@@ -58,11 +58,9 @@ CMFCPropertyPage::~CMFCPropertyPage()
 }
 
 BEGIN_MESSAGE_MAP(CMFCPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCPropertyPage)
 	ON_WM_ACTIVATE()
 	ON_WM_NCACTIVATE()
 	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

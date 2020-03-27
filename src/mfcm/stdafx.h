@@ -18,6 +18,8 @@
 #undef _WIN32_WINNT
 #define _WIN32_WINNT _WIN32_WINNT_MAXVER
 
+#undef NTDDI_VERSION
+
 #include <sdkddkver.h>
 
 #ifndef VC_EXTRALEAN

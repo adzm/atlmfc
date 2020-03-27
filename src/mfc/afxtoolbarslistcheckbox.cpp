@@ -27,7 +27,6 @@ CMFCToolBarsListCheckBox::~CMFCToolBarsListCheckBox()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCToolBarsListCheckBox)
 BEGIN_MESSAGE_MAP(CMFCToolBarsListCheckBox, CCheckListBox)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_KEYDOWN()
@@ -37,7 +36,6 @@ BEGIN_MESSAGE_MAP(CMFCToolBarsListCheckBox, CCheckListBox)
 	ON_MESSAGE(LB_RESETCONTENT, &CMFCToolBarsListCheckBox::OnLBResetContent)
 	ON_MESSAGE(LB_DELETESTRING, &CMFCToolBarsListCheckBox::OnLBDeleteString)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCToolBarsListCheckBox message handlers

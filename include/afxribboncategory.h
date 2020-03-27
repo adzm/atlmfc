@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -24,7 +24,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonTab
 
 class CMFCRibbonCategory;
@@ -56,9 +56,10 @@ public:
 	BOOL IsSelected() const;
 
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+	virtual void OnAccDefaultAction();
 };
 
-/////////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRibbonCategoryScroll
 
 class CRibbonCategoryScroll : public CMFCRibbonButton
@@ -81,7 +82,7 @@ public:
 	BOOL IsLeftScroll() const { return m_bIsLeft; }
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonCategory
 
 class CMFCRibbonPanel;
@@ -233,7 +234,7 @@ public:
 	virtual void ReposPanels(CDC* pDC);
 
 	/// <summary>
-	// Called by the framework when a user presses a keyboard button.</summary>
+	/// Called by the framework when a user presses a keyboard button.</summary>
 	/// <param name="nChar">The virtual-key code for the key that a user pressed.</param>
 	virtual BOOL OnKey(UINT nChar);
 

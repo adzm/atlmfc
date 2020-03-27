@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -398,9 +398,7 @@ void CMFCRibbonCollector::CollectPanel(const CMFCRibbonPanel& panel, CMFCRibbonI
 	info.m_bJustifyColumns = panel.IsJustifyColumns();
 	info.m_bCenterColumnVert = panel.IsCenterColumnVert();
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	CollectElement((const_cast<CMFCRibbonPanel&>(panel)).GetLaunchButton(), info.m_btnLaunch);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	int i = 0;
 	int count = panel.GetCount();
@@ -659,12 +657,10 @@ void CMFCRibbonCollector::CollectElement(const CMFCRibbonBaseElement& element, C
 
 		GetElementImages(element, infoElement.m_Image);
 	}
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	else if (info.GetElementType() == CMFCRibbonInfo::e_TypeButton_Launch && element.IsKindOf(RUNTIME_CLASS(CMFCRibbonLaunchButton)))
 	{
 		CollectBaseElement(element, info);
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 	else if (info.GetElementType() == CMFCRibbonInfo::e_TypeGroup && element.IsKindOf(RUNTIME_CLASS(CMFCRibbonButtonsGroup)))
 	{
 		const CMFCRibbonButtonsGroup* pElement = (const CMFCRibbonButtonsGroup*)&element;

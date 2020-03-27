@@ -25,7 +25,6 @@
 // CHtmlView
 
 BEGIN_MESSAGE_MAP(CHtmlView, CFormView)
-	//{{AFX_MSG_MAP(CHtmlView)
 	ON_WM_SIZE()
 	ON_WM_PAINT()
 	ON_WM_DESTROY()
@@ -35,7 +34,6 @@ BEGIN_MESSAGE_MAP(CHtmlView, CFormView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, &CHtmlView::OnUpdateEditCut)
 	ON_COMMAND(ID_EDIT_PASTE, &CHtmlView::OnEditPaste)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, &CHtmlView::OnUpdateEditPaste)
-	//}}AFX_MSG_MAP
 	// Standard printing commands
 	ON_COMMAND(ID_FILE_PRINT, &CHtmlView::OnFilePrint)
 END_MESSAGE_MAP()
@@ -1174,7 +1172,7 @@ void CHtmlView::Navigate(LPCTSTR lpszURL, DWORD dwFlags /* = 0 */,
 	if (lpvPostData != NULL)
 	{
 		if (dwPostDataLen == 0)
-			dwPostDataLen = lstrlen((LPCTSTR) lpvPostData);
+			dwPostDataLen = static_cast<DWORD>(AtlStrLen((LPCTSTR) lpvPostData));
 
 		vPostData.CreateOneDim(VT_UI1, dwPostDataLen, lpvPostData);
 	}
@@ -1211,7 +1209,7 @@ void CHtmlView::Navigate2(LPCTSTR lpszURL, DWORD dwFlags /* = 0 */,
 	if (lpvPostData != NULL)
 	{
 		if (dwPostDataLen == 0)
-			dwPostDataLen = lstrlen((LPCTSTR) lpvPostData);
+			dwPostDataLen = static_cast<DWORD>(AtlStrLen((LPCTSTR) lpvPostData));
 
 		vPostData.CreateOneDim(VT_UI1, dwPostDataLen, lpvPostData);
 	}

@@ -24,7 +24,7 @@
 
 class CMFCToolBarMenuButton;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPopupMenuBar command target
 
 class CMFCPopupMenuBar : public CMFCToolBar
@@ -122,6 +122,9 @@ public:
 // Overrides
 	virtual void SetButtonStyle(int nIndex, UINT nStyle);
 
+	virtual HRESULT get_accRole(VARIANT varChild, VARIANT *pvarRole);
+	virtual HRESULT get_accState(VARIANT varChild, VARIANT *pvarState);
+
 protected:
 	virtual BOOL OnSendCommand(const CMFCToolBarButton* pButton);
 	virtual void AdjustLocations();
@@ -163,7 +166,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCPopupMenuBar)
 	afx_msg void OnNcPaint();
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
 	afx_msg void OnDestroy();
@@ -176,7 +178,7 @@ protected:
 	afx_msg void OnToolbarImageAndText();
 	afx_msg void OnToolbarText();
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

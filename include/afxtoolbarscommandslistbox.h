@@ -18,7 +18,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsCommandsListBox window
 
 class CMFCToolBarsCommandsListBox : public CListBox
@@ -47,10 +47,8 @@ public:
 	virtual ~CMFCToolBarsCommandsListBox();
 
 protected:
-	//{{AFX_MSG(CMFCToolBarsCommandsListBox)
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 };

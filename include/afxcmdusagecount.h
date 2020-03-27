@@ -32,7 +32,7 @@ public:
 	UINT GetCount(UINT uiCmd) const;
 	BOOL HasEnoughInformation() const;
 
-	BOOL IsFreqeuntlyUsedCmd(UINT uiCmd) const;
+	BOOL IsFrequentlyUsedCmd(UINT uiCmd) const;
 
 	static BOOL __stdcall SetOptions(UINT nStartCount, UINT nMinUsagePercentage);
 

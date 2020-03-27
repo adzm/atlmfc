@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPaneDialog window
 
 class CPaneDialog : public CDockablePane
@@ -62,13 +62,13 @@ public:
 	virtual BOOL SetOccDialogInfo(_AFX_OCC_DIALOG_INFO* pOccDialogInfo);
 #endif
 
-	//{{AFX_MSG(CPaneDialog)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnWindowPosChanging(WINDOWPOS FAR* lpwndpos);
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
-	//}}AFX_MSG
+	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
+
 	DECLARE_MESSAGE_MAP()
 
 public:

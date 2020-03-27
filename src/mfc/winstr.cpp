@@ -17,7 +17,7 @@
 // Windows extensions to strings
 
 #ifndef _AFXDLL
-int AFXAPI AfxLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nMaxBuf, return + 1) LPSTR lpszBuf, _In_ UINT nMaxBuf)
+int AFXAPI AfxLoadString(_In_ UINT nID, _Out_writes_to_(nMaxBuf, return + 1) LPSTR lpszBuf, _In_ UINT nMaxBuf)
 {
 	ASSERT(AfxIsValidAddress(lpszBuf, nMaxBuf*sizeof(CHAR)));
 	if( lpszBuf == NULL || nMaxBuf == 0)
@@ -39,7 +39,7 @@ int AFXAPI AfxLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nMaxBuf, return +
 	return nBytes;
 }
 
-int AFXAPI AfxLoadString(_In_ UINT nID, _Out_z_cap_post_count_(nMaxBuf, return + 1) LPWSTR lpszBuf, _In_ UINT nMaxBuf)
+int AFXAPI AfxLoadString(_In_ UINT nID, _Out_writes_to_(nMaxBuf, return + 1) LPWSTR lpszBuf, _In_ UINT nMaxBuf)
 {
 	ASSERT(AfxIsValidAddress(lpszBuf, nMaxBuf*sizeof(WCHAR)));
 	if( lpszBuf == NULL || nMaxBuf == 0)
@@ -89,7 +89,7 @@ BOOL AFXAPI AfxExtractSubString(CString& rString, LPCTSTR lpszFullString,
 	}
 	LPCTSTR lpchEnd = _tcschr(lpszFullString, chSep);
 	int nLen = (lpchEnd == NULL) ?
-		lstrlen(lpszFullString) : (int)(lpchEnd - lpszFullString);
+		static_cast<int>(_tcslen(lpszFullString)) : (int)(lpchEnd - lpszFullString);
 	ASSERT(nLen >= 0);
 	Checked::memcpy_s(rString.GetBufferSetLength(nLen), nLen*sizeof(TCHAR),
 		lpszFullString, nLen*sizeof(TCHAR));

@@ -76,7 +76,7 @@ protected:
 	LPCTSTR  m_lpszInitialPath; // Valid in BrowseForFolder only
 };
 
-extern CShellManager* afxShellManager;
+AFX_IMPORT_DATA extern CShellManager* afxShellManager;
 
 extern AFX_IMPORT_DATA UINT AFX_WM_ON_AFTER_SHELL_COMMAND;
 

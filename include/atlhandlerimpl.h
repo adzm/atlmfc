@@ -21,6 +21,12 @@
 #pragma warning (push)
 #endif //!_ATL_NO_PRAGMA_WARNINGS
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <Filterr.h>
 #include <atlhandler.h>
 #include <atlcoll.h>
@@ -50,15 +56,21 @@ public:
 		ReleaseAll();
 	}
 
+ATLPREFAST_SUPPRESS(6387 28196)
 	//IThumbnailProvider implementation
 	STDMETHOD (GetThumbnail)(
-		_In_ UINT cx,
-		_Inout_ HBITMAP *phbmp,
-		_Inout_ WTS_ALPHATYPE *pdwAlpha)
+		UINT cx,
+		__RPC__deref_out_opt HBITMAP *phbmp,
+		__RPC__out WTS_ALPHATYPE *pdwAlpha)
 	{
 #ifdef _AFXDLL
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
 #endif
+		if ((phbmp == NULL) || (pdwAlpha == NULL))
+		{
+			return E_POINTER;
+		}
+
 		*phbmp = NULL;
 		*pdwAlpha = WTSAT_UNKNOWN;
 
@@ -81,6 +93,7 @@ public:
 		ReleaseAll();
 		return hr;
 	}
+ATLPREFAST_UNSUPPRESS()
 
 	//IInitializeWithStream implementation
 	STDMETHOD (Initialize)(
@@ -532,11 +545,11 @@ public:
 
 public:
 	// IFilter implementation
-	STDMETHODIMP Init(
-		_In_ ULONG /* grfFlags */,
-		_In_ ULONG /* cAttributes */,
-		_In_opt_ const FULLPROPSPEC * /* aAttributes */,
-		_In_opt_ ULONG * /* pFlags */)
+	SCODE STDMETHODCALLTYPE Init(
+		ULONG /* grfFlags */,
+		ULONG /* cAttributes */,
+		const FULLPROPSPEC * /* aAttributes */,
+		ULONG * /* pFlags */)
 	{
 
 #ifdef _AFXDLL
@@ -580,7 +593,7 @@ public:
 		return S_OK;
 	}
 
-	STDMETHODIMP GetChunk(_Inout_ STAT_CHUNK *pStat)
+	SCODE STDMETHODCALLTYPE GetChunk(STAT_CHUNK *pStat)
 	{
 #ifdef _AFXDLL
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -638,9 +651,9 @@ public:
 		return hr;
 	}
 
-	STDMETHODIMP GetText(
-		_Inout_ ULONG *pcwcBuffer,
-		_Out_z_cap_(*pcwcBuffer) WCHAR *awcBuffer)
+	SCODE STDMETHODCALLTYPE GetText(
+		ULONG *pcwcBuffer,
+		WCHAR *awcBuffer)
 	{
 #ifdef _AFXDLL
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -709,7 +722,7 @@ public:
 		return hr;
 	}
 
-	STDMETHODIMP GetValue(_Deref_out_ PROPVARIANT **ppPropValue)
+	SCODE STDMETHODCALLTYPE GetValue(PROPVARIANT **ppPropValue)
 	{
 #ifdef _AFXDLL
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -751,10 +764,10 @@ public:
 		return hr;
 	}
 
-	STDMETHODIMP BindRegion(
-		_In_ FILTERREGION /* origPos */,
-		_In_ REFIID /* riid */,
-		_In_opt_ void ** /* ppunk */)
+	SCODE STDMETHODCALLTYPE BindRegion(
+		FILTERREGION /* origPos */,
+		REFIID /* riid */,
+		void ** /* ppunk */)
 	{
 #ifdef _AFXDLL
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -766,15 +779,19 @@ public:
 	// IPersistStream implementation
 	// IPersistStream::Load() is used by WS 3.x and above for the index
 	// search case when this filter is loaded into the filter host process
-	STDMETHODIMP Load(_Inout_ IStream *pStream)
+	STDMETHODIMP Load(__RPC__in_opt IStream *pStream)
 	{
 #ifdef _AFXDLL
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
 #endif
-
 		if (m_hEventLog == NULL)
 		{
 			m_hEventLog = OpenEventLog(NULL, L"Search Handler");
+		}
+
+		if (pStream == NULL)
+		{
+			return E_FAIL;
 		}
 
 		// Initialize can be called more than once, so release existing valid m_pStream
@@ -796,8 +813,8 @@ public:
 	};
 
 	STDMETHODIMP Save(
-		_Inout_ IStream * /* pStm */,
-		_In_ BOOL /* fClearDirty */)
+		__RPC__in_opt IStream * /* pStm */,
+		BOOL /* fClearDirty */)
 	{
 #ifdef _AFXDLL
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -947,7 +964,7 @@ public:
 	}
 
 ATLPREFAST_SUPPRESS(6387)
-	virtual HRESULT GetValue(_Deref_out_ PROPVARIANT **ppPropVariant)
+	virtual HRESULT GetValue(_Outptr_ PROPVARIANT **ppPropVariant)
 	{
 		HRESULT hr = S_OK;
 
@@ -1287,7 +1304,7 @@ public:
 		return TRUE;
 	}
 
-	virtual BOOL ReadNextChunkValue(_Deref_out_ IFilterChunkValue** ppValue)
+	virtual _Success_(return != FALSE) BOOL ReadNextChunkValue(_Outptr_ IFilterChunkValue** ppValue)
 	{
 		if (m_posReadChunk == NULL || ppValue == NULL)
 		{
@@ -1331,10 +1348,11 @@ public:
 		return value;
 	}
 
-	BOOL GetThumbnail(
+	ATLPREFAST_SUPPRESS(6101)
+	_Success_(return != FALSE) BOOL GetThumbnail(
 		_In_ UINT cx,
 		_Out_ HBITMAP* phbmp,
-		_In_opt_ WTS_ALPHATYPE* /* pdwAlpha */)
+		_Out_ WTS_ALPHATYPE* /* pdwAlpha */)
 	{
 		HDC hdc = ::GetDC(NULL);
 		RECT rcBounds;
@@ -1369,6 +1387,7 @@ public:
 		*phbmp = hBmp;
 		return TRUE;
 	}
+	ATLPREFAST_UNSUPPRESS()
 
 	virtual void OnDrawThumbnail(
 		_In_ HDC /* hDrawDC */,

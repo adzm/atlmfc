@@ -46,6 +46,7 @@ CMFCToolBarsCustomizeDialog::CMFCToolBarsCustomizeDialog(CFrameWnd* pWndParentFr
 		UINT uiFlags /* = 0xFFFF */, CList<CRuntimeClass*,CRuntimeClass*>* plistCustomPages /* = NULL */) :
 	CPropertySheet(_T(""), pWndParentFrame), m_bAutoSetFromMenus(bAutoSetFromMenus), m_uiFlags(uiFlags)
 {
+	m_nPaneMenuEntryID = 0;
 
 	if ((m_uiFlags & AFX_CUSTOMIZE_MENUAMPERS) == 0)
 	{
@@ -110,6 +111,7 @@ CMFCToolBarsCustomizeDialog::CMFCToolBarsCustomizeDialog(CFrameWnd* pWndParentFr
 	if (pMainMDIFrame != NULL)
 	{
 		bMenuBarIsAvailable = (pMainMDIFrame->IsMenuBarAvailable());
+		m_nPaneMenuEntryID = pMainMDIFrame->GetPaneMenuEntryID();
 	}
 	else
 	{
@@ -117,6 +119,7 @@ CMFCToolBarsCustomizeDialog::CMFCToolBarsCustomizeDialog(CFrameWnd* pWndParentFr
 		if (pMainFrame != NULL)
 		{
 			bMenuBarIsAvailable = (pMainFrame->IsMenuBarAvailable());
+			m_nPaneMenuEntryID = pMainFrame->GetPaneMenuEntryID();
 		}
 	}
 
@@ -206,11 +209,9 @@ CMFCToolBarsCustomizeDialog::~CMFCToolBarsCustomizeDialog()
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsCustomizeDialog, CPropertySheet)
-	//{{AFX_MSG_MAP(CMFCToolBarsCustomizeDialog)
 	ON_WM_CREATE()
 	ON_WM_HELPINFO()
 	ON_WM_CLOSE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -252,6 +253,11 @@ void CMFCToolBarsCustomizeDialog::AddButton(UINT uiCategoryId, const CMFCToolBar
 void CMFCToolBarsCustomizeDialog::AddButton(LPCTSTR lpszCategory, const CMFCToolBarButton& button, int iInsertBefore)
 {
 	int iId = (int) button.m_nID;
+
+	if (m_nPaneMenuEntryID != 0 && iId == (int)m_nPaneMenuEntryID)
+	{
+		return;
+	}
 
 	if (!button.IsEditable())
 	{
@@ -834,7 +840,7 @@ BOOL CMFCToolBarsCustomizeDialog::OnInitDialog()
 		m_btnHelp.EnableWindow();
 
 		// Set Help button image:
-		m_btnHelp.SetImage(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_HELP32 : IDB_AFXBARRES_HELP);
+		m_btnHelp.SetImage(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_HELP32 : IDB_AFXBARRES_HELP);
 		m_btnHelp.SetWindowText(_T(""));
 
 		// Move "Help" button to the left bottom corner and
@@ -994,11 +1000,16 @@ void CMFCToolBarsCustomizeDialog::AddMenuCommands(const CMenu* pMenu, BOOL bPopu
 
 					LPTSTR pszCustom = strCustom.GetBuffer(strCustom.GetLength() + 1);
 
-					for (int j = 0; j < lstrlen(pszCustom) - 1; j++)
+					size_t nLen = AtlStrLen(pszCustom);
+
+					if (nLen > 1)
 					{
-						if (pszCustom [j] == _TCHAR(' '))
+						for (size_t j = 0; j < nLen - 1; j++)
 						{
-							CharUpperBuff(&pszCustom [j + 1], 1);
+							if (pszCustom [j] == _TCHAR(' '))
+							{
+								CharUpperBuff(&pszCustom [j + 1], 1);
+							}
 						}
 					}
 

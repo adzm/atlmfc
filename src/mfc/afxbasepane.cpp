@@ -30,6 +30,7 @@
 #include "afxbasepane.h"
 #include "afxbasetabbedpane.h"
 #include "afxdockablepaneadapter.h"
+#include "afxtoolbar.h"
 
 #include "afxregpath.h"
 #include "afxsettingsstore.h"
@@ -41,7 +42,7 @@
 #define new DEBUG_NEW
 #endif
 
-static const CString strBaseControlBarProfile = _T("BasePanes");
+#define AFX_BASE_CONTROL_BAR_PROFILE _T("BasePanes")
 BOOL CBasePane::m_bSetTooltipTopmost = TRUE;
 
 #define AFX_REG_SECTION_FMT    _T("%sBasePane-%d")
@@ -88,7 +89,6 @@ CBasePane::~CBasePane()
 {
 }
 
-//{{AFX_MSG_MAP(CBasePane)
 BEGIN_MESSAGE_MAP(CBasePane, CWnd)
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
@@ -101,7 +101,6 @@ BEGIN_MESSAGE_MAP(CBasePane, CWnd)
 	ON_MESSAGE(WM_GETOBJECT, &CBasePane::OnGetObject)
 	ON_MESSAGE(WM_PRINTCLIENT, &CBasePane::OnPrintClient)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CBasePane message handlers
@@ -319,7 +318,7 @@ void CBasePane::OnPaint()
 	}
 }
 
-HDWP CBasePane::MoveWindow(CRect& rect, BOOL bRepaint, HDWP hdwp)
+HDWP CBasePane::MoveWindow(const CRect& rect, BOOL bRepaint, HDWP hdwp)
 {
 	CRect rectOld;
 	GetWindowRect(rectOld);
@@ -789,7 +788,7 @@ void CBasePane::Serialize(CArchive& ar)
 
 BOOL CBasePane::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strBaseControlBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_BASE_CONTROL_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -823,7 +822,7 @@ BOOL CBasePane::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 BOOL CBasePane::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
 
-	CString strProfileName = ::AFXGetRegPath(strBaseControlBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_BASE_CONTROL_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -1098,7 +1097,7 @@ LRESULT CBasePane::OnSetIcon(WPARAM,LPARAM)
 
 LRESULT CBasePane::OnGetObject(WPARAM wParam, LPARAM lParam)
 {
-	if (afxGlobalData.IsAccessibilitySupport() && IsAccessibilityCompatible())
+	if (GetGlobalData()->IsAccessibilitySupport() && IsAccessibilityCompatible())
 	{
 		return CWnd::OnGetObject(wParam, lParam);
 	}
@@ -1133,7 +1132,7 @@ void CBasePane::CopyState(CBasePane* pOrgBar)
 void CBasePane::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 {
 	CWnd::OnSettingChange(uFlags, lpszSection);
-	afxGlobalData.OnSettingChange();
+	GetGlobalData()->OnSettingChange();
 }
 
 void CBasePane::OnPaneContextMenu(CWnd* pParentFrame, CPoint point)
@@ -1257,16 +1256,16 @@ HRESULT CBasePane::get_accDescription(VARIANT varChild, BSTR *pszDescription)
 
 HRESULT CBasePane::get_accRole(VARIANT varChild, VARIANT *pvarRole)
 {
+	if (pvarRole == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
 	if ((varChild.vt == VT_I4) && (varChild.lVal == CHILDID_SELF))
 	{
 		pvarRole->vt = VT_I4;
-		pvarRole->lVal = ROLE_SYSTEM_TOOLBAR;
+		pvarRole->lVal = ROLE_SYSTEM_CLIENT;
 		return S_OK;
-	}
-
-	if (!pvarRole || ((varChild.vt != VT_I4) && (varChild.lVal != CHILDID_SELF)))
-	{
-		return E_INVALIDARG;
 	}
 
 	if ((varChild.vt == VT_I4) && (varChild.lVal > 0))
@@ -1285,16 +1284,24 @@ HRESULT CBasePane::get_accRole(VARIANT varChild, VARIANT *pvarRole)
 
 HRESULT CBasePane::get_accState(VARIANT varChild, VARIANT *pvarState)
 {
+	if (pvarState == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
 	if ((varChild.vt == VT_I4) && (varChild.lVal == CHILDID_SELF))
 	{
 		pvarState->vt = VT_I4;
-		pvarState->lVal = STATE_SYSTEM_DEFAULT;
-		return S_OK;
-	}
 
-	if (!pvarState || ((varChild.vt != VT_I4) && (varChild.lVal != CHILDID_SELF)))
-	{
-		return E_INVALIDARG;
+		if (DYNAMIC_DOWNCAST(CMFCToolBar, this) != NULL)
+		{
+			pvarState->lVal = STATE_SYSTEM_NORMAL;
+		}
+		else
+		{
+			pvarState->lVal = STATE_SYSTEM_DEFAULT;
+		}
+		return S_OK;
 	}
 
 	if ((varChild.vt == VT_I4) && (varChild.lVal > 0))
@@ -1305,7 +1312,7 @@ HRESULT CBasePane::get_accState(VARIANT varChild, VARIANT *pvarState)
 		return S_OK; 
 	}
 
-	return E_INVALIDARG;
+	return S_FALSE;
 }
 
 HRESULT CBasePane::get_accHelp(VARIANT varChild, BSTR *pszHelp)
@@ -1338,7 +1345,7 @@ HRESULT CBasePane::get_accFocus(VARIANT *pvarChild)
 		return E_INVALIDARG;
 	}
 
-	return DISP_E_MEMBERNOTFOUND; 
+	return DISP_E_MEMBERNOTFOUND;
 }
 
 HRESULT CBasePane::get_accSelection(VARIANT *pvarChildren)
@@ -1348,7 +1355,7 @@ HRESULT CBasePane::get_accSelection(VARIANT *pvarChildren)
 		return E_INVALIDARG;
 	}
 
-	return DISP_E_MEMBERNOTFOUND; 
+	return DISP_E_MEMBERNOTFOUND;
 }
 
 HRESULT CBasePane::get_accHelpTopic(BSTR* /*pszHelpFile*/, VARIANT /*varChild*/, long* /*pidTopic*/)

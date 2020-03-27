@@ -411,7 +411,7 @@ void CDaoException::GetErrorInfo(int nIndex)
 	}
 }
 
-BOOL CDaoException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL CDaoException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 	_Out_opt_ PUINT pnHelpContext) const
 {
 	ASSERT(lpszError != NULL && AfxIsValidString(lpszError, nMaxError));
@@ -581,6 +581,7 @@ void CDaoWorkspace::Create(LPCTSTR lpszName, LPCTSTR lpszUserName,
 		V_BSTR(&varPassword), &m_pDAOWorkspace));
 
 	m_bNew = TRUE;
+	m_bOpen = TRUE;
 
 	// Add the workspace to map of Open/New CDaoWorkspaces
 	pDaoState->m_mapWorkspaces.SetAt(this, this);
@@ -3150,7 +3151,7 @@ void CDaoQueryDef::FillParameterInfo(DAOParameter* pDAOParameter,
 		paraminfo.m_strName = V_BSTRT(&var);
 
 		TCHAR* pch = paraminfo.m_strName.GetBuffer(0);
-		int nLength = lstrlen(pch);
+		int nLength = AtlStrLen(pch);
 		if (nLength > 0 && *pch == '[' && *(pch + nLength -1) == ']')
 		{
 			*(pch + nLength - 1) = 0;  // remove last bracket.
@@ -5762,6 +5763,19 @@ void AFXAPI AfxDaoTerm()
 
 #endif
 
+#include <initguid.h>
+
+// Privately define DAO CLSIDs and GUIDs so we don't have to link against
+// DAOUUID.LIB.  That library was not built with the current compiler and
+// linker so it triggers BinScope warnings against the MFC DLLs.
+DEFINE_DAOGUID(CLSID_CDAODBEngine,   0x00000100);
+DEFINE_DAOGUID(IID_IDAODBEngine,     0x00000020);
+DEFINE_DAOGUID(IID_IDAODBEngineW,    0x00000021);
+DEFINE_OLEGUID(IID_ICDAORecordset,   0x00025e31, 0, 0);
+DEFINE_DAOGUID(IID_IDAOField,        0x00000050);
+DEFINE_DAOGUID(IID_IDAOFieldW,       0x00000051);
+DEFINE_DAOGUID(IID_IDAOIndexFields,  0x0000005C);
+DEFINE_DAOGUID(IID_IDAOIndexFieldsW, 0x0000005D);
 
 #pragma warning(disable: 4074)
 #pragma init_seg(lib)

@@ -17,12 +17,12 @@ static const COLORREF clrTransparent = RGB(255, 0, 255);
 static const int nImageWidth = 9;
 static const int nImageHeight = 9;
 
-CMFCToolBarImages CMenuImages::m_ImagesBlack;
-CMFCToolBarImages CMenuImages::m_ImagesDkGray;
-CMFCToolBarImages CMenuImages::m_ImagesGray;
-CMFCToolBarImages CMenuImages::m_ImagesLtGray;
-CMFCToolBarImages CMenuImages::m_ImagesWhite;
-CMFCToolBarImages CMenuImages::m_ImagesBlack2;
+CMFCToolBarImages CMenuImages::m_ImagesBlack(TRUE);
+CMFCToolBarImages CMenuImages::m_ImagesDkGray(TRUE);
+CMFCToolBarImages CMenuImages::m_ImagesGray(TRUE);
+CMFCToolBarImages CMenuImages::m_ImagesLtGray(TRUE);
+CMFCToolBarImages CMenuImages::m_ImagesWhite(TRUE);
+CMFCToolBarImages CMenuImages::m_ImagesBlack2(TRUE);
 
 BOOL CMenuImages::m_bInitializing = FALSE;
 
@@ -40,8 +40,15 @@ BOOL __stdcall CMenuImages::Initialize()
 
 	m_bInitializing = TRUE;
 
+	m_ImagesBlack.Initialize();
+	m_ImagesDkGray.Initialize();
+	m_ImagesGray.Initialize();
+	m_ImagesLtGray.Initialize();
+	m_ImagesWhite.Initialize();
+	m_ImagesBlack2.Initialize();
+
 	m_ImagesBlack.SetImageSize(CSize(nImageWidth, nImageHeight));
-	if (!m_ImagesBlack.Load(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_MENU_IMAGES24 : IDB_AFXBARRES_MENU_IMAGES))
+	if (!m_ImagesBlack.Load(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_MENU_IMAGES24 : IDB_AFXBARRES_MENU_IMAGES))
 	{
 		TRACE(_T("CMenuImages. Can't load menu images %x\n"), IDB_AFXBARRES_MENU_IMAGES);
 		m_bInitializing = FALSE;
@@ -63,7 +70,7 @@ BOOL __stdcall CMenuImages::Initialize()
 
 	if (m_ImagesBlack.IsValid())
 	{
-		double dblScale = afxGlobalData.GetRibbonImageScale();
+		double dblScale = GetGlobalData()->GetRibbonImageScale();
 		if (dblScale != 1.0)
 		{
 			m_ImagesBlack.SmoothResize(dblScale);
@@ -85,7 +92,7 @@ CSize __stdcall CMenuImages::Size()
 	{
 		CSize size(nImageWidth, nImageHeight);
 
-		double dblScale = afxGlobalData.GetRibbonImageScale();
+		double dblScale = GetGlobalData()->GetRibbonImageScale();
 		if (dblScale != 1.0)
 		{
 			size.cx = (int)(.5 + size.cx * dblScale);
@@ -157,7 +164,7 @@ void __stdcall CMenuImages::SetColor(CMenuImages::IMAGE_STATE state, COLORREF co
 	CMFCToolBarImages imagesTmp;
 
 	imagesTmp.SetImageSize (CSize (nImageWidth, nImageHeight));
-	imagesTmp.Load(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_MENU_IMAGES24 : IDB_AFXBARRES_MENU_IMAGES);
+	imagesTmp.Load(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_MENU_IMAGES24 : IDB_AFXBARRES_MENU_IMAGES);
 	imagesTmp.SetTransparentColor(clrTransparent);
 
 	if (imagesTmp.IsRTL())
@@ -175,7 +182,7 @@ void __stdcall CMenuImages::SetColor(CMenuImages::IMAGE_STATE state, COLORREF co
 
 	if (!m_bInitializing)
 	{
-		imagesTmp.SmoothResize(afxGlobalData.GetRibbonImageScale());
+		imagesTmp.SmoothResize(GetGlobalData()->GetRibbonImageScale());
 	}
 
 	images.Clear();

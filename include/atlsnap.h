@@ -19,6 +19,13 @@
 #pragma warning(disable: 4127) // conditional expression constant
 #endif //!_ATL_NO_PRAGMA_WARNINGS
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
+
 #include <mmc.h>
 #include <commctrl.h>
 #include <atlwin.h>
@@ -253,7 +260,7 @@ public:
 	STDMETHOD(GetScopePaneInfo)(_Out_ SCOPEDATAITEM *pScopeDataItem) = 0;
 
 	STDMETHOD(GetResultViewType)(
-		_Deref_out_z_ LPOLESTR *ppViewType,
+		_Outptr_result_z_ LPOLESTR *ppViewType,
 		_Out_ long *pViewOptions) = 0;
 
 	STDMETHOD(GetResultPaneInfo)(_Out_ RESULTDATAITEM *pResultDataItem) = 0;
@@ -291,9 +298,9 @@ public:
 		_Inout_ CSnapInObjectRootBase* pObj,
 		_In_ DATA_OBJECT_TYPES type) = 0;
 
-	STDMETHOD(GetScopeData)(_Deref_out_ SCOPEDATAITEM  **pScopeDataItem) = 0;
+	STDMETHOD(GetScopeData)(_Outptr_ SCOPEDATAITEM  **pScopeDataItem) = 0;
 
-	STDMETHOD(GetResultData)(_Deref_out_ RESULTDATAITEM  **pResultDataItem) = 0;
+	STDMETHOD(GetResultData)(_Outptr_ RESULTDATAITEM  **pResultDataItem) = 0;
 
 	STDMETHOD(FillData)(
 		_In_ CLIPFORMAT cf,
@@ -308,7 +315,7 @@ public:
 
 	static HRESULT GetDataClass(
 		_Inout_ IDataObject* pDataObj,
-		_Deref_out_opt_ _Deref_post_opt_bytecount_x_(sizeof(CSnapInItem)) CSnapInItem** ppItem,
+		_Outptr_result_bytebuffer_maybenull_(sizeof(CSnapInItem)) CSnapInItem** ppItem,
 		_Out_ DATA_OBJECT_TYPES* pType)
 	{
 		if (ppItem == NULL)
@@ -336,7 +343,9 @@ public:
 		if (stgmedium.hGlobal == NULL)
 			return E_OUTOFMEMORY;
 
+ATLPREFAST_SUPPRESS(6011)
 		HRESULT hr = pDataObj->GetDataHere(&formatetc, &stgmedium);
+ATLPREFAST_UNSUPPRESS()
 		if (SUCCEEDED(hr))
 		{
 			CObjectData* pData = (CObjectData*)stgmedium.hGlobal;
@@ -350,7 +359,7 @@ public:
 	}
 
 	virtual HRESULT STDMETHODCALLTYPE GetDataObject(
-		_Deref_out_ IDataObject** pDataObj,
+		_Outptr_ IDataObject** pDataObj,
 		_In_ DATA_OBJECT_TYPES type) = 0;
 
 	static void Init()
@@ -384,7 +393,7 @@ public:
 ATLPREFAST_SUPPRESS(6387)
 	HRESULT GetDataClass(
 		_In_ IDataObject* pDataObject,
-		_Deref_out_ CSnapInItem** ppItem,
+		_Outptr_result_maybenull_ CSnapInItem** ppItem,
 		_Out_ DATA_OBJECT_TYPES* pType)
 	{
 		return CSnapInItem::GetDataClass(pDataObject, ppItem, pType);
@@ -410,7 +419,7 @@ public :
 #define BEGIN_EXTENSION_SNAPIN_NODEINFO_MAP(classname) \
 	HRESULT GetDataClass( \
 		_In_ IDataObject* pDataObject, \
-		_Deref_out_ ATL::CSnapInItem** ppItem, \
+		_Outptr_ ATL::CSnapInItem** ppItem, \
 		_Out_ DATA_OBJECT_TYPES* pType) \
 	{ \
 		if (ppItem == NULL) \
@@ -519,25 +528,25 @@ public:
 	STDMETHOD(SetData)(
 		_In_opt_ FORMATETC* /* pformatetc */,
 		_In_opt_ STGMEDIUM* /* pmedium */,
-		_In_ BOOL /* fRelease */)
+		BOOL /* fRelease */)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::SetData\n"));
 	}
 	STDMETHOD(EnumFormatEtc)(
-		_In_ DWORD /* dwDirection */,
+		DWORD /* dwDirection */,
 		_In_ IEnumFORMATETC** /* ppenumFormatEtc */)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::EnumFormatEtc\n"));
 	}
 	STDMETHOD(DAdvise)(
 		_In_opt_ FORMATETC * /*pformatetc*/,
-		_In_ DWORD /*advf*/,
+		DWORD /*advf*/,
 		_Inout_opt_ IAdviseSink * /*pAdvSink*/,
 		_Out_opt_ DWORD* /*pdwConnection*/)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::SetData\n"));
 	}
-	STDMETHOD(DUnadvise)(_In_ DWORD /*dwConnection*/)
+	STDMETHOD(DUnadvise)(DWORD /*dwConnection*/)
 	{
 		ATLTRACENOTIMPL(_T("SnapInDataObjectImpl::SetDatan\n"));
 	}
@@ -579,7 +588,7 @@ public :
 		return hr;
 	}
 
-	STDMETHOD(CreateComponent)(_Deref_out_ LPCOMPONENT *ppComponent)
+	STDMETHOD(CreateComponent)(_Outptr_ LPCOMPONENT *ppComponent)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentDataImpl::CreateComponent\n"));
 
@@ -661,7 +670,7 @@ public :
 	STDMETHOD(QueryDataObject)(
 		_In_ LONG_PTR cookie,
 		_In_ DATA_OBJECT_TYPES type,
-		_Deref_out_ LPDATAOBJECT *ppDataObject)
+		_Outptr_ LPDATAOBJECT *ppDataObject)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentDataImpl::QueryDataObject\n"));
 		HRESULT hr = E_POINTER;
@@ -804,7 +813,7 @@ public:
 	STDMETHOD(QueryDataObject)(
 		_In_ LONG_PTR cookie,
 		_In_ DATA_OBJECT_TYPES type,
-		_Deref_out_ LPDATAOBJECT *ppDataObject)
+		_Outptr_ LPDATAOBJECT *ppDataObject)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::QueryDataObject\n"));
 
@@ -834,7 +843,7 @@ public:
 
 	STDMETHOD(GetResultViewType)(
 		_In_ LONG_PTR cookie,
-		_Deref_out_z_ LPOLESTR *ppViewType,
+		_Outptr_result_z_ LPOLESTR *ppViewType,
 		_Out_ long *pViewOptions)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("IComponentImpl::GetResultViewType\n"));
@@ -1244,7 +1253,7 @@ public:
 	}
 
 	STDMETHOD(GetResultViewType)(
-		_Deref_out_opt_z_ LPOLESTR *ppViewType,
+		_Outptr_result_maybenull_z_ LPOLESTR *ppViewType,
 		_Out_ long *pViewOptions)
 	{
 		ATLTRACE(atlTraceSnapin, 2, _T("CSnapInItemImpl::GetResultViewType\n"));
@@ -1454,7 +1463,9 @@ public:
 
 			int nButtonCount = pData->wItemCount;
 			if (pInfo->m_pnButtonID == NULL)
-				ATLTRY(pInfo->m_pnButtonID = new UINT[nButtonCount]);
+			{
+				pInfo->m_pnButtonID = _ATL_NEW UINT[nButtonCount];
+			}
 			pInfo->m_nButtonCount=nButtonCount;
 
 			if (pInfo->m_pnButtonID == NULL)
@@ -1470,7 +1481,7 @@ public:
 
 			if (pInfo->m_pStrToolTip == NULL)
 			{
-				ATLTRY(pInfo->m_pStrToolTip = new OLECHAR* [pData->wItemCount]);
+				pInfo->m_pStrToolTip = _ATL_NEW OLECHAR* [pData->wItemCount];
 				if (pInfo->m_pStrToolTip)
 					memset(pInfo->m_pStrToolTip, 0, sizeof(OLECHAR*) * pData->wItemCount);
 			}
@@ -1494,11 +1505,11 @@ public:
 
 					if (pInfo->m_pStrToolTip[i] == NULL)
 					{
-						ATLTRY(pInfo->m_pStrToolTip[i] = new OLECHAR[lstrlen(szStatusBar) + 1]);
+						pInfo->m_pStrToolTip[i] = _ATL_NEW OLECHAR[_tcslen(szStatusBar) + 1];
 					}
 					if (pInfo->m_pStrToolTip[i] == NULL)
 						continue;
-					if(!ocscpy_s(pInfo->m_pStrToolTip[i], (lstrlen(szStatusBar) + 1), CT2COLE(szStatusBar)))
+					if(!ocscpy_s(pInfo->m_pStrToolTip[i], (_tcslen(szStatusBar) + 1), CT2COLE(szStatusBar)))
 					{
 						return E_FAIL;
 					}
@@ -1527,6 +1538,7 @@ public:
 					hr = pToolbar->AddButtons(pData->wItemCount, pButtons);
 					if (SUCCEEDED(hr))
 					{
+						(*pToolbar).AddRef();
 						pToolbarMap->Add(pInfo->m_idToolbar, pToolbar);
 					}
 				}
@@ -1612,7 +1624,7 @@ public:
 		return E_UNEXPECTED;
 	}
 
-	STDMETHOD(GetScopeData)(_Deref_out_ SCOPEDATAITEM **pScopeDataItem)
+	STDMETHOD(GetScopeData)(_Outptr_ SCOPEDATAITEM **pScopeDataItem)
 	{
 		if (pScopeDataItem == NULL)
 			return E_FAIL;
@@ -1621,7 +1633,7 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(GetResultData)(_Deref_out_ RESULTDATAITEM **pResultDataItem)
+	STDMETHOD(GetResultData)(_Outptr_ RESULTDATAITEM **pResultDataItem)
 	{
 		if (pResultDataItem == NULL)
 			return E_FAIL;
@@ -1630,9 +1642,8 @@ public:
 		return S_OK;
 	}
 	
-ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(GetDataObject)(
-		_Deref_out_ IDataObject** pDataObj,
+		_COM_Outptr_ IDataObject** pDataObj,
 		_In_ DATA_OBJECT_TYPES type)
 	{
 		ATLASSERT(pDataObj != NULL);
@@ -1652,7 +1663,6 @@ ATLPREFAST_SUPPRESS(6387)
 		hr = pData->QueryInterface(__uuidof(IDataObject), (void**)(pDataObj));
 		return hr;
 	}
-ATLPREFAST_UNSUPPRESS()
 	
 	void UpdateMenuState(
 		_In_ UINT /*id*/,

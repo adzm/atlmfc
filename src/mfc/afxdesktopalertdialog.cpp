@@ -42,7 +42,6 @@ CMFCDesktopAlertDialog::~CMFCDesktopAlertDialog()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCDesktopAlertDialog)
 BEGIN_MESSAGE_MAP(CMFCDesktopAlertDialog, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
@@ -52,7 +51,6 @@ BEGIN_MESSAGE_MAP(CMFCDesktopAlertDialog, CDialogEx)
 	ON_WM_SETFOCUS()
 	ON_MESSAGE(WM_PRINTCLIENT, &CMFCDesktopAlertDialog::OnPrintClient)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCDesktopAlertDialog message handlers
@@ -63,9 +61,9 @@ HBRUSH CMFCDesktopAlertDialog::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	{
 		pDC->SetBkMode(TRANSPARENT);
 
-		if (afxGlobalData.IsHighContrastMode())
+		if (GetGlobalData()->IsHighContrastMode())
 		{
-			pDC->SetTextColor(afxGlobalData.clrWindowText);
+			pDC->SetTextColor(GetGlobalData()->clrWindowText);
 		}
 
 		return(HBRUSH) ::GetStockObject(HOLLOW_BRUSH);
@@ -74,16 +72,8 @@ HBRUSH CMFCDesktopAlertDialog::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
-BOOL CMFCDesktopAlertDialog::OnEraseBkgnd(CDC* pDC)
+BOOL CMFCDesktopAlertDialog::OnEraseBkgnd(CDC* /* pDC */)
 {
-	if (!afxGlobalData.IsWindowsThemingDrawParentBackground())
-	{
-		CRect rectClient;
-		GetClientRect(&rectClient);
-
-		CMFCVisualManager::GetInstance()->OnFillPopupWindowBackground(pDC, rectClient);
-	}
-
 	return TRUE;
 }
 
@@ -268,10 +258,10 @@ CSize CMFCDesktopAlertDialog::GetOptimalTextSize(CString str)
 
 	CClientDC dc(this);
 
-	CFont* pOldFont = dc.SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = dc.SelectObject(&(GetGlobalData()->fontRegular));
 	ASSERT_VALID(pOldFont);
 
-	int nStepY = afxGlobalData.GetTextHeight();
+	int nStepY = GetGlobalData()->GetTextHeight();
 	int nStepX = nStepY * 3;
 
 	CRect rectText(0, 0, nStepX, nStepY);
@@ -359,7 +349,7 @@ BOOL CMFCDesktopAlertDialog::CreateFromParams(CMFCDesktopAlertWndInfo& params, C
 		CRect rectText(CPoint(x, y), CSize(cx, sizeText.cy));
 
 		m_wndText.Create(strText, WS_CHILD | WS_VISIBLE, rectText, this);
-		m_wndText.SetFont(&afxGlobalData.fontRegular);
+		m_wndText.SetFont(&(GetGlobalData()->fontRegular));
 
 		y = rectText.bottom + nYMargin;
 	}

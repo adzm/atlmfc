@@ -24,7 +24,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCTasksPane additional classes
 
 class CMFCTasksPane;
@@ -192,16 +192,15 @@ protected:
 	virtual void AdjustLocations();
 	virtual BOOL OnUserToolTip(CMFCToolBarButton* pButton, CString& strTTText) const;
 
-	//{{AFX_MSG(CMFCTasksPaneToolBar)
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CMFCToolBarMenuButton* m_pBtnBack;
 	CMFCToolBarMenuButton* m_pBtnForward;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCTasksPane window
 
 class CMFCTasksPane : public CDockablePane
@@ -541,7 +540,6 @@ public:
 	HMENU CreateMenu() const;
 
 protected:
-	//{{AFX_MSG(CMFCTasksPane)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
@@ -568,7 +566,7 @@ protected:
 	afx_msg void OnUpdateForward(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateClose(CCmdUI* pCmdUI);
 	afx_msg LRESULT OnSetText(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	virtual void DoPaint(CDC* pDC);

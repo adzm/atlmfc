@@ -216,7 +216,7 @@ void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, CString& value)
 	}
 }
 
-void AFXAPI DDX_Text(_Inout_ CDataExchange* pDX, _In_ int nIDC, _Out_z_cap_(nMaxLen) LPTSTR value, _In_ int nMaxLen)
+void AFXAPI DDX_Text(_Inout_ CDataExchange* pDX, _In_ int nIDC, _Out_writes_z_(nMaxLen) LPTSTR value, _In_ int nMaxLen)
 {
 	ASSERT(nMaxLen != 0);
 
@@ -643,54 +643,6 @@ void AFXAPI DDV_MaxChars(CDataExchange* pDX, CString const& value, int nChars)
 		// ensure that the characters will be limited for both kinds of controls.
 		::SendMessage(hWndLastControl, EM_SETLIMITTEXT, nChars, 0);
 		::SendMessage(hWndLastControl, CB_LIMITTEXT, nChars, 0);
-	}
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// Special DDX_ proc for subclassing controls
-
-void AFXAPI DDX_Control(CDataExchange* pDX, int nIDC, CWnd& rControl)
-{
-	if ((rControl.m_hWnd == NULL) && (rControl.GetControlUnknown() == NULL))    // not subclassed yet
-	{
-		ASSERT(!pDX->m_bSaveAndValidate);
-
-		pDX->PrepareCtrl(nIDC);
-		HWND hWndCtrl;
-		pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
-		
-		CMFCControlContainer* pMFCCtrlContainer = pDX->m_pDlgWnd->GetMFCControlContainer();
-		if (pMFCCtrlContainer != NULL && pMFCCtrlContainer->IsSubclassedFeaturePackControl(hWndCtrl))
-		{
-			pMFCCtrlContainer->ReSubclassControl(hWndCtrl, (WORD)nIDC, rControl);
-			return;
-		}
-		
-		if ((hWndCtrl != NULL) && !rControl.SubclassWindow(hWndCtrl))
-		{
-			ASSERT(FALSE);      // possibly trying to subclass twice?
-			AfxThrowNotSupportedException();
-		}
-#ifndef _AFX_NO_OCC_SUPPORT
-		else
-		{
-			if (hWndCtrl == NULL)
-			{
-				if (pDX->m_pDlgWnd->GetOleControlSite(nIDC) != NULL)
-				{
-					rControl.AttachControlSite(pDX->m_pDlgWnd, nIDC);
-				}
-			}
-			else
-			{
-				// If the control has reparented itself (e.g., invisible control),
-				// make sure that the CWnd gets properly wired to its control site.
-				if (pDX->m_pDlgWnd->m_hWnd != ::GetParent(rControl.m_hWnd))
-					rControl.AttachControlSite(pDX->m_pDlgWnd);
-			}
-		}
-#endif //!_AFX_NO_OCC_SUPPORT
-
 	}
 }
 

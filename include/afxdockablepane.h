@@ -27,16 +27,11 @@
 
 #define AFX_CONTROLBAR_BUTTONS_NUM 3  // Hide + Expand + Menu
 
-// auto hide timer events
-static const UINT AFX_AUTO_HIDE_SLIDE_IN_EVENT     = 1;
-static const UINT AFX_AUTO_HIDE_SLIDE_OUT_EVENT    = 2;
-static const UINT AFX_ID_CHECK_AUTO_HIDE_CONDITION = 3;
-
 class CDockablePane;
 class CTabbedPane;
 class CPaneContainerManager;
 
-/////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDockablePane control bar styles
 
 #define AFX_SCBS_EDGELEFT       0x00000001
@@ -157,7 +152,7 @@ public:
 	virtual void UnSetAutoHideMode (CDockablePane* pFirstBarInGroup);
 	BOOL ReplacePane(CDockablePane* pBarToReplaceWith, AFX_DOCK_METHOD dockMethod, BOOL bRegisterWithFrame = FALSE);
 
-	void RemoveFromDefaultPaneDividier();
+	void RemoveFromDefaultPaneDivider();
 
 	virtual void ShowPane(BOOL bShow, BOOL bDelay, BOOL bActivate/* = TRUE*/);
 	virtual BOOL DockToRecentPos() { return Dock(NULL, NULL, DM_SHOW); }
@@ -165,10 +160,6 @@ public:
 	virtual void EnableGripper(BOOL bEnable);
 
 	virtual CMFCAutoHideBar* SetAutoHideMode(BOOL bMode, DWORD dwAlignment, CMFCAutoHideBar* pCurrAutoHideBar = NULL, BOOL bUseTimer = TRUE);
-	static void __stdcall SetCaptionStyle(BOOL bDrawText, BOOL bForceGradient = FALSE, BOOL bHideDisabledButtons = FALSE);
-	
-	static BOOL __stdcall IsDrawCaption() { return m_bCaptionText; }
-	static BOOL __stdcall IsHideDisabledButtons() { return m_bHideDisabledButtons; }
 
 	static CPaneDivider* __stdcall CreateDefaultPaneDivider(DWORD dwAlignment, CWnd* pParent, CRuntimeClass* pSliderRTC = NULL);
 
@@ -182,10 +173,8 @@ public:
 
 	void SetLastPercentInPaneContainer(int n) { m_nLastPercent = n; }
 	int  GetLastPercentInPaneContainer() const { return m_nLastPercent; }
-	void GetRecentSiblingPaneInfo(CList<UINT, UINT&>& lstBarIDs);
 
 	CRect GetAHRestoredRect() const {return m_rectRestored;}
-	virtual BOOL CanAdjustLayout() const { return !m_bIsSliding || !m_bIsHiding; }
 	virtual UINT GetAHSlideMode() const { return m_ahSlideMode; }
 
 	CMFCAutoHideBar* GetAutoHideToolBar() const { return m_pAutoHideBar; }
@@ -213,7 +202,6 @@ public:
 	AFX_IMPORT_DATA static int m_nSlideSteps;
 
 protected:
-	//{{AFX_MSG(CDockablePane)
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
 	afx_msg void OnNcPaint();
 	afx_msg void OnPaint();
@@ -236,7 +224,7 @@ protected:
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 protected:
@@ -312,9 +300,6 @@ protected:
 	CPoint CalcCorrectOffset(CRect rect, BOOL bIsRTL);
 
 	CTypedPtrArray<CObArray, CMFCCaptionButton*> m_arrButtons;
-
-	AFX_IMPORT_DATA static BOOL m_bCaptionText;
-	AFX_IMPORT_DATA static BOOL m_bHideDisabledButtons;
 
 	CRuntimeClass* m_pTabbedControlBarRTC;
 	CToolTipCtrl*  m_pToolTip;

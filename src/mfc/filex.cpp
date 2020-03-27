@@ -55,7 +55,7 @@ void PASCAL CFileException::ThrowErrno(int nErrno,
 			_doserrno, lpszFileName);
 }
 
-BOOL CFileException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL CFileException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext) const
 {
 	ASSERT(lpszError != NULL && AfxIsValidString(lpszError, nMaxError));

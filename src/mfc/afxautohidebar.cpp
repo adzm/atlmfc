@@ -17,13 +17,10 @@
 #include "afxdocksite.h"
 #include "afxdockablepane.h"
 #include "afxdockingpanesrow.h"
-#include "afxtrackmouse.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-#define AFX_DISPLAY_AHWND_EVENT	1
 
 int CMFCAutoHideBar::m_nShowAHWndDelay = 400;
 
@@ -53,14 +50,12 @@ CMFCAutoHideBar::~CMFCAutoHideBar()
 }
 
 BEGIN_MESSAGE_MAP(CMFCAutoHideBar, CPane)
-	//{{AFX_MSG_MAP(CMFCAutoHideBar)
 	ON_WM_CREATE()
 	ON_WM_MOUSEMOVE()
 	ON_WM_NCDESTROY()
 	ON_WM_TIMER()
 	ON_WM_LBUTTONDOWN()
-	//}}AFX_MSG_MAP
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCAutoHideBar::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -284,8 +279,7 @@ void CMFCAutoHideBar::OnMouseMove(UINT /*nFlags*/, CPoint /*point*/)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 
 	if (pBtn != NULL && !m_bReadyToDisplayAHWnd)
@@ -301,7 +295,7 @@ void CMFCAutoHideBar::OnMouseMove(UINT /*nFlags*/, CPoint /*point*/)
 			{
 				KillTimer(m_nDisplayAHWndTimerID);
 			}
-			m_nDisplayAHWndTimerID = SetTimer(AFX_DISPLAY_AHWND_EVENT, m_nShowAHWndDelay, NULL);
+			m_nDisplayAHWndTimerID = SetTimer(AFX_TIMER_ID_DISPLAY_AHWND_EVENT, m_nShowAHWndDelay, NULL);
 		}
 
 		if (m_pHighlightedButton != NULL && m_pHighlightedButton != pBtn)
@@ -322,7 +316,7 @@ void CMFCAutoHideBar::OnMouseMove(UINT /*nFlags*/, CPoint /*point*/)
 	}
 }
 
-LRESULT CMFCAutoHideBar::OnMouseLeave(WPARAM, LPARAM)
+void CMFCAutoHideBar::OnMouseLeave()
 {
 	if (m_pHighlightedButton != NULL)
 	{
@@ -336,7 +330,6 @@ LRESULT CMFCAutoHideBar::OnMouseLeave(WPARAM, LPARAM)
 	}
 
 	m_bTracked = FALSE;
-	return 0;
 }
 
 CMFCAutoHideButton* CMFCAutoHideBar::ButtonFromPoint(CPoint pt)
@@ -414,7 +407,7 @@ void CMFCAutoHideBar::OnNcDestroy()
 
 void CMFCAutoHideBar::OnTimer(UINT_PTR nIDEvent)
 {
-	if (nIDEvent == AFX_DISPLAY_AHWND_EVENT)
+	if (nIDEvent == AFX_TIMER_ID_DISPLAY_AHWND_EVENT)
 	{
 		CPoint pt;
 		GetCursorPos(&pt);

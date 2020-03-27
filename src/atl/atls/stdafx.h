@@ -13,11 +13,10 @@
 
 #include <atlbase.h>
 #include <atlcom.h>
-#include <atlwin.h>
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 #include <atlimage.h>
+#endif
 #include <atlcomtime.h>
 #include <atlmem.h>
-#include <atlstr.h>
-#include <atltime.h>
 
 #include <atldebugapi.h>

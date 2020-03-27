@@ -19,35 +19,35 @@ namespace ATL
 
 #ifdef _DEBUG
 
-CTraceCategory atlTraceGeneral("atlTraceGeneral");
-CTraceCategory atlTraceCOM("atlTraceCOM");  
-CTraceCategory atlTraceQI("atlTraceQI");	
-CTraceCategory atlTraceRegistrar("atlTraceRegistrar");
-CTraceCategory atlTraceRefcount("atlTraceRefcount");
-CTraceCategory atlTraceWindowing("atlTraceWindowing");
-CTraceCategory atlTraceControls("atlTraceControls");
-CTraceCategory atlTraceHosting("atlTraceHosting"); 
-CTraceCategory atlTraceDBClient("atlTraceDBClient");  
-CTraceCategory atlTraceDBProvider("atlTraceDBProvider");
-CTraceCategory atlTraceSnapin("atlTraceSnapin");
-CTraceCategory atlTraceNotImpl("atlTraceNotImpl");   
-CTraceCategory atlTraceAllocation("atlTraceAllocation");
-CTraceCategory atlTraceException("atlTraceException");
-CTraceCategory atlTraceTime("atlTraceTime");
-CTraceCategory atlTraceCache("atlTraceCache");
-CTraceCategory atlTraceStencil("atlTraceStencil");
-CTraceCategory atlTraceString("atlTraceString");
-CTraceCategory atlTraceMap("atlTraceMap");	
-CTraceCategory atlTraceUtil("atlTraceUtil");		
-CTraceCategory atlTraceSecurity("atlTraceSecurity");
-CTraceCategory atlTraceSync("atlTraceSync");
-CTraceCategory atlTraceISAPI("atlTraceISAPI");		
+CTraceCategory atlTraceGeneral(_T("atlTraceGeneral"));
+CTraceCategory atlTraceCOM(_T("atlTraceCOM"));
+CTraceCategory atlTraceQI(_T("atlTraceQI"));
+CTraceCategory atlTraceRegistrar(_T("atlTraceRegistrar"));
+CTraceCategory atlTraceRefcount(_T("atlTraceRefcount"));
+CTraceCategory atlTraceWindowing(_T("atlTraceWindowing"));
+CTraceCategory atlTraceControls(_T("atlTraceControls"));
+CTraceCategory atlTraceHosting(_T("atlTraceHosting"));
+CTraceCategory atlTraceDBClient(_T("atlTraceDBClient"));
+CTraceCategory atlTraceDBProvider(_T("atlTraceDBProvider"));
+CTraceCategory atlTraceSnapin(_T("atlTraceSnapin"));
+CTraceCategory atlTraceNotImpl(_T("atlTraceNotImpl"));
+CTraceCategory atlTraceAllocation(_T("atlTraceAllocation"));
+CTraceCategory atlTraceException(_T("atlTraceException"));
+CTraceCategory atlTraceTime(_T("atlTraceTime"));
+CTraceCategory atlTraceCache(_T("atlTraceCache"));
+CTraceCategory atlTraceStencil(_T("atlTraceStencil"));
+CTraceCategory atlTraceString(_T("atlTraceString"));
+CTraceCategory atlTraceMap(_T("atlTraceMap"));
+CTraceCategory atlTraceUtil(_T("atlTraceUtil"));
+CTraceCategory atlTraceSecurity(_T("atlTraceSecurity"));
+CTraceCategory atlTraceSync(_T("atlTraceSync"));
+CTraceCategory atlTraceISAPI(_T("atlTraceISAPI"));
 
 #pragma warning( disable: 4995 )  // Ignore #pragma deprecated warnings
-CTraceCategory atlTraceUser("atlTraceUser");		
-CTraceCategory atlTraceUser2("atlTraceUser2");		
-CTraceCategory atlTraceUser3("atlTraceUser3");		
-CTraceCategory atlTraceUser4("atlTraceUser4");		
+CTraceCategory atlTraceUser(_T("atlTraceUser"));
+CTraceCategory atlTraceUser2(_T("atlTraceUser2"));
+CTraceCategory atlTraceUser3(_T("atlTraceUser3"));
+CTraceCategory atlTraceUser4(_T("atlTraceUser4"));
 
 #endif
 

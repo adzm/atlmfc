@@ -175,7 +175,7 @@ void CMFCOutlookBarPaneButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarIm
 		{
 			if (m_pWndParentBar->IsBackgroundTexture())
 			{
-				clrText = afxGlobalData.clrGrayedText;
+				clrText = GetGlobalData()->clrGrayedText;
 			}
 		}
 		else
@@ -187,7 +187,7 @@ void CMFCOutlookBarPaneButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarIm
 		{
 			if (m_pWndParentBar->IsBackgroundTexture())
 			{
-				clrText = afxGlobalData.clrWindowText;
+				clrText = GetGlobalData()->clrWindowText;
 			}
 			else
 			{

@@ -26,7 +26,7 @@ class CPane;
 class CDockablePane;
 class CPaneContainer;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPaneDivider window
 
 class CPaneDivider : public CBasePane
@@ -119,7 +119,6 @@ public:
 	virtual CSize CalcFixedLayout(BOOL bStretch, BOOL bHorz);
 
 protected:
-	//{{AFX_MSG(CPaneDivider)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -131,7 +130,7 @@ protected:
 	afx_msg void OnNcDestroy();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnCancelMode();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 protected:

@@ -79,9 +79,9 @@ BOOL __stdcall CTooltipManager::CreateToolTip(CToolTipCtrl*& pToolTip, CWnd* pWn
 
 	pToolTip->Activate(TRUE);
 
-	if (afxGlobalData.m_nMaxToolTipWidth != -1)
+	if (GetGlobalData()->m_nMaxToolTipWidth != -1)
 	{
-		pToolTip->SetMaxTipWidth(afxGlobalData.m_nMaxToolTipWidth);
+		pToolTip->SetMaxTipWidth(GetGlobalData()->m_nMaxToolTipWidth);
 	}
 
 	if (pWndParent->GetSafeHwnd() != NULL && afxTooltipManager != NULL && afxTooltipManager->m_lstOwners.Find(pWndParent->GetSafeHwnd()) == NULL)

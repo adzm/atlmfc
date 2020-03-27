@@ -769,14 +769,14 @@ void CCmdUI::SetText(LPCTSTR lpszText)
 		if (m_pSubMenu != NULL)
 			return; // don't change popup menus indirectly
 
-		// get current menu state so it doesn't change
-		UINT nState = m_pMenu->GetMenuState(m_nIndex, MF_BYPOSITION);
-		nState &= ~(MF_BITMAP|MF_OWNERDRAW|MF_SEPARATOR);
-
 		// set menu text
 		ENSURE(m_nIndex < m_nIndexMax);
-		VERIFY(m_pMenu->ModifyMenu(m_nIndex, MF_BYPOSITION |
-			MF_STRING | nState, m_nID, lpszText));
+
+		MENUITEMINFO menuInfo;
+		menuInfo.cbSize = sizeof(MENUITEMINFO);
+		menuInfo.fMask = MIIM_STRING;
+		menuInfo.dwTypeData = LPTSTR(lpszText);
+		VERIFY(m_pMenu->SetMenuItemInfo(m_nIndex, &menuInfo, TRUE));
 	}
 	else
 	{

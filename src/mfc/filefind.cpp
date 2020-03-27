@@ -72,7 +72,7 @@ BOOL CFileFind::FindFile(LPCTSTR pstrName /* = NULL */,
 
 	if (pstrName == NULL)
 		pstrName = _T("*.*");
-	else if (lstrlen(pstrName) >= (_countof(((WIN32_FIND_DATA*) m_pNextInfo)->cFileName)))
+	else if (_tcslen(pstrName) >= (_countof(((WIN32_FIND_DATA*) m_pNextInfo)->cFileName)))
 	{
 		::SetLastError(ERROR_BAD_ARGUMENTS);
 		return FALSE;		

@@ -118,7 +118,7 @@ UINT CWnd::GetDlgItemInt(int nID, BOOL* lpTrans, BOOL bSigned) const
 		return m_pCtrlCont->GetDlgItemInt(nID, lpTrans, bSigned);
 }
 
-int CWnd::GetDlgItemText(_In_ int nID, _Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpStr, _In_ int nMaxCount) const
+int CWnd::GetDlgItemText(_In_ int nID, _Out_writes_to_(nMaxCount, return + 1) LPTSTR lpStr, _In_ int nMaxCount) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 
@@ -251,7 +251,7 @@ void CWnd::SetWindowText(LPCTSTR lpszString)
 		m_pCtrlSite->SetWindowText(lpszString);
 }
 
-int CWnd::GetWindowText(_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lpszString, _In_ int nMaxCount) const
+int CWnd::GetWindowText(_Out_writes_to_(nMaxCount, return + 1) LPTSTR lpszString, _In_ int nMaxCount) const
 {
 	ASSERT(::IsWindow(m_hWnd) || (m_pCtrlSite != NULL));
 
@@ -263,7 +263,7 @@ int CWnd::GetWindowText(_Out_z_cap_post_count_(nMaxCount, return + 1) LPTSTR lps
 
 		m_pCtrlSite->GetWindowText(str);
 		Checked::tcsncpy_s(lpszString, nMaxCount, str, _TRUNCATE);
-		return lstrlen(lpszString);
+		return AtlStrLen(lpszString);
 	}
 }
 

@@ -22,7 +22,7 @@
 
 class CMFCColorDialog;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCCustomColorsPropertyPage dialog
 
 class CMFCCustomColorsPropertyPage : public CPropertyPage
@@ -37,7 +37,6 @@ public:
 	void Setup(BYTE R, BYTE G, BYTE B);
 
 protected:
-	//{{AFX_DATA(CMFCCustomColorsPropertyPage)
 	enum { IDD = IDD_AFXBARRES_COLORPAGE_TWO };
 	CMFCColorPickerCtrl m_wndLuminance;
 	CMFCColorPickerCtrl m_wndColorPicker;
@@ -47,7 +46,6 @@ protected:
 	UINT m_l;
 	UINT m_h;
 	UINT m_s;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -55,14 +53,13 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCCustomColorsPropertyPage)
 	virtual BOOL OnInitDialog();
 	afx_msg void OnRGBChanged();
 	afx_msg void OnHLSChanged();
 	afx_msg void OnLuminance();
 	afx_msg void OnColour();
 	afx_msg void OnDoubleClickedColor();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	BOOL m_bIsReady;

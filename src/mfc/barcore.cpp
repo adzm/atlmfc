@@ -21,7 +21,6 @@
 // IMPLEMENT_DYNAMIC for CControlBar is in wincore.cpp for .OBJ granularity reasons
 
 BEGIN_MESSAGE_MAP(CControlBar, CWnd)
-	//{{AFX_MSG_MAP(CControlBar)
 	ON_WM_TIMER()
 	ON_WM_PAINT()
 	ON_WM_CTLCOLOR()
@@ -39,7 +38,6 @@ BEGIN_MESSAGE_MAP(CControlBar, CWnd)
 	ON_MESSAGE_VOID(WM_INITIALUPDATE, CControlBar::OnInitialUpdate)
 	ON_MESSAGE(WM_HELPHITTEST, &CControlBar::OnHelpHitTest)
 	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -230,13 +228,10 @@ BOOL CControlBar::IsDockBar() const
 /////////////////////////////////////////////////////////////////////////////
 // Fly-by status bar help
 
-#define ID_TIMER_WAIT   0xE000  // timer while waiting to show status
-#define ID_TIMER_CHECK  0xE001  // timer to check for removal of status
-
 void CControlBar::ResetTimer(UINT_PTR nEvent, UINT nTime)
 {
-	KillTimer(ID_TIMER_WAIT);
-	KillTimer(ID_TIMER_CHECK);
+	KillTimer(AFX_TIMER_ID_TIMER_WAIT);
+	KillTimer(AFX_TIMER_ID_TIMER_CHECK);
 	VERIFY(SetTimer(nEvent, nTime, NULL));
 }
 
@@ -299,14 +294,14 @@ void CControlBar::OnTimer(UINT_PTR nIDEvent)
 	if (nHit < 0)
 	{
 		if (pModuleThreadState->m_nLastStatus == static_cast<INT_PTR>(-1))
-			KillTimer(ID_TIMER_CHECK);
+			KillTimer(AFX_TIMER_ID_TIMER_CHECK);
 		SetStatusText(static_cast<INT_PTR>(-1));
 	}
 
 	// set status text after initial timeout
-	if (nIDEvent == ID_TIMER_WAIT)
+	if (nIDEvent == AFX_TIMER_ID_TIMER_WAIT)
 	{
-		KillTimer(ID_TIMER_WAIT);
+		KillTimer(AFX_TIMER_ID_TIMER_WAIT);
 		if (nHit >= 0)
 			SetStatusText(nHit);
 	}
@@ -343,7 +338,7 @@ BOOL CControlBar::SetStatusText(INT_PTR nHit)
 			m_nStateFlags &= ~statusSet;
 			return TRUE;
 		}
-		KillTimer(ID_TIMER_WAIT);
+		KillTimer(AFX_TIMER_ID_TIMER_WAIT);
 	}
 	else
 	{
@@ -353,7 +348,7 @@ BOOL CControlBar::SetStatusText(INT_PTR nHit)
 			pModuleThreadState->m_pLastStatus = this;
 			pOwner->SendMessage(WM_SETMESSAGESTRING, nHit);
 			m_nStateFlags |= statusSet;
-			ResetTimer(ID_TIMER_CHECK, 200);
+			ResetTimer(AFX_TIMER_ID_TIMER_CHECK, 200);
 			return TRUE;
 		}
 	}
@@ -402,7 +397,7 @@ BOOL CControlBar::PreTranslateMessage(MSG* pMsg)
 			if (GetKeyState(VK_LBUTTON) >= 0 || bNotButton)
 			{
 				SetStatusText(static_cast<INT_PTR>(-1));
-				KillTimer(ID_TIMER_CHECK);
+				KillTimer(AFX_TIMER_ID_TIMER_CHECK);
 			}
 		}
 		else
@@ -410,14 +405,14 @@ BOOL CControlBar::PreTranslateMessage(MSG* pMsg)
 			if (message == WM_LBUTTONUP)
 			{
 				SetStatusText(static_cast<INT_PTR>(-1));
-				ResetTimer(ID_TIMER_CHECK, 200);
+				ResetTimer(AFX_TIMER_ID_TIMER_CHECK, 200);
 			}
 			else
 			{
 				if ((m_nStateFlags & statusSet) || GetKeyState(VK_LBUTTON) < 0)
 					SetStatusText(nHit);
 				else if (nHit != pModuleThreadState->m_nLastStatus)
-					ResetTimer(ID_TIMER_WAIT, 300);
+					ResetTimer(AFX_TIMER_ID_TIMER_WAIT, 300);
 			}
 		}
 		pModuleThreadState->m_nLastStatus = nHit;
@@ -573,9 +568,9 @@ int CControlBar::OnCreate(LPCREATESTRUCT lpcs)
 
 	if (IsKindOf(RUNTIME_CLASS(CToolBar)) || IsKindOf(RUNTIME_CLASS(CDockBar)))
 	{
-		if (CThemeHelper::IsAppThemed())
+		if (IsAppThemed())
 		{
-			m_hReBarTheme = CThemeHelper::OpenThemeData(m_hWnd, VSCLASS_REBAR);
+			m_hReBarTheme = OpenThemeData(m_hWnd, VSCLASS_REBAR);
 		}
 	}
 	return 0;
@@ -587,9 +582,9 @@ LRESULT CControlBar::OnThemeChanged()
 	{
 		if (NULL != m_hReBarTheme)
 		{
-			CThemeHelper::CloseThemeData(m_hReBarTheme);
+			CloseThemeData(m_hReBarTheme);
 		}
-		m_hReBarTheme = CThemeHelper::OpenThemeData(m_hWnd, VSCLASS_REBAR);
+		m_hReBarTheme = OpenThemeData(m_hWnd, VSCLASS_REBAR);
 	}
 	return 1;
 }
@@ -598,9 +593,9 @@ void CControlBar::OnDestroy()
 {
 	if (IsKindOf(RUNTIME_CLASS(CToolBar)) || IsKindOf(RUNTIME_CLASS(CDockBar)))
 	{
-		if (CThemeHelper::IsAppThemed())
+		if (IsAppThemed())
 		{
-			CThemeHelper::CloseThemeData(m_hReBarTheme);
+			CloseThemeData(m_hReBarTheme);
 		}
 	}
 
@@ -939,13 +934,12 @@ void CControlBar::DrawBorders(CDC* pDC, CRect& rect)
 
 		if (m_hReBarTheme)
 		{
-			if (CThemeHelper::IsThemeBackgroundPartiallyTransparent(m_hReBarTheme, RP_BACKGROUND, 0 /* No states defined */))
+			if (IsThemeBackgroundPartiallyTransparent(m_hReBarTheme, RP_BACKGROUND, 0 /* No states defined */))
 			{
-				CThemeHelper::DrawThemeParentBackground(m_hWnd, pDC->m_hDC, &rctBk);
+				DrawThemeParentBackground(m_hWnd, pDC->m_hDC, &rctBk);
 			}
 
-			hr = CThemeHelper::DrawThemeBackground(m_hReBarTheme, pDC->m_hDC, RP_BACKGROUND,
-									 0 /* No states defined */,&rctBk, NULL);
+			hr = DrawThemeBackground(m_hReBarTheme, pDC->m_hDC, RP_BACKGROUND, 0 /* No states defined */,&rctBk, NULL);
 		}
 
 		if (FAILED(hr))
@@ -1053,8 +1047,7 @@ BOOL CControlBar::DrawThemedGripper(CDC* pDC, const CRect& rect, BOOL fCentered)
 		SIZE size;
 
 		nPartId = RP_GRIPPERVERT;
-		hr = CThemeHelper::GetThemePartSize(m_hReBarTheme, pDC->m_hDC, nPartId,
-								 0, NULL, TS_TRUE, &size);
+		hr = GetThemePartSize(m_hReBarTheme, pDC->m_hDC, nPartId, 0, NULL, TS_TRUE, &size);
 		if (FAILED(hr))
 		{
 			return FALSE;
@@ -1088,8 +1081,7 @@ BOOL CControlBar::DrawThemedGripper(CDC* pDC, const CRect& rect, BOOL fCentered)
 		SIZE size;
 
 		nPartId = RP_GRIPPER;
-		hr = CThemeHelper::GetThemePartSize(m_hReBarTheme, pDC->m_hDC, nPartId,
-								 0, NULL, TS_TRUE, &size);
+		hr = GetThemePartSize(m_hReBarTheme, pDC->m_hDC, nPartId, 0, NULL, TS_TRUE, &size);
 		if (FAILED(hr))
 		{
 			return FALSE;
@@ -1119,8 +1111,7 @@ BOOL CControlBar::DrawThemedGripper(CDC* pDC, const CRect& rect, BOOL fCentered)
 		clipRect.bottom = rectClient.top;
 	}
 
-	hr = CThemeHelper::DrawThemeBackground(m_hReBarTheme, pDC->m_hDC, nPartId,
-				0, &rectGripper, &clipRect);
+	hr = DrawThemeBackground(m_hReBarTheme, pDC->m_hDC, nPartId, 0, &rectGripper, &clipRect);
 
 	if (FAILED(hr))
 	{

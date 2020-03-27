@@ -12,7 +12,6 @@
 #include "afxheaderctrl.h"
 #include "afxglobals.h"
 #include "afxvisualmanager.h"
-#include "afxtrackmouse.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -38,7 +37,6 @@ CMFCHeaderCtrl::~CMFCHeaderCtrl()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCHeaderCtrl)
 BEGIN_MESSAGE_MAP(CMFCHeaderCtrl, CHeaderCtrl)
 	ON_WM_ERASEBKGND()
 	ON_WM_PAINT()
@@ -47,10 +45,9 @@ BEGIN_MESSAGE_MAP(CMFCHeaderCtrl, CHeaderCtrl)
 	ON_WM_MOUSEMOVE()
 	ON_WM_CANCELMODE()
 	ON_WM_CREATE()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCHeaderCtrl::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 	ON_MESSAGE(WM_SETFONT, &CMFCHeaderCtrl::OnSetFont)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCHeaderCtrl message handlers
@@ -241,7 +238,7 @@ void CMFCHeaderCtrl::OnPaint()
 	CFont* pOldFont = SelectFont(pDC);
 	ASSERT_VALID(pOldFont);
 
-	pDC->SetTextColor(afxGlobalData.clrBtnText);
+	pDC->SetTextColor(GetGlobalData()->clrBtnText);
 	pDC->SetBkMode(TRANSPARENT);
 
 	CRect rect;
@@ -322,7 +319,7 @@ CFont* CMFCHeaderCtrl::SelectFont(CDC *pDC)
 	}
 	else
 	{
-		pOldFont = m_bIsDlgControl ? (CFont*) pDC->SelectStockObject(DEFAULT_GUI_FONT) : pDC->SelectObject(&afxGlobalData.fontRegular);
+		pOldFont = m_bIsDlgControl ? (CFont*) pDC->SelectStockObject(DEFAULT_GUI_FONT) : pDC->SelectObject(&(GetGlobalData()->fontRegular));
 	}
 
 	return pOldFont;
@@ -450,8 +447,7 @@ void CMFCHeaderCtrl::OnMouseMove(UINT nFlags, CPoint point)
 			trackmouseevent.cbSize = sizeof(trackmouseevent);
 			trackmouseevent.dwFlags = TME_LEAVE;
 			trackmouseevent.hwndTrack = GetSafeHwnd();
-			trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-			::AFXTrackMouse(&trackmouseevent);
+			TrackMouseEvent(&trackmouseevent);
 		}
 
 		if (nPrevHighlightedItem != m_nHighlightedItem)
@@ -463,7 +459,7 @@ void CMFCHeaderCtrl::OnMouseMove(UINT nFlags, CPoint point)
 	CHeaderCtrl::OnMouseMove(nFlags, point);
 }
 
-LRESULT CMFCHeaderCtrl::OnMouseLeave(WPARAM,LPARAM)
+void CMFCHeaderCtrl::OnMouseLeave()
 {
 	m_bTracked = FALSE;
 
@@ -472,8 +468,6 @@ LRESULT CMFCHeaderCtrl::OnMouseLeave(WPARAM,LPARAM)
 		m_nHighlightedItem = -1;
 		RedrawWindow();
 	}
-
-	return 0;
 }
 
 void CMFCHeaderCtrl::OnCancelMode()

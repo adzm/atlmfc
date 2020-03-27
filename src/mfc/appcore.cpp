@@ -12,8 +12,11 @@
 #include <malloc.h>
 #include "sal.h"
 
-#include "afxglobals.h"
 #include "afxdatarecovery.h"
+
+#ifdef _AFXDLL
+#include "afxglobals.h"
+#endif
 
 AFX_STATIC_DATA const TCHAR _afxFileSection[] = _T("Recent File List");
 AFX_STATIC_DATA const TCHAR _afxFileEntry[] = _T("File%d");
@@ -29,48 +32,88 @@ CDocManager* CDocManager::pStaticDocManager = NULL;
 CPtrList* CDocManager::pStaticList = NULL;
 
 BEGIN_MESSAGE_MAP(CWinApp, CCmdTarget)
-	//{{AFX_MSG_MAP(CWinApp)
 	// Global File commands
 	ON_COMMAND(ID_APP_EXIT, &CWinApp::OnAppExit)
 	// MRU - most recently used file menu
 	ON_UPDATE_COMMAND_UI(ID_FILE_MRU_FILE1, &CWinApp::OnUpdateRecentFileMenu)
 	ON_COMMAND_EX_RANGE(ID_FILE_MRU_FILE1, ID_FILE_MRU_FILE16, &CWinApp::OnOpenRecentFile)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // _AFX_WIN_STATE implementation
 
 
-static HINSTANCE _AfxLoadLangDLL(LPCTSTR pszFormat, LPCTSTR pszPath, LCID lcid)
+static HINSTANCE _AfxLoadLangDLL(LPCWSTR pszFormat, LPCWSTR pszPath, LPCWSTR pwzLocaleName)
 {
-	TCHAR szLangDLL[_MAX_PATH+14];
-	TCHAR szLangCode[4];
-	HINSTANCE hInstance;
-	if (lcid == LOCALE_SYSTEM_DEFAULT)
+	WCHAR szLangDLL[_MAX_PATH+14];
+	WCHAR szLangCode[4];
+	HINSTANCE hInstance = NULL;
+	int nResult = _AfxGetLocaleInfoEx(pwzLocaleName, LOCALE_SABBREVLANGNAME, szLangCode, 4);
+	if (nResult == 0)
 	{
-		Checked::tcscpy_s(szLangCode, _countof(szLangCode), _T("LOC"));
+		return NULL;
 	}
-	else
-	{
-		int nResult;
-		nResult = ::GetLocaleInfo(lcid, LOCALE_SABBREVLANGNAME, szLangCode, 4);
-		if (nResult == 0)
-			return NULL;
-		ASSERT( nResult == 4 );
-	}
+	ASSERT(nResult == 4);
 
 	int ret;
-	ATL_CRT_ERRORCHECK_SPRINTF(ret = _sntprintf_s(szLangDLL,_countof(szLangDLL),_countof(szLangDLL)-1,pszFormat,pszPath,szLangCode));
-	if(ret == -1 || ret >= _countof(szLangDLL))
+	ATL_CRT_ERRORCHECK_SPRINTF(ret = _snwprintf_s(szLangDLL, _countof(szLangDLL), _countof(szLangDLL) - 1, pszFormat, pszPath, szLangCode));
+	if (ret == -1 || ret >= _countof(szLangDLL))
 	{
 		ASSERT(FALSE);
 		return NULL;
 	}
 
-	hInstance = ::LoadLibraryEx(szLangDLL, NULL, 0);
+	hInstance = ::LoadLibraryExW(szLangDLL, NULL, LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+
+	if (hInstance == NULL)
+	{
+		// if library load failed using flags only valid on Vista+, fall back to using flags valid on XP
+		hInstance = ::LoadLibraryExW(szLangDLL, NULL, LOAD_LIBRARY_AS_DATAFILE);
+	}
 
 	return hInstance;
+}
+
+static HINSTANCE _AfxLoadLocDLL(LPCWSTR pszFormat, LPCWSTR pszPath)
+{
+	WCHAR szLangDLL[_MAX_PATH+14];
+	HINSTANCE hInstance = NULL;
+
+	int ret;
+	ATL_CRT_ERRORCHECK_SPRINTF(ret = _snwprintf_s(szLangDLL, _countof(szLangDLL), _countof(szLangDLL) - 1, pszFormat, pszPath, L"LOC"));
+	if (ret == -1 || ret >= _countof(szLangDLL))
+	{
+		ASSERT(FALSE);
+		return NULL;
+	}
+
+	hInstance = ::LoadLibraryExW(szLangDLL, NULL, LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+
+	if (hInstance == NULL)
+	{
+		// if library load failed using flags only valid on Vista+, fall back to using flags valid on XP
+		hInstance = ::LoadLibraryExW(szLangDLL, NULL, LOAD_LIBRARY_AS_DATAFILE);
+	}
+
+	return hInstance;
+}
+
+HINSTANCE AFXAPI _AfxLoadLangDLLFromList(LPCWSTR pszFormat, LPCWSTR pszPath, LPWSTR pszLanguageList)
+{
+	HINSTANCE hLangDLL = NULL;
+	WCHAR *pwz = pszLanguageList;
+	while (*pwz != 0)
+	{
+		// Load the resource DLL using the language names.
+		hLangDLL = _AfxLoadLangDLL(pszFormat, pszPath, pwz);
+		if(hLangDLL != NULL)
+		{
+			return hLangDLL;
+		}
+		pwz += wcslen(pwz) + 1;  // move to next ID in list
+	}
+
+	return NULL;
 }
 
 static BOOL CALLBACK _AfxEnumResLangProc(HMODULE /*hModule*/, LPCTSTR /*pszType*/, 
@@ -85,165 +128,46 @@ static BOOL CALLBACK _AfxEnumResLangProc(HMODULE /*hModule*/, LPCTSTR /*pszType*
 	return TRUE;
 }
 
-class CActivationContext
-{
-protected :
-	HANDLE m_hCtxt;
-	ULONG_PTR m_uCookie;
-
-public:
-	CActivationContext(HANDLE hCtxt = INVALID_HANDLE_VALUE) : m_hCtxt( hCtxt ), m_uCookie( 0 )
-	{
-	};
-	
-	~CActivationContext()
-	{
-		Release();
-	}
-
-	bool Create( PCACTCTX pactctx )
-	{
-		ASSERT( pactctx != NULL );
-		if ( pactctx == NULL )
-		{
-			return false;
-		}
-
-		ASSERT( m_hCtxt == INVALID_HANDLE_VALUE );
-		if ( m_hCtxt != INVALID_HANDLE_VALUE )
-		{
-			return false;
-		}
-
-		return ( ( m_hCtxt = CreateActCtx( pactctx ) ) != INVALID_HANDLE_VALUE );
-	}
-
-	void Release()
-	{
-		if ( m_hCtxt != INVALID_HANDLE_VALUE )
-		{
-			Deactivate();
-			ReleaseActCtx( m_hCtxt );
-		}
-	}
-
-	bool Activate()
-	{
-		ASSERT( m_hCtxt != INVALID_HANDLE_VALUE );
-		if ( m_hCtxt == INVALID_HANDLE_VALUE )
-		{
-			return false;
-		}
-
-		ASSERT( m_uCookie == 0 );
-		if ( m_uCookie != 0 )
-		{
-			return false;
-		}
-	
-		return ( ActivateActCtx( m_hCtxt, &m_uCookie) == TRUE );
-	}
-	
-	bool Deactivate()
-	{
-		if ( m_uCookie != 0 )
-		{
-			ULONG_PTR uCookie = m_uCookie;
-			m_uCookie = 0;
-			return ( DeactivateActCtx(0, uCookie) == TRUE );
-		}
-		return true;
-	}
-};
-
-
 // HINSTANCE of the module
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 BOOL g_fLoadingResourcesForMFCDLL = FALSE;
 
-typedef BOOL (WINAPI *PFNGETPREFERREDUILANGS)(DWORD, PULONG, PZZWSTR, PULONG);
 const int nMaxExpectedPreferredLangs = 20;
 
 HINSTANCE AFXAPI AfxLoadLangResourceDLL(LPCTSTR pszFormat, LPCTSTR pszPath)
 {
+	CStringW strFormat = pszFormat;
+	CStringW strPath = pszPath;
+
 	// load language specific DLL
-	LANGID langid = 0;
-	int nPrimaryLang = 0;
-	int nSubLang = 0;
-	LCID lcid = 0;
-	LCID alcidSearch[nMaxExpectedPreferredLangs + 5];
-	int nLocales;
+	HINSTANCE hLangDLL = NULL;
 
-	nLocales = 0;
+	// Get the thread preferred UI languages using the language names
+	BOOL bGotPreferredLangs = FALSE;
+	ULONG nLanguages, cchLanguagesBuffer;
+	WCHAR wszLanguages[(6 * nMaxExpectedPreferredLangs) + 1] = {0}; // each lang has five chars plus NULL, plus terminating NULL
 
-	// First, get the thread preferred UI languages (if supported)
-	HMODULE hKernel = AfxCtxLoadLibrary(_T("KERNEL32.DLL"));
-	if (hKernel != NULL)
+	nLanguages = 0;
+	cchLanguagesBuffer = _countof(wszLanguages);
+	bGotPreferredLangs = _AfxGetThreadPreferredUILanguages(MUI_LANGUAGE_NAME | MUI_UI_FALLBACK, &nLanguages, wszLanguages, &cchLanguagesBuffer);
+	if (bGotPreferredLangs)
 	{
-		PFNGETPREFERREDUILANGS pfnGetThreadPreferredUILanguages = (PFNGETPREFERREDUILANGS)GetProcAddress(hKernel, "GetThreadPreferredUILanguages");
-		if (pfnGetThreadPreferredUILanguages != NULL)
+		// Load the resource DLL using the language names.
+		hLangDLL = _AfxLoadLangDLLFromList(strFormat, strPath, wszLanguages);
+		if (hLangDLL != NULL)
 		{
-			BOOL bGotPreferredLangs = FALSE;
-			ULONG nLanguages = 0;
-			WCHAR wszLanguages[(5 * nMaxExpectedPreferredLangs) + 1] = {0}; // each lang has four chars plus NULL, plus terminating NULL
-			ULONG cchLanguagesBuffer = _countof(wszLanguages);
-			bGotPreferredLangs = pfnGetThreadPreferredUILanguages(MUI_LANGUAGE_ID | MUI_UI_FALLBACK, &nLanguages, wszLanguages, &cchLanguagesBuffer);
-			if (bGotPreferredLangs)
-			{
-				WCHAR *pwz = wszLanguages;
-				while ((*pwz != 0) && (nLocales < nMaxExpectedPreferredLangs))
-				{
-					ULONG ulLangID = wcstoul(pwz, NULL, 16);
-					if ((ulLangID != 0) && (errno != ERANGE))
-					{
-						alcidSearch[nLocales] = (LCID)ulLangID;
-						nLocales++;
-					}
-					pwz += wcslen(pwz) + 1;  // move to next ID in list
-				}
-			}
+			return hLangDLL;
 		}
 	}
 
-	// Next, try the user's UI language
-	langid = GetUserDefaultUILanguage();
-	nPrimaryLang = PRIMARYLANGID(langid);
-	nSubLang = SUBLANGID(langid);
-
-	lcid = MAKELCID(MAKELANGID(nPrimaryLang, nSubLang), SORT_DEFAULT);
-	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-	nLocales++;
-
-	lcid = MAKELCID(MAKELANGID(nPrimaryLang, SUBLANG_NEUTRAL), SORT_DEFAULT);
-	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-	nLocales++;
-
-	// Then, try the system's default UI language
-	langid = GetSystemDefaultUILanguage();
-	nPrimaryLang = PRIMARYLANGID(langid);
-	nSubLang = SUBLANGID(langid);
-
-	lcid = MAKELCID(MAKELANGID(nPrimaryLang, nSubLang), SORT_DEFAULT);
-	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-	nLocales++;
-
-	lcid = MAKELCID(MAKELANGID(nPrimaryLang, SUBLANG_NEUTRAL), SORT_DEFAULT);
-	alcidSearch[nLocales] = ::ConvertDefaultLocale(lcid);
-	nLocales++;
-
 	if (!g_fLoadingResourcesForMFCDLL)
 	{
-		alcidSearch[nLocales] = LOCALE_SYSTEM_DEFAULT;
-		nLocales++;
-	}
-
-	for(int iLocale = 0; iLocale < nLocales; iLocale++)
-	{
-		HINSTANCE hLangDLL;
-
-		hLangDLL = _AfxLoadLangDLL(pszFormat, pszPath, alcidSearch[iLocale]);
+		// Attempt to load a "LOC" resource DLL.
+		hLangDLL = _AfxLoadLocDLL(strFormat, strPath);
 		if(hLangDLL != NULL)
+		{
 			return hLangDLL;
+		}
 	}
 
 	return NULL;
@@ -252,7 +176,7 @@ HINSTANCE AFXAPI AfxLoadLangResourceDLL(LPCTSTR pszFormat, LPCTSTR pszPath)
 HINSTANCE AFXAPI AfxLoadLangResourceDLL(LPCTSTR pszFormat)
 {
 	TCHAR pszNewFormat[MAX_PATH + 2 + 1] = _T("%s"); // have space for %s and string terminator
-	ENSURE(_tcslen(pszFormat) <= MAX_PATH);
+	ENSURE(AtlStrLen(pszFormat) <= MAX_PATH);
 	_tcscat_s (pszNewFormat, _countof(pszNewFormat), pszFormat);
 	return AfxLoadLangResourceDLL(pszNewFormat, _T(""));
 }
@@ -287,6 +211,7 @@ CWinApp::CWinApp(LPCTSTR lpszAppName)
 	m_pszProfileName = NULL;
 	m_pszRegistryKey = NULL;
 	m_pszExeName = NULL;
+	m_pszAppID = NULL;
 	m_pRecentFileList = NULL;
 	m_pDocManager = NULL;
 	m_atomApp = m_atomSystemTopic = NULL;
@@ -315,6 +240,20 @@ CWinApp::CWinApp(LPCTSTR lpszAppName)
 	m_nAutosaveInterval = 5 * 60 * 1000;   // default autosave interval is 5 minutes (only has effect if autosave flag is set)
 
 	m_bTaskbarInteractionEnabled = TRUE;
+
+	// Detect the kind of OS:
+	OSVERSIONINFO osvi;
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	::GetVersionEx(&osvi);
+
+	m_bIsWindows7 = (osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1) || (osvi.dwMajorVersion > 6);
+
+	// Taskbar initialization:
+	m_bComInitialized = FALSE;
+
+	m_pTaskbarList = NULL;
+	m_pTaskbarList3 = NULL;
+	m_bTaskBarInterfacesAvailable = TRUE;
 }
 
 BOOL CWinApp::LoadSysPolicies() 
@@ -696,6 +635,14 @@ CWinApp::~CWinApp()
 {
 	AFX_BEGIN_DESTRUCTOR
 
+	ReleaseTaskBarRefs();
+
+	if (m_bComInitialized)
+	{
+		CoUninitialize();
+		m_bComInitialized = FALSE;
+	}
+
 	// free doc manager
 	if (m_pDocManager != NULL)
 		delete m_pDocManager;
@@ -789,9 +736,10 @@ int CWinApp::ExitInstance()
 
 #ifdef _AFXDLL
 	AfxGlobalsRelease();
-#else
-	ControlBarCleanUp();
 #endif
+
+	// Release any references to D2D
+	AfxReleaseD2DRefs();
 
 	// Cleanup DAO if necessary
 	if (m_lpfnDaoTerm != NULL)
@@ -969,32 +917,24 @@ HRESULT CWinApp::RegisterWithRestartManager(LPCWSTR pwzCommandLineArgs, DWORD dw
 {
 	HRESULT hr = S_OK;
 
-	HMODULE hKernel = GetModuleHandleW(L"KERNEL32.DLL");
-	ENSURE(hKernel != NULL);
-	PFNREGISTERAPPLICATIONRESTART pfnRegisterApplicationRestart = (PFNREGISTERAPPLICATIONRESTART)GetProcAddress(hKernel, "RegisterApplicationRestart");
-	PFNREGISTERAPPLICATIONRECOVERYCALLBACK pfnRegisterApplicationRecoveryCallback = (PFNREGISTERAPPLICATIONRECOVERYCALLBACK)GetProcAddress(hKernel, "RegisterApplicationRecoveryCallback");
-
-	if (pfnRegisterApplicationRestart && pfnRegisterApplicationRecoveryCallback)
+	// Register for restart by the Restart Manager (component update scenario)
+	// Note that according to MSDN, UnregisterApplicationRestart does not need to be called on normal
+	// application shutdown, but only if the application for some reason can no longer be restarted.
+	hr = _AfxRegisterApplicationRestart(pwzCommandLineArgs, dwRestartFlags);
+	if (hr != S_OK)
 	{
-		// Register for restart by the Restart Manager (component update scenario)
-		// Note that according to MSDN, UnregisterApplicationRestart does not need to be called on normal
-		// application shutdown, but only if the application for some reason can no longer be restarted.
-		hr = pfnRegisterApplicationRestart(pwzCommandLineArgs, dwRestartFlags);
+		return hr;
+	}
+
+	if (pRecoveryCallback != NULL)
+	{
+		// Register for application recovery (application hang or crash scenario)
+		// Note that according to MSDN, UnregisterApplicationRecoveryCallback does not need to be called on normal
+		// application shutdown, but only if the application for some reason can no longer do recovery.
+		hr = _AfxRegisterApplicationRecoveryCallback(pRecoveryCallback, lpvParam, dwPingInterval, dwCallbackFlags);
 		if (hr != S_OK)
 		{
 			return hr;
-		}
-
-		if (pRecoveryCallback != NULL)
-		{
-			// Register for application recovery (application hang or crash scenario)
-			// Note that according to MSDN, UnregisterApplicationRecoveryCallback does not need to be called on normal
-			// application shutdown, but only if the application for some reason can no longer do recovery.
-			hr = pfnRegisterApplicationRecoveryCallback(pRecoveryCallback, lpvParam, dwPingInterval, dwCallbackFlags);
-			if (hr != S_OK)
-			{
-				return hr;
-			}
 		}
 	}
 
@@ -1006,35 +946,27 @@ DWORD CWinApp::ApplicationRecoveryCallback(LPVOID /* lpvParam */)
 	// To change this behavior, either override CWinApp::ApplicationRecoveryCallback or
 	// call CWinApp::RegisterWithRestartManager using your own recovery callback function.
 
-	HMODULE hKernel = GetModuleHandleW(L"KERNEL32.DLL");
-	ENSURE(hKernel != NULL);
-	PFNAPPLICATIONRECOVERYINPROGRESS pfnApplicationRecoveryInProgress = (PFNAPPLICATIONRECOVERYINPROGRESS)GetProcAddress(hKernel, "ApplicationRecoveryInProgress");
-	PFNAPPLICATIONRECOVERYFINISHED pfnApplicationRecoveryFinished = (PFNAPPLICATIONRECOVERYFINISHED)GetProcAddress(hKernel, "ApplicationRecoveryFinished");
-
-	if (pfnApplicationRecoveryInProgress && pfnApplicationRecoveryFinished)
+	// ApplicationRecoveryInProgress must be called before the ping interval has elapsed. The ping interval
+	// is set via the dwPingInterval parameter in the call to RegisterApplicationRecoveryCallback above.
+	BOOL bRecoveryCanceled = FALSE;
+	HRESULT hr = _AfxApplicationRecoveryInProgress(&bRecoveryCanceled);
+	if (FAILED(hr) || bRecoveryCanceled)
 	{
-		// ApplicationRecoveryInProgress must be called before the ping interval has elapsed. The ping interval
-		// is set via the dwPingInterval parameter in the call to RegisterApplicationRecoveryCallback above.
-		BOOL bRecoveryCanceled = FALSE;
-		pfnApplicationRecoveryInProgress(&bRecoveryCanceled);
-		if (bRecoveryCanceled)
-		{
-			// Recovery has been canceled, so terminate the application.
-			return 0;
-		}
-
-		BOOL bRecoverySuccessful = TRUE;
-		CDataRecoveryHandler *pHandler = GetDataRecoveryHandler();
-		if (pHandler)
-		{
-			// Save the list of open documents to the registry.  Since an exception has already
-			// occurred, we do as little as possible here, so we don't do any document autosaves.
-			bRecoverySuccessful = pHandler->SaveOpenDocumentList();
-		}
-
-		// Once recovery is complete, call ApplicationRecoveryFinished so the Restart Manager can restart the app.
-		pfnApplicationRecoveryFinished(bRecoverySuccessful);
+		// Recovery has been canceled, so terminate the application.
+		return 0;
 	}
+
+	BOOL bRecoverySuccessful = TRUE;
+	CDataRecoveryHandler *pHandler = GetDataRecoveryHandler();
+	if (pHandler)
+	{
+		// Save the list of open documents to the registry.  Since an exception has already
+		// occurred, we do as little as possible here, so we don't do any document autosaves.
+		bRecoverySuccessful = pHandler->SaveOpenDocumentList();
+	}
+
+	// Once recovery is complete, call ApplicationRecoveryFinished so the Restart Manager can restart the app.
+	_AfxApplicationRecoveryFinished(bRecoverySuccessful);
 
 	return 0;
 }
@@ -1045,7 +977,7 @@ CDataRecoveryHandler *CWinApp::GetDataRecoveryHandler()
 
 	// Since the application restart and application recovery are supported only on Windows
 	// Vista and above, we don't need a recovery handler on Windows versions less than Vista.
-	if (afxGlobalData.bIsWindowsVista && (SupportsRestartManager() || SupportsApplicationRecovery()))
+	if (SupportsRestartManager() || SupportsApplicationRecovery())
 	{
 		if (!bTriedOnce && m_pDataRecoveryHandler == NULL)
 		{

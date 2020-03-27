@@ -321,8 +321,7 @@ BOOL COleClientItem::ConvertTo(REFCLSID clsidNew)
 	m_dwConnection = 0;
 
 	// then load the new object from the new storage
-	BOOL bResult = FinishCreate(::OleLoad(m_lpStorage, IID_IUnknown,
-		NULL, (LPLP)&m_lpObject));
+	BOOL bResult = FinishCreate(AfxInternalOleLoadFromStorage(m_lpStorage, IID_IUnknown, NULL, (LPLP)&m_lpObject, m_ClassesAllowedInStorage, m_nClassesAllowedInStorage));
 
 	if (bResult)
 	{
@@ -351,8 +350,7 @@ BOOL COleClientItem::Reload()
 	RELEASE(m_lpViewObject);
 
 	// then reload the object with OleLoad and finish creation process
-	BOOL bResult = FinishCreate(::OleLoad(m_lpStorage, IID_IUnknown,
-		NULL, (LPLP)&m_lpObject));
+	BOOL bResult = FinishCreate(AfxInternalOleLoadFromStorage(m_lpStorage, IID_IUnknown, NULL, (LPLP)&m_lpObject, m_ClassesAllowedInStorage, m_nClassesAllowedInStorage));
 
 	ASSERT_VALID(this);
 	return bResult;

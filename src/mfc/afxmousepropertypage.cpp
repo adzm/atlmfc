@@ -37,21 +37,17 @@ CMFCMousePropertyPage::~CMFCMousePropertyPage()
 void CMFCMousePropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCMousePropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_LIST_VIEWS, m_wndListOfViews);
 	DDX_Control(pDX, IDC_AFXBARRES_LIST_OF_COMMANDS, m_wndListOfCommands);
 	DDX_Control(pDX, IDC_AFXBARRES_COMMAND_DESCRIPTION, m_wndCommandDescription);
 	DDX_Text(pDX, IDC_AFXBARRES_COMMAND_DESCRIPTION, m_strCommandDescription);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCMousePropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCMousePropertyPage)
 	ON_BN_CLICKED(IDC_AFXBARRES_NO_DBLCLIICK, &CMFCMousePropertyPage::OnNoDblcliick)
 	ON_BN_CLICKED(IDC_AFXBARRES_USE_DBLCLIICK, &CMFCMousePropertyPage::OnUseDblcliick)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_LIST_OF_COMMANDS, &CMFCMousePropertyPage::OnSelchangeListOfCommands)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_AFXBARRES_LIST_VIEWS, &CMFCMousePropertyPage::OnItemchangedListViews)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -158,7 +154,7 @@ BOOL CMFCMousePropertyPage::OnInitDialog()
 	afxMouseManager->GetViewNames(listOfViewNames);
 
 	// Create image list:
-	if (!m_ViewsImages.Create( afxGlobalData.m_sizeSmallIcon.cx, afxGlobalData.m_sizeSmallIcon.cy, ILC_COLOR | ILC_MASK, (int) listOfViewNames.GetCount(), 1))
+	if (!m_ViewsImages.Create( GetGlobalData()->m_sizeSmallIcon.cx, GetGlobalData()->m_sizeSmallIcon.cy, ILC_COLOR | ILC_MASK, (int) listOfViewNames.GetCount(), 1))
 	{
 		ASSERT(FALSE);
 	}

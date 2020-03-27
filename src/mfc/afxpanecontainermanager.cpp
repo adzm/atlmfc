@@ -1364,6 +1364,10 @@ CDockablePane* CPaneContainerManager::PaneFromPoint(CPoint point,
 	for (POSITION pos = m_lstControlBars.GetHeadPosition(); pos != NULL;)
 	{
 		CDockablePane* pBar = DYNAMIC_DOWNCAST(CDockablePane, m_lstControlBars.GetNext(pos));
+		if (pBar == NULL || !pBar->IsPaneVisible())
+		{
+			continue;
+		}
 
 		CRect rectWnd;
 		pBar->GetWindowRect(rectWnd);

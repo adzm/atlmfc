@@ -18,6 +18,10 @@
 
 #include <atldef.h>
 
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <time.h>
 
 #ifdef _AFX
@@ -132,11 +136,11 @@ public:
 	bool operator<=(_In_ CTime time) const throw();
 	bool operator>=(_In_ CTime time) const throw();
 
-	struct tm* GetGmtTm(_Out_ struct tm* ptm) const;
-	struct tm* GetLocalTm(_Out_ struct tm* ptm) const;
+	_Success_(return != NULL) struct tm* GetGmtTm(_Out_ struct tm* ptm) const;
+	_Success_(return != NULL) struct tm* GetLocalTm(_Out_ struct tm* ptm) const;
 
-	bool GetAsSystemTime(_Out_ SYSTEMTIME& st) const throw();
-	bool GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const throw();
+	_Success_(return != false) bool GetAsSystemTime(_Out_ SYSTEMTIME& st) const throw();
+	_Success_(return != false) bool GetAsDBTIMESTAMP(_Out_ DBTIMESTAMP& dbts) const throw();
 
 	__time64_t GetTime() const throw();
 
@@ -347,7 +351,7 @@ inline CString CTimeSpan::Format(_In_ UINT nFormatID) const
 	return Format(strFormat);
 }
 
-#if defined(_AFX) && defined(_UNICODE)
+#if defined(_AFX) && defined(_UNICODE) && !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION)
 inline CString CTimeSpan::Format(_In_z_ LPCSTR pFormat) const
 {
 	return Format(CString(pFormat));
@@ -433,7 +437,7 @@ inline CString CTime::FormatGmt(_In_ UINT nFormatID) const
 	return FormatGmt(strFormat);
 }
 
-#if defined (_AFX) && defined(_UNICODE)
+#if defined (_AFX) && defined(_UNICODE) && !defined(_CSTRING_DISABLE_NARROW_WIDE_CONVERSION)
 inline CString CTime::Format(_In_z_ LPCSTR pFormat) const
 {
 	return Format(CString(pFormat));

@@ -23,6 +23,8 @@
 #error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
 #endif
 
+#include <new.h>
+
 struct __EventingCriticalSectionStub 
 {
    void Lock()
@@ -36,6 +38,7 @@ struct __EventingCriticalSectionStub
 struct __EventingCriticalSectionAuto 
 {
 private:
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	void EmitError(_In_ DWORD dwLastError)
 	{
 		static const int nMax = 256;
@@ -51,6 +54,7 @@ private:
 
 		MessageBox(0, pszMessage, 0, MB_OK | MB_ICONHAND);
 	}
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 public:
 	void Lock()
 	{
@@ -62,9 +66,14 @@ public:
 	}
 	__EventingCriticalSectionAuto()
 	{
-		if (!InitializeCriticalSectionAndSpinCount(&m_sec, 0)) {
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP) || defined(_ATL_STATIC_LIB_IMPL)
+		_AtlInitializeCriticalSectionEx(&m_sec, 0, 0);
+#else
+		if (!InitializeCriticalSectionAndSpinCount(&m_sec, 0))
+		{
 			EmitError(GetLastError());
 		}
+#endif
 	}
 	~__EventingCriticalSectionAuto()
 	{
@@ -154,11 +163,11 @@ inline HRESULT WINAPI __VariantChangeType(
 
 HRESULT WINAPI _com_handle_excepinfo(
 	_In_ EXCEPINFO& excepInfo,
-	_Deref_out_ IErrorInfo** pperrinfo);
+	_Outptr_ IErrorInfo** pperrinfo);
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL {
-
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
     inline HRESULT AtlExcepInfoFromErrorInfo(
 		_In_ HRESULT hrInvoke,
 		_Inout_ EXCEPINFO *pExcepInfo)
@@ -208,6 +217,7 @@ namespace ATL {
 		}
 		return hr;
 	}
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 	struct __EventHandlerProxy 
 	{
@@ -238,8 +248,7 @@ namespace ATL {
 				__pNext = 0;
 				__pGuid = const_cast<_GUID*> (pGuid);
 				__nArraySize = nSize;
-				__proxyIndex = NULL;
-				__proxyIndex = new int[__nArraySize];
+				__proxyIndex = _ATL_NEW int[__nArraySize];
 				memset(__proxyIndex, 0xff, __nArraySize*sizeof(int));
 			}
 			int __Index(_In_ int i) {
@@ -320,7 +329,7 @@ namespace ATL {
 					}
 					pSink->AddRef();
 					pSink->__pThis = pThis;
-					ATLTRY( pSink->__pThat = __pCurrent = new __ComEventingNode(pThis, pS, pSink, U::Guid(), nSize) );
+					pSink->__pThat = __pCurrent = _ATL_NEW __ComEventingNode(pThis, pS, pSink, U::Guid(), nSize);
 					if( pSink->__pThat == NULL )
 						return E_OUTOFMEMORY;
 					if (__pLast != 0) {
@@ -452,7 +461,7 @@ namespace ATL {
 				pRoot = pRoot->__nextCookie;
 			}
 			if (pRoot == 0) {
-				ATLTRY( pRoot = new __EventCookieNode(pSrc, &iid) );
+				pRoot = _ATL_NEW __EventCookieNode(pSrc, &iid);
 				if( pRoot == NULL )
 					return E_OUTOFMEMORY;
 				pRoot->__nextCookie = __EventCookies;

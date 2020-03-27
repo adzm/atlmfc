@@ -22,7 +22,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMultiPaneFrameWnd window
 
 class CMultiPaneFrameWnd : public CPaneFrameWnd
@@ -96,7 +96,6 @@ public:
 	virtual CString GetCaptionText();
 
 protected:
-	//{{AFX_MSG(CMultiPaneFrameWnd)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
@@ -105,7 +104,7 @@ protected:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
 	afx_msg LRESULT OnCheckEmptyState(WPARAM, LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 protected:

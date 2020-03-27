@@ -34,7 +34,6 @@ enum HitTestValue
 // CSplitterWnd
 
 BEGIN_MESSAGE_MAP(CSplitterWnd, CWnd)
-	//{{AFX_MSG_MAP(CSplitterWnd)
 	ON_WM_SETCURSOR()
 	ON_WM_MOUSEMOVE()
 	ON_WM_PAINT()
@@ -53,7 +52,6 @@ BEGIN_MESSAGE_MAP(CSplitterWnd, CWnd)
 	ON_MESSAGE_VOID(WM_SETTINGCHANGE,CSplitterWnd::OnDisplayChange)
 	ON_MESSAGE(WM_PRINTCLIENT, &CSplitterWnd::OnPrintClient)
 	ON_WM_MOUSEWHEEL()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

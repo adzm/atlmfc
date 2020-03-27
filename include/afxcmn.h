@@ -104,7 +104,7 @@
 #undef AFX_DATA
 #define AFX_DATA AFX_CORE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CToolInfo
 
 #ifdef _UNICODE
@@ -117,7 +117,7 @@ public:
 	TCHAR szText[256];
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDragListBox
 
 class CDragListBox : public CListBox
@@ -135,8 +135,11 @@ public:
 
 // Operations
 
+#pragma push_macro("DrawInsert")
+#undef DrawInsert
 	// draws insertion line
 	virtual void DrawInsert(_In_ int nItem);
+#pragma pop_macro("DrawInsert")
 
 // Overridables
 
@@ -163,7 +166,7 @@ protected:
 	virtual BOOL OnChildNotify(UINT, WPARAM, LPARAM, LRESULT*);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CStatusBarCtrl
 
 // NOTE: This class must remain a binary-compatible subset
@@ -249,7 +252,7 @@ protected:
 	virtual BOOL OnChildNotify(UINT, WPARAM, LPARAM, LRESULT*);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CListCtrl
 
 // NOTE: This class must remain a binary-compatible subset
@@ -383,7 +386,7 @@ public:
 
 	// Retrieves the text associated with a particular item.
 	CString GetItemText(_In_ int nItem, _In_ int nSubItem) const;
-	int GetItemText(_In_ int nItem, _In_ int nSubItem, _Out_z_cap_post_count_(nLen, return + 1) LPTSTR lpszText, _In_ int nLen) const;
+	int GetItemText(_In_ int nItem, _In_ int nSubItem, _Out_writes_to_(nLen, return + 1) LPTSTR lpszText, _In_ int nLen) const;
 
 	// Sets the text associated with a particular item.
 	BOOL SetItemText(_In_ int nItem, _In_ int nSubItem, _In_z_ LPCTSTR lpszText);
@@ -458,7 +461,7 @@ public:
 	// Calculates the approximate minimum size required to
 	// display the passed number of items.
 	CSize ApproximateViewRect(_In_ CSize sz = CSize(-1, -1),
-		int iCount = -1) const;
+		_In_ int iCount = -1) const;
 
 	// Retrieves information about the background image in the control.
 	BOOL GetBkImage(_Out_ LVBKIMAGE* plvbkImage) const;
@@ -704,13 +707,12 @@ protected:
 	// virtual OK here - CWnd makes this virtual
 	virtual BOOL OnChildNotify(UINT, WPARAM, LPARAM, LRESULT*);
 protected:
-	//{{AFX_MSG(CListCtrl)
 	afx_msg void OnNcDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTreeCtrl
 
 // NOTE: This class must remain a binary-compatible subset
@@ -893,13 +895,13 @@ public:
 
 #if (_WIN32_WINNT >= 0x0501) && defined(UNICODE)
 	// Maps treeview item id to accessibility identifier.
-	UINT MapItemToAccId(HTREEITEM hItem) const;
+	UINT MapItemToAccId(_In_ HTREEITEM hItem) const;
 
 	// Maps accessibility identifier id to treeview item.
-	HTREEITEM MapAccIdToItem(UINT uAccId) const;
+	HTREEITEM MapAccIdToItem(_In_ UINT uAccId) const;
 
 	// Set autoscrolling rate and delay (?).
-	BOOL SetAutoscrollInfo(UINT uPixelsPerSec, UINT uUpdateTime);
+	BOOL SetAutoscrollInfo(_In_ UINT uPixelsPerSec, _In_ UINT uUpdateTime);
 #endif
 
 #if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
@@ -907,25 +909,25 @@ public:
 	UINT GetSelectedCount();
 
 	// Get rectangle for the specified part of the specified item.
-	BOOL GetItemPartRect(HTREEITEM hItem, TVITEMPART nPart, LPRECT lpRect);
+	BOOL GetItemPartRect(_In_ HTREEITEM hItem, _In_ TVITEMPART nPart, _Out_ LPRECT lpRect);
 
 	// Get the extended state of the item
-	UINT GetItemStateEx(HTREEITEM hItem) const;
+	UINT GetItemStateEx(_In_ HTREEITEM hItem) const;
 	
 	// Set the extended state of the item
-	BOOL SetItemStateEx(HTREEITEM hItem, UINT uStateEx);
+	BOOL SetItemStateEx(_In_ HTREEITEM hItem, _In_ UINT uStateEx);
 
 	// Get the expanded image index for the specified item
-	int GetItemExpandedImageIndex(HTREEITEM hItem) const;
+	int GetItemExpandedImageIndex(_In_ HTREEITEM hItem) const;
 	
 	// Set the expanded image index for the specified item
-	BOOL SetItemExpandedImageIndex(HTREEITEM hItem, int nIndex);
+	BOOL SetItemExpandedImageIndex(_In_ HTREEITEM hItem, _In_ int nIndex);
 
 	// Get extended styles for the tree control.
 	DWORD GetExtendedStyle() const;
 
 	// Set extended styles on the tree control.
-	DWORD SetExtendedStyle(DWORD dwExMask, DWORD dwExStyles);
+	DWORD SetExtendedStyle(_In_ DWORD dwExMask, _In_ DWORD dwExStyles);
 #endif
 
 // Operations
@@ -982,11 +984,11 @@ public:
 	BOOL SortChildrenCB(_In_ LPTVSORTCB pSort);
 
 	// Terminates label editing operation.
-	BOOL EndEditLabelNow(BOOL fCancelWithoutSave);
+	BOOL EndEditLabelNow(_In_ BOOL fCancelWithoutSave);
 
 #if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
 	// Shows information tooltip on the specified item.
-	void ShowInfoTip(HTREEITEM hItem);
+	void ShowInfoTip(_In_ HTREEITEM hItem);
 #endif
 
 // Implementation
@@ -996,13 +998,12 @@ protected:
 public:
 	// virtual OK here - ~CWnd is virtual
 	virtual ~CTreeCtrl();
-	//{{AFX_MSG(CTreeCtrl)
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSpinButtonCtrl
 
 class CSpinButtonCtrl : public CWnd
@@ -1067,7 +1068,7 @@ public:
 	virtual ~CSpinButtonCtrl();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSliderCtrl
 
 class CSliderCtrl : public CWnd
@@ -1189,7 +1190,7 @@ public:
 	virtual ~CSliderCtrl();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CProgressCtrl
 
 class CProgressCtrl : public CWnd
@@ -1271,7 +1272,7 @@ public:
 	virtual ~CProgressCtrl();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CComboBoxEx
 
 class CComboBoxEx : public CComboBox
@@ -1323,7 +1324,7 @@ public:
 	virtual ~CComboBoxEx();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CHeaderCtrl
 
 class CHeaderCtrl : public CWnd
@@ -1438,7 +1439,7 @@ protected:
 
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CHotKeyCtrl
 
 class CHotKeyCtrl : public CWnd
@@ -1482,7 +1483,7 @@ public:
 
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CToolTipCtrl
 
 class CToolTipCtrl : public CWnd
@@ -1619,12 +1620,11 @@ public:
 #endif
 
 protected:
-	//{{AFX_MSG(CToolTipCtrl)
 	afx_msg LRESULT OnDisableModal(WPARAM, LPARAM);
 	afx_msg LRESULT OnWindowFromPoint(WPARAM, LPARAM);
 	afx_msg LRESULT OnAddTool(WPARAM, LPARAM);
 	afx_msg void OnEnable(BOOL bEnable);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CMapStringToPtr m_mapString;
@@ -1633,7 +1633,7 @@ protected:
 	friend class CToolBar;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CTabCtrl
 
 class CTabCtrl : public CWnd
@@ -1754,13 +1754,12 @@ public:
 	virtual ~CTabCtrl();
 protected:
 	virtual BOOL OnChildNotify(UINT, WPARAM, LPARAM, LRESULT*);
-	//{{AFX_MSG(CTabCtrl)
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CAnimateCtrl
 
 class CAnimateCtrl : public CWnd
@@ -1805,7 +1804,7 @@ public:
 	virtual ~CAnimateCtrl();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CToolBarCtrl
 
 struct IDropTarget; // forward declaration
@@ -2091,7 +2090,7 @@ public:
 	void AutoSize();
 
 #if _WIN32_IE >= 0x0500
-	int GetString(_In_ int nString, _Out_z_cap_post_count_(cchMaxLen, return + 1) LPTSTR lpstrString, _In_ size_t cchMaxLen) const;
+	int GetString(_In_ int nString, _Out_writes_to_(cchMaxLen, return + 1) LPTSTR lpstrString, _In_ size_t cchMaxLen) const;
 	int GetString(_In_ int nString, _Out_ CString& str) const;
 #endif
 
@@ -2101,13 +2100,12 @@ public:
 	virtual ~CToolBarCtrl();
 
 protected:
-	//{{AFX_MSG(CToolBarCtrl)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CReBarCtrl
 
 // NOTE: This class must remain a binary-compatible subset
@@ -2276,7 +2274,7 @@ public:
 };
 
 #ifndef _AFX_NO_RICHEDIT_SUPPORT
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRichEditCtrl
 
 // NOTE: This class must remain a binary-compatible subset
@@ -2322,7 +2320,7 @@ public:
 	// NOTE: Copied line does not contain null character!
 	int GetLine(_In_ int nIndex, _Pre_notnull_ _Post_z_ LPTSTR lpszBuffer) const;
 	// NOTE: Copied line does not contain null character!
-	int GetLine(_In_ int nIndex, _Out_cap_post_count_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const;
+	int GetLine(_In_ int nIndex, _Out_writes_to_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const;
 
 	BOOL CanPaste(_In_ UINT nFormat = 0) const;
 	void GetSel(_Out_ long& nStartChar, _Out_ long& nEndChar) const;
@@ -2377,7 +2375,13 @@ public:
 	void SetRect(_In_ LPCRECT lpRect);
 
 	BOOL DisplayBand(_In_ LPRECT pDisplayRect);
+#pragma push_macro("FindTextA")
+#pragma push_macro("FindTextW")
+#undef FindTextA
+#undef FindTextW
 	long FindText(_In_ DWORD dwFlags, _Out_ FINDTEXTEX* pFindText) const;
+#pragma pop_macro("FindTextA")
+#pragma pop_macro("FindTextW")
 	DWORD FindWordBreak(_In_ UINT nCode, _In_ DWORD nStart) const;
 	long FormatRange(_In_ FORMATRANGE* pfr, _In_ BOOL bDisplay = TRUE);
 	void HideSelection(_In_ BOOL bHide, _In_ BOOL bPerm);
@@ -2396,7 +2400,7 @@ public:
 
 // OLE support
 	IRichEditOle* GetIRichEditOle() const;
-	BOOL SetOLECallback(IRichEditOleCallback* pCallback);
+	BOOL SetOLECallback(_In_ IRichEditOleCallback* pCallback);
 
 // Implementation
 public:
@@ -2406,7 +2410,7 @@ public:
 #endif //!_AFX_NO_RICHEDIT_SUPPORT
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CIPAddressCtrl
 
 class CIPAddressCtrl : public CWnd
@@ -2450,7 +2454,7 @@ public:
 	virtual ~CIPAddressCtrl();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPagerCtrl
 
 class CPagerCtrl : public CWnd
@@ -2531,7 +2535,7 @@ public:
 };
 
 #if (_WIN32_WINNT >= 0x0501)
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CLinkCtrl
 
 AFX_ANSI_DEPRECATED class CLinkCtrl : public CWnd
@@ -2572,11 +2576,11 @@ public:
 
 	// Retrieve the states and attributes of an item.
 	BOOL GetItem(_Out_ PLITEM pItem) const;
-	BOOL GetItemID(_In_ int iLink, _Out_ CString& strID) const;
-	BOOL GetItemID(_In_ int iLink, _Out_z_cap_(cchID) LPWSTR szID, _In_ UINT cchID) const;
-	BOOL GetItemUrl(_In_ int iLink, _Out_ CString& strUrl) const;
-	BOOL GetItemUrl(_In_ int iLink, _Out_z_cap_(cchUrl) LPWSTR szUrl, _In_ UINT cchUrl) const;
-	BOOL GetItemState(_In_ int iLink, _Out_ UINT *pnState, _In_ UINT stateMask = LIS_FOCUSED | LIS_ENABLED | LIS_VISITED) const;
+	_Success_(return != FALSE) BOOL GetItemID(_In_ int iLink, _Out_ CString& strID) const;
+	BOOL GetItemID(_In_ int iLink, _Out_writes_z_(cchID) LPWSTR szID, _In_ UINT cchID) const;
+	_Success_(return != FALSE) BOOL GetItemUrl(_In_ int iLink, _Out_ CString& strUrl) const;
+	BOOL GetItemUrl(_In_ int iLink, _Out_writes_z_(cchUrl) LPWSTR szUrl, _In_ UINT cchUrl) const;
+	_Success_(return != FALSE) BOOL GetItemState(_In_ int iLink, _Out_ UINT *pnState, _In_ UINT stateMask = LIS_FOCUSED | LIS_ENABLED | LIS_VISITED) const;
 
 	// Determines whether the user clicked the specified link.
 	BOOL HitTest(_In_ PLHITTESTINFO phti) const;
@@ -2590,7 +2594,7 @@ public:
 
 #if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CNetAddressCtrl
 
 class CNetAddressCtrl : public CEdit

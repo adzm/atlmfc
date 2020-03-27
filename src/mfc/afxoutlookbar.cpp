@@ -27,8 +27,8 @@
 #define AFX_REG_SECTION_FMT _T("%sMFCOutlookBar-%d")
 #define AFX_REG_SECTION_FMT_EX _T("%sMFCOutlookBar-%d%x")
 
-static const CString strOutlookBarProfile = _T("MFCOutlookBars");
-static const CString strRegCustomPages = _T("MFCOutlookCustomPages");
+#define AFX_OUTLOOK_BAR_PROFILE  _T("MFCOutlookBars")
+#define AFX_OUTLOOK_CUSTOM_PAGES  _T("MFCOutlookCustomPages")
 
 UINT g_nMinReservedPageID = 0xF000;
 
@@ -56,10 +56,8 @@ CMFCOutlookBar::~CMFCOutlookBar()
 }
 
 BEGIN_MESSAGE_MAP(CMFCOutlookBar, CBaseTabbedPane)
-	//{{AFX_MSG_MAP(CMFCOutlookBar)
 	ON_WM_CREATE()
 	ON_WM_PAINT()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -322,7 +320,7 @@ BOOL CMFCOutlookBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
 	CBaseTabbedPane::LoadState(lpszProfileName, nIndex, uiID);
 
-	CString strProfileName = ::AFXGetRegPath(strOutlookBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_OUTLOOK_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -350,7 +348,7 @@ BOOL CMFCOutlookBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 		return FALSE;
 	}
 
-	if (!reg.Read(strRegCustomPages, &lpbData, &uiDataSize))
+	if (!reg.Read(AFX_OUTLOOK_CUSTOM_PAGES, &lpbData, &uiDataSize))
 	{
 		return FALSE;
 	}
@@ -416,7 +414,7 @@ BOOL CMFCOutlookBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 		pPage->SaveState(lpszProfileName, nID, nID);
 	}
 
-	CString strProfileName = ::AFXGetRegPath(strOutlookBarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_OUTLOOK_BAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -484,7 +482,7 @@ BOOL CMFCOutlookBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 
 			if (reg.CreateKey(strSection))
 			{
-				reg.Write(strRegCustomPages, lpbData, uiDataSize);
+				reg.Write(AFX_OUTLOOK_CUSTOM_PAGES, lpbData, uiDataSize);
 			}
 
 			free(lpbData);

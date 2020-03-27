@@ -48,13 +48,13 @@ IMPLEMENT_DYNAMIC(CMFCPropertyGridProperty, CObject)
 #define AFX_PROP_HAS_BUTTON 0x0002
 #define AFX_PROP_HAS_SPIN 0x0004
 
-CString CMFCPropertyGridProperty::m_strFormatChar = _T("%c");
-CString CMFCPropertyGridProperty::m_strFormatShort = _T("%d");
-CString CMFCPropertyGridProperty::m_strFormatLong = _T("%ld");
-CString CMFCPropertyGridProperty::m_strFormatUShort = _T("%u");
-CString CMFCPropertyGridProperty::m_strFormatULong = _T("%u");
-CString CMFCPropertyGridProperty::m_strFormatFloat = _T("%f");
-CString CMFCPropertyGridProperty::m_strFormatDouble = _T("%lf");
+#define AFX_FORMAT_CHAR   _T("%c")
+#define AFX_FORMAT_SHORT  _T("%d")
+#define AFX_FORMAT_LONG   _T("%ld")
+#define AFX_FORMAT_USHORT _T("%u")
+#define AFX_FORMAT_ULONG  _T("%u")
+#define AFX_FORMAT_FLOAT  _T("%f")
+#define AFX_FORMAT_DOUBLE _T("%lf")
 
 CMFCPropertyGridProperty::CMFCPropertyGridProperty(const CString& strName, const COleVariant& varValue, LPCTSTR lpszDescr, DWORD_PTR dwData, LPCTSTR lpszEditMask, LPCTSTR lpszEditTemplate, LPCTSTR lpszValidChars) : m_strName(strName), m_varValue(varValue), m_varValueOrig(varValue), m_strDescr(lpszDescr == NULL ? _T("") : lpszDescr), m_strEditMask(lpszEditMask == NULL ? _T("") : lpszEditMask), m_strEditTempl(lpszEditTemplate == NULL ? _T("") : lpszEditTemplate), m_strValidChars(lpszValidChars == NULL ? _T("") : lpszValidChars), m_dwData(dwData)
 {
@@ -309,6 +309,18 @@ BOOL CMFCPropertyGridCtrl::DeleteProperty(CMFCPropertyGridProperty*& pProp, BOOL
 	if (m_pSel == pProp)
 	{
 		m_pSel = NULL;
+	}
+
+	if (m_pSel != NULL)
+	{
+		for (CMFCPropertyGridProperty* pParent = m_pSel; pParent != NULL; pParent = pParent->GetParent())
+		{
+			if (pParent == pProp)
+			{
+				m_pSel = NULL;
+				break;
+			}
+		}
 	}
 
 	delete pProp;
@@ -874,36 +886,36 @@ CString CMFCPropertyGridProperty::FormatProperty()
 		break;
 
 	case VT_I2:
-		strVal.Format(m_strFormatShort, (short)var.iVal);
+		strVal.Format(AFX_FORMAT_SHORT, (short)var.iVal);
 		break;
 
 	case VT_I4:
 	case VT_INT:
-		strVal.Format(m_strFormatLong, (long)var.lVal);
+		strVal.Format(AFX_FORMAT_LONG, (long)var.lVal);
 		break;
 
 	case VT_UI1:
 		if ((BYTE)var.bVal != 0)
 		{
-			strVal.Format(m_strFormatChar, (TCHAR)(BYTE)var.bVal);
+			strVal.Format(AFX_FORMAT_CHAR, (TCHAR)(BYTE)var.bVal);
 		}
 		break;
 
 	case VT_UI2:
-		strVal.Format( m_strFormatUShort, var.uiVal);
+		strVal.Format(AFX_FORMAT_USHORT, var.uiVal);
 		break;
 
 	case VT_UINT:
 	case VT_UI4:
-		strVal.Format(m_strFormatULong, var.ulVal);
+		strVal.Format(AFX_FORMAT_ULONG, var.ulVal);
 		break;
 
 	case VT_R4:
-		strVal.Format(m_strFormatFloat, (float)var.fltVal);
+		strVal.Format(AFX_FORMAT_FLOAT, (float)var.fltVal);
 		break;
 
 	case VT_R8:
-		strVal.Format(m_strFormatDouble, (double)var.dblVal);
+		strVal.Format(AFX_FORMAT_DOUBLE, (double)var.dblVal);
 		break;
 
 	case VT_BOOL:
@@ -933,14 +945,14 @@ void CMFCPropertyGridProperty::OnDrawName(CDC* pDC, CRect rect)
 
 		if (!m_pWndList->m_bFocused)
 		{
-			clrTextOld = pDC->SetTextColor(afxGlobalData.clrBtnText);
+			clrTextOld = pDC->SetTextColor(GetGlobalData()->clrBtnText);
 
-			pDC->FillRect(rectFill, m_pWndList->m_bControlBarColors ? &afxGlobalData.brBarFace : &afxGlobalData.brBtnFace);
+			pDC->FillRect(rectFill, m_pWndList->m_bControlBarColors ? &(GetGlobalData()->brBarFace) : &(GetGlobalData()->brBtnFace));
 		}
 		else
 		{
-			clrTextOld = pDC->SetTextColor(afxGlobalData.clrTextHilite);
-			pDC->FillRect(rectFill, &afxGlobalData.brHilite);
+			clrTextOld = pDC->SetTextColor(GetGlobalData()->clrTextHilite);
+			pDC->FillRect(rectFill, &(GetGlobalData()->brHilite));
 		}
 	}
 
@@ -975,7 +987,7 @@ void CMFCPropertyGridProperty::OnDrawName(CDC* pDC, CRect rect)
 		rectFocus.right = min(rect.right, rectFocus.left + pDC->GetTextExtent(m_strName).cx);
 		rectFocus.InflateRect(2, 0);
 
-		COLORREF clrShadow = m_pWndList->m_bControlBarColors ? afxGlobalData.clrBarShadow : afxGlobalData.clrBtnShadow;
+		COLORREF clrShadow = m_pWndList->m_bControlBarColors ? GetGlobalData()->clrBarShadow : GetGlobalData()->clrBtnShadow;
 
 		pDC->Draw3dRect(rectFocus, clrShadow, clrShadow);
 	}
@@ -1025,7 +1037,7 @@ void CMFCPropertyGridProperty::OnDrawButton(CDC* pDC, CRect rect)
 
 	CMFCToolBarComboBoxButton button;
 
-	pDC->FillRect(rect, m_pWndList->m_bControlBarColors ? &afxGlobalData.brBarFace : &afxGlobalData.brBtnFace);
+	pDC->FillRect(rect, m_pWndList->m_bControlBarColors ? &(GetGlobalData()->brBarFace) : &(GetGlobalData()->brBtnFace));
 
 	if (m_dwFlags & AFX_PROP_HAS_LIST)
 	{
@@ -1058,9 +1070,9 @@ void CMFCPropertyGridProperty::OnDrawExpandBox(CDC* pDC, CRect rect)
 	CPoint ptCenter = rect.CenterPoint();
 
 	int nMaxBoxSize = 9;
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		nMaxBoxSize = (int)(.5 + nMaxBoxSize * afxGlobalData.GetRibbonImageScale());
+		nMaxBoxSize = (int)(.5 + nMaxBoxSize * GetGlobalData()->GetRibbonImageScale());
 	}
 
 	int nBoxSize = min (nMaxBoxSize, rect.Width ());
@@ -1076,12 +1088,12 @@ void CMFCPropertyGridProperty::OnDrawExpandBox(CDC* pDC, CRect rect)
 		}
 		else
 		{
-			pDC->FillRect(rect, &afxGlobalData.brWindow);
+			pDC->FillRect(rect, &(GetGlobalData()->brWindow));
 		}
 	}
 
-	COLORREF clrShadow = m_pWndList->m_bControlBarColors ? afxGlobalData.clrBarShadow : afxGlobalData.clrBtnShadow;
-	COLORREF clrText = m_pWndList->m_bControlBarColors ? afxGlobalData.clrBarText : afxGlobalData.clrBtnText;
+	COLORREF clrShadow = m_pWndList->m_bControlBarColors ? GetGlobalData()->clrBarShadow : GetGlobalData()->clrBtnShadow;
+	COLORREF clrText = m_pWndList->m_bControlBarColors ? GetGlobalData()->clrBarText : GetGlobalData()->clrBtnText;
 
 	visualManager->OnDrawExpandingBox(pDC, rect, m_bExpanded && !m_lstSubItems.IsEmpty(), m_pWndList->m_bVSDotNetLook ? clrText : clrShadow);
 }
@@ -1197,7 +1209,7 @@ BOOL CMFCPropertyGridProperty::TextToVar(const CString& strText)
 
 			if (!strVal.IsEmpty())
 			{
-				_stscanf_s(strVal, m_strFormatFloat, &fVal);
+				_stscanf_s(strVal, AFX_FORMAT_FLOAT, &fVal);
 			}
 
 			m_varValue = fVal;
@@ -1213,7 +1225,7 @@ BOOL CMFCPropertyGridProperty::TextToVar(const CString& strText)
 
 			if (!strVal.IsEmpty())
 			{
-				_stscanf_s(strVal, m_strFormatDouble, &dblVal);
+				_stscanf_s(strVal, AFX_FORMAT_DOUBLE, &dblVal);
 			}
 
 			m_varValue = dblVal;
@@ -1830,8 +1842,8 @@ HBRUSH CMFCPropertyGridProperty::OnCtlColor(CDC* pDC, UINT /*nCtlColor*/)
 	case VT_BOOL:
 		if (!m_bEnabled || !m_bAllowEdit)
 		{
-			pDC->SetBkColor(afxGlobalData.clrWindow);
-			return(HBRUSH) afxGlobalData.brWindow.GetSafeHandle();
+			pDC->SetBkColor(GetGlobalData()->clrWindow);
+			return(HBRUSH) GetGlobalData()->brWindow.GetSafeHandle();
 		}
 	}
 
@@ -2522,7 +2534,6 @@ CMFCPropertyGridCtrl::~CMFCPropertyGridCtrl()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCPropertyGridCtrl)
 BEGIN_MESSAGE_MAP(CMFCPropertyGridCtrl, CWnd)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
@@ -2563,7 +2574,6 @@ BEGIN_MESSAGE_MAP(CMFCPropertyGridCtrl, CWnd)
 	ON_CBN_KILLFOCUS(AFX_PROPLIST_ID_INPLACE, &CMFCPropertyGridCtrl::OnComboKillFocus)
 	ON_MESSAGE(WM_PRINTCLIENT, &CMFCPropertyGridCtrl::OnPrintClient)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCPropertyGridCtrl message handlers
@@ -2593,14 +2603,14 @@ void CMFCPropertyGridCtrl::Init()
 	CRect rectDummy;
 	rectDummy.SetRectEmpty();
 
-	if (afxGlobalData.m_hcurStretch == NULL)
+	if (GetGlobalData()->m_hcurStretch == NULL)
 	{
-		afxGlobalData.m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
+		GetGlobalData()->m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
 	}
 
-	if (afxGlobalData.m_hcurStretchVert == NULL)
+	if (GetGlobalData()->m_hcurStretchVert == NULL)
 	{
-		afxGlobalData.m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
+		GetGlobalData()->m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
 	}
 
 	InitHeader();
@@ -2622,9 +2632,9 @@ void CMFCPropertyGridCtrl::Init()
 
 	m_ToolTip.Create(this, TTS_ALWAYSTIP);
 	m_ToolTip.Activate(TRUE);
-	if (afxGlobalData.m_nMaxToolTipWidth != -1)
+	if (GetGlobalData()->m_nMaxToolTipWidth != -1)
 	{
-		m_ToolTip.SetMaxTipWidth(afxGlobalData.m_nMaxToolTipWidth);
+		m_ToolTip.SetMaxTipWidth(GetGlobalData()->m_nMaxToolTipWidth);
 	}
 
 	m_ToolTip.SetWindowPos(&wndTop, -1, -1, -1, -1, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOSIZE);
@@ -2885,7 +2895,7 @@ void CMFCPropertyGridCtrl::OnFillBackground(CDC* pDC, CRect rectClient)
 
 	if (m_brBackground.GetSafeHandle() == NULL)
 	{
-		pDC->FillRect(rectClient, &afxGlobalData.brWindow);
+		pDC->FillRect(rectClient, &(GetGlobalData()->brWindow));
 	}
 	else
 	{
@@ -2903,7 +2913,7 @@ void CMFCPropertyGridCtrl::OnDrawList(CDC* pDC)
 	ASSERT_VALID(this);
 	ASSERT_VALID(pDC);
 
-	COLORREF clrShadow = m_bControlBarColors ? afxGlobalData.clrBarShadow : afxGlobalData.clrBtnShadow;
+	COLORREF clrShadow = m_bControlBarColors ? GetGlobalData()->clrBarShadow : GetGlobalData()->clrBtnShadow;
 
 	CPen penLine(PS_SOLID, 1, m_clrLine != (COLORREF)-1 ? m_clrLine :(m_bVSDotNetLook ? m_clrGray : clrShadow));
 	CPen* pOldPen = pDC->SelectObject(&penLine);
@@ -2941,12 +2951,12 @@ void CMFCPropertyGridCtrl::OnDrawDescription(CDC* pDC, CRect rect)
 	}
 	else
 	{
-		pDC->FillRect(rect, m_bControlBarColors ? &afxGlobalData.brBarFace : &afxGlobalData.brBtnFace);
+		pDC->FillRect(rect, m_bControlBarColors ? &(GetGlobalData()->brBarFace) : &(GetGlobalData()->brBtnFace));
 	}
 
 	rect.top += AFX_TEXT_MARGIN;
 
-	COLORREF clrShadow = m_bControlBarColors ? afxGlobalData.clrBarShadow : afxGlobalData.clrBtnShadow;
+	COLORREF clrShadow = m_bControlBarColors ? GetGlobalData()->clrBarShadow : GetGlobalData()->clrBtnShadow;
 
 	pDC->Draw3dRect(rect, clrShadow, clrShadow);
 
@@ -3018,7 +3028,7 @@ BOOL CMFCPropertyGridCtrl::OnDrawProperty(CDC* pDC, CMFCPropertyGridProperty* pP
 
 			if (!pProp->IsEnabled())
 			{
-				clrTextOld = pDC->SetTextColor(afxGlobalData.clrGrayedText);
+				clrTextOld = pDC->SetTextColor(GetGlobalData()->clrGrayedText);
 			}
 
 			CRect rectName = pProp->m_Rect;
@@ -3042,7 +3052,7 @@ BOOL CMFCPropertyGridCtrl::OnDrawProperty(CDC* pDC, CMFCPropertyGridProperty* pP
 					}
 					else
 					{
-						pDC->FillRect(rectFill, &afxGlobalData.brWindow);
+						pDC->FillRect(rectFill, &(GetGlobalData()->brWindow));
 					}
 				}
 
@@ -3071,7 +3081,7 @@ BOOL CMFCPropertyGridCtrl::OnDrawProperty(CDC* pDC, CMFCPropertyGridProperty* pP
 				}
 				else
 				{
-					pDC->FillRect(rectFill, &afxGlobalData.brWindow);
+					pDC->FillRect(rectFill, &(GetGlobalData()->brWindow));
 				}
 			}
 
@@ -3202,11 +3212,11 @@ void CMFCPropertyGridCtrl::EnableHeaderCtrl(BOOL bEnable, LPCTSTR lpszLeftColumn
 		hdItem.mask = HDI_TEXT;
 
 		hdItem.pszText = (LPTSTR) lpszLeftColumn;
-		hdItem.cchTextMax = lstrlen(lpszLeftColumn) + 1;
+		hdItem.cchTextMax = static_cast<int>(_tcslen(lpszLeftColumn)) + 1;
 		GetHeaderCtrl().SetItem(0, &hdItem);
 
 		hdItem.pszText = (LPTSTR) lpszRightColumn;
-		hdItem.cchTextMax = lstrlen(lpszRightColumn) + 1;
+		hdItem.cchTextMax = static_cast<int>(_tcslen(lpszRightColumn)) + 1;
 		GetHeaderCtrl().SetItem(1, &hdItem);
 	}
 
@@ -3837,7 +3847,7 @@ void CMFCPropertyGridCtrl::OnRButtonDown(UINT nFlags, CPoint point)
 
 BOOL CMFCPropertyGridCtrl::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
-	return CWnd::Create(afxGlobalData.RegisterWindowClass(_T("Afx:PropList")), _T(""), dwStyle, rect, pParentWnd, nID, NULL);
+	return CWnd::Create(GetGlobalData()->RegisterWindowClass(_T("Afx:PropList")), _T(""), dwStyle, rect, pParentWnd, nID, NULL);
 }
 
 BOOL CMFCPropertyGridCtrl::EditItem(CMFCPropertyGridProperty* pProp, LPPOINT lptClick)
@@ -3993,7 +4003,9 @@ BOOL CMFCPropertyGridCtrl::PreTranslateMessage(MSG* pMsg)
 	{
 		ASSERT_VALID(m_pSel);
 
-		if (pMsg->message == WM_KEYDOWN)
+		const BOOL bIsDroppedDown = m_pSel->m_pWndCombo != NULL && m_pSel->m_pWndCombo->GetDroppedState();
+
+		if (pMsg->message == WM_KEYDOWN && (!bIsDroppedDown || pMsg->wParam == VK_RETURN))
 		{
 			switch (pMsg->wParam)
 			{
@@ -4012,7 +4024,7 @@ BOOL CMFCPropertyGridCtrl::PreTranslateMessage(MSG* pMsg)
 					return TRUE;
 				}
 
-				if (m_pSel->m_pWndCombo != NULL && m_pSel->m_pWndCombo->GetDroppedState())
+				if (bIsDroppedDown)
 				{
 					HWND hwndInplace = m_pSel->m_pWndInPlace->GetSafeHwnd();
 					m_pSel->OnSelectCombo();
@@ -4021,8 +4033,6 @@ BOOL CMFCPropertyGridCtrl::PreTranslateMessage(MSG* pMsg)
 					{
 						m_pSel->m_pWndInPlace->SetFocus();
 					}
-
-					return TRUE;
 				}
 
 				if (!EndEditItem())
@@ -4040,7 +4050,7 @@ BOOL CMFCPropertyGridCtrl::PreTranslateMessage(MSG* pMsg)
 
 			case VK_DOWN:
 			case VK_UP:
-				if (m_pSel->m_lstOptions.GetCount() > 1 && (m_pSel->m_pWndCombo == NULL || !m_pSel->m_pWndCombo->GetDroppedState()))
+				if (m_pSel->m_lstOptions.GetCount() > 1)
 				{
 					if (m_pSel->OnRotateListValue(pMsg->wParam != VK_UP))
 					{
@@ -4303,6 +4313,11 @@ int CMFCPropertyGridCtrl::GetTotalItems(BOOL bIncludeHidden) const
 			if (pProp->IsVisible())
 			{
 				nCount++;
+
+				if (pProp->IsExpanded())
+				{
+					nCount += pProp->GetExpandedSubItems();
+				}
 			}
 		}
 
@@ -4479,7 +4494,7 @@ BOOL CMFCPropertyGridCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 		if (m_bDescriptionArea && abs(point.y -(m_rectList.bottom + AFX_TEXT_MARGIN)) <= AFX_STRETCH_DELTA)
 		{
-			::SetCursor(afxGlobalData.m_hcurStretchVert);
+			::SetCursor(GetGlobalData()->m_hcurStretchVert);
 			return TRUE;
 		}
 
@@ -4487,7 +4502,7 @@ BOOL CMFCPropertyGridCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 		{
 			if (abs(point.x -(m_rectList.left + m_nLeftColumnWidth)) <= AFX_STRETCH_DELTA)
 			{
-				::SetCursor(afxGlobalData.m_hcurStretch);
+				::SetCursor(GetGlobalData()->m_hcurStretch);
 				return TRUE;
 			}
 
@@ -5283,7 +5298,7 @@ int CMFCPropertyGridCtrl::CompareProps(const CMFCPropertyGridProperty* pProp1, c
 
 LRESULT CMFCPropertyGridCtrl::OnGetObject(WPARAM wParam, LPARAM lParam)
 {
-	if (afxGlobalData.IsAccessibilitySupport())
+	if (GetGlobalData()->IsAccessibilitySupport())
 	{
 		return CWnd::OnGetObject(wParam, lParam);
 	}
@@ -5293,7 +5308,7 @@ LRESULT CMFCPropertyGridCtrl::OnGetObject(WPARAM wParam, LPARAM lParam)
 
 void CMFCPropertyGridCtrl::NotifyAccessibility(CMFCPropertyGridProperty* pProp)
 {
-	if (!afxGlobalData.IsAccessibilitySupport() || pProp == NULL)
+	if (!GetGlobalData()->IsAccessibilitySupport() || pProp == NULL)
 	{
 		return;
 	}
@@ -5364,6 +5379,11 @@ HRESULT CMFCPropertyGridCtrl::get_accChild(VARIANT /*varChild*/, IDispatch **ppd
 
 HRESULT CMFCPropertyGridCtrl::get_accName(VARIANT varChild, BSTR *pszName)
 {
+	if (pszName == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
 	if ((varChild.vt == VT_I4) && (varChild.lVal == CHILDID_SELF))
 	{
 		CString strText;
@@ -5380,7 +5400,7 @@ HRESULT CMFCPropertyGridCtrl::get_accName(VARIANT varChild, BSTR *pszName)
 
 	if (m_pAccProp != NULL)
 	{
-		CString strName = m_pAccProp->GetName();
+		CString strName = m_pAccProp->IsInPlaceEditing() ? m_pAccProp->FormatProperty() : m_pAccProp->GetName();
 		*pszName = strName.AllocSysString();
 		return S_OK;
 	}
@@ -5605,7 +5625,7 @@ LRESULT CMFCPropertyGridCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
 	CTagManager tagManager(strDst);
 
 	BOOL bDescriptionArea = TRUE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_DescriptionArea, bDescriptionArea))
+	if (ReadBoolProp(tagManager, PS_MFCPropertyGrid_DescriptionArea, bDescriptionArea))
 	{
 		EnableDescriptionArea(bDescriptionArea);
 	}
@@ -5624,25 +5644,25 @@ LRESULT CMFCPropertyGridCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
 	}
 
 	BOOL bHeaderCtrl = TRUE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_HeaderCtrl, bHeaderCtrl))
+	if (ReadBoolProp(tagManager, PS_MFCPropertyGrid_HeaderCtrl, bHeaderCtrl))
 	{
 		EnableHeaderCtrl(bHeaderCtrl);
 	}
 
 	BOOL bAlphabeticMode = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_AlphabeticMode, bAlphabeticMode))
+	if (ReadBoolProp(tagManager, PS_MFCPropertyGrid_AlphabeticMode, bAlphabeticMode))
 	{
 		SetAlphabeticMode(bAlphabeticMode);
 	}
 
 	BOOL bModifiedProperties = TRUE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_ModifiedProperties, bModifiedProperties))
+	if (ReadBoolProp(tagManager, PS_MFCPropertyGrid_ModifiedProperties, bModifiedProperties))
 	{
 		MarkModifiedProperties(bModifiedProperties);
 	}
 
 	BOOL bVSDotNetLook = TRUE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCPropertyGrid_VSDotNetLook, bVSDotNetLook))
+	if (ReadBoolProp(tagManager, PS_MFCPropertyGrid_VSDotNetLook, bVSDotNetLook))
 	{
 		SetVSDotNetLook(bVSDotNetLook);
 	}

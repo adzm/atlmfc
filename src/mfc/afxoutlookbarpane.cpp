@@ -25,17 +25,11 @@
 
 #define AFX_SCROLL_BUTTON_OFFSET 5
 
-//------------------
-// Timer event IDs:
-//------------------
-static const UINT idScrollUp = 1;
-static const UINT idScrollDn = 2;
-
 static const int nScrollButtonMargin = 3;
 
 static const UINT uiScrollDelay = 200; // ms
 
-CMFCToolBarImages CMFCOutlookBarPane::m_Images;
+CMFCToolBarImages CMFCOutlookBarPane::m_Images(TRUE);
 CSize CMFCOutlookBarPane::m_csImage = CSize(0, 0);
 
 /////////////////////////////////////////////////////////////////////////////
@@ -45,6 +39,8 @@ IMPLEMENT_SERIAL(CMFCOutlookBarPane, CMFCToolBar, 1)
 
 CMFCOutlookBarPane::CMFCOutlookBarPane()
 {
+	m_Images.Initialize();
+
 	m_nSize = -1;
 
 	m_iScrollOffset = 0;
@@ -52,7 +48,7 @@ CMFCOutlookBarPane::CMFCOutlookBarPane()
 	m_bScrollDown = FALSE;
 
 	m_clrRegText = (COLORREF)-1;
-	m_clrBackColor = afxGlobalData.clrBtnShadow;
+	m_clrBackColor = GetGlobalData()->clrBtnShadow;
 
 	m_clrTransparentColor = RGB(255, 0, 255);
 	m_Images.SetTransparentColor(m_clrTransparentColor);
@@ -82,7 +78,6 @@ CMFCOutlookBarPane::~CMFCOutlookBarPane()
 }
 
 BEGIN_MESSAGE_MAP(CMFCOutlookBarPane, CMFCToolBar)
-	//{{AFX_MSG_MAP(CMFCOutlookBarPane)
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
 	ON_WM_CREATE()
@@ -94,7 +89,6 @@ BEGIN_MESSAGE_MAP(CMFCOutlookBarPane, CMFCToolBar)
 	ON_WM_CONTEXTMENU()
 	ON_WM_NCPAINT()
 	ON_WM_NCDESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -255,6 +249,30 @@ BOOL CMFCOutlookBarPane::RemoveButton(UINT iIdCommand)
 	return FALSE;
 }
 
+BOOL CMFCOutlookBarPane::RemoveButtonByIndex(int nIndex)
+{
+	POSITION pos = m_Buttons.FindIndex(nIndex);
+	if (pos == NULL)
+	{
+		return FALSE;
+	}
+
+	CMFCOutlookBarPaneButton* pButton = (CMFCOutlookBarPaneButton*)m_Buttons.GetAt(pos);
+	ASSERT_VALID(pButton);
+
+	m_Buttons.RemoveAt(pos);
+	delete pButton;
+
+	if (GetSafeHwnd () != NULL)
+	{
+		AdjustLocations();
+		UpdateWindow();
+		Invalidate();
+	}
+
+	return TRUE;
+}
+
 BOOL CMFCOutlookBarPane::InternalAddButton(int iImageIndex, LPCTSTR lpszLabel, UINT iIdCommand, int iInsertAt)
 {
 	CMFCOutlookBarPaneButton* pButton = new CMFCOutlookBarPaneButton;
@@ -373,14 +391,14 @@ void CMFCOutlookBarPane::ScrollUp()
 		m_iScrollOffset = 0;
 		m_iFirstVisibleButton = 0;
 
-		KillTimer(idScrollUp);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_UP);
 		return;
 	}
 
 	CMFCToolBarButton* pFirstVisibleButton = GetButton(m_iFirstVisibleButton);
 	if (pFirstVisibleButton == NULL)
 	{
-		KillTimer(idScrollDn);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN);
 		return;
 	}
 
@@ -403,14 +421,14 @@ void CMFCOutlookBarPane::ScrollDown()
 {
 	if (!m_bScrollDown || m_iFirstVisibleButton + 1 >= GetCount())
 	{
-		KillTimer(idScrollDn);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN);
 		return;
 	}
 
 	CMFCToolBarButton* pFirstVisibleButton = GetButton(m_iFirstVisibleButton);
 	if (pFirstVisibleButton == NULL)
 	{
-		KillTimer(idScrollDn);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN);
 		return;
 	}
 
@@ -472,7 +490,7 @@ void CMFCOutlookBarPane::SetBackImage(UINT uiImageID)
 			m_uiBackImageId = uiImageID;
 		}
 
-		m_bDrawShadedHighlight = (afxGlobalData.m_nBitsPerPixel > 8); // For 16 bits or greater
+		m_bDrawShadedHighlight = (GetGlobalData()->m_nBitsPerPixel > 8); // For 16 bits or greater
 	}
 
 	if (GetSafeHwnd() != NULL)
@@ -507,7 +525,7 @@ void CMFCOutlookBarPane::OnSysColorChange()
 {
 	CMFCToolBar::OnSysColorChange();
 
-	m_clrBackColor = afxGlobalData.clrBtnShadow;
+	m_clrBackColor = GetGlobalData()->clrBtnShadow;
 
 	if (m_uiBackImageId != 0)
 	{
@@ -535,7 +553,7 @@ void CMFCOutlookBarPane::AdjustLocations()
 	CSize sizeBtn = CMenuImages::Size() + CSize(2 * nScrollButtonMargin, 2 * nScrollButtonMargin);
 
 	CClientDC dc(this);
-	CFont* pOldFont = dc.SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = dc.SelectObject(&(GetGlobalData()->fontRegular));
 
 	CRect rectClient;
 	GetClientRect(rectClient);
@@ -601,7 +619,7 @@ void CMFCOutlookBarPane::AdjustLocations()
 	m_btnUp.RedrawWindow();
 	m_btnDown.RedrawWindow();
 
-	OnMouseLeave(0, 0);
+	OnMouseLeave();
 	UpdateTooltips();
 }
 
@@ -624,7 +642,7 @@ void CMFCOutlookBarPane::DoPaint(CDC* pDCPaint)
 
 	if (!m_Buttons.IsEmpty())
 	{
-		pDC->SetTextColor(afxGlobalData.clrBtnText);
+		pDC->SetTextColor(GetGlobalData()->clrBtnText);
 		pDC->SetBkMode(TRANSPARENT);
 
 		CAfxDrawState ds;
@@ -634,7 +652,7 @@ void CMFCOutlookBarPane::DoPaint(CDC* pDCPaint)
 			return;     // something went wrong
 		}
 
-		CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontRegular);
+		CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 
 		//--------------
 		// Draw buttons:
@@ -783,8 +801,8 @@ BOOL CMFCOutlookBarPane::PreTranslateMessage(MSG* pMsg)
 	switch(pMsg->message)
 	{
 	case WM_LBUTTONUP:
-		KillTimer(idScrollUp);
-		KillTimer(idScrollDn);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_UP);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN);
 
 	case WM_LBUTTONDOWN:
 	case WM_MOUSEMOVE:
@@ -802,7 +820,7 @@ BOOL CMFCOutlookBarPane::PreTranslateMessage(MSG* pMsg)
 				m_btnDown.SendMessage(pMsg->message, pMsg->wParam, pMsg->wParam);
 				if (pMsg->message == WM_LBUTTONDOWN)
 				{
-					SetTimer(idScrollDn, uiScrollDelay, NULL);
+					SetTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN, uiScrollDelay, NULL);
 
 					if (m_bPageScrollMode)
 					{
@@ -824,7 +842,7 @@ BOOL CMFCOutlookBarPane::PreTranslateMessage(MSG* pMsg)
 
 				if (pMsg->message == WM_LBUTTONDOWN)
 				{
-					SetTimer(idScrollUp, uiScrollDelay, NULL);
+					SetTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_UP, uiScrollDelay, NULL);
 
 					if (m_bPageScrollMode)
 					{
@@ -847,7 +865,7 @@ void CMFCOutlookBarPane::OnTimer(UINT_PTR nIDEvent)
 {
 	switch(nIDEvent)
 	{
-	case idScrollUp:
+	case AFX_TIMER_ID_OUTLOOK_BAR_SCRL_UP:
 		if (m_btnUp.IsPressed())
 		{
 			if (m_bPageScrollMode)
@@ -861,7 +879,7 @@ void CMFCOutlookBarPane::OnTimer(UINT_PTR nIDEvent)
 		}
 		return;
 
-	case idScrollDn:
+	case AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN:
 		if (m_btnDown.IsPressed())
 		{
 			if (m_bPageScrollMode)
@@ -886,7 +904,7 @@ void CMFCOutlookBarPane::OnLButtonUp(UINT nFlags, CPoint point)
 
 	if (::IsWindow(hWnd))
 	{
-		OnMouseLeave(0, 0);
+		OnMouseLeave();
 	}
 }
 
@@ -1052,7 +1070,7 @@ void CMFCOutlookBarPane::SetDefaultState()
 	CopyButtonsList(m_Buttons, m_OrigButtons);
 }
 
-BOOL CMFCOutlookBarPane::RestoreOriginalstate()
+BOOL CMFCOutlookBarPane::RestoreOriginalState()
 {
 	if (m_OrigButtons.IsEmpty())
 	{
@@ -1107,7 +1125,7 @@ BOOL CMFCOutlookBarPane::SmartUpdate(const CObList& lstPrevButtons)
 
 	if (bIsModified)
 	{
-		RestoreOriginalstate();
+		RestoreOriginalState();
 	}
 
 	return bIsModified;
@@ -1146,14 +1164,14 @@ void CMFCOutlookBarPane::ScrollPageUp()
 		m_iScrollOffset = 0;
 		m_iFirstVisibleButton = 0;
 
-		KillTimer(idScrollUp);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_UP);
 		return;
 	}
 
 	CMFCToolBarButton* pFirstVisibleButton = GetButton(m_iFirstVisibleButton);
 	if (pFirstVisibleButton == NULL)
 	{
-		KillTimer(idScrollDn);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN);
 		return;
 	}
 
@@ -1173,14 +1191,14 @@ void CMFCOutlookBarPane::ScrollPageDown()
 {
 	if (!m_bScrollDown || m_iFirstVisibleButton + 1 >= GetCount())
 	{
-		KillTimer(idScrollDn);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN);
 		return;
 	}
 
 	CMFCToolBarButton* pFirstVisibleButton = GetButton(m_iFirstVisibleButton);
 	if (pFirstVisibleButton == NULL)
 	{
-		KillTimer(idScrollDn);
+		KillTimer(AFX_TIMER_ID_OUTLOOK_BAR_SCRL_DN);
 		return;
 	}
 

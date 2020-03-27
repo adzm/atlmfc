@@ -19,7 +19,7 @@
 #pragma warning(disable : 4711)	// function selected for automatic inline expansion
 
 bool CAtlAllocator::Init(
-	_In_z_ const CHAR *pszFileName,
+	_In_z_ const WCHAR *pszFileName,
 	_In_ DWORD dwMaxSize)
 {
 	// We're relying on syncronization provided by the startup code (CRT DllMain/WinMain)
@@ -44,7 +44,7 @@ bool CAtlAllocator::Init(
 		}
 
 		// Use a NULL SECURITY_ATTRIBUTES structure to get the default DACL.
-		m_hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL,
+		m_hMap = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL,
 			PAGE_READWRITE | SEC_RESERVE, 0, dwMaxSize, pszFileName);
 		if(!m_hMap)
 		{
@@ -135,13 +135,13 @@ bool CAtlAllocator::Init(
 	return m_bValid;
 }
 
-bool CAtlAllocator::Open(_In_z_ const CHAR *pszFileName)
+bool CAtlAllocator::Open(_In_z_ const WCHAR *pszFileName)
 {
 	Close();
 
 	__try
 	{
-		m_hMap = OpenFileMappingA(FILE_MAP_WRITE, FALSE, pszFileName);
+		m_hMap = OpenFileMappingW(FILE_MAP_WRITE, FALSE, pszFileName);
 		if(!m_hMap)
 			__leave;
 
@@ -151,6 +151,10 @@ bool CAtlAllocator::Open(_In_z_ const CHAR *pszFileName)
 			__leave;
 
 		m_pProcess = reinterpret_cast<CAtlTraceProcess *>(m_pBufferStart);
+
+		if (m_pProcess->m_cbSize != sizeof(CAtlTraceProcess))
+			__leave;
+
 		m_pProcess->IncRef();
 
 		SYSTEM_INFO si;

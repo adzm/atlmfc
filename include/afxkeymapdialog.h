@@ -27,7 +27,7 @@
 class CMFCToolBarsCustomizeDialog;
 class CMFCToolBarButton;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCKeyMapDialog dialog
 
 class CMFCKeyMapDialog : public CDialogEx
@@ -38,7 +38,6 @@ public:
 	~CMFCKeyMapDialog();
 
 // Dialog Data
-	//{{AFX_DATA(CMFCKeyMapDialog)
 	enum { IDD = IDD_AFXBARRES_KEYMAP };
 	CStatic         m_wndAccelLabel;
 	CMFCListCtrl m_KeymapList;
@@ -47,7 +46,6 @@ public:
 	CComboBox       m_wndViewTypeList;
 	CMFCButton   m_ButtonPrint;
 	CMFCButton   m_ButtonCopy;
-	//}}AFX_DATA
 
 	CFrameWnd*      m_pWndParentFrame;
 	HACCEL          m_hAccelTable;
@@ -80,7 +78,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCKeyMapDialog)
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSelchangeViewType();
 	afx_msg void OnSelchangeCategory();
@@ -88,7 +85,7 @@ protected:
 	afx_msg void OnPrint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -59,10 +59,8 @@ CMFCRibbonCustomizePropertyPage::CMFCRibbonCustomizePropertyPage( CMFCRibbonBar*
 {
 	ASSERT_VALID(pRibbonBar);
 
-	//{{AFX_DATA_INIT(CMFCRibbonCustomizePropertyPage)
 	m_nCategory = -1;
 	m_bQAToolbarOnBottom = FALSE;
-	//}}AFX_DATA_INIT
 
 	m_pRibbonBar = pRibbonBar;
 	m_bQAToolbarOnBottom = !m_pRibbonBar->IsQuickAccessToolbarOnTop();
@@ -79,7 +77,6 @@ CMFCRibbonCustomizePropertyPage::~CMFCRibbonCustomizePropertyPage()
 void CMFCRibbonCustomizePropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CMFCPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCRibbonCustomizePropertyPage)
 	DDX_Control(pDX, IDS_AFXBARRES_ADD, m_wndAdd);
 	DDX_Control(pDX, IDC_AFXBARRES_REMOVE, m_wndRemove);
 	DDX_Control(pDX, IDC_AFXBARRES_COMMANDS_LIST, m_wndCommandsList);
@@ -89,11 +86,9 @@ void CMFCRibbonCustomizePropertyPage::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_AFXBARRES_MOVEDOWN, m_wndDown);
 	DDX_CBIndex(pDX, IDC_AFXBARRES_CATEGORY, m_nCategory);
 	DDX_Check(pDX, IDC_AFXBARRES_QAT_ON_BOTTOM, m_bQAToolbarOnBottom);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCRibbonCustomizePropertyPage, CMFCPropertyPage)
-	//{{AFX_MSG_MAP(CMFCRibbonCustomizePropertyPage)
 	ON_BN_CLICKED(IDS_AFXBARRES_ADD, &CMFCRibbonCustomizePropertyPage::OnAdd)
 	ON_BN_CLICKED(IDC_AFXBARRES_REMOVE, &CMFCRibbonCustomizePropertyPage::OnRemove)
 	ON_BN_CLICKED(IDC_AFXBARRES_MOVEUP, &CMFCRibbonCustomizePropertyPage::OnUp)
@@ -105,7 +100,6 @@ BEGIN_MESSAGE_MAP(CMFCRibbonCustomizePropertyPage, CMFCPropertyPage)
 	ON_LBN_SELCHANGE(IDC_AFXBARRES_COMMANDS_LIST, &CMFCRibbonCustomizePropertyPage::OnSelchangeCommandsList)
 	ON_LBN_DBLCLK(IDC_AFXBARRES_COMMANDS_LIST, &CMFCRibbonCustomizePropertyPage::OnAdd)
 	ON_LBN_DBLCLK(IDC_AFXBARRES_QAT_COMMANDS_LIST, &CMFCRibbonCustomizePropertyPage::OnRemove)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

@@ -67,7 +67,6 @@ protected:
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 	BOOL _AddMFCToolBar(CWnd* pBar, REBARBANDINFO* pRBBI);
 
-	//{{AFX_MSG(CMFCReBar)
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT);
 	afx_msg void OnPaint();
 	afx_msg void OnHeightChange(NMHDR* pNMHDR, LRESULT* pResult);
@@ -79,7 +78,7 @@ protected:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	CMFCControlBarImpl m_Impl;

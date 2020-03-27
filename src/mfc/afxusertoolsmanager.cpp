@@ -17,8 +17,8 @@
 
 #include "afxribbonres.h"
 
-static const CString strUserToolsProfile = _T("UserToolsManager");
-static const CString strUserToolsEntry = _T("Tools");
+#define AFX_USER_TOOLS_PROFILE  _T("UserToolsManager")
+#define AFX_USER_TOOLS_ENTRY  _T("Tools")
 
 CUserToolsManager* afxUserToolsManager = NULL;
 extern CObList afxAllToolBars;
@@ -64,7 +64,7 @@ CUserToolsManager::~CUserToolsManager()
 
 BOOL CUserToolsManager::LoadState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strUserToolsProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_USER_TOOLS_PROFILE, lpszProfileName);
 
 	while (!m_lstUserTools.IsEmpty())
 	{
@@ -79,7 +79,7 @@ BOOL CUserToolsManager::LoadState(LPCTSTR lpszProfileName)
 		return FALSE;
 	}
 
-	if (!reg.Read(strUserToolsEntry, m_lstUserTools))
+	if (!reg.Read(AFX_USER_TOOLS_ENTRY, m_lstUserTools))
 	{
 		//---------------------------------------------------------
 		// Tools objects may be corrupted, so, I don't delete them.
@@ -94,7 +94,7 @@ BOOL CUserToolsManager::LoadState(LPCTSTR lpszProfileName)
 
 BOOL CUserToolsManager::SaveState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strUserToolsProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_USER_TOOLS_PROFILE, lpszProfileName);
 
 	CSettingsStoreSP regSP;
 	CSettingsStore& reg = regSP.Create(FALSE, FALSE);
@@ -104,7 +104,7 @@ BOOL CUserToolsManager::SaveState(LPCTSTR lpszProfileName)
 		return FALSE;
 	}
 
-	return reg.Write(strUserToolsEntry, m_lstUserTools);
+	return reg.Write(AFX_USER_TOOLS_ENTRY, m_lstUserTools);
 }
 
 CUserTool* CUserToolsManager::CreateNewTool()

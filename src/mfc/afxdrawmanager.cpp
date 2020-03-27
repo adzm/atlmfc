@@ -172,7 +172,7 @@ BOOL CDrawingManager::HighlightRect(CRect rect, int nPercentage, COLORREF clrTra
 		return TRUE;
 	}
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		CMFCToolBarImages::FillDitheredRect(&m_dc, rect);
 		return TRUE;
@@ -243,8 +243,8 @@ BOOL CDrawingManager::HighlightRect(CRect rect, int nPercentage, COLORREF clrTra
 		{
 			if (nPercentage == -1)
 			{
-				*pBits = AFX_RGB_TO_RGBA(min(255, (2 * GetRValue(color) + GetBValue(afxGlobalData.clrBtnHilite)) / 3),
-					min(255, (2 * GetGValue(color) + GetGValue(afxGlobalData.clrBtnHilite)) / 3), min(255, (2 * GetBValue(color) + GetRValue(afxGlobalData.clrBtnHilite)) / 3));
+				*pBits = AFX_RGB_TO_RGBA(min(255, (2 * GetRValue(color) + GetBValue(GetGlobalData()->clrBtnHilite)) / 3),
+					min(255, (2 * GetGValue(color) + GetGValue(GetGlobalData()->clrBtnHilite)) / 3), min(255, (2 * GetBValue(color) + GetRValue(GetGlobalData()->clrBtnHilite)) / 3));
 			}
 			else
 			{
@@ -266,7 +266,7 @@ BOOL CDrawingManager::HighlightRect(CRect rect, int nPercentage, COLORREF clrTra
 	}
 #pragma warning(default : 6269)
 
-	// Copy highligted bitmap back to the screen:
+	// Copy highlighted bitmap back to the screen:
 	m_dc.BitBlt(rect.left, rect.top, cx, cy, &dcMem, 0, 0, SRCCOPY);
 
 	dcMem.SelectObject(pOldBmp);
@@ -383,7 +383,7 @@ BOOL CDrawingManager::GrayRect(CRect rect, int nPercentage, COLORREF clrTranspar
 		return TRUE;
 	}
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8)
 	{
 		CMFCToolBarImages::FillDitheredRect(&m_dc, rect);
 		return TRUE;
@@ -430,7 +430,7 @@ BOOL CDrawingManager::GrayRect(CRect rect, int nPercentage, COLORREF clrTranspar
 
 	if (clrDisabled == (COLORREF)-1)
 	{
-		clrDisabled = afxGlobalData.clrBtnHilite;
+		clrDisabled = GetGlobalData()->clrBtnHilite;
 	}
 
 #pragma warning(disable : 6269)
@@ -456,7 +456,7 @@ BOOL CDrawingManager::GrayRect(CRect rect, int nPercentage, COLORREF clrTranspar
 	}
 #pragma warning(default : 6269)
 
-	// Copy highligted bitmap back to the screen:
+	// Copy highlighted bitmap back to the screen:
 	m_dc.BitBlt(rect.left, rect.top, cx, cy, &dcMem, 0, 0, SRCCOPY);
 
 	dcMem.SelectObject(pOldBmp);

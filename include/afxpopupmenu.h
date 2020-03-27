@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -28,7 +28,7 @@ class CMFCToolBarsMenuPropertyPage;
 class CMFCRibbonBaseElement;
 class CMFCShadowWnd;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPopupMenu frame
 
 class CMFCPopupMenu : public CMiniFrameWnd
@@ -131,13 +131,13 @@ public:
 	{
 		if (m_AnimationType == SYSTEM_DEFAULT_ANIMATION && !bNoSystem)
 		{
-			if (afxGlobalData.m_bMenuAnimation)
+			if (GetGlobalData()->m_bMenuAnimation)
 			{
-				return afxGlobalData.m_bMenuFadeEffect ? FADE : SLIDE; 
+				return GetGlobalData()->m_bMenuFadeEffect ? FADE : SLIDE; 
 			}
 			else
 			{
-				return NO_ANIMATION;
+				return CMFCPopupMenu::NO_ANIMATION;
 			}
 		}
 
@@ -401,7 +401,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCPopupMenu)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnPaint();
@@ -421,8 +420,15 @@ protected:
 	afx_msg void OnNcLButtonDown(UINT nHitTest, CPoint point);
 	afx_msg void OnActivateApp(BOOL bActive, DWORD dwThreadID);
 	afx_msg void OnWindowPosChanged(WINDOWPOS FAR* lpwndpos);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
+
+	virtual HRESULT get_accName(VARIANT varChild, BSTR *pszName);
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT get_accChild(VARIANT varChild, IDispatch **ppdispChild);
+	virtual HRESULT get_accRole(VARIANT varChild, VARIANT *pvarRole);
+	virtual HRESULT get_accState(VARIANT varChild, VARIANT *pvarState);
 };
 
 class CMFCDisableMenuAnimation

@@ -86,7 +86,7 @@ INT_PTR CFontDialog::DoModal()
 	ASSERT(m_cf.lpfnHook != NULL); // can still be a user hook
 
 	m_cf.hwndOwner = PreModal();
-	INT_PTR nResult = ::AfxCtxChooseFont(&m_cf);
+	INT_PTR nResult = ChooseFont(&m_cf);
 	PostModal();
 
 	if (nResult == IDOK)

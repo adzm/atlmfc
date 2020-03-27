@@ -33,8 +33,8 @@ static const int nColumnCommand = 0;
 static const int nColumnKeys = 1;
 static const int nColumnDescr = 2;
 
-static const CString strWindowPlacementRegSection = _T("KeyMapWindowPlacement");
-static const CString strRectKey = _T("KeyMapWindowRect");
+#define AFX_WINDOW_PLACEMENT_REG_SECTION  _T("KeyMapWindowPlacement")
+#define AFX_WINDOW_RECT_REG_SECTION  _T("KeyMapWindowRect")
 
 static int CALLBACK listCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
@@ -93,7 +93,6 @@ CMFCKeyMapDialog::~CMFCKeyMapDialog()
 void CMFCKeyMapDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCKeyMapDialog)
 	DDX_Control(pDX, IDC_AFXBARRES_ACCEL_LABEL, m_wndAccelLabel);
 	DDX_Control(pDX, IDC_AFXBARRES_KEYLIST, m_KeymapList);
 	DDX_Control(pDX, IDC_AFXBARRES_CATEGORY, m_wndCategoryList);
@@ -101,18 +100,15 @@ void CMFCKeyMapDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_AFXBARRES_VIEW_TYPE, m_wndViewTypeList);
 	DDX_Control(pDX, IDC_AFXBARRES_PRINT_KEYMAP, m_ButtonPrint);
 	DDX_Control(pDX, IDC_AFXBARRES_COPY_KEYMAP, m_ButtonCopy);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCKeyMapDialog, CDialogEx)
-	//{{AFX_MSG_MAP(CMFCKeyMapDialog)
 	ON_WM_SIZE()
 	ON_WM_DESTROY()
 	ON_CBN_SELCHANGE(IDC_AFXBARRES_VIEW_TYPE, &CMFCKeyMapDialog::OnSelchangeViewType)
 	ON_CBN_SELCHANGE(IDC_AFXBARRES_CATEGORY, &CMFCKeyMapDialog::OnSelchangeCategory)
 	ON_BN_CLICKED(IDC_AFXBARRES_COPY_KEYMAP, &CMFCKeyMapDialog::OnCopy)
 	ON_BN_CLICKED(IDC_AFXBARRES_PRINT_KEYMAP, &CMFCKeyMapDialog::OnPrint)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -146,7 +142,7 @@ BOOL CMFCKeyMapDialog::OnInitDialog()
 
 		if (m_bEnablePrint)
 		{
-			m_ButtonPrint.SetImage(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_PRINT32 : IDB_AFXBARRES_PRINT, NULL);
+			m_ButtonPrint.SetImage(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_PRINT32 : IDB_AFXBARRES_PRINT, NULL);
 			m_ButtonPrint.GetWindowText(strTT);
 			m_ButtonPrint.SetWindowText(_T(""));
 			m_ButtonPrint.SetTooltip(strTT);
@@ -158,7 +154,7 @@ BOOL CMFCKeyMapDialog::OnInitDialog()
 			m_ButtonPrint.ShowWindow(SW_HIDE);
 		}
 
-		m_ButtonCopy.SetImage(afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_COPY32 : IDB_AFXBARRES_COPY, NULL);
+		m_ButtonCopy.SetImage(GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_COPY32 : IDB_AFXBARRES_COPY, NULL);
 		m_ButtonCopy.GetWindowText(strTT);
 		m_ButtonCopy.SetWindowText(_T(""));
 		m_ButtonCopy.SetTooltip(strTT);
@@ -233,7 +229,7 @@ BOOL CMFCKeyMapDialog::OnInitDialog()
 
 		CRect rectPosition;
 
-		if (reg.Open(pApp->GetRegSectionPath(strWindowPlacementRegSection)) && reg.Read(strRectKey, rectPosition))
+		if (reg.Open(pApp->GetRegSectionPath(AFX_WINDOW_PLACEMENT_REG_SECTION)) && reg.Read(AFX_WINDOW_RECT_REG_SECTION, rectPosition))
 		{
 			MoveWindow(rectPosition);
 		}
@@ -576,9 +572,9 @@ void CMFCKeyMapDialog::OnDestroy()
 		CSettingsStoreSP regSP;
 		CSettingsStore& reg = regSP.Create(FALSE, FALSE);
 
-		if (reg.CreateKey(pApp->GetRegSectionPath(strWindowPlacementRegSection)))
+		if (reg.CreateKey(pApp->GetRegSectionPath(AFX_WINDOW_PLACEMENT_REG_SECTION)))
 		{
-			reg.Write(strRectKey, rectPosition);
+			reg.Write(AFX_WINDOW_RECT_REG_SECTION, rectPosition);
 		}
 	}
 

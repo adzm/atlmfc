@@ -75,7 +75,7 @@
 #undef AFX_DATA
 #define AFX_DATA AFX_NET_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSocketWnd -- internal use only
 //  Implementation for sockets notification callbacks.
 //  Future versions of MFC may or may not include this exact class.
@@ -87,14 +87,13 @@ public:
 	CSocketWnd();
 
 protected:
-	//{{AFX_MSG(CSocketWnd)
 	LRESULT OnSocketNotify(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSocketDead(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CAsyncSocket
 
 class CAsyncSocket : public CObject
@@ -235,7 +234,7 @@ protected:
 		const SOCKADDR* lpSockAddr, int nSockAddrLen, int nFlags);
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSocket
 
 class CSocket : public CAsyncSocket
@@ -303,7 +302,7 @@ protected:
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSocketFile
 
 class CSocketFile : public CFile
@@ -403,18 +402,17 @@ inline BOOL CAsyncSocket::GetPeerNameEx(CString& rPeerAddress, UINT& rPeerPort)
 	BOOL bResult = GetPeerName((SOCKADDR*)&sockAddr, &nSockAddrLen);
 	if (bResult)
 	{
+#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+		wchar_t szName[NI_MAXHOST];
+		BOOL bResult2 = GetNameInfoW((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
+#else
 		char szName[NI_MAXHOST];
-		bResult = getnameinfo(
-			(SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
-		if (!bResult)
+		BOOL bResult2 = getnameinfo((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
+#endif // ( _WIN32_WINNT >= 0x600 ) && defined(UNICODE)
+		if (!bResult2)
 		{
 			rPeerAddress = szName;
 			rPeerPort = ntohs(SS_PORT(&sockAddr));
-			bResult = TRUE;
-		}
-		else
-		{
-			bResult = FALSE;
 		}
 	}
 	return bResult;
@@ -429,10 +427,14 @@ inline BOOL CAsyncSocket::GetSockNameEx(CString& rSocketAddress, UINT& rSocketPo
 	BOOL bResult = GetSockName((SOCKADDR*)&sockAddr, &nSockAddrLen);
 	if (bResult)
 	{
+#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+		wchar_t szName[NI_MAXHOST];
+		BOOL bResult2 = GetNameInfoW((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
+#else
 		char szName[NI_MAXHOST];
-		bResult = getnameinfo(
-			(SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
-		if (!bResult)
+		BOOL bResult2 = getnameinfo((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
+#endif // ( _WIN32_WINNT >= 0x600 ) && defined(UNICODE)
+		if (!bResult2)
 		{
 			rSocketAddress = szName;
 			rSocketPort = ntohs(SS_PORT(&sockAddr));
@@ -448,11 +450,15 @@ inline int CAsyncSocket::ReceiveFromEx(void* lpBuf, int nBufLen, CString& rSocke
 
 	int nSockAddrLen = sizeof(sockAddr);
 	int nResult = ReceiveFrom(lpBuf, nBufLen, (SOCKADDR*)&sockAddr, &nSockAddrLen, nFlags);
-	if(nResult != SOCKET_ERROR)
+	if (nResult != SOCKET_ERROR)
 	{
+#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+		wchar_t szName[NI_MAXHOST];
+		BOOL bResult = GetNameInfoW((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
+#else
 		char szName[NI_MAXHOST];
-		BOOL bResult = getnameinfo(
-			(SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
+		BOOL bResult = getnameinfo((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
+#endif // ( _WIN32_WINNT >= 0x600 ) && defined(UNICODE)
 		if (!bResult)
 		{
 			rSocketAddress = szName;
@@ -461,6 +467,7 @@ inline int CAsyncSocket::ReceiveFromEx(void* lpBuf, int nBufLen, CString& rSocke
 	}
 	return nResult;
 }
+
 
 inline int CAsyncSocket::SendToEx(const void* lpBuf, int nBufLen, UINT nHostPort, LPCTSTR lpszHostAddress, int nFlags)
 {

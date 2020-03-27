@@ -18,7 +18,6 @@
 // CMiniFrameWnd
 
 BEGIN_MESSAGE_MAP(CMiniFrameWnd, CFrameWnd)
-	//{{AFX_MSG_MAP(CMiniFrameWnd)
 	ON_WM_NCACTIVATE()
 	ON_WM_NCHITTEST()
 	ON_WM_SYSCOMMAND()
@@ -26,7 +25,6 @@ BEGIN_MESSAGE_MAP(CMiniFrameWnd, CFrameWnd)
 	ON_WM_NCCREATE()
 	ON_MESSAGE(WM_FLOATSTATUS, &CMiniFrameWnd::OnFloatStatus)
 	ON_MESSAGE(WM_QUERYCENTERWND, &CMiniFrameWnd::OnQueryCenterWnd)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 #define new DEBUG_NEW

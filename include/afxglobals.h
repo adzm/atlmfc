@@ -20,11 +20,6 @@
 #include <shobjidl.h>
 #endif
 
-#include <d2d1.h>
-#include <d2d1helper.h>
-#include <dwrite.h>
-#include <wincodec.h>
-
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
 #endif
@@ -33,7 +28,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Auxiliary System/Screen metrics
 
 typedef enum AFX_DOCK_TYPE
@@ -55,29 +50,6 @@ static const UINT AFX_AHSM_STRETCH = 2;
 
 typedef HANDLE AFX_HPAINTBUFFER;  // handle to a buffered paint context
 
-typedef HRESULT (__stdcall * DRAWTHEMEPARENTBACKGROUND)(HWND hWnd, HDC hdc,const RECT *pRec);
-
-typedef enum _AFX_BP_BUFFERFORMAT
-{
-	AFX_BPBF_COMPATIBLEBITMAP,    // Compatible bitmap
-	AFX_BPBF_DIB,                 // Device-independent bitmap
-	AFX_BPBF_TOPDOWNDIB,          // Top-down device-independent bitmap
-	AFX_BPBF_TOPDOWNMONODIB       // Top-down monochrome device-independent bitmap
-} AFX_BP_BUFFERFORMAT;
-
-typedef struct _AFX_BP_PAINTPARAMS
-{
-	DWORD                       cbSize;
-	DWORD                       dwFlags; // BPPF_ flags
-	const RECT *                prcExclude;
-	const BLENDFUNCTION *       pBlendFunction;
-} AFX_BP_PAINTPARAMS;
-
-typedef HRESULT (__stdcall * BUFFEREDPAINTINIT)(VOID);
-typedef HRESULT (__stdcall * BUFFEREDPAINTUNINIT)(VOID);
-typedef AFX_HPAINTBUFFER (__stdcall * BEGINBUFFEREDPAINT)(HDC hdcTarget, const RECT* rcTarget, AFX_BP_BUFFERFORMAT dwFormat, AFX_BP_PAINTPARAMS *pPaintParams, HDC *phdc);
-typedef HRESULT (__stdcall * ENDBUFFEREDPAINT)(AFX_HPAINTBUFFER hBufferedPaint, BOOL fUpdateTarget);
-
 typedef struct _AFX_MARGINS {
 	int cxLeftWidth;
 	int cxRightWidth;
@@ -85,41 +57,15 @@ typedef struct _AFX_MARGINS {
 	int cyBottomHeight;
 } AFX_MARGINS;
 
-typedef HRESULT (__stdcall * DWMEXTENDFRAMEINTOCLIENTAREA)(HWND hWnd, const AFX_MARGINS* pMargins);
-typedef HRESULT (__stdcall * DWMDEFWINDOWPROC)(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult);
-typedef HRESULT (__stdcall * DWMISCOMPOSITIONENABLED)(BOOL* pfEnabled);
-
-typedef int (WINAPI *AFX_DTT_CALLBACK_PROC)(HDC hdc, LPWSTR pszText, int cchText, LPRECT prc, UINT dwFlags, LPARAM lParam);
-
-typedef struct _AFX_DTTOPTS {
-	DWORD dwSize;
-	DWORD dwFlags;
-	COLORREF crText;
-	COLORREF crBorder;
-	COLORREF crShadow;
-	int iTextShadowType;
-	POINT ptShadowOffset;
-	int nBorderSize;
-	int iFontPropId;
-	int iColorPropId;
-	int iStateId;
-	BOOL fApplyOverlay;
-	int iGlowSize;
-	AFX_DTT_CALLBACK_PROC pfnDrawTextCallback;
-	LPARAM lParam;
-} AFX_DTTOPTS;
-
-typedef HRESULT (__stdcall * DRAWTHEMETEXTEX)(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, LPCWSTR pszText, int iCharCount, DWORD dwFlags, LPRECT pRect, const AFX_DTTOPTS *pOptions);
-
-typedef HRESULT (WINAPI * D2D1MAKEROTATEMATRIX)(FLOAT angle, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix);
-
 class CMFCToolBarImages;
 
 struct AFX_GLOBAL_DATA
 {
 	friend class CMemDC;
 
+	BOOL m_bInitialized;	// Has the singleton afxGlobalData structure been initialized?
 	BOOL m_bUseSystemFont;	// Use system font for menu/toolbar/ribbons
+	BOOL m_bDontReduceFontHeight; // Do not reduce font height in UpdateFonts
 	BOOL m_bInSettingChange;
 
 	// solid brushes with convenient gray colors and system colors
@@ -205,11 +151,9 @@ struct AFX_GLOBAL_DATA
 	CFont fontMarlett;	// Standard Windows menu symbols
 	CRect m_rectVirtual;
 
-	BOOL  bIsWindowsVista;
 	///<summary>
 	/// Indicates whether the application is being executed under Windows 7 OS or higher</summary>
 	BOOL  bIsWindows7;
-	BOOL  bDisableAero;
 	BOOL  bIsRemoteSession;
 
 	BOOL  m_bIsBlackHighContrast;
@@ -238,6 +182,7 @@ struct AFX_GLOBAL_DATA
 	AFX_GLOBAL_DATA();
 	~AFX_GLOBAL_DATA();
 
+	void Initialize();
 	void UpdateSysColors();
 	void UpdateFonts();
 	void OnSettingChange();
@@ -269,21 +214,12 @@ struct AFX_GLOBAL_DATA
 		return m_bIsRibbonImageScale;
 	}
 
-	BOOL IsWindowsThemingDrawParentBackground() const
-	{
-		return m_pfDrawThemeBackground != NULL;
-	}
-
 	BOOL DrawParentBackground(CWnd* pWnd, CDC* pDC, LPRECT lpRect = NULL);
 	void CleanUp();
 
 	COLORREF GetColor(int nColor);
 
 	BOOL SetLayeredAttrib(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
-	BOOL IsWindowsLayerSupportAvailable() const
-	{
-		return TRUE;
-	}
 
 	BOOL Is32BitIcons() const
 	{
@@ -348,9 +284,7 @@ struct AFX_GLOBAL_DATA
 	CString RegisterWindowClass(LPCTSTR lpszClassNamePrefix);
 	BOOL ExcludeTag(CString& strBuffer, LPCTSTR lpszTag, CString& strTag, BOOL bIsCharsList = FALSE);
 
-	BOOL DwmExtendFrameIntoClientArea(HWND hWnd, AFX_MARGINS* pMargins);
-	LRESULT DwmDefWindowProc(HWND hWnd, UINT message, WPARAM wp, LPARAM lp);
-	BOOL DwmIsCompositionEnabled();
+	BOOL IsDwmCompositionEnabled();
 
 	BOOL DrawTextOnGlass(HTHEME hTheme, CDC* pDC, int iPartId, int iStateId, CString strText,
 		CRect rect, DWORD dwFlags, int nGlowSize = 0, COLORREF clrText = (COLORREF)-1);
@@ -374,64 +308,14 @@ struct AFX_GLOBAL_DATA
 	/// Creates and stores in the global data a pointer to ITaskBarList interface.</summary>
 	/// <returns>A pointer to ITaskbarList interface if creation of a task bar list object succeeds, or NULL if creation fails or current
 	/// Operation System is less than Windows 7.</returns>
-	ITaskbarList  *GetITaskbarList();
+	ITaskbarList* GetITaskbarList();
 
 	/// <summary>
 	/// Creates and stores in the global data a pointer to ITaskBarList3 interface.</summary>
 	/// <returns>A pointer to ITaskbarList3 interface if creation creation of a task bar list object succeeds, or NULL if creation fails or current
 	/// Operation System is less than Windows 7.</returns>
-	ITaskbarList3 *GetITaskbarList3();
-
-	/// <summary>
-	/// Releases interfaces obtained through GetITaskbarList and GetITaskbarList3 methods.</summary>
-	void ReleaseTaskBarRefs();
+	ITaskbarList3* GetITaskbarList3();
 #endif
-
-	/// <summary>
-	/// Initializes D2D, DirectWrite and WIC factories. This method should be called prior to initialization of the main window .</summary>
-	/// <returns> 
-	/// Returns TRUE if the factories were intilalizrd, FALSE - otherwise</returns>
-	/// <param name="d2dFactoryType">The threading model of the D2D factory and the resources it creates.</param>
-	/// <param name="writeFactoryType">A value that specifies whether the write factory object will be shared or isolated</param>
-	BOOL InitD2D(D2D1_FACTORY_TYPE d2dFactoryType = D2D1_FACTORY_TYPE_SINGLE_THREADED, DWRITE_FACTORY_TYPE writeFactoryType = DWRITE_FACTORY_TYPE_SHARED);
-
-	/// <summary>
-	/// Determines whether the D2D was initialized</summary>
-	/// <returns> 
-	/// TRUE if D2D was initialized; otherwise FALSE.</returns>
-	BOOL IsD2DInitialized() const
-	{
-		return m_bD2DInitialized;
-	}
-
-	/// <summary>
-	/// Returns a pointer to ID2D1Factory interface stored in the global data. If this interface is not initialized yet, it will be created with the default parameters.</summary>
-	/// <returns>A pointer to ID2D1Factory interface if creation of a factory succeeds, or NULL if creation fails or current
-	/// Operation System don't have D2D support.</returns>
-	ID2D1Factory* GetDirect2dFactory()	{ InitD2D(); return m_pDirect2dFactory; }
-
-	/// <summary>
-	/// Returns a pointer to IDWriteFactory interface stored in the global data. If this interface is not initialized yet, it will be created with the default parameters.</summary>
-	/// <returns>A pointer to IDWriteFactory interface if creation of a factory succeeds, or NULL if creation fails or current
-	/// Operation System don't have DirectWrite support.</returns>
-	IDWriteFactory* GetWriteFactory()	{ InitD2D(); return m_pWriteFactory; }
-
-	/// <summary>
-	/// Returns a pointer to IWICImagingFactory interface stored in the global data. If this interface is not initialized yet, it will be created with the default parameters.</summary>
-	/// <returns>A pointer to IWICImagingFactory interface if creation of a factory succeeds, or NULL if creation fails or current
-	/// Operation System don't have WIC support.</returns>
-	IWICImagingFactory* GetWICFactory()	{ InitD2D(); return m_pWicFactory; }
-
-	/// <summary>
-	/// Creates a rotation transformation that rotates by the specified angle about the specified point.</summary>
-	/// <returns>Returns S_OK if successful, or an error value otherwise. </returns>
-	/// <param name="angle">The clockwise rotation angle, in degrees.</param>
-	/// <param name="center">The point about which to rotate.</param>
-	/// <param name="matrix">When this method returns, contains the new rotation transformation. You must allocate storage for this parameter.</param>
-	HRESULT D2D1MakeRotateMatrix(FLOAT angle, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix)
-	{
-		return m_pfD2D1MakeRotateMatrix == NULL ? E_FAIL : (*m_pfD2D1MakeRotateMatrix)(angle, center, matrix);
-	}
 
 protected:
 
@@ -447,41 +331,25 @@ protected:
 	BOOL   m_bIsRibbonImageScale;
 	BOOL   m_bBufferedPaintInited;
 
-	HINSTANCE m_hinstUXThemeDLL;
 	HINSTANCE m_hinstDwmapiDLL;
-
-	DRAWTHEMEPARENTBACKGROUND    m_pfDrawThemeBackground;
-	DRAWTHEMETEXTEX              m_pfDrawThemeTextEx;
-	BUFFEREDPAINTINIT            m_pfBufferedPaintInit;
-	BUFFEREDPAINTUNINIT          m_pfBufferedPaintUnInit;
-	BEGINBUFFEREDPAINT           m_pfBeginBufferedPaint;
-	ENDBUFFEREDPAINT             m_pfEndBufferedPaint;
-	DWMEXTENDFRAMEINTOCLIENTAREA m_pfDwmExtendFrameIntoClientArea;
-	DWMDEFWINDOWPROC             m_pfDwmDefWindowProc;
-	DWMISCOMPOSITIONENABLED      m_pfDwmIsCompositionEnabled;
-
-#if (NTDDI_VERSION >= NTDDI_WIN7)
-	BOOL m_bComInitialized;
-	BOOL m_bTaskBarInterfacesAvailable;
-	ITaskbarList*  m_pTaskbarList;
-	ITaskbarList3* m_pTaskbarList3;
-#endif
-
-	void ReleaseD2DRefs();
-
-	AFX_IMPORT_DATA static HINSTANCE m_hinstD2DDLL;
-	AFX_IMPORT_DATA static HINSTANCE m_hinstDWriteDLL;
-
-	AFX_IMPORT_DATA static ID2D1Factory* m_pDirect2dFactory;
-	AFX_IMPORT_DATA static IDWriteFactory* m_pWriteFactory;
-	AFX_IMPORT_DATA static IWICImagingFactory* m_pWicFactory;
-
-	AFX_IMPORT_DATA static D2D1MAKEROTATEMATRIX m_pfD2D1MakeRotateMatrix;
-
-	AFX_IMPORT_DATA static BOOL m_bD2DInitialized;
 };
 
+// Do not reference this structure directly inside of MFC.  Always use the accessor method
+// GetGlobalData in order to ensure that the structure has been properly initialized.
+// Initialization is not done during the construction of the afxGlobalData object because it requires
+// calling a number of GDI32/USER32 APIs, which violates the best practices for DLLMain.
 AFX_IMPORT_DATA extern AFX_GLOBAL_DATA afxGlobalData;
+
+inline AFX_GLOBAL_DATA *GetGlobalData()
+{
+	if (!afxGlobalData.m_bInitialized)
+	{
+		afxGlobalData.Initialize();
+		afxGlobalData.m_bInitialized = TRUE;
+	}
+
+	return &afxGlobalData;
+}
 
 #define AFX_IMAGE_MARGIN 4
 

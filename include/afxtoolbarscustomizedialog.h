@@ -44,7 +44,7 @@ class CUserTool;
 #define AFX_CUSTOMIZE_MENUAMPERS      0x0040 // Allow buttons text contain '&'
 #define AFX_CUSTOMIZE_NO_LARGE_ICONS  0x0080 // Remove "Large Icons" option from the customization dialog
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarsCustomizeDialog
 //
 // CMFCToolBarsCustomizeDialog is a modeless property sheet that is  created once and not destroyed
@@ -96,6 +96,7 @@ protected:
 	UINT m_uiFlags;
 	BOOL m_bSaveMenuAmps;
 	CMFCButton m_btnHelp;
+	UINT m_nPaneMenuEntryID;
 
 // Operations
 public:
@@ -154,6 +155,7 @@ protected:
 	// Keyboard page hooks:
 	//---------------------
 	virtual BOOL OnAssignKey(ACCEL* /*pAccel*/) { return TRUE; }
+	virtual BOOL OnRemoveKey(ACCEL* /*pAccel*/) { return TRUE; }
 
 public:
 	virtual BOOL Create();
@@ -165,15 +167,14 @@ public:
 	virtual void PostNcDestroy();
 
 protected:
-	//{{AFX_MSG(CMFCToolBarsCustomizeDialog)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg void OnClose();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

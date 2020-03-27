@@ -158,14 +158,14 @@ void AFXAPI AfxOleTermOrFreeLib(BOOL bTerm, BOOL bJustRevoke)
 
 AFX_STATIC BOOL AFXAPI _AfxParseOption(_Inout_ LPTSTR lpszCmdLine, LPCTSTR lpszOption)
 {
-	int nLen = lstrlen(lpszOption);
+	size_t nLen = AtlStrLen(lpszOption);
 	while (*lpszCmdLine != 0)
 	{
 		if ((*lpszCmdLine == '-' || *lpszCmdLine == '/') &&
 			_tcsncmp(lpszOption, lpszCmdLine+1, nLen) == 0)
 		{
 			// remove the option from the command line
-			int nCmdLen = lstrlen(lpszCmdLine);
+			size_t nCmdLen = AtlStrLen(lpszCmdLine);
 			Checked::memmove_s(lpszCmdLine, nCmdLen * sizeof(TCHAR), 
 				lpszCmdLine + nLen + 1, (nCmdLen - nLen) * sizeof(TCHAR));
 			return TRUE;

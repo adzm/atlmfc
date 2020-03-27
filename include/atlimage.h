@@ -14,6 +14,11 @@
 #pragma once
 
 #include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <atlbase.h>
 #include <atlstr.h>
 #include <atlsimpcoll.h>
@@ -27,7 +32,11 @@
 #pragma warning( push, 3 )
 #pragma push_macro("new")
 #undef new
+
+ATLPREFAST_SUPPRESS(6385)
 #include <gdiplus.h>
+ATLPREFAST_UNSUPPRESS()
+
 #pragma pop_macro("new")
 #pragma warning( pop )
 
@@ -51,6 +60,9 @@ const int CIMAGE_DC_CACHE_SIZE = 4;
 
 class CImage;
 
+#pragma warning(push)
+#pragma warning(disable:4512)
+
 class CImageDC
 {
 public:
@@ -63,6 +75,8 @@ private:
 	const CImage& m_image;
 	HDC m_hDC;
 };
+
+#pragma warning(pop)
 
 class CImage
 {
@@ -193,7 +207,7 @@ public:
 		_In_ int nHeight,
 		_In_ int nBPP,
 		_In_ DWORD eCompression,
-		_In_opt_count_c_(3) const DWORD* pdwBitmasks = NULL,
+		_In_reads_opt_(3) const DWORD* pdwBitmasks = NULL,
 		_In_ DWORD dwFlags = 0) throw();
 	void Destroy() throw();
 	HBITMAP Detach() throw();
@@ -308,11 +322,11 @@ public:
 		_In_ DWORD dwROP = SRCCOPY) const throw();
 	BOOL PlgBlt(
 		_In_ HDC hDestDC,
-		_In_count_c_(3) const POINT* pPoints,
+		_In_reads_(3) const POINT* pPoints,
 		_In_opt_ HBITMAP hbmMask = NULL) const throw();
 	BOOL PlgBlt(
 		_In_ HDC hDestDC,
-		_In_count_c_(3) const POINT* pPoints,
+		_In_reads_(3) const POINT* pPoints,
 		_In_ int xSrc,
 		_In_ int ySrc,
 		_In_ int nSrcWidth,
@@ -322,7 +336,7 @@ public:
 		_In_ int yMask = 0) const throw();
 	BOOL PlgBlt(
 		_In_ HDC hDestDC,
-		_In_count_c_(3) const POINT* pPoints,
+		_In_reads_(3) const POINT* pPoints,
 		_In_ const RECT& rectSrc,
 		_In_opt_ HBITMAP hbmMask = NULL,
 		_In_ const POINT& pointMask = CPoint( 0, 0 )) const throw();
@@ -438,14 +452,14 @@ public:
 private:
 	static CLSID FindCodecForExtension(
 		_In_z_ LPCTSTR pszExtension,
-		_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+		_In_reads_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
 		_In_ UINT nCodecs);
 	static CLSID FindCodecForFileType(
 		_In_ REFGUID guidFileType,
-		_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+		_In_reads_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
 		_In_ UINT nCodecs);
 	static void BuildCodecFilterString(
-		_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+		_In_reads_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
 		_In_ UINT nCodecs,
 		_Inout_ CSimpleString& strFilter,
 		_Inout_ CSimpleArray< GUID >& aguidFileTypes,
@@ -500,7 +514,11 @@ inline CImageDC::operator HDC() const throw()
 inline CImage::CInitGDIPlus::CInitGDIPlus() throw() :
 	m_dwToken( 0 ), m_nCImageObjects( 0 ), m_dwLastError(S_OK)
 {
+#if defined(_ATL_STATIC_LIB_IMPL)
+	if (!_AtlInitializeCriticalSectionEx(&m_sect, 0, 0))
+#else
 	if (!InitializeCriticalSectionAndSpinCount(&m_sect, 0))
+#endif
 	{
 		m_dwLastError = HRESULT_FROM_WIN32(GetLastError());
 	}
@@ -803,7 +821,7 @@ inline BOOL CImage::CreateEx(
 	_In_ int nHeight,
 	_In_ int nBPP,
 	_In_ DWORD eCompression,
-	_In_opt_count_c_(3) const DWORD* pdwBitfields,
+	_In_reads_opt_(3) const DWORD* pdwBitfields,
 	_In_ DWORD dwFlags) throw()
 {
 	USES_ATL_SAFE_ALLOCA;
@@ -1100,7 +1118,7 @@ inline bool CImage::ShouldExcludeFormat(
 }
 
 inline void CImage::BuildCodecFilterString(
-	_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+	_In_reads_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
 	_In_ UINT nCodecs,
 	_Inout_ CSimpleString& strFilter,
 	_Inout_ CSimpleArray< GUID >& aguidFileTypes,
@@ -1518,7 +1536,7 @@ inline BOOL CImage::MaskBlt(
 
 inline BOOL CImage::PlgBlt(
 	_In_ HDC hDestDC,
-	_In_count_c_(3) const POINT* pPoints,
+	_In_reads_(3) const POINT* pPoints,
 	_In_ int xSrc,
 	_In_ int ySrc,
 	_In_ int nSrcWidth,
@@ -1542,7 +1560,7 @@ inline BOOL CImage::PlgBlt(
 
 inline BOOL CImage::PlgBlt(
 	_In_ HDC hDestDC,
-	_In_count_c_(3) const POINT* pPoints,
+	_In_reads_(3) const POINT* pPoints,
 	_In_ const RECT& rectSrc,
 	_In_opt_ HBITMAP hbmMask,
 	_In_ const POINT& pointMask) const throw()
@@ -1554,7 +1572,7 @@ inline BOOL CImage::PlgBlt(
 
 inline BOOL CImage::PlgBlt(
 	_In_ HDC hDestDC,
-	_In_count_c_(3) const POINT* pPoints,
+	_In_reads_(3) const POINT* pPoints,
 	_In_opt_ HBITMAP hbmMask) const throw()
 {
 	return PlgBlt( hDestDC, pPoints, 0, 0, m_nWidth, m_nHeight, hbmMask, 0, 0 );
@@ -1578,7 +1596,7 @@ inline void CImage::ReleaseDC() const throw()
 
 inline CLSID CImage::FindCodecForExtension(
 	_In_z_ LPCTSTR pszExtension,
-	_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+	_In_reads_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
 	_In_ UINT nCodecs)
 {
 	CT2CW pszExtensionW( pszExtension );
@@ -1606,7 +1624,7 @@ inline CLSID CImage::FindCodecForExtension(
 
 inline CLSID CImage::FindCodecForFileType(
 	_In_ REFGUID guidFileType,
-	_In_count_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
+	_In_reads_(nCodecs) const Gdiplus::ImageCodecInfo* pCodecs,
 	_In_ UINT nCodecs)
 {
 	for( UINT iCodec = 0; iCodec < nCodecs; iCodec++ )

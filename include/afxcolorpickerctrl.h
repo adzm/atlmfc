@@ -20,7 +20,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCColorPickerCtrl window
 
 class CMFCColorPickerCtrl : public CButton
@@ -90,7 +90,6 @@ protected:
 	void NotifyParent();
 
 protected:
-	//{{AFX_MSG(CMFCColorPickerCtrl)
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
@@ -104,7 +103,7 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnCancelMode();
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Attributes:

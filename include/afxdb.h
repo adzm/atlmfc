@@ -33,6 +33,8 @@
 	#include <sqlext.h>     // extensions
 #endif
 
+#include <wincrypt.h>
+
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
 #endif 
@@ -44,6 +46,7 @@
 
 #pragma comment(lib, "odbc32.lib")
 #pragma comment(lib, "odbccp32.lib")
+#pragma comment(lib, "crypt32.lib")
 
 #endif //!_AFX_NOFORCE_LIBS
 
@@ -118,7 +121,7 @@ struct CODBCParamInfo;
 #define MAX_DBNAME_LEN   32     // Max size of a database name
 #define MAX_DNAME_LEN    256    // Max size of Recordset names
 #define MAX_CONNECT_LEN  1024   // Max size of Connect string
-#define MAX_CURSOR_NAME  18     // Max size of a cursor name
+#define MAX_CURSOR_NAME  40     // Max size of a cursor name
 #define DEFAULT_FIELD_TYPE SQL_TYPE_NULL // pick "C" data type to match SQL data type
 
 // Timeout and net wait defaults
@@ -181,14 +184,14 @@ public:
 
 // Implementation (use AfxThrowDBException to create)
 public:
-	/* explicit */ CDBException(RETCODE nRetCode = SQL_SUCCESS);
+	explicit CDBException(RETCODE nRetCode = SQL_SUCCESS);
 
 	virtual void BuildErrorString(CDatabase* pdb, HSTMT hstmt,
 		BOOL bTrace = TRUE);
 	void Empty();
 	virtual ~CDBException();
 
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 
 #ifdef _DEBUG
@@ -199,7 +202,7 @@ public:
 
 void AFXAPI AfxThrowDBException(RETCODE nRetCode, CDatabase* pdb, HSTMT hstmt);
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDatabase - a SQL Database
 
 class CDatabase : public CObject
@@ -285,7 +288,8 @@ public:
 	void SetSynchronousMode(BOOL bSynchronous); // Obsolete, does nothing
 
 protected:
-	CString m_strConnect;
+	CString   m_strConnect;
+	DATA_BLOB m_blobConnect; // encrypted connection string
 
 	CPtrList m_listRecordsets;  // maintain list to ensure CRecordsets all closed
 
@@ -317,7 +321,7 @@ protected:
 	friend class CDBException;
 };
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CFieldExchange - for field exchange
 class CFieldExchange
 {
@@ -400,12 +404,12 @@ public:
 
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Global helper
 
 HENV AFXAPI AfxGetHENV();
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Recordset Field Exchange helpers
 
 void AFXAPI AfxStoreField(CRecordset& rs, UINT nField, void* pvField);
@@ -415,7 +419,7 @@ BOOL AFXAPI AfxCompareValueByRef(void* pvData, void* pvCache, int nDataType);
 void AFXAPI AfxCopyValueByRef(void* pvCache, void* pvData,
 	LONG_PTR* plLength, int nDataType);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Standard Recordset Field Exchange routines
 
 // text data
@@ -426,9 +430,9 @@ void AFXAPI RFX_Text(CFieldExchange* pFX, LPCTSTR szName, CStringA &value,
 	// Default max length for char and varchar, default datasource type
 	int nMaxLength = 255, int nColumnType = SQL_VARCHAR, short nScale = 0);
 
-void AFXAPI RFX_Text(_In_ CFieldExchange* pFX, _In_z_ LPCTSTR szName, _Out_cap_(nMaxLength) _Pre_notnull_ _Post_z_ LPWSTR value,
+void AFXAPI RFX_Text(_In_ CFieldExchange* pFX, _In_z_ LPCTSTR szName, _Out_writes_(nMaxLength) _Pre_notnull_ _Post_z_ LPWSTR value,
 	_In_ int nMaxLength, _In_ int nColumnType = SQL_VARCHAR, _In_ short nScale = 0);
-void AFXAPI RFX_Text(_In_ CFieldExchange* pFX, _In_ LPCTSTR szName, _Out_cap_(nMaxLength) _Pre_notnull_ _Post_z_ LPSTR value,
+void AFXAPI RFX_Text(_In_ CFieldExchange* pFX, _In_ LPCTSTR szName, _Out_writes_(nMaxLength) _Pre_notnull_ _Post_z_ LPSTR value,
 	_In_ int nMaxLength, _In_ int nColumnType = SQL_VARCHAR, _In_ short nScale = 0);
 
 // boolean data
@@ -453,18 +457,18 @@ void AFXAPI RFX_Binary(CFieldExchange* pFX, LPCTSTR szName, CByteArray& value,
 void AFXAPI RFX_Byte(CFieldExchange* pFX, LPCTSTR szName, BYTE& value);
 void AFXAPI RFX_LongBinary(CFieldExchange* pFX, LPCTSTR szName, CLongBinary& value);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Bulk Recordset Field Exchange helpers
 void AFXAPI AfxRFXBulkDefault(CFieldExchange* pFX, LPCTSTR szName,
 	void* pv, LONG_PTR* rgLengths, int nCType, SQLULEN cbValue);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Bulk Recordset Field Exchange routines
 
 void AFXAPI RFX_Text_Bulk(CFieldExchange* pFX, LPCTSTR szName,
-	_Out_ _Deref_post_cap_(nMaxLength) LPWSTR* prgStrVals, LONG_PTR** prgLengths, int nMaxLength);
+	_Outptr_result_buffer_(nMaxLength) LPWSTR* prgStrVals, LONG_PTR** prgLengths, int nMaxLength);
 void AFXAPI RFX_Text_Bulk(CFieldExchange* pFX, LPCTSTR szName,
-	_Out_ _Deref_post_cap_(nMaxLength) LPSTR* prgStrVals, LONG_PTR** prgLengths, int nMaxLength);
+	_Outptr_result_buffer_(nMaxLength) LPSTR* prgStrVals, LONG_PTR** prgLengths, int nMaxLength);
 
 void AFXAPI RFX_Bool_Bulk(CFieldExchange* pFX, LPCTSTR szName,
 	BOOL** prgBoolVals, LONG_PTR** prgLengths);
@@ -486,7 +490,7 @@ void AFXAPI RFX_Byte_Bulk(CFieldExchange* pFX, LPCTSTR szName,
 void AFXAPI RFX_Binary_Bulk(CFieldExchange* pFX, LPCTSTR szName,
 	BYTE** prgByteVals, LONG_PTR** prgLengths, int nMaxLength);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Database Dialog Data Exchange cover routines
 // Cover routines provide database semantics on top of DDX routines
 
@@ -503,7 +507,7 @@ void AFXAPI DDX_FieldText(CDataExchange* pDX, int nIDC, DWORD& value,
 	CRecordset* pRecordset);
 void AFXAPI DDX_FieldText(CDataExchange* pDX, int nIDC, CString& value,
 	CRecordset* pRecordset);
-void AFXAPI DDX_FieldText(_In_ CDataExchange* pDX, _In_ int nIDC, _Out_z_cap_(nMaxLen) LPTSTR pstrValue,
+void AFXAPI DDX_FieldText(_In_ CDataExchange* pDX, _In_ int nIDC, _Out_writes_z_(nMaxLen) LPTSTR pstrValue,
 	_In_ int nMaxLen, _In_ CRecordset* pRecordset);
 void AFXAPI DDX_FieldText(CDataExchange* pDX, int nIDC, double& value,
 	CRecordset* pRecordset);
@@ -536,7 +540,7 @@ void AFXAPI DDX_FieldCBStringExact(CDataExchange* pDX, int nIDC,
 void AFXAPI DDX_FieldScroll(CDataExchange* pDX, int nIDC, int& value,
 	CRecordset* pRecordset);
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRecordset - the result of a SQL Statement
 
 #define AFX_DB_USE_DEFAULT_TYPE     (0xFFFFFFFF)
@@ -559,7 +563,7 @@ class CRecordset : public CObject
 
 // Constructor
 public:
-	/* explicit */ CRecordset(CDatabase* pDatabase = NULL);
+	explicit CRecordset(CDatabase* pDatabase = NULL);
 
 public:
 	virtual ~CRecordset();
@@ -956,7 +960,7 @@ protected:
 	friend class CRecordView;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Info helper definitions
 #define AFX_CURRENT_RECORD_UNDEFINED (-2)
 #define AFX_CURRENT_RECORD_BOF (-1)
@@ -1006,7 +1010,7 @@ struct CODBCParamInfo
 };
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDBVariant
 
 #define DBVT_NULL       0
@@ -1055,7 +1059,7 @@ public:
 	virtual ~CDBVariant();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRecordView - form for viewing data records
 
 class AFX_NOVTABLE CRecordView : public CFormView
@@ -1091,12 +1095,10 @@ protected:
 	BOOL m_bOnFirstRecord;
 	BOOL m_bOnLastRecord;
 
-	//{{AFX_MSG(CRecordView)
 	afx_msg void OnUpdateRecordFirst(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordPrev(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordNext(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordLast(CCmdUI* pCmdUI);
-	//}}AFX_MSG
 	afx_msg void OnMove(int cx, int cy);
 
 	DECLARE_MESSAGE_MAP()

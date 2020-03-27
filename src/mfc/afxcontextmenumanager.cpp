@@ -23,7 +23,7 @@
 #define new DEBUG_NEW
 #endif
 
-static const CString strMenusProfile = _T("ContextMenuManager");
+#define AFX_MENUS_PROFILE _T("ContextMenuManager")
 
 CContextMenuManager* afxContextMenuManager = NULL;
 
@@ -383,7 +383,7 @@ HMENU CContextMenuManager::GetMenuByName(LPCTSTR lpszName, UINT* puiOrigResID) c
 
 BOOL CContextMenuManager::LoadState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strMenusProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MENUS_PROFILE, lpszProfileName);
 
 	for (POSITION pos = m_Menus.GetStartPosition(); pos != NULL;)
 	{
@@ -432,7 +432,7 @@ BOOL CContextMenuManager::LoadState(LPCTSTR lpszProfileName)
 
 BOOL CContextMenuManager::SaveState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strMenusProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MENUS_PROFILE, lpszProfileName);
 
 	for (POSITION pos = m_Menus.GetStartPosition(); pos != NULL;)
 	{

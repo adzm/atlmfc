@@ -31,7 +31,7 @@ extern "C"
 BOOL WINAPI DllMain(
 	_In_ HINSTANCE hInstance,
 	_In_ DWORD dwReason,
-	__reserved LPVOID /*lpReserved*/)
+	_Reserved_ LPVOID /*lpReserved*/)
 {
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
@@ -70,7 +70,7 @@ BOOL WINAPI DllMain(
 
 namespace ATL
 {
-STDAPI AtlCreateRegistrar(_Deref_out_ IRegistrar** ppReg)
+STDAPI AtlCreateRegistrar(_Outptr_ IRegistrar** ppReg)
 {
 	if (ppReg == NULL)
 		return E_POINTER;

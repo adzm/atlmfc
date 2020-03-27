@@ -14,7 +14,6 @@
 #include "afxtoolbarcomboboxbutton.h"
 #include "afxtoolbarmenubutton.h"
 #include "afxmenuimages.h"
-#include "afxtrackmouse.h"
 #include "afxvisualmanager.h"
 #include "afxcontextmenumanager.h"
 
@@ -233,10 +232,23 @@ SIZE CMFCToolBarComboBoxButton::OnCalculateSize(CDC* pDC, const CSize& sizeDefau
 
 		if (m_pWndCombo != NULL && m_pWndCombo->GetSafeHwnd() != NULL)
 		{
-			CRect rectCombo;
-			m_pWndCombo->GetWindowRect(&rectCombo);
+			if (GetGlobalData()->bIsWindows7)
+			{
+				COMBOBOXINFO info;
+				memset(&info,  0, sizeof(COMBOBOXINFO));
+				info.cbSize = sizeof(COMBOBOXINFO);
 
-			cy = rectCombo.Height();
+				m_pWndCombo->GetComboBoxInfo(&info);
+
+				cy = info.rcButton.bottom - info.rcButton.top;
+			}
+			else
+			{
+				CRect rectCombo;
+				m_pWndCombo->GetWindowRect(&rectCombo);
+
+				cy = rectCombo.Height();
+			}
 		}
 
 		if (!m_bIsHidden && m_pWndEdit->GetSafeHwnd() != NULL && (m_pWndCombo->GetStyle() & WS_VISIBLE) == 0)
@@ -345,7 +357,7 @@ void CMFCToolBarComboBoxButton::OnChangeParentWnd(CWnd* pWndParent)
 			return;
 		}
 
-		m_pWndEdit->SetFont(&afxGlobalData.fontRegular);
+		m_pWndEdit->SetFont(&(GetGlobalData()->fontRegular));
 		m_pWndEdit->SetOwner(m_pWndCombo->GetParent()->GetOwner());
 
 		if (m_pWndEdit != NULL && m_pWndEdit->GetSafeHwnd() != NULL)
@@ -357,7 +369,7 @@ void CMFCToolBarComboBoxButton::OnChangeParentWnd(CWnd* pWndParent)
 
 	AdjustRect();
 
-	m_pWndCombo->SetFont(&afxGlobalData.fontRegular);
+	m_pWndCombo->SetFont(&(GetGlobalData()->fontRegular));
 
 	if (m_pWndCombo->GetCount() > 0)
 	{
@@ -775,10 +787,10 @@ void CMFCToolBarComboBoxButton::OnAddToCustomizePage()
 
 HBRUSH CMFCToolBarComboBoxButton::OnCtlColor(CDC* pDC, UINT /*nCtlColor*/)
 {
-	pDC->SetTextColor(afxGlobalData.clrWindowText);
-	pDC->SetBkColor(afxGlobalData.clrWindow);
+	pDC->SetTextColor(GetGlobalData()->clrWindowText);
+	pDC->SetBkColor(GetGlobalData()->clrWindow);
 
-	return(HBRUSH) afxGlobalData.brWindow.GetSafeHandle();
+	return(HBRUSH) GetGlobalData()->brWindow.GetSafeHandle();
 }
 
 void CMFCToolBarComboBoxButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* pImages, BOOL bHorz, BOOL bCustomizeMode, BOOL bHighlight, BOOL bDrawBorder, BOOL bGrayDisabledButtons)
@@ -791,7 +803,7 @@ void CMFCToolBarComboBoxButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 
 	BOOL bDisabled = (bCustomizeMode && !IsEditable()) || (!bCustomizeMode &&(m_nStyle & TBBS_DISABLED));
 
-	pDC->SetTextColor(bDisabled ? afxGlobalData.clrGrayedText : (bHighlight) ? CMFCToolBar::GetHotTextColor() : afxGlobalData.clrBarText);
+	pDC->SetTextColor(bDisabled ? GetGlobalData()->clrGrayedText : (bHighlight) ? CMFCToolBar::GetHotTextColor() : GetGlobalData()->clrBarText);
 
 	if (m_bFlat)
 	{
@@ -810,16 +822,16 @@ void CMFCToolBarComboBoxButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 
 		int nPrevTextColor = pDC->GetTextColor();
 
-		pDC->FillSolidRect(rectCombo, bDisabled ? afxGlobalData.clrBtnFace : afxGlobalData.clrWindow);
+		pDC->FillSolidRect(rectCombo, bDisabled ? GetGlobalData()->clrBtnFace : GetGlobalData()->clrWindow);
 
 		if (bDisabled)
 		{
-			pDC->Draw3dRect(&rectCombo, afxGlobalData.clrBarHilite, afxGlobalData.clrBarHilite);
+			pDC->Draw3dRect(&rectCombo, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarHilite);
 		}
 
 		// Draw drop-down button:
 		CRect rectButton = m_rectButton;
-		if (afxGlobalData.m_bIsBlackHighContrast)
+		if (GetGlobalData()->m_bIsBlackHighContrast)
 		{
 			rectButton.DeflateRect(1, 1);
 		}
@@ -863,7 +875,7 @@ void CMFCToolBarComboBoxButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarI
 				}
 				else
 				{
-					COLORREF cltTextOld = pDC->SetTextColor(afxGlobalData.clrWindowText);
+					COLORREF cltTextOld = pDC->SetTextColor(GetGlobalData()->clrWindowText);
 					pDC->DrawText(m_strEdit, rectText, DT_VCENTER | DT_SINGLELINE);
 					pDC->SetTextColor(cltTextOld);
 				}
@@ -1094,9 +1106,9 @@ int CMFCToolBarComboBoxButton::OnDrawOnCustomizeList(CDC* pDC, const CRect& rect
 	int nMargin = 1;
 	rectCombo.DeflateRect(nMargin, nMargin);
 
-	pDC->FillRect(rectCombo, &afxGlobalData.brWindow);
+	pDC->FillRect(rectCombo, &(GetGlobalData()->brWindow));
 
-	pDC->Draw3dRect(rectCombo, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rectCombo, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 
 	CRect rectBtn = rectCombo;
 	rectBtn.left = rectBtn.right - rectBtn.Height() + 2;
@@ -1402,15 +1414,13 @@ CMFCToolBarComboBoxEdit::~CMFCToolBarComboBoxEdit()
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarComboBoxEdit, CEdit)
-	//{{AFX_MSG_MAP(CMFCToolBarComboBoxEdit)
 	ON_WM_SETFOCUS()
 	ON_WM_KILLFOCUS()
 	ON_WM_MOUSEMOVE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_PAINT()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCToolBarComboBoxEdit::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 	ON_CONTROL_REFLECT(EN_CHANGE, &CMFCToolBarComboBoxEdit::OnChange)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1540,12 +1550,11 @@ void CMFCToolBarComboBoxEdit::OnMouseMove(UINT nFlags, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 }
 
-afx_msg LRESULT CMFCToolBarComboBoxEdit::OnMouseLeave(WPARAM,LPARAM)
+void CMFCToolBarComboBoxEdit::OnMouseLeave()
 {
 	m_bTracked = FALSE;
 
@@ -1553,8 +1562,6 @@ afx_msg LRESULT CMFCToolBarComboBoxEdit::OnMouseLeave(WPARAM,LPARAM)
 	{
 		m_combo.SetHotEdit(FALSE);
 	}
-
-	return 0;
 }
 
 void CMFCToolBarComboBoxEdit::OnContextMenu(CWnd* pWnd, CPoint point)
@@ -1684,12 +1691,12 @@ void CMFCToolBarComboBoxButton::OnGlobalFontsChanged()
 
 	if (m_pWndEdit->GetSafeHwnd() != NULL)
 	{
-		m_pWndEdit->SetFont(&afxGlobalData.fontRegular);
+		m_pWndEdit->SetFont(&(GetGlobalData()->fontRegular));
 	}
 
 	if (m_pWndCombo->GetSafeHwnd() != NULL)
 	{
-		m_pWndCombo->SetFont(&afxGlobalData.fontRegular);
+		m_pWndCombo->SetFont(&(GetGlobalData()->fontRegular));
 	}
 }
 
@@ -1789,11 +1796,11 @@ void CMFCToolBarComboBoxEdit::OnPaint()
 	GetClientRect(rect);
 
 	CPaintDC dc(this);
-	dc.FillRect(rect, &afxGlobalData.brWindow);
+	dc.FillRect(rect, &(GetGlobalData()->brWindow));
 
 	dc.SetBkMode(TRANSPARENT);
-	dc.SetTextColor(afxGlobalData.clrGrayedText);
-	CFont* pOldFont = dc.SelectObject(&afxGlobalData.fontRegular);
+	dc.SetTextColor(GetGlobalData()->clrGrayedText);
+	CFont* pOldFont = dc.SelectObject(&(GetGlobalData()->fontRegular));
 
 	rect.DeflateRect(1, 1);
 	dc.DrawText(m_combo.GetPrompt(), rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);

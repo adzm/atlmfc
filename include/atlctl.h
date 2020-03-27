@@ -24,6 +24,12 @@
 	#error ATL requires C++ compilation (use a .cpp suffix)
 #endif
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <atlwin.h>
 
 #include <objsafe.h>
@@ -163,6 +169,9 @@ public:
 
 //////////////////////////////////////////////////////////////////////////////
 // CComControlBase
+
+#pragma warning(push)
+#pragma warning(disable:4512)
 
 // Holds the essential data members for an ActiveX control and useful helper functions
 class ATL_NO_VTABLE CComControlBase
@@ -327,7 +336,7 @@ public:
 		BackColor = var.lVal;
 		return hRes;
 	}
-	HRESULT GetAmbientDisplayName(_Inout_ _Deref_post_opt_z_ BSTR& bstrDisplayName)
+	HRESULT GetAmbientDisplayName(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrDisplayName)
 	{
 		CComVariant var;		
 
@@ -349,7 +358,7 @@ public:
 		return hRes;
 	}
 ATLPREFAST_SUPPRESS(6387)
-	HRESULT GetAmbientFont(_Deref_out_ IFont** ppFont)
+	HRESULT GetAmbientFont(_Outptr_result_maybenull_ IFont** ppFont)
 	{
 		// caller MUST Release the font!
 		if (ppFont == NULL)
@@ -370,7 +379,7 @@ ATLPREFAST_SUPPRESS(6387)
 ATLPREFAST_UNSUPPRESS()
 	
 ATLPREFAST_SUPPRESS(6387)
-	HRESULT GetAmbientFontDisp(_Deref_out_ IFontDisp** ppFont)
+	HRESULT GetAmbientFontDisp(_Outptr_result_maybenull_ IFontDisp** ppFont)
 	{
 		// caller MUST Release the font!
 		if (ppFont == NULL)
@@ -406,7 +415,7 @@ ATLPREFAST_UNSUPPRESS()
 		lcid = var.lVal;
 		return hRes;
 	}
-	HRESULT GetAmbientScaleUnits(_Inout_ _Deref_post_opt_z_ BSTR& bstrScaleUnits)
+	HRESULT GetAmbientScaleUnits(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrScaleUnits)
 	{
 		CComVariant var;		
 
@@ -569,7 +578,7 @@ ATLPREFAST_UNSUPPRESS()
 		return hRes;
 	}
 
-	HRESULT GetAmbientCharSet(_Inout_ _Deref_post_opt_z_ BSTR& bstrCharSet)
+	HRESULT GetAmbientCharSet(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrCharSet)
 	{
 		CComVariant var;
 
@@ -623,7 +632,7 @@ ATLPREFAST_UNSUPPRESS()
 ATLPREFAST_SUPPRESS(6387)
 	HRESULT InternalGetSite(
 		_In_ REFIID riid, 
-		_Deref_out_ void** ppUnkSite)
+		_Outptr_ void** ppUnkSite)
 	{
 		ATLASSERT(ppUnkSite != NULL);
 		if (ppUnkSite == NULL)
@@ -680,14 +689,14 @@ ATLPREFAST_UNSUPPRESS()
 		_In_opt_ const RECT* prcPosRect = NULL);
 
 	HRESULT IOleObject_SetClientSite(_Inout_opt_ IOleClientSite *pClientSite);
-	HRESULT IOleObject_GetClientSite(_Deref_out_opt_ IOleClientSite **ppClientSite);
+	HRESULT IOleObject_GetClientSite(_Outptr_result_maybenull_ IOleClientSite **ppClientSite);
 	HRESULT IOleObject_Advise(
 		_Inout_ IAdviseSink *pAdvSink, 
 		_Out_ DWORD *pdwConnection);
 	HRESULT IOleObject_Close(_In_ DWORD dwSaveOption);
 	HRESULT IOleObject_SetExtent(
 		_In_ DWORD dwDrawAspect, 
-		_In_bytecount_c_(sizeof(SIZE)) SIZEL *psizel);
+		_In_reads_bytes_(sizeof(SIZE)) SIZEL *psizel);
 	HRESULT IOleInPlaceObject_InPlaceDeactivate(void);
 	HRESULT IOleInPlaceObject_UIDeactivate(void);
 	HRESULT IOleInPlaceObject_SetObjectRects(
@@ -718,13 +727,13 @@ ATLPREFAST_UNSUPPRESS()
 		_In_ RECT& rcPos) = 0;
 	virtual HRESULT ControlQueryInterface(
 		_In_ const IID& iid, 
-		_Deref_out_ void** ppv) = 0;
+		_Outptr_ void** ppv) = 0;
 	virtual HRESULT OnDrawAdvanced(_Inout_ ATL_DRAWINFO& di);
 	virtual HRESULT OnDraw(_In_ ATL_DRAWINFO& di)
 	{
 		::SetTextAlign(di.hdcDraw, TA_CENTER|TA_BASELINE);
 		LPCTSTR pszText = _T("ATL ") _T(_ATL_VER_RBLD);
-		::TextOut(di.hdcDraw, di.prcBounds->left + (di.prcBounds->right - di.prcBounds->left) / 2, di.prcBounds->top + (di.prcBounds->bottom - di.prcBounds->top) / 2, pszText, lstrlen(pszText));
+		::TextOut(di.hdcDraw, di.prcBounds->left + (di.prcBounds->right - di.prcBounds->left) / 2, di.prcBounds->top + (di.prcBounds->bottom - di.prcBounds->top) / 2, pszText, static_cast<int>(_tcslen(pszText)));
 
 		return S_OK;
 	}
@@ -768,6 +777,8 @@ public:
 
 	DECLARE_VIEW_STATUS(VIEWSTATUS_OPAQUE)
 };
+
+#pragma warning(pop)
 
 inline HRESULT CComControlBase::IQuickActivate_QuickActivate(
 	_In_ QACONTAINER *pQACont,
@@ -1109,7 +1120,7 @@ inline HRESULT CComControlBase::IOleObject_SetClientSite(_Inout_opt_ IOleClientS
 	return S_OK;
 }
 
-inline HRESULT CComControlBase::IOleObject_GetClientSite(_Deref_out_opt_ IOleClientSite **ppClientSite)
+inline HRESULT CComControlBase::IOleObject_GetClientSite(_Outptr_result_maybenull_ IOleClientSite **ppClientSite)
 {
 	ATLASSERT(ppClientSite);
 	if (ppClientSite == NULL)
@@ -1279,7 +1290,7 @@ inline HRESULT CComControlBase::IOleInPlaceObject_SetObjectRects(
 
 inline HRESULT CComControlBase::IOleObject_SetExtent(
 	_In_ DWORD dwDrawAspect, 
-	_In_bytecount_c_(sizeof(SIZE)) SIZEL *psizel)
+	_In_reads_bytes_(sizeof(SIZE)) SIZEL *psizel)
 {
 	if (dwDrawAspect != DVASPECT_CONTENT)
 		return DV_E_DVASPECT;
@@ -1323,8 +1334,8 @@ inline HRESULT CComControlBase::IViewObject_Draw(
 	_In_opt_ LPCRECTL prcWBounds)
 {
 	ATLTRACE(atlTraceControls,2,_T("Draw dwDrawAspect=%x lindex=%d ptd=%x hic=%x hdc=%x\n"),
-		dwDrawAspect, lindex, reinterpret_cast<int>(ptd), 
-			reinterpret_cast<int>(hicTargetDev), reinterpret_cast<int>(hdcDraw));
+		dwDrawAspect, lindex, reinterpret_cast<ULONG_PTR>(ptd), 
+			reinterpret_cast<ULONG_PTR>(hicTargetDev), reinterpret_cast<ULONG_PTR>(hdcDraw));
 #ifdef _DEBUG
 	if (prcBounds == NULL)
 		ATLTRACE(atlTraceControls,2,_T("\tprcBounds=NULL\n"));
@@ -1583,7 +1594,7 @@ public:
 
 	virtual HRESULT ControlQueryInterface(
 		_In_ const IID& iid, 
-		_Deref_out_ void** ppv)
+		_Outptr_ void** ppv)
 	{
 		T* pT = static_cast<T*>(this);
 		return pT->GetUnknown()->QueryInterface(iid, ppv);
@@ -1810,7 +1821,7 @@ public:
 			{
 				if (ci.cAccel > 0)
 				{
-					ACCEL* pAccel = new ACCEL[ci.cAccel];
+					ACCEL* pAccel = _ATL_NEW ACCEL[ci.cAccel];
 					if (pAccel == NULL)
 					{
 						//Out of memory, don't send to control site
@@ -1892,9 +1903,9 @@ public:
 				hWnd = ::GetParent(hWnd);
 			}
 			while (hWnd != NULL && ::GetParent(hWnd) != m_hWnd);
-			if (hWnd != m_hWndFocus)
+			
+			if (hWnd != m_hWndFocus && hWnd != NULL)
 			{
-				ATLASSUME(hWnd != NULL);
 				CComPtr<IUnknown> spUnknown;
 				HRESULT hr = AtlAxGetControl(hWnd, &spUnknown);
 				if (SUCCEEDED(hr))
@@ -2159,9 +2170,9 @@ public:
 	}
 };
 
-
 //////////////////////////////////////////////////////////////////////////////
 // IOleObjectImpl
+ATLPREFAST_SUPPRESS(6387)
 template <class T>
 class ATL_NO_VTABLE IOleObjectImpl : 
 	public IOleObject
@@ -2173,7 +2184,7 @@ public:
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::SetClientSite\n"));
 		return pT->IOleObject_SetClientSite(pClientSite);
 	}
-	STDMETHOD(GetClientSite)(_Deref_out_opt_ IOleClientSite **ppClientSite)
+	STDMETHOD(GetClientSite)(_Outptr_result_maybenull_ IOleClientSite **ppClientSite)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::GetClientSite\n"));
@@ -2380,9 +2391,7 @@ public:
 		}
 		return hr;
 	}
-	
-ATLPREFAST_SUPPRESS(6387)
-	STDMETHOD(EnumVerbs)(_Deref_out_ IEnumOLEVERB **ppEnumOleVerb)
+	STDMETHOD(EnumVerbs)(_Outptr_ IEnumOLEVERB **ppEnumOleVerb)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::EnumVerbs\n"));
 		ATLASSERT(ppEnumOleVerb);
@@ -2390,8 +2399,6 @@ ATLPREFAST_SUPPRESS(6387)
 			return E_POINTER;
 		return OleRegEnumVerbs(T::GetObjectCLSID(), ppEnumOleVerb);
 	}
-ATLPREFAST_UNSUPPRESS()
-	
 	STDMETHOD(Update)(void)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::Update\n"));
@@ -2411,17 +2418,13 @@ ATLPREFAST_UNSUPPRESS()
 		*pClsid = T::GetObjectCLSID();
 		return S_OK;
 	}
-	
-ATLPREFAST_SUPPRESS(6387)
 	STDMETHOD(GetUserType)(
 		_In_ DWORD dwFormOfType, 
-		_Deref_out_z_ LPOLESTR *pszUserType)
+		_Outptr_result_z_ LPOLESTR *pszUserType)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::GetUserType\n"));
 		return OleRegGetUserType(T::GetObjectCLSID(), dwFormOfType, pszUserType);
 	}
-ATLPREFAST_UNSUPPRESS()
-	
 	STDMETHOD(SetExtent)(
 		_In_ DWORD dwDrawAspect, 
 		_In_ SIZEL *psizel)
@@ -2460,9 +2463,7 @@ ATLPREFAST_UNSUPPRESS()
 			hRes = pT->m_spOleAdviseHolder->Unadvise(dwConnection);
 		return hRes;
 	}
-	
-ATLPREFAST_SUPPRESS(6387)
-	STDMETHOD(EnumAdvise)(_Deref_out_ IEnumSTATDATA **ppenumAdvise)
+	STDMETHOD(EnumAdvise)(_Outptr_ IEnumSTATDATA **ppenumAdvise)
 	{
 		T* pT = static_cast<T*>(this);
 		ATLTRACE(atlTraceControls,2,_T("IOleObjectImpl::EnumAdvise\n"));
@@ -2476,8 +2477,6 @@ ATLPREFAST_SUPPRESS(6387)
 				
 		return hRes;
 	}
-ATLPREFAST_UNSUPPRESS()
-	
 	STDMETHOD(GetMiscStatus)(
 		_In_ DWORD dwAspect, 
 		_Out_ DWORD *pdwStatus)
@@ -2540,6 +2539,7 @@ public:
 		return S_OK; 
 	}
 };
+ATLPREFAST_UNSUPPRESS()
 
 //////////////////////////////////////////////////////////////////////////////
 // IPropertyPageImpl
@@ -2714,8 +2714,7 @@ public:
 			delete [] pT->m_ppUnk;
 		}
 
-		pT->m_ppUnk = NULL;
-		ATLTRY(pT->m_ppUnk = new IUnknown*[nObjects]);
+		pT->m_ppUnk = _ATL_NEW IUnknown*[nObjects];
 
 		if (pT->m_ppUnk == NULL)
 			return E_OUTOFMEMORY;
@@ -2887,7 +2886,7 @@ public:
 
 	STDMETHOD(GetDisplayString)(
 		_In_ DISPID dispID, 
-		_Deref_out_opt_z_ BSTR *pBstr)
+		_Outptr_result_maybenull_z_ BSTR *pBstr)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IPerPropertyBrowsingImpl::GetDisplayString\n"));
 		if (pBstr == NULL)
@@ -3017,7 +3016,7 @@ public:
 				pCookies[addcnt] = i;
 				// allocate and store string
 				src = valmap[i].szDesc;
-				size_t len = lstrlenW(src)+1;
+				size_t len = AtlStrLen(src)+1;
 				if(len>ULONG_MAX)
 				{
 					goto outofmem;
@@ -3137,7 +3136,7 @@ public:
 	STDMETHOD(GetAdvise)(
 		_In_opt_  DWORD* /* pAspects */, 
 		_In_opt_  DWORD* /* pAdvf */, 
-		_Deref_out_opt_ IAdviseSink** ppAdvSink)
+		_Outptr_result_maybenull_ IAdviseSink** ppAdvSink)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IViewObjectExImpl::GetAdvise\n"));
 		ATLASSERT(ppAdvSink != NULL);
@@ -3592,7 +3591,7 @@ public:
 		return hr;
 	}
 	
-	STDMETHOD(EnumDAdvise)(_Deref_out_ IEnumSTATDATA **ppenumAdvise)
+	STDMETHOD(EnumDAdvise)(_Outptr_ IEnumSTATDATA **ppenumAdvise)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IDataObjectImpl::EnumDAdvise\n"));
 		ATLASSERT(ppenumAdvise != NULL);
@@ -3748,7 +3747,7 @@ class ATL_NO_VTABLE IOleLinkImpl :
 	}
 
 	STDMETHOD(GetSourceDisplayName)(
-		_Deref_out_opt_z_ LPOLESTR *ppszDisplayName)
+		_Outptr_result_maybenull_z_ LPOLESTR *ppszDisplayName)
 	{
 		ATLTRACE(atlTraceControls,2,_T("IOleLink::GetSourceDisplayName\n"));
 		*ppszDisplayName = NULL;
@@ -3784,6 +3783,7 @@ class ATL_NO_VTABLE IOleLinkImpl :
 	};
 };
 
+ATLPREFAST_SUPPRESS(6011)
 template <class T, int nBindFlags = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_GETNEWESTVERSION | BINDF_NOWRITECACHE>
 class ATL_NO_VTABLE CBindStatusCallback :
 	public CComObjectRootEx<typename T::_ThreadModel::ThreadModelNoCS>,
@@ -3808,7 +3808,7 @@ END_COM_MAP()
 	}
 
 	STDMETHOD(OnStartBinding)(
-		_In_ DWORD /*dwReserved*/, 
+		DWORD /*dwReserved*/, 
 		_In_opt_ IBinding *pBinding)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnStartBinding\n"));
@@ -3827,16 +3827,16 @@ END_COM_MAP()
 		return S_OK;
 	}
 
-	STDMETHOD(OnLowResource)(_In_ DWORD /*reserved*/)
+	STDMETHOD(OnLowResource)(DWORD /*reserved*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnLowResource"));
 		return S_OK;
 	}
 
 	STDMETHOD(OnProgress)(
-		_In_ ULONG /*ulProgress*/, 
-		_In_ ULONG /*ulProgressMax*/, 
-		_In_ ULONG /*ulStatusCode*/, 
+		ULONG /*ulProgress*/, 
+		ULONG /*ulProgressMax*/, 
+		ULONG /*ulStatusCode*/, 
 		_In_opt_z_ LPCWSTR /*szStatusText*/)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnProgress"));
@@ -3858,8 +3858,8 @@ END_COM_MAP()
 	}
 
 	STDMETHOD(GetBindInfo)(
-		_Out_ DWORD *pgrfBINDF, 
-		_Inout_ BINDINFO *pbindInfo)
+		DWORD *pgrfBINDF, 
+		BINDINFO *pbindInfo)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::GetBindInfo\n"));
 
@@ -3877,10 +3877,10 @@ END_COM_MAP()
 	}
 
 	STDMETHOD(OnDataAvailable)(
-		_In_ DWORD grfBSCF, 
-		_In_ DWORD dwSize, 
-		_In_opt_ FORMATETC * /*pformatetc*/, 
-		_In_ STGMEDIUM *pstgmed)
+		DWORD grfBSCF, 
+		DWORD dwSize, 
+		FORMATETC * /*pformatetc*/, 
+		STGMEDIUM *pstgmed)
 	{
 		ATLTRACE(atlTraceControls,2,_T("CBindStatusCallback::OnDataAvailable\n"));
 		HRESULT hr = S_OK;
@@ -3900,8 +3900,7 @@ END_COM_MAP()
 		{
 			if (dwRead > 0)
 			{
-				BYTE* pBytes = NULL;
-				ATLTRY(pBytes = new BYTE[dwRead + 1]);
+				BYTE* pBytes = _ATL_NEW BYTE[dwRead + 1];
 				if (pBytes == NULL)
 				{
 					// Before returning m_spStream should be released if grfBSCF is BSCF_LASTDATANOTIFICATION
@@ -4026,6 +4025,7 @@ END_COM_MAP()
 	DWORD m_dwTotalRead;
 	DWORD m_dwAvailableToRead;
 };
+ATLPREFAST_UNSUPPRESS()
 
 #define IMPLEMENT_STOCKPROP(type, fname, pname, dispid) \
 	HRESULT STDMETHODCALLTYPE put_##fname(_In_ type pname) \
@@ -4204,7 +4204,7 @@ public:
 		return S_OK;
 	}
 	HRESULT STDMETHODCALLTYPE get_Font(
-		_Deref_out_opt_ IFontDisp** ppFont)
+		_Outptr_result_maybenull_ IFontDisp** ppFont)
 	{
 		__if_exists(T::m_pFont) 
 		{ 
@@ -4291,7 +4291,7 @@ public:
 		return S_OK;
 	}
 	HRESULT STDMETHODCALLTYPE get_Picture(
-		_Deref_out_opt_ IPictureDisp** ppPicture)
+		_Outptr_result_maybenull_ IPictureDisp** ppPicture)
 	{
 		__if_exists(T::m_pPicture) 
 		{ 
@@ -4378,7 +4378,7 @@ public:
 		return S_OK;
 	}
 	HRESULT STDMETHODCALLTYPE get_MouseIcon(
-		_Deref_out_opt_ IPictureDisp** ppPicture)
+		_Outptr_result_maybenull_ IPictureDisp** ppPicture)
 	{
 		__if_exists(T::m_pMouseIcon) 
 		{ 

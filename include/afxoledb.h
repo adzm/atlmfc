@@ -57,8 +57,8 @@ void AFXAPI DDX_DateTimeCtrl(CDataExchange* pDX, int nIDC, DBTIME& value);
 void AFXAPI DDX_DateTimeCtrl(CDataExchange* pDX, int nIDC, DBTIMESTAMP& value);
 void AFXAPI DDX_MonthCalCtrl(CDataExchange* pDX, int nIDC, DBDATE& value);
 
-/////////////////////////////////////////////////////////////////////////////
-// CRecordView - form for viewing data records
+/*============================================================================*/
+// COleDBRecordView - form for viewing data records
 
 class COleDBRecordView : public CFormView
 {
@@ -81,7 +81,7 @@ protected:  // must derive your own class
 
 // Attributes
 public:
-	virtual CRowset<>* OnGetRowset() = 0;
+	virtual ATL::CRowset<>* OnGetRowset() = 0;
 
 // Operations
 public:
@@ -95,12 +95,10 @@ protected:
 	BOOL m_bOnFirstRecord;
 	BOOL m_bOnLastRecord;
 
-	//{{AFX_MSG(CRecordView)
 	afx_msg void OnUpdateRecordFirst(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordPrev(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordNext(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateRecordLast(CCmdUI* pCmdUI);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 };

@@ -316,6 +316,15 @@ public: \
 	HRESULT class_name::GetClassID(LPCLSID pclsid) \
 		{ *pclsid = guid; return NOERROR; }
 
+#define IMPLEMENT_OLECREATE_NOREGNAME(class_name, \
+			l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+	class_name::class_name##Factory class_name::factory( \
+		class_name::guid, RUNTIME_CLASS(class_name), FALSE, NULL); \
+	const GUID class_name::guid = \
+		{ l, w1, w2, { b1, b2, b3, b4, b5, b6, b7, b8 } }; \
+	HRESULT class_name::GetClassID(LPCLSID pclsid) \
+		{ *pclsid = guid; return NOERROR; }
+
 /////////////////////////////////////////////////////////////////////////////
 // Macros for type name and misc status
 
@@ -1065,7 +1074,6 @@ protected:
 
 // Message Maps
 protected:
-	//{{AFX_MSG(COleControl)
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
@@ -1104,8 +1112,6 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
-	//}}AFX_MSG
-
 	afx_msg LRESULT OnOcmCtlColorBtn(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnOcmCtlColorDlg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnOcmCtlColorEdit(WPARAM wParam, LPARAM lParam);
@@ -1610,10 +1616,8 @@ protected:
 #endif
 
 protected:
-	// Generated message map functions
-	//{{AFX_MSG(COlePropertyPage)
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Interface Maps

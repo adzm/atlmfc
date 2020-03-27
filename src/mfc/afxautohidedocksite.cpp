@@ -38,9 +38,7 @@ CAutoHideDockSite::~CAutoHideDockSite()
 }
 
 BEGIN_MESSAGE_MAP(CAutoHideDockSite, CDockSite)
-	//{{AFX_MSG_MAP(CAutoHideDockSite)
 	ON_WM_PAINT()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CAutoHideDockSite::DockPane(CPane* pControlBar, AFX_DOCK_METHOD /*dockMethod*/, LPCRECT lpRect)
@@ -99,7 +97,7 @@ void CAutoHideDockSite::RepositionPanes(CRect& /*rectNewClientArea*/)
 		CDockingPanesRow* pRow = (CDockingPanesRow*) m_lstDockBarRows.GetHead();
 		ASSERT_VALID(pRow);
 
-		pRow->ArrangePanes(m_nOffsetLeft + afxGlobalData.m_nAutoHideToolBarMargin, afxGlobalData.m_nAutoHideToolBarSpacing);
+		pRow->ArrangePanes(m_nOffsetLeft + GetGlobalData()->m_nAutoHideToolBarMargin, GetGlobalData()->m_nAutoHideToolBarSpacing);
 
 		if (CMFCVisualManager::GetInstance()->HasOverlappedAutoHideButtons())
 		{

@@ -43,7 +43,7 @@ static BOOL IsFontInstalled(LPCTSTR pszFace)
 
 	memset(&lf, 0, sizeof(lf));
 
-	size_t nLenFace=_tcslen(pszFace);
+	size_t nLenFace=AtlStrLen(pszFace);
 	ENSURE(nLenFace<LF_FACESIZE);
 
 	Checked::tcscpy_s(lf.lfFaceName, _countof(lf.lfFaceName), pszFace);
@@ -69,7 +69,7 @@ BOOL AFXAPI AfxGetPropSheetFont(CString& strFace, WORD& wSize, BOOL bWizard)
 	{
 		ASSERT(pFontInfo->m_pszFaceName == NULL);
 
-		HINSTANCE hInst = afxComCtlWrapper->GetModuleHandle();
+		HINSTANCE hInst = GetModuleHandleW(L"comctl32.dll");
 		if (hInst != NULL)
 		{
 			HRSRC hResource = NULL;

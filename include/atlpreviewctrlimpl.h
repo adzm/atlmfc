@@ -8,6 +8,15 @@
 // See these sources for detailed information regarding the
 // Active Template Library product.
 
+#pragma once
+
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
+
 #include <atlwin.h>
 #include <atlhandler.h>
 

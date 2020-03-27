@@ -625,7 +625,7 @@ void CDaoFieldExchange::Default(LPCTSTR lpszName, void* pv,
 	case BindField:
 		{
 			// Query parser needs "[" & "]", GetRows can't tolerate them.
-			LPTSTR lpszNoBracketName = new TCHAR[lstrlen(lpszName) + 1];
+			LPTSTR lpszNoBracketName = new TCHAR[AtlStrLen(lpszName) + 1];
 			m_prs->StripBrackets(lpszName, lpszNoBracketName);
 
 			// Finish setting up column binding info struct
@@ -809,7 +809,7 @@ void CDaoFieldExchange::Default(LPCTSTR lpszName, void* pv,
 				LPTSTR lpszModifiedName = NULL;
 				if (*lpszName == '[')
 				{
-					lpszModifiedName = new TCHAR[lstrlen(lpszName) + 1];
+					lpszModifiedName = new TCHAR[_tcslen(lpszName) + 1];
 
 					// Copy the name with no brackets, and reset lpszName
 					m_prs->StripBrackets(lpszName, lpszModifiedName);

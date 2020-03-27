@@ -11,6 +11,12 @@
 #ifndef __ATL_SOCKET__
 #define __ATL_SOCKET__
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #pragma warning(push)
 #pragma warning(disable: 4191) // unsafe conversion from 'functionptr1' to 'functionptr2'
 
@@ -18,8 +24,7 @@
 #include <mswsock.h>
 
 #pragma warning(push)
-#pragma warning(disable : 4127)
-#pragma warning(disable : 4706)
+#pragma warning(disable : 4127 4706)
 #if !defined(_WIN32_WINNT) || (_WIN32_WINNT <= 0x0500)
 /* psdk prefast noise */
 #pragma warning(disable : 6011)
@@ -30,7 +35,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "mswsock.lib")
 
-#if _WIN32_WINNT < 0x0502
+#if (NTDDI_VERSION < NTDDI_WINXPSP2) || (_WIN32_WINNT < 0x0501)
 #define ADDRINFOT addrinfo
 #define GetAddrInfo getaddrinfo
 #define FreeAddrInfo freeaddrinfo

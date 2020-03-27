@@ -12,7 +12,6 @@
 #include "afxtoolbar.h"
 #include "afxtoolbareditboxbutton.h"
 #include "afxvisualmanager.h"
-#include "afxtrackmouse.h"
 #include "afxcontextmenumanager.h"
 
 #ifdef _DEBUG
@@ -162,7 +161,7 @@ void CMFCToolBarEditBoxButton::OnMove()
 		return;
 	}
 
-	int cy = afxGlobalData.GetTextHeight();
+	int cy = GetGlobalData()->GetTextHeight();
 	int yOffset = max(0, (m_rect.Height() - m_sizeText.cy - cy) / 2);
 
 	m_pWndEdit->SetWindowPos(NULL, m_rect.left + nHorzMargin, m_rect.top + yOffset, m_rect.Width() - 2 * nHorzMargin, cy, SWP_NOZORDER | SWP_NOACTIVATE);
@@ -205,7 +204,7 @@ void CMFCToolBarEditBoxButton::OnChangeParentWnd(CWnd* pWndParent)
 
 	CRect rect = m_rect;
 	rect.DeflateRect(nHorzMargin, nVertMargin);
-	rect.bottom = rect.top + afxGlobalData.GetTextHeight();
+	rect.bottom = rect.top + GetGlobalData()->GetTextHeight();
 
 	if ((m_pWndEdit = CreateEdit(pWndParent, rect)) == NULL)
 	{
@@ -216,7 +215,7 @@ void CMFCToolBarEditBoxButton::OnChangeParentWnd(CWnd* pWndParent)
 	ASSERT_VALID(m_pWndEdit);
 
 	OnMove();
-	m_pWndEdit->SetFont(&afxGlobalData.fontRegular);
+	m_pWndEdit->SetFont(&(GetGlobalData()->fontRegular));
 
 	CString sText;
 	m_pWndEdit->GetWindowText(sText);
@@ -286,10 +285,10 @@ void CMFCToolBarEditBoxButton::OnAddToCustomizePage()
 
 HBRUSH CMFCToolBarEditBoxButton::OnCtlColor(CDC* pDC, UINT /*nCtlColor*/)
 {
-	pDC->SetTextColor(afxGlobalData.clrWindowText);
-	pDC->SetBkColor(afxGlobalData.clrWindow);
+	pDC->SetTextColor(GetGlobalData()->clrWindowText);
+	pDC->SetBkColor(GetGlobalData()->clrWindow);
 
-	return(HBRUSH) afxGlobalData.brWindow.GetSafeHandle();
+	return(HBRUSH) GetGlobalData()->brWindow.GetSafeHandle();
 }
 
 void CMFCToolBarEditBoxButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* pImages, BOOL bHorz,
@@ -314,7 +313,7 @@ void CMFCToolBarEditBoxButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarIm
 		// Draw button's text:
 		bDisabled = (bCustomizeMode && !IsEditable()) || (!bCustomizeMode &&(m_nStyle & TBBS_DISABLED));
 
-		pDC->SetTextColor(bDisabled ? afxGlobalData.clrGrayedText : (bHighlight) ? CMFCToolBar::GetHotTextColor() : afxGlobalData.clrBtnText);
+		pDC->SetTextColor(bDisabled ? GetGlobalData()->clrGrayedText : (bHighlight) ? CMFCToolBar::GetHotTextColor() : GetGlobalData()->clrBtnText);
 		CRect rectText = rect;
 		rectText.top = (rectBorder.bottom + rect.bottom - m_sizeText.cy) / 2;
 		pDC->DrawText(m_strText, &rectText, DT_CENTER | DT_WORDBREAK);
@@ -346,8 +345,8 @@ int CMFCToolBarEditBoxButton::OnDrawOnCustomizeList(CDC* pDC, const CRect& rect,
 	rectEdit.left = rectEdit.right - nEditWidth;
 	rectEdit.DeflateRect(2, 2);
 
-	pDC->FillRect(rectEdit, &afxGlobalData.brWindow);
-	pDC->Draw3dRect(rectEdit, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->FillRect(rectEdit, &(GetGlobalData()->brWindow));
+	pDC->Draw3dRect(rectEdit, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 
 	return rect.Width();
 }
@@ -514,7 +513,7 @@ void CMFCToolBarEditBoxButton::OnGlobalFontsChanged()
 
 	if (m_pWndEdit->GetSafeHwnd() != NULL)
 	{
-		m_pWndEdit->SetFont(&afxGlobalData.fontRegular);
+		m_pWndEdit->SetFont(&(GetGlobalData()->fontRegular));
 	}
 }
 
@@ -555,13 +554,11 @@ CMFCToolBarEditCtrl::~CMFCToolBarEditCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarEditCtrl, CMFCEditBrowseCtrl)
-	//{{AFX_MSG_MAP(CMFCToolBarEditCtrl)
 	ON_WM_SETFOCUS()
 	ON_WM_KILLFOCUS()
 	ON_WM_MOUSEMOVE()
 	ON_WM_CONTEXTMENU()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCToolBarEditCtrl::OnMouseLeave)
-	//}}AFX_MSG_MAP
+	ON_WM_MOUSELEAVE()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -647,12 +644,11 @@ void CMFCToolBarEditCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 }
 
-LRESULT CMFCToolBarEditCtrl::OnMouseLeave(WPARAM,LPARAM)
+void CMFCToolBarEditCtrl::OnMouseLeave()
 {
 	m_bTracked = FALSE;
 
@@ -660,8 +656,6 @@ LRESULT CMFCToolBarEditCtrl::OnMouseLeave(WPARAM,LPARAM)
 	{
 		m_buttonEdit.SetHotEdit(FALSE);
 	}
-
-	return 0;
 }
 
 void CMFCToolBarEditCtrl::OnContextMenu(CWnd* pWnd, CPoint point)

@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CDialogEx dialog
 
 class CDialogEx : public CDialog
@@ -75,7 +75,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CDialogEx)
 	afx_msg void OnActivate(UINT nState, CWnd *pWndOther, BOOL bMinimized);
 	afx_msg BOOL OnNcActivate(BOOL bActive);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -83,7 +82,7 @@ protected:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnSysColorChange();
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	void SetActiveMenu(CMFCPopupMenu* pMenu);

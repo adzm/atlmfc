@@ -18,9 +18,7 @@
 // CListView
 
 BEGIN_MESSAGE_MAP(CListView, CCtrlView)
-	//{{AFX_MSG_MAP(CListView)
 	ON_WM_NCDESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CListView::PreCreateWindow(CREATESTRUCT& cs)
@@ -67,9 +65,7 @@ void CListView::OnNcDestroy()
 // CTreeView
 
 BEGIN_MESSAGE_MAP(CTreeView, CCtrlView)
-	//{{AFX_MSG_MAP(CTreeView)
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CTreeView::PreCreateWindow(CREATESTRUCT& cs)

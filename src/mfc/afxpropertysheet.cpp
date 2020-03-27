@@ -13,7 +13,6 @@
 #include "afxpropertypage.h"
 #include "afxpropertysheet.h"
 #include "afxvisualmanager.h"
-#include "afxtrackmouse.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -105,12 +104,12 @@ BEGIN_MESSAGE_MAP(CMFCProperySheetListBox, CListBox)
 	ON_WM_DRAWITEM_REFLECT()
 	ON_WM_MEASUREITEM_REFLECT()
 	ON_WM_MOUSEMOVE()
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCProperySheetListBox::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 END_MESSAGE_MAP()
 
 void CMFCProperySheetListBox::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 {
-	lpMeasureItemStruct->itemHeight = afxGlobalData.GetTextHeight() + 12;
+	lpMeasureItemStruct->itemHeight = GetGlobalData()->GetTextHeight() + 12;
 }
 
 void CMFCProperySheetListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
@@ -137,7 +136,7 @@ void CMFCProperySheetListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 
 	pDC->SetBkMode(TRANSPARENT);
 
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontRegular);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 	ASSERT_VALID(pOldFont);
 
 	COLORREF clrText = (COLORREF)-1;
@@ -149,7 +148,7 @@ void CMFCProperySheetListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 
 	if (clrText == (COLORREF)-1)
 	{
-		pDC->SetTextColor(afxGlobalData.clrWindowText);
+		pDC->SetTextColor(GetGlobalData()->clrWindowText);
 	}
 	else
 	{
@@ -195,8 +194,7 @@ void CMFCProperySheetListBox::OnMouseMove(UINT nFlags, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 
 	if (nHighlightedItem != m_nHighlightedItem)
@@ -219,7 +217,7 @@ void CMFCProperySheetListBox::OnMouseMove(UINT nFlags, CPoint point)
 	}
 }
 
-LRESULT CMFCProperySheetListBox::OnMouseLeave(WPARAM,LPARAM)
+void CMFCProperySheetListBox::OnMouseLeave()
 {
 	m_bTracked = FALSE;
 
@@ -231,9 +229,8 @@ LRESULT CMFCProperySheetListBox::OnMouseLeave(WPARAM,LPARAM)
 		m_nHighlightedItem = -1;
 		RedrawWindow(rectItem);
 	}
-
-	return 0;
 }
+
 /////////////////////////////////////////////////////////////////////////////
 // CMFCPropertySheetTabCtrl
 
@@ -383,7 +380,6 @@ void CMFCPropertySheet::CommonInit()
 	m_nHeaderHeight = 0;
 }
 
-//{{AFX_MSG_MAP(CMFCPropertySheet)
 BEGIN_MESSAGE_MAP(CMFCPropertySheet, CPropertySheet)
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_SETTINGCHANGE()
@@ -394,7 +390,6 @@ BEGIN_MESSAGE_MAP(CMFCPropertySheet, CPropertySheet)
 	ON_NOTIFY(TVN_GETDISPINFOW, idTree, &CMFCPropertySheet::OnGetDispInfo)
 	ON_LBN_SELCHANGE(idList, &CMFCPropertySheet::OnSelectList)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCPropertySheet message handlers
@@ -501,7 +496,7 @@ void CMFCPropertySheet::RemovePage(CPropertyPage* pPage)
 
 	if (m_wndPane1.GetSafeHwnd() != NULL)
 	{
-		m_wndPane1.RemoveButton(nPage);
+		m_wndPane1.RemoveButtonByIndex(nPage);
 	}
 
 	if (m_wndTree.GetSafeHwnd() != NULL)
@@ -537,7 +532,7 @@ void CMFCPropertySheet::RemovePage(int nPage)
 
 	if (m_wndPane1.GetSafeHwnd() != NULL)
 	{
-		m_wndPane1.RemoveButton(nPage);
+		m_wndPane1.RemoveButtonByIndex(nPage);
 	}
 }
 
@@ -686,7 +681,6 @@ BOOL CMFCPropertySheet::OnInitDialog()
 		SetActivePage(GetActivePage());
 
 		int ids[] = { IDOK, IDCANCEL, ID_APPLY_NOW, IDHELP };
-
 		int nTotalButtonsWidth = 0;
 
 		for (int iStep = 0; iStep < 2; iStep++)
@@ -716,7 +710,7 @@ BOOL CMFCPropertySheet::OnInitDialog()
 						// Align buttons at the bottom
 						pButton->SetWindowPos(&wndTop, rectButton.left, rectClient.bottom - rectButton.Height() - nVertMargin, -1, -1, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
 
-						nTotalButtonsWidth = rectButton.right;
+						nTotalButtonsWidth = max(nTotalButtonsWidth, rectButton.right);
 					}
 					else
 					{
@@ -1292,7 +1286,7 @@ void CMFCPropertySheet::OnSysColorChange()
 
 	if (AfxGetMainWnd() == this)
 	{
-		afxGlobalData.UpdateSysColors();
+		GetGlobalData()->UpdateSysColors();
 	}
 }
 
@@ -1302,7 +1296,7 @@ void CMFCPropertySheet::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 
 	if (AfxGetMainWnd() == this)
 	{
-		afxGlobalData.OnSettingChange();
+		GetGlobalData()->OnSettingChange();
 	}
 }
 

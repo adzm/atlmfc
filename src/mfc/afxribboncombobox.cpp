@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -19,7 +19,6 @@
 #include "afxribbonbar.h"
 #include "afxribbonpanel.h"
 #include "afxmenuimages.h"
-#include "afxtrackmouse.h"
 #include "afxtoolbarmenubutton.h"
 #include "afxribbonres.h"
 #include "afxribbonedit.h"
@@ -355,7 +354,7 @@ void CMFCRibbonComboBox::OnDraw(CDC* pDC)
 		CRect rectText = m_rectCommand;
 		rectText.DeflateRect(m_szMargin);
 
-		DrawRibbonText(pDC, m_strEdit, rectText, DT_SINGLELINE | DT_VCENTER);
+		DrawRibbonText(pDC, m_strEdit, rectText, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 	}
 
 	CMFCVisualManager::GetInstance()->OnDrawRibbonButtonBorder(pDC, this);
@@ -483,7 +482,7 @@ void CMFCRibbonComboBox::DropDownList()
 
 	if (m_bResizeDropDownList)
 	{
-		pList->EnableVertResize(2 * afxGlobalData.GetTextHeight());
+		pList->EnableVertResize(2 * GetGlobalData()->GetTextHeight());
 	}
 
 	pList->Track(CPoint(bIsRTL ? rect.right : rect.left, rect.bottom), pWndParent->GetOwner());
@@ -562,9 +561,9 @@ void CMFCRibbonComboBox::OnAfterChangeRect(CDC* pDC)
 	m_rectCommand.left += m_nLabelImageWidth;
 
 	int cx = m_bFloatyMode ? m_nWidthFloaty : m_nWidth;
-	if (afxGlobalData.GetRibbonImageScale () > 1.)
+	if (GetGlobalData()->GetRibbonImageScale () > 1.)
 	{
-		cx = (int)(.5 + afxGlobalData.GetRibbonImageScale () * cx);
+		cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale () * cx);
 	}
 
 	if (m_rectCommand.Width () > cx)
@@ -842,7 +841,7 @@ BOOL CMFCRibbonFontComboBox::OnDrawDropListItem(CDC* pDC, int nIndex, CMFCToolBa
 	if (m_bDrawUsingFont && pDesc->m_nCharSet != SYMBOL_CHARSET)
 	{
 		LOGFONT lf;
-		afxGlobalData.fontRegular.GetLogFont(&lf);
+		GetGlobalData()->fontRegular.GetLogFont(&lf);
 
 		lstrcpy(lf.lfFaceName, pDesc->m_strName);
 

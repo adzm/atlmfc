@@ -35,8 +35,9 @@ INT_PTR CALLBACK AfxDlgProc(HWND hWnd, UINT message, WPARAM, LPARAM)
 /////////////////////////////////////////////////////////////////////////////
 // CDialog - Modeless and Modal
 
+static BOOL g_bClosedByEndDialog = FALSE;
+
 BEGIN_MESSAGE_MAP(CDialog, CWnd)
-	//{{AFX_MSG_MAP(CDialog)
 	ON_COMMAND(IDOK, &CDialog::OnOK)
 	ON_COMMAND(IDCANCEL, &CDialog::OnCancel)
 	ON_MESSAGE(WM_COMMANDHELP, &CDialog::OnCommandHelp)
@@ -46,7 +47,6 @@ BEGIN_MESSAGE_MAP(CDialog, CWnd)
 	ON_WM_PAINT()
 	ON_WM_QUERYENDSESSION()
 	ON_WM_ENDSESSION()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CDialog::PreTranslateMessage(MSG* pMsg)
@@ -153,6 +153,7 @@ void CDialog::Initialize()
 #ifndef _AFX_NO_OCC_SUPPORT
 	m_pOccDialogInfo = NULL;
 #endif
+	g_bClosedByEndDialog = FALSE;
 }
 
 void CDialog::OnPaint()
@@ -289,7 +290,7 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 {
 
 #ifdef _DEBUG
-	if ( AfxGetApp()->IsKindOf( RUNTIME_CLASS( COleControlModule ) ) )
+	if ((AfxGetApp() != NULL) && (AfxGetApp()->IsKindOf(RUNTIME_CLASS(COleControlModule))))
 	{
 		TRACE(traceAppMsg, 0, "Warning: Creating dialog from within a COleControlModule application is not a supported scenario.\n");
 	}
@@ -370,7 +371,7 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 	}
 	CATCH_ALL(e)
 	{
-		DELETE_EXCEPTION(e);
+	DELETE_EXCEPTION(e);
 		m_nModalResult = -1;
 	}
 	END_CATCH_ALL
@@ -407,9 +408,10 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 #ifndef _AFX_NO_OCC_SUPPORT
 	if (pOccManager != NULL)
 	{
+		pOccManager->PostCreateDialog(&occDialogInfo);
+
 		if (hWnd != NULL)
 		{
-			pOccManager->PostCreateDialog(&occDialogInfo);
 			SetOccDialogInfo(NULL);
 		}
 	}
@@ -465,6 +467,30 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 
 	ASSERT(hWnd == m_hWnd);
 	return TRUE;
+}
+
+BOOL CWnd::CreateRunDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate, CWnd* pParentWnd, HINSTANCE hInst)
+{
+	BOOL bRet = CreateDlgIndirect(lpDialogTemplate, pParentWnd, hInst);
+
+	if (bRet)
+	{
+		if (m_nFlags & WF_CONTINUEMODAL)
+		{
+			// enter modal loop
+			DWORD dwFlags = MLF_SHOWONIDLE;
+			if (GetStyle() & DS_NOIDLEMSG)
+				dwFlags |= MLF_NOIDLEMSG;
+			VERIFY(RunModalLoop(dwFlags) == m_nModalResult);
+		}
+
+		// hide the window before enabling the parent, etc.
+		if (m_hWnd != NULL)
+			SetWindowPos(NULL, 0, 0, 0, 0, SWP_HIDEWINDOW|
+			SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+	}
+
+	return bRet;
 }
 
 #ifndef _AFX_NO_OCC_SUPPORT
@@ -626,26 +652,18 @@ INT_PTR CDialog::DoModal()
 	{
 		// create modeless dialog
 		AfxHookWindowCreate(this);
-		if (CreateDlgIndirect(lpDialogTemplate,
-						CWnd::FromHandle(hWndParent), hInst))
+		if (!CreateRunDlgIndirect(lpDialogTemplate, CWnd::FromHandle(hWndParent), hInst) && !g_bClosedByEndDialog)
 		{
-			if (m_nFlags & WF_CONTINUEMODAL)
-			{
-				// enter modal loop
-				DWORD dwFlags = MLF_SHOWONIDLE;
-				if (GetStyle() & DS_NOIDLEMSG)
-					dwFlags |= MLF_NOIDLEMSG;
-				VERIFY(RunModalLoop(dwFlags) == m_nModalResult);
-			}
-
-			// hide the window before enabling the parent, etc.
-			if (m_hWnd != NULL)
-				SetWindowPos(NULL, 0, 0, 0, 0, SWP_HIDEWINDOW|
-					SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+			// If the resource handle is a resource-only DLL, the dialog may fail to launch. Use the
+			// module instance handle as the fallback dialog creator instance handle if necessary.
+			CreateRunDlgIndirect(lpDialogTemplate, CWnd::FromHandle(hWndParent), AfxGetInstanceHandle());
 		}
+
+		g_bClosedByEndDialog = FALSE;
 	}
 	CATCH_ALL(e)
 	{
+		TRACE(traceAppMsg, 0, "Warning: dialog creation failed.\n");
 		DELETE_EXCEPTION(e);
 		m_nModalResult = -1;
 	}
@@ -676,6 +694,8 @@ INT_PTR CDialog::DoModal()
 void CDialog::EndDialog(int nResult)
 {
 	ASSERT(::IsWindow(m_hWnd));
+
+	g_bClosedByEndDialog = TRUE;
 
 	if (m_nFlags & (WF_MODALLOOP|WF_CONTINUEMODAL))
 		EndModalLoop(nResult);

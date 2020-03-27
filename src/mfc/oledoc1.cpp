@@ -120,8 +120,7 @@ CDocItem* COleDocument::GetNextItem(POSITION& pos) const
 	return pItem;
 }
 
-CDocItem*
-COleDocument::GetNextItemOfKind(POSITION& pos, CRuntimeClass* pClass) const
+CDocItem* COleDocument::GetNextItemOfKind(POSITION& pos, CRuntimeClass* pClass) const
 {
 	while (pos != NULL)
 	{
@@ -435,7 +434,7 @@ LPMONIKER COleDocument::GetMoniker(OLEGETMONIKER /*nAssign*/)
 	// return file moniker based on current path name
 	const CStringW strPathNameW(m_strPathName);
 	LPMONIKER lpMoniker;
-	CreateFileMoniker(strPathNameW.GetString(), &lpMoniker);
+	::CreateFileMoniker(strPathNameW.GetString(), &lpMoniker);
 	return lpMoniker;
 }
 

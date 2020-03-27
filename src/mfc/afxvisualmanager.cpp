@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -125,7 +125,7 @@ CMFCVisualManager::CMFCVisualManager(BOOL bIsTemporary)
 
 		CMFCAutoHideButton::m_bOverlappingTabs = TRUE;
 
-		afxGlobalData.UpdateSysColors();
+		GetGlobalData()->UpdateSysColors();
 	}
 
 	OnUpdateSystemColors();
@@ -161,7 +161,7 @@ void __stdcall CMFCVisualManager::SetDefaultManager(CRuntimeClass* pRTI)
 		m_pVisManager = NULL;
 	}
 
-	afxGlobalData.UpdateSysColors();
+	GetGlobalData()->UpdateSysColors();
 
 	CDockingManager::SetDockingMode(DT_STANDARD);
 	CTabbedPane::ResetTabs();
@@ -259,8 +259,8 @@ void CMFCVisualManager::OnDrawBarGripper(CDC* pDC, CRect rectGripper, BOOL bHorz
 {
 	ASSERT_VALID(pDC);
 
-	const COLORREF clrHilite = pBar != NULL && pBar->IsDialogControl() ? afxGlobalData.clrBtnHilite : afxGlobalData.clrBarHilite;
-	const COLORREF clrShadow = pBar != NULL && pBar->IsDialogControl() ? afxGlobalData.clrBtnShadow : afxGlobalData.clrBarShadow;
+	const COLORREF clrHilite = pBar != NULL && pBar->IsDialogControl() ? GetGlobalData()->clrBtnHilite : GetGlobalData()->clrBarHilite;
+	const COLORREF clrShadow = pBar != NULL && pBar->IsDialogControl() ? GetGlobalData()->clrBtnShadow : GetGlobalData()->clrBarShadow;
 
 	const int iGripperSize = 3;
 
@@ -317,11 +317,11 @@ void CMFCVisualManager::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rec
 
 		if (pCaptionBar->IsMessageBarMode())
 		{
-			pDC->FillRect(rectClip, &afxGlobalData.brBarFace);
+			pDC->FillRect(rectClip, &(GetGlobalData()->brBarFace));
 		}
 		else
 		{
-			pDC->FillSolidRect(rectClip, pCaptionBar->m_clrBarBackground == -1 ? afxGlobalData.clrBarShadow : pCaptionBar->m_clrBarBackground);
+			pDC->FillSolidRect(rectClip, pCaptionBar->m_clrBarBackground == -1 ? GetGlobalData()->clrBarShadow : pCaptionBar->m_clrBarBackground);
 		}
 		return;
 	}
@@ -332,7 +332,7 @@ void CMFCVisualManager::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rec
 
 		if (pMenuBar->IsDropDownListMode())
 		{
-			pDC->FillRect(rectClip, &afxGlobalData.brWindow);
+			pDC->FillRect(rectClip, &(GetGlobalData()->brWindow));
 			return;
 		}
 	}
@@ -340,7 +340,7 @@ void CMFCVisualManager::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rec
 	// By default, control bar background is filled by
 	// the system 3d background color
 
-	pDC->FillRect(rectClip.IsRectEmpty() ? rectClient : rectClip, pBar->IsDialogControl() ? &afxGlobalData.brBtnFace : &afxGlobalData.brBarFace);
+	pDC->FillRect(rectClip.IsRectEmpty() ? rectClient : rectClip, pBar->IsDialogControl() ? &(GetGlobalData()->brBtnFace) : &(GetGlobalData()->brBarFace));
 }
 
 void CMFCVisualManager::OnDrawPaneBorder(CDC* pDC, CBasePane* pBar, CRect& rect)
@@ -359,8 +359,8 @@ void CMFCVisualManager::OnDrawPaneBorder(CDC* pDC, CBasePane* pBar, CRect& rect)
 
 	COLORREF clrBckOld = pDC->GetBkColor(); // FillSolidRect changes it
 
-	const COLORREF clrHilite = pBar->IsDialogControl() ? afxGlobalData.clrBtnHilite : afxGlobalData.clrBarHilite;
-	const COLORREF clrShadow = pBar->IsDialogControl() ? afxGlobalData.clrBtnShadow : afxGlobalData.clrBarShadow;
+	const COLORREF clrHilite = pBar->IsDialogControl() ? GetGlobalData()->clrBtnHilite : GetGlobalData()->clrBarHilite;
+	const COLORREF clrShadow = pBar->IsDialogControl() ? GetGlobalData()->clrBtnShadow : GetGlobalData()->clrBarShadow;
 
 	COLORREF clr = clrHilite;
 
@@ -399,9 +399,9 @@ void CMFCVisualManager::OnDrawMenuBorder(CDC* pDC, CMFCPopupMenu* /*pMenu*/, CRe
 {
 	ASSERT_VALID(pDC);
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarLight, afxGlobalData.clrBarDkShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarLight, GetGlobalData()->clrBarDkShadow);
 	rect.DeflateRect(1, 1);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 }
 
 void CMFCVisualManager::OnDrawMenuShadow(CDC* pPaintDC, const CRect& rectClient, const CRect& /*rectExclude*/,
@@ -462,18 +462,18 @@ void CMFCVisualManager::OnFillButtonInterior(CDC* pDC, CMFCToolBarButton* pButto
 
 COLORREF CMFCVisualManager::GetToolbarHighlightColor()
 {
-	return afxGlobalData.clrBarFace;
+	return GetGlobalData()->clrBarFace;
 }
 
 COLORREF CMFCVisualManager::GetToolbarDisabledTextColor()
 {
-	return afxGlobalData.clrGrayedText;
+	return GetGlobalData()->clrGrayedText;
 }
 
 void CMFCVisualManager::OnHighlightMenuItem(CDC*pDC, CMFCToolBarMenuButton* /*pButton*/, CRect rect, COLORREF& /*clrText*/)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, &afxGlobalData.brHilite);
+	pDC->FillRect(rect, &(GetGlobalData()->brHilite));
 }
 
 COLORREF CMFCVisualManager::GetHighlightedMenuItemTextColor(CMFCToolBarMenuButton* pButton)
@@ -482,10 +482,10 @@ COLORREF CMFCVisualManager::GetHighlightedMenuItemTextColor(CMFCToolBarMenuButto
 
 	if (pButton->m_nStyle & TBBS_DISABLED)
 	{
-		return afxGlobalData.clrGrayedText;
+		return GetGlobalData()->clrGrayedText;
 	}
 
-	return afxGlobalData.clrTextHilite;
+	return GetGlobalData()->clrTextHilite;
 }
 
 void CMFCVisualManager::OnHighlightRarelyUsedMenuItems(CDC* pDC, CRect rectRarelyUsed)
@@ -495,7 +495,7 @@ void CMFCVisualManager::OnHighlightRarelyUsedMenuItems(CDC* pDC, CRect rectRarel
 	CDrawingManager dm(*pDC);
 	dm.HighlightRect(rectRarelyUsed);
 
-	pDC->Draw3dRect(rectRarelyUsed, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+	pDC->Draw3dRect(rectRarelyUsed, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 }
 
 void CMFCVisualManager::OnDrawMenuCheck(CDC* pDC, CMFCToolBarMenuButton* pButton, CRect rectCheck, BOOL /*bHighlight*/, BOOL bIsRadio)
@@ -516,7 +516,7 @@ void CMFCVisualManager::OnDrawMenuItemButton(CDC* pDC, CMFCToolBarMenuButton* /*
 	rect.left--;
 	rect.DeflateRect(0, bHighlight ? 1 : 4);
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 }
 
 void CMFCVisualManager::OnDrawButtonBorder(CDC* pDC, CMFCToolBarButton* pButton, CRect rect, AFX_BUTTON_STATE state)
@@ -525,16 +525,16 @@ void CMFCVisualManager::OnDrawButtonBorder(CDC* pDC, CMFCToolBarButton* pButton,
 	ASSERT_VALID(pButton);
 
 	BOOL bIsOutlookButton = pButton->IsKindOf(RUNTIME_CLASS(CMFCOutlookBarPaneButton));
-	COLORREF clrDark = bIsOutlookButton ? afxGlobalData.clrBarDkShadow : afxGlobalData.clrBarShadow;
+	COLORREF clrDark = bIsOutlookButton ? GetGlobalData()->clrBarDkShadow : GetGlobalData()->clrBarShadow;
 
 	switch(state)
 	{
 	case ButtonsIsPressed:
-		pDC->Draw3dRect(&rect, clrDark, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(&rect, clrDark, GetGlobalData()->clrBarHilite);
 		return;
 
 	case ButtonsIsHighlighted:
-		pDC->Draw3dRect(&rect, afxGlobalData.clrBarHilite, clrDark);
+		pDC->Draw3dRect(&rect, GetGlobalData()->clrBarHilite, clrDark);
 		return;
 	}
 }
@@ -567,8 +567,8 @@ void CMFCVisualManager::OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, B
 		rectSeparator.bottom = rectSeparator.top + 2;
 	}
 
-	const COLORREF clrHilite = pBar->IsDialogControl() ? afxGlobalData.clrBtnHilite : afxGlobalData.clrBarHilite;
-	const COLORREF clrShadow = pBar->IsDialogControl() ? afxGlobalData.clrBtnShadow : afxGlobalData.clrBarShadow;
+	const COLORREF clrHilite = pBar->IsDialogControl() ? GetGlobalData()->clrBtnHilite : GetGlobalData()->clrBarHilite;
+	const COLORREF clrShadow = pBar->IsDialogControl() ? GetGlobalData()->clrBtnShadow : GetGlobalData()->clrBarShadow;
 
 	pDC->Draw3dRect(rectSeparator, clrShadow, clrHilite);
 }
@@ -577,25 +577,25 @@ COLORREF CMFCVisualManager::OnDrawMenuLabel(CDC* pDC, CRect rect)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rect, &afxGlobalData.brBtnFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBtnFace));
 
 	CRect rectSeparator = rect;
 	rectSeparator.top = rectSeparator.bottom - 2;
 
-	pDC->Draw3dRect(rectSeparator, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnHilite);
+	pDC->Draw3dRect(rectSeparator, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnHilite);
 
-	return afxGlobalData.clrBtnText;
+	return GetGlobalData()->clrBtnText;
 }
 
 COLORREF CMFCVisualManager::OnDrawPaneCaption(CDC* pDC, CDockablePane* /*pBar*/, BOOL bActive, CRect rectCaption, CRect /*rectButtons*/)
 {
 	ASSERT_VALID(pDC);
 
-	CBrush br(bActive ? afxGlobalData.clrActiveCaption : afxGlobalData.clrInactiveCaption);
+	CBrush br(bActive ? GetGlobalData()->clrActiveCaption : GetGlobalData()->clrInactiveCaption);
 	pDC->FillRect(rectCaption, &br);
 
 	// get the text color
-	return bActive ? afxGlobalData.clrCaptionText : afxGlobalData.clrInactiveCaptionText;
+	return bActive ? GetGlobalData()->clrCaptionText : GetGlobalData()->clrInactiveCaptionText;
 }
 
 void CMFCVisualManager::OnDrawCaptionButton(CDC* pDC, CMFCCaptionButton* pButton, BOOL bActive, BOOL bHorz, BOOL bMaximized, BOOL bDisabled, int nImageID /*= -1*/)
@@ -649,19 +649,19 @@ void CMFCVisualManager::OnDrawCaptionButton(CDC* pDC, CMFCCaptionButton* pButton
 	{
 		if (pButton->m_bPushed &&(pButton->m_bFocused || pButton->m_bDroppedDown))
 		{
-			pDC->Draw3dRect(rc, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarLight);
+			pDC->Draw3dRect(rc, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarLight);
 			rc.DeflateRect(1, 1);
-			pDC->Draw3dRect(rc, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarHilite);
+			pDC->Draw3dRect(rc, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
 		}
 		else if (/*!m_bLook2000*/FALSE)
 		{
-			pDC->Draw3dRect(rc, afxGlobalData.clrBarLight, afxGlobalData.clrBarDkShadow);
+			pDC->Draw3dRect(rc, GetGlobalData()->clrBarLight, GetGlobalData()->clrBarDkShadow);
 			rc.DeflateRect(1, 1);
-			pDC->Draw3dRect(rc, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+			pDC->Draw3dRect(rc, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 		}
 		else if (pButton->m_bFocused || pButton->m_bPushed || pButton->m_bDroppedDown)
 		{
-			pDC->Draw3dRect(rc, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+			pDC->Draw3dRect(rc, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 		}
 	}
 }
@@ -669,7 +669,7 @@ void CMFCVisualManager::OnDrawCaptionButton(CDC* pDC, CMFCCaptionButton* pButton
 void CMFCVisualManager::OnEraseTabsArea(CDC* pDC, CRect rect, const CMFCBaseTabCtrl* /*pTabWnd*/)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 }
 
 void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsActive, const CMFCBaseTabCtrl* pTabWnd)
@@ -821,12 +821,12 @@ void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsAct
 
 		pDC->SelectClipRgn(&rgnClip);
 
-		CBrush br(clrTab == (COLORREF)-1 ? afxGlobalData.clrBtnFace : clrTab);
+		CBrush br(clrTab == (COLORREF)-1 ? GetGlobalData()->clrBtnFace : clrTab);
 		OnFillTab(pDC, rectTab, &br, iTab, bIsActive, pTabWnd);
 
 		pDC->SelectClipRgn(NULL);
 
-		CPen pen(PS_SOLID, 1, afxGlobalData.clrBarShadow);
+		CPen pen(PS_SOLID, 1, GetGlobalData()->clrBarShadow);
 		CPen* pOLdPen = pDC->SelectObject(&pen);
 
 		for (i = 0; i < pts.GetCount(); i++)
@@ -893,7 +893,7 @@ void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsAct
 			if (clrTab != (COLORREF)-1 || bIsOneNote || m_bAlwaysFillTab)
 			{
 				CRgn rgn;
-				CBrush br(clrTab == (COLORREF)-1 ? afxGlobalData.clrBtnFace : clrTab);
+				CBrush br(clrTab == (COLORREF)-1 ? GetGlobalData()->clrBtnFace : clrTab);
 
 				CRect rectFill = rectTab;
 
@@ -1006,9 +1006,9 @@ void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsAct
 			}
 		}
 
-		CPen penLight(PS_SOLID, 1, afxGlobalData.clrBarHilite);
-		CPen penShadow(PS_SOLID, 1, afxGlobalData.clrBarShadow);
-		CPen penDark(PS_SOLID, 1, afxGlobalData.clrBarDkShadow);
+		CPen penLight(PS_SOLID, 1, GetGlobalData()->clrBarHilite);
+		CPen penShadow(PS_SOLID, 1, GetGlobalData()->clrBarShadow);
+		CPen penDark(PS_SOLID, 1, GetGlobalData()->clrBarDkShadow);
 
 		CPen* pOldPen = NULL;
 
@@ -1150,7 +1150,7 @@ void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsAct
 
 				if (clrActiveTab == (COLORREF)-1)
 				{
-					clrActiveTab = afxGlobalData.clrWindow;
+					clrActiveTab = GetGlobalData()->clrWindow;
 				}
 			}
 
@@ -1161,7 +1161,7 @@ void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsAct
 			}
 			else
 			{
-				pDC->FillRect(rectFill, &afxGlobalData.brBarFace);
+				pDC->FillRect(rectFill, &(GetGlobalData()->brBarFace));
 			}
 		}
 
@@ -1221,10 +1221,10 @@ void CMFCVisualManager::OnFillTab(CDC* pDC, CRect rectFill, CBrush* pbrFill, int
 	ASSERT_VALID(pbrFill);
 	ASSERT_VALID(pTabWnd);
 
-	if (bIsActive && !afxGlobalData.IsHighContrastMode() && (pTabWnd->IsOneNoteStyle() || pTabWnd->IsVS2005Style() || pTabWnd->IsLeftRightRounded()) &&
+	if (bIsActive && !GetGlobalData()->IsHighContrastMode() && (pTabWnd->IsOneNoteStyle() || pTabWnd->IsVS2005Style() || pTabWnd->IsLeftRightRounded()) &&
 		pTabWnd->GetTabBkColor(iTab) == (COLORREF)-1)
 	{
-		pDC->FillRect(rectFill, &afxGlobalData.brWindow);
+		pDC->FillRect(rectFill, &(GetGlobalData()->brWindow));
 	}
 	else
 	{
@@ -1275,6 +1275,7 @@ void CMFCVisualManager::OnDrawTabContent(CDC* pDC, CRect rectTab, int iTab, BOOL
 			nFormat |= DT_NOPREFIX;
 		}
 
+		AdjustTabTextRect(rectTab);
 		pDC->DrawText(strText, rectTab, nFormat);
 	}
 	else
@@ -1371,7 +1372,7 @@ void CMFCVisualManager::OnDrawTabCloseButton(CDC* pDC, CRect rect, const CMFCBas
 {
 	if (bIsHighlighted)
 	{
-		pDC->FillRect(rect, &afxGlobalData.brBarFace);
+		pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 	}
 
 	CMenuImages::Draw(pDC, CMenuImages::IdClose, rect, CMenuImages::ImageBlack);
@@ -1380,11 +1381,11 @@ void CMFCVisualManager::OnDrawTabCloseButton(CDC* pDC, CRect rect, const CMFCBas
 	{
 		if (bIsPressed)
 		{
-			pDC->Draw3dRect(rect, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarHilite);
+			pDC->Draw3dRect(rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
 		}
 		else
 		{
-			pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarDkShadow);
+			pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarDkShadow);
 		}
 	}
 }
@@ -1392,7 +1393,7 @@ void CMFCVisualManager::OnDrawTabCloseButton(CDC* pDC, CRect rect, const CMFCBas
 void CMFCVisualManager::OnEraseTabsButton(CDC* pDC, CRect rect, CMFCButton* /*pButton*/, CMFCBaseTabCtrl* /*pWndTab*/)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 }
 
 void CMFCVisualManager::OnDrawTabsButtonBorder(CDC* pDC, CRect& rect, CMFCButton* pButton, UINT uiState, CMFCBaseTabCtrl* /*pWndTab*/)
@@ -1402,14 +1403,14 @@ void CMFCVisualManager::OnDrawTabsButtonBorder(CDC* pDC, CRect& rect, CMFCButton
 
 	if (pButton->IsPressed() ||(uiState & ODS_SELECTED))
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
 
 		rect.left += 2;
 		rect.top += 2;
 	}
 	else
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarDkShadow);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarDkShadow);
 	}
 
 	rect.DeflateRect(2, 2);
@@ -1447,7 +1448,7 @@ COLORREF CMFCVisualManager::OnFillCommandsListBackground(CDC* pDC, CRect rect, B
 
 	if (bIsSelected)
 	{
-		pDC->FillRect(rect, &afxGlobalData.brHilite);
+		pDC->FillRect(rect, &(GetGlobalData()->brHilite));
 
 		const int nFrameSize = 1;
 
@@ -1460,12 +1461,12 @@ COLORREF CMFCVisualManager::OnFillCommandsListBackground(CDC* pDC, CRect rect, B
 		pDC->PatBlt(rect.right, rect.top, nFrameSize, rect.Height(), PATINVERT);
 		pDC->PatBlt(rect.left + nFrameSize, rect.bottom, rect.Width(), nFrameSize, PATINVERT);
 
-		return afxGlobalData.clrTextHilite;
+		return GetGlobalData()->clrTextHilite;
 	}
 
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 
-	return afxGlobalData.clrBarText;
+	return GetGlobalData()->clrBarText;
 }
 
 void CMFCVisualManager::OnDrawMenuArrowOnCustomizeList(CDC* pDC, CRect rectCommand, BOOL bSelected)
@@ -1480,7 +1481,7 @@ void CMFCVisualManager::OnDrawMenuArrowOnCustomizeList(CDC* pDC, CRect rectComma
 	rectLine.left = rectLine.right - 2;
 	rectLine.DeflateRect(0, 2);
 
-	pDC->Draw3dRect(&rectLine, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnHilite);
+	pDC->Draw3dRect(&rectLine, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnHilite);
 }
 
 CMFCVisualManager* __stdcall CMFCVisualManager::CreateVisualManager(CRuntimeClass* pVisualManager)
@@ -1538,18 +1539,18 @@ void CMFCVisualManager::OnDrawTearOffCaption(CDC* pDC, CRect rect, BOOL bIsActiv
 
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 
 	rect.DeflateRect(nBorderSize, 1);
 
-	pDC->FillSolidRect(rect, bIsActive ? afxGlobalData.clrActiveCaption : afxGlobalData.clrInactiveCaption);
+	pDC->FillSolidRect(rect, bIsActive ? GetGlobalData()->clrActiveCaption : GetGlobalData()->clrInactiveCaption);
 }
 
 void CMFCVisualManager::OnDrawMenuResizeBar(CDC* pDC, CRect rect, int /*nResizeFlags*/)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillSolidRect(rect, afxGlobalData.clrInactiveCaption);
+	pDC->FillSolidRect(rect, GetGlobalData()->clrInactiveCaption);
 }
 
 void CMFCVisualManager::OnDrawMenuScrollButton(CDC* pDC, CRect rect, BOOL bIsScrollDown, BOOL bIsHighlited, BOOL /*bIsPressed*/, BOOL /*bIsDisabled*/)
@@ -1559,13 +1560,13 @@ void CMFCVisualManager::OnDrawMenuScrollButton(CDC* pDC, CRect rect, BOOL bIsScr
 	CRect rectFill = rect;
 	rectFill.top -= 2;
 
-	pDC->FillRect(rectFill, &afxGlobalData.brBarFace);
+	pDC->FillRect(rectFill, &(GetGlobalData()->brBarFace));
 
 	CMenuImages::Draw(pDC, bIsScrollDown ? CMenuImages::IdArrowDown : CMenuImages::IdArrowUp, rect);
 
 	if (bIsHighlited)
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 	}
 }
 
@@ -1616,31 +1617,31 @@ void CMFCVisualManager::OnDrawComboDropButton(CDC* pDC, CRect rect, BOOL bDisabl
 	if (CMFCToolBarImages::m_bIsDrawOnGlass)
 	{
 		CDrawingManager dm(*pDC);
-		dm.DrawRect(rect, afxGlobalData.clrBarFace, afxGlobalData.clrBarHilite);
+		dm.DrawRect(rect, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarHilite);
 
 		if (bIsDropped)
 		{
 			rect.OffsetRect(1, 1);
-			dm.DrawRect(rect, (COLORREF)-1, afxGlobalData.clrBarShadow);
+			dm.DrawRect(rect, (COLORREF)-1, GetGlobalData()->clrBarShadow);
 		}
 		else if (bIsHighlighted)
 		{
-			dm.DrawRect(rect, (COLORREF)-1, afxGlobalData.clrBarShadow);
+			dm.DrawRect(rect, (COLORREF)-1, GetGlobalData()->clrBarShadow);
 		}
 	}
 	else
 	{
-		pDC->FillRect(rect, &afxGlobalData.brBarFace);
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarHilite);
+		pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarHilite);
 
 		if (bIsDropped)
 		{
 			rect.OffsetRect(1, 1);
-			pDC->Draw3dRect(&rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+			pDC->Draw3dRect(&rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 		}
 		else if (bIsHighlighted)
 		{
-			pDC->Draw3dRect(&rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+			pDC->Draw3dRect(&rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 		}
 	}
 
@@ -1660,11 +1661,11 @@ void CMFCVisualManager::OnDrawComboBorder(CDC* pDC, CRect rect, BOOL /*bDisabled
 			CRect rectBorder = rect;
 			rectBorder.DeflateRect(1, 1);
 
-			pDC->Draw3dRect(&rectBorder, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarDkShadow);
+			pDC->Draw3dRect(&rectBorder, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarDkShadow);
 		}
 		else
 		{
-			pDC->Draw3dRect(&rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+			pDC->Draw3dRect(&rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 		}
 	}
 }
@@ -1683,14 +1684,14 @@ void CMFCVisualManager::OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* /*pBa
 		if (nStyle & SBPS_POPOUT)
 		{
 			// reverse colors
-			clrHilite = afxGlobalData.clrBarShadow;
-			clrShadow = afxGlobalData.clrBarHilite;
+			clrHilite = GetGlobalData()->clrBarShadow;
+			clrShadow = GetGlobalData()->clrBarHilite;
 		}
 		else
 		{
 			// normal colors
-			clrHilite = afxGlobalData.clrBarHilite;
-			clrShadow = afxGlobalData.clrBarShadow;
+			clrHilite = GetGlobalData()->clrBarHilite;
+			clrShadow = GetGlobalData()->clrBarShadow;
 		}
 
 		pDC->Draw3dRect(rectPane, clrShadow, clrHilite);
@@ -1707,11 +1708,11 @@ COLORREF CMFCVisualManager::OnFillMiniFrameCaption(CDC* pDC, CRect rectCaption, 
 		bActive = TRUE;
 	}
 
-	CBrush br(bActive ? afxGlobalData.clrActiveCaption : afxGlobalData.clrInactiveCaption);
+	CBrush br(bActive ? GetGlobalData()->clrActiveCaption : GetGlobalData()->clrInactiveCaption);
 	pDC->FillRect(rectCaption, &br);
 
 	// get the text color
-	return bActive ? afxGlobalData.clrCaptionText : afxGlobalData.clrInactiveCaptionText;
+	return bActive ? GetGlobalData()->clrCaptionText : GetGlobalData()->clrInactiveCaptionText;
 }
 
 void CMFCVisualManager::OnDrawMiniFrameBorder(CDC* pDC, CPaneFrameWnd* pFrameWnd, CRect rectBorder, CRect rectBorderSize)
@@ -1724,41 +1725,41 @@ void CMFCVisualManager::OnDrawMiniFrameBorder(CDC* pDC, CPaneFrameWnd* pFrameWnd
 	if (preDockState == PDS_DOCK_REGULAR)
 	{
 		// draw outer edge;
-		pDC->Draw3dRect(rectBorder, RGB(127, 0, 0), afxGlobalData.clrBarDkShadow);
+		pDC->Draw3dRect(rectBorder, RGB(127, 0, 0), GetGlobalData()->clrBarDkShadow);
 		rectBorder.DeflateRect(1, 1);
-		pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarHilite, RGB(127, 0, 0));
+		pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarHilite, RGB(127, 0, 0));
 	}
 	else if (preDockState == PDS_DOCK_TO_TAB)
 	{
 		// draw outer edge;
-		pDC->Draw3dRect(rectBorder, RGB(0, 0, 127), afxGlobalData.clrBarDkShadow);
+		pDC->Draw3dRect(rectBorder, RGB(0, 0, 127), GetGlobalData()->clrBarDkShadow);
 		rectBorder.DeflateRect(1, 1);
-		pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarHilite, RGB(0, 0, 127));
+		pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarHilite, RGB(0, 0, 127));
 	}
 	else
 	{
 		// draw outer edge;
-		pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarFace, afxGlobalData.clrBarDkShadow);
+		pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarDkShadow);
 		rectBorder.DeflateRect(1, 1);
-		pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+		pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 	}
 
 	// draw the inner egde
 	rectBorder.DeflateRect(rectBorderSize.right - 2, rectBorderSize.top - 2);
-	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarFace, afxGlobalData.clrBarFace);
+	pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarFace);
 	rectBorder.InflateRect(1, 1);
-	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarFace, afxGlobalData.clrBarFace);
+	pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarFace);
 }
 
 void CMFCVisualManager::OnDrawFloatingToolbarBorder(CDC* pDC, CMFCBaseToolBar* /*pToolBar*/, CRect rectBorder, CRect /*rectBorderSize*/)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarFace, afxGlobalData.clrBarDkShadow);
+	pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarDkShadow);
 	rectBorder.DeflateRect(1, 1);
-	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 	rectBorder.DeflateRect(1, 1);
-	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarFace, afxGlobalData.clrBarFace);
+	pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarFace);
 }
 
 COLORREF CMFCVisualManager::GetToolbarButtonTextColor(CMFCToolBarButton* pButton, CMFCVisualManager::AFX_BUTTON_STATE state)
@@ -1769,23 +1770,23 @@ COLORREF CMFCVisualManager::GetToolbarButtonTextColor(CMFCToolBarButton* pButton
 
 	if (pButton->IsKindOf(RUNTIME_CLASS(CMFCOutlookBarPaneButton)))
 	{
-		if (afxGlobalData.IsHighContrastMode())
+		if (GetGlobalData()->IsHighContrastMode())
 		{
-			return bDisabled ? afxGlobalData.clrGrayedText : afxGlobalData.clrWindowText;
+			return bDisabled ? GetGlobalData()->clrGrayedText : GetGlobalData()->clrWindowText;
 		}
 
-		return bDisabled ? afxGlobalData.clrBtnFace : afxGlobalData.clrWindow;
+		return bDisabled ? GetGlobalData()->clrBtnFace : GetGlobalData()->clrWindow;
 	}
 
-	return(bDisabled ? afxGlobalData.clrGrayedText : (state == ButtonsIsHighlighted) ? CMFCToolBar::GetHotTextColor() : afxGlobalData.clrBarText);
+	return(bDisabled ? GetGlobalData()->clrGrayedText : (state == ButtonsIsHighlighted) ? CMFCToolBar::GetHotTextColor() : GetGlobalData()->clrBarText);
 }
 
 void CMFCVisualManager::OnFillOutlookPageButton(CDC* pDC, const CRect& rect, BOOL /*bIsHighlighted*/, BOOL /*bIsPressed*/, COLORREF& clrText)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
-	clrText = afxGlobalData.clrBarText;
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
+	clrText = GetGlobalData()->clrBarText;
 }
 
 void CMFCVisualManager::OnDrawOutlookPageButtonBorder(CDC* pDC, CRect& rectBtn, BOOL bIsHighlighted, BOOL bIsPressed)
@@ -1794,19 +1795,19 @@ void CMFCVisualManager::OnDrawOutlookPageButtonBorder(CDC* pDC, CRect& rectBtn, 
 
 	if (bIsHighlighted && bIsPressed)
 	{
-		pDC->Draw3dRect(rectBtn, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarFace);
+		pDC->Draw3dRect(rectBtn, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarFace);
 		rectBtn.DeflateRect(1, 1);
-		pDC->Draw3dRect(rectBtn, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(rectBtn, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	}
 	else
 	{
 		if (bIsHighlighted || bIsPressed)
 		{
-			pDC->Draw3dRect(rectBtn, afxGlobalData.clrBarFace, afxGlobalData.clrBarDkShadow);
+			pDC->Draw3dRect(rectBtn, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarDkShadow);
 			rectBtn.DeflateRect(1, 1);
 		}
 
-		pDC->Draw3dRect(rectBtn, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+		pDC->Draw3dRect(rectBtn, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 	}
 
 	rectBtn.DeflateRect(1, 1);
@@ -1816,7 +1817,7 @@ COLORREF CMFCVisualManager::GetCaptionBarTextColor(CMFCCaptionBar* pBar)
 {
 	ASSERT_VALID(pBar);
 
-	return pBar->IsMessageBarMode() ? ::GetSysColor(COLOR_INFOTEXT) : afxGlobalData.clrWindow;
+	return pBar->IsMessageBarMode() ? ::GetSysColor(COLOR_INFOTEXT) : GetGlobalData()->clrWindow;
 }
 
 void CMFCVisualManager::OnDrawCaptionBarBorder(CDC* pDC, CMFCCaptionBar* /*pBar*/, CRect rect, COLORREF clrBarBorder, BOOL bFlatBorder)
@@ -1825,7 +1826,7 @@ void CMFCVisualManager::OnDrawCaptionBarBorder(CDC* pDC, CMFCCaptionBar* /*pBar*
 
 	if (clrBarBorder == (COLORREF) -1)
 	{
-		pDC->FillRect(rect, &afxGlobalData.brBarFace);
+		pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 	}
 	else
 	{
@@ -1836,7 +1837,7 @@ void CMFCVisualManager::OnDrawCaptionBarBorder(CDC* pDC, CMFCCaptionBar* /*pBar*
 
 	if (!bFlatBorder)
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 	}
 }
 
@@ -1846,9 +1847,9 @@ void CMFCVisualManager::OnDrawCaptionBarInfoArea(CDC* pDC, CMFCCaptionBar* /*pBa
 
 	::FillRect(pDC->GetSafeHdc(), rect, ::GetSysColorBrush(COLOR_INFOBK));
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	rect.DeflateRect(1, 1);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 }
 
 COLORREF CMFCVisualManager::OnFillCaptionBarButton(CDC* pDC, CMFCCaptionBar* pBar, CRect rect,
@@ -1869,8 +1870,8 @@ COLORREF CMFCVisualManager::OnFillCaptionBarButton(CDC* pDC, CMFCCaptionBar* pBa
 
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
-	return bIsDisabled ? afxGlobalData.clrGrayedText : afxGlobalData.clrBarText;
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
+	return bIsDisabled ? GetGlobalData()->clrGrayedText : GetGlobalData()->clrBarText;
 }
 
 void CMFCVisualManager::OnDrawCaptionBarButtonBorder(CDC* pDC, CMFCCaptionBar* pBar, CRect rect,
@@ -1885,11 +1886,11 @@ void CMFCVisualManager::OnDrawCaptionBarButtonBorder(CDC* pDC, CMFCCaptionBar* p
 
 	if (bIsPressed)
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
 	}
 	else if (bIsHighlighted || pBar->IsMessageBarMode())
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarDkShadow);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarDkShadow);
 	}
 }
 
@@ -1924,14 +1925,14 @@ void CMFCVisualManager::OnDrawStatusBarProgress(CDC* pDC, CMFCStatusBar* /*pStat
 		CString strText;
 		strText.Format(_T("%d%%"), nProgressCurr * 100 / nProgressTotal);
 
-		COLORREF clrText = pDC->SetTextColor(afxGlobalData.clrBarText);
+		COLORREF clrText = pDC->SetTextColor(GetGlobalData()->clrBarText);
 
 		pDC->DrawText(strText, rectProgress, DT_CENTER | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 
 		CRgn rgn;
 		rgn.CreateRectRgnIndirect(rectComplete);
 		pDC->SelectClipRgn(&rgn);
-		pDC->SetTextColor(clrProgressText == (COLORREF)-1 ? afxGlobalData.clrTextHilite : clrProgressText);
+		pDC->SetTextColor(clrProgressText == (COLORREF)-1 ? GetGlobalData()->clrTextHilite : clrProgressText);
 		pDC->DrawText(strText, rectProgress, DT_CENTER | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 		pDC->SelectClipRgn(NULL);
 		pDC->SetTextColor(clrText);
@@ -1941,7 +1942,7 @@ void CMFCVisualManager::OnDrawStatusBarProgress(CDC* pDC, CMFCStatusBar* /*pStat
 void CMFCVisualManager::OnFillHeaderCtrlBackground(CMFCHeaderCtrl* pCtrl, CDC* pDC, CRect rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, pCtrl->IsDialogControl() ? &afxGlobalData.brBtnFace : &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, pCtrl->IsDialogControl() ? &(GetGlobalData()->brBtnFace) : &(GetGlobalData()->brBarFace));
 }
 
 void CMFCVisualManager::OnDrawHeaderCtrlBorder(CMFCHeaderCtrl* pCtrl, CDC* pDC, CRect& rect, BOOL bIsPressed, BOOL /*bIsHighlighted*/)
@@ -1952,11 +1953,11 @@ void CMFCVisualManager::OnDrawHeaderCtrlBorder(CMFCHeaderCtrl* pCtrl, CDC* pDC, 
 	{
 		if (pCtrl->IsDialogControl())
 		{
-			pDC->Draw3dRect(rect, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnShadow);
+			pDC->Draw3dRect(rect, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnShadow);
 		}
 		else
 		{
-			pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+			pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 		}
 
 		rect.left++;
@@ -1966,11 +1967,11 @@ void CMFCVisualManager::OnDrawHeaderCtrlBorder(CMFCHeaderCtrl* pCtrl, CDC* pDC, 
 	{
 		if (pCtrl->IsDialogControl())
 		{
-			pDC->Draw3dRect(rect, afxGlobalData.clrBtnHilite, afxGlobalData.clrBtnShadow);
+			pDC->Draw3dRect(rect, GetGlobalData()->clrBtnHilite, GetGlobalData()->clrBtnShadow);
 		}
 		else
 		{
-			pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+			pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 		}
 	}
 }
@@ -1984,13 +1985,13 @@ void CMFCVisualManager::OnDrawStatusBarSizeBox(CDC* pDC, CMFCStatusBar* /*pStatB
 {
 	ASSERT_VALID(pDC);
 
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontMarlett);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontMarlett));
 	ENSURE(pOldFont != NULL);
 
 	const CString strSizeBox(_T("o")); // Char of the sizing box in "Marlett" font
 
 	UINT nTextAlign = pDC->SetTextAlign(TA_RIGHT | TA_BOTTOM);
-	COLORREF clrText = pDC->SetTextColor(afxGlobalData.clrBarShadow);
+	COLORREF clrText = pDC->SetTextColor(GetGlobalData()->clrBarShadow);
 
 	pDC->ExtTextOut(rectSizeBox.right, rectSizeBox.bottom,
 		ETO_CLIPPED, &rectSizeBox, strSizeBox, NULL);
@@ -2014,7 +2015,7 @@ void CMFCVisualManager::OnFillTasksPaneBackground(CDC* pDC, CRect rectWorkArea)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rectWorkArea, &afxGlobalData.brWindow);
+	pDC->FillRect(rectWorkArea, &(GetGlobalData()->brWindow));
 }
 
 void CMFCVisualManager::OnDrawTasksGroupCaption(CDC* pDC, CMFCTasksPaneTaskGroup* pGroup, BOOL bIsHighlighted, BOOL bIsSelected, BOOL bCanCollapse)
@@ -2032,7 +2033,7 @@ void CMFCVisualManager::OnDrawTasksGroupCaption(CDC* pDC, CMFCTasksPaneTaskGroup
 	// Draw caption background(Windows)
 	// ---------------------------------
 	COLORREF clrBckOld = pDC->GetBkColor();
-	pDC->FillSolidRect(rectGroup, (pGroup->m_bIsSpecial ? afxGlobalData.clrHilite : afxGlobalData.clrBarFace));
+	pDC->FillSolidRect(rectGroup, (pGroup->m_bIsSpecial ? GetGlobalData()->clrHilite : GetGlobalData()->clrBarFace));
 	pDC->SetBkColor(clrBckOld);
 
 	// ---------------------------
@@ -2047,16 +2048,16 @@ void CMFCVisualManager::OnDrawTasksGroupCaption(CDC* pDC, CMFCTasksPaneTaskGroup
 	// -----------------------
 	// Draw group caption text
 	// -----------------------
-	CFont* pFontOld = pDC->SelectObject(&afxGlobalData.fontBold);
+	CFont* pFontOld = pDC->SelectObject(&(GetGlobalData()->fontBold));
 	COLORREF clrTextOld = pDC->GetTextColor();
 
 	if (bCanCollapse && bIsHighlighted)
 	{
-		clrTextOld = pDC->SetTextColor(pGroup->m_clrTextHot == (COLORREF)-1 ? (pGroup->m_bIsSpecial ? afxGlobalData.clrWindow : afxGlobalData.clrWindowText) : pGroup->m_clrTextHot);
+		clrTextOld = pDC->SetTextColor(pGroup->m_clrTextHot == (COLORREF)-1 ? (pGroup->m_bIsSpecial ? GetGlobalData()->clrWindow : GetGlobalData()->clrWindowText) : pGroup->m_clrTextHot);
 	}
 	else
 	{
-		clrTextOld = pDC->SetTextColor(pGroup->m_clrText == (COLORREF)-1 ? (pGroup->m_bIsSpecial ? afxGlobalData.clrWindow : afxGlobalData.clrWindowText) : pGroup->m_clrText);
+		clrTextOld = pDC->SetTextColor(pGroup->m_clrText == (COLORREF)-1 ? (pGroup->m_bIsSpecial ? GetGlobalData()->clrWindow : GetGlobalData()->clrWindowText) : pGroup->m_clrText);
 	}
 
 	int nBkModeOld = pDC->SetBkMode(TRANSPARENT);
@@ -2093,10 +2094,10 @@ void CMFCVisualManager::OnDrawTasksGroupCaption(CDC* pDC, CMFCTasksPaneTaskGroup
 			if (bIsHighlighted)
 			{
 				// Draw button frame
-				CBrush* pBrushOld = (CBrush*) pDC->SelectObject(&afxGlobalData.brBarFace);
+				CBrush* pBrushOld = (CBrush*) pDC->SelectObject(&(GetGlobalData()->brBarFace));
 				COLORREF clrBckOldFrame = pDC->GetBkColor();
 
-				pDC->Draw3dRect(&rectButton, afxGlobalData.clrWindow, afxGlobalData.clrBarShadow);
+				pDC->Draw3dRect(&rectButton, GetGlobalData()->clrWindow, GetGlobalData()->clrBarShadow);
 
 				pDC->SetBkColor(clrBckOldFrame);
 				pDC->SelectObject(pBrushOld);
@@ -2160,7 +2161,7 @@ void CMFCVisualManager::OnDrawTasksGroupAreaBorder(CDC* pDC, CRect rect, BOOL bS
 	ASSERT_VALID(pDC);
 
 	// Draw caption background:
-	CPen* pPenOld = (CPen*) pDC->SelectObject(bSpecial ? &afxGlobalData.penHilite : &afxGlobalData.penBarFace);
+	CPen* pPenOld = (CPen*) pDC->SelectObject(bSpecial ? &(GetGlobalData()->penHilite) : &(GetGlobalData()->penBarFace));
 
 	pDC->MoveTo(rect.left, rect.top);
 	pDC->LineTo(rect.left, rect.bottom-1);
@@ -2190,7 +2191,7 @@ void CMFCVisualManager::OnDrawTask(CDC* pDC, CMFCTasksPaneTask* pTask, CImageLis
 
 	if (pTask->m_bIsSeparator)
 	{
-		CPen* pPenOld = (CPen*) pDC->SelectObject(&afxGlobalData.penBarFace);
+		CPen* pPenOld = (CPen*) pDC->SelectObject(&(GetGlobalData()->penBarFace));
 
 		pDC->MoveTo(rectText.left, rectText.CenterPoint().y);
 		pDC->LineTo(rectText.right, rectText.CenterPoint().y);
@@ -2220,23 +2221,23 @@ void CMFCVisualManager::OnDrawTask(CDC* pDC, CMFCTasksPaneTask* pTask, CImageLis
 	COLORREF clrTextOld = pDC->GetTextColor();
 	if (bIsLabel)
 	{
-		pFontOld = pDC->SelectObject(pTask->m_bIsBold ? &afxGlobalData.fontBold : &afxGlobalData.fontRegular);
-		pDC->SetTextColor(pTask->m_clrText == (COLORREF)-1 ? afxGlobalData.clrWindowText : pTask->m_clrText);
+		pFontOld = pDC->SelectObject(pTask->m_bIsBold ? &(GetGlobalData()->fontBold) : &(GetGlobalData()->fontRegular));
+		pDC->SetTextColor(pTask->m_clrText == (COLORREF)-1 ? GetGlobalData()->clrWindowText : pTask->m_clrText);
 	}
 	else if (!pTask->m_bEnabled)
 	{
-		pDC->SetTextColor(afxGlobalData.clrGrayedText);
-		pFontOld = pDC->SelectObject(&afxGlobalData.fontRegular);
+		pDC->SetTextColor(GetGlobalData()->clrGrayedText);
+		pFontOld = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 	}
 	else if (bIsHighlighted)
 	{
-		pFontOld = pDC->SelectObject(&afxGlobalData.fontUnderline);
-		pDC->SetTextColor(pTask->m_clrTextHot == (COLORREF)-1 ? afxGlobalData.clrWindowText : pTask->m_clrTextHot);
+		pFontOld = pDC->SelectObject(&(GetGlobalData()->fontUnderline));
+		pDC->SetTextColor(pTask->m_clrTextHot == (COLORREF)-1 ? GetGlobalData()->clrWindowText : pTask->m_clrTextHot);
 	}
 	else
 	{
-		pFontOld = pDC->SelectObject(&afxGlobalData.fontRegular);
-		pDC->SetTextColor(pTask->m_clrText == (COLORREF)-1 ? afxGlobalData.clrWindowText : pTask->m_clrText);
+		pFontOld = pDC->SelectObject(&(GetGlobalData()->fontRegular));
+		pDC->SetTextColor(pTask->m_clrText == (COLORREF)-1 ? GetGlobalData()->clrWindowText : pTask->m_clrText);
 	}
 
 	int nBkModeOld = pDC->SetBkMode(TRANSPARENT);
@@ -2272,14 +2273,14 @@ void CMFCVisualManager::OnDrawScrollButtons(CDC* pDC, const CRect& rect, const i
 	CRect rectFill = rect;
 	rectFill.top -= nBorderSize;
 
-	pDC->FillRect(rectFill, &afxGlobalData.brBarFace);
+	pDC->FillRect(rectFill, &(GetGlobalData()->brBarFace));
 
 	if (bHilited)
 	{
 		CDrawingManager dm(*pDC);
 		dm.HighlightRect(rect);
 
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarDkShadow);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarDkShadow);
 	}
 
 	CMenuImages::Draw(pDC, (CMenuImages::IMAGES_IDS) iImage, rect);
@@ -2288,7 +2289,7 @@ void CMFCVisualManager::OnDrawScrollButtons(CDC* pDC, const CRect& rect, const i
 void CMFCVisualManager::OnDrawToolBoxFrame(CDC* pDC, const CRect& rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarFace, afxGlobalData.clrBarFace);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarFace);
 }
 
 void CMFCVisualManager::OnDrawPaneDivider(CDC* pDC, CPaneDivider* pSlider, CRect rect, BOOL bAutoHideMode)
@@ -2296,7 +2297,7 @@ void CMFCVisualManager::OnDrawPaneDivider(CDC* pDC, CPaneDivider* pSlider, CRect
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pSlider);
 
-	CRect rectScreen = afxGlobalData.m_rectVirtual;
+	CRect rectScreen = GetGlobalData()->m_rectVirtual;
 	pSlider->ScreenToClient(&rectScreen);
 
 	CRect rectFill = rect;
@@ -2311,7 +2312,7 @@ void CMFCVisualManager::OnDrawPaneDivider(CDC* pDC, CPaneDivider* pSlider, CRect
 		DWORD dwAlgn = pSlider->GetCurrentAlignment();
 		CRect rectBorder = rect;
 
-		COLORREF clrBorder = afxGlobalData.clrBarDkShadow;
+		COLORREF clrBorder = GetGlobalData()->clrBarDkShadow;
 
 		if (dwAlgn & CBRS_ALIGN_LEFT)
 		{
@@ -2320,7 +2321,7 @@ void CMFCVisualManager::OnDrawPaneDivider(CDC* pDC, CPaneDivider* pSlider, CRect
 		else if (dwAlgn & CBRS_ALIGN_RIGHT)
 		{
 			rectBorder.right = rectBorder.left;
-			clrBorder = afxGlobalData.clrBarHilite;
+			clrBorder = GetGlobalData()->clrBarHilite;
 		}
 		else if (dwAlgn & CBRS_ALIGN_TOP)
 		{
@@ -2329,7 +2330,7 @@ void CMFCVisualManager::OnDrawPaneDivider(CDC* pDC, CPaneDivider* pSlider, CRect
 		else if (dwAlgn & CBRS_ALIGN_BOTTOM)
 		{
 			rectBorder.bottom = rectBorder.top;
-			clrBorder = afxGlobalData.clrBarHilite;
+			clrBorder = GetGlobalData()->clrBarHilite;
 		}
 		else
 		{
@@ -2345,21 +2346,21 @@ void CMFCVisualManager::OnDrawSplitterBorder(CDC* pDC, CSplitterWndEx* /*pSplitt
 {
 	ASSERT_VALID(pDC);
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	rect.InflateRect(-AFX_CX_BORDER, -AFX_CY_BORDER);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarFace, afxGlobalData.clrBarFace);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarFace);
 }
 
 void CMFCVisualManager::OnDrawSplitterBox(CDC* pDC, CSplitterWndEx* /*pSplitterWnd*/, CRect& rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarFace, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarShadow);
 }
 
 void CMFCVisualManager::OnFillSplitterBackground(CDC* pDC, CSplitterWndEx* /*pSplitterWnd*/, CRect rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillSolidRect(rect, afxGlobalData.clrBarFace);
+	pDC->FillSolidRect(rect, GetGlobalData()->clrBarFace);
 }
 
 void CMFCVisualManager::OnDrawCheckBox(CDC *pDC, CRect rect, BOOL bHighlighted, BOOL bChecked, BOOL bEnabled)
@@ -2375,7 +2376,7 @@ void CMFCVisualManager::OnDrawCheckBoxEx(CDC *pDC, CRect rect, int nState, BOOL 
 
 		rect.DeflateRect(1, 1);
 
-		dm.DrawRect(rect, bEnabled ? afxGlobalData.clrWindow : afxGlobalData.clrBarFace, afxGlobalData.clrBarShadow);
+		dm.DrawRect(rect, bEnabled ? GetGlobalData()->clrWindow : GetGlobalData()->clrBarFace, GetGlobalData()->clrBarShadow);
 
 		if (nState == 1)
 		{
@@ -2391,11 +2392,11 @@ void CMFCVisualManager::OnDrawCheckBoxEx(CDC *pDC, CRect rect, int nState, BOOL 
 	}
 
 	rect.DeflateRect(1, 1);
-	pDC->FillSolidRect(&rect, bEnabled ? afxGlobalData.clrWindow : afxGlobalData.clrBarFace);
-	pDC->Draw3dRect(&rect, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarHilite);
+	pDC->FillSolidRect(&rect, bEnabled ? GetGlobalData()->clrWindow : GetGlobalData()->clrBarFace);
+	pDC->Draw3dRect(&rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
 
 	rect.DeflateRect(1, 1);
-	pDC->Draw3dRect(&rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarLight);
+	pDC->Draw3dRect(&rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarLight);
 
 	if (nState == 1)
 	{
@@ -2406,7 +2407,7 @@ void CMFCVisualManager::OnDrawCheckBoxEx(CDC *pDC, CRect rect, int nState, BOOL 
 		rect.DeflateRect(1, 1);
 
 		CBrush br;
-		br.CreateHatchBrush(HS_DIAGCROSS, afxGlobalData.clrBtnText);
+		br.CreateHatchBrush(HS_DIAGCROSS, GetGlobalData()->clrBtnText);
 
 		pDC->FillRect(rect, &br);
 	}
@@ -2437,12 +2438,12 @@ void CMFCVisualManager::OnDrawSpinButtons(CDC* pDC, CRect rectSpin, int nState, 
 	if (CMFCToolBarImages::m_bIsDrawOnGlass)
 	{
 		CDrawingManager dm(*pDC);
-		dm.DrawRect(rectSpin, afxGlobalData.clrBarFace, afxGlobalData.clrBarHilite);
+		dm.DrawRect(rectSpin, GetGlobalData()->clrBarFace, GetGlobalData()->clrBarHilite);
 	}
 	else
 	{
-		pDC->FillRect(rectSpin, &afxGlobalData.brBarFace);
-		pDC->Draw3dRect(rectSpin, afxGlobalData.clrBarHilite, afxGlobalData.clrBarHilite);
+		pDC->FillRect(rectSpin, &(GetGlobalData()->brBarFace));
+		pDC->Draw3dRect(rectSpin, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarHilite);
 	}
 
 	CMenuImages::IMAGES_IDS id[2][2] = {{CMenuImages::IdArrowUp, CMenuImages::IdArrowDown}, {CMenuImages::IdArrowLeft, CMenuImages::IdArrowRight}};
@@ -2458,22 +2459,22 @@ void CMFCVisualManager::OnDrawSpinButtons(CDC* pDC, CRect rectSpin, int nState, 
 
 			if (idxPressed == i)
 			{
-				dm.DrawRect(rect[i], (COLORREF)-1, afxGlobalData.clrBarShadow);
+				dm.DrawRect(rect[i], (COLORREF)-1, GetGlobalData()->clrBarShadow);
 			}
 			else
 			{
-				dm.DrawRect(rect[i], (COLORREF)-1, afxGlobalData.clrBarHilite);
+				dm.DrawRect(rect[i], (COLORREF)-1, GetGlobalData()->clrBarHilite);
 			}
 		}
 		else
 		{
 			if (idxPressed == i)
 			{
-				pDC->Draw3dRect(&rect[i], afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+				pDC->Draw3dRect(&rect[i], GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 			}
 			else
 			{
-				pDC->Draw3dRect(&rect[i], afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+				pDC->Draw3dRect(&rect[i], GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 			}
 		}
 
@@ -2489,7 +2490,7 @@ void CMFCVisualManager::OnDrawExpandingBox(CDC* pDC, CRect rect, BOOL bIsOpened,
 
 	rect.DeflateRect(2, 2);
 
-	CPen penLine(PS_SOLID, 1, afxGlobalData.clrBarText);
+	CPen penLine(PS_SOLID, 1, GetGlobalData()->clrBarText);
 	CPen* pOldPen = pDC->SelectObject(&penLine);
 
 	CPoint ptCenter = rect.CenterPoint();
@@ -2521,15 +2522,15 @@ void CMFCVisualManager::OnDrawControlBorder(CWnd* pWndCtrl)
 
 	if (pWndCtrl->GetStyle() & WS_POPUP)
 	{
-		dc.Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+		dc.Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 	}
 	else
 	{
-		dc.Draw3dRect(rect, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarHilite);
+		dc.Draw3dRect(rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
 	}
 
 	rect.DeflateRect(1, 1);
-	dc.Draw3dRect(rect, afxGlobalData.clrWindow, afxGlobalData.clrWindow);
+	dc.Draw3dRect(rect, GetGlobalData()->clrWindow, GetGlobalData()->clrWindow);
 }
 
 void CMFCVisualManager::OnDrawShowAllMenuItems(CDC* pDC, CRect rect, CMFCVisualManager::AFX_BUTTON_STATE /*state*/)
@@ -2556,48 +2557,48 @@ void CMFCVisualManager::GetTabFrameColors(const CMFCBaseTabCtrl* pTabWnd, COLORR
 	}
 	else if (pTabWnd->IsDialogControl())
 	{
-		clrFace = afxGlobalData.clrBtnFace;
+		clrFace = GetGlobalData()->clrBtnFace;
 	}
 	else
 	{
-		clrFace = afxGlobalData.clrBarFace;
+		clrFace = GetGlobalData()->clrBarFace;
 	}
 
 	if (pTabWnd->IsDialogControl())
 	{
-		clrDark = afxGlobalData.clrBtnShadow;
-		clrBlack = afxGlobalData.clrBtnText;
-		clrHighlight = pTabWnd->IsVS2005Style() ? afxGlobalData.clrBtnShadow : afxGlobalData.clrBtnHilite;
-		clrDarkShadow = afxGlobalData.clrBtnDkShadow;
-		clrLight = afxGlobalData.clrBtnLight;
+		clrDark = GetGlobalData()->clrBtnShadow;
+		clrBlack = GetGlobalData()->clrBtnText;
+		clrHighlight = pTabWnd->IsVS2005Style() ? GetGlobalData()->clrBtnShadow : GetGlobalData()->clrBtnHilite;
+		clrDarkShadow = GetGlobalData()->clrBtnDkShadow;
+		clrLight = GetGlobalData()->clrBtnLight;
 
-		pbrFace = &afxGlobalData.brBtnFace;
+		pbrFace = &(GetGlobalData()->brBtnFace);
 	}
 	else
 	{
-		clrDark = afxGlobalData.clrBarShadow;
-		clrBlack = afxGlobalData.clrBarText;
-		clrHighlight = pTabWnd->IsVS2005Style() ? afxGlobalData.clrBarShadow : afxGlobalData.clrBarHilite;
-		clrDarkShadow = afxGlobalData.clrBarDkShadow;
-		clrLight = afxGlobalData.clrBarLight;
+		clrDark = GetGlobalData()->clrBarShadow;
+		clrBlack = GetGlobalData()->clrBarText;
+		clrHighlight = pTabWnd->IsVS2005Style() ? GetGlobalData()->clrBarShadow : GetGlobalData()->clrBarHilite;
+		clrDarkShadow = GetGlobalData()->clrBarDkShadow;
+		clrLight = GetGlobalData()->clrBarLight;
 
-		pbrFace = &afxGlobalData.brBarFace;
+		pbrFace = &(GetGlobalData()->brBarFace);
 	}
 
-	pbrBlack = &afxGlobalData.brBlack;
+	pbrBlack = &(GetGlobalData()->brBlack);
 }
 
 void CMFCVisualManager::OnFillAutoHideButtonBackground(CDC* pDC, CRect rect, CMFCAutoHideButton* /*pButton*/)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 }
 
 void CMFCVisualManager::OnDrawAutoHideButtonBorder(CDC* pDC, CRect rectBounds, CRect rectBorderSize, CMFCAutoHideButton* /*pButton*/)
 {
 	ASSERT_VALID(pDC);
 
-	COLORREF clr = afxGlobalData.clrBarShadow;
+	COLORREF clr = GetGlobalData()->clrBarShadow;
 	COLORREF clrText = pDC->GetTextColor();
 
 	if (rectBorderSize.left > 0)
@@ -2622,34 +2623,34 @@ void CMFCVisualManager::OnDrawAutoHideButtonBorder(CDC* pDC, CRect rectBounds, C
 
 COLORREF CMFCVisualManager::GetAutoHideButtonTextColor(CMFCAutoHideButton* /*pButton*/)
 {
-	return afxGlobalData.clrBarText;
+	return GetGlobalData()->clrBarText;
 }
 
 void CMFCVisualManager::OnDrawOutlookBarSplitter(CDC* pDC, CRect rectSplitter)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rectSplitter, &afxGlobalData.brBarFace);
-	pDC->Draw3dRect(rectSplitter, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+	pDC->FillRect(rectSplitter, &(GetGlobalData()->brBarFace));
+	pDC->Draw3dRect(rectSplitter, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 }
 
 void CMFCVisualManager::OnFillOutlookBarCaption(CDC* pDC, CRect rectCaption, COLORREF& clrText)
 {
 
-	pDC->FillSolidRect(rectCaption, afxGlobalData.clrBarShadow);
-	clrText = afxGlobalData.clrBarHilite;
+	pDC->FillSolidRect(rectCaption, GetGlobalData()->clrBarShadow);
+	clrText = GetGlobalData()->clrBarHilite;
 }
 
 BOOL CMFCVisualManager::OnDrawBrowseButton(CDC* pDC, CRect rect, CMFCEditBrowseCtrl* /*pEdit*/, CMFCVisualManager::AFX_BUTTON_STATE state, COLORREF& /*clrText*/)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(&rect, &afxGlobalData.brBtnFace);
+	pDC->FillRect(&rect, &(GetGlobalData()->brBtnFace));
 
 	CRect rectFrame = rect;
 	rectFrame.InflateRect(0, 1, 1, 1);
 
-	pDC->Draw3dRect(rectFrame, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnDkShadow);
+	pDC->Draw3dRect(rectFrame, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnDkShadow);
 
 	rectFrame.DeflateRect(1, 1);
 	pDC->DrawEdge(rectFrame, state == ButtonsIsPressed ? BDR_SUNKENINNER : BDR_RAISEDINNER, BF_RECT);
@@ -2659,39 +2660,39 @@ BOOL CMFCVisualManager::OnDrawBrowseButton(CDC* pDC, CRect rect, CMFCEditBrowseC
 
 void CMFCVisualManager::GetSmartDockingBaseGuideColors(COLORREF& clrBaseGroupBackground, COLORREF& clrBaseGroupBorder)
 {
-	clrBaseGroupBackground = afxGlobalData.clrBarFace;
-	clrBaseGroupBorder = afxGlobalData.clrBarShadow;
+	clrBaseGroupBackground = GetGlobalData()->clrBarFace;
+	clrBaseGroupBorder = GetGlobalData()->clrBarShadow;
 }
 
 COLORREF CMFCVisualManager::GetSmartDockingHighlightToneColor()
 {
-	return afxGlobalData.clrActiveCaption;
+	return GetGlobalData()->clrActiveCaption;
 }
 
 void CMFCVisualManager::OnFillPopupWindowBackground(CDC* pDC, CRect rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 }
 
 void CMFCVisualManager::OnDrawPopupWindowBorder(CDC* pDC, CRect rect)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarLight, afxGlobalData.clrBarDkShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarLight, GetGlobalData()->clrBarDkShadow);
 	rect.DeflateRect(1, 1);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 }
 
 COLORREF  CMFCVisualManager::OnDrawPopupWindowCaption(CDC* pDC, CRect rectCaption, CMFCDesktopAlertWnd* /*pPopupWnd*/)
 {
 	ASSERT_VALID(pDC);
 
-	CBrush br(afxGlobalData.clrActiveCaption);
+	CBrush br(GetGlobalData()->clrActiveCaption);
 	pDC->FillRect(rectCaption, &br);
 
 	// get the text color
-	return afxGlobalData.clrCaptionText;
+	return GetGlobalData()->clrCaptionText;
 }
 
 void CMFCVisualManager::OnErasePopupWindowButton(CDC* pDC, CRect rect, CMFCDesktopAlertWndButton* pButton)
@@ -2701,7 +2702,7 @@ void CMFCVisualManager::OnErasePopupWindowButton(CDC* pDC, CRect rect, CMFCDeskt
 
 	if (pButton->IsCaptionButton())
 	{
-		pDC->FillRect(rect, &afxGlobalData.brBtnFace);
+		pDC->FillRect(rect, &(GetGlobalData()->brBtnFace));
 		return;
 	}
 
@@ -2716,22 +2717,22 @@ void CMFCVisualManager::OnDrawPopupWindowButtonBorder(CDC* pDC, CRect rect, CMFC
 {
 	if (pButton->IsPressed())
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarDkShadow, afxGlobalData.clrBarLight);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarLight);
 		rect.DeflateRect(1, 1);
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	}
 	else
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarLight, afxGlobalData.clrBarDkShadow);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarLight, GetGlobalData()->clrBarDkShadow);
 		rect.DeflateRect(1, 1);
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 	}
 }
 
 void CMFCVisualManager::DoDrawHeaderSortArrow(CDC* pDC, CRect rectArrow, BOOL bIsUp, BOOL bDlgCtrl)
 {
-	CPen penLight(PS_SOLID, 1, bDlgCtrl ? afxGlobalData.clrBtnHilite : afxGlobalData.clrBarHilite);
-	CPen penDark(PS_SOLID, 1, bDlgCtrl ? afxGlobalData.clrBtnDkShadow : afxGlobalData.clrBarDkShadow);
+	CPen penLight(PS_SOLID, 1, bDlgCtrl ? GetGlobalData()->clrBtnHilite : GetGlobalData()->clrBarHilite);
+	CPen penDark(PS_SOLID, 1, bDlgCtrl ? GetGlobalData()->clrBtnDkShadow : GetGlobalData()->clrBarDkShadow);
 
 	CPen* pPenOld = pDC->SelectObject(&penLight);
 	ASSERT_VALID(pPenOld);
@@ -2762,31 +2763,31 @@ COLORREF CMFCVisualManager::GetPropertyGridGroupColor(CMFCPropertyGridCtrl* pPro
 {
 	ASSERT_VALID(pPropList);
 
-	return pPropList->DrawControlBarColors() ? afxGlobalData.clrBarFace : afxGlobalData.clrBtnFace;
+	return pPropList->DrawControlBarColors() ? GetGlobalData()->clrBarFace : GetGlobalData()->clrBtnFace;
 }
 
 COLORREF CMFCVisualManager::GetPropertyGridGroupTextColor(CMFCPropertyGridCtrl* pPropList)
 {
 	ASSERT_VALID(pPropList);
 
-	return pPropList->DrawControlBarColors() ? afxGlobalData.clrBarDkShadow : afxGlobalData.clrBtnDkShadow;
+	return pPropList->DrawControlBarColors() ? GetGlobalData()->clrBarDkShadow : GetGlobalData()->clrBtnDkShadow;
 }
 
 COLORREF CMFCVisualManager::GetMenuItemTextColor(CMFCToolBarMenuButton* /*pButton*/, BOOL bHighlighted, BOOL bDisabled)
 {
 	if (bHighlighted)
 	{
-		return bDisabled ? afxGlobalData.clrBtnFace : afxGlobalData.clrTextHilite;
+		return bDisabled ? GetGlobalData()->clrBtnFace : GetGlobalData()->clrTextHilite;
 	}
 
-	return bDisabled ? afxGlobalData.clrGrayedText : afxGlobalData.clrWindowText;
+	return bDisabled ? GetGlobalData()->clrGrayedText : GetGlobalData()->clrWindowText;
 }
 
 COLORREF CMFCVisualManager::GetStatusBarPaneTextColor(CMFCStatusBar* /*pStatusBar*/, CMFCStatusBarPaneInfo* pPane)
 {
 	ENSURE(pPane != NULL);
 
-	return(pPane->nStyle & SBPS_DISABLED) ? afxGlobalData.clrGrayedText : pPane->clrText == (COLORREF)-1 ? afxGlobalData.clrBtnText : pPane->clrText;
+	return(pPane->nStyle & SBPS_DISABLED) ? GetGlobalData()->clrGrayedText : pPane->clrText == (COLORREF)-1 ? GetGlobalData()->clrBtnText : pPane->clrText;
 }
 
 void CMFCVisualManager::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* pBar, CRect rect, CRect rectText)
@@ -2826,7 +2827,7 @@ void CMFCVisualManager::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* pBar, CRect
 		bTextCenter = TRUE;
 	}
 
-	CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+	CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 	ENSURE(pOldFont != NULL);
 
 	int nOldMode = pDC->SetBkMode(TRANSPARENT);
@@ -2834,7 +2835,7 @@ void CMFCVisualManager::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* pBar, CRect
 	CString strCaption;
 	pWnd->GetWindowText(strCaption);
 
-	DWORD dwTextStyle = DT_END_ELLIPSIS | DT_SINGLELINE | DT_VCENTER | (bIsRTL ? DT_RTLREADING | DT_RIGHT : 0);
+	DWORD dwTextStyle = DT_END_ELLIPSIS | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | (bIsRTL ? DT_RTLREADING | DT_RIGHT : 0);
 
 	COLORREF clrText = RGB(0, 0, 0);
 
@@ -2914,9 +2915,9 @@ void CMFCVisualManager::OnDrawDefaultRibbonImage(CDC* pDC, CRect rectImage, BOOL
 	CRect rectBullet(rectImage.CenterPoint(), CSize(1, 1));
 	rectBullet.InflateRect(5, 5);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode())
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode())
 	{
-		CBrush br(bIsDisabled ? afxGlobalData.clrGrayedText : RGB(0, 127, 0));
+		CBrush br(bIsDisabled ? GetGlobalData()->clrGrayedText : RGB(0, 127, 0));
 
 		CBrush* pOldBrush = (CBrush*) pDC->SelectObject(&br);
 		CPen* pOldPen = (CPen*) pDC->SelectStockObject(NULL_PEN);
@@ -2930,7 +2931,7 @@ void CMFCVisualManager::OnDrawDefaultRibbonImage(CDC* pDC, CRect rectImage, BOOL
 	{
 		CDrawingManager dm(*pDC);
 
-		dm.DrawEllipse(rectBullet, bIsDisabled ? afxGlobalData.clrGrayedText : RGB(160, 208, 128), bIsDisabled ? afxGlobalData.clrBtnShadow : RGB(71, 117, 44));
+		dm.DrawEllipse(rectBullet, bIsDisabled ? GetGlobalData()->clrGrayedText : RGB(160, 208, 128), bIsDisabled ? GetGlobalData()->clrBtnShadow : RGB(71, 117, 44));
 	}
 }
 
@@ -2947,14 +2948,14 @@ void CMFCVisualManager::OnDrawRibbonApplicationButton(CDC* pDC, CMFCRibbonButton
 
 	CDrawingManager dm(*pDC);
 
-	dm.DrawEllipse(rect, bIsPressed ? afxGlobalData.clrBarLight : afxGlobalData.clrBarFace, bIsHighlighted ? afxGlobalData.clrBarDkShadow : afxGlobalData.clrBarShadow);
+	dm.DrawEllipse(rect, bIsPressed ? GetGlobalData()->clrBarLight : GetGlobalData()->clrBarFace, bIsHighlighted ? GetGlobalData()->clrBarDkShadow : GetGlobalData()->clrBarShadow);
 }
 
 COLORREF CMFCVisualManager::OnDrawRibbonTabsFrame(CDC* pDC, CMFCRibbonBar* /*pWndRibbonBar*/, CRect rectTab)
 {
 	ASSERT_VALID(pDC);
 
-	CPen pen(PS_SOLID, 1, afxGlobalData.clrBarShadow);
+	CPen pen(PS_SOLID, 1, GetGlobalData()->clrBarShadow);
 	CPen* pOldPen = pDC->SelectObject(&pen);
 	ENSURE(pOldPen != NULL);
 
@@ -2976,11 +2977,11 @@ void CMFCVisualManager::OnDrawRibbonCategory(CDC* pDC, CMFCRibbonCategory* pCate
 	rectCategory.right -= nShadowSize;
 	rectCategory.bottom -= nShadowSize;
 
-	pDC->FillRect(rectCategory, &afxGlobalData.brBarFace);
+	pDC->FillRect(rectCategory, &(GetGlobalData()->brBarFace));
 
 	CRect rectActiveTab = pCategory->GetTabRect();
 
-	CPen pen(PS_SOLID, 1, afxGlobalData.clrBarShadow);
+	CPen pen(PS_SOLID, 1, GetGlobalData()->clrBarShadow);
 	CPen* pOldPen = pDC->SelectObject(&pen);
 	ENSURE(pOldPen != NULL);
 
@@ -3007,7 +3008,7 @@ void CMFCVisualManager::OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScro
 	CRect rect = pScroll->GetRect();
 	rect.bottom--;
 
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 	if (pScroll->IsHighlighted())
 	{
 		CDrawingManager dm(*pDC);
@@ -3015,7 +3016,7 @@ void CMFCVisualManager::OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScro
 	}
 
 	BOOL bIsLeft = pScroll->IsLeftScroll();
-	if (afxGlobalData.m_bIsRTL)
+	if (GetGlobalData()->m_bIsRTL)
 	{
 		bIsLeft = !bIsLeft;
 	}
@@ -3024,7 +3025,7 @@ void CMFCVisualManager::OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScro
 		bIsLeft ? CMenuImages::IdArrowLeftLarge : CMenuImages::IdArrowRightLarge, 
 		rect);
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 }
 
 COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTab, BOOL bIsActive)
@@ -3042,7 +3043,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 	const BOOL bIsFocused	= pTab->IsFocused() && (pBar->GetHideFlags() & AFX_RIBBONBAR_HIDE_ELEMENTS);
 	const BOOL bIsHighlighted = (pTab->IsHighlighted() || bIsFocused) && !pTab->IsDroppedDown();
 
-	CPen pen(PS_SOLID, 1, afxGlobalData.clrBarShadow);
+	CPen pen(PS_SOLID, 1, GetGlobalData()->clrBarShadow);
 	CPen* pOldPen = pDC->SelectObject(&pen);
 	ENSURE(pOldPen != NULL);
 
@@ -3056,7 +3057,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 	{
 		const int nPercent = max(10, 100 - nTruncateRatio / 2);
 
-		COLORREF color = CDrawingManager::PixelAlpha(afxGlobalData.clrBarFace, nPercent);
+		COLORREF color = CDrawingManager::PixelAlpha(GetGlobalData()->clrBarFace, nPercent);
 
 		CPen penColor(PS_SOLID, 1, color);
 		pDC->SelectObject(&penColor);
@@ -3068,7 +3069,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 	if (!bIsActive && !bIsHighlighted)
 	{
 		pDC->SelectObject(pOldPen);
-		return afxGlobalData.clrBarText;
+		return GetGlobalData()->clrBarText;
 	}
 
 	rectTab.right -= 2;
@@ -3092,7 +3093,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 	{
 		pDC->SelectClipRgn(&rgnClip);
 
-		COLORREF clrFill = pTab->IsSelected() ? afxGlobalData.clrBarHilite : RibbonCategoryColorToRGB(pTab->GetParentCategory()->GetTabColor());
+		COLORREF clrFill = pTab->IsSelected() ? GetGlobalData()->clrBarHilite : RibbonCategoryColorToRGB(pTab->GetParentCategory()->GetTabColor());
 
 		if (clrFill != (COLORREF)-1)
 		{
@@ -3101,7 +3102,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 		}
 		else
 		{
-			pDC->FillRect(rectTab, bIsHighlighted ? &afxGlobalData.brWindow : &afxGlobalData.brBarFace);
+			pDC->FillRect(rectTab, bIsHighlighted ? &(GetGlobalData()->brWindow) : &(GetGlobalData()->brBarFace));
 		}
 
 		pDC->SelectClipRgn(NULL);
@@ -3110,7 +3111,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryTab(CDC* pDC, CMFCRibbonTab* pTa
 	pDC->Polyline(pts, AFX_POINTS_NUM);
 	pDC->SelectObject(pOldPen);
 
-	return afxGlobalData.clrBarText;
+	return GetGlobalData()->clrBarText;
 }
 
 COLORREF CMFCVisualManager::OnDrawRibbonPanel(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectPanel, CRect /*rectCaption*/)
@@ -3118,12 +3119,12 @@ COLORREF CMFCVisualManager::OnDrawRibbonPanel(CDC* pDC, CMFCRibbonPanel* pPanel,
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pPanel);
 
-	COLORREF clrText = afxGlobalData.clrBarText;
+	COLORREF clrText = GetGlobalData()->clrBarText;
 
 	if (pPanel->IsCollapsed() && pPanel->GetDefaultButton().IsFocused())
 	{
-		pDC->FillRect(rectPanel, &afxGlobalData.brHilite);
-		clrText = afxGlobalData.clrTextHilite;
+		pDC->FillRect(rectPanel, &(GetGlobalData()->brHilite));
+		clrText = GetGlobalData()->clrTextHilite;
 	}
 	else if (pPanel->IsHighlighted())
 	{
@@ -3131,9 +3132,9 @@ COLORREF CMFCVisualManager::OnDrawRibbonPanel(CDC* pDC, CMFCRibbonPanel* pPanel,
 		dm.HighlightRect(rectPanel);
 	}
 
-	pDC->Draw3dRect(rectPanel, afxGlobalData.clrBarHilite, afxGlobalData.clrBarHilite);
+	pDC->Draw3dRect(rectPanel, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarHilite);
 	rectPanel.OffsetRect(-1, -1);
-	pDC->Draw3dRect(rectPanel, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rectPanel, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 
 	return clrText;
 }
@@ -3143,29 +3144,26 @@ void CMFCVisualManager::OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPan
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pPanel);
 
-	COLORREF clrTextOld = pDC->SetTextColor(pPanel->IsHighlighted() ? afxGlobalData.clrCaptionText : afxGlobalData.clrInactiveCaptionText);
+	COLORREF clrTextOld = pDC->SetTextColor(pPanel->IsHighlighted() ? GetGlobalData()->clrCaptionText : GetGlobalData()->clrInactiveCaptionText);
 
 	rectCaption.DeflateRect(1, 1);
 	rectCaption.right -= 2;
 
-	CBrush br(pPanel->IsHighlighted() ? afxGlobalData.clrActiveCaption : afxGlobalData.clrInactiveCaption);
+	CBrush br(pPanel->IsHighlighted() ? GetGlobalData()->clrActiveCaption : GetGlobalData()->clrInactiveCaption);
 	pDC->FillRect(rectCaption, &br);
 
 	CString str = pPanel->GetName();
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	if (pPanel->GetLaunchButton().GetID() > 0)
 	{
 		rectCaption.right = pPanel->GetLaunchButton().GetRect().left;
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	pDC->DrawText( str, rectCaption, DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
 
 	pDC->SetTextColor(clrTextOld);
 }
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 void CMFCVisualManager::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel)
 {
 	ASSERT_VALID(pDC);
@@ -3198,7 +3196,6 @@ void CMFCVisualManager::OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButto
 
 	OnDrawRibbonButtonBorder(pDC, pButton);
 }
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 void CMFCVisualManager::OnDrawRibbonDefaultPaneButton(CDC* pDC, CMFCRibbonButton* pButton)
 {
@@ -3247,8 +3244,8 @@ void CMFCVisualManager::OnDrawRibbonDefaultPaneButtonIndicator(CDC* pDC, CMFCRib
 	rect.left = rect.right - rect.Height();
 	rect.DeflateRect(1, 1);
 
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 
 	CRect rectWhite = rect;
 	rectWhite.OffsetRect(0, 1);
@@ -3264,7 +3261,7 @@ COLORREF CMFCVisualManager::OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButt
 
 	if (pButton->IsKindOf(RUNTIME_CLASS(CMFCRibbonEdit)))
 	{
-		COLORREF clrBorder = afxGlobalData.clrBarShadow;
+		COLORREF clrBorder = GetGlobalData()->clrBarShadow;
 		CRect rectCommand = pButton->GetCommandRect();
 
 		CRect rect = pButton->GetRect();
@@ -3273,13 +3270,13 @@ COLORREF CMFCVisualManager::OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButt
 		if (CMFCToolBarImages::m_bIsDrawOnGlass)
 		{
 			CDrawingManager dm(*pDC);
-			dm.DrawRect(rect, afxGlobalData.clrWindow, clrBorder);
+			dm.DrawRect(rect, GetGlobalData()->clrWindow, clrBorder);
 		}
 		else
 		{
 			if (pButton->IsDroppedDown() || pButton->IsHighlighted())
 			{
-				pDC->FillRect(rectCommand, &afxGlobalData.brWindow);
+				pDC->FillRect(rectCommand, &(GetGlobalData()->brWindow));
 			}
 			else
 			{
@@ -3297,8 +3294,8 @@ COLORREF CMFCVisualManager::OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButt
 	{
 		if (pButton->IsHighlighted())
 		{
-			pDC->FillRect(pButton->GetRect(), &afxGlobalData.brHilite);
-			return afxGlobalData.clrTextHilite;
+			pDC->FillRect(pButton->GetRect(), &(GetGlobalData()->brHilite));
+			return GetGlobalData()->clrTextHilite;
 		}
 	}
 	else
@@ -3308,7 +3305,7 @@ COLORREF CMFCVisualManager::OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButt
 			if (CMFCToolBarImages::m_bIsDrawOnGlass)
 			{
 				CDrawingManager dm(*pDC);
-				dm.DrawRect(pButton->GetRect(), afxGlobalData.clrWindow, (COLORREF)-1);
+				dm.DrawRect(pButton->GetRect(), GetGlobalData()->clrWindow, (COLORREF)-1);
 			}
 			else
 			{
@@ -3340,11 +3337,11 @@ void CMFCVisualManager::OnFillRibbonEdit( CDC* pDC, CMFCRibbonRichEditCtrl* /*pE
 		if (CMFCToolBarImages::m_bIsDrawOnGlass)
 		{
 			CDrawingManager dm(*pDC);
-			dm.DrawRect(rect, afxGlobalData.clrWindow, (COLORREF)-1);
+			dm.DrawRect(rect, GetGlobalData()->clrWindow, (COLORREF)-1);
 		}
 		else
 		{
-			pDC->FillRect(rect, &afxGlobalData.brWindow);
+			pDC->FillRect(rect, &(GetGlobalData()->brWindow));
 		}
 	}
 	else
@@ -3353,11 +3350,11 @@ void CMFCVisualManager::OnFillRibbonEdit( CDC* pDC, CMFCRibbonRichEditCtrl* /*pE
 
 		if (CMFCToolBarImages::m_bIsDrawOnGlass)
 		{
-			dm.DrawRect(rect, afxGlobalData.clrBarFace, (COLORREF)-1);
+			dm.DrawRect(rect, GetGlobalData()->clrBarFace, (COLORREF)-1);
 		}
 		else
 		{
-			pDC->FillRect(rect, &afxGlobalData.brBarFace);
+			pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 			dm.HighlightRect(rect);
 		}
 	}
@@ -3385,17 +3382,17 @@ void CMFCVisualManager::OnDrawRibbonButtonBorder(CDC* pDC, CMFCRibbonButton* pBu
 		if (CMFCToolBarImages::m_bIsDrawOnGlass)
 		{
 			CDrawingManager dm(*pDC);
-			dm.DrawRect(rect, (COLORREF)-1, afxGlobalData.clrBarShadow);
+			dm.DrawRect(rect, (COLORREF)-1, GetGlobalData()->clrBarShadow);
 		}
 		else
 		{
 			if (pButton->IsPressed() || pButton->IsChecked() || pButton->IsDroppedDown())
 			{
-				pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+				pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 			}
 			else
 			{
-				pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+				pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 			}
 		}
 
@@ -3409,16 +3406,16 @@ void CMFCVisualManager::OnDrawRibbonButtonBorder(CDC* pDC, CMFCRibbonButton* pBu
 
 				if (pButton->IsMenuOnBottom())
 				{
-					dm.DrawLine(rectMenu.left, rectMenu.top, rectMenu.right, rectMenu.top, afxGlobalData.clrBarShadow);
+					dm.DrawLine(rectMenu.left, rectMenu.top, rectMenu.right, rectMenu.top, GetGlobalData()->clrBarShadow);
 				}
 				else
 				{
-					dm.DrawLine(rectMenu.left, rectMenu.top, rectMenu.left, rectMenu.bottom, afxGlobalData.clrBarShadow);
+					dm.DrawLine(rectMenu.left, rectMenu.top, rectMenu.left, rectMenu.bottom, GetGlobalData()->clrBarShadow);
 				}
 			}
 			else
 			{
-				CPen* pOldPen = pDC->SelectObject(&afxGlobalData.penBarShadow);
+				CPen* pOldPen = pDC->SelectObject(&(GetGlobalData()->penBarShadow));
 				ENSURE(pOldPen != NULL);
 
 				if (pButton->IsMenuOnBottom())
@@ -3442,36 +3439,36 @@ void CMFCVisualManager::OnDrawRibbonMenuCheckFrame(CDC* pDC, CMFCRibbonButton* /
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rect, &afxGlobalData.brBtnFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBtnFace));
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnHilite);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnHilite);
 }
 
 void CMFCVisualManager::OnDrawRibbonMainPanelFrame(CDC* pDC, CMFCRibbonMainPanel* /*pPanel*/, CRect rect)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 	rect.InflateRect(1, 1);
-	pDC->Draw3dRect(rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarHilite);
+	pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarHilite);
 }
 
 void CMFCVisualManager::OnFillRibbonMenuFrame(CDC* pDC, CMFCRibbonMainPanel* /*pPanel*/, CRect rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, &afxGlobalData.brWindow);
+	pDC->FillRect(rect, &(GetGlobalData()->brWindow));
 }
 
 void CMFCVisualManager::OnDrawRibbonRecentFilesFrame(CDC* pDC, CMFCRibbonMainPanel* /*pPanel*/, CRect rect)
 {
 	ASSERT_VALID(pDC);
 
-	pDC->FillRect(rect, &afxGlobalData.brBtnFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBtnFace));
 
 	CRect rectSeparator = rect;
 	rectSeparator.right = rectSeparator.left + 2;
 
-	pDC->Draw3dRect(rectSeparator, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnHilite);
+	pDC->Draw3dRect(rectSeparator, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnHilite);
 }
 
 void CMFCVisualManager::OnDrawRibbonLabel(CDC* /*pDC*/, CMFCRibbonLabel* /*pLabel*/, CRect /*rect*/)
@@ -3490,12 +3487,12 @@ void CMFCVisualManager::OnDrawRibbonGalleryButton(CDC* pDC, CMFCRibbonGalleryIco
 void CMFCVisualManager::OnDrawRibbonGalleryBorder(CDC* pDC, CMFCRibbonGallery* /*pButton*/, CRect rectBorder)
 {
 	ASSERT_VALID(pDC);
-	pDC->Draw3dRect(rectBorder, afxGlobalData.clrBarShadow, afxGlobalData.clrBarShadow);
+	pDC->Draw3dRect(rectBorder, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarShadow);
 }
 
 COLORREF CMFCVisualManager::RibbonCategoryColorToRGB(AFX_RibbonCategoryColor color)
 {
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode())
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode())
 	{
 		switch(color)
 		{
@@ -3565,7 +3562,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonCategoryCaption(CDC* pDC, CMFCRibbonCont
 		pDC->FillRect(rect, &br);
 	}
 
-	return afxGlobalData.clrBarText;
+	return GetGlobalData()->clrBarText;
 }
 
 COLORREF CMFCVisualManager::OnDrawRibbonStatusBarPane(CDC* pDC, CMFCRibbonStatusBar* /*pBar*/, CMFCRibbonStatusBarPane* pPane)
@@ -3580,7 +3577,7 @@ COLORREF CMFCVisualManager::OnDrawRibbonStatusBarPane(CDC* pDC, CMFCRibbonStatus
 		CRect rectButton = rect;
 		rectButton.DeflateRect(1, 1);
 
-		pDC->Draw3dRect(rectButton, pPane->IsPressed() ? afxGlobalData.clrBarShadow : afxGlobalData.clrBarHilite, pPane->IsPressed() ? afxGlobalData.clrBarHilite : afxGlobalData.clrBarShadow);
+		pDC->Draw3dRect(rectButton, pPane->IsPressed() ? GetGlobalData()->clrBarShadow : GetGlobalData()->clrBarHilite, pPane->IsPressed() ? GetGlobalData()->clrBarHilite : GetGlobalData()->clrBarShadow);
 	}
 
 	return(COLORREF)-1;
@@ -3588,9 +3585,9 @@ COLORREF CMFCVisualManager::OnDrawRibbonStatusBarPane(CDC* pDC, CMFCRibbonStatus
 
 void CMFCVisualManager::GetRibbonSliderColors(CMFCRibbonSlider* /*pSlider*/, BOOL bIsHighlighted, BOOL bIsPressed, BOOL bIsDisabled, COLORREF& clrLine, COLORREF& clrFill)
 {
-	clrLine = bIsDisabled ? afxGlobalData.clrBarShadow : afxGlobalData.clrBarDkShadow;
-	clrFill = bIsPressed && bIsHighlighted ? afxGlobalData.clrBarShadow :
-	bIsHighlighted ? afxGlobalData.clrBarHilite : afxGlobalData.clrBarFace;
+	clrLine = bIsDisabled ? GetGlobalData()->clrBarShadow : GetGlobalData()->clrBarDkShadow;
+	clrFill = bIsPressed && bIsHighlighted ? GetGlobalData()->clrBarShadow :
+	bIsHighlighted ? GetGlobalData()->clrBarHilite : GetGlobalData()->clrBarFace;
 }
 
 void CMFCVisualManager::OnDrawRibbonSliderZoomButton(CDC* pDC, CMFCRibbonSlider* pSlider, CRect rect, BOOL bIsZoomOut, BOOL bIsHighlighted, BOOL bIsPressed, BOOL bIsDisabled)
@@ -3647,11 +3644,11 @@ void CMFCVisualManager::OnDrawRibbonSliderChannel(CDC* pDC, CMFCRibbonSlider* /*
 	if (CMFCToolBarImages::m_bIsDrawOnGlass)
 	{
 		CDrawingManager dm(*pDC);
-		dm.DrawRect(rect, (COLORREF)-1, afxGlobalData.clrBarShadow);
+		dm.DrawRect(rect, (COLORREF)-1, GetGlobalData()->clrBarShadow);
 	}
 	else
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	}
 }
 
@@ -3708,26 +3705,26 @@ void CMFCVisualManager::OnDrawRibbonProgressBar(CDC* pDC, CMFCRibbonProgressBar*
 
 		if (!rectChunk.IsRectEmpty())
 		{
-			dm.DrawRect(rectChunk, afxGlobalData.clrHilite, (COLORREF)-1);
+			dm.DrawRect(rectChunk, GetGlobalData()->clrHilite, (COLORREF)-1);
 		}
 
-		dm.DrawRect(rectProgress, (COLORREF)-1, afxGlobalData.clrBarShadow);
+		dm.DrawRect(rectProgress, (COLORREF)-1, GetGlobalData()->clrBarShadow);
 	}
 	else
 	{
 		if (!rectChunk.IsRectEmpty())
 		{
-			pDC->FillRect(rectChunk, &afxGlobalData.brHilite);
+			pDC->FillRect(rectChunk, &(GetGlobalData()->brHilite));
 		}
 
-		pDC->Draw3dRect(rectProgress, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(rectProgress, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	}
 }
 
 void CMFCVisualManager::OnFillRibbonQuickAccessToolBarPopup(CDC* pDC, CMFCRibbonPanelMenuBar* /*pMenuBar*/, CRect rect)
 {
 	ASSERT_VALID(pDC);
-	pDC->FillRect(rect, &afxGlobalData.brBarFace);
+	pDC->FillRect(rect, &(GetGlobalData()->brBarFace));
 }
 
 void CMFCVisualManager::OnDrawRibbonQuickAccessToolBarSeparator(CDC* pDC, CMFCRibbonSeparator* /*pSeparator*/, CRect rect)
@@ -3737,11 +3734,11 @@ void CMFCVisualManager::OnDrawRibbonQuickAccessToolBarSeparator(CDC* pDC, CMFCRi
 	if (CMFCToolBarImages::m_bIsDrawOnGlass)
 	{
 		CDrawingManager dm(*pDC);
-		dm.DrawRect(rect, (COLORREF)-1, afxGlobalData.clrBtnShadow);
+		dm.DrawRect(rect, (COLORREF)-1, GetGlobalData()->clrBtnShadow);
 	}
 	else
 	{
-		pDC->Draw3dRect(rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	}
 }
 
@@ -3750,17 +3747,33 @@ void CMFCVisualManager::OnDrawRibbonKeyTip(CDC* pDC, CMFCRibbonBaseElement* pEle
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pElement);
 
-	::FillRect(pDC->GetSafeHdc(), rect, ::GetSysColorBrush(COLOR_INFOBK));
+	COLORREF clrText = ::GetSysColor (COLOR_INFOTEXT);
+	COLORREF clrBorder = clrText;
+
+	if (m_hThemeToolTip != NULL)
+	{
+		CRect rectFill = rect;
+		rectFill.InflateRect (2, 2);
+
+		DrawThemeBackground(m_hThemeToolTip, pDC->GetSafeHdc(), TTP_STANDARD, 0, &rectFill, 0);
+
+		GetThemeColor(m_hThemeToolTip, TTP_STANDARD, 0, TMT_TEXTCOLOR, &clrText);
+		GetThemeColor(m_hThemeToolTip, TTP_STANDARD, 0, TMT_EDGELIGHTCOLOR, &clrBorder);
+	}
+	else
+	{
+		::FillRect(pDC->GetSafeHdc(), rect, ::GetSysColorBrush(COLOR_INFOBK));
+	}
 
 	str.MakeUpper();
 
-	COLORREF clrTextOld = pDC->SetTextColor( pElement->IsDisabled() ? afxGlobalData.clrGrayedText : ::GetSysColor(COLOR_INFOTEXT));
+	COLORREF clrTextOld = pDC->SetTextColor( pElement->IsDisabled() ? GetGlobalData()->clrGrayedText : clrText);
 
 	pDC->DrawText(str, rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 
 	pDC->SetTextColor(clrTextOld);
 
-	pDC->Draw3dRect(rect, ::GetSysColor(COLOR_INFOTEXT), ::GetSysColor(COLOR_INFOTEXT));
+	pDC->Draw3dRect(rect, clrBorder, clrBorder);
 }
 
 void CMFCVisualManager::OnDrawRibbonCheckBoxOnList(CDC* pDC, CMFCRibbonCheckBox* /*pCheckBox*/, CRect rect, BOOL /*bIsSelected*/, BOOL /*bHighlighted*/)
@@ -3783,17 +3796,17 @@ COLORREF CMFCVisualManager::GetRibbonHyperlinkTextColor(CMFCRibbonLinkCtrl* pHyp
 		return GetToolbarDisabledTextColor();
 	}
 
-	return pHyperLink->IsHighlighted() ? afxGlobalData.clrHotLinkHoveredText : afxGlobalData.clrHotLinkNormalText;
+	return pHyperLink->IsHighlighted() ? GetGlobalData()->clrHotLinkHoveredText : GetGlobalData()->clrHotLinkNormalText;
 }
 
 COLORREF CMFCVisualManager::GetRibbonStatusBarTextColor(CMFCRibbonStatusBar* /*pStatusBar*/)
 {
-	return afxGlobalData.clrBarText;
+	return GetGlobalData()->clrBarText;
 }
 
 COLORREF CMFCVisualManager::GetRibbonEditBackgroundColor(CMFCRibbonRichEditCtrl* /*pEdit*/, BOOL bIsHighlighted, BOOL /*bIsPaneHighlighted*/, BOOL bIsDisabled)
 {
-	return (bIsHighlighted && !bIsDisabled) ? afxGlobalData.clrWindow : afxGlobalData.clrBarFace;
+	return (bIsHighlighted && !bIsDisabled) ? GetGlobalData()->clrWindow : GetGlobalData()->clrBarFace;
 }
 
 void CMFCVisualManager::OnDrawRibbonColorPaletteBox(CDC* pDC, CMFCRibbonColorButton* /*pColorButton*/, CMFCRibbonGalleryIcon* /*pIcon*/,
@@ -3816,7 +3829,7 @@ void CMFCVisualManager::OnDrawRibbonColorPaletteBox(CDC* pDC, CMFCRibbonColorBut
 		pDC->FillRect(rectFill, &br);
 	}
 
-	COLORREF clrBorder = afxGlobalData.clrBtnShadow;
+	COLORREF clrBorder = GetGlobalData()->clrBtnShadow;
 
 	if (bDrawTopEdge && bDrawBottomEdge)
 	{
@@ -3852,17 +3865,17 @@ void CMFCVisualManager::OnDrawRibbonColorPaletteBox(CDC* pDC, CMFCRibbonColorBut
 
 	if (bIsHighlighted)
 	{
-		pDC->Draw3dRect(&rect, afxGlobalData.clrBarHilite, afxGlobalData.clrBarShadow);
+		pDC->Draw3dRect(&rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarShadow);
 	}
 	else if (bIsChecked)
 	{
-		pDC->Draw3dRect(&rect, afxGlobalData.clrBarShadow, afxGlobalData.clrBarHilite);
+		pDC->Draw3dRect(&rect, GetGlobalData()->clrBarShadow, GetGlobalData()->clrBarHilite);
 	}
 }
 
 BOOL CMFCVisualManager::OnSetWindowRegion(CWnd* pWnd, CSize sizeWindow)
 {
-	if (afxGlobalData.DwmIsCompositionEnabled())
+	if (GetGlobalData()->IsDwmCompositionEnabled())
 	{
 		return FALSE;
 	}
@@ -3944,6 +3957,21 @@ BOOL CMFCVisualManager::GetToolTipInfo(CMFCToolTipInfo& params, UINT /*nType*/ /
 	return TRUE;
 }
 
+void CMFCVisualManager::OnFillToolTip (CDC* pDC, CMFCToolTipCtrl* /*pToolTip*/, CRect rect, COLORREF& clrText, COLORREF& clrLine)
+{
+	if (m_hThemeToolTip != NULL)
+	{
+		DrawThemeBackground(m_hThemeToolTip, pDC->GetSafeHdc(), TTP_STANDARD, 0, &rect, 0);
+
+		GetThemeColor(m_hThemeToolTip, TTP_STANDARD, 0, TMT_TEXTCOLOR, &clrText);
+		GetThemeColor(m_hThemeToolTip, TTP_STANDARD, 0, TMT_EDGEDKSHADOWCOLOR, &clrLine);
+	}
+	else
+	{
+		::FillRect(pDC->GetSafeHdc (), rect, ::GetSysColorBrush(COLOR_INFOBK));
+	}
+}
+
 BOOL CMFCVisualManager::DrawTextOnGlass(CDC* pDC, CString strText, CRect rect, DWORD dwFlags, int nGlowSize, COLORREF clrText)
 {
 	ASSERT_VALID(pDC);
@@ -3951,7 +3979,7 @@ BOOL CMFCVisualManager::DrawTextOnGlass(CDC* pDC, CString strText, CRect rect, D
 	COLORREF clrOldText = pDC->GetTextColor();
 	pDC->SetTextColor(RGB(0, 0, 0));
 
-	BOOL bRes = afxGlobalData.DrawTextOnGlass(m_hThemeButton, pDC, 0, 0, strText, rect, dwFlags, nGlowSize, clrText);
+	BOOL bRes = GetGlobalData()->DrawTextOnGlass(m_hThemeButton, pDC, 0, 0, strText, rect, dwFlags, nGlowSize, clrText);
 
 	pDC->SetTextColor(clrOldText);
 
@@ -3966,8 +3994,8 @@ COLORREF CMFCVisualManager::OnDrawPropertySheetListItem(CDC* pDC, CMFCPropertySh
 
 	if (bIsSelected)
 	{
-		pDC->FillRect(rect, &afxGlobalData.brHilite);
-		clrText = afxGlobalData.clrTextHilite;
+		pDC->FillRect(rect, &(GetGlobalData()->brHilite));
+		clrText = GetGlobalData()->clrTextHilite;
 	}
 
 	if (bIsHighlihted)
@@ -3998,176 +4026,137 @@ CMFCBaseVisualManager::CMFCBaseVisualManager()
 	m_hThemeTaskBand = NULL;
 	m_hThemeTaskBar = NULL;
 	m_hThemeSpin = NULL;
+	m_hThemeToolTip = NULL;
 	m_hThemeTab = NULL;
 	m_hThemeTrack = NULL;
 	m_hThemeMenu = NULL;
 
-	m_hinstUXDLL = ::AfxCtxLoadLibraryW(L"UxTheme.dll");
-
-	if (m_hinstUXDLL != NULL)
-	{
-		m_pfOpenThemeData = (OPENTHEMEDATA)::GetProcAddress(m_hinstUXDLL, "OpenThemeData");
-		m_pfCloseThemeData = (CLOSETHEMEDATA)::GetProcAddress(m_hinstUXDLL, "CloseThemeData");
-		m_pfDrawThemeBackground = (DRAWTHEMEBACKGROUND)::GetProcAddress(m_hinstUXDLL, "DrawThemeBackground");
-		m_pfGetThemeColor = (GETTHEMECOLOR)::GetProcAddress(m_hinstUXDLL, "GetThemeColor");
-		m_pfGetThemeSysColor = (GETTHEMESYSCOLOR)::GetProcAddress(m_hinstUXDLL, "GetThemeSysColor");
-		m_pfGetCurrentThemeName = (GETCURRENTTHEMENAME)::GetProcAddress(m_hinstUXDLL, "GetCurrentThemeName");
-		m_pfGetWindowTheme = (GETWINDOWTHEME)::GetProcAddress(m_hinstUXDLL, "GetWindowTheme");
-
-		UpdateSystemColors();
-	}
-	else
-	{
-		m_pfOpenThemeData = NULL;
-		m_pfCloseThemeData = NULL;
-		m_pfDrawThemeBackground = NULL;
-		m_pfGetThemeColor = NULL;
-		m_pfGetThemeSysColor = NULL;
-		m_pfGetCurrentThemeName = NULL;
-		m_pfGetWindowTheme = NULL;
-	}
+	UpdateSystemColors();
 }
 
 CMFCBaseVisualManager::~CMFCBaseVisualManager()
 {
-	if (m_hinstUXDLL != NULL)
-	{
-		CleanUpThemes();
-		::FreeLibrary(m_hinstUXDLL);
-	}
+	CleanUpThemes();
 }
 
 void CMFCBaseVisualManager::UpdateSystemColors()
 {
-	if (m_hinstUXDLL != NULL)
-	{
-		CleanUpThemes();
-
-		if (m_pfOpenThemeData == NULL ||
-			m_pfCloseThemeData == NULL ||
-			m_pfDrawThemeBackground == NULL)
-		{
-			ASSERT(FALSE);
-		}
-		else
-		{
-			m_hThemeWindow = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"WINDOW");
-			m_hThemeToolBar = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TOOLBAR");
-			m_hThemeButton = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"BUTTON");
-			m_hThemeStatusBar = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"STATUS");
-			m_hThemeRebar = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"REBAR");
-			m_hThemeComboBox = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"COMBOBOX");
-			m_hThemeProgress = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"PROGRESS");
-			m_hThemeHeader = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"HEADER");
-			m_hThemeScrollBar = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"SCROLLBAR");
-			m_hThemeExplorerBar = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"EXPLORERBAR");
-			m_hThemeTree = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TREEVIEW");
-			m_hThemeStartPanel = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"STARTPANEL");
-			m_hThemeTaskBand = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TASKBAND");
-			m_hThemeTaskBar = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TASKBAR");
-			m_hThemeSpin = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"SPIN");
-			m_hThemeTab = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TAB");
-			m_hThemeTrack = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd(), L"TRACKBAR");
-			m_hThemeMenu = (*m_pfOpenThemeData)(AfxGetMainWnd()->GetSafeHwnd (), L"MENU");
-		}
-	}
+	m_hThemeWindow      = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"WINDOW");
+	m_hThemeToolBar     = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"TOOLBAR");
+	m_hThemeButton      = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"BUTTON");
+	m_hThemeStatusBar   = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"STATUS");
+	m_hThemeRebar       = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"REBAR");
+	m_hThemeComboBox    = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"COMBOBOX");
+	m_hThemeProgress    = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"PROGRESS");
+	m_hThemeHeader      = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"HEADER");
+	m_hThemeScrollBar   = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"SCROLLBAR");
+	m_hThemeExplorerBar = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"EXPLORERBAR");
+	m_hThemeTree        = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"TREEVIEW");
+	m_hThemeStartPanel  = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"STARTPANEL");
+	m_hThemeTaskBand    = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"TASKBAND");
+	m_hThemeTaskBar     = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"TASKBAR");
+	m_hThemeSpin        = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"SPIN");
+	m_hThemeTab         = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"TAB");
+	m_hThemeToolTip     = OpenThemeData(AfxGetMainWnd ()->GetSafeHwnd(), L"TOOLTIP");
+	m_hThemeTrack       = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd(), L"TRACKBAR");
+	m_hThemeMenu        = OpenThemeData(AfxGetMainWnd()->GetSafeHwnd (), L"MENU");
 }
 
 void CMFCBaseVisualManager::CleanUpThemes()
 {
-	if (m_pfCloseThemeData == NULL)
-	{
-		return;
-	}
-
 	if (m_hThemeWindow != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeWindow);
+		CloseThemeData(m_hThemeWindow);
 	}
 
 	if (m_hThemeToolBar != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeToolBar);
+		CloseThemeData(m_hThemeToolBar);
 	}
 
 	if (m_hThemeRebar != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeRebar);
+		CloseThemeData(m_hThemeRebar);
 	}
 
 	if (m_hThemeStatusBar != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeStatusBar);
+		CloseThemeData(m_hThemeStatusBar);
 	}
 
 	if (m_hThemeButton != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeButton);
+		CloseThemeData(m_hThemeButton);
 	}
 
 	if (m_hThemeComboBox != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeComboBox);
+		CloseThemeData(m_hThemeComboBox);
 	}
 
 	if (m_hThemeProgress != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeProgress);
+		CloseThemeData(m_hThemeProgress);
 	}
 
 	if (m_hThemeHeader != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeHeader);
+		CloseThemeData(m_hThemeHeader);
 	}
 
 	if (m_hThemeScrollBar != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeScrollBar);
+		CloseThemeData(m_hThemeScrollBar);
 	}
 
 	if (m_hThemeExplorerBar != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeExplorerBar);
+		CloseThemeData(m_hThemeExplorerBar);
 	}
 
 	if (m_hThemeTree != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeTree);
+		CloseThemeData(m_hThemeTree);
 	}
 
 	if (m_hThemeStartPanel != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeStartPanel);
+		CloseThemeData(m_hThemeStartPanel);
 	}
 
 	if (m_hThemeTaskBand != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeTaskBand);
+		CloseThemeData(m_hThemeTaskBand);
 	}
 
 	if (m_hThemeTaskBar != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeTaskBar);
+		CloseThemeData(m_hThemeTaskBar);
 	}
 
 	if (m_hThemeSpin != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeSpin);
+		CloseThemeData(m_hThemeSpin);
+	}
+
+	if (m_hThemeToolTip != NULL)
+	{
+		CloseThemeData(m_hThemeToolTip);
 	}
 
 	if (m_hThemeTab != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeTab);
+		CloseThemeData(m_hThemeTab);
 	}
 
 	if (m_hThemeTrack != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeTrack);
+		CloseThemeData(m_hThemeTrack);
 	}
 
 	if (m_hThemeMenu != NULL)
 	{
-		(*m_pfCloseThemeData)(m_hThemeMenu);
+		CloseThemeData(m_hThemeMenu);
 	}
 }
 
@@ -4199,10 +4188,7 @@ BOOL CMFCBaseVisualManager::DrawPushButton(CDC* pDC, CRect rect, CMFCButton* pBu
 
 	pButton->OnDrawParentBackground(pDC, rect);
 
-	if (m_pfDrawThemeBackground)
-	{
-		(*m_pfDrawThemeBackground)(m_hThemeButton, pDC->GetSafeHdc(), BP_PUSHBUTTON, nState, &rect, 0);
-	}
+	DrawThemeBackground(m_hThemeButton, pDC->GetSafeHdc(), BP_PUSHBUTTON, nState, &rect, 0);
 
 	return TRUE;
 }
@@ -4217,10 +4203,7 @@ BOOL CMFCBaseVisualManager::DrawStatusBarProgress(CDC* pDC, CMFCStatusBar* /*pSt
 
 	ASSERT_VALID(pDC);
 
-	if (m_pfDrawThemeBackground != NULL)
-	{
-		(*m_pfDrawThemeBackground)(m_hThemeProgress, pDC->GetSafeHdc(), PP_BAR, 0, &rectProgress, 0);
-	}
+	DrawThemeBackground(m_hThemeProgress, pDC->GetSafeHdc(), PP_BAR, 0, &rectProgress, 0);
 
 	if (nProgressTotal == 0)
 	{
@@ -4232,17 +4215,14 @@ BOOL CMFCBaseVisualManager::DrawStatusBarProgress(CDC* pDC, CMFCStatusBar* /*pSt
 
 	rectComplete.right = rectComplete.left + nProgressCurr * rectComplete.Width() / nProgressTotal;
 
-	if (m_pfDrawThemeBackground != NULL)
-	{
-		(*m_pfDrawThemeBackground)(m_hThemeProgress, pDC->GetSafeHdc(), PP_CHUNK, 0, &rectComplete, 0);
-	}
+	DrawThemeBackground(m_hThemeProgress, pDC->GetSafeHdc(), PP_CHUNK, 0, &rectComplete, 0);
 
 	if (bProgressText)
 	{
 		CString strText;
 		strText.Format(_T("%d%%"), nProgressCurr * 100 / nProgressTotal);
 
-		COLORREF clrText = pDC->SetTextColor(afxGlobalData.clrBtnText);
+		COLORREF clrText = pDC->SetTextColor(GetGlobalData()->clrBtnText);
 		pDC->DrawText(strText, rectProgress, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 		pDC->SetTextColor(clrText);
 	}
@@ -4258,10 +4238,8 @@ BOOL CMFCBaseVisualManager::DrawComboDropButton(CDC* pDC, CRect rect, BOOL bDisa
 	}
 
 	int nState = bDisabled ? CBXS_DISABLED : bIsDropped ? CBXS_PRESSED : bIsHighlighted ? CBXS_HOT : CBXS_NORMAL;
-	if (m_pfDrawThemeBackground != NULL)
-	{
-		(*m_pfDrawThemeBackground)(m_hThemeComboBox, pDC->GetSafeHdc(), CP_DROPDOWNBUTTON, nState, &rect, 0);
-	}
+	DrawThemeBackground(m_hThemeComboBox, pDC->GetSafeHdc(), CP_DROPDOWNBUTTON, nState, &rect, 0);
+
 	return TRUE;
 }
 
@@ -4277,7 +4255,7 @@ BOOL CMFCBaseVisualManager::DrawComboBorder(CDC* pDC, CRect rect, BOOL /*bDisabl
 	if (bIsHighlighted || bIsDropped)
 	{
 		rect.DeflateRect(1, 1);
-		pDC->Draw3dRect(&rect,  afxGlobalData.clrHilite, afxGlobalData.clrHilite);
+		pDC->Draw3dRect(&rect,  GetGlobalData()->clrHilite, GetGlobalData()->clrHilite);
 	}
 
 	return TRUE;
@@ -4288,9 +4266,9 @@ void CMFCBaseVisualManager::FillReBarPane(CDC* pDC, CBasePane* pBar, CRect rectC
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pBar);
 
-	if (m_pfDrawThemeBackground == NULL || m_hThemeRebar == NULL)
+	if (m_hThemeRebar == NULL)
 	{
-		pDC->FillRect(rectClient, &afxGlobalData.brBarFace);
+		pDC->FillRect(rectClient, &(GetGlobalData()->brBarFace));
 		return;
 	}
 
@@ -4329,10 +4307,7 @@ void CMFCBaseVisualManager::FillReBarPane(CDC* pDC, CBasePane* pBar, CRect rectC
 		}
 	}
 
-	if (m_pfDrawThemeBackground != NULL)
-	{
-		(*m_pfDrawThemeBackground)(m_hThemeRebar, pDC->GetSafeHdc(), 0, 0, &rectClient, 0);
-	}
+	DrawThemeBackground(m_hThemeRebar, pDC->GetSafeHdc(), 0, 0, &rectClient, 0);
 }
 
 BOOL CMFCBaseVisualManager::DrawCheckBox(CDC *pDC, CRect rect, BOOL bHighlighted, int nState, BOOL bEnabled, BOOL bPressed)
@@ -4362,27 +4337,13 @@ BOOL CMFCBaseVisualManager::DrawCheckBox(CDC *pDC, CRect rect, BOOL bHighlighted
 		nDrawState = nState == 1 ? CBS_CHECKEDHOT : nState == 2 ? CBS_MIXEDHOT : CBS_UNCHECKEDHOT;
 	}
 
-	if (m_pfDrawThemeBackground != NULL)
-	{
-		(*m_pfDrawThemeBackground)(m_hThemeButton, pDC->GetSafeHdc(), BP_CHECKBOX, nDrawState, &rect, 0);
-	}
+	DrawThemeBackground(m_hThemeButton, pDC->GetSafeHdc(), BP_CHECKBOX, nDrawState, &rect, 0);
 
 	return TRUE;
 }
 
 BOOL CMFCBaseVisualManager::DrawRadioButton(CDC *pDC, CRect rect, BOOL bHighlighted, BOOL bChecked, BOOL bEnabled, BOOL bPressed)
 {
-/*	#define RBS_UNCHECKEDNORMAL 1
-	#define RBS_UNCHECKEDHOT 2
-	#define RBS_UNCHECKEDPRESSED 3
-	#define RBS_UNCHECKEDDISABLED 4
-	#define RBS_CHECKEDNORMAL 5
-	#define RBS_CHECKEDHOT 6
-	#define RBS_CHECKEDPRESSED 7
-	#define RBS_CHECKEDDISABLED 8
-
-	#define BP_RADIOBUTTON 2	*/
-
 	if (m_hThemeButton == NULL)
 	{
 		return FALSE;
@@ -4405,10 +4366,7 @@ BOOL CMFCBaseVisualManager::DrawRadioButton(CDC *pDC, CRect rect, BOOL bHighligh
 		nDrawState = bChecked ? RBS_CHECKEDHOT : RBS_UNCHECKEDHOT;
 	}
 
-	if (m_pfDrawThemeBackground != NULL)
-	{
-		(*m_pfDrawThemeBackground)(m_hThemeButton, pDC->GetSafeHdc(), BP_RADIOBUTTON, nDrawState, &rect, 0);
-	}
+	DrawThemeBackground(m_hThemeButton, pDC->GetSafeHdc(), BP_RADIOBUTTON, nDrawState, &rect, 0);
 
 	return TRUE;
 }
@@ -4418,7 +4376,7 @@ CMFCBaseVisualManager::WinXpTheme CMFCBaseVisualManager::GetStandardWindowsTheme
 	WCHAR szName [256] = L"";
 	WCHAR szColor [256] = L"";
 
-	if (m_pfGetCurrentThemeName == NULL || (*m_pfGetCurrentThemeName)(szName, 255, szColor, 255, NULL, 0) != S_OK)
+	if (GetCurrentThemeName(szName, 255, szColor, 255, NULL, 0) != S_OK)
 	{
 		return WinXpTheme_None;
 	}
@@ -4438,10 +4396,10 @@ CMFCBaseVisualManager::WinXpTheme CMFCBaseVisualManager::GetStandardWindowsTheme
 	}
 
 	// Check for 3-d party visual managers:
-	if (m_pfGetThemeColor != NULL && m_hThemeButton != NULL)
+	if (m_hThemeButton != NULL)
 	{
 		COLORREF clrTest = 0;
-		if ((*m_pfGetThemeColor)(m_hThemeButton, 1, 0, 3823, &clrTest) != S_OK || clrTest == 1)
+		if (GetThemeColor(m_hThemeButton, 1, 0, 3823, &clrTest) != S_OK || clrTest == 1)
 		{
 			return WinXpTheme_NonStandard;
 		}

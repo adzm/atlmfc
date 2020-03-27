@@ -15,6 +15,8 @@
 #include "afxglobals.h"
 #include "afxcolorpickerctrl.h"
 #include "afxdrawmanager.h"
+#include "afxribbonres.h"
+#include "afxstandardcolorspropertypage.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -88,7 +90,7 @@ class CCellObj : public CObject
 
 		m_CellColor = RGB(lRed, lGreen, lBlue);
 
-		if (afxGlobalData.m_nBitsPerPixel == 8) // 256 colors
+		if (GetGlobalData()->m_nBitsPerPixel == 8) // 256 colors
 		{
 			ASSERT_VALID(pPalette);
 
@@ -153,11 +155,11 @@ class CCellObj : public CObject
 		pDC->SelectObject(pOldBrush);
 	}
 
-	void DrawSelected(CDC* pDC)
+	void DrawSelected(CDC* pDC, BOOL bIsFocused)
 	{
 		ASSERT_VALID(pDC);
 
-		CBrush* pBrWhite = CBrush::FromHandle((HBRUSH) ::GetStockObject(WHITE_BRUSH));
+		CBrush* pBrWhite = CBrush::FromHandle((HBRUSH) ::GetStockObject(bIsFocused ? WHITE_BRUSH : GRAY_BRUSH));
 		ASSERT_VALID(pBrWhite);
 
 		CBrush* pBrBlack = CBrush::FromHandle((HBRUSH) ::GetStockObject(BLACK_BRUSH));
@@ -219,7 +221,6 @@ CMFCColorPickerCtrl::~CMFCColorPickerCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCColorPickerCtrl, CButton)
-	//{{AFX_MSG_MAP(CMFCColorPickerCtrl)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONUP()
@@ -233,7 +234,6 @@ BEGIN_MESSAGE_MAP(CMFCColorPickerCtrl, CButton)
 	ON_WM_ERASEBKGND()
 	ON_WM_CANCELMODE()
 	ON_WM_LBUTTONDBLCLK()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 //----------------------------------------------------------------------
@@ -420,7 +420,7 @@ void CMFCColorPickerCtrl::DrawHex(CDC* pDC)
 {
 	ASSERT_VALID(pDC);
 
-	afxGlobalData.DrawParentBackground(this, pDC);
+	GetGlobalData()->DrawParentBackground(this, pDC);
 
 	CCellObj* pSelCell = NULL;
 
@@ -439,7 +439,7 @@ void CMFCColorPickerCtrl::DrawHex(CDC* pDC)
 
 	if (pSelCell != NULL)
 	{
-		pSelCell->DrawSelected(pDC);
+		pSelCell->DrawSelected(pDC, (GetFocus() == this));
 	}
 }
 
@@ -458,7 +458,7 @@ void CMFCColorPickerCtrl::DrawPicker(CDC* pDC)
 		{
 			CBitmap* pOldBmp = dcMem.SelectObject(&m_bmpPicker);
 
-			int nStep = (afxGlobalData.m_nBitsPerPixel > 8) ? 1 : 4;
+			int nStep = (GetGlobalData()->m_nBitsPerPixel > 8) ? 1 : 4;
 
 			for (int i= 0;i<szColorPicker.cy;i += nStep)
 			{
@@ -467,7 +467,7 @@ void CMFCColorPickerCtrl::DrawPicker(CDC* pDC)
 					CPoint pt(j, szColorPicker.cy - i - nStep);
 					COLORREF color = CDrawingManager::HLStoRGB_ONE((double)j/(double)szColorPicker.cx, AFX_DEFAULT_LUMINANCE, (double)i/(double)szColorPicker.cy);
 
-					if (afxGlobalData.m_nBitsPerPixel > 8) // High/True color
+					if (GetGlobalData()->m_nBitsPerPixel > 8) // High/True color
 					{
 						// Draw exact color:
 						dcMem.SetPixelV(pt, color);
@@ -529,9 +529,9 @@ void CMFCColorPickerCtrl::DrawCursor(CDC* pDC, const CRect& rect)
 		pt[2].x = rect.right - 1;
 		pt[2].y = rect.bottom - 1;
 
-		CPen pen(PS_SOLID, 1, afxGlobalData.clrBtnText);
+		CPen pen(PS_SOLID, 1, GetGlobalData()->clrBtnText);
 
-		CBrush br(GetFocus() == this ? afxGlobalData.clrBtnText : afxGlobalData.clrBtnShadow);
+		CBrush br(GetFocus() == this ? GetGlobalData()->clrBtnText : GetGlobalData()->clrBtnShadow);
 
 		CBrush* poldBrush = pDC->SelectObject(&br);
 		CPen* poldPen = pDC->SelectObject(&pen);
@@ -777,9 +777,109 @@ void CMFCColorPickerCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	case HEX:
 	case HEX_GREYSCALE:
+		{
+			for (int i = 0; i < m_arCells.GetSize(); i++)
+			{
+				CCellObj* pCell = (CCellObj*)m_arCells[i];
+				ASSERT_VALID (pCell);
+
+				if (pCell->m_CellColor == m_colorNew)
+				{
+					CCellObj* pNewCell = NULL;
+
+					if (m_COLORTYPE == HEX)
+					{
+						int x = pCell->m_x;
+						int y = pCell->m_y;
+
+						switch (nChar)
+						{
+						case VK_LEFT:
+							x -= pCell->m_nCellWidth;
+							break;
+						
+						case VK_RIGHT:
+							x += pCell->m_nCellWidth;
+							break;
+
+						case VK_UP:
+							x -= pCell->m_nCellWidth / 2;
+							y -= pCell->m_nCellWidth;
+							break;
+
+						case VK_DOWN:
+							x += pCell->m_nCellWidth / 2;
+							y += pCell->m_nCellWidth;
+							break;
+						}
+
+						if (x != pCell->m_x || y != pCell->m_y)
+						{
+							if (SelectCellHexagon(x, y))
+							{
+								RedrawWindow();
+								NotifyParent();
+							}
+							else if (nChar == VK_DOWN) 
+							{
+								// Activate Gray scale picker:
+								CMFCStandardColorsPropertyPage* pPage = DYNAMIC_DOWNCAST(CMFCStandardColorsPropertyPage, GetParent());
+								if (pPage != NULL && pPage->m_hexpicker_greyscale.m_arCells.GetSize() > 0)
+								{
+									pPage->m_hexpicker_greyscale.SetFocus();
+									pNewCell = (CCellObj*)pPage->m_hexpicker_greyscale.m_arCells[0];
+								}
+							}
+						}
+					}
+					else
+					{
+						switch (nChar)
+						{
+						case VK_LEFT:
+						case VK_UP:
+							if (i > 0)
+							{
+								pNewCell = (CCellObj*)m_arCells[i - 1];
+							}
+							else
+							{
+								// Activate hex picker:
+								CMFCStandardColorsPropertyPage* pPage = DYNAMIC_DOWNCAST(CMFCStandardColorsPropertyPage, GetParent());
+								if (pPage != NULL && pPage->m_hexpicker.m_arCells.GetSize() > 0)
+								{
+									pPage->m_hexpicker.SetFocus();
+									pNewCell = (CCellObj*)pPage->m_hexpicker.m_arCells[1];
+								}
+							}
+							break;
+						
+						case VK_RIGHT:
+						case VK_DOWN:
+							if (i < m_arCells.GetSize() - 1)
+							{
+								pNewCell = (CCellObj*)m_arCells[i + 1];
+							}
+							break;
+						}
+					}
+
+					if (pNewCell != NULL)
+					{
+						ASSERT_VALID(pNewCell);
+
+						SetColor(pNewCell->m_CellColor);
+						RedrawWindow();
+						NotifyParent ();
+					}
+					break;
+				}
+			}
+		}
+		break;
+
 	default:
 		break;
-		// TBD
 	}
 
 	CButton::OnKeyDown(nChar, nRepCnt, nFlags);
@@ -863,7 +963,7 @@ void CMFCColorPickerCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 		pCurMemPalette = pDC->SelectPalette(m_pPalette, FALSE);
 		pDC->RealizePalette();
 
-		afxGlobalData.DrawParentBackground(this, pDC);
+		GetGlobalData()->DrawParentBackground(this, pDC);
 	}
 
 	switch (m_COLORTYPE)
@@ -889,21 +989,21 @@ void CMFCColorPickerCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 			pDC->SetTextColor(clrText); // Text color was changed by FillSolidRect
 
 			// Draw frame
-			pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnDkShadow);
+			pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnDkShadow);
 		}
 		break;
 
 	case PICKER:
 		DrawPicker(pDC);
 		DrawCursor(pDC, GetCursorRect());
-		pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnHilite);
+		pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnHilite);
 		break;
 
 	case LUMINANCE:
 		DrawLuminanceBar(pDC);
 
 		// Draw marker:
-		afxGlobalData.DrawParentBackground(this, pDC, CRect(m_nLumBarWidth, 0, rectClient.Width() - m_nLumBarWidth, rectClient.Height()));
+		GetGlobalData()->DrawParentBackground(this, pDC, CRect(m_nLumBarWidth, 0, rectClient.Width() - m_nLumBarWidth, rectClient.Height()));
 		DrawCursor(pDC, GetCursorRect());
 		break;
 	}

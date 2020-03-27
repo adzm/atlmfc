@@ -21,7 +21,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Recordset Field exchange for ODBC & DAO classes (RFX_ and DFX_)
 
 #define AFX_RFX_SHORT_PSEUDO_NULL (0x7EE4)
@@ -58,7 +58,7 @@
 #define AFX_RFX_ATEXT       21
 #define AFX_RFX_BIGINT      22
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CLongBinary - a Long (generally > 32k in length) Binary object
 
 class CLongBinary : public CObject

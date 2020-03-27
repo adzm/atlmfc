@@ -22,7 +22,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleCntrFrameWndEx frame
 
 class COleCntrFrameWndEx : public COleCntrFrameWnd
@@ -79,12 +79,11 @@ protected:
 protected:
 	virtual ~COleCntrFrameWndEx();
 
-	//{{AFX_MSG(COleCntrFrameWndEx)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 	afx_msg void OnDestroy();
 	afx_msg void OnIdleUpdateCmdUI();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

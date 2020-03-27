@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -41,7 +41,9 @@ class CMFCRibbonRichEditCtrl;
 class CMFCRibbonKeyTip;
 class CMFCRibbonPanel;
 
-/////////////////////////////////////////////////////////////////////////////
+#define AFX_RIBBON_PROFILE  _T("MFCRibbons")
+
+/*============================================================================*/
 // AFX_RibbonCategoryColor
 
 enum AFX_RibbonCategoryColor
@@ -56,7 +58,7 @@ enum AFX_RibbonCategoryColor
 	AFX_CategoryColor_Violet
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonCaptionButton
 
 class CMFCRibbonCaptionButton : public CMFCRibbonButton
@@ -82,7 +84,7 @@ protected:
 	HWND m_hwndMDIChild;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonContextCaption
 
 class CMFCRibbonContextCaption : public CMFCRibbonButton
@@ -108,7 +110,7 @@ protected:
 	int  m_nRightTabX;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonBar window
 
 #define AFX_RIBBONBAR_HIDE_ELEMENTS  0x0001
@@ -138,21 +140,21 @@ public:
 
 	/// <summary>
 	/// Loads a Ribbon Bar from application resources.</summary>
-	/// <returns> TRUE if load succeeds; otherwise FALSE. </summary>
+	/// <returns> TRUE if load succeeds; otherwise FALSE. </returns>
 	/// <param name="uiXMLResID">Specifies resource ID of XML string with Ribbon Bar information.</param>
 	/// <param name="lpszResType">Specifies type of the resource located at uiXMLResID.</param>
 	/// <param name="hInstance">Handle to the module whose executable file contains the resource. If hModule is NULL, the system loads the resource from the module that was used to create the current process.</param>
 	virtual BOOL LoadFromResource(UINT uiXMLResID, LPCTSTR lpszResType = RT_RIBBON, HINSTANCE hInstance = NULL);
 	/// <summary>
 	/// Loads a Ribbon Bar from application resources.</summary>
-	/// <returns> TRUE if load succeeds; otherwise FALSE. </summary>
+	/// <returns> TRUE if load succeeds; otherwise FALSE. </returns>
 	/// <param name="lpszXMLResID">Specifies resource ID (in string form) with Ribbon Bar information.</param>
 	/// <param name="lpszResType">Specifies type of the resource located at uiXMLResID.</param>
 	/// <param name="hInstance">Handle to the module whose executable file contains the resource. If hModule is NULL, the system loads the resource from the module that was used to create the current process.</param>
 	virtual BOOL LoadFromResource(LPCTSTR lpszXMLResID, LPCTSTR lpszResType = RT_RIBBON, HINSTANCE hInstance = NULL);
 	/// <summary>
 	/// Loads a Ribbon Bar from application resources.</summary>
-	/// <returns> TRUE if load succeeds; otherwise FALSE. </summary>
+	/// <returns> TRUE if load succeeds; otherwise FALSE. </returns>
 	/// <param name="lpszXMLBuffer">A buffer with XML string to load the Ribbon Bar from.</param>
 	virtual BOOL LoadFromBuffer(LPCTSTR lpszXMLBuffer);
 
@@ -320,6 +322,11 @@ public:
 	CObject* GetKeyboardNavLevelCurrent() const { return m_pKeyboardNavLevelCurrent; }
 
 	virtual BOOL OnSetAccData(long lVal);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT get_accChild(VARIANT varChild, IDispatch **ppdispChild);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
 
 protected:
 	int m_nTabsHeight;
@@ -426,8 +433,8 @@ protected:
 
 	BOOL NavigateRibbon(int nChar);
 
-	static CMFCRibbonBaseElement* FindNextFocusedElement(int nChar, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElems, CRect rectElems, CMFCRibbonBaseElement* pFocused, BOOL bIsScrollLeftAvailable, BOOL bIsScrollRightAvailable, int& nScroll);
-	static CMFCRibbonBaseElement* FindNearest(CPoint pt, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons);
+	static CMFCRibbonBaseElement* __stdcall FindNextFocusedElement(int nChar, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElems, CRect rectElems, CMFCRibbonBaseElement* pFocused, BOOL bIsScrollLeftAvailable, BOOL bIsScrollRightAvailable, int& nScroll);
+	static CMFCRibbonBaseElement* __stdcall FindNearest(CPoint pt, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons);
 
 // Implementation
 public:
@@ -456,7 +463,6 @@ protected:
 	void RemoveAllKeys();
 
 protected:
-	//{{AFX_MSG(CMFCRibbonBar)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnPaint();
@@ -479,15 +485,15 @@ protected:
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
 	afx_msg LRESULT OnGetFont(WPARAM, LPARAM);
-	afx_msg LRESULT OnMouseLeave(WPARAM, LPARAM);
+	afx_msg void OnMouseLeave();
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg LRESULT OnPostRecalcLayout(WPARAM,LPARAM);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonBar idle update through CMFCRibbonCmdUI class
 
 class CMFCRibbonCmdUI : public CCmdUI
@@ -503,7 +509,7 @@ public:
 	CMFCRibbonBaseElement* m_pUpdated;
 };
 
-//////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonApplicationButton
 
 class CMFCRibbonApplicationButton : public CMFCRibbonButton
@@ -548,6 +554,7 @@ protected:
 
 	virtual void OnLButtonDown(CPoint point);
 	virtual void OnLButtonDblClk(CPoint point);
+	virtual void OnAccDefaultAction() { ShowMainMenu(); }
 	virtual BOOL OnKey(BOOL bIsMenuKey);
 
 	virtual BOOL IsDrawTooltipImage() const { return FALSE; }

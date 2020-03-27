@@ -10,7 +10,6 @@
 
 #include "StdAfx.h"
 #include "afxrendertarget.h"
-#include "afxglobals.h"
 
 template<class Interface>
 AFX_INLINE void SafeRelease(Interface **ppInterfaceToRelease)
@@ -19,6 +18,140 @@ AFX_INLINE void SafeRelease(Interface **ppInterfaceToRelease)
 	{
 		(*ppInterfaceToRelease)->Release();
 		(*ppInterfaceToRelease) = NULL;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// _AFX_D2D_STATE
+
+_AFX_D2D_STATE::_AFX_D2D_STATE()
+{
+	m_pDirect2dFactory = NULL;
+	m_pWriteFactory = NULL;
+	m_pWicFactory = NULL;
+	m_hinstD2DDLL = NULL;
+	m_hinstDWriteDLL = NULL;
+	m_bComInitialized = FALSE;
+}
+
+_AFX_D2D_STATE::~_AFX_D2D_STATE()
+{
+	// D2D references should already have been released via
+	// CWinApp::ExitInstance, but call again to make sure.
+	ReleaseD2DRefs();
+}
+
+BOOL _AFX_D2D_STATE::InitD2D(D2D1_FACTORY_TYPE d2dFactoryType, DWRITE_FACTORY_TYPE writeFactoryType)
+{
+	if (m_bD2DInitialized)
+	{
+		return TRUE;
+	}
+
+	HRESULT hr = S_OK;
+
+	if (!m_bComInitialized)
+	{
+		hr = CoInitialize(NULL);
+		if (FAILED(hr))
+		{
+			return FALSE;
+		}
+		
+		m_bComInitialized = TRUE;
+	}
+
+	if ((m_hinstD2DDLL = ::AtlLoadSystemLibraryUsingFullPath(L"D2D1.dll")) == NULL)
+	{
+		return FALSE;
+	}
+
+	typedef HRESULT (WINAPI * D2D1CREATEFACTORY)(D2D1_FACTORY_TYPE factoryType, REFIID riid, CONST D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
+
+	D2D1CREATEFACTORY pfD2D1CreateFactory = (D2D1CREATEFACTORY)::GetProcAddress(m_hinstD2DDLL, "D2D1CreateFactory");
+	if (pfD2D1CreateFactory != NULL)
+	{
+		hr = (*pfD2D1CreateFactory)(d2dFactoryType, __uuidof(ID2D1Factory),
+			NULL, reinterpret_cast<void **>(&m_pDirect2dFactory));
+		if (FAILED(hr))
+		{
+			m_pDirect2dFactory = NULL;
+			return FALSE;
+		}
+	}
+
+	m_pfD2D1MakeRotateMatrix = (D2D1MAKEROTATEMATRIX)::GetProcAddress(m_hinstD2DDLL, "D2D1MakeRotateMatrix");
+
+	m_hinstDWriteDLL = AtlLoadSystemLibraryUsingFullPath(L"DWrite.dll");
+	if (m_hinstDWriteDLL != NULL)
+	{
+		auto pfD2D1CreateFactory = AtlGetProcAddressFn(m_hinstDWriteDLL, DWriteCreateFactory);
+		if (pfD2D1CreateFactory)
+		{
+			hr = (*pfD2D1CreateFactory)(writeFactoryType, __uuidof(IDWriteFactory), (IUnknown**)&m_pWriteFactory);
+		}
+	}
+
+	hr = CoCreateInstance(CLSID_WICImagingFactory1, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)&m_pWicFactory);
+
+	m_bD2DInitialized = TRUE;
+	return TRUE;
+}
+
+void _AFX_D2D_STATE::ReleaseD2DRefs()
+{
+	if (m_bD2DInitialized)
+	{
+		if (m_pDirect2dFactory != NULL)
+		{
+			m_pDirect2dFactory->Release();
+			m_pDirect2dFactory = NULL;
+		}
+
+		if (m_pWriteFactory != NULL)
+		{
+			m_pWriteFactory->Release();
+			m_pWriteFactory = NULL;
+		}
+
+		if (m_pWicFactory != NULL)
+		{
+			m_pWicFactory->Release();
+			m_pWicFactory = NULL;
+		}
+
+		if (m_hinstD2DDLL != NULL)
+		{
+			::FreeLibrary(m_hinstD2DDLL);
+			m_hinstD2DDLL = NULL;
+		}
+
+		if (m_hinstDWriteDLL != NULL)
+		{
+			::FreeLibrary(m_hinstDWriteDLL);
+			m_hinstDWriteDLL = NULL;
+		}
+
+		m_bD2DInitialized = FALSE;
+	}
+	
+	if (m_bComInitialized)
+	{
+		CoUninitialize();
+		m_bComInitialized = FALSE;
+	}
+}
+
+_AFX_D2D_STATE* AFX_CDECL AfxGetD2DState()
+{
+	return _afxD2DState.GetData();
+}
+
+void AFX_CDECL AfxReleaseD2DRefs()
+{
+	if (_afxD2DState.GetDataNA() != NULL)
+	{
+		_afxD2DState.GetDataNA()->ReleaseD2DRefs();
 	}
 }
 
@@ -1242,7 +1375,7 @@ HRESULT CD2DBitmap::Create(CRenderTarget* pRenderTarget)
 
 	if (!m_strPath.IsEmpty())
 	{
-		hr = afxGlobalData.GetWICFactory()->CreateDecoderFromFilename(
+		hr = _afxD2DState->GetWICFactory()->CreateDecoderFromFilename(
 			T2CW(m_strPath),
 			NULL,
 			GENERIC_READ,
@@ -1296,7 +1429,7 @@ HRESULT CD2DBitmap::Create(CRenderTarget* pRenderTarget)
 		if (SUCCEEDED(hr))
 		{
 			// Create a WIC stream to map onto the memory.
-			hr = afxGlobalData.GetWICFactory()->CreateStream(&pStream);
+			hr = _afxD2DState->GetWICFactory()->CreateStream(&pStream);
 		}
 		if (SUCCEEDED(hr))
 		{
@@ -1309,7 +1442,7 @@ HRESULT CD2DBitmap::Create(CRenderTarget* pRenderTarget)
 		if (SUCCEEDED(hr))
 		{
 			// Create a decoder for the stream.
-			hr = afxGlobalData.GetWICFactory()->CreateDecoderFromStream(
+			hr = _afxD2DState->GetWICFactory()->CreateDecoderFromStream(
 				pStream,
 				NULL,
 				WICDecodeMetadataCacheOnLoad,
@@ -1319,7 +1452,7 @@ HRESULT CD2DBitmap::Create(CRenderTarget* pRenderTarget)
 	}
 	else if (m_hBmpSrc != NULL)
 	{
-		hr = afxGlobalData.GetWICFactory()->CreateBitmapFromHBITMAP(m_hBmpSrc, NULL, WICBitmapUseAlpha, &pWICBitmap);
+		hr = _afxD2DState->GetWICFactory()->CreateBitmapFromHBITMAP(m_hBmpSrc, NULL, WICBitmapUseAlpha, &pWICBitmap);
 
 		if (SUCCEEDED(hr))
 		{
@@ -1340,7 +1473,7 @@ HRESULT CD2DBitmap::Create(CRenderTarget* pRenderTarget)
 		{
 			// Convert the image format to 32bppPBGRA
 			// (DXGI_FORMAT_B8G8R8A8_UNORM + D2D1_ALPHA_MODE_PREMULTIPLIED).
-			hr = afxGlobalData.GetWICFactory()->CreateFormatConverter(&pConverter);
+			hr = _afxD2DState->GetWICFactory()->CreateFormatConverter(&pConverter);
 		}
 
 		// If a new width or height was specified, create an
@@ -1367,7 +1500,7 @@ HRESULT CD2DBitmap::Create(CRenderTarget* pRenderTarget)
 					destinationHeight = static_cast<UINT>(scalar * static_cast<FLOAT>(originalHeight));
 				}
 
-				hr = afxGlobalData.GetWICFactory()->CreateBitmapScaler(&pScaler);
+				hr = _afxD2DState->GetWICFactory()->CreateBitmapScaler(&pScaler);
 				if (SUCCEEDED(hr))
 				{
 					hr = pScaler->Initialize(
@@ -1445,9 +1578,9 @@ CD2DResource(pParentTarget, bAutoDestroy)
 
 	m_pTextFormat = NULL;
 
-	if (afxGlobalData.GetWriteFactory() != NULL)
+	if (_afxD2DState->GetWriteFactory() != NULL)
 	{
-		afxGlobalData.GetWriteFactory()->CreateTextFormat(T2CW(strFontFamilyName), pFontCollection, fontWeight, fontStyle, 
+		_afxD2DState->GetWriteFactory()->CreateTextFormat(T2CW(strFontFamilyName), pFontCollection, fontWeight, fontStyle, 
 			fontStretch, fontSize, T2CW(strFontLocale), &m_pTextFormat);
 	}
 }
@@ -1523,9 +1656,9 @@ CD2DResource(pParentTarget, bAutoDestroy)
 
 	m_pTextLayout = NULL;
 
-	if (afxGlobalData.GetWriteFactory() != NULL)
+	if (_afxD2DState->GetWriteFactory() != NULL)
 	{
-		afxGlobalData.GetWriteFactory()->CreateTextLayout(T2CW(strText), strText.GetLength(), textFormat, 
+		_afxD2DState->GetWriteFactory()->CreateTextLayout(T2CW(strText), strText.GetLength(), textFormat, 
 			sizeMax.width, sizeMax.height, &m_pTextLayout);
 	}
 }
@@ -1924,11 +2057,12 @@ void CRenderTarget::DrawText(const CString& strText,
 		// Use default text format
 		if (m_pTextFormatDefault == NULL)
 		{
-			LOGFONT lf;
-			memset(&lf, 0, sizeof(LOGFONT));
-			afxGlobalData.fontRegular.GetLogFont(&lf);
+			NONCLIENTMETRICS NonClientMetrics;
+			NonClientMetrics.cbSize = sizeof(NONCLIENTMETRICS);
 
-			m_pTextFormatDefault = new CD2DTextFormat(this, lf.lfFaceName, (FLOAT)abs(lf.lfHeight));
+			::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, NonClientMetrics.cbSize, &NonClientMetrics, 0);
+
+			m_pTextFormatDefault = new CD2DTextFormat(this, NonClientMetrics.lfMenuFont.lfFaceName, (FLOAT)abs(NonClientMetrics.lfMenuFont.lfHeight));
 		}
 
 		textFormat = m_pTextFormatDefault;
@@ -2315,7 +2449,7 @@ BOOL CHwndRenderTarget::Create(HWND hWnd)
 		return FALSE;
 	}
 
-	if (afxGlobalData.GetDirect2dFactory() == NULL)
+	if (_afxD2DState->GetDirect2dFactory() == NULL)
 	{
 		// Not supported by system
 		return FALSE;
@@ -2327,7 +2461,7 @@ BOOL CHwndRenderTarget::Create(HWND hWnd)
 	D2D1_SIZE_U size = D2D1::SizeU(rectClient.Width(), rectClient.Height());
 
 	// Create a Direct2D render target.
-	HRESULT hr = afxGlobalData.GetDirect2dFactory()->CreateHwndRenderTarget(
+	HRESULT hr = _afxD2DState->GetDirect2dFactory()->CreateHwndRenderTarget(
 		D2D1::RenderTargetProperties(),
 		D2D1::HwndRenderTargetProperties(hWnd, size),
 		&m_pHwndRenderTarget);
@@ -2417,12 +2551,12 @@ BOOL CDCRenderTarget::Create(const D2D1_RENDER_TARGET_PROPERTIES& props)
 		return FALSE;
 	}
 
-	if (afxGlobalData.GetDirect2dFactory() == NULL)
+	if (_afxD2DState->GetDirect2dFactory() == NULL)
 	{
 		return FALSE;
 	}
 
-	HRESULT hr = afxGlobalData.GetDirect2dFactory()->CreateDCRenderTarget(&props, &m_pDCRenderTarget);
+	HRESULT hr = _afxD2DState->GetDirect2dFactory()->CreateDCRenderTarget(&props, &m_pDCRenderTarget);
 	if (FAILED(hr))
 	{
 		return FALSE;
@@ -2710,7 +2844,7 @@ CD2DPathGeometry::CD2DPathGeometry(CRenderTarget* pParentTarget, BOOL bAutoDestr
 
 HRESULT CD2DPathGeometry::Create(CRenderTarget* /*pTarget*/)
 {
-	if (afxGlobalData.GetDirect2dFactory() == NULL)
+	if (_afxD2DState->GetDirect2dFactory() == NULL)
 	{
 		ASSERT(FALSE);
 		return E_FAIL;
@@ -2722,7 +2856,7 @@ HRESULT CD2DPathGeometry::Create(CRenderTarget* /*pTarget*/)
 		return E_FAIL;
 	}
 
-	HRESULT hr = afxGlobalData.GetDirect2dFactory()->CreatePathGeometry(&m_pPathGeometry);
+	HRESULT hr = _afxD2DState->GetDirect2dFactory()->CreatePathGeometry(&m_pPathGeometry);
 	if (FAILED(hr))
 	{
 		return hr;
@@ -3028,3 +3162,12 @@ ID2D1TessellationSink* CD2DMesh::Open()
 
 	return pSink;
 }
+
+PROCESS_LOCAL(_AFX_D2D_STATE, _afxD2DState)
+
+
+// Privately define CLSID_WICImagingFactory1 so the MFC static library can link against both SDK 7.x and SDK 8.x
+
+#include <initguid.h>
+
+DEFINE_GUID(CLSID_WICImagingFactory1, 0xcacaf262, 0x9370, 0x4615, 0xa1, 0x3b, 0x9f, 0x55, 0x39, 0xda, 0x4c, 0xa);

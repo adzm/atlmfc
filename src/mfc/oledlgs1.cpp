@@ -81,7 +81,7 @@ SCODE _AfxParseDisplayName(LPMONIKER lpmk, LPBC lpbc, _In_z_ LPTSTR lpszRemainde
 		}
 		*cchEaten = cEaten;
 		CStringW strItemName(szItemName);
-		sc = CreateItemMoniker(OLESTDDELIMOLE, strItemName.GetString(), plpmkOut);
+		sc = ::CreateItemMoniker(OLESTDDELIMOLE, strItemName.GetString(), plpmkOut);
 	}
 
 	return sc;
@@ -259,7 +259,7 @@ STDMETHODIMP COleUILinkInfo::SetLinkSource(
 	Checked::tcsncpy_s(szName, _countof(szName), lpszDisplayName, _TRUNCATE);
 	LPMONIKER lpmk = NULL;
 	CStringW strName(szName);
-	SCODE sc = CreateFileMoniker(strName.GetString(), &lpmk);
+	SCODE sc = ::CreateFileMoniker(strName.GetString(), &lpmk);
 	if (lpmk == NULL)
 		return sc;
 
@@ -275,7 +275,7 @@ STDMETHODIMP COleUILinkInfo::SetLinkSource(
 	}
 
 	// nUneaten is the number of chars left to parse
-	UINT nUneaten = lstrlen(lpszDisplayName) - lenFileName;
+	size_t nUneaten = AtlStrLen(lpszDisplayName) - lenFileName;
 
 	// lpszRemainder is the left over display name
 	LPTSTR lpszRemainder = lpszDisplayName + lenFileName;
@@ -362,8 +362,8 @@ STDMETHODIMP COleUILinkInfo::SetLinkSource(
 }
 
 STDMETHODIMP COleUILinkInfo::GetLinkSource(
-	DWORD dwLink, _Deref_out_ LPTSTR* lplpszDisplayName, ULONG* lplenFileName,
-	_Deref_out_ LPTSTR* lplpszFullLinkType, _Deref_out_ LPTSTR* lplpszShortLinkType,
+	DWORD dwLink, _Outptr_ LPTSTR* lplpszDisplayName, ULONG* lplenFileName,
+	_Outptr_ LPTSTR* lplpszFullLinkType, _Outptr_ LPTSTR* lplpszShortLinkType,
 	BOOL* lpfSourceAvailable, BOOL* lpfIsSelected)
 {
 	SCODE sc=S_OK;

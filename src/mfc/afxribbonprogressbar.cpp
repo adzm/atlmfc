@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -90,9 +90,9 @@ CSize CMFCRibbonProgressBar::GetRegularSize(CDC* /*pDC*/)
 
 	int nHeight = m_nHeight;
 
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		nHeight = (int)(.5 + afxGlobalData.GetRibbonImageScale() * nHeight);
+		nHeight = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * nHeight);
 		nHeight -= (nHeight - m_nHeight) / 2;
 	}
 

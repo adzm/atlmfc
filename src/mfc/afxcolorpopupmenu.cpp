@@ -25,9 +25,7 @@
 IMPLEMENT_DYNAMIC(CMFCColorPopupMenu, CMFCPopupMenu)
 
 BEGIN_MESSAGE_MAP(CMFCColorPopupMenu, CMFCPopupMenu)
-	//{{AFX_MSG_MAP(CMFCColorPopupMenu)
 	ON_WM_CREATE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 CMFCColorPopupMenu::~CMFCColorPopupMenu()

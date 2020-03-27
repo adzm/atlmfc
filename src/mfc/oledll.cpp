@@ -109,7 +109,7 @@ SCODE AFXAPI AfxDllCanUnloadNow(void)
 	AfxUnlockGlobals(CRIT_DYNLINKLIST);
 #endif
 
-	TRACE(traceOle, 0, "Info: AfxDllCanUnloadNow returning S_OK\n");
+	TRACE(traceOle, 1, "Info: AfxDllCanUnloadNow returning S_OK\n");
 	return S_OK;
 }
 

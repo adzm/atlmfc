@@ -278,6 +278,8 @@ public:
 	void AddHiddenMDITabbedBar(CDockablePane* pBar);
 	void RemoveHiddenMDITabbedBar(CDockablePane* pBar);
 
+	void RedrawAllMiniFrames();
+
 public:
 	BOOL m_bEnableAdjustLayout;
 	BOOL m_bLockUpdate;

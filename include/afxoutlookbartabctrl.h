@@ -59,15 +59,14 @@ class CMFCOutlookBarToolBar : public CMFCToolBar
 	CMap<int, int, int, int> m_TabButtons;
 	CMFCOutlookBarTabCtrl*             m_pParentBar;
 
-	//{{AFX_MSG(CMFCOutlookBarToolBar)
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
 	afx_msg void OnNcPaint();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCOutlookBarTabCtrl window
 
 class CMFCOutlookBarTabCtrl : public CMFCBaseTabCtrl
@@ -158,7 +157,6 @@ protected:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CMFCOutlookBarTabCtrl)
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnPaint();
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
@@ -170,7 +168,7 @@ protected:
 	afx_msg void OnCancelMode();
 	afx_msg void OnToolbarCommand(UINT id);
 	afx_msg void OnUpdateToolbarCommand(CCmdUI* pCmdUI);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	int   m_nBorderSize;

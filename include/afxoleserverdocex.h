@@ -18,7 +18,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // COleServerDocEx document
 
 class COleServerDocEx : public COleServerDoc
@@ -48,8 +48,6 @@ public:
 #endif
 
 protected:
-	//{{AFX_MSG(COleServerDocEx)
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
 

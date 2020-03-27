@@ -39,8 +39,6 @@ public:
 	virtual ~CSplitterWndEx();
 
 protected:
-	//{{AFX_MSG(CSplitterWndEx)
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
 

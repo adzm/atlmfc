@@ -48,11 +48,11 @@ BOOL __stdcall AtlTraceUnregister(_In_ DWORD_PTR dwModule);
 
 DWORD_PTR __stdcall AtlTraceRegisterCategoryA(
 	_In_ DWORD_PTR dwModule,
-	_In_z_count_c_(ATL_TRACE_MAX_NAME_SIZE) const CHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE]);
+	_In_reads_z_(ATL_TRACE_MAX_NAME_SIZE) const CHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE]);
 
 DWORD_PTR __stdcall AtlTraceRegisterCategoryU(
 	_In_ DWORD_PTR dwModule,
-	_In_z_count_c_(ATL_TRACE_MAX_NAME_SIZE) const WCHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE]);
+	_In_reads_z_(ATL_TRACE_MAX_NAME_SIZE) const WCHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE]);
 
 BOOL __stdcall AtlTraceModifyProcess(
 	_In_ DWORD_PTR dwProcess,
@@ -99,11 +99,11 @@ _ATL_INSECURE_DEPRECATE("AtlTraceGetUpdateEventNameU is unsafe. Instead use AtlT
 void __stdcall AtlTraceGetUpdateEventNameU(_Inout_z_ WCHAR *pszEventName);
 
 void __stdcall AtlTraceGetUpdateEventNameA_s(
-	_Out_z_cap_(cchEventName) CHAR *pszEventName,
+	_Out_writes_z_(cchEventName) CHAR *pszEventName,
 	_In_ size_t cchEventName);
 
 void __stdcall AtlTraceGetUpdateEventNameU_s(
-	_Out_z_cap_(cchEventName) WCHAR *pszEventName,
+	_Out_writes_z_(cchEventName) WCHAR *pszEventName,
 	_In_ size_t cchEventName);
 
 void __cdecl AtlTraceVA(

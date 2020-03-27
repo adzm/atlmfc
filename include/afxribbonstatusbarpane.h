@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -38,7 +38,8 @@ public:
 		LPCTSTR  lpszText,                   // Pane label
 		BOOL     bIsStatic = FALSE,          // Pane is static (non-clickable)
 		HICON    hIcon = NULL,               // Pane icon
-		LPCTSTR  lpszAlmostLargeText = NULL);// The almost large text in pane
+		LPCTSTR  lpszAlmostLargeText = NULL, // The almost large text in pane
+		BOOL     bAlphaBlendIcon = FALSE);	 // The icon is 32 bit
 
 	CMFCRibbonStatusBarPane(
 		UINT     nCmdID,                    // Pane command id
@@ -47,7 +48,8 @@ public:
 		int      cxAnimation = 16,          // Animation frame width
 		COLORREF clrTrnsp= RGB(192,192,192),// Transparent color
 		HICON    hIcon = NULL,              // Pane icon
-		BOOL     bIsStatic = FALSE);        // Pane is static (non-clickable)
+		BOOL     bIsStatic = FALSE,         // Pane is static (non-clickable)
+		BOOL     bAlphaBlendIcon = FALSE);	 // The icon is 32 bit
 
 	CMFCRibbonStatusBarPane(
 		UINT     nCmdID,                    // Pane command id
@@ -56,7 +58,8 @@ public:
 		int      cxAnimation = 16,          // Animation frame width
 		COLORREF clrTrnsp= RGB(192,192,192),// Transparent color
 		HICON    hIcon = NULL,              // Pane icon
-		BOOL     bIsStatic = FALSE);        // Pane is static (non-clickable)
+		BOOL     bIsStatic = FALSE,         // Pane is static (non-clickable)
+		BOOL     bAlphaBlendIcon = FALSE);	 // The icon is 32 bit
 
 	virtual ~CMFCRibbonStatusBarPane();
 

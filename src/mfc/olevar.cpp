@@ -229,7 +229,7 @@ COleVariant::COleVariant(LPCTSTR lpszSrc, VARTYPE vtSrc)
 #ifndef _UNICODE
 		if (vtSrc == VT_BSTRT)
 		{
-			int nLen = lstrlen(lpszSrc);
+			int nLen = static_cast<int>(_tcslen(lpszSrc));
 			bstrVal = ::SysAllocStringByteLen(lpszSrc, nLen);
 			
 			if (bstrVal == NULL)
@@ -265,7 +265,7 @@ void COleVariant::SetString(LPCTSTR lpszSrc, VARTYPE vtSrc)
 #ifndef _UNICODE
 		if (vtSrc == VT_BSTRT)
 		{
-			int nLen = lstrlen(lpszSrc);
+			int nLen = static_cast<int>(_tcslen(lpszSrc));
 			bstrVal = ::SysAllocStringByteLen(lpszSrc, nLen);
 
 			if (bstrVal == NULL)

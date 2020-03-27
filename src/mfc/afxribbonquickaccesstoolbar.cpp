@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -71,10 +71,10 @@ class CMFCRibbonQuickAccessCustomizeButton : public CMFCRibbonButton
 
 		CSize sizeImage = CMenuImages::Size();
 
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			sizeImage.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cx);
-			sizeImage.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeImage.cy);
+			sizeImage.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImage.cx);
+			sizeImage.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeImage.cy);
 		}
 
 		return sizeImage;
@@ -119,7 +119,7 @@ class CMFCRibbonQuickAccessCustomizeButton : public CMFCRibbonButton
 
 		if (m_arHidden.GetSize() > 0)
 		{
-			nImageIndex = afxGlobalData.m_bIsRTL ? CMenuImages::IdArrowPageLeft : CMenuImages::IdCustomizeMoreButtonsHorz;
+			nImageIndex = GetGlobalData()->m_bIsRTL ? CMenuImages::IdArrowPageLeft : CMenuImages::IdCustomizeMoreButtonsHorz;
 		}
 
 		SetKeys(m_arHidden.GetSize() == 0 ? NULL : _T("00"));

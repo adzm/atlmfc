@@ -18,7 +18,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertyGridToolTipCtrl window
 
 class CMFCPropertyGridToolTipCtrl : public CWnd
@@ -59,11 +59,10 @@ public:
 	virtual ~CMFCPropertyGridToolTipCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCPropertyGridToolTipCtrl)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnPaint();
 	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

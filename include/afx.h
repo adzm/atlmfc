@@ -25,8 +25,12 @@
 #endif
 #endif
 
-#if !defined(_M_IX86) && !defined(_M_AMD64)
-	#error Compiling for unsupported platform.  Only x86 and x64 platforms are supported by MFC.
+#if !defined(_M_IX86) && !defined(_M_AMD64) && !defined(_M_ARM)
+	#error Compiling for unsupported platform.  Only x86, x64 and ARM platforms are supported by MFC.
+#endif
+
+#if defined(_MANAGED) && !defined(_M_IX86) && !defined(_M_AMD64)
+	#error Compiling for unsupported platform.  Managed MFC only supports x86 and x64 platforms.
 #endif
 
 // Since MFC itself is built with wchar_t as a native type, it will not have
@@ -44,6 +48,10 @@
 #error <atldbgmem.h> cannot be used in MFC projects. See AfxEnableMemoryTracking
 #endif
 
+#ifndef _ATL_DISABLE_NOTHROW_NEW
+#define _ATL_DISABLE_NOTHROW_NEW
+#endif
+
 #if defined(_MFC_DLL_BLD) && defined(_DEBUG)
 #ifndef _CRTDBG_MAP_ALLOC
 #define _CRTDBG_MAP_ALLOC
@@ -54,9 +62,15 @@
 	#include <new.h>
 #endif
 
+#if defined(_MFC_BLD)
+// For MFC DLLs and static libraries, enable the
+// isolation-aware APIs in the Windows headers
+#define ISOLATION_AWARE_ENABLED 1
+#endif
+
 #include <afxver_.h>        // Target version control
 
-#ifdef _WIN64
+#if defined(_WIN64) || defined(_M_ARM)
 #ifndef _AFX_NO_DAO_SUPPORT
 #define _AFX_NO_DAO_SUPPORT
 #endif
@@ -64,10 +78,19 @@
 
 #ifndef _AFX_NOFORCE_LIBS
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Win32 libraries
 
 #ifndef _AFXDLL
+	#ifdef _AFX_NO_MFC_CONTROLS_IN_DIALOGS
+		#ifdef _DEBUG
+			#pragma comment(lib, "afxnmcdd.lib")
+		#else
+			#pragma comment(lib, "afxnmcd.lib")
+		#endif
+		#pragma comment(linker, "/include:__afxNoMFCControlSupportInDialogs")
+		#pragma comment(linker, "/include:__afxNoMFCControlContainerInDialogs")
+	#endif
 	#ifndef _UNICODE
 		#ifdef _DEBUG
 			#pragma comment(lib, "nafxcwd.lib")
@@ -125,6 +148,7 @@
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "windowscodecs.lib")
 
 // force inclusion of NOLIB.OBJ for /disallowlib directives
@@ -149,7 +173,7 @@
 #endif 
 
 #endif //_MANAGED
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Classes declared in this file
 //   in addition to standard primitive data types and various helper macros
 
@@ -176,7 +200,7 @@ struct CMemoryState;                  // diagnostic memory support
 class CArchive;                       // object persistence tool
 class CDumpContext;                   // object diagnostic dumping
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Other includes from standard "C" runtimes
 
 #ifndef _INC_STRING
@@ -220,7 +244,7 @@ class CDumpContext;                   // object diagnostic dumping
 #pragma pack(push, _AFX_PACKING)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Basic types
 // abstract iteration position
 struct __POSITION {};
@@ -235,7 +259,7 @@ typedef __POSITION* POSITION;
 #define TRUE    1
 #define NULL    0
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // _AFX_FUNCNAME definition
 #ifdef UNICODE
 #define _AFX_FUNCNAME(_Name) _Name##W
@@ -243,7 +267,7 @@ typedef __POSITION* POSITION;
 #define _AFX_FUNCNAME(_Name) _Name##A
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Turn off warnings for /W4
 // To resume any of these warning: #pragma warning(default: 4xxx)
 // which should be placed after the AFX include files
@@ -281,7 +305,7 @@ typedef __POSITION* POSITION;
 #endif
 #pragma warning(disable: 4263 4264)  // base class method is hidden
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Diagnostic support
 
 #ifdef _DEBUG
@@ -336,7 +360,7 @@ inline void AFX_CDECL AfxTrace(...) { }
 /* We use the name AFXASSUME to avoid name clashes */
 
 #if defined(_PREFAST_) || defined (_DEBUG)
-#define AFXASSUME(cond)			do { bool __afx_condVal=!!(cond); ASSERT(__afx_condVal); __analysis_assume(__afx_condVal); } while(0) 
+#define AFXASSUME(cond)			do { bool __afx_condVal=!!(cond); ASSERT(__afx_condVal); _Analysis_assume_(__afx_condVal); } while(0) 
 #else
 #define AFXASSUME(cond)			((void)0)
 #endif
@@ -399,12 +423,12 @@ inline void AFX_CDECL AfxTrace(...) { }
 #define AFX_BEGIN_DESTRUCTOR try {
 #define AFX_END_DESTRUCTOR   } catch (CException *pException) { EXCEPTION_IN_DTOR(pException); }
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Other implementation helpers
 
 #define BEFORE_START_POSITION ((POSITION)-1L)
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // explicit initialization for general purpose classes
 
 BOOL AFXAPI AfxInitialize(BOOL bDLL = FALSE, DWORD dwVersion = _MFC_VER);
@@ -412,7 +436,7 @@ BOOL AFXAPI AfxInitialize(BOOL bDLL = FALSE, DWORD dwVersion = _MFC_VER);
 #undef AFX_DATA
 #define AFX_DATA AFX_CORE_DATA
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Basic object model
 
 // generate static object constructor for class registration
@@ -452,7 +476,7 @@ struct CRuntimeClass
 	const AFX_CLASSINIT* m_pClassInit;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Standard exception throws
 
 void __declspec(noreturn) AFXAPI AfxThrowMemoryException();
@@ -464,7 +488,7 @@ void __declspec(noreturn) AFXAPI AfxThrowFileException(int cause, LONG lOsError 
 	LPCTSTR lpszFileName = NULL);
 void __declspec(noreturn) AFXAPI AfxThrowOleException(LONG sc);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CRT functions
 
 inline errno_t AfxCrtErrorCheck(errno_t error)
@@ -496,14 +520,14 @@ inline void __cdecl Afx_clearerr_s(FILE *stream)
 	AFX_CRT_ERRORCHECK(::clearerr_s(stream));
 }
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Strings
 
 #ifndef _OLEAUTO_H_
-	typedef LPWSTR BSTR;// must (semantically) match typedef in oleauto.h
+	typedef _Null_terminated_ LPWSTR BSTR;// must (semantically) match typedef in oleauto.h
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // class CObject is the root of all compliant objects
 
 class AFX_NOVTABLE CObject
@@ -583,7 +607,7 @@ CObject* AFX_CDECL AfxStaticDownCast(CRuntimeClass* pClass, CObject* pObject);
 #define STATIC_DOWNCAST(class_name, object) (static_cast<class_name*>(object))
 #endif
 
-//////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Helper macros for declaring CRuntimeClass compatible classes
 
 #ifdef _AFXDLL
@@ -692,7 +716,7 @@ public: \
 // optional bit for schema number that enables object versioning
 #define VERSIONABLE_SCHEMA  (0x80000000)
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Exceptions
 
 class AFX_NOVTABLE CException : public CObject
@@ -708,9 +732,9 @@ public:
 // Operations
 	void Delete();  // use to delete exception in 'catch' block
 
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const ;
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL);
 	virtual int ReportError(UINT nType = MB_OK, UINT nMessageID = 0);
 
@@ -743,7 +767,7 @@ public:
 	explicit CSimpleException(BOOL bAutoDelete);
 
 // Operations
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 
 // Implementation (setting m_bAutoDelete to FALSE is advanced)
@@ -807,7 +831,7 @@ int AFX_CDECL AfxNewHandler(size_t nSize);
 void AFXAPI AfxAbort();
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Exception macros using try, catch and throw
 //  (for backward compatibility to previous versions of MFC)
 
@@ -842,7 +866,7 @@ void AFXAPI AfxAbort();
 		_afxExceptionLink.m_pException = e; } }
 
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Standard Exception classes
 
 class CMemoryException : public CSimpleException
@@ -905,7 +929,7 @@ public:
 #pragma warning(pop)
 
 // Constructor
-	/* explicit */ CArchiveException(int cause = CArchiveException::none,
+	explicit CArchiveException(int cause = CArchiveException::none,
 		LPCTSTR lpszArchiveName = NULL);
 
 // Attributes
@@ -918,7 +942,7 @@ public:
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext& dc) const;
 #endif
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 };
 
@@ -951,7 +975,7 @@ public:
 #pragma warning(pop)
 
 // Constructor
-	/* explicit */ CFileException(int cause = CFileException::none, LONG lOsError = -1,
+	explicit CFileException(int cause = CFileException::none, LONG lOsError = -1,
 		LPCTSTR lpszArchiveName = NULL);
 
 // Attributes
@@ -974,11 +998,11 @@ public:
 #ifdef _DEBUG
 	virtual void Dump(CDumpContext&) const;
 #endif
-	virtual BOOL GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+	virtual BOOL GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext = NULL) const;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // File - raw unbuffered disk file I/O
 
 #ifndef __ATLTRANSACTIONMANAGER_H__
@@ -1003,10 +1027,13 @@ public:
 		shareDenyRead =    (int) 0x00030,
 		shareDenyNone =    (int) 0x00040,
 		modeNoInherit =    (int) 0x00080,
+#ifdef _UNICODE
+		typeUnicode =      (int) 0x00400, // used in derived classes (e.g. CStdioFile) only
+#endif
 		modeCreate =       (int) 0x01000,
 		modeNoTruncate =   (int) 0x02000,
-		typeText =         (int) 0x04000, // typeText and typeBinary are
-		typeBinary =       (int) 0x08000, // used in derived classes only
+		typeText =         (int) 0x04000, // used in derived classes (e.g. CStdioFile) only
+		typeBinary =       (int) 0x08000, // used in derived classes (e.g. CStdioFile) only
 		osNoBuffer =       (int) 0x10000,
 		osWriteThrough =   (int) 0x20000,
 		osRandomAccess =   (int) 0x40000,
@@ -1014,13 +1041,21 @@ public:
 		};
 
 	enum Attribute {
-		normal =    0x00,
-		readOnly =  0x01,
-		hidden =    0x02,
-		system =    0x04,
-		volume =    0x08,
-		directory = 0x10,
-		archive =   0x20
+		normal     = 0x00,                // note: not same as FILE_ATTRIBUTE_NORMAL
+		readOnly   = FILE_ATTRIBUTE_READONLY,
+		hidden     = FILE_ATTRIBUTE_HIDDEN,
+		system     = FILE_ATTRIBUTE_SYSTEM,
+		volume     = 0x08,
+		directory  = FILE_ATTRIBUTE_DIRECTORY,
+		archive    = FILE_ATTRIBUTE_ARCHIVE,
+		device     = FILE_ATTRIBUTE_DEVICE,
+		temporary  = FILE_ATTRIBUTE_TEMPORARY,
+		sparse     = FILE_ATTRIBUTE_SPARSE_FILE,
+		reparsePt  = FILE_ATTRIBUTE_REPARSE_POINT,
+		compressed = FILE_ATTRIBUTE_COMPRESSED,
+		offline    = FILE_ATTRIBUTE_OFFLINE,
+		notIndexed = FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
+		encrypted  = FILE_ATTRIBUTE_ENCRYPTED
 		};
 
 	enum SeekPosition { begin = 0x0, current = 0x1, end = 0x2 };
@@ -1146,7 +1181,7 @@ protected:
 	CAtlTransactionManager* m_pTM;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // STDIO file implementation
 
 class CStdioFile : public CFile
@@ -1179,7 +1214,7 @@ public:
 // Operations
 	// reading and writing strings
 	virtual void WriteString(LPCTSTR lpsz);
-	virtual LPTSTR ReadString(_Out_z_cap_(nMax) LPTSTR lpsz, _In_ UINT nMax);
+	virtual LPTSTR ReadString(_Out_writes_z_(nMax) LPTSTR lpsz, _In_ UINT nMax);
 	virtual BOOL ReadString(CString& rString);
 
 // Implementation
@@ -1219,7 +1254,7 @@ protected:
 	void CommonInit(LPCTSTR lpszFileName, UINT nOpenFlags, CAtlTransactionManager* pTM);
 };
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Memory based file implementation
 
 class CMemFile : public CFile
@@ -1228,7 +1263,7 @@ class CMemFile : public CFile
 
 public:
 // Constructors
-	/* explicit */ CMemFile(UINT nGrowBytes = 1024);
+	explicit CMemFile(UINT nGrowBytes = 1024);
 	CMemFile(BYTE* lpBuffer, UINT nBufferSize, UINT nGrowBytes = 0);
 
 // Operations
@@ -1277,7 +1312,7 @@ public:
 	virtual void UnlockRange(ULONGLONG dwPos, ULONGLONG dwCount);
 };
 
-////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Local file searches
 
 #include <atltime.h>
@@ -1366,7 +1401,7 @@ CDumpContext& AFXAPI operator<<(CDumpContext& dc, CTime dateSrc);
 CArchive& AFXAPI operator<<(CArchive& ar, CTime dateSrc);
 CArchive& AFXAPI operator>>(CArchive& ar, CTime& dateSrc);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // File status
 
 struct CFileStatus
@@ -1374,9 +1409,8 @@ struct CFileStatus
 	CTime m_ctime;          // creation date/time of file
 	CTime m_mtime;          // last modification date/time of file
 	CTime m_atime;          // last access date/time of file
-	ULONGLONG m_size;            // logical size of file in bytes
-	BYTE m_attribute;       // logical OR of CFile::Attribute enum values
-	BYTE _m_padding;        // pad the structure to a WORD
+	ULONGLONG m_size;       // logical size of file in bytes
+	DWORD m_attribute;      // logical OR of CFile::Attribute enum values
 	TCHAR m_szFullName[_MAX_PATH]; // absolute path name
 
 #ifdef _DEBUG
@@ -1384,7 +1418,7 @@ struct CFileStatus
 #endif
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Diagnostic memory management routines
 
 // Low level sanity checks for memory blocks
@@ -1404,7 +1438,7 @@ void* AFX_CDECL operator new(size_t nSize, LPCSTR lpszFileName, int nLine);
 #define DEBUG_NEW new(THIS_FILE, __LINE__)
 void AFX_CDECL operator delete(void* p, LPCSTR lpszFileName, int nLine);
 
-void * __cdecl operator new[](size_t);
+_Ret_notnull_ _Post_writable_byte_size_(_Size) void * __cdecl operator new[](size_t _Size);
 void* __cdecl operator new[](size_t nSize, LPCSTR lpszFileName, int nLine);
 void __cdecl operator delete[](void* p, LPCSTR lpszFileName, int nLine);
 void __cdecl operator delete[](void *);
@@ -1520,7 +1554,7 @@ BOOL AFXAPI AfxDiagnosticInit(void);
 
 #endif // _DEBUG
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Archives for serializing CObject data
 
 // needed for implementation
@@ -1566,7 +1600,7 @@ public:
 
 	// reading and writing strings
 	void WriteString(LPCTSTR lpsz);
-	LPTSTR ReadString(_Out_z_cap_(nMax+1) LPTSTR lpsz, _In_ UINT nMax);
+	LPTSTR ReadString(_Out_writes_z_(nMax+1) LPTSTR lpsz, _In_ UINT nMax);
 	BOOL ReadString(CString& rString);
 
 public:
@@ -1689,7 +1723,7 @@ protected:
 	UINT m_nHashSize;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // Diagnostic dumping
 
 // Note: AfxDumpStack is available in release builds, although it is always

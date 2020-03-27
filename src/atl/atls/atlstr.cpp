@@ -17,7 +17,7 @@ namespace ATL
 
 #pragma init_seg( lib )
 
-CWin32Heap g_strheap( ::GetProcessHeap() );
+static CWin32Heap g_strheap( ::GetProcessHeap() );
 CAtlStringMgr g_strmgr( &g_strheap );
 
 };  // namespace ATL

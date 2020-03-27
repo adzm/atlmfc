@@ -403,7 +403,7 @@ public:
 	// appends an array of type T items
 	HRESULT Add(
 		_In_ ULONG ulCount,
-		_In_count_(ulCount) const T *pT,
+		_In_reads_(ulCount) const T *pT,
 		_In_ BOOL bCopy = TRUE)
 	{
 		ATLASSERT(pT != NULL);

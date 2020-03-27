@@ -39,7 +39,7 @@ extern "C" { int _afxForceEXTDLL; }
 extern "C" { int __afxForceEXTDLL; }
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // RawDllMain that saves current app class list and factory list
 
 extern "C" BOOL WINAPI ExtRawDllMain(HINSTANCE, DWORD dwReason, LPVOID);

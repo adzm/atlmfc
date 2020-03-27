@@ -11,6 +11,12 @@
 	#error The Visual C++ COM Library requires C++ compilation (use a .cpp suffix)
 #endif
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <shellapi.h>
 #include "atlevent.h"
 #include <atlstr.h>
@@ -70,7 +76,7 @@ class CVMExpansionVector :
 	public CSimpleMap<LPTSTR, LPTSTR>
 {
 public:
-	int FindKey(_In_ _Deref_prepost_z_ LPTSTR& key) const
+	int FindKey(_In_ _Prepost_z_ LPTSTR& key) const
 	{
 		for(int i = 0; i < m_nSize; i++)
 		{
@@ -79,7 +85,7 @@ public:
 		}
 		return -1;  // not found
 	}
-	int FindVal(_In_ _Deref_prepost_z_ LPTSTR& val) const
+	int FindVal(_In_ _Prepost_z_ LPTSTR& val) const
 	{
 		for(int i = 0; i < m_nSize; i++)
 		{
@@ -105,8 +111,8 @@ class CRegistryVirtualMachine :
 public:
 ATLPREFAST_SUPPRESS(6387)
 	HRESULT STDMETHODCALLTYPE QueryInterface(
-		_In_ const IID &riid,
-		_Deref_out_ void** ppv)
+		const IID &riid,
+		_Outptr_ void** ppv)
 	{
 		if (ppv == NULL)
 			return E_POINTER;
@@ -175,7 +181,7 @@ public:
 			TCHAR szModuleQuote[_MAX_PATH + _ATL_QUOTES_SPACE];
 			szModuleQuote[0] = _T('\"');
 			Checked::tcscpy_s(szModuleQuote + 1, _countof(szModuleQuote) - 1, szModule);
-			int nLen = lstrlen(szModuleQuote);
+			int nLen = static_cast<int>(_tcslen(szModuleQuote));
 			szModuleQuote[nLen] = _T('\"');
 			szModuleQuote[nLen + 1] = 0;
 			hr = AddReplacement(_T("Module"), szModuleQuote);
@@ -203,9 +209,11 @@ public:
 		CoTaskMemFree(sz);
 		if (FAILED(hr))
 			return hr;
+ATLPREFAST_SUPPRESS(6001)
 		SHFILEINFO shf;
 		if (SHGetFileInfo(szModule, 0, &shf, sizeof(shf), SHGFI_EXETYPE) == 0)
 			hr = AddReplacement(_T("MODULETYPE"), _T("InprocServer32"));
+ATLPREFAST_UNSUPPRESS()
 		else
 			hr = AddReplacement(_T("MODULETYPE"), _T("LocalServer32"));
 
@@ -225,12 +233,12 @@ public:
 		HRESULT hr = E_OUTOFMEMORY; // If any of the new's fail.
 
 		m_csMap.Lock();
-		DWORD cch = lstrlen(lpszKey) + 1;
+		DWORD cch = static_cast<DWORD>(_tcslen(lpszKey)) + 1;
 		CAutoVectorPtr<TCHAR> szNewKey;
 		if (szNewKey.Allocate(cch))
 		{
 			Checked::tcscpy_s(szNewKey, cch, lpszKey);
-			cch = lstrlen(lpszItem) + 1;
+			cch = static_cast<DWORD>(_tcslen(lpszItem)) + 1;
 			CAutoVectorPtr<TCHAR> szNewItem;
 			if (szNewItem.Allocate(cch))
 			{
@@ -395,7 +403,7 @@ public:
 	HRESULT GetBinaryAtLoc(
 		_In_ RGSBinary* rgBinary,
 		_In_ DWORD iLoc,
-		_Deref_out_ BYTE** ppValue,
+		_Outptr_ BYTE** ppValue,
 		_Out_ DWORD* pdwLen) throw()
 	{
 		*ppValue = rgBinary[iLoc].pBytes;
@@ -607,7 +615,7 @@ public:
 					ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %s at %s\n"), (szReplacement) ? szReplacement : rgBytes.m_aT, (p1 != 0) ? (szReplacement2) ? szReplacement2 : rgBytes2.m_aT : _T("default"));
 
 					TCHAR* pszValue = (szReplacement) ? szReplacement : rgBytes.m_aT;
-					int nLen = lstrlen(pszValue) + 2; //Allocate space for double null termination.
+					int nLen = static_cast<int>(_tcslen(pszValue)) + 2; //Allocate space for double null termination.
 					CTempBuffer <TCHAR, 1024> pszDestValue;
 					//nLen should be >= the max size of the target buffer.
 					ATLTRY(pszDestValue.Allocate(nLen));
@@ -743,7 +751,7 @@ public:
 						{
 							szReplacement = rgBytes.m_aT;
 						}
-						int cbValue = lstrlen(szReplacement);
+						int cbValue = static_cast<int>(_tcslen(szReplacement));
 						if (cbValue & 0x00000001)
 						{
 							ATLTRACE(atlTraceRegistrar, 0, _T("Binary Data does not fall on BYTE boundries\n"));

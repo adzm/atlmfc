@@ -28,7 +28,6 @@
 static const int nImageHorzMargin = 10;
 static const int nVertMargin = 5;
 static const COLORREF clrDefault = (COLORREF) -1;
-static const UINT IdAutoCommand = 1;
 
 BOOL CMFCButton::m_bWinXPTheme = FALSE;
 BOOL CMFCButton::m_bWinXPThemeWasChecked = FALSE;
@@ -80,6 +79,7 @@ CMFCButton::CMFCButton()
 
 CMFCButton::~CMFCButton()
 {
+	CTooltipManager::DeleteToolTip(m_pToolTip);
 	CleanUp();
 }
 
@@ -99,7 +99,6 @@ void CMFCButton::CleanUp()
 	m_ImageCheckedDisabled.Clear();
 }
 
-//{{AFX_MSG_MAP(CMFCButton)
 BEGIN_MESSAGE_MAP(CMFCButton, CButton)
 	ON_WM_ERASEBKGND()
 	ON_WM_CANCELMODE()
@@ -122,7 +121,6 @@ BEGIN_MESSAGE_MAP(CMFCButton, CButton)
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCButton::OnInitControl)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCButton::OnUpdateToolTips)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCButton message handlers
@@ -225,13 +223,13 @@ void CMFCButton::OnFillBackground(CDC* pDC, const CRect& rectClient)
 	if (m_bTransparent)
 	{
 		// Copy background from the parent window
-		afxGlobalData.DrawParentBackground(this, pDC);
+		GetGlobalData()->DrawParentBackground(this, pDC);
 	}
 	else
 	{
 		if (m_clrFace == (COLORREF)-1)
 		{
-			pDC->FillRect(rectClient, &afxGlobalData.brBtnFace);
+			pDC->FillRect(rectClient, &(GetGlobalData()->brBtnFace));
 		}
 		else
 		{
@@ -291,7 +289,7 @@ void CMFCButton::OnDraw(CDC* pDC, const CRect& rect, UINT uiState)
 	ENSURE(pOldFont != NULL);
 
 	pDC->SetBkMode(TRANSPARENT);
-	COLORREF clrText = m_clrRegular == clrDefault ? afxGlobalData.clrBtnText : m_clrRegular;
+	COLORREF clrText = m_clrRegular == clrDefault ? GetGlobalData()->clrBtnText : m_clrRegular;
 
 	if (m_bHighlighted && m_clrHover != clrDefault)
 	{
@@ -334,13 +332,13 @@ void CMFCButton::OnDraw(CDC* pDC, const CRect& rect, UINT uiState)
 
 	if ((uiState & ODS_DISABLED) && m_bGrayDisabled)
 	{
-		pDC->SetTextColor(afxGlobalData.clrBtnHilite);
+		pDC->SetTextColor(GetGlobalData()->clrBtnHilite);
 
 		CRect rectShft = rectText;
 		rectShft.OffsetRect(1, 1);
 		OnDrawText(pDC, rectShft, strText, uiDTFlags, uiState);
 
-		clrText = afxGlobalData.clrGrayedText;
+		clrText = GetGlobalData()->clrGrayedText;
 	}
 
 	pDC->SetTextColor(clrText);
@@ -484,7 +482,7 @@ void CMFCButton::SetImageInternal(HICON hIconCold, BOOL bAutoDestroy, HICON hIco
 			{
 				HBITMAP hOldBmp = (HBITMAP) dcMem.SelectObject(hBmp);
 
-				dcMem.FillRect(CRect(0, 0, m_sizeImage.cx, m_sizeImage.cy), &afxGlobalData.brBtnFace);
+				dcMem.FillRect(CRect(0, 0, m_sizeImage.cx, m_sizeImage.cy), &(GetGlobalData()->brBtnFace));
 
 				::DrawIconEx(dcMem.GetSafeHdc(), 0, 0, hIcon, m_sizeImage.cx, m_sizeImage.cy, 0, NULL, DI_NORMAL);
 
@@ -500,7 +498,7 @@ void CMFCButton::SetImageInternal(HICON hIconCold, BOOL bAutoDestroy, HICON hIco
 
 		if (!bAlphaBlend)
 		{
-			image.SetTransparentColor(afxGlobalData.clrBtnFace);
+			image.SetTransparentColor(GetGlobalData()->clrBtnFace);
 		}
 
 		image.AddIcon(hIcon, bAlphaBlend);
@@ -571,7 +569,7 @@ void CMFCButton::SetImageInternal(HBITMAP hBitmapCold, BOOL bAutoDestroy, HBITMA
 		}
 
 		image.SetImageSize(CSize(bmp.bmWidth, bmp.bmHeight));
-		image.SetTransparentColor(bMap3dColorsCurr ? RGB(192, 192, 192) : bAlpha ?(COLORREF) -1 : afxGlobalData.clrBtnFace);
+		image.SetTransparentColor(bMap3dColorsCurr ? RGB(192, 192, 192) : bAlpha ?(COLORREF) -1 : GetGlobalData()->clrBtnFace);
 		image.AddImage(hBitmap, TRUE);
 	}
 
@@ -674,7 +672,7 @@ void CMFCButton::OnCancelMode()
 
 	if (m_nAutoRepeatTimeDelay >= 0)
 	{
-		KillTimer(IdAutoCommand);
+		KillTimer(AFX_TIMER_ID_AUTOCOMMAND);
 	}
 }
 
@@ -690,7 +688,10 @@ void CMFCButton::OnMouseMove(UINT nFlags, CPoint point)
 		CRect rectClient;
 		GetClientRect(rectClient);
 
-		if (rectClient.PtInRect(point))
+		CPoint ptScreen = point;
+		ClientToScreen(&ptScreen);
+
+		if (rectClient.PtInRect(point) && WindowFromPoint(ptScreen)->GetSafeHwnd() == GetSafeHwnd())
 		{
 			m_bHover = TRUE;
 
@@ -775,7 +776,7 @@ void CMFCButton::OnLButtonDown(UINT nFlags, CPoint point)
 
 		if (m_nAutoRepeatTimeDelay > 0)
 		{
-			SetTimer(IdAutoCommand, m_nAutoRepeatTimeDelay, NULL);
+			SetTimer(AFX_TIMER_ID_AUTOCOMMAND, m_nAutoRepeatTimeDelay, NULL);
 		}
 	}
 
@@ -839,7 +840,7 @@ void CMFCButton::OnLButtonUp(UINT nFlags, CPoint point)
 
 	if (m_nAutoRepeatTimeDelay > 0)
 	{
-		KillTimer(IdAutoCommand);
+		KillTimer(AFX_TIMER_ID_AUTOCOMMAND);
 	}
 
 	if (m_pToolTip->GetSafeHwnd() != NULL)
@@ -1017,7 +1018,7 @@ void CMFCButton::SetMouseCursor(HCURSOR hcursor)
 
 void CMFCButton::SetMouseCursorHand()
 {
-	SetMouseCursor(afxGlobalData.GetHandCursor());
+	SetMouseCursor(GetGlobalData()->GetHandCursor());
 }
 
 BOOL CMFCButton::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
@@ -1048,7 +1049,7 @@ void CMFCButton::OnDrawFocusRect(CDC* pDC, const CRect& rectClient)
 	CRect rectFocus = rectClient;
 	rectFocus.DeflateRect(1, 1);
 
-	COLORREF clrBckgr = (m_clrFace == (COLORREF)-1) ? afxGlobalData.clrBtnFace : m_clrFace;
+	COLORREF clrBckgr = (m_clrFace == (COLORREF)-1) ? GetGlobalData()->clrBtnFace : m_clrFace;
 
 	if (!m_bWinXPTheme || m_bDontUseWinXPTheme)
 	{
@@ -1062,7 +1063,7 @@ void CMFCButton::OnDrawFocusRect(CDC* pDC, const CRect& rectClient)
 void CMFCButton::OnDrawParentBackground(CDC* pDC, CRect rectClient)
 {
 	ASSERT_VALID(pDC);
-	afxGlobalData.DrawParentBackground(this, pDC, rectClient);
+	GetGlobalData()->DrawParentBackground(this, pDC, rectClient);
 }
 
 void CMFCButton::OnEnable(BOOL bEnable)
@@ -1133,7 +1134,7 @@ afx_msg LRESULT CMFCButton::OnGetFont(WPARAM, LPARAM)
 
 void CMFCButton::EnableMenuFont(BOOL bOn, BOOL bRedraw)
 {
-	m_hFont = bOn ?(HFONT) afxGlobalData.fontRegular.GetSafeHandle() : NULL;
+	m_hFont = bOn ?(HFONT) GetGlobalData()->fontRegular.GetSafeHandle() : NULL;
 
 	if (bRedraw && GetSafeHwnd() != NULL)
 	{
@@ -1295,16 +1296,32 @@ void CMFCButton::UncheckRadioButtonsInGroup()
 		return;
 	}
 
+	BOOL bResetTabStop = FALSE;
+
 	// Walk through group and clear radio buttons check state
 	for (CWnd * pCtl = pWndParent->GetNextDlgGroupItem(this); pCtl != this && pCtl != NULL; pCtl = pWndParent->GetNextDlgGroupItem(pCtl))
 	{
 		CMFCButton* pBtn = DYNAMIC_DOWNCAST(CMFCButton, pCtl);
 
-		if (pBtn != NULL && pBtn->m_bRadioButton && pBtn->m_bChecked)
+		if (pBtn != NULL && pBtn->m_bRadioButton)
 		{
-			pBtn->m_bChecked = FALSE;
-			pBtn->RedrawWindow();
+			if ((pBtn->GetStyle() & WS_TABSTOP) == WS_TABSTOP)
+			{
+				pBtn->ModifyStyle(WS_TABSTOP, 0);
+				bResetTabStop = TRUE;
+			}
+
+			if (pBtn->m_bChecked)
+			{
+				pBtn->m_bChecked = FALSE;
+				pBtn->RedrawWindow();
+			}
 		}
+	}
+
+	if (bResetTabStop)
+	{
+		ModifyStyle(0, WS_TABSTOP);
 	}
 }
 
@@ -1316,7 +1333,7 @@ void CMFCButton::SetAutorepeatMode(int nTimeDelay)
 
 void CMFCButton::OnTimer(UINT_PTR nIDEvent)
 {
-	if (nIDEvent == IdAutoCommand)
+	if (nIDEvent == AFX_TIMER_ID_AUTOCOMMAND)
 	{
 		if (m_bPushed && m_bHighlighted)
 		{
@@ -1349,13 +1366,13 @@ void CMFCButton::DrawBorder(CDC* pDC, CRect& rectClient, UINT uiState)
 		{
 			if (!bBorderIsReady)
 			{
-				pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnDkShadow, afxGlobalData.clrBtnHilite);
+				pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnDkShadow, GetGlobalData()->clrBtnHilite);
 
 				rectClient.DeflateRect(1, 1);
 
 				if (m_nFlatStyle != BUTTONSTYLE_FLAT)
 				{
-					pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnShadow, afxGlobalData.clrBtnLight);
+					pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnShadow, GetGlobalData()->clrBtnLight);
 				}
 
 				rectClient.DeflateRect(1, 1);
@@ -1373,12 +1390,12 @@ void CMFCButton::DrawBorder(CDC* pDC, CRect& rectClient, UINT uiState)
 		}
 		else if (!bBorderIsReady &&(m_nFlatStyle != BUTTONSTYLE_FLAT || m_bHighlighted))
 		{
-			pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnHilite, afxGlobalData.clrBtnDkShadow);
+			pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnHilite, GetGlobalData()->clrBtnDkShadow);
 			rectClient.DeflateRect(1, 1);
 
 			if (m_nFlatStyle == BUTTONSTYLE_3D || (m_nFlatStyle == BUTTONSTYLE_SEMIFLAT && m_bHighlighted))
 			{
-				pDC->Draw3dRect(rectClient, afxGlobalData.clrBtnLight, afxGlobalData.clrBtnShadow);
+				pDC->Draw3dRect(rectClient, GetGlobalData()->clrBtnLight, GetGlobalData()->clrBtnShadow);
 			}
 
 			rectClient.DeflateRect(1, 1);
@@ -1525,7 +1542,7 @@ LRESULT CMFCButton::OnInitControl(WPARAM wParam, LPARAM lParam)
 	}
 
 	BOOL bAutosize = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCButton_Autosize, bAutosize))
+	if (ReadBoolProp(tagManager, PS_MFCButton_Autosize, bAutosize))
 	{
 		if (bAutosize)
 		{
@@ -1613,13 +1630,13 @@ LRESULT CMFCButton::OnInitControl(WPARAM wParam, LPARAM lParam)
 	}
 
 	BOOL bImageOnTop = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCButton_ImageOnTop, bImageOnTop))
+	if (ReadBoolProp(tagManager, PS_MFCButton_ImageOnTop, bImageOnTop))
 	{
 		m_bTopImage = bImageOnTop;
 	}
 
 	BOOL bImageOnRight = FALSE;
-	if (CMFCControlContainer::ReadBoolProp(tagManager, PS_MFCButton_ImageOnRight, bImageOnRight))
+	if (ReadBoolProp(tagManager, PS_MFCButton_ImageOnRight, bImageOnRight))
 	{
 		m_bRightImage = bImageOnRight;
 	}

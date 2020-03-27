@@ -24,7 +24,7 @@
 class CMFCToolBarImages;
 class CUserTool;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCToolBarButtonCustomizeDialog dialog
 
 class CMFCToolBarButtonCustomizeDialog : public CDialog
@@ -35,7 +35,6 @@ public:
 	virtual ~CMFCToolBarButtonCustomizeDialog();
 
 // Dialog Data
-	//{{AFX_DATA(CMFCToolBarButtonCustomizeDialog)
 	enum { IDD = IDD_AFXBARRES_BUTTON_PROPS };
 	CButton      m_wndDefautImageBtn;
 	CButton      m_wndUserImageBtn;
@@ -46,7 +45,6 @@ public:
 	CButton      m_wndEditImage;
 	CString      m_strButtonText;
 	CString      m_strButtonDescr;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -54,7 +52,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCToolBarButtonCustomizeDialog)
 	afx_msg void OnAddImage();
 	afx_msg void OnEditImage();
 	afx_msg void OnImageList();
@@ -64,7 +61,7 @@ protected:
 	afx_msg void OnUserImage();
 	afx_msg void OnDefaultImage();
 	afx_msg void OnPaint();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	virtual void OnOK();

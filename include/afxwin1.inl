@@ -33,11 +33,6 @@ _AFXWIN_INLINE CWnd* AFXAPI AfxGetMainWnd()
 	{ CWinThread* pThread = AfxGetThread();
 		return pThread != NULL ? pThread->GetMainWnd() : NULL; }
 
-_AFXWIN_INLINE BOOL AFXAPI AfxGetAmbientActCtx()
-	{ 	return afxAmbientActCtx; }
-_AFXWIN_INLINE void AFXAPI AfxSetAmbientActCtx(BOOL bSet)
-	{  afxAmbientActCtx = bSet; }
-
 // CArchive output helpers
 _AFXWIN_INLINE CArchive& AFXAPI operator<<(CArchive& ar, SIZE size)
 	{ ar.Write(&size, sizeof(SIZE)); return ar; }
@@ -198,7 +193,7 @@ _AFXWIN_INLINE BOOL CBitmap::LoadBitmap(LPCTSTR lpszResourceName)
 #ifndef _AFX_NO_AFXCMN_SUPPORT
 _AFXWIN_INLINE BOOL CBitmap::LoadMappedBitmap(UINT nIDBitmap, UINT nFlags,
 	LPCOLORMAP lpColorMap, int nMapSize)
-	{ return Attach(::AfxCreateMappedBitmap(AfxFindResourceHandle(
+	{ return Attach(CreateMappedBitmap(AfxFindResourceHandle(
 		MAKEINTRESOURCE(nIDBitmap), RT_BITMAP), nIDBitmap, (WORD)nFlags,
 		lpColorMap, nMapSize)); }
 #endif
@@ -686,7 +681,7 @@ _AFXWIN_INLINE BOOL CDC::GrayString(CBrush* pBrush,
 		(GRAYSTRINGPROC)lpfnOutput, lpData, nCount, x, y, nWidth, nHeight); }
 _AFXWIN_INLINE UINT CDC::GetTextAlign() const
 	{ ASSERT(m_hAttribDC != NULL); return ::GetTextAlign(m_hAttribDC); }
-_AFXWIN_INLINE int CDC::GetTextFace(_In_ int nCount, _Out_z_cap_post_count_(nCount, return) LPTSTR lpszFacename) const
+_AFXWIN_INLINE int CDC::GetTextFace(_In_ int nCount, _Out_writes_to_(nCount, return) LPTSTR lpszFacename) const
 	{ ASSERT(m_hAttribDC != NULL); return ::GetTextFace(m_hAttribDC, nCount, lpszFacename); }
 _AFXWIN_INLINE  int CDC::GetTextFace(CString& rString) const
 	{ ASSERT(m_hAttribDC != NULL); int nResult = ::GetTextFace(m_hAttribDC,
@@ -730,7 +725,7 @@ _AFXWIN_INLINE BOOL CDC::ScrollDC(int dx, int dy,
 		lpRectClip, (HRGN)pRgnUpdate->GetSafeHandle(), lpRectUpdate); }
 
 // Printer Escape Functions
-_AFXWIN_INLINE int CDC::Escape(int nEscape, int nCount, LPCSTR lpszInData, LPVOID lpOutData)
+_AFXWIN_INLINE int CDC::Escape(_In_ int nEscape, _In_ int nCount, _In_reads_bytes_(nCount) LPCSTR lpszInData, _In_ LPVOID lpOutData)
 	{ ASSERT(m_hDC != NULL); return ::Escape(m_hDC, nEscape, nCount, lpszInData, lpOutData);}
 
 // CDC 3.1 Specific functions
@@ -808,8 +803,8 @@ _AFXWIN_INLINE BOOL CDC::PolyBezier(const POINT* lpPoints, int nCount)
 
 _AFXWIN_INLINE int CDC::DrawEscape(int nEscape, int nInputSize, LPCSTR lpszInputData)
 	{ ASSERT(m_hDC != NULL); return ::DrawEscape(m_hDC, nEscape, nInputSize, lpszInputData); }
-_AFXWIN_INLINE int CDC::Escape(_In_ int nEscape, _In_ int nInputSize, _In_bytecount_(nInputSize) LPCSTR lpszInputData,
-		_In_ int nOutputSize, _Out_bytecap_(nOutputSize) LPSTR lpszOutputData)
+_AFXWIN_INLINE int CDC::Escape(_In_ int nEscape, _In_ int nInputSize, _In_reads_bytes_(nInputSize) LPCSTR lpszInputData,
+		_In_ int nOutputSize, _Out_writes_bytes_(nOutputSize) LPSTR lpszOutputData)
 	{ ASSERT(m_hDC != NULL); return ::ExtEscape(m_hDC, nEscape, nInputSize, lpszInputData,
 		nOutputSize, lpszOutputData); }
 
@@ -859,49 +854,49 @@ _AFXWIN_INLINE CImageList::operator HIMAGELIST() const
 _AFXWIN_INLINE HIMAGELIST CImageList::GetSafeHandle() const
 	{ return (this == NULL) ? NULL : m_hImageList; }
 _AFXWIN_INLINE int CImageList::GetImageCount() const
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_GetImageCount(m_hImageList); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_GetImageCount(m_hImageList); }
 _AFXWIN_INLINE int CImageList::Add(CBitmap* pbmImage, CBitmap* pbmMask)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_Add(m_hImageList, (HBITMAP)pbmImage->GetSafeHandle(), (HBITMAP)pbmMask->GetSafeHandle()); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_Add(m_hImageList, (HBITMAP)pbmImage->GetSafeHandle(), (HBITMAP)pbmMask->GetSafeHandle()); }
 _AFXWIN_INLINE int CImageList::Add(CBitmap* pbmImage, COLORREF crMask)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_AddMasked(m_hImageList, (HBITMAP)pbmImage->GetSafeHandle(), crMask); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_AddMasked(m_hImageList, (HBITMAP)pbmImage->GetSafeHandle(), crMask); }
 _AFXWIN_INLINE BOOL CImageList::Remove(int nImage)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_Remove(m_hImageList, nImage); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_Remove(m_hImageList, nImage); }
 _AFXWIN_INLINE BOOL CImageList::Replace(int nImage, CBitmap* pbmImage, CBitmap* pbmMask)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_Replace(m_hImageList, nImage, (HBITMAP)pbmImage->GetSafeHandle(), (HBITMAP)pbmMask->GetSafeHandle()); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_Replace(m_hImageList, nImage, (HBITMAP)pbmImage->GetSafeHandle(), (HBITMAP)pbmMask->GetSafeHandle()); }
 _AFXWIN_INLINE int CImageList::Add(HICON hIcon)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_AddIcon(m_hImageList, hIcon); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_AddIcon(m_hImageList, hIcon); }
 _AFXWIN_INLINE int CImageList::Replace(int nImage, HICON hIcon)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_ReplaceIcon(m_hImageList, nImage, hIcon); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_ReplaceIcon(m_hImageList, nImage, hIcon); }
 _AFXWIN_INLINE HICON CImageList::ExtractIcon(int nImage)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_ExtractIcon(NULL, m_hImageList, nImage); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_ExtractIcon(NULL, m_hImageList, nImage); }
 _AFXWIN_INLINE BOOL CImageList::Draw(CDC* pDC, int nImage, POINT pt, UINT nStyle)
-	{ ASSERT(m_hImageList != NULL); ASSERT(pDC != NULL); return AfxImageList_Draw(m_hImageList, nImage, pDC->GetSafeHdc(), pt.x, pt.y, nStyle); }
+	{ ASSERT(m_hImageList != NULL); ASSERT(pDC != NULL); return ImageList_Draw(m_hImageList, nImage, pDC->GetSafeHdc(), pt.x, pt.y, nStyle); }
 _AFXWIN_INLINE BOOL CImageList::DrawEx(CDC* pDC, int nImage, POINT pt, SIZE sz, COLORREF clrBk, COLORREF clrFg, UINT nStyle)
-	{ ASSERT(m_hImageList != NULL); ASSERT(pDC != NULL); return AfxImageList_DrawEx(m_hImageList, nImage, pDC->GetSafeHdc(), pt.x, pt.y, sz.cx, sz.cy, clrBk, clrFg, nStyle); }
+	{ ASSERT(m_hImageList != NULL); ASSERT(pDC != NULL); return ImageList_DrawEx(m_hImageList, nImage, pDC->GetSafeHdc(), pt.x, pt.y, sz.cx, sz.cy, clrBk, clrFg, nStyle); }
 _AFXWIN_INLINE COLORREF CImageList::SetBkColor(COLORREF cr)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_SetBkColor(m_hImageList, cr); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_SetBkColor(m_hImageList, cr); }
 _AFXWIN_INLINE COLORREF CImageList::GetBkColor() const
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_GetBkColor(m_hImageList); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_GetBkColor(m_hImageList); }
 _AFXWIN_INLINE BOOL CImageList::SetOverlayImage(int nImage, int nOverlay)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_SetOverlayImage(m_hImageList, nImage, nOverlay); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_SetOverlayImage(m_hImageList, nImage, nOverlay); }
 _AFXWIN_INLINE BOOL CImageList::GetImageInfo(int nImage, IMAGEINFO* pImageInfo) const
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_GetImageInfo(m_hImageList, nImage, pImageInfo); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_GetImageInfo(m_hImageList, nImage, pImageInfo); }
 _AFXWIN_INLINE BOOL CImageList::BeginDrag(int nImage, CPoint ptHotSpot)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_BeginDrag(m_hImageList, nImage, ptHotSpot.x, ptHotSpot.y); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_BeginDrag(m_hImageList, nImage, ptHotSpot.x, ptHotSpot.y); }
 _AFXWIN_INLINE void PASCAL CImageList::EndDrag()
-	{ AfxImageList_EndDrag(); }
+	{ ImageList_EndDrag(); }
 _AFXWIN_INLINE BOOL PASCAL CImageList::DragMove(CPoint pt)
-	{ return AfxImageList_DragMove(pt.x, pt.y); }
+	{ return ImageList_DragMove(pt.x, pt.y); }
 _AFXWIN_INLINE BOOL CImageList::SetDragCursorImage(int nDrag, CPoint ptHotSpot)
-	{ ASSERT(m_hImageList != NULL); return AfxImageList_SetDragCursorImage(m_hImageList, nDrag, ptHotSpot.x, ptHotSpot.y); }
+	{ ASSERT(m_hImageList != NULL); return ImageList_SetDragCursorImage(m_hImageList, nDrag, ptHotSpot.x, ptHotSpot.y); }
 _AFXWIN_INLINE BOOL PASCAL CImageList::DragShowNolock(BOOL bShow)
-	{return AfxImageList_DragShowNolock(bShow);}
+	{return ImageList_DragShowNolock(bShow);}
 _AFXWIN_INLINE CImageList* PASCAL CImageList::GetDragImage(LPPOINT lpPoint, LPPOINT lpPointHotSpot)
-	{return CImageList::FromHandle(AfxImageList_GetDragImage(lpPoint, lpPointHotSpot));}
+	{return CImageList::FromHandle(ImageList_GetDragImage(lpPoint, lpPointHotSpot));}
 _AFXWIN_INLINE BOOL PASCAL CImageList::DragEnter(CWnd* pWndLock, CPoint point)
-	{ return AfxImageList_DragEnter(pWndLock->GetSafeHwnd(), point.x, point.y); }
+	{ return ImageList_DragEnter(pWndLock->GetSafeHwnd(), point.x, point.y); }
 _AFXWIN_INLINE BOOL PASCAL CImageList::DragLeave(CWnd* pWndLock)
-	{ return AfxImageList_DragLeave(pWndLock->GetSafeHwnd()); }
+	{ return ImageList_DragLeave(pWndLock->GetSafeHwnd()); }
 
 /////////////////////////////////////////////////////////////////////////////	
 
@@ -946,7 +941,7 @@ _AFXWIN_INLINE UINT CMenu::GetMenuItemID(int nPos) const
 	{ ASSERT(::IsMenu(m_hMenu)); return ::GetMenuItemID(m_hMenu, nPos); }
 _AFXWIN_INLINE UINT CMenu::GetMenuState(UINT nID, UINT nFlags) const
 	{ ASSERT(::IsMenu(m_hMenu)); return ::GetMenuState(m_hMenu, nID, nFlags); }
-_AFXWIN_INLINE int CMenu::GetMenuString(_In_ UINT nIDItem, _Out_z_cap_(nMaxCount) LPTSTR lpString, _In_ int nMaxCount, _In_ UINT nFlags) const
+_AFXWIN_INLINE int CMenu::GetMenuString(_In_ UINT nIDItem, _Out_writes_z_(nMaxCount) LPTSTR lpString, _In_ int nMaxCount, _In_ UINT nFlags) const
 	{ ASSERT(::IsMenu(m_hMenu)); return ::GetMenuString(m_hMenu, nIDItem, lpString, nMaxCount, nFlags); }
 _AFXWIN_INLINE BOOL CMenu::GetMenuItemInfo(UINT uItem, LPMENUITEMINFO lpMenuItemInfo, BOOL fByPos)
 	{ ASSERT(::IsMenu(m_hMenu)); ASSERT_POINTER(lpMenuItemInfo, MENUITEMINFO);

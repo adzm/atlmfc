@@ -23,6 +23,11 @@
 
 #pragma pack(push,_ATL_PACKING)
 
+#if defined(_AFX)
+#pragma push_macro("GetEnvironmentVariable")
+#undef GetEnvironmentVariable
+#endif
+
 namespace ATL
 {
 
@@ -47,7 +52,7 @@ public:
 
 // IAtlStringMgr
 public:
-	_Ret_opt_bytecap_x_(sizeof(CStringData) + nChars*nCharSize) virtual CStringData* Allocate(
+	virtual _Ret_maybenull_ _Post_writable_byte_size_(sizeof(CStringData) + nChars*nCharSize) CStringData* Allocate(
 		_In_ int nChars,
 		_In_ int nCharSize) throw()
 	{
@@ -81,8 +86,8 @@ public:
 			
 		m_pMemMgr->Free( pData );
 	}
-	_Ret_opt_bytecap_x_(sizeof(CStringData) + nChars*nCharSize) virtual CStringData* Reallocate(
-		_Inout_ _Post_bytecount_x_(sizeof(CStringData)) CStringData* pData,
+	virtual _Ret_maybenull_ _Post_writable_byte_size_(sizeof(CStringData) + nChars*nCharSize) CStringData* Reallocate(
+		_Inout_ _Post_readable_byte_size_(sizeof(CStringData)) CStringData* pData,
 		_In_ int nChars,
 		_In_ int nCharSize) throw()
 	{
@@ -122,10 +127,16 @@ protected:
 	CNilStringData m_nil;
 };
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 extern CAtlStringMgr g_strmgr;
+#else
+extern CAtlStringMgr g_strmgrApp;
+#endif
 
 template <class ChTraits>
 inline typename ChTraits::PCXSTR strstrT(typename ChTraits::PCXSTR pStr,typename ChTraits::PCXSTR pCharSet);
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 template< typename _CharType = char >
 class ChTraitsOS :
@@ -138,13 +149,13 @@ public:
 		LPCSTR pnext = CharNext(p);
 		return ((pnext-p)>1) ? 2 : 1;
 	}
-	_Ret_opt_z_ static LPCSTR strchr(
+	_Ret_maybenull_z_ static LPCSTR strchr(
 		_In_z_ LPCSTR p,
 		_In_ char ch) throw()
 	{
 		return AtlstrchrT(p,ch);
 	}
-	_Ret_opt_z_ static LPCSTR strchr_db(
+	_Ret_maybenull_z_ static LPCSTR strchr_db(
 		_In_z_ LPCSTR p,
 		_In_ char ch1,
 		_In_ char ch2) throw()
@@ -160,7 +171,7 @@ public:
 		}
 		return NULL;
 	}
-	_Ret_opt_z_ static LPCSTR strrchr(
+	_Ret_maybenull_z_ static LPCSTR strrchr(
 		_In_z_ LPCSTR p,
 		_In_ char ch) throw()
 	{
@@ -240,7 +251,7 @@ public:
 		}
 		return psz;
 	}
-	_Ret_opt_z_ static LPCSTR strstr(
+	_Ret_maybenull_z_ static LPCSTR strstr(
 		_In_z_ LPCSTR pStr,
 		_In_z_ LPCSTR pCharSet) throw()
 	{
@@ -298,7 +309,7 @@ public:
 		}
 		return nRet;
 	}
-	_Ret_opt_z_ static LPCSTR strpbrk(
+	_Ret_maybenull_z_ static LPCSTR strpbrk(
 		_In_z_ LPCSTR p,
 		_In_z_ LPCSTR lpszCharSet) throw()
 	{
@@ -364,35 +375,35 @@ public:
 		return nRet-2;  // Convert to strcmp convention.  This really is documented.
 	}
 
-	_Ret_opt_z_ static LPCSTR StringFindString(
+	_Ret_maybenull_z_ static LPCSTR StringFindString(
 		_In_z_ LPCSTR pstrBlock,
 		_In_z_ LPCSTR pstrMatch) throw()
 	{
 		return strstr(pstrBlock, pstrMatch);
 	}
 
-	_Ret_opt_z_ static LPSTR StringFindString(
+	_Ret_maybenull_z_ static LPSTR StringFindString(
 		_In_z_ LPSTR pszBlock,
 		_In_z_ LPCSTR pszMatch) throw()
 	{
 		return( const_cast< LPSTR >( StringFindString( const_cast< LPCSTR >( pszBlock ), pszMatch ) ) );
 	}
 
-	_Ret_opt_z_ static LPCSTR StringFindChar(
+	_Ret_maybenull_z_ static LPCSTR StringFindChar(
 		_In_z_ LPCSTR pszBlock,
 		_In_ char chMatch) throw()
 	{
 		return strchr(pszBlock, chMatch);
 	}
 
-	_Ret_opt_z_ static LPCSTR StringFindCharRev(
+	_Ret_maybenull_z_ static LPCSTR StringFindCharRev(
 		_In_z_ LPCSTR psz,
 		_In_ char ch) throw()
 	{
 		return strrchr(psz, ch);
 	}
 
-	_Ret_opt_z_ static LPCSTR StringScanSet(
+	_Ret_maybenull_z_ static LPCSTR StringScanSet(
 		_In_z_ LPCSTR pszBlock,
 		_In_z_ LPCSTR pszMatch) throw()
 	{
@@ -426,7 +437,7 @@ public:
 	}
 
 	static _CharType* StringUppercase(
-		_Inout_z_cap_(size) _CharType* psz,
+		_Inout_updates_z_(size) _CharType* psz,
 		_In_ size_t size) throw()
 	{
 		if(size>UINT_MAX)
@@ -440,7 +451,7 @@ public:
 	}
 
 	static _CharType* StringLowercase(
-		_Inout_z_cap_(size) _CharType* psz,
+		_Inout_updates_z_(size) _CharType* psz,
 		_In_ size_t size) throw()
 	{
 		if(size>UINT_MAX)
@@ -484,7 +495,7 @@ public:
 
 	_ATL_INSECURE_DEPRECATE("CSimpleStringT::Format must be passed a buffer size")
 	static int Format(
-		_Out_ _Post_z_count_(return) _CharType* pszBuffer,
+		_Out_ _Post_z_ _Post_readable_size_(return) _CharType* pszBuffer,
 		_In_z_ _Printf_format_string_ const _CharType* pszFormat,
 		_In_ va_list args) throw()
 	{
@@ -495,7 +506,7 @@ public:
 #pragma warning(pop)
 	}
 	static int Format(
-		_Out_z_cap_post_count_(nlength, return) _CharType*  pszBuffer,
+		_Out_writes_to_(nlength, return) _Post_z_ _CharType*  pszBuffer,
 		_In_ size_t nlength,
 		_In_z_ _Printf_format_string_ const _CharType* pszFormat, 
 		_In_ va_list args )
@@ -524,7 +535,7 @@ public:
 	static int GetBaseTypeLength(_In_z_ const char* pszSrc) throw()
 	{
 		// Returns required buffer length in XCHARs
-		return lstrlenA(pszSrc);
+		return AtlStrLen(pszSrc);
 	}
 
 	static int GetBaseTypeLength(
@@ -543,7 +554,7 @@ public:
 	}
 
 	static int GetBaseTypeLength(
-		_In_count_(nLength) const wchar_t* pszSrc,
+		_In_reads_(nLength) const wchar_t* pszSrc,
 		_In_ int nLength) throw()
 	{
 		// Returns required buffer length in XCHARs
@@ -551,9 +562,9 @@ public:
 	}
 
 	static void ConvertToBaseType(
-		_Out_cap_(nDestLength) _CharType* pszDest,
+		_Out_writes_(nDestLength) _CharType* pszDest,
 		_In_ int nDestLength,
-		_In_count_(nSrcLength) const char* pszSrc,
+		_In_reads_(nSrcLength) const char* pszSrc,
 		_In_ int nSrcLength = -1) throw()
 	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
@@ -563,9 +574,9 @@ public:
 	}
 
 	static void ConvertToBaseType(
-		_Out_cap_(nDestLength) _CharType* pszDest,
+		_Out_writes_(nDestLength) _CharType* pszDest,
 		_In_ int nDestLength,
-		_In_count_(nSrcLength) const wchar_t* pszSrc,
+		_In_reads_(nSrcLength) const wchar_t* pszSrc,
 		_In_ int nSrcLength = -1) throw()
 	{
 		// nLen is in XCHARs
@@ -589,7 +600,7 @@ public:
 	}
 
 	static void ConvertToOem(
-		_Out_z_cap_(size) _CharType* pstrString,
+		_Out_writes_z_(size) _CharType* pstrString,
 		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
@@ -606,7 +617,7 @@ public:
 	}
 
 	static void ConvertToAnsi(
-		_Out_z_cap_(size) _CharType* pstrString,
+		_Out_writes_z_(size) _CharType* pstrString,
 		_In_ size_t size)
 	{
 		if(size>UINT_MAX)
@@ -625,14 +636,14 @@ public:
 	static void FloodCharacters(
 		_In_ _CharType ch,
 		_In_ int nLength,
-		_Out_bytecapcount_(nLength) _CharType* pstr) throw()
+		_Out_writes_bytes_all_(nLength) _CharType* pstr) throw()
 	{
 		// nLength is in XCHARs
 		memset(pstr, ch, nLength);
 	}
 
-	_Ret_z_ static BSTR AllocSysString(
-		_In_count_(nDataLength) const _CharType* pchData,
+	_Ret_maybenull_z_ static BSTR AllocSysString(
+		_In_reads_(nDataLength) const _CharType* pchData,
 		_In_ int nDataLength) throw()
 	{
 		int nLen = MultiByteToWideChar(_AtlGetConversionACP(), 0, pchData, nDataLength,
@@ -647,7 +658,7 @@ public:
 	}
 
 	static BOOL ReAllocSysString(
-		_In_bytecount_(nDataLength) const _CharType* pchData,
+		_In_reads_bytes_(nDataLength) const _CharType* pchData,
 		_Inout_ _Deref_post_opt_valid_ BSTR* pbstr,
 		_In_ int nDataLength) throw()
 	{
@@ -668,7 +679,7 @@ public:
 		_In_ LPCVOID lpSource,
 		_In_ DWORD dwMessageID,
 		_In_ DWORD dwLanguageID,
-		_Out_z_cap_(nSize) char* pstrBuffer,
+		_Out_writes_z_(nSize) char* pstrBuffer,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* pArguments) throw()
 	{
@@ -679,13 +690,13 @@ public:
 	static int SafeStringLen(_In_opt_z_ const char* psz) throw()
 	{
 		// returns length in bytes
-		return (psz != NULL) ? lstrlenA(psz) : 0;
+		return (psz != NULL) ? static_cast<int>(strlen(psz)) : 0;
 	}
 
 	static int SafeStringLen(_In_opt_z_ const wchar_t* psz) throw()
 	{
 		// returns length in wchar_ts
-		return (psz != NULL) ? lstrlenW(psz) : 0;
+		return (psz != NULL) ? static_cast<int>(wcslen(psz)) : 0;
 	}
 
 	static int GetCharLen(_In_opt_z_ const wchar_t*) throw()
@@ -701,7 +712,7 @@ public:
 
 	static DWORD GetEnvironmentVariable(
 		_In_z_ const _CharType* pstrVar,
-		_Out_opt_z_cap_(dwSize) _CharType* pstrBuffer,
+		_Out_writes_opt_z_(dwSize) _CharType* pstrBuffer,
 		_In_ DWORD dwSize) throw()
 	{
 		return ::GetEnvironmentVariableA(pstrVar, pstrBuffer, dwSize);
@@ -717,9 +728,9 @@ protected:
 	static int CompareStringW(
 		_In_ LCID lcid,
 		_In_ DWORD dwFlags,
-		_In_count_(nLength1) LPCWSTR pszString1,
+		_In_reads_(nLength1) LPCWSTR pszString1,
 		_In_ int nLength1,
-		_In_count_(nLength2) LPCWSTR pszString2,
+		_In_reads_(nLength2) LPCWSTR pszString2,
 		_In_ int nLength2)
 	{
 		return ::CompareStringW(lcid, dwFlags, pszString1, nLength1,
@@ -728,7 +739,7 @@ protected:
 	static BOOL GetStringTypeExW(
 		_In_ LCID lcid,
 		_In_ DWORD dwInfoType,
-		_In_count_(nLength) LPCWSTR pszSrc,
+		_In_reads_(nLength) LPCWSTR pszSrc,
 		_In_ int nLength,
 		_Out_ LPWORD pwCharType)
 	{
@@ -748,28 +759,27 @@ protected:
 	}
 	static DWORD _GetEnvironmentVariableW(
 		_In_z_ LPCWSTR pszName,
-		_Out_opt_z_cap_(nSize) LPWSTR pszBuffer,
+		_Out_writes_opt_z_(nSize) LPWSTR pszBuffer,
 		_In_ DWORD nSize)
 	{
 		return ::GetEnvironmentVariableW(pszName, pszBuffer, nSize);
 	}
-
 public:
 	static int tclen(_In_opt_z_ const wchar_t*) throw()
 	{
 		return 1;
 	}
-	_Ret_opt_z_ static LPCWSTR strchr(
+	_Ret_maybenull_z_ static LPCWSTR strchr(
 		_In_z_ LPCWSTR p,
 		_In_ wchar_t ch) throw()
 	{
 		return AtlstrchrT(p,ch);
 	}
-	_Ret_opt_z_ static LPCWSTR strrchr(
+	_Ret_maybenull_z_ static LPCWSTR strrchr(
 		_In_z_ LPCWSTR p,
 		_In_ wchar_t ch) throw()
 	{
-		const wchar_t* pch = p+lstrlenW(p);
+		const wchar_t* pch = p+AtlStrLen(p);
 		while ((pch != p) && (*pch != ch))
 		{
 			pch--;
@@ -783,7 +793,7 @@ public:
 			return NULL;
 		}
 	}
-	_Ret_opt_z_ static wchar_t* _strrev(_Inout_opt_z_ wchar_t* psz) throw()
+	_Ret_maybenull_z_ static wchar_t* _strrev(_Inout_opt_z_ wchar_t* psz) throw()
 	{
 		// Optimize NULL, zero-length, and single-char case.		
 		ATLPREFAST_SUPPRESS(6385)
@@ -791,7 +801,7 @@ public:
 			return psz;
 		ATLPREFAST_UNSUPPRESS()
 
-		wchar_t* p = psz+(lstrlenW( psz )-1);
+		wchar_t* p = psz+(wcslen( psz )-1);
 		wchar_t* q = psz;
 		while(q < p)
 		{
@@ -803,7 +813,7 @@ public:
 		}
 		return psz;
 	}
-	_Ret_opt_z_ static LPCWSTR strstr(
+	_Ret_maybenull_z_ static LPCWSTR strstr(
 		_In_z_ LPCWSTR pStr,
 		_In_z_ LPCWSTR pCharSet) throw()
 	{
@@ -839,7 +849,7 @@ public:
 		}
 		return nRet;
 	}
-	_Ret_opt_z_ static LPCWSTR strpbrk(
+	_Ret_maybenull_z_ static LPCWSTR strpbrk(
 		_In_z_ LPCWSTR psz,
 		_In_z_ LPCWSTR pszCharSet) throw()
 	{
@@ -907,35 +917,35 @@ public:
 		return nRet-2;  // Convert to strcmp convention.  This really is documented.
 	}
 
-	_Ret_opt_z_ static LPCWSTR StringFindString(
+	_Ret_maybenull_z_ static LPCWSTR StringFindString(
 		_In_z_ LPCWSTR pstrBlock,
 		_In_z_ LPCWSTR pstrMatch) throw()
 	{
 		return strstr(pstrBlock, pstrMatch);
 	}
 
-	_Ret_opt_z_ static LPWSTR StringFindString(
+	_Ret_maybenull_z_ static LPWSTR StringFindString(
 		_In_z_ LPWSTR pszBlock,
 		_In_z_ LPCWSTR pszMatch) throw()
 	{
 		return( const_cast< LPWSTR >( StringFindString( const_cast< LPCWSTR >( pszBlock ), pszMatch ) ) );
 	}
 
-	_Ret_opt_z_ static LPCWSTR StringFindChar(
+	_Ret_maybenull_z_ static LPCWSTR StringFindChar(
 		_In_z_ LPCWSTR pstrBlock,
 		_In_ wchar_t pstrMatch) throw()
 	{
 		return strchr(pstrBlock, pstrMatch);
 	}
 
-	_Ret_opt_z_ static LPCWSTR StringFindCharRev(
+	_Ret_maybenull_z_ static LPCWSTR StringFindCharRev(
 		_In_z_ LPCWSTR pstr,
 		_In_ wchar_t ch) throw()
 	{
 		return strrchr(pstr, ch);
 	}
 
-	_Ret_opt_z_ static LPCWSTR StringScanSet(
+	_Ret_maybenull_z_ static LPCWSTR StringScanSet(
 		_In_z_ LPCWSTR pszBlock,
 		_In_z_ LPCWSTR pszMatch) throw()
 	{
@@ -971,7 +981,7 @@ public:
 	}
 
 	_Ret_z_ static wchar_t* StringUppercase(
-		_Inout_z_cap_(size) wchar_t* psz,
+		_Inout_updates_z_(size) wchar_t* psz,
 		_In_ size_t size) throw()
 	{
 		if(size>(UINT_MAX/sizeof(wchar_t)))
@@ -985,7 +995,7 @@ public:
 	}
 
 	_Ret_z_ static wchar_t* StringLowercase(
-		_Inout_z_cap_(size) wchar_t* psz,
+		_Inout_updates_z_(size) wchar_t* psz,
 		_In_ size_t size) throw()
 	{
 		if(size>(UINT_MAX/sizeof(wchar_t)))
@@ -998,7 +1008,7 @@ public:
 		return psz;
 	}
 
-	_Ret_opt_z_ static wchar_t* StringReverse(_Inout_z_ wchar_t* psz) throw()
+	_Ret_maybenull_z_ static wchar_t* StringReverse(_Inout_z_ wchar_t* psz) throw()
 	{
 		return _strrev(psz);
 	}
@@ -1014,6 +1024,7 @@ public:
 #pragma warning(push)
 #pragma warning(disable:4995)
 #pragma warning(disable:4996)
+#pragma warning(disable:28719)
 		// wvsprintf always truncates the output to 1024 character plus the '\0'.
 		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
 		// an insecure function and should be avoided. Here the use of wvsprintf
@@ -1036,12 +1047,13 @@ public:
 #pragma warning(push)
 #pragma warning(disable:4995)
 #pragma warning(disable:4996)
+#pragma warning(disable:28719)
 		return wvsprintfW(pszBuffer, pszFormat, args);
 #pragma warning(pop)
 	}
 
 	static int Format(
-		_Out_z_cap_(nLength) wchar_t* pszBuffer,
+		_Out_writes_z_(nLength) wchar_t* pszBuffer,
 		_In_ size_t nLength,
 		_In_z_ _Printf_format_string_ const wchar_t* pszFormat,
 		_In_ va_list args)
@@ -1053,6 +1065,7 @@ public:
 #pragma warning(push)
 #pragma warning(disable:4995)
 #pragma warning(disable:4996)
+#pragma warning(disable:28719)
 		// wvsprintf always truncates the output to 1024 character plus the '\0'.
 		// Note that we are using wvsprintf only in the MIN_CRT case; wvsprintf is
 		// an insecure function and should be avoided. Here the use of wvsprintf
@@ -1063,7 +1076,7 @@ public:
 		ATLENSURE(nCharsWritten <= 1024);
 		//nlength should have room for nCharsWritten + NULL
 		ATLENSURE_THROW((size_t)nCharsWritten < nLength ,E_INVALIDARG);
-		ATLENSURE_THROW(wcslen(buffSafe) < nLength ,E_INVALIDARG);
+		ATLENSURE_THROW(static_cast<size_t>(AtlStrLen(buffSafe)) < nLength ,E_INVALIDARG);
 
 ATLPREFAST_SUPPRESS(6386)
 		/* prefast noise 497597 */
@@ -1080,7 +1093,7 @@ ATLPREFAST_UNSUPPRESS()
 	}
 
 	static int GetBaseTypeLength(
-		_In_count_(nLength) const char* pszSrc,
+		_In_reads_(nLength) const char* pszSrc,
 		_In_ int nLength) throw()
 	{
 		// Returns required buffer size in wchar_ts
@@ -1090,11 +1103,11 @@ ATLPREFAST_UNSUPPRESS()
 	static int GetBaseTypeLength(_In_z_ const wchar_t* pszSrc) throw()
 	{
 		// Returns required buffer size in wchar_ts
-		return lstrlenW(pszSrc);
+		return AtlStrLen(pszSrc);
 	}
 
 	static int GetBaseTypeLength(
-		_In_count_(nLength) const wchar_t* pszSrc,
+		_In_reads_(nLength) const wchar_t* pszSrc,
 		_In_ int nLength) throw()
 	{
 		(void)pszSrc;
@@ -1103,9 +1116,9 @@ ATLPREFAST_UNSUPPRESS()
 	}
 
 	static void ConvertToBaseType(
-		_Out_cap_(nDestLength) wchar_t* pszDest,
+		_Out_writes_(nDestLength) wchar_t* pszDest,
 		_In_ int nDestLength,
-		_In_count_(nSrcLength) const char* pszSrc,
+		_In_reads_(nSrcLength) const char* pszSrc,
 		_In_ int nSrcLength = -1) throw()
 	{
 		// nLen is in wchar_ts
@@ -1113,9 +1126,9 @@ ATLPREFAST_UNSUPPRESS()
 	}
 
 	static void ConvertToBaseType(
-		_Out_cap_(nDestLength) wchar_t* pszDest,
+		_Out_writes_(nDestLength) wchar_t* pszDest,
 		_In_ int nDestLength,
-		_In_count_(nSrcLength) const wchar_t* pszSrc,
+		_In_reads_(nSrcLength) const wchar_t* pszSrc,
 		_In_ int nSrcLength = -1) throw()
 	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
@@ -1142,23 +1155,22 @@ ATLPREFAST_UNSUPPRESS()
 	static void FloodCharacters(
 		_In_ wchar_t ch,
 		_In_ int nLength,
-		_Out_z_capcount_(nLength) wchar_t* pstr) throw()
+		_Out_writes_all_(nLength) wchar_t* pstr) throw()
 	{
 		// nLength is in XCHARs
 		for (int i = 0; i < nLength; i++)
 			pstr[i] = ch;
 	}
 
-	static BSTR AllocSysString(
-		_In_count_(nDataLength) const wchar_t* pchData,
+	static _Ret_maybenull_z_ BSTR AllocSysString(
+		_In_reads_(nDataLength) const wchar_t* pchData,
 		_In_ int nDataLength) throw()
 	{
-		BSTR bstr = ::SysAllocStringLen(pchData, nDataLength);
-		return bstr;
+		return ::SysAllocStringLen(pchData, nDataLength);
 	}
 
 	static BOOL ReAllocSysString(
-		_In_count_(nDataLength) const wchar_t* pchData,
+		_In_reads_(nDataLength) const wchar_t* pchData,
 		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
 		_In_ int nDataLength) throw()
 	{
@@ -1170,7 +1182,7 @@ ATLPREFAST_UNSUPPRESS()
 		_In_ LPCVOID lpSource,
 		_In_ DWORD dwMessageID,
 		_In_ DWORD dwLanguageID,
-		_Out_z_cap_(nSize) wchar_t* pstrBuffer,
+		_Out_writes_z_(nSize) wchar_t* pstrBuffer,
 		_In_ DWORD nSize,
 		_In_opt_ va_list* pArguments) throw()
 	{
@@ -1181,13 +1193,13 @@ ATLPREFAST_UNSUPPRESS()
 	static int SafeStringLen(_In_opt_z_ const char* psz) throw()
 	{
 		// returns length in bytes
-		return (psz != NULL) ? lstrlenA(psz) : 0;
+		return (psz != NULL) ? static_cast<int>(strlen(psz)) : 0;
 	}
 
 	static int SafeStringLen(_In_opt_z_ const wchar_t* psz) throw()
 	{
 		// returns length in wchar_ts
-		return (psz != NULL) ? lstrlenW(psz) : 0;
+		return (psz != NULL) ? static_cast<int>(wcslen(psz)) : 0;
 	}
 
 	static int GetCharLen(_In_opt_z_ const wchar_t*) throw()
@@ -1203,12 +1215,14 @@ ATLPREFAST_UNSUPPRESS()
 
 	static DWORD GetEnvironmentVariable(
 		_In_z_ const wchar_t* pstrVar,
-		_Out_opt_z_cap_(dwSize) wchar_t* pstrBuffer,
+		_Out_writes_opt_z_(dwSize) wchar_t* pstrBuffer,
 		_In_ DWORD dwSize) throw()
 	{
 		return ::GetEnvironmentVariableW(pstrVar, pstrBuffer, dwSize);
 	}
 };
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 template <class ChTraits>
 inline typename ChTraits::PCXSTR strstrT(
@@ -1219,7 +1233,7 @@ inline typename ChTraits::PCXSTR strstrT(
 	size_t nCharSetLen = ChTraits::GetBaseTypeLength(pCharSet);
 	if (nCharSetLen == 0)
 		return pStr;
-	//lstrlenA returns length in bytes, not chars.
+	//strlen returns length in bytes, not chars.
 	size_t nStrLen = ChTraits::GetBaseTypeLength(pStr);
 	ChTraits::PCXSTR pStrEnd=pStr + nStrLen;
 	const ChTraits::XCHAR* pMatch;
@@ -1253,34 +1267,59 @@ public:
 
 	static IAtlStringMgr* GetDefaultManager() throw()
 	{
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 		return( &g_strmgr );
+#else
+		return (&g_strmgrApp);
+#endif
 	}
 };
 
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP) && defined(_ATL_CSTRING_NO_CRT)
+#error _ATL_CSTRING_NO_CRT flag is not compatible with the current WINAPI_FAMILY
+#endif
+
 #ifndef _ATL_CSTRING_NO_CRT
 typedef CStringT< wchar_t, StrTraitATL< wchar_t, ChTraitsCRT< wchar_t > > > CAtlStringW;
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 typedef CStringT< char, StrTraitATL< char, ChTraitsCRT< char > > > CAtlStringA;
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 typedef CStringT< TCHAR, StrTraitATL< TCHAR, ChTraitsCRT< TCHAR > > > CAtlString;
 #else  // _ATL_CSTRING_NO_CRT
 typedef CStringT< wchar_t, StrTraitATL< wchar_t > > CAtlStringW;
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 typedef CStringT< char, StrTraitATL< char > > CAtlStringA;
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 typedef CStringT< TCHAR, StrTraitATL< TCHAR > > CAtlString;
 #endif  // _ATL_CSTRING_NO_CRT
 
 #ifndef _AFX
 typedef CAtlStringW CStringW;
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 typedef CAtlStringA CStringA;
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 typedef CAtlString CString;
 #endif
 
 template< typename T >
 class CElementTraits;
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 template<>
 class CElementTraits< ATL::CAtlStringA > :
 	public CStringElementTraits< ATL::CAtlStringA >
 {
 };
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 template<>
 class CElementTraits< ATL::CAtlStringW > :
@@ -1291,6 +1330,12 @@ class CElementTraits< ATL::CAtlStringW > :
 }; //namespace ATL
 
 #pragma pack(pop)
+
+
+#if defined(_AFX)
+#pragma pop_macro("GetEnvironmentVariable")
+#endif
+
 #endif // __ATLSTR_H__
 
 /////////////////////////////////////////////////////////////////////////////

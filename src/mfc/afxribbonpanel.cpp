@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -30,8 +30,6 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 
 //////////////////////////////////////////////////////////////////////
 // CMFCRibbonLaunchButton
@@ -129,8 +127,6 @@ BOOL CMFCRibbonLaunchButton::SetACCData(CWnd* pParent, CAccessibilityData& data)
 	data.m_bAccState |= STATE_SYSTEM_HASPOPUP;
 	return TRUE;
 }
-
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 //////////////////////////////////////////////////////////////////////
 // CMFCRibbonDefaultPanelButton
@@ -261,10 +257,10 @@ void CMFCRibbonDefaultPanelButton::DrawImage(CDC* pDC, RibbonImageType type, CRe
 
 	CSize sizeIcon(16, 16);
 
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		sizeIcon.cx = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cx);
-		sizeIcon.cy = (int)(.5 + afxGlobalData.GetRibbonImageScale() * sizeIcon.cy);
+		sizeIcon.cx = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cx);
+		sizeIcon.cy = (int)(.5 + GetGlobalData()->GetRibbonImageScale() * sizeIcon.cy);
 	}
 
 	BOOL bIsRTL = FALSE;
@@ -275,7 +271,7 @@ void CMFCRibbonDefaultPanelButton::DrawImage(CDC* pDC, RibbonImageType type, CRe
 		bIsRTL = TRUE;
 	}
 
-	if (afxGlobalData.GetRibbonImageScale() != 1. || bIsRTL)
+	if (GetGlobalData()->GetRibbonImageScale() != 1. || bIsRTL)
 	{
 		UINT diFlags = DI_NORMAL;
 
@@ -376,10 +372,8 @@ void CMFCRibbonPanel::CopyFrom(CMFCRibbonPanel& src)
 		m_arElements.Add(pElem);
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.CopyFrom(src.m_btnLaunch);
 	m_btnLaunch.SetOriginal(&src.m_btnLaunch);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 }
 
 void CMFCRibbonPanel::CommonInit(LPCTSTR lpszName, HICON hIcon)
@@ -396,6 +390,13 @@ void CMFCRibbonPanel::CommonInit(LPCTSTR lpszName, HICON hIcon)
 	m_dwData = 0;
 	m_btnDefault.m_hIcon = hIcon;
 	m_btnDefault.SetText(m_strName);
+
+	// Jump across a ribbon (system) id
+	if ((UINT)-108 <= m_nNextPanelID && m_nNextPanelID <= (UINT)-102)
+	{
+		m_nNextPanelID = (UINT)-109;
+	}
+
 	m_btnDefault.SetID(m_nNextPanelID--);
 
 	m_rect.SetRectEmpty();
@@ -429,6 +430,7 @@ void CMFCRibbonPanel::CommonInit(LPCTSTR lpszName, HICON hIcon)
 	m_bJustifyColumns = FALSE;
 	m_bScrollDnAvailable = FALSE;
 	m_bTruncateCaption = FALSE;
+	m_bMouseIsDown = FALSE;
 }
 
 #pragma warning(default : 4355)
@@ -445,7 +447,6 @@ CMFCRibbonPanel::~CMFCRibbonPanel()
 	RemoveAll();
 }
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 void CMFCRibbonPanel::EnableLaunchButton(UINT uiCmdID, int nIconIndex, LPCTSTR lpszKeys)
 {
 	ASSERT_VALID(this);
@@ -454,7 +455,6 @@ void CMFCRibbonPanel::EnableLaunchButton(UINT uiCmdID, int nIconIndex, LPCTSTR l
 	m_btnLaunch.m_nSmallImageIndex = nIconIndex;
 	m_btnLaunch.SetKeys(lpszKeys);
 }
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 void CMFCRibbonPanel::Add(CMFCRibbonBaseElement* pElem)
 {
@@ -710,7 +710,7 @@ void CMFCRibbonPanel::DoPaint(CDC* pDC)
 	COLORREF clrTextOld = pDC->GetTextColor();
 
 	// Fill panel background:
-	COLORREF clrText = m_pParent == NULL || m_pPaletteButton != NULL ? afxGlobalData.clrBarText : CMFCVisualManager::GetInstance()->OnDrawRibbonPanel(pDC, this, m_rect, m_rectCaption);
+	COLORREF clrText = m_pParent == NULL || m_pPaletteButton != NULL ? GetGlobalData()->clrBarText : CMFCVisualManager::GetInstance()->OnDrawRibbonPanel(pDC, this, m_rect, m_rectCaption);
 
 	// Draw panel caption:
 	if (!m_rectCaption.IsRectEmpty() && rectInter.IntersectRect(m_rectCaption, rectClip))
@@ -718,13 +718,11 @@ void CMFCRibbonPanel::DoPaint(CDC* pDC)
 		CMFCVisualManager::GetInstance()->OnDrawRibbonPanelCaption(pDC, this, m_rectCaption);
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	// Draw launch button:
 	if (rectInter.IntersectRect(m_btnLaunch.GetRect(), rectClip))
 	{
 		m_btnLaunch.OnDraw(pDC);
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	pDC->SetTextColor(clrText);
 
@@ -857,7 +855,7 @@ void CMFCRibbonPanel::OnDrawPaletteMenu(CDC* pDC)
 
 	if (m_pPaletteButton->m_imagesPalette.GetCount() > 0)
 	{
-		m_pPaletteButton->m_imagesPalette.SetTransparentColor(afxGlobalData.clrBtnFace);
+		m_pPaletteButton->m_imagesPalette.SetTransparentColor(GetGlobalData()->clrBtnFace);
 		m_pPaletteButton->m_imagesPalette.PrepareDrawImage(ds, m_pPaletteButton->GetIconSize());
 	}
 
@@ -965,19 +963,14 @@ void CMFCRibbonPanel::Reposition(CDC* pDC, const CRect& rect)
 
 	m_btnDefault.m_pParent = m_pParent;
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.m_pParent = m_pParent;
 	m_btnLaunch.m_pParentPanel = this;
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	m_btnDefault.OnCalcTextSize(pDC);
 	const int cxDefaultButton = m_btnDefault.GetRegularSize(pDC).cx;
 
 	m_rect = rect;
-
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.SetRect(CRect(0, 0, 0, 0));
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	if (m_bForceCollpapse)
 	{
@@ -1694,11 +1687,13 @@ void CMFCRibbonPanel::Reposition(CDC* pDC, const CRect& rect)
 		}
 
 		nTotalWidth = sizeCaption.cx;
+
+		m_nFullWidth = max(m_nFullWidth, nTotalWidth);
 	}
 
 	if (m_arElements.GetSize() == 0)
 	{
-		m_nFullWidth = cxDefaultButton + m_nXMargin;
+		m_nFullWidth = max(sizeCaption.cx, cxDefaultButton) + m_nXMargin;
 	}
 
 	if (nTotalWidth < cxDefaultButton)
@@ -1710,7 +1705,6 @@ void CMFCRibbonPanel::Reposition(CDC* pDC, const CRect& rect)
 		m_rect.right = m_rect.left + nTotalWidth + 2 * m_nXMargin;
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	// Set launch button rectangle:
 	if (m_btnLaunch.GetID() > 0)
 	{
@@ -1725,7 +1719,6 @@ void CMFCRibbonPanel::Reposition(CDC* pDC, const CRect& rect)
 
 		m_btnLaunch.SetRect(rectLaunch);
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	// Set caption rectangle:
 	if (m_bShowCaption)
@@ -2328,12 +2321,10 @@ CSize CMFCRibbonPanel::GetCaptionSize(CDC* pDC) const
 
 	size.cy += m_nYMargin + 1;
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	if (m_btnLaunch.GetID() > 0)
 	{
 		size.cx += size.cy + 1;
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	return size;
 }
@@ -2476,6 +2467,10 @@ void CMFCRibbonPanel::RecalcWidths(CDC* pDC, int nHeight)
 			{
 				if (rect.Width() >= rectScreen.Width())
 				{
+					// If we see that after adding a lot of controls, the ribbon panel doesn’t fit the screen
+					// size, we create a panel with a large width (predefined = 32767). This prevents the panel
+					// from collapsing in design mode and allows the extra controls to be removed or moved to
+					// another panel. At run-time, that part of the ribbon panel will be off of the screen.
 					if (m_arWidths.GetSize() == 0)
 					{
 						m_arWidths.Add(32767);
@@ -2526,7 +2521,13 @@ void CMFCRibbonPanel::Highlight(BOOL bHighlight, CPoint point)
 	ASSERT_VALID(this);
 
 	BOOL bRedrawPanel = m_bIsHighlighted != bHighlight;
-	BOOL bMouseIsDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+	
+	if (!bHighlight)
+	{
+		m_bMouseIsDown = FALSE;
+	}
+
+	BOOL bMouseIsDown = m_bMouseIsDown;
 
 	m_bIsHighlighted = bHighlight;
 
@@ -2634,12 +2635,10 @@ CMFCRibbonBaseElement* CMFCRibbonPanel::HitTest(CPoint point, BOOL bCheckPanelCa
 		return &m_btnDefault;
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	if (!m_btnLaunch.m_rect.IsRectEmpty() && m_btnLaunch.m_rect.PtInRect(point))
 	{
 		return &m_btnLaunch;
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	for (int i = 0; i < m_arElements.GetSize(); i++)
 	{
@@ -2700,6 +2699,8 @@ CMFCRibbonBaseElement* CMFCRibbonPanel::MouseButtonDown(CPoint point)
 {
 	ASSERT_VALID(this);
 
+	m_bMouseIsDown = TRUE;
+
 	if (m_pHighlighted != NULL)
 	{
 		ASSERT_VALID (m_pHighlighted);
@@ -2741,6 +2742,8 @@ void CMFCRibbonPanel::MouseButtonUp(CPoint point)
 {
 	ASSERT_VALID(this);
 
+	m_bMouseIsDown = FALSE;
+
 	if (m_pHighlighted != NULL)
 	{
 		ASSERT_VALID(m_pHighlighted);
@@ -2766,6 +2769,8 @@ void CMFCRibbonPanel::MouseButtonUp(CPoint point)
 void CMFCRibbonPanel::CancelMode()
 {
 	ASSERT_VALID(this);
+
+	m_bMouseIsDown = FALSE;
 
 	if (m_pHighlighted != NULL)
 	{
@@ -2804,9 +2809,7 @@ void CMFCRibbonPanel::OnUpdateCmdUI(CMFCRibbonCmdUI* pCmdUI, CFrameWnd* pTarget,
 		pElem->OnUpdateCmdUI(pCmdUI, pTarget, bDisableIfNoHndler);
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.OnUpdateCmdUI(pCmdUI, pTarget, bDisableIfNoHndler);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 }
 
 BOOL CMFCRibbonPanel::NotifyControlCommand(BOOL bAccelerator, int nNotifyCode, WPARAM wParam, LPARAM lParam)
@@ -2842,10 +2845,7 @@ void CMFCRibbonPanel::OnAfterChangeRect(CDC* pDC)
 
 	m_btnDefault.OnShow(!m_btnDefault.GetRect().IsRectEmpty());
 	m_btnDefault.OnAfterChangeRect(pDC);
-
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.OnAfterChangeRect(pDC);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 }
 
 void CMFCRibbonPanel::OnShow(BOOL bShow)
@@ -2885,14 +2885,12 @@ CMFCRibbonBaseElement* CMFCRibbonPanel::FindByID(UINT uiCmdID) const
 		}
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	CMFCRibbonBaseElement* pElem = ((CMFCRibbonPanel*) this)->m_btnLaunch.FindByID(uiCmdID);
 	if (pElem != NULL)
 	{
 		ASSERT_VALID(pElem);
 		return pElem;
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	if (m_btnDefault.GetID() == uiCmdID)
 	{
@@ -2919,14 +2917,12 @@ CMFCRibbonBaseElement* CMFCRibbonPanel::FindByData(DWORD_PTR dwData) const
 		}
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	CMFCRibbonBaseElement* pElem = ((CMFCRibbonPanel*) this)->m_btnLaunch.FindByData(dwData);
 	if (pElem != NULL)
 	{
 		ASSERT_VALID(pElem);
 		return pElem;
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	if (m_btnDefault.GetData() == dwData)
 	{
@@ -3141,12 +3137,10 @@ void CMFCRibbonPanel::GetElements(CArray <CMFCRibbonBaseElement*, CMFCRibbonBase
 		pElem->GetElements(arElements);
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	if (m_btnLaunch.GetID() > 0)
 	{
 		arElements.Add(&m_btnLaunch);
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	if (!IsMainPanel())
 	{
@@ -3182,9 +3176,7 @@ void CMFCRibbonPanel::GetElementsByID(UINT uiCmdID, CArray <CMFCRibbonBaseElemen
 	}
 
 	m_btnDefault.GetElementsByID(uiCmdID, arElements);
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.GetElementsByID(uiCmdID, arElements);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 }
 
 CMFCRibbonBaseElement* CMFCRibbonPanel::GetPressed() const
@@ -3338,14 +3330,14 @@ BOOL CMFCRibbonPanel::OnKey(UINT nChar)
 
 					if (nChar == VK_DOWN)
 					{
-						if (rectIcon.bottom >= rectPalette.bottom && m_pScrollBar->GetScrollPos() < m_pScrollBar->GetScrollLimit())
+						if (rectIcon.bottom > rectPalette.bottom && m_pScrollBar->GetScrollPos() < m_pScrollBar->GetScrollLimit())
 						{
 							nDelta = rectIcon.Height();
 						}
 					}
 					else
 					{
-						if (rectIcon.top <= rectPalette.top && m_pScrollBar->GetScrollPos() > 0)
+						if (rectIcon.top < rectPalette.top && m_pScrollBar->GetScrollPos() > 0)
 						{
 							nDelta = -rectIcon.Height();
 						}
@@ -3457,7 +3449,7 @@ BOOL CMFCRibbonPanel::OnKey(UINT nChar)
 				m_pHighlighted = NULL;
 			}
 
-			if (afxGlobalData.IsAccessibilitySupport() && m_pParentMenuBar != NULL && IsMenuMode())
+			if (GetGlobalData()->IsAccessibilitySupport() && m_pParentMenuBar != NULL && IsMenuMode())
 			{
 				CPoint pt = pNewHighlighted->GetRect().TopLeft();
 				m_pParentMenuBar->ClientToScreen(&pt);
@@ -3866,9 +3858,7 @@ void CMFCRibbonPanel::OnRTLChanged(BOOL bIsRTL)
 	}
 
 	m_btnDefault.OnRTLChanged(bIsRTL);
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.OnRTLChanged(bIsRTL);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 }
 
 CMFCRibbonPanelMenu* CMFCRibbonPanel::ShowPopup(CMFCRibbonDefaultPanelButton* pButton/* = NULL*/)
@@ -3949,12 +3939,10 @@ CMFCRibbonBaseElement* CMFCRibbonPanel::GetFocused() const
 		return (CMFCRibbonBaseElement*)&m_btnDefault;
 	}
 
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	if (m_btnLaunch.IsFocused())
 	{
 		return (CMFCRibbonBaseElement*)&m_btnLaunch;
 	}
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	for (int i = 0; i < m_arElements.GetSize(); i++)
 	{
@@ -3985,9 +3973,7 @@ void CMFCRibbonPanel::GetVisibleElements(CArray <CMFCRibbonBaseElement*, CMFCRib
 	}
 
 	m_btnDefault.GetVisibleElements(arElements);
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	m_btnLaunch.GetVisibleElements(arElements);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 }
 
 void CMFCRibbonPanel::SetFocused(CMFCRibbonBaseElement* pNewFocus)

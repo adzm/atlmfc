@@ -1253,10 +1253,8 @@ LRESULT CSocketWnd::OnSocketDead(WPARAM wParam, LPARAM lParam)
 // Message table implementation
 
 BEGIN_MESSAGE_MAP(CSocketWnd, CWnd)
-	//{{AFX_MSG_MAP(CWnd)
 	ON_MESSAGE(WM_SOCKET_NOTIFY, &CSocketWnd::OnSocketNotify)
 	ON_MESSAGE(WM_SOCKET_DEAD, &CSocketWnd::OnSocketDead)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 //////////////////////////////////////////////////////////////////////////////

@@ -384,7 +384,7 @@ LPCTSTR AFXAPI AfxGetFullScodeString(SCODE sc)
 	{
 		// found exact match
 		static const TCHAR szFormat[] = _T("%s ($%08lX)");
-		if( lstrlen(lpsz) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
+		if( _tcslen(lpsz) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
 		{
 			_stprintf_s(szBuf, _countof(szBuf), szFormat, lpsz, sc);
 		}
@@ -393,7 +393,7 @@ LPCTSTR AFXAPI AfxGetFullScodeString(SCODE sc)
 	{
 		// found suitable range
 		static const TCHAR szFormat[] = _T("range: %s ($%08lX)");
-		if( lstrlen(lpsz) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
+		if( _tcslen(lpsz) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
 		{
 			_stprintf_s(szBuf, _countof(szBuf), szFormat, lpsz, sc);
 		}
@@ -405,7 +405,7 @@ LPCTSTR AFXAPI AfxGetFullScodeString(SCODE sc)
 		LPCTSTR lpszFacility = AfxGetFacilityString(sc);
 		static const TCHAR szFormat[] = _T("severity: %s, facility: %s ($%08lX)");
 
-		if( lstrlen(lpszSeverity) + lstrlen(lpszFacility) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
+		if( AtlStrLen(lpszSeverity) + AtlStrLen(lpszFacility) + _countof(szFormat) - 2 /*%s*/ - 6 /*$%08lX*/ + 8 /*size of long value*/ < _countof(szBuf) )
 		{
 			_stprintf_s(szBuf, _countof(szBuf), szFormat, lpszSeverity, lpszFacility, sc);
 		}
@@ -428,7 +428,7 @@ void __declspec(noreturn) AFXAPI AfxThrowOleException(SCODE sc)
 	THROW(pException);
 }
 
-BOOL COleException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL COleException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext) const
 {
 	ASSERT(lpszError != NULL && AfxIsValidString(lpszError, nMaxError));
@@ -752,7 +752,7 @@ BOOL AFXAPI _AfxCopyStgMedium(
 				{
 					AfxThrowInvalidArgException();
 				}
-				UINT cbSrc = lstrlenW(lpSource->lpszFileName);
+				UINT cbSrc = static_cast<UINT>(wcslen(lpSource->lpszFileName));
 				LPOLESTR szFileName = (LPOLESTR)::ATL::AtlCoTaskMemCAlloc((cbSrc+1),sizeof(OLECHAR));
 				lpDest->lpszFileName = szFileName;
 				if (szFileName == NULL)
@@ -883,7 +883,7 @@ HGLOBAL AFXAPI _AfxOleGetObjectDescriptorData(
 	// Get the Source of Copy string and it's length;
 	//  Add 1 for the null terminator
 	if (lpszSrcOfCopy && lpszSrcOfCopy[0] != '\0')
-	   dwSrcOfCopyLen = lstrlenW(lpszSrcOfCopy)+1;
+	   dwSrcOfCopyLen = static_cast<DWORD>(wcslen(lpszSrcOfCopy))+1;
 	else
 	{
 	   // No src moniker so use user type name as source string.
@@ -1069,11 +1069,11 @@ SCODE AFXAPI _AfxOleDoConvert(LPSTORAGE lpStg, REFCLSID rClsidNew)
 		lpszNew = &chZero;
 
 	// write class stg
-	if ((sc = WriteClassStg(lpStg, rClsidNew)) != S_OK)
+	if ((sc = ::WriteClassStg(lpStg, rClsidNew)) != S_OK)
 		goto ErrorReturn;
 
 	// write old fmt/new user type;
-	if ((sc = WriteFmtUserTypeStg(lpStg, cfOld, lpszNew)) != S_OK)
+	if ((sc = ::WriteFmtUserTypeStg(lpStg, cfOld, lpszNew)) != S_OK)
 		goto RewriteInfo;
 
 	// set convert bit
@@ -1083,8 +1083,8 @@ SCODE AFXAPI _AfxOleDoConvert(LPSTORAGE lpStg, REFCLSID rClsidNew)
 	goto ErrorReturn;
 
 RewriteInfo:
-	WriteClassStg(lpStg, clsidOld);
-	WriteFmtUserTypeStg(lpStg, cfOld, lpszOld);
+	::WriteClassStg(lpStg, clsidOld);
+	::WriteFmtUserTypeStg(lpStg, cfOld, lpszOld);
 
 ErrorReturn:
 	if (lpszNew != &chZero)
@@ -1108,7 +1108,7 @@ SCODE AFXAPI _AfxOleDoTreatAsClass(
 		StringFromCLSID(rclsid, &lpOleStr);
 		lpszCLSID = TASKSTRINGOLE2T(lpOleStr);
 		RegSetValue(hKey, lpszCLSID, REG_SZ, lpszUserType,
-			lstrlen(lpszUserType) * sizeof(TCHAR));
+			static_cast<DWORD>(_tcslen(lpszUserType)) * sizeof(TCHAR));
 
 		CoTaskMemFree(lpszCLSID);
 		sc = CoTreatAsClass(rclsid, rclsidNew);

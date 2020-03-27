@@ -103,7 +103,6 @@ void COleCntrFrameWnd::AssertValid() const
 // COleIPFrameWnd implementation
 
 BEGIN_MESSAGE_MAP(COleIPFrameWnd, CFrameWnd)
-	//{{AFX_MSG_MAP(COleIPFrameWnd)
 	ON_WM_SIZE()
 	ON_MESSAGE(WM_RECALCPARENT, &COleIPFrameWnd::OnRecalcParent)
 	ON_MESSAGE_VOID(WM_IDLEUPDATECMDUI, COleIPFrameWnd::OnIdleUpdateCmdUI)
@@ -116,7 +115,6 @@ BEGIN_MESSAGE_MAP(COleIPFrameWnd, CFrameWnd)
 	ON_COMMAND_EX(ID_VIEW_STATUS_BAR, &COleIPFrameWnd::OnBarCheck)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_TOOLBAR, &COleIPFrameWnd::OnUpdateControlBarMenu)
 	ON_COMMAND_EX(ID_VIEW_TOOLBAR, &COleIPFrameWnd::OnBarCheck)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 COleIPFrameWnd::COleIPFrameWnd()

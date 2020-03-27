@@ -21,11 +21,6 @@
 
 IMPLEMENT_DYNAMIC(CMFCDesktopAlertWnd, CWnd)
 
-// Timer IDs:
-static const int nClosePopupTimerId = 1;
-static const int nAnimTimerId = 2;
-static const int nCheckActivityTimerId = 3;
-
 static clock_t nLastAnimTime = 0;
 static const int nSmallCaptionHeight = 7;
 
@@ -92,7 +87,6 @@ CMFCDesktopAlertWnd::~CMFCDesktopAlertWnd()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCDesktopAlertWnd)
 BEGIN_MESSAGE_MAP(CMFCDesktopAlertWnd, CWnd)
 	ON_WM_TIMER()
 	ON_WM_NCDESTROY()
@@ -107,7 +101,6 @@ BEGIN_MESSAGE_MAP(CMFCDesktopAlertWnd, CWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_MESSAGE(WM_PRINTCLIENT, &CMFCDesktopAlertWnd::OnPrintClient)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCDesktopAlertWnd message handlers
@@ -155,7 +148,7 @@ BOOL CMFCDesktopAlertWnd::CommonCreate(CPoint ptPos, CMFCDesktopAlertWndInfo* pP
 	CRect rectDummy(0, 0, 0, 0);
 	DWORD dwStyleEx = WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
 
-	if (afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+	if (GetGlobalData()->m_nBitsPerPixel > 8 && m_nTransparency < 255)
 	{
 		dwStyleEx |= WS_EX_LAYERED;
 	}
@@ -214,7 +207,14 @@ BOOL CMFCDesktopAlertWnd::CommonCreate(CPoint ptPos, CMFCDesktopAlertWndInfo* pP
 
 	MONITORINFO mi;
 	mi.cbSize = sizeof(MONITORINFO);
-	if (GetMonitorInfo(MonitorFromPoint(ptPos, MONITOR_DEFAULTTONEAREST), &mi))
+
+	DWORD dwMonitorFlag = MONITOR_DEFAULTTONEAREST;
+	if (ptPos == CPoint(-1, -1))
+	{
+		dwMonitorFlag = MONITOR_DEFAULTTOPRIMARY;
+	}
+
+	if (GetMonitorInfo(MonitorFromPoint(ptPos, dwMonitorFlag), &mi))
 	{
 		rectScreen = mi.rcWork;
 	}
@@ -292,7 +292,7 @@ BOOL CMFCDesktopAlertWnd::CommonCreate(CPoint ptPos, CMFCDesktopAlertWndInfo* pP
 
 	m_pWndDlg->SetWindowPos(NULL, 1, nCaptionHeight + 1, sizeDialog.cx, sizeDialog.cy, SWP_NOZORDER | SWP_NOACTIVATE);
 
-	SetTimer(nCheckActivityTimerId, 100, NULL);
+	SetTimer(AFX_TIMER_ID_ALERT_CHECK_ACTIVITY, 100, NULL);
 
 	if (pWndForeground->GetSafeHwnd() != NULL)
 	{
@@ -324,9 +324,11 @@ CSize CMFCDesktopAlertWnd::GetDialogSize()
 
 void CMFCDesktopAlertWnd::OnTimer(UINT_PTR nIDEvent)
 {
+	const CMFCPopupMenu::ANIMATION_TYPE animationType = GetActualAnimationType();
+
 	switch(nIDEvent)
 	{
-	case nAnimTimerId:
+	case AFX_TIMER_ID_ALERT_ANIMATION:
 		if (!m_bAnimationIsDone)
 		{
 			clock_t nCurrAnimTime = clock();
@@ -339,7 +341,7 @@ void CMFCDesktopAlertWnd::OnTimer(UINT_PTR nIDEvent)
 				nSteps = -nSteps;
 			}
 
-			switch(m_AnimationType)
+			switch (animationType)
 			{
 			case CMFCPopupMenu::UNFOLD:
 				m_AnimSize.cx += nSteps * m_nAnimStepX;
@@ -362,19 +364,19 @@ void CMFCDesktopAlertWnd::OnTimer(UINT_PTR nIDEvent)
 			m_AnimSize.cx = max(0, min(m_AnimSize.cx, m_FinalSize.cx));
 			m_AnimSize.cy = max(0, min(m_AnimSize.cy, m_FinalSize.cy));
 
-			if (m_bFadeOutAnimation && !m_bIsActive && (m_AnimSize.cx == 0 || m_AnimSize.cy == 0 || (m_AnimationType == CMFCPopupMenu::FADE && m_iFadePercent <= 0)))
+			if (m_bFadeOutAnimation && !m_bIsActive && (m_AnimSize.cx == 0 || m_AnimSize.cy == 0 || (animationType == CMFCPopupMenu::FADE && m_iFadePercent <= 0)))
 			{
 				SendMessage(WM_CLOSE);
 				return;
 			}
 
-			if ((m_AnimationType != CMFCPopupMenu::FADE && m_AnimSize.cy >= m_FinalSize.cy && m_AnimSize.cx >= m_FinalSize.cx) ||
-				(m_AnimationType == CMFCPopupMenu::UNFOLD && m_AnimSize.cx >= m_FinalSize.cx) || (m_AnimationType == CMFCPopupMenu::FADE && m_iFadePercent > 100) || m_bIsActive)
+			if ((animationType != CMFCPopupMenu::FADE && m_AnimSize.cy >= m_FinalSize.cy && m_AnimSize.cx >= m_FinalSize.cx) ||
+				(animationType == CMFCPopupMenu::UNFOLD && m_AnimSize.cx >= m_FinalSize.cx) || (animationType == CMFCPopupMenu::FADE && m_iFadePercent > 100) || m_bIsActive)
 			{
 				m_AnimSize.cx = m_FinalSize.cx;
 				m_AnimSize.cy = m_FinalSize.cy;
 
-				KillTimer(nAnimTimerId);
+				KillTimer(AFX_TIMER_ID_ALERT_ANIMATION);
 
 				if (m_btnClose.GetSafeHwnd() != NULL)
 				{
@@ -393,11 +395,11 @@ void CMFCDesktopAlertWnd::OnTimer(UINT_PTR nIDEvent)
 
 				if (m_nAutoCloseTime > 0)
 				{
-					SetTimer(nClosePopupTimerId, m_nAutoCloseTime, NULL);
+					SetTimer(AFX_TIMER_ID_ALERT_CLOSE_POPUP, m_nAutoCloseTime, NULL);
 				}
 			}
 
-			if (m_bFadeOutAnimation && m_AnimationType != CMFCPopupMenu::FADE)
+			if (m_bFadeOutAnimation && animationType != CMFCPopupMenu::FADE)
 			{
 				CRect rectWnd;
 				GetWindowRect(rectWnd);
@@ -417,15 +419,15 @@ void CMFCDesktopAlertWnd::OnTimer(UINT_PTR nIDEvent)
 		}
 		break;
 
-	case nClosePopupTimerId:
+	case AFX_TIMER_ID_ALERT_CLOSE_POPUP:
 		if (!m_bIsActive && !m_bMoving)
 		{
-			KillTimer(nClosePopupTimerId);
+			KillTimer(AFX_TIMER_ID_ALERT_CLOSE_POPUP);
 			StartAnimation(FALSE);
 		}
 		return;
 
-	case nCheckActivityTimerId:
+	case AFX_TIMER_ID_ALERT_CHECK_ACTIVITY:
 		if (!m_bMoving)
 		{
 			BOOL bWasActive = m_bIsActive;
@@ -438,7 +440,7 @@ void CMFCDesktopAlertWnd::OnTimer(UINT_PTR nIDEvent)
 
 			m_bIsActive = rectWnd.PtInRect(ptCursor) || m_pWndDlg->HasFocus();
 
-			if (m_bIsActive != bWasActive && afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+			if (m_bIsActive != bWasActive && GetGlobalData()->m_nBitsPerPixel > 8 && m_nTransparency < 255)
 			{
 				BYTE nTransparency = m_bIsActive ?(BYTE) 255 : m_nTransparency;
 				SetLayeredWindowAttributes(0, nTransparency, LWA_ALPHA);
@@ -472,6 +474,16 @@ void CMFCDesktopAlertWnd::OnPaint()
 	{
 		OnDraw(&dc);
 	}
+}
+
+void CMFCDesktopAlertWnd::SetAnimationSpeed(UINT nSpeed)
+{
+	if(nSpeed == 0 || nSpeed > 200)
+	{
+		ASSERT(FALSE);
+		return;
+	}
+	m_AnimationSpeed = max((UINT)2, nSpeed);
 }
 
 CRect CMFCDesktopAlertWnd::GetCaptionRect()
@@ -628,7 +640,7 @@ void CMFCDesktopAlertWnd::OnDraw(CDC* pDC)
 	HICON hIcon = GetIcon(FALSE);
 	if (hIcon != NULL)
 	{
-		CSize sizeImage = afxGlobalData.m_sizeSmallIcon;
+		CSize sizeImage = GetGlobalData()->m_sizeSmallIcon;
 		CRect rectImage = rectCaption;
 
 		rectImage.top += (rectCaption.Height() - sizeImage.cy) / 2;
@@ -649,7 +661,7 @@ void CMFCDesktopAlertWnd::OnDraw(CDC* pDC)
 	{
 		COLORREF clrTextOld = pDC->SetTextColor(clrText);
 		pDC->SetBkMode(TRANSPARENT);
-		CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontRegular);
+		CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontRegular));
 
 		pDC->DrawText(strText, rectText, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 
@@ -660,7 +672,9 @@ void CMFCDesktopAlertWnd::OnDraw(CDC* pDC)
 
 void CMFCDesktopAlertWnd::StartAnimation(BOOL bShow/* = TRUE*/)
 {
-	if (m_AnimationType == CMFCPopupMenu::NO_ANIMATION || afxGlobalData.bIsRemoteSession || (m_AnimationType == CMFCPopupMenu::FADE && afxGlobalData.m_nBitsPerPixel <= 8))
+	const CMFCPopupMenu::ANIMATION_TYPE animationType = GetActualAnimationType();
+
+	if (animationType == CMFCPopupMenu::NO_ANIMATION || GetGlobalData()->bIsRemoteSession || (animationType == CMFCPopupMenu::FADE && GetGlobalData()->m_nBitsPerPixel <= 8))
 	{
 		if (!bShow)
 		{
@@ -682,13 +696,13 @@ void CMFCDesktopAlertWnd::StartAnimation(BOOL bShow/* = TRUE*/)
 
 		if (m_nAutoCloseTime > 0)
 		{
-			SetTimer(nClosePopupTimerId, m_nAutoCloseTime, NULL);
+			SetTimer(AFX_TIMER_ID_ALERT_CLOSE_POPUP, m_nAutoCloseTime, NULL);
 		}
 
 		m_pWndDlg->SetWindowPos(NULL,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOREDRAW|SWP_NOZORDER|SWP_SHOWWINDOW | SWP_NOACTIVATE);
 		m_pWndDlg->ValidateRect(NULL);
 
-		if (afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+		if (GetGlobalData()->m_nBitsPerPixel > 8 && m_nTransparency < 255)
 		{
 			SetLayeredWindowAttributes(0, m_nTransparency, LWA_ALPHA);
 		}
@@ -732,7 +746,7 @@ void CMFCDesktopAlertWnd::StartAnimation(BOOL bShow/* = TRUE*/)
 
 	if (bShow)
 	{
-		switch(m_AnimationType)
+		switch(animationType)
 		{
 		case CMFCPopupMenu::UNFOLD:
 			m_AnimSize.cx = m_nAnimStepX;
@@ -748,7 +762,7 @@ void CMFCDesktopAlertWnd::StartAnimation(BOOL bShow/* = TRUE*/)
 		m_pWndDlg->ShowWindow(SW_HIDE);
 	}
 
-	SetTimer(nAnimTimerId, m_AnimationSpeed, NULL);
+	SetTimer(AFX_TIMER_ID_ALERT_ANIMATION, m_AnimationSpeed, NULL);
 	nLastAnimTime = clock();
 }
 
@@ -766,12 +780,14 @@ void CMFCDesktopAlertWnd::DrawAnimation(CDC* pPaintDC)
 		return;
 	}
 
+	const CMFCPopupMenu::ANIMATION_TYPE animationType = GetActualAnimationType();
+
 	// create the three bitmaps if not done yet
 	if (m_bmpScreenDst.GetSafeHandle() == NULL)
 	{
 		CBitmap* pBmpOld = NULL;
 
-		if (m_AnimationType == CMFCPopupMenu::FADE || afxGlobalData.m_nBitsPerPixel > 8)
+		if (animationType == CMFCPopupMenu::FADE || GetGlobalData()->m_nBitsPerPixel > 8)
 		{
 			// Fill in the BITMAPINFOHEADER
 			BITMAPINFOHEADER bih;
@@ -851,7 +867,7 @@ void CMFCDesktopAlertWnd::DrawAnimation(CDC* pPaintDC)
 
 		dcMem.SelectObject(pBmpOld);
 
-		if (afxGlobalData.m_nBitsPerPixel > 8 && m_nTransparency < 255)
+		if (GetGlobalData()->m_nBitsPerPixel > 8 && m_nTransparency < 255)
 		{
 			SetLayeredWindowAttributes(0, m_nTransparency, LWA_ALPHA);
 		}
@@ -863,7 +879,7 @@ void CMFCDesktopAlertWnd::DrawAnimation(CDC* pPaintDC)
 
 	CBitmap* pBmpOld = NULL;
 
-	switch(m_AnimationType)
+	switch(animationType)
 	{
 	case CMFCPopupMenu::UNFOLD:
 	case CMFCPopupMenu::SLIDE:
@@ -922,7 +938,7 @@ void CMFCDesktopAlertWnd::StartWindowMove()
 	GetCursorPos(&m_ptStartMove);
 
 	SetCapture();
-	KillTimer(nClosePopupTimerId);
+	KillTimer(AFX_TIMER_ID_ALERT_CLOSE_POPUP);
 }
 
 void CMFCDesktopAlertWnd::OnMouseMove(UINT nFlags, CPoint point)
@@ -991,7 +1007,7 @@ void CMFCDesktopAlertWnd::OnLButtonUp(UINT nFlags, CPoint point)
 
 		if (m_nAutoCloseTime > 0)
 		{
-			SetTimer(nClosePopupTimerId, m_nAutoCloseTime, NULL);
+			SetTimer(AFX_TIMER_ID_ALERT_CLOSE_POPUP, m_nAutoCloseTime, NULL);
 		}
 
 		CRect rectWnd;
@@ -1014,7 +1030,7 @@ void CMFCDesktopAlertWnd::OnCancelMode()
 
 		if (m_nAutoCloseTime > 0)
 		{
-			SetTimer(nClosePopupTimerId, m_nAutoCloseTime, NULL);
+			SetTimer(AFX_TIMER_ID_ALERT_CLOSE_POPUP, m_nAutoCloseTime, NULL);
 		}
 
 		CRect rectWnd;

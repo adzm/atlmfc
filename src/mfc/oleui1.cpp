@@ -92,6 +92,11 @@ BOOL COleDocument::OnCmdMsg(UINT nID, int nCode, void* pExtra,
 {
 	ASSERT_VALID(this);
 
+	if (nCode == CN_COMMAND && nID == ID_OLE_VERB_POPUP)
+	{
+		nID = ID_OLE_VERB_FIRST;
+	}
+
 	if (nCode == CN_COMMAND && nID >= ID_OLE_VERB_FIRST && nID <= ID_OLE_VERB_LAST)
 	{
 		CView* pRoutingView = GetRoutingView_();

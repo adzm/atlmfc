@@ -231,12 +231,22 @@ const DLGTEMPLATE* COccManager::PreCreateDialog(_AFX_OCC_DIALOG_INFO* pDlgInfo,
 void COccManager::PostCreateDialog(_AFX_OCC_DIALOG_INFO* pDlgInfo)
 {
 	if (pDlgInfo->m_pNewTemplate != NULL)
+	{
 		GlobalFree(pDlgInfo->m_pNewTemplate);
+		pDlgInfo->m_pNewTemplate = NULL;
+	}
 
 	if (pDlgInfo->m_ppOleDlgItems != NULL)
+	{
 		free(pDlgInfo->m_ppOleDlgItems);
+		pDlgInfo->m_ppOleDlgItems = NULL;
+	}
 
-	delete[] pDlgInfo->m_pItemInfo;
+	if (pDlgInfo->m_pItemInfo != NULL)
+	{
+		delete[] pDlgInfo->m_pItemInfo;
+		pDlgInfo->m_pItemInfo = NULL;
+	}
 }
 
 DLGTEMPLATE* COccManager::SplitDialogTemplate(const DLGTEMPLATE* pTemplate,

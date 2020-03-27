@@ -31,9 +31,7 @@ CMFCAcceleratorKeyAssignCtrl::~CMFCAcceleratorKeyAssignCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCAcceleratorKeyAssignCtrl, CEdit)
-	//{{AFX_MSG_MAP(CMFCAcceleratorKeyAssignCtrl)
 	ON_WM_KILLFOCUS()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

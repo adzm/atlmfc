@@ -13,6 +13,7 @@
 #define __ATLALLOC_H__
 #endif
 
+#include <atldef.h>
 #include <windows.h>
 #include <ole2.h>
 
@@ -214,7 +215,7 @@ inline T AtlAddThrow(
 	return tResult;
 }
 
-_Ret_opt_bytecount_x_(nCount * nSize) inline LPVOID AtlCoTaskMemCAlloc(
+_Ret_opt_ _Post_writable_byte_size_(nCount * nSize) inline LPVOID AtlCoTaskMemCAlloc(
 	_In_ ULONG nCount,
 	_In_ ULONG nSize)
 {
@@ -227,7 +228,7 @@ _Ret_opt_bytecount_x_(nCount * nSize) inline LPVOID AtlCoTaskMemCAlloc(
 	return ::CoTaskMemAlloc(nBytes);
 }
 
-_Ret_opt_bytecount_x_(nCount * nSize) inline LPVOID AtlCoTaskMemRecalloc(
+_Ret_writes_bytes_maybenull_(nCount * nSize) inline LPVOID AtlCoTaskMemRecalloc(
 	_In_opt_ void *pvMemory,
 	_In_ ULONG nCount,
 	_In_ ULONG nSize)
@@ -252,9 +253,9 @@ namespace ATL
 namespace Checked
 {
     void __cdecl memcpy_s(
-		_Out_bytecap_post_bytecount_(_S1max,_N) void *s1,
+		_Out_writes_bytes_to_(_S1max,_N) void *s1,
 		_In_ size_t _S1max,
-		_In_bytecount_(_N) const void *s2,
+		_In_reads_bytes_(_N) const void *s2,
 		_In_ size_t _N);
 }
 
@@ -264,14 +265,14 @@ namespace Checked
 class CCRTAllocator
 {
 public:
-	_Ret_opt_bytecap_(nBytes) static void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Reallocate(
 		_In_ void* p,
 		_In_ size_t nBytes) throw()
 	{
 		return realloc(p, nBytes);
 	}
 
-	_Ret_opt_bytecap_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return malloc(nBytes);
 	}
@@ -282,14 +283,17 @@ public:
 	}
 };
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
+
 class CLocalAllocator
 {
 public:
-	_Ret_opt_bytecap_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return ::LocalAlloc(LMEM_FIXED, nBytes);
 	}
-	_Ret_opt_bytecap_(nBytes) static void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Reallocate(
 		_In_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -312,11 +316,11 @@ public:
 class CGlobalAllocator
 {
 public:
-	_Ret_opt_bytecap_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return ::GlobalAlloc(GMEM_FIXED, nBytes);
 	}
-	_Ret_opt_bytecap_(nBytes) static void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) static void* Reallocate(
 		_In_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -335,6 +339,8 @@ public:
 		::GlobalFree(p);
 	}
 };
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 template <class T, class Allocator = CCRTAllocator>
 class CHeapPtrBase
@@ -514,12 +520,12 @@ public:
 		return( m_p );
 	}
 
-	_Ret_opt_bytecap_x_(nElements * sizeof(T)) T* Allocate(_In_ size_t nElements) throw( ... )
+	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Allocate(_In_ size_t nElements) throw( ... )
 	{
 		return( AllocateBytes( ::ATL::AtlMultiplyThrow(nElements,sizeof( T )) ) );
 	}
 
-	_Ret_opt_bytecap_x_(nElements * sizeof(T)) T* Reallocate(_In_ size_t nElements) throw( ... )
+	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Reallocate(_In_ size_t nElements) throw( ... )
 	{
 		ATLENSURE(nElements < size_t(-1)/sizeof(T) );
 		size_t nNewSize = nElements*sizeof( T ) ;
@@ -553,7 +559,7 @@ public:
 		return m_p;
 	}
 
-	_Ret_opt_bytecap_(nBytes) T* AllocateBytes(_In_ size_t nBytes)
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) T* AllocateBytes(_In_ size_t nBytes)
 	{
 		ATLASSERT( m_p == NULL );
 		if( nBytes > t_nFixedBytes )
@@ -608,8 +614,13 @@ namespace _ATL_SAFE_ALLOCA_IMPL
 #ifndef _ATL_STACK_MARGIN
 #if defined(_M_IX86)
 #define _ATL_STACK_MARGIN	0x2000	// Minimum stack available after call to _ATL_SAFE_ALLOCA
-#else //_M_AMD64 _M_IA64
+#elif defined _M_AMD64 || defined _M_IA64
 #define _ATL_STACK_MARGIN	0x4000
+#elif defined _M_ARM
+// ARMWORKITEM: Page size is the same as x86 so that should probably be the same value
+#define _ATL_STACK_MARGIN	0x2000	// Minimum stack available after call to _ATL_SAFE_ALLOCA
+#else
+#error Unsupported target architecture.
 #endif
 #endif //_ATL_STACK_MARGIN
 
@@ -640,7 +651,9 @@ __declspec(noinline) inline bool _AtlVerifyStackAvailable(_In_ SIZE_T Size)
                    EXCEPTION_CONTINUE_SEARCH)
     {
         bStackAvailable = false;
+#if defined( _ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
         _resetstkoflw();
+#endif
     }
     return bStackAvailable;
 }
@@ -660,8 +673,10 @@ private :
 		BYTE _pad[8];
 #elif defined(_M_AMD64)
 		BYTE _pad[8];
+#elif defined(_M_ARM)
+		BYTE _pad[4];
 #else
-	#error Only supported for X86, AMD64 and IA64
+	#error Only supported for X86, AMD64, IA64 and ARM
 #endif
 		void* GetData()
 		{
@@ -675,7 +690,7 @@ public :
 	CAtlSafeAllocBufferManager() : m_pHead(NULL)
 	{
 	}
-	_Ret_opt_bytecap_(nRequestedSize) void* Allocate(_In_ SIZE_T nRequestedSize)
+	_Ret_maybenull_ _Post_writable_byte_size_(nRequestedSize) void* Allocate(_In_ SIZE_T nRequestedSize)
 	{
 		CAtlSafeAllocBufferNode *p = (CAtlSafeAllocBufferNode*)Allocator::Allocate(::ATL::AtlAddThrow(nRequestedSize, static_cast<SIZE_T>(sizeof(CAtlSafeAllocBufferNode))));
 		if (p == NULL)

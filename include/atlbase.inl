@@ -84,7 +84,7 @@ ATLPREFAST_SUPPRESS(6387)
 ATLINLINE ATLAPI AtlMarshalPtrInProc(
 	_Inout_ IUnknown* pUnk,
 	_In_ const IID& iid,
-	_Deref_out_ IStream** ppStream)
+	_Outptr_ IStream** ppStream)
 {
 	ATLASSERT(ppStream != NULL);
 	if (ppStream == NULL)
@@ -108,7 +108,7 @@ ATLPREFAST_UNSUPPRESS()
 ATLINLINE ATLAPI AtlUnmarshalPtr(
 	_Inout_ IStream* pStream,
 	_In_ const IID& iid,
-	_Deref_out_ IUnknown** ppUnk)
+	_Outptr_ IUnknown** ppUnk)
 {
 	ATLASSERT(ppUnk != NULL);
 	if (ppUnk == NULL)
@@ -128,12 +128,12 @@ ATLINLINE ATLAPI AtlUnmarshalPtr(
 
 /////////////////////////////////////////////////////////////////////////////
 // Module
-ATLPREFAST_SUPPRESS(6387)
+ATLPREFAST_SUPPRESS(6387 28196)
 ATLINLINE ATLAPI AtlComModuleGetClassObject(
 	_Inout_ _ATL_COM_MODULE* pComModule,
 	_In_ REFCLSID rclsid,
 	_In_ REFIID riid,
-	_Deref_out_ LPVOID* ppv)
+	_COM_Outptr_ LPVOID* ppv)
 {
 	if (ppv == NULL)
 	{
@@ -155,15 +155,17 @@ ATLINLINE ATLAPI AtlComModuleGetClassObject(
 
 	HRESULT hr = S_OK;
 
-	for (_ATL_OBJMAP_ENTRY** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast; ppEntry++)
+	for (_ATL_OBJMAP_ENTRY_EX** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast; ppEntry++)
 	{
 		if (*ppEntry != NULL)
 		{
-			const _ATL_OBJMAP_ENTRY* pEntry = *ppEntry;
+			const _ATL_OBJMAP_ENTRY_EX* pEntry = *ppEntry;
 
 			if ((pEntry->pfnGetClassObject != NULL) && InlineIsEqualGUID(rclsid, *pEntry->pclsid))
 			{
-				if (pEntry->pCF == NULL)
+				_ATL_OBJMAP_CACHE* pCache = pEntry->pCache;
+				
+				if (pCache->pCF == NULL)
 				{
 					CComCritSecLock<CComCriticalSection> lock(pComModule->m_csObjMap, false);
 					hr = lock.Lock();
@@ -174,15 +176,23 @@ ATLINLINE ATLAPI AtlComModuleGetClassObject(
 						break;
 					}
 
-					if (pEntry->pCF == NULL)
+					if (pCache->pCF == NULL)
 					{
-						hr = pEntry->pfnGetClassObject(pEntry->pfnCreateInstance, __uuidof(IUnknown), (LPVOID*)&pEntry->pCF);
+						IUnknown *factory;
+						hr = pEntry->pfnGetClassObject(pEntry->pfnCreateInstance, __uuidof(IUnknown), reinterpret_cast<void**>(&factory));
+						if (SUCCEEDED(hr))
+						{
+							pCache->pCF = reinterpret_cast<IUnknown*>(::EncodePointer(factory));
+						}
 					}
 				}
 
-				if (pEntry->pCF != NULL)
+				if (pCache->pCF != NULL)
 				{
-					hr = pEntry->pCF->QueryInterface(riid, ppv);
+					// Decode factory pointer
+					IUnknown* factory = reinterpret_cast<IUnknown*>(::DecodePointer(pCache->pCF));
+					_Analysis_assume_(factory != nullptr);
+					hr = factory->QueryInterface(riid, ppv);
 				}
 				break;
 			}
@@ -208,7 +218,7 @@ ATLINLINE ATLAPI AtlComModuleRegisterClassObjects(
 		return E_INVALIDARG;
 
 	HRESULT hr = S_FALSE;
-	for (_ATL_OBJMAP_ENTRY** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast && SUCCEEDED(hr); ppEntry++)
+	for (_ATL_OBJMAP_ENTRY_EX** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast && SUCCEEDED(hr); ppEntry++)
 	{
 		if (*ppEntry != NULL)
 			hr = (*ppEntry)->RegisterClassObject(dwClsContext, dwFlags);
@@ -224,13 +234,15 @@ ATLINLINE ATLAPI AtlComModuleRevokeClassObjects(
 		return E_INVALIDARG;
 
 	HRESULT hr = S_OK;
-	for (_ATL_OBJMAP_ENTRY** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast && hr == S_OK; ppEntry++)
+	for (_ATL_OBJMAP_ENTRY_EX** ppEntry = pComModule->m_ppAutoObjMapFirst; ppEntry < pComModule->m_ppAutoObjMapLast && hr == S_OK; ppEntry++)
 	{
 		if (*ppEntry != NULL)
 			hr = (*ppEntry)->RevokeClassObject();
 	}
 	return hr;
 }
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 ATLINLINE ATLAPI_(BOOL) AtlWaitWithMessageLoop(_In_ HANDLE hEvent)
 {
@@ -276,35 +288,46 @@ ATLINLINE ATLAPI_(BOOL) AtlWaitWithMessageLoop(_In_ HANDLE hEvent)
 	return FALSE;
 }
 
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 /////////////////////////////////////////////////////////////////////////////
 // QI support
-ATLPREFAST_SUPPRESS(6387)
 ATLINLINE ATLAPI AtlInternalQueryInterface(
 	_Inout_ void* pThis,
 	_In_ const _ATL_INTMAP_ENTRY* pEntries,
 	_In_ REFIID iid,
-	_Deref_out_ void** ppvObject)
+	_COM_Outptr_ void** ppvObject)
 {
 	ATLASSERT(pThis != NULL);
 	ATLASSERT(pEntries!= NULL);
-
+ 
 	if(pThis == NULL || pEntries == NULL)
 		return E_INVALIDARG;
 
 	// First entry in the com map should be a simple map entry
 	ATLASSERT(pEntries->pFunc == _ATL_SIMPLEMAPENTRY);
+ 
 	if (ppvObject == NULL)
 		return E_POINTER;
-	*ppvObject = NULL;
+
 	if (InlineIsEqualUnknown(iid)) // use first interface
 	{
-			IUnknown* pUnk = (IUnknown*)((INT_PTR)pThis+pEntries->dw);
-			pUnk->AddRef();
-			*ppvObject = pUnk;
-			return S_OK;
+		IUnknown* pUnk = (IUnknown*)((INT_PTR)pThis+pEntries->dw);
+		pUnk->AddRef();
+		*ppvObject = pUnk;
+		return S_OK;
 	}
-	while (pEntries->pFunc != NULL)
+ 
+	HRESULT hRes;
+ 
+	for (;; pEntries++)
 	{
+		if (pEntries->pFunc == NULL)
+		{
+			hRes = E_NOINTERFACE;
+			break;
+		}
+
 		BOOL bBlind = (pEntries->piid == NULL);
 		if (bBlind || InlineIsEqualGUID(*(pEntries->piid), iid))
 		{
@@ -316,19 +339,22 @@ ATLINLINE ATLAPI AtlInternalQueryInterface(
 				*ppvObject = pUnk;
 				return S_OK;
 			}
-			else //actual function call
-			{
-				HRESULT hRes = pEntries->pFunc(pThis,
-					iid, ppvObject, pEntries->dw);
-				if (hRes == S_OK || (!bBlind && FAILED(hRes)))
-					return hRes;
-			}
+ 
+			// Actual function call
+ 
+			hRes = pEntries->pFunc(pThis,
+				iid, ppvObject, pEntries->dw);
+			if (hRes == S_OK)
+				return S_OK;
+			if (!bBlind && FAILED(hRes))
+				break;
 		}
-		pEntries++;
 	}
-	return E_NOINTERFACE;
+ 
+	*ppvObject = NULL;
+ 
+	return hRes;
 }
-ATLPREFAST_UNSUPPRESS()
 
 ATLINLINE ATLAPI_(DWORD) AtlGetVersion(_In_opt_ void* /* pReserved */)
 {
@@ -433,8 +459,7 @@ ATLINLINE ATLAPI AtlModuleAddTermFunc(
 		return E_INVALIDARG;
 
 	HRESULT hr = S_OK;
-	_ATL_TERMFUNC_ELEM* pNew = NULL;
-	ATLTRY(pNew = new _ATL_TERMFUNC_ELEM);
+	_ATL_TERMFUNC_ELEM* pNew = _ATL_NEW _ATL_TERMFUNC_ELEM;
 	if (pNew == NULL)
 		hr = E_OUTOFMEMORY;
 	else

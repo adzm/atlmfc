@@ -23,7 +23,7 @@
 
 class CMFCAutoHideBar;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CAutoHideDockSite window
 
 class CAutoHideDockSite : public CDockSite
@@ -56,9 +56,7 @@ public:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CAutoHideDockSite)
 	afx_msg void OnPaint();
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
 	int m_nOffsetLeft;
@@ -67,7 +65,7 @@ protected:
 	AFX_IMPORT_DATA static int m_nExtraSpace;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

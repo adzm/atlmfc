@@ -175,7 +175,7 @@ void CFieldExchange::Default(LPCTSTR szName,
 		if (m_prs->IsFieldStatusDirty(nField - 1))
 		{
 			// We require a name
-			ASSERT(lstrlen(szName) != 0);
+			ASSERT(_tcslen(szName) != 0);
 
 			*m_pstr += szName;
 			*m_pstr += m_lpszSeparator;
@@ -326,8 +326,8 @@ void CFieldExchange::Default(LPCTSTR szName,
 
 namespace nsRFX_Text
 {
-inline int RFX_Text_strlen(_In_ LPSTR  psz){return ::lstrlenA(psz);}
-inline int RFX_Text_strlen(_In_ LPWSTR psz){return ::lstrlenW(psz);}
+inline int RFX_Text_strlen(_In_ LPSTR  psz){return AtlStrLen(psz);}
+inline int RFX_Text_strlen(_In_ LPWSTR psz){return AtlStrLen(psz);}
 
 inline void RFX_Text_inc(LPSTR *ppsz)
 	#ifdef _MBCS
@@ -842,13 +842,13 @@ void RFX_Text(CFieldExchange* pFX, LPCTSTR szName,
 } // namespace
 
 void AFXAPI RFX_Text(_In_ CFieldExchange* pFX, _In_z_ LPCTSTR szName,
-	_Out_cap_(nMaxLength) _Pre_notnull_ _Post_z_ LPWSTR value, _In_ int nMaxLength, _In_ int nColumnType, _In_ short nScale)
+	_Out_writes_(nMaxLength) _Pre_notnull_ _Post_z_ LPWSTR value, _In_ int nMaxLength, _In_ int nColumnType, _In_ short nScale)
 {
 	nsRFX_Text::RFX_Text(pFX, szName, value, nMaxLength, nColumnType, nScale, SQL_C_WCHAR, L' ');
 }
 
 void AFXAPI RFX_Text(_In_ CFieldExchange* pFX, _In_ LPCTSTR szName,
-	_Out_cap_(nMaxLength) _Pre_notnull_ _Post_z_ LPSTR value, _In_ int nMaxLength, _In_ int nColumnType, _In_ short nScale)
+	_Out_writes_(nMaxLength) _Pre_notnull_ _Post_z_ LPSTR value, _In_ int nMaxLength, _In_ int nColumnType, _In_ short nScale)
 {
 	nsRFX_Text::RFX_Text(pFX, szName, value, nMaxLength, nColumnType, nScale, SQL_C_CHAR, ' ');
 }
@@ -2919,12 +2919,12 @@ void AFXAPI AfxCopyValueByRef(void* pvSrc, void* pvDest, LONG_PTR* plLength, int
 
 	case AFX_RFX_LPWSTR:
 		lstrcpyW(static_cast<LPWSTR>(pvDest), static_cast<LPCWSTR>(pvSrc));
-		*plLength = lstrlenW(static_cast<LPCWSTR>(pvDest)) * sizeof(WCHAR);
+		*plLength = wcslen(static_cast<LPCWSTR>(pvDest)) * sizeof(WCHAR);
 		break;
 
 	case AFX_RFX_LPASTR:
 		lstrcpyA(static_cast<LPSTR>(pvDest), static_cast<LPCSTR>(pvSrc));
-		*plLength = lstrlenA(static_cast<LPCSTR>(pvDest))  * sizeof(CHAR);
+		*plLength = AtlStrLen(static_cast<LPCSTR>(pvDest))  * sizeof(CHAR);
 		break;
 
 	case AFX_RFX_WTEXT:
@@ -3010,7 +3010,7 @@ void AFXAPI AfxCopyValueByRef(void* pvSrc, void* pvDest, LONG_PTR* plLength, int
 // Bulk Recordset Field Exchange
 template<typename CharType>
 inline void RFX_Text_Bulk(CFieldExchange* pFX, LPCTSTR szName,
-	_Out_ _Deref_post_cap_(nMaxLength) CharType **prgStrVals, LONG_PTR** prgLengths, int nMaxLength,
+	_Outptr_result_buffer_(nMaxLength) CharType **prgStrVals, LONG_PTR** prgLengths, int nMaxLength,
 	short nFieldType)
 {
 	ENSURE_ARG(AfxIsValidAddress(pFX, sizeof(CFieldExchange)));
@@ -3055,13 +3055,13 @@ inline void RFX_Text_Bulk(CFieldExchange* pFX, LPCTSTR szName,
 }
 
 void AFXAPI RFX_Text_Bulk(CFieldExchange* pFX, LPCTSTR szName,
-	_Out_ _Deref_post_cap_(nMaxLength) LPWSTR *prgStrVals, LONG_PTR** prgLengths, int nMaxLength)
+	_Outptr_result_buffer_(nMaxLength) LPWSTR *prgStrVals, LONG_PTR** prgLengths, int nMaxLength)
 {
 	RFX_Text_Bulk(pFX, szName, prgStrVals, prgLengths, nMaxLength, SQL_C_WCHAR);
 }
 
 void AFXAPI RFX_Text_Bulk(CFieldExchange* pFX, LPCTSTR szName,
-	_Out_ _Deref_post_cap_(nMaxLength) LPSTR *prgStrVals, LONG_PTR** prgLengths, int nMaxLength)
+	_Outptr_result_buffer_(nMaxLength) LPSTR *prgStrVals, LONG_PTR** prgLengths, int nMaxLength)
 {
 	RFX_Text_Bulk(pFX, szName, prgStrVals, prgLengths, nMaxLength, SQL_C_CHAR);
 }
@@ -3341,7 +3341,7 @@ void AFXAPI AfxRFXBulkDefault(CFieldExchange* pFX, LPCTSTR szName,
 	case CFieldExchange::Name:
 		ENSURE_ARG(szName!=NULL);
 		// We require a name
-		ASSERT(lstrlen(szName) != 0);
+		ASSERT(_tcslen(szName) != 0);
 
 		*pFX->m_pstr += szName;
 		*pFX->m_pstr += pFX->m_lpszSeparator;

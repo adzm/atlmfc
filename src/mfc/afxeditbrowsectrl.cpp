@@ -26,6 +26,8 @@
 /////////////////////////////////////////////////////////////////////////////
 // CMFCEditBrowseCtrl
 
+IMPLEMENT_DYNAMIC(CMFCEditBrowseCtrl, CEdit)
+
 CMFCEditBrowseCtrl::CMFCEditBrowseCtrl()
 {
 	m_rectBtn.SetRectEmpty();
@@ -43,7 +45,6 @@ CMFCEditBrowseCtrl::~CMFCEditBrowseCtrl()
 }
 
 BEGIN_MESSAGE_MAP(CMFCEditBrowseCtrl, CEdit)
-	//{{AFX_MSG_MAP(CMFCEditBrowseCtrl)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_NCCALCSIZE()
@@ -56,7 +57,6 @@ BEGIN_MESSAGE_MAP(CMFCEditBrowseCtrl, CEdit)
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCEditBrowseCtrl::OnInitControl)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -192,7 +192,7 @@ void CMFCEditBrowseCtrl::OnDrawBrowseButton(CDC* pDC, CRect rect, BOOL bIsButton
 		state = CMFCVisualManager::ButtonsIsHighlighted;
 	}
 
-	COLORREF clrText = afxGlobalData.clrBtnText;
+	COLORREF clrText = GetGlobalData()->clrBtnText;
 
 	if (!CMFCVisualManager::GetInstance()->OnDrawBrowseButton(pDC, rect, this, state, clrText))
 	{
@@ -229,7 +229,7 @@ void CMFCEditBrowseCtrl::OnDrawBrowseButton(CDC* pDC, CRect rect, BOOL bIsButton
 
 		m_ImageBrowse.Draw(pDC, iImage, ptImage, ILD_NORMAL);
 	}
-	else if (!m_strLabel.IsEmpty())
+	else
 	{
 		COLORREF clrTextOld = pDC->SetTextColor(clrText);
 		int nTextMode = pDC->SetBkMode(TRANSPARENT);
@@ -244,7 +244,7 @@ void CMFCEditBrowseCtrl::OnDrawBrowseButton(CDC* pDC, CRect rect, BOOL bIsButton
 			rectText.OffsetRect(1, 1);
 		}
 
-		pDC->DrawText(m_strLabel, rectText, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+		pDC->DrawText(_T("..."), rectText, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
 
 		pDC->SetTextColor(clrTextOld);
 		pDC->SetBkMode(nTextMode);
@@ -252,14 +252,12 @@ void CMFCEditBrowseCtrl::OnDrawBrowseButton(CDC* pDC, CRect rect, BOOL bIsButton
 	}
 }
 
-void CMFCEditBrowseCtrl::EnableBrowseButton(BOOL bEnable/* = TRUE*/, LPCTSTR szLabel/* = _T("...")*/)
+void CMFCEditBrowseCtrl::EnableBrowseButton(BOOL bEnable/* = TRUE*/)
 {
 	ASSERT_VALID(this);
 	ENSURE(GetSafeHwnd() != NULL);
-	ENSURE(szLabel != NULL);
 
 	m_Mode = bEnable ? BrowseMode_Default : BrowseMode_None;
-	m_strLabel = szLabel;
 
 	m_ImageBrowse.DeleteImageList();
 	m_sizeImage = CSize(0, 0);
@@ -307,7 +305,8 @@ void CMFCEditBrowseCtrl::OnBrowse()
 			GetWindowText(strFolder);
 
 			CString strResult;
-			if (afxShellManager->BrowseForFolder(strResult, this, strFolder) &&
+			LPCTSTR lpszTitle = m_strBrowseFolderTitle != _T("") ? m_strBrowseFolderTitle : (LPCTSTR)NULL;
+			if (afxShellManager->BrowseForFolder(strResult, this, strFolder, lpszTitle, m_ulBrowseFolderFlags) &&
 				(strResult != strFolder))
 			{
 				SetWindowText(strResult);
@@ -543,13 +542,15 @@ void CMFCEditBrowseCtrl::EnableFileBrowseButton(LPCTSTR lpszDefExt/* = NULL*/, L
 	OnChangeLayout();
 }
 
-void CMFCEditBrowseCtrl::EnableFolderBrowseButton()
+void CMFCEditBrowseCtrl::EnableFolderBrowseButton(LPCTSTR lpszBrowseFolderTitle/* = NULL */, UINT ulBrowseFolderFlags/* = BIF_RETURNONLYFSDIRS */)
 {
 	ASSERT_VALID(this);
 	ENSURE(GetSafeHwnd() != NULL);
 	ENSURE(afxShellManager != NULL); // You need to call CWinAppEx::InitShellManager() first!
 
 	m_Mode = BrowseMode_Folder;
+	m_strBrowseFolderTitle = lpszBrowseFolderTitle != NULL ? lpszBrowseFolderTitle: _T("");
+	m_ulBrowseFolderFlags = ulBrowseFolderFlags;
 	SetInternalImage();
 	OnChangeLayout();
 }
@@ -561,7 +562,7 @@ void CMFCEditBrowseCtrl::SetInternalImage()
 		m_ImageBrowse.DeleteImageList();
 	}
 
-	UINT uiImageListResID = afxGlobalData.Is32BitIcons() ? IDB_AFXBARRES_BROWSE32 : IDB_AFXBARRES_BROWSE;
+	UINT uiImageListResID = GetGlobalData()->Is32BitIcons() ? IDB_AFXBARRES_BROWSE32 : IDB_AFXBARRES_BROWSE;
 
 	LPCTSTR lpszResourceName = MAKEINTRESOURCE(uiImageListResID);
 	ENSURE(lpszResourceName != NULL);

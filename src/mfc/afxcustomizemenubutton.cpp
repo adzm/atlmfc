@@ -227,8 +227,8 @@ BOOL CMFCCustomizeMenuButton::OnClickMenuItem()
 			int nCount = pMenuBar->GetCount();
 			for (int i = 0; i < nCount; i++)
 			{
-				CMFCCustomizeMenuButton* pBtn = (CMFCCustomizeMenuButton*)pMenuBar->GetButton(i);
-				if ((pBtn->m_uiIndex >= nNewIndex) && (pBtn->m_uiIndex != ID_AFXBARRES_TOOLBAR_RESET_PROMT))
+				CMFCCustomizeMenuButton* pBtn = DYNAMIC_DOWNCAST(CMFCCustomizeMenuButton, pMenuBar->GetButton(i));
+				if (pBtn != NULL && (pBtn->m_uiIndex >= nNewIndex) && (pBtn->m_uiIndex != ID_AFXBARRES_TOOLBAR_RESET_PROMT))
 				{
 					if (pBtn->m_bExist)
 					{

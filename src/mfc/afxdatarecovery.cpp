@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -68,8 +68,6 @@ CDataRecoveryHandler::~CDataRecoveryHandler()
 	KillTimer(NULL, m_nTimerID);
 }
 
-typedef HRESULT (STDAPICALLTYPE *PFNGETKNOWNFOLDERPATH)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
-
 BOOL CDataRecoveryHandler::Initialize()
 {
 	BOOL bRet = TRUE;
@@ -80,15 +78,7 @@ BOOL CDataRecoveryHandler::Initialize()
 		PWSTR pszAutosavePath = NULL;
 
 		// Get the path where files will be autosaved on timer tick or restart
-		HMODULE hShell = AfxCtxLoadLibraryW(L"SHELL32.DLL");
-		if (hShell != NULL)
-		{
-			PFNGETKNOWNFOLDERPATH pfnSHGetKnownFolderPath = (PFNGETKNOWNFOLDERPATH)GetProcAddress(hShell, "SHGetKnownFolderPath");
-			if (pfnSHGetKnownFolderPath != NULL)
-			{
-				hr = pfnSHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &pszAutosavePath);
-			}
-		}
+		hr = _AfxSHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &pszAutosavePath);
 
 		if ((hr == S_OK) && (pszAutosavePath != NULL))
 		{

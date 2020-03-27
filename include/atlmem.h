@@ -40,10 +40,10 @@ inline N WINAPI AtlAlignDown(
 __interface __declspec(uuid("654F7EF5-CFDF-4df9-A450-6C6A13C622C0")) IAtlMemMgr
 {
 public:
-	void* Allocate(_In_ size_t nBytes) throw();
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) void* Allocate(_In_ size_t nBytes) throw();
 	void Free(_Inout_opt_ void* p) throw();
-	void* Reallocate(
-		_Inout_opt_bytecap_(nBytes) void* p,
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) void* Reallocate(
+		_Inout_updates_bytes_opt_(nBytes) void* p,
 		_In_ size_t nBytes) throw();
 	size_t GetSize(_In_ void* p) throw();
 };
@@ -52,7 +52,7 @@ class CCRTHeap :
 	public IAtlMemMgr
 {
 public:
-	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( malloc( nBytes ) );
 	}
@@ -60,7 +60,7 @@ public:
 	{
 		free( p );
 	}
-	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -89,6 +89,7 @@ public:
 	{
 		ATLASSERT( hHeap != NULL );
 	}
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	CWin32Heap(
 			_In_ DWORD dwFlags,
 			_In_ size_t nInitialSize,
@@ -103,8 +104,10 @@ public:
 			AtlThrowLastWin32();
 		}
 	}
+#endif
 	virtual ~CWin32Heap() throw()
 	{
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 		if( m_bOwnHeap && (m_hHeap != NULL) )
 		{
 			BOOL bSuccess;
@@ -112,6 +115,7 @@ public:
 			bSuccess = ::HeapDestroy( m_hHeap );
 			ATLASSERT( bSuccess );
 		}
+#endif
 	}
 
 	void Attach(
@@ -136,7 +140,7 @@ public:
 	}
 
 // IAtlMemMgr
-	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::HeapAlloc( m_hHeap, 0, nBytes ) );
 	}
@@ -150,7 +154,7 @@ public:
 			ATLASSERT( bSuccess );
 		}
 	}
-	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -177,12 +181,14 @@ public:
 	bool m_bOwnHeap;
 };
 
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+
 class CLocalHeap :
 	public IAtlMemMgr
 {
 // IAtlMemMgr
 public:
-	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::LocalAlloc( LMEM_FIXED, nBytes ) );
 	}
@@ -190,7 +196,7 @@ public:
 	{
 		::LocalFree( p );
 	}
-	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -217,7 +223,7 @@ class CGlobalHeap :
 {
 // IAtlMemMgr
 public:
-	_Ret_opt_bytecap_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Allocate(_In_ size_t nBytes) throw()
 	{
 		return( ::GlobalAlloc( LMEM_FIXED, nBytes ) );
 	}
@@ -225,7 +231,7 @@ public:
 	{
 		::GlobalFree( p );
 	}
-	_Ret_opt_bytecap_(nBytes) virtual void* Reallocate(
+	_Ret_maybenull_ _Post_writable_byte_size_(nBytes) virtual void* Reallocate(
 		_In_opt_ void* p,
 		_In_ size_t nBytes) throw()
 	{
@@ -244,6 +250,8 @@ public:
 		return( ::GlobalSize( p ) );
 	}
 };
+
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 };  // namespace ATL
 #pragma pack(pop)

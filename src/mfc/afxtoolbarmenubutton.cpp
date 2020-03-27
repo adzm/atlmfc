@@ -45,8 +45,6 @@ IMPLEMENT_SERIAL(CMFCToolBarMenuButton, CMFCToolBarButton, VERSIONABLE_SCHEMA | 
 
 BOOL CMFCToolBarMenuButton::m_bAlwaysCallOwnerDraw = FALSE;
 
-static const CString strDummyAmpSeq = _T("\001\001");
-
 // Construction/Destruction
 CMFCToolBarMenuButton::CMFCToolBarMenuButton()
 {
@@ -415,7 +413,7 @@ SIZE CMFCToolBarMenuButton::OnCalculateSize(CDC* pDC, const CSize& sizeDefault, 
 	{
 		if (m_bMenuMode)
 		{
-			nArrowSize = (bHorz) ? afxGlobalData.GetTextWidth() : afxGlobalData.GetTextHeight();
+			nArrowSize = (bHorz) ? GetGlobalData()->GetTextWidth() : GetGlobalData()->GetTextHeight();
 		}
 		else
 		{
@@ -463,7 +461,7 @@ SIZE CMFCToolBarMenuButton::OnCalculateSize(CDC* pDC, const CSize& sizeDefault, 
 
 	if (m_nID == AFX_MENU_GROUP_ID)
 	{
-		pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+		pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 		ASSERT_VALID(pOldFont);
 	}
 
@@ -706,12 +704,22 @@ void CMFCToolBarMenuButton::CreateFromMenu(HMENU hMenu)
 
 		if (uiState & MF_MENUBREAK)
 		{
-			pItem->m_nStyle |= AFX_TBBS_BREAK;
+			pItem->m_nStyle |= TBBS_BREAK;
 		}
 
 		if ((uiState & MF_DISABLED) ||(uiState & MF_GRAYED))
 		{
 			pItem->m_nStyle |= TBBS_DISABLED;
+		}
+
+		if (uiState & MF_CHECKED)
+		{
+			pItem->m_nStyle |= TBBS_CHECKED;
+		}
+
+		if (uiState & MFT_RADIOCHECK)
+		{
+			pItem->m_bIsRadio = TRUE;
 		}
 
 		m_listCommands.AddTail(pItem);
@@ -747,7 +755,7 @@ HMENU CMFCToolBarMenuButton::CreateMenu() const
 
 		UINT uiStyle = MF_STRING;
 
-		if (pItem->m_nStyle & AFX_TBBS_BREAK)
+		if (pItem->m_nStyle & TBBS_BREAK)
 		{
 			uiStyle |= MF_MENUBREAK;
 		}
@@ -757,6 +765,15 @@ HMENU CMFCToolBarMenuButton::CreateMenu() const
 			uiStyle |= MF_DISABLED;
 		}
 
+		if (pItem->m_nStyle & TBBS_CHECKED)
+		{
+			uiStyle |= MF_CHECKED;
+		}
+
+		if (pItem->m_bIsRadio)
+		{
+			uiStyle |= MFT_RADIOCHECK;
+		}
 
 		if (pItem->IsTearOffMenu())
 		{
@@ -837,7 +854,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 		rectText.DeflateRect(AFX_TEXT_MARGIN, 0);
 		rectText.bottom -= 2;
 
-		CFont* pOldFont = pDC->SelectObject(&afxGlobalData.fontBold);
+		CFont* pOldFont = pDC->SelectObject(&(GetGlobalData()->fontBold));
 		ASSERT_VALID(pOldFont);
 
 		pDC->DrawText(m_strText, rectText, DT_SINGLELINE | DT_VCENTER);
@@ -941,7 +958,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 
 	if (m_nID != 0 && m_nID != (UINT) -1 && !m_bMenuOnly && pParentMenu != NULL && pParentMenu->GetDefaultMenuId() == m_nID)
 	{
-		pOldFont = (CFont*) pDC->SelectObject(&afxGlobalData.fontBold);
+		pOldFont = (CFont*) pDC->SelectObject(&(GetGlobalData()->fontBold));
 	}
 
 	CRect rectImage;
@@ -1042,7 +1059,19 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 			{
 				ASSERT_VALID(pUserImages);
 
-				pUserImages->PrepareDrawImage(ds);
+				CSize sizeImageDest(0, 0);
+
+				if (pImages != NULL)
+				{
+					CSize sizeImageDefault = pImages->GetImageSize();
+				
+					if (sizeImageDefault != pUserImages->GetImageSize())
+					{
+						sizeImageDest = sizeImageDefault;
+					}
+				}
+
+				pUserImages->PrepareDrawImage(ds, sizeImageDest);
 				pImages = pUserImages;
 			}
 		}
@@ -1061,7 +1090,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 	if (!bDisableImage &&(IsDrawImage() && pImages != NULL) || hDocIcon != NULL)
 	{
 		BOOL bDrawImageShadow = bHighlight && !bCustomizeMode && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() &&
-			!afxGlobalData.IsHighContrastMode() && ((m_nStyle & TBBS_CHECKED) == 0) && ((m_nStyle & TBBS_DISABLED) == 0);
+			!GetGlobalData()->IsHighContrastMode() && ((m_nStyle & TBBS_CHECKED) == 0) && ((m_nStyle & TBBS_DISABLED) == 0);
 
 		pDC->SelectObject(&rgnClip);
 
@@ -1084,7 +1113,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 				CPoint pt = rectImage.TopLeft();
 				pt += ptImageOffset;
 
-				if (afxGlobalData.GetRibbonImageScale() != 1. && CMFCToolBar::m_bDontScaleImages)
+				if (GetGlobalData()->GetRibbonImageScale() != 1. && CMFCToolBar::m_bDontScaleImages)
 				{
 					pt.x += max (0, (rectImage.Width() - pImages->GetImageSize().cx) / 2);
 					pt.y += max (0, (rectImage.Width() - pImages->GetImageSize().cy) / 2);
@@ -1311,16 +1340,16 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 		strText += strEllipses;
 	}
 
-	if (!afxGlobalData.m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode())
+	if (!GetGlobalData()->m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode())
 	{
-		strText.Replace(_T("&&"), strDummyAmpSeq);
+		strText.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 		strText.Remove(_T('&'));
-		strText.Replace(strDummyAmpSeq, _T("&&"));
+		strText.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&&"));
 	}
 
 	if (bDisabled && !bHighlight && CMFCVisualManager::GetInstance()->IsEmbossDisabledImage())
 	{
-		pDC->SetTextColor(afxGlobalData.clrBtnHilite);
+		pDC->SetTextColor(GetGlobalData()->clrBtnHilite);
 
 		CRect rectShft = rectText;
 		rectShft.OffsetRect(1, 1);
@@ -1340,7 +1369,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 
 		if (bDisabled && !bHighlight && CMFCVisualManager::GetInstance()->IsEmbossDisabledImage())
 		{
-			pDC->SetTextColor(afxGlobalData.clrBtnHilite);
+			pDC->SetTextColor(GetGlobalData()->clrBtnHilite);
 
 			CRect rectAccelShft = rectAccel;
 			rectAccelShft.OffsetRect(1, 1);
@@ -1356,7 +1385,7 @@ void CMFCToolBarMenuButton::DrawMenuItem(CDC* pDC, const CRect& rect, CMFCToolBa
 	//--------------------------------------------
 	if (m_nID == (UINT) -1 || m_bDrawDownArrow || m_bMenuOnly)
 	{
-		CFont* pRegFont = pDC->SelectObject(&afxGlobalData.fontMarlett);
+		CFont* pRegFont = pDC->SelectObject(&(GetGlobalData()->fontMarlett));
 		ENSURE(pRegFont != NULL);
 
 		CRect rectTriangle = rect;
@@ -1800,8 +1829,8 @@ void CMFCToolBarMenuButton::DrawDocumentIcon(CDC* pDC, const CRect& rectImage, H
 {
 	ASSERT_VALID(pDC);
 
-	int cx = afxGlobalData.m_sizeSmallIcon.cx;
-	int cy = afxGlobalData.m_sizeSmallIcon.cy;
+	int cx = GetGlobalData()->m_sizeSmallIcon.cx;
+	int cy = GetGlobalData()->m_sizeSmallIcon.cy;
 
 	if (cx > rectImage.Width() ||
 		cy > rectImage.Height())

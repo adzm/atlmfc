@@ -47,10 +47,8 @@ public:
 		Close();
 	}
 
-	bool Init(
-		_In_z_ const CHAR *pszFileMappingName,
-		_In_ DWORD dwMaxSize);
-	bool Open(_In_z_ const CHAR *pszFileMappingName);
+	bool Init(_In_z_ const WCHAR *pszFileMappingName, _In_ DWORD dwMaxSize);
+	bool Open(_In_z_ const WCHAR *pszFileMappingName);
 	void Close(_In_ bool bForceUnmap = false);
 	bool IsValid() const
 	{

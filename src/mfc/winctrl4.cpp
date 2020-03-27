@@ -26,6 +26,10 @@ _AFX_RICHEDIT_STATE::~_AFX_RICHEDIT_STATE()
 		::FreeLibrary(m_hInstRichEdit);
 	if (m_hInstRichEdit2 != NULL)
 		::FreeLibrary(m_hInstRichEdit2);
+#ifdef _UNICODE
+	if (m_hInstRichEdit5 != NULL)
+		::FreeLibrary(m_hInstRichEdit5);
+#endif
 }
 
 _AFX_RICHEDIT_STATE* AFX_CDECL AfxGetRichEditState()
@@ -37,7 +41,7 @@ BOOL PASCAL AfxInitRichEdit()
 {
 	_AFX_RICHEDIT_STATE* pState = _afxRichEditState;
 	if (pState->m_hInstRichEdit == NULL)
-		pState->m_hInstRichEdit = AfxCtxLoadLibraryW(L"RICHED32.DLL");
+		pState->m_hInstRichEdit = AtlLoadSystemLibraryUsingFullPath(L"RICHED32.DLL");
 	return pState->m_hInstRichEdit != NULL;
 }
 
@@ -45,9 +49,19 @@ BOOL PASCAL AfxInitRichEdit2()
 {
 	_AFX_RICHEDIT_STATE* pState = _afxRichEditState;
 	if (pState->m_hInstRichEdit2 == NULL)
-		pState->m_hInstRichEdit2 = AfxCtxLoadLibraryW(L"RICHED20.DLL");
+		pState->m_hInstRichEdit2 = AtlLoadSystemLibraryUsingFullPath(L"RICHED20.DLL");
 	return pState->m_hInstRichEdit2 != NULL;
 }
+
+#ifdef _UNICODE
+BOOL PASCAL AfxInitRichEdit5()
+{
+	_AFX_RICHEDIT_STATE* pState = _afxRichEditState;
+	if (pState->m_hInstRichEdit5 == NULL)
+		pState->m_hInstRichEdit5 = AtlLoadSystemLibraryUsingFullPath(L"MSFTEDIT.DLL");
+	return pState->m_hInstRichEdit5 != NULL;
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // CRichEdit
@@ -55,11 +69,19 @@ BOOL PASCAL AfxInitRichEdit2()
 BOOL CRichEditCtrl::Create(DWORD dwStyle, const RECT& rect,
 	CWnd* pParentWnd, UINT nID)
 {
+#ifdef _UNICODE
+	if (!AfxInitRichEdit5())
+#else
 	if (!AfxInitRichEdit2())
+#endif
 		return FALSE;
 
 	CWnd* pWnd = this;
+#ifdef _UNICODE
+	return pWnd->Create(MSFTEDIT_CLASS, NULL, dwStyle, rect,
+#else
 	return pWnd->Create(RICHEDIT_CLASS, NULL, dwStyle, rect,
+#endif
 		pParentWnd, nID);
 }
 
@@ -129,7 +151,7 @@ void CRichEditCtrl::PasteSpecial(UINT nClipFormat, DWORD dvAspect, HMETAFILE hMF
 	::SendMessage(m_hWnd, EM_PASTESPECIAL, nClipFormat, (LPARAM)&reps);
 }
 
-int CRichEditCtrl::GetLine(_In_ int nIndex, _Out_cap_post_count_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const
+int CRichEditCtrl::GetLine(_In_ int nIndex, _Out_writes_to_(nMaxLength, return) LPTSTR lpszBuffer, _In_ int nMaxLength) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	ENSURE(sizeof(nMaxLength)<=nMaxLength*sizeof(TCHAR)&&nMaxLength>0);
@@ -203,7 +225,7 @@ int CRichEditCtrl::GetTextRange(int nFirst, int nLast,
 	textRange.chrg.cpMax = nLast;
 
 	// can't be backwards
-	int nLength = int(nLast - nFirst + 1);
+	int nLength = int((nLast - nFirst + 1) * 2); // ensure space for MBCS characters
 	ASSERT(nLength > 0);
 
 	textRange.lpstrText = refString.GetBuffer(nLength);
@@ -217,14 +239,14 @@ BOOL CRichEditCtrl::SetDefaultCharFormat(CHARFORMAT &cf)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	cf.cbSize = sizeof(CHARFORMAT);
-	return (BOOL)::SendMessage(m_hWnd, EM_SETCHARFORMAT, 0, (LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf);
 }
 
 BOOL CRichEditCtrl::SetDefaultCharFormat(CHARFORMAT2 &cf)
 {
 	ASSERT(::IsWindow(m_hWnd));
 	cf.cbSize = sizeof(CHARFORMAT2);
-	return (BOOL)::SendMessage(m_hWnd, EM_SETCHARFORMAT, 0, (LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf);
 }
 
 BOOL CRichEditCtrl::SetSelectionCharFormat(CHARFORMAT &cf)

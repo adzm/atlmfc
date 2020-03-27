@@ -244,7 +244,11 @@ AFX_STATIC BOOL AFXAPI _AfxOleMakeSymbolTable(_AFX_OLESYMBOLTABLE& refTable,
 	// get path name to server
 	CString strPathName;
 	AfxGetModuleFileName(AfxGetInstanceHandle(), strPathName);
-	refTable.SetAt(2, strPathName);
+	CString strPathNameQuoted;
+	strPathNameQuoted = "\"";
+	strPathNameQuoted += strPathName;
+	strPathNameQuoted += "\"";
+	refTable.SetAt(2, strPathNameQuoted);
 
 	// fill in rest of symbols
 	refTable.SetAt(3, lpszShortTypeName);
@@ -355,7 +359,7 @@ BOOL AFXAPI AfxOleRegisterServerClass(
 
 	// protect against registering an invalid DocObject server
 	ASSERT(nAppType != OAT_DOC_OBJECT_SERVER ||
-		(lstrlen(table.GetAt(8)) != 0 && lstrcmp(table.GetAt(8), _T(".*")) != 0));
+		(AtlStrLen(table.GetAt(8)) != 0 && lstrcmp(table.GetAt(8), _T(".*")) != 0));
 
 	// update the registry with helper function
 	BOOL bResult;
@@ -476,7 +480,7 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 		if ((hKeyRoot == HKEY_CLASSES_ROOT) && (*lpszKey == '\0'))
 			continue;
 
-		LPCTSTR lpszValue = lpszKey + lstrlen(lpszKey) + 1;
+		LPCTSTR lpszValue = lpszKey + AtlStrLen(lpszKey) + 1;
 
 		AfxFormatStrings(strKey, lpszKey, rglpszSymbols, nSymbols);
 		AfxFormatStrings(strValue, lpszValue, rglpszSymbols, nSymbols);
@@ -504,7 +508,7 @@ BOOL AFXAPI AfxOleRegisterHelper(LPCTSTR const* rglpszRegister,
 			}
 		}
 
-		LONG lResult = AfxRegSetValue(hKeyRoot, strKey, REG_SZ, strValue, lstrlen(strValue) * sizeof(TCHAR));
+		LONG lResult = AfxRegSetValue(hKeyRoot, strKey, REG_SZ, strValue, AtlStrLen(strValue) * sizeof(TCHAR));
 		if(lResult != ERROR_SUCCESS)
 		{
 			TRACE(traceOle, 0, _T("Error: failed setting key '%s' to value '%s'.\n"), (LPCTSTR)strKey, (LPCTSTR)strValue);
@@ -546,7 +550,7 @@ BOOL AFXAPI AfxRegisterPreviewHandler(LPCTSTR lpszCLSID, LPCTSTR lpszShortTypeNa
 	CRegKey regKey(HKEY_CLASSES_ROOT);
 	regKey.Create(HKEY_CLASSES_ROOT, strShellExKey);
 
-	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID)lpszCLSID, (ULONG)(_tcslen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
+	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID)lpszCLSID, (ULONG)(AtlStrLen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
 	{
 		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_CLASSES_ROOT\\'%s'.\n"), lpszCLSID, strShellExKey);
 		return FALSE;
@@ -580,7 +584,7 @@ BOOL AFXAPI AfxRegisterThumbnailHandler(LPCTSTR lpszCLSID, LPCTSTR lpszFilterExt
 	CRegKey regKey(HKEY_CLASSES_ROOT);
 	regKey.Create(HKEY_CLASSES_ROOT, strShellExKey);
 
-	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID) lpszCLSID, (ULONG)(_tcslen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
+	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID) lpszCLSID, (ULONG)(AtlStrLen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
 	{
 		TRACE(traceOle, 0, _T("Error: failed setting value '%s' for key HKEY_CLASSES_ROOT\\'%s'.\n"), lpszCLSID, strShellExKey);
 		return FALSE;
@@ -641,7 +645,7 @@ BOOL AFXAPI AfxOleInprocRegisterHelper(HKEY hkeyProgID,
 			ASSERT(hkeyInprocServer32 != NULL);
 			bSuccess = (::RegSetValueEx(hkeyInprocServer32, _T("ThreadingModel"), 0,
 				REG_SZ, (const BYTE*) pstrThreadingModel, 
-				(lstrlen(pstrThreadingModel)+1) * sizeof(TCHAR)) == ERROR_SUCCESS);
+				(static_cast<DWORD>(AtlStrLen(pstrThreadingModel))+1) * sizeof(TCHAR)) == ERROR_SUCCESS);
 			::RegCloseKey(hkeyInprocServer32);
 		}
 		else

@@ -12,6 +12,12 @@
 
 #pragma once
 
+#include <atldef.h>
+
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 #include <sddl.h>
 #include <userenv.h>
 #include <aclapi.h>
@@ -517,17 +523,17 @@ public:
 	void SetSacl(
 		_In_ const CSacl &Sacl,
 		_In_ bool bDefaulted = false) throw(...);
-	bool GetOwner(
+	_Success_(return != false) bool GetOwner(
 		_Out_ CSid *pSid,
 		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
-	bool GetGroup(
+	_Success_(return != false) bool GetGroup(
 		_Out_ CSid *pSid,
 		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
-	bool GetDacl(
+	_Success_(return != false) bool GetDacl(
 		_Out_ CDacl *pDacl,
 		_Out_opt_ bool *pbPresent = NULL,
 		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
-	bool GetSacl(
+	_Success_(return != false) bool GetSacl(
 		_Out_ CSacl *pSacl,
 		_Out_opt_ bool *pbPresent = NULL,
 		_Out_opt_ bool *pbDefaulted = NULL) const throw(...);
@@ -567,6 +573,7 @@ public:
 
 protected:
 	virtual void Clear() throw();
+	_At_(this->m_pSecurityDescriptor, _Post_notnull_ _Post_writable_size_(1))
 	void AllocateAndInitializeSecurityDescriptor() throw(...);
 	void Init(_In_ const SECURITY_DESCRIPTOR &rhs) throw(...);
 
@@ -657,7 +664,7 @@ public:
 	typedef CAtlArray<CString> CNames;
 	typedef CAtlArray<DWORD> CAttributes;
 
-	bool LookupPrivilege(
+	_Success_(return != false) bool LookupPrivilege(
 		_In_z_ LPCTSTR pszPrivilege,
 		_Out_opt_ DWORD *pdwAttributes = NULL) const throw(...);
 	void GetNamesAndAttributes(
@@ -704,7 +711,7 @@ public:
 	void Add(_In_ const TOKEN_GROUPS &rTokenGroups) throw(...);
 	void Add(_In_ const CSid &rSid, _In_ DWORD dwAttributes) throw(...);
 
-	bool LookupSid(
+	_Success_(return != false) bool LookupSid(
 		_In_ const CSid &rSid,
 		_Out_opt_ DWORD *pdwAttributes = NULL) const throw();
 	void GetSidsAndAttributes(
@@ -777,17 +784,17 @@ public:
 		_In_ const CAtlArray<LPCTSTR> &rPrivileges,
 		_Inout_opt_ CTokenPrivileges *pPreviousState = NULL,
 		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
-	bool EnableDisablePrivileges(
+	_Success_(return != false) bool EnableDisablePrivileges(
 		_In_ const CTokenPrivileges &rPrivilenges,
 		_Inout_opt_ CTokenPrivileges *pPreviousState = NULL,
 		_Out_opt_ bool* pbErrNotAllAssigned=NULL) throw(...);
-	bool PrivilegeCheck(
+	_Success_(return != false) bool PrivilegeCheck(
 		_In_ PPRIVILEGE_SET RequiredPrivileges,
 		_Out_ bool *pbResult) const throw();
 
 	bool GetLogonSid(_Inout_ CSid *pSid) const throw(...);
-	bool GetTokenId(_Out_ LUID *pluid) const throw(...);
-	bool GetLogonSessionId(_Out_ LUID *pluid) const throw(...);
+	_Success_(return != false) bool GetTokenId(_Out_ LUID *pluid) const throw(...);
+	_Success_(return != false) bool GetLogonSessionId(_Out_ LUID *pluid) const throw(...);
 
 	bool CheckTokenMembership(
 		_In_ const CSid &rSid,

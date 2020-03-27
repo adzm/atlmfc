@@ -30,7 +30,6 @@ BOOL CMFCToolBarButton::m_bWrapText = TRUE;
 
 static const int nTextMargin = 3;
 static const int nSeparatorWidth = 8;
-static const CString strDummyAmpSeq = _T("\001\001");
 
 CList<UINT, UINT> CMFCToolBarButton::m_lstProtectedCommands;
 BOOL CMFCToolBarButton::m_bUpdateImages = TRUE;
@@ -281,9 +280,9 @@ void CMFCToolBarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* p
 	int iTextLen = 0;
 
 	CString strWithoutAmp = m_strText;
-	strWithoutAmp.Replace(_T("&&"), strDummyAmpSeq);
+	strWithoutAmp.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 	strWithoutAmp.Remove(_T('&'));
-	strWithoutAmp.Replace(strDummyAmpSeq, _T("&"));
+	strWithoutAmp.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 
 	CSize sizeText = pDC->GetTextExtent(strWithoutAmp);
 
@@ -337,7 +336,7 @@ void CMFCToolBarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* p
 	BOOL bPressed = FALSE;
 
 	BOOL bDrawImageShadow = bHighlight && !bCustomizeMode && !IsDroppedDown() && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() &&\
-		!afxGlobalData.IsHighContrastMode() && ((m_nStyle & TBBS_PRESSED) == 0) && ((m_nStyle & TBBS_CHECKED) == 0) && ((m_nStyle & TBBS_DISABLED) == 0);
+		!GetGlobalData()->IsHighContrastMode() && ((m_nStyle & TBBS_PRESSED) == 0) && ((m_nStyle & TBBS_CHECKED) == 0) && ((m_nStyle & TBBS_DISABLED) == 0);
 
 	if ((m_nStyle &(TBBS_PRESSED | TBBS_CHECKED)) && !bCustomizeMode &&
 		!CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && CMFCVisualManager::GetInstance()->IsOffsetPressedButton())
@@ -484,9 +483,18 @@ void CMFCToolBarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* p
 				rectText.OffsetRect(0, CMFCVisualManager::GetInstance()->GetButtonExtraBorder().cy / 2);
 			}
 
-			if (!afxGlobalData.m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode())
+			if (!GetGlobalData()->m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode())
 			{
-				strText = strWithoutAmp;
+				if (strText.Find(_T("&&")) >= 0)
+				{
+					strText.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
+					strText.Remove(_T('&'));
+					strText.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&&"));
+				}
+				else
+				{
+					strText = strWithoutAmp;
+				}
 			}
 
 			pDC->DrawText(strText, &rectText, uiTextFormat);
@@ -504,12 +512,12 @@ void CMFCToolBarButton::OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* p
 
 			uiTextFormat = DT_NOCLIP | DT_SINGLELINE;
 
-			strText.Replace(_T("&&"), strDummyAmpSeq);
+			strText.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 			int iAmpIndex = strText.Find(_T('&')); // Find a SINGLE '&'
 			strText.Remove(_T('&'));
-			strText.Replace(strDummyAmpSeq, _T("&&"));
+			strText.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&&"));
 
-			if (iAmpIndex >= 0 && (afxGlobalData.m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode()))
+			if (iAmpIndex >= 0 && (GetGlobalData()->m_bUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode()))
 			{
 				// Calculate underlined character position:
 				CRect rectSubText;
@@ -633,9 +641,9 @@ SIZE CMFCToolBarButton::OnCalculateSize(CDC* pDC, const CSize& sizeDefault, BOOL
 			else if (IsDrawText())
 			{
 				CString strWithoutAmp = m_strText;
-				strWithoutAmp.Replace(_T("&&"), strDummyAmpSeq);
+				strWithoutAmp.Replace(_T("&&"), AFX_DUMMY_AMPERSAND_SEQUENCE);
 				strWithoutAmp.Remove(_T('&'));
-				strWithoutAmp.Replace(strDummyAmpSeq, _T("&"));
+				strWithoutAmp.Replace(AFX_DUMMY_AMPERSAND_SEQUENCE, _T("&"));
 
 				int nTextExtra = bHasImage ? 2 * nTextMargin : 3 * nTextMargin;
 				int iTextLen = pDC->GetTextExtent(strWithoutAmp).cx + nTextExtra;
@@ -836,10 +844,14 @@ int CMFCToolBarButton::OnDrawOnCustomizeList(CDC* pDC, const CRect& rect, BOOL b
 		else
 		{
 			BOOL bFadeImage = !bSelected && CMFCVisualManager::GetInstance()->IsFadeInactiveImage();
-			BOOL bDrawImageShadow = bSelected && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !afxGlobalData.IsHighContrastMode();
+			BOOL bDrawImageShadow = bSelected && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !GetGlobalData()->IsHighContrastMode();
 
 			CSize sizeImageDest(0, 0);
-			if (afxGlobalData.GetRibbonImageScale() != 1. && !CMFCToolBar::m_bDontScaleImages)
+			if (GetGlobalData()->GetRibbonImageScale() != 1. && !CMFCToolBar::m_bDontScaleImages)
+			{
+				sizeImageDest = sizeMenuImage;
+			}
+			else if (m_bUserButton && sizeMenuImage != pImages->GetImageSize())
 			{
 				sizeImageDest = sizeMenuImage;
 			}
@@ -851,7 +863,7 @@ int CMFCToolBarButton::OnDrawOnCustomizeList(CDC* pDC, const CRect& rect, BOOL b
 			pt.x += nMargin;
 			pt.y += nMargin;
 
-			if (afxGlobalData.GetRibbonImageScale() != 1. && CMFCToolBar::m_bDontScaleImages)
+			if (GetGlobalData()->GetRibbonImageScale() != 1. && CMFCToolBar::m_bDontScaleImages)
 			{
 				pt.x += max (0, (sizeMenuImage.cx - pImages->GetImageSize().cx) / 2);
 				pt.y += max (0, (sizeMenuImage.cy - pImages->GetImageSize().cy) / 2);
@@ -1196,4 +1208,16 @@ BOOL CMFCToolBarButton::SetACCData(CWnd* pParent, CAccessibilityData& data)
 	pParent->ClientToScreen(&data.m_rectAccLocation);
 
 	return TRUE;
+}
+
+int CMFCToolBarButton::GetAccCount()
+{
+	ASSERT_VALID(this);
+
+	if (!IsVisible() || m_rect.IsRectEmpty() || (m_nStyle & TBBS_SEPARATOR) != 0)
+	{
+		return 0;
+	}
+
+	return 1;
 }

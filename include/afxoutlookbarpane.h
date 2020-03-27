@@ -23,7 +23,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCOutlookBarPane window
 
 class CMFCOutlookBarPane : public CMFCToolBar
@@ -54,6 +54,7 @@ public:
 	BOOL AddButton(HICON hIcon, LPCTSTR lpszLabel, UINT iIdCommand, int iInsertAt = -1, BOOL bAlphaBlend = FALSE);
 
 	BOOL RemoveButton(UINT iIdCommand);
+	BOOL RemoveButtonByIndex(int nIndex);
 
 	void ClearAll();
 	void SetDefaultState();
@@ -74,7 +75,7 @@ public:
 	virtual BOOL Dock(CBasePane* pDockBar, LPCRECT lpRect, AFX_DOCK_METHOD dockMethod);
 	virtual BOOL OnBeforeFloat(CRect& rectFloat, AFX_DOCK_METHOD dockMethod);
 
-	virtual BOOL RestoreOriginalstate();
+	virtual BOOL RestoreOriginalState();
 	virtual BOOL SmartUpdate(const CObList& lstPrevButtons);
 
 	virtual BOOL CanBeRestored() const { return !m_OrigButtons.IsEmpty(); }
@@ -121,7 +122,6 @@ public:
 	virtual ~CMFCOutlookBarPane();
 
 protected:
-	//{{AFX_MSG(CMFCOutlookBarPane)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -131,7 +131,7 @@ protected:
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnNcDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 public:

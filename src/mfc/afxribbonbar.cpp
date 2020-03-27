@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -19,7 +19,6 @@
 #include "afxvisualmanager.h"
 #include "afxtooltipmanager.h"
 #include "afxtooltipctrl.h"
-#include "afxtrackmouse.h"
 #include "afxtoolbarmenubutton.h"
 #include "afxregpath.h"
 #include "afxsettingsstore.h"
@@ -56,9 +55,6 @@ static const int nYTabMargin = 5;
 static const int nXMargin = 2;
 static const int nYMargin = 2;
 
-static const UINT IdAutoCommand = 1;
-static const UINT IdShowKeyTips = 2;
-
 static const int nIdToolTipClient = 1;
 static const int nIdToolTipCaption = 2;
 
@@ -66,8 +62,6 @@ static const UINT idCut = (UINT) -10002;
 static const UINT idCopy = (UINT) -10003;
 static const UINT idPaste = (UINT) -10004;
 static const UINT idSelectAll = (UINT) -10005;
-
-static const CString strRibbonProfile = _T("MFCRibbons");
 
 #define AFX_REG_SECTION_FMT _T("%sMFCRibbonBar-%d")
 #define AFX_REG_SECTION_FMT_EX _T("%sMFCRibbonBar-%d%x")
@@ -112,12 +106,10 @@ void CMFCRibbonCmdUI::SetCheck(int nCheck)
 	ASSERT_VALID(m_pOther);
 	ASSERT_VALID(m_pUpdated);
 
-	const BOOL bIsChecked = nCheck == 1;
-
-	if (m_pUpdated->IsChecked() != bIsChecked)
+	if (m_pUpdated->IsChecked() != (BOOL)nCheck)
 	{
-		m_pUpdated->m_bIsChecked = bIsChecked;
-		m_pUpdated->OnCheck(bIsChecked);
+		m_pUpdated->m_bIsChecked = (BOOL)nCheck;
+		m_pUpdated->OnCheck((BOOL)nCheck);
 		m_pOther->RedrawWindow(m_pUpdated->GetRect());
 	}
 }
@@ -280,9 +272,9 @@ void CMFCRibbonApplicationButton::SetImage(UINT uiBmpResID)
 	m_Image.Load(uiBmpResID, NULL, TRUE);
 	m_Image.SetSingleImage();
 
-	if (m_Image.IsValid() && m_Image.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	if (m_Image.IsValid() && m_Image.GetBitsPerPixel() < 32)
 	{
-		m_Image.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+		m_Image.ConvertTo32Bits(GetGlobalData()->clrBtnFace);
 	}
 }
 
@@ -303,9 +295,9 @@ void CMFCRibbonApplicationButton::SetImage(HBITMAP hBmp)
 	m_Image.AddImage(hBmp, TRUE);
 	m_Image.SetSingleImage();
 
-	if (m_Image.IsValid() && m_Image.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	if (m_Image.IsValid() && m_Image.GetBitsPerPixel() < 32)
 	{
-		m_Image.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+		m_Image.ConvertTo32Bits(GetGlobalData()->clrBtnFace);
 	}
 }
 
@@ -321,9 +313,9 @@ void CMFCRibbonApplicationButton::SetWindows7Image(UINT uiBmpResID)
 	m_ImageWindows7.Load(uiBmpResID, NULL, TRUE);
 	m_ImageWindows7.SetSingleImage();
 
-	if (m_ImageWindows7.IsValid() && m_ImageWindows7.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	if (m_ImageWindows7.IsValid() && m_ImageWindows7.GetBitsPerPixel() < 32)
 	{
-		m_ImageWindows7.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+		m_ImageWindows7.ConvertTo32Bits(GetGlobalData()->clrBtnFace);
 	}
 }
 
@@ -344,9 +336,9 @@ void CMFCRibbonApplicationButton::SetWindows7Image(HBITMAP hBmp)
 	m_ImageWindows7.AddImage(hBmp, TRUE);
 	m_ImageWindows7.SetSingleImage();
 
-	if (m_ImageWindows7.IsValid() && m_ImageWindows7.GetBitsPerPixel() < 32 && afxGlobalData.bIsWindowsVista)
+	if (m_ImageWindows7.IsValid() && m_ImageWindows7.GetBitsPerPixel() < 32)
 	{
-		m_ImageWindows7.ConvertTo32Bits(afxGlobalData.clrBtnFace);
+		m_ImageWindows7.ConvertTo32Bits(GetGlobalData()->clrBtnFace);
 	}
 }
 
@@ -416,7 +408,7 @@ void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, 
 		rectImage.bottom = rectImage.top + sizeImage.cy;
 
 		CSize sizeArrow (CMenuImages::Size());
-		double scale = afxGlobalData.GetRibbonImageScale();
+		double scale = GetGlobalData()->GetRibbonImageScale();
 		if (scale > 1.)
 		{
 			sizeArrow.cx = (int)(.5 + scale * sizeArrow.cx);
@@ -439,7 +431,7 @@ void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, 
 
 		rectImage.OffsetRect(-sizeArrow.cx / 2, 0);
 	}
-	else if (afxGlobalData.GetRibbonImageScale() != 1.)
+	else if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
 		const CSize sizeImage = m_Image.GetImageSize();
 
@@ -456,7 +448,7 @@ void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, 
 		}
 	}
 
-	pImage->SetTransparentColor(afxGlobalData.clrBtnFace);
+	pImage->SetTransparentColor(GetGlobalData()->clrBtnFace);
 	pImage->DrawEx(pDC, rectImage, 0, horz, vert);
 }
 
@@ -629,7 +621,6 @@ CMFCRibbonBar::~CMFCRibbonBar()
 	}
 }
 
-//{{AFX_MSG_MAP(CMFCRibbonBar)
 BEGIN_MESSAGE_MAP(CMFCRibbonBar, CPane)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
@@ -653,12 +644,11 @@ BEGIN_MESSAGE_MAP(CMFCRibbonBar, CPane)
 	ON_WM_SHOWWINDOW()
 	ON_MESSAGE(WM_SETFONT, &CMFCRibbonBar::OnSetFont)
 	ON_MESSAGE(WM_GETFONT, &CMFCRibbonBar::OnGetFont)
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCRibbonBar::OnMouseLeave)
+	ON_WM_MOUSELEAVE()
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCRibbonBar::OnNeedTipText)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCRibbonBar::OnUpdateToolTips)
 	ON_REGISTERED_MESSAGE(AFX_WM_POSTRECALCLAYOUT, &CMFCRibbonBar::OnPostRecalcLayout)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonBar message handlers
@@ -683,12 +673,12 @@ BOOL CMFCRibbonBar::CreateEx(CWnd* pParentWnd, DWORD /*dwCtrlStyle*/, DWORD dwSt
 
 	m_dwControlBarStyle = 0; // can't float, resize, close, slide
 
-	if (m_bReplaceFrameCaption && afxGlobalData.DwmIsCompositionEnabled())
+	if (m_bReplaceFrameCaption && GetGlobalData()->IsDwmCompositionEnabled())
 	{
 		dwStyle |= WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_MAXIMIZE;
 	}
 
-	if (!CWnd::Create(afxGlobalData.RegisterWindowClass(_T("Afx:RibbonBar")), NULL, dwStyle | WS_CLIPSIBLINGS, rect, pParentWnd, nID))
+	if (!CWnd::Create(GetGlobalData()->RegisterWindowClass(_T("Afx:RibbonBar")), NULL, dwStyle | WS_CLIPSIBLINGS, rect, pParentWnd, nID))
 	{
 		return FALSE;
 	}
@@ -711,7 +701,7 @@ BOOL CMFCRibbonBar::CreateEx(CWnd* pParentWnd, DWORD /*dwCtrlStyle*/, DWORD dwSt
 
 	if (m_bReplaceFrameCaption)
 	{
-		if (afxGlobalData.DwmIsCompositionEnabled())
+		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			pParentWnd->SetWindowPos(NULL, -1, -1, -1, -1, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 		}
@@ -800,7 +790,7 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 	{
 		m_nCaptionHeight = GetSystemMetrics(SM_CYCAPTION) + 1;
 
-		if (afxGlobalData.DwmIsCompositionEnabled())
+		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			m_nCaptionHeight += GetSystemMetrics(SM_CYSIZEFRAME);
 		}
@@ -809,7 +799,7 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 	int cy = 0;
 
 	CSize sizeMainButton = m_sizeMainButton;
-	double scale = afxGlobalData.GetRibbonImageScale();
+	double scale = GetGlobalData()->GetRibbonImageScale();
 	if (scale > 1.)
 	{
 		sizeMainButton.cx = (int)(.5 + scale * sizeMainButton.cx);
@@ -854,7 +844,7 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 		cy = nQuickAceesToolbarHeight + nCategoryHeight + max( m_nCaptionHeight + m_nTabsHeight, m_sizeMainButton.cy + nYMargin);
 	}
 
-	if (afxGlobalData.DwmIsCompositionEnabled())
+	if (GetGlobalData()->IsDwmCompositionEnabled())
 	{
 		if (GetParent()->IsZoomed() && m_bReplaceFrameCaption)
 		{
@@ -1567,7 +1557,7 @@ LRESULT CMFCRibbonBar::OnSetFont(WPARAM wParam, LPARAM /*lParam*/)
 
 LRESULT CMFCRibbonBar::OnGetFont(WPARAM, LPARAM)
 {
-	return(LRESULT)(m_hFont != NULL ? m_hFont :(HFONT) afxGlobalData.fontRegular);
+	return(LRESULT)(m_hFont != NULL ? m_hFont :(HFONT) GetGlobalData()->fontRegular);
 }
 
 void CMFCRibbonBar::OnPaint()
@@ -1789,7 +1779,7 @@ void CMFCRibbonBar::OnLButtonDown(UINT nFlags, CPoint point)
 
 		if (m_pPressed->IsAutoRepeatMode(nDelay))
 		{
-			SetTimer(IdAutoCommand, nDelay, NULL);
+			SetTimer(AFX_TIMER_ID_RIBBONBAR_AUTO_COMMAND, nDelay, NULL);
 			m_bAutoCommandTimer = TRUE;
 		}
 	}
@@ -1801,7 +1791,7 @@ void CMFCRibbonBar::OnLButtonUp(UINT nFlags, CPoint point)
 
 	if (m_bAutoCommandTimer)
 	{
-		KillTimer(IdAutoCommand);
+		KillTimer(AFX_TIMER_ID_RIBBONBAR_AUTO_COMMAND);
 		m_bAutoCommandTimer = FALSE;
 	}
 
@@ -1910,8 +1900,7 @@ void CMFCRibbonBar::OnMouseMove(UINT nFlags, CPoint point)
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 
 		if (m_pPressed != NULL &&((nFlags & MK_LBUTTON) == 0))
 		{
@@ -2085,7 +2074,7 @@ BOOL CMFCRibbonBar::OnMouseWheel(UINT /*nFlags*/, short zDelta, CPoint /*pt*/)
 	return SetActiveCategory(pNewActiveCategory);
 }
 
-LRESULT CMFCRibbonBar::OnMouseLeave(WPARAM,LPARAM)
+void CMFCRibbonBar::OnMouseLeave()
 {
 	CPoint point;
 
@@ -2101,7 +2090,6 @@ LRESULT CMFCRibbonBar::OnMouseLeave(WPARAM,LPARAM)
 	}
 
 	m_bTracked = FALSE;
-	return 0;
 }
 
 void CMFCRibbonBar::OnCancelMode()
@@ -2112,7 +2100,7 @@ void CMFCRibbonBar::OnCancelMode()
 
 	if (m_bAutoCommandTimer)
 	{
-		KillTimer(IdAutoCommand);
+		KillTimer(AFX_TIMER_ID_RIBBONBAR_AUTO_COMMAND);
 		m_bAutoCommandTimer = FALSE;
 	}
 
@@ -2227,7 +2215,7 @@ void CMFCRibbonBar::RecalcLayout()
 		int x = m_rectCaption.right;
 		int nCaptionOffsetY = 0;
 
-		if (afxGlobalData.DwmIsCompositionEnabled())
+		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			if (GetParent()->IsZoomed())
 			{
@@ -2244,7 +2232,7 @@ void CMFCRibbonBar::RecalcLayout()
 			// Get system buttons size:
 			NONCLIENTMETRICS ncm;
 			ncm.cbSize = sizeof(ncm);
-			afxGlobalData.GetNonClientMetrics (ncm);
+			GetGlobalData()->GetNonClientMetrics (ncm);
 
 			int nSysButtonsWidth = 3 * ncm.iCaptionWidth;
 
@@ -2258,7 +2246,7 @@ void CMFCRibbonBar::RecalcLayout()
 		{
 			NONCLIENTMETRICS ncm;
 			ncm.cbSize = sizeof(ncm);
-			afxGlobalData.GetNonClientMetrics(ncm);
+			GetGlobalData()->GetNonClientMetrics(ncm);
 
 			int nSysBtnEdge = min(ncm.iCaptionHeight, m_rectCaption.Height() - nYMargin);
 
@@ -2295,7 +2283,7 @@ void CMFCRibbonBar::RecalcLayout()
 
 		m_rectCaptionText = m_rectCaption;
 
-		if (afxGlobalData.DwmIsCompositionEnabled())
+		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			m_rectCaptionText.top += GetSystemMetrics(SM_CYSIZEFRAME) / 2;
 		}
@@ -2308,7 +2296,7 @@ void CMFCRibbonBar::RecalcLayout()
 
 	// Reposition main button:
 	CSize sizeMainButton = m_sizeMainButton;
-	double scale = afxGlobalData.GetRibbonImageScale();
+	double scale = GetGlobalData()->GetRibbonImageScale();
 	if (scale > 1.)
 	{
 		sizeMainButton.cx = (int)(.5 + scale * sizeMainButton.cx);
@@ -2327,7 +2315,7 @@ void CMFCRibbonBar::RecalcLayout()
 		{
 			int yOffset = nYMargin;
 
-			if (afxGlobalData.DwmIsCompositionEnabled())
+			if (GetGlobalData()->IsDwmCompositionEnabled())
 			{
 				yOffset += GetSystemMetrics(SM_CYSIZEFRAME) / 2;
 			}
@@ -2378,7 +2366,7 @@ void CMFCRibbonBar::RecalcLayout()
 			m_QAToolbar.m_rect.top += yOffset;
 			m_QAToolbar.m_rect.bottom = m_QAToolbar.m_rect.top + sizeAQToolbar.cy;
 
-			if (afxGlobalData.DwmIsCompositionEnabled())
+			if (GetGlobalData()->IsDwmCompositionEnabled())
 			{
 				m_QAToolbar.m_rect.top += nYMargin;
 			}
@@ -2643,17 +2631,17 @@ void CMFCRibbonBar::RecalcLayout()
 
 	dc.SelectObject(pOldFont);
 
-	if (afxGlobalData.DwmIsCompositionEnabled() && m_bReplaceFrameCaption)
+	if (GetGlobalData()->IsDwmCompositionEnabled() && m_bReplaceFrameCaption)
 	{
 		GetParent()->ModifyStyleEx(0, WS_EX_WINDOWEDGE);
 
-		AFX_MARGINS margins;
+		MARGINS margins;
 		margins.cxLeftWidth = 0;
 		margins.cxRightWidth = 0;
 		margins.cyTopHeight = m_rectCaption.bottom;
 		margins.cyBottomHeight = 0;
 
-		if (afxGlobalData.DwmExtendFrameIntoClientArea(GetParent()->GetSafeHwnd(), &margins))
+		if (_AfxDwmExtendFrameIntoClientArea(GetParent()->GetSafeHwnd(), &margins) == S_OK)
 		{
 			m_bIsTransparentCaption = TRUE;
 		}
@@ -3377,14 +3365,14 @@ BOOL CMFCRibbonBar::DrawMenuImage(CDC* pDC, const CMFCToolBarMenuButton* pMenuIt
 
 	ASSERT_VALID(pElem);
 
-	BOOL bIsRibbonImageScale = afxGlobalData.IsRibbonImageScaleEnabled();
-	afxGlobalData.EnableRibbonImageScale(FALSE);
+	BOOL bIsRibbonImageScale = GetGlobalData()->IsRibbonImageScaleEnabled();
+	GetGlobalData()->EnableRibbonImageScale(FALSE);
 
 	const CSize sizeElemImage = pElem->GetImageSize(CMFCRibbonButton::RibbonImageSmall);
 
 	if (sizeElemImage == CSize(0, 0) || sizeElemImage.cx > rectImage.Width() || sizeElemImage.cy > rectImage.Height())
 	{
-		afxGlobalData.EnableRibbonImageScale(bIsRibbonImageScale);
+		GetGlobalData()->EnableRibbonImageScale(bIsRibbonImageScale);
 		return FALSE;
 	}
 
@@ -3405,7 +3393,7 @@ BOOL CMFCRibbonBar::DrawMenuImage(CDC* pDC, const CMFCToolBarMenuButton* pMenuIt
 	pElem->m_bIsDisabled = bWasDisabled;
 	pElem->m_bIsChecked = bWasChecked;
 
-	afxGlobalData.EnableRibbonImageScale(bIsRibbonImageScale);
+	GetGlobalData()->EnableRibbonImageScale(bIsRibbonImageScale);
 	return bRes;
 }
 
@@ -3517,7 +3505,7 @@ BOOL CMFCRibbonBar::OnShowRibbonContextMenu(CWnd* pWnd, int x, int y, CMFCRibbon
 
 	if (m_bAutoCommandTimer)
 	{
-		KillTimer(IdAutoCommand);
+		KillTimer(AFX_TIMER_ID_RIBBONBAR_AUTO_COMMAND);
 		m_bAutoCommandTimer = FALSE;
 	}
 
@@ -3871,7 +3859,7 @@ void CMFCRibbonBar::OnSizing(UINT fwSide, LPRECT pRect)
 
 BOOL CMFCRibbonBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strRibbonProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_RIBBON_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -3912,7 +3900,7 @@ BOOL CMFCRibbonBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 
 BOOL CMFCRibbonBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strRibbonProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_RIBBON_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -3943,7 +3931,7 @@ BOOL CMFCRibbonBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 	{
 		m_nCaptionHeight = GetSystemMetrics (SM_CYCAPTION) + 1;
 
-		if (afxGlobalData.DwmIsCompositionEnabled ())
+		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
 			m_nCaptionHeight += GetSystemMetrics (SM_CYSIZEFRAME);
 		}
@@ -4003,7 +3991,7 @@ void CMFCRibbonBar::ForceRecalcLayout()
 		pCategory->CleanUpSizes();
 	}
 
-	afxGlobalData.UpdateFonts();
+	GetGlobalData()->UpdateFonts();
 
 	CFrameWnd* pParentFrame = GetParentFrame();
 	ASSERT_VALID(pParentFrame);
@@ -4121,7 +4109,7 @@ void CMFCRibbonBar::SetActiveMDIChild(CWnd* pWnd)
 
 void CMFCRibbonBar::OnTimer(UINT_PTR nIDEvent)
 {
-	if (nIDEvent == IdAutoCommand)
+	if (nIDEvent == AFX_TIMER_ID_RIBBONBAR_AUTO_COMMAND)
 	{
 		if (m_pPressed != NULL)
 		{
@@ -4136,16 +4124,16 @@ void CMFCRibbonBar::OnTimer(UINT_PTR nIDEvent)
 			{
 				if (!m_pPressed->OnAutoRepeat())
 				{
-					KillTimer(IdAutoCommand);
+					KillTimer(AFX_TIMER_ID_RIBBONBAR_AUTO_COMMAND);
 				}
 			}
 		}
 	}
 
-	if (nIDEvent == IdShowKeyTips)
+	if (nIDEvent == AFX_TIMER_ID_RIBBONBAR_SHOW_KEYTIPS)
 	{
 		SetKeyboardNavigationLevel(NULL, FALSE);
-		KillTimer(IdShowKeyTips);
+		KillTimer(AFX_TIMER_ID_RIBBONBAR_SHOW_KEYTIPS);
 	}
 
 	CPane::OnTimer(nIDEvent);
@@ -4408,7 +4396,7 @@ void CMFCRibbonBar::OnSysColorChange()
 {
 	CPane::OnSysColorChange();
 
-	afxGlobalData.UpdateSysColors();
+	GetGlobalData()->UpdateSysColors();
 
 	CMFCVisualManager::GetInstance()->OnUpdateSystemColors();
 	RedrawWindow(NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE);
@@ -4428,7 +4416,8 @@ LRESULT CMFCRibbonBar::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 
 	if (message == WM_NCHITTEST)
 	{
-		LRESULT lResult = afxGlobalData.DwmDefWindowProc(GetParent()->GetSafeHwnd(), message, wParam, lParam);
+		LRESULT lResult = 0;
+		_AfxDwmDefWindowProc(GetParent()->GetSafeHwnd(), message, wParam, lParam, &lResult);
 
 		if (lResult == HTCLOSE || lResult == HTMINBUTTON || lResult == HTMAXBUTTON)
 		{
@@ -4504,14 +4493,15 @@ void CMFCRibbonBar::DWMCompositionChanged()
 
 	DWORD dwStyle = WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_MAXIMIZE;
 
-	if (afxGlobalData.DwmIsCompositionEnabled())
+	if (GetGlobalData()->IsDwmCompositionEnabled())
 	{
-		ModifyStyle(0, dwStyle);
+		ModifyStyle(0, dwStyle, SWP_FRAMECHANGED);
 		GetParent()->ModifyStyle(0, WS_CAPTION);
+		GetParent()->SetWindowRgn(NULL, TRUE);
 	}
 	else
 	{
-		ModifyStyle(dwStyle, 0);
+		ModifyStyle(dwStyle, 0, SWP_FRAMECHANGED);
 		GetParent()->ModifyStyle(WS_CAPTION, 0);
 	}
 
@@ -4930,23 +4920,176 @@ void CMFCRibbonBar::SetKeyboardNavigationLevel(CObject* pLevel, BOOL bSetFocus)
 	RedrawWindow();
 }
 
-BOOL CMFCRibbonBar::OnSetAccData(long lVal)
+BOOL CMFCRibbonBar::OnSetAccData (long lVal)
 {
 	ASSERT_VALID (this);
 
-	CPoint pt(LOWORD(lVal), HIWORD(lVal));
-	ScreenToClient(&pt);
+	m_AccData.Clear ();
 
-	m_AccData.Clear();
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements (arButtons);
 
-	CMFCRibbonBaseElement* pHit = HitTest(pt, TRUE, TRUE);
-	if (pHit == NULL)
+	int nIndex = (int)lVal - 1;
+
+	if (nIndex < 0 || nIndex >= (int)arButtons.GetSize())
 	{
 		return FALSE;
 	}
 
-	ASSERT_VALID(pHit);
-	return pHit->SetACCData(this, m_AccData);
+	ASSERT_VALID(arButtons[nIndex]);
+	return arButtons[nIndex]->SetACCData (this, m_AccData);
+}
+
+HRESULT CMFCRibbonBar::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+{
+	if (pvarChild == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+	pvarChild->vt = VT_I4;
+	pvarChild->lVal = CHILDID_SELF;
+
+	CPoint pt(xLeft, yTop);
+	ScreenToClient(&pt);
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements(arButtons);
+
+	for (int i = 0; i < (int)arButtons.GetSize (); i++)
+	{
+		CMFCRibbonBaseElement* pElem = arButtons[i];
+		ASSERT_VALID(pElem);
+
+		CRect rectElem = pElem->GetRect();
+		if (rectElem.PtInRect(pt))
+		{
+			pvarChild->lVal = (long)i + 1;
+			pElem->SetACCData(this, m_AccData);
+			break;
+		}
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonBar::get_accChildCount(long *pcountChildren)
+{
+	if (pcountChildren == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements(arButtons);
+
+	*pcountChildren = (long)arButtons.GetSize();
+	return S_OK;
+}
+
+HRESULT CMFCRibbonBar::get_accChild(VARIANT /*varChild*/, IDispatch **ppdispChild)
+{
+	if (ppdispChild == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEndUpAt)
+{
+    pvarEndUpAt->vt = VT_EMPTY;
+
+    if (varStart.vt != VT_I4)
+    {
+        return E_INVALIDARG;
+    }
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements (arButtons);
+
+	switch (navDir)
+    {
+	case NAVDIR_FIRSTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = 1;
+			return S_OK;	
+		}
+		break;
+
+	case NAVDIR_LASTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = (long)arButtons.GetSize();
+			return S_OK;
+		}
+		break;
+
+	case NAVDIR_NEXT:   
+	case NAVDIR_RIGHT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal + 1;
+
+			if (pvarEndUpAt->lVal > arButtons.GetSize())
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+			return S_OK;
+		}
+		break;
+
+   	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal - 1;
+
+			if (pvarEndUpAt->lVal <= 0)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+			return S_OK;
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonBar::accDoDefaultAction(VARIANT varChild)
+{
+    if (varChild.vt != VT_I4)
+    {
+        return E_INVALIDARG;
+    }
+
+    if (varChild.lVal != CHILDID_SELF)
+    {
+		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+		GetVisibleElements (arButtons);
+
+		int nIndex = (int)varChild.lVal - 1;
+		if (nIndex < 0 || nIndex >= arButtons.GetSize())
+		{
+			return E_INVALIDARG;
+		}
+
+		CMFCRibbonBaseElement* pElem = arButtons [nIndex];
+		ASSERT_VALID (pElem);
+
+		pElem->OnAccDefaultAction();
+    }
+
+    return S_OK;
 }
 
 void CMFCRibbonBar::OnBeforeProcessKey(int& nChar)
@@ -5029,9 +5172,26 @@ BOOL CMFCRibbonBar::ProcessKey(int nChar)
 
 void CMFCRibbonBar::RemoveAllKeys()
 {
-	for (int i = 0; i < m_arKeyElements.GetSize(); i++)
+	// protect against recursive calls by copying the key array, emptying the
+	// original key array and then deleting the elements from the copied array.
+	int nSize = (int)m_arKeyElements.GetSize();
+	if (nSize == 0)
 	{
-		CMFCRibbonKeyTip* pKeyTip = m_arKeyElements [i];
+		return;
+	}
+
+	CArray<CMFCRibbonKeyTip*,CMFCRibbonKeyTip*> arKeyElements;
+
+	for (int i = 0; i < nSize; i++)
+	{
+		arKeyElements.Add(m_arKeyElements[i]);
+	}
+
+	m_arKeyElements.RemoveAll();
+
+	for (int i = 0; i < nSize; i++)
+	{
+		CMFCRibbonKeyTip* pKeyTip = arKeyElements [i];
 		ASSERT_VALID(pKeyTip);
 
 		if (pKeyTip->GetSafeHwnd() != NULL)
@@ -5041,8 +5201,6 @@ void CMFCRibbonBar::RemoveAllKeys()
 
 		delete pKeyTip;
 	}
-
-	m_arKeyElements.RemoveAll();
 }
 
 void CMFCRibbonBar::ShowKeyTips(BOOL bRepos)
@@ -5124,7 +5282,7 @@ BOOL CMFCRibbonBar::OnSysKeyDown(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM lPa
 		ShowSysMenu(CPoint(rectWindow.left + cxOffset, rectWindow.top + cyOffset));
 
 		RemoveAllKeys();
-		KillTimer(IdShowKeyTips);
+		KillTimer(AFX_TIMER_ID_RIBBONBAR_SHOW_KEYTIPS);
 
 		return FALSE;
 	}
@@ -5139,7 +5297,7 @@ BOOL CMFCRibbonBar::OnSysKeyDown(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM lPa
 
 	if (wParam != VK_MENU && wParam != VK_F10)
 	{
-		KillTimer(IdShowKeyTips);
+		KillTimer(AFX_TIMER_ID_RIBBONBAR_SHOW_KEYTIPS);
 		return FALSE;
 	}
 
@@ -5158,7 +5316,7 @@ BOOL CMFCRibbonBar::OnSysKeyDown(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM lPa
 			else if (m_nKeyboardNavLevel < 0)
 			{
 				int nDelay = 200;
-				SetTimer(IdShowKeyTips, nDelay, NULL);
+				SetTimer(AFX_TIMER_ID_RIBBONBAR_SHOW_KEYTIPS, nDelay, NULL);
 			}
 		}
 
@@ -5175,7 +5333,7 @@ BOOL CMFCRibbonBar::OnSysKeyUp(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM /*lPa
 		return wParam == VK_F10 || wParam == VK_MENU;
 	}
 
-	KillTimer(IdShowKeyTips);
+	KillTimer(AFX_TIMER_ID_RIBBONBAR_SHOW_KEYTIPS);
 
 	if (wParam == VK_MENU)
 	{
@@ -5201,13 +5359,13 @@ void CMFCRibbonBar::OnShowWindow(BOOL bShow, UINT nStatus)
 
 	if (!bShow && m_bIsTransparentCaption)
 	{
-		AFX_MARGINS margins;
+		MARGINS margins;
 		margins.cxLeftWidth = 0;
 		margins.cxRightWidth = 0;
 		margins.cyTopHeight = 0;
 		margins.cyBottomHeight = 0;
 
-		afxGlobalData.DwmExtendFrameIntoClientArea(GetParent()->GetSafeHwnd(), &margins);
+		_AfxDwmExtendFrameIntoClientArea(GetParent()->GetSafeHwnd(), &margins);
 	}
 }
 
@@ -5401,7 +5559,7 @@ BOOL CMFCRibbonBar::NavigateRibbon(int nChar)
 	return FALSE;
 }
 
-CMFCRibbonBaseElement* CMFCRibbonBar::FindNearest(CPoint pt, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons)
+CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNearest(CPoint pt, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons)
 {
 	for (int i = 0; i < arButtons.GetSize(); i++)
 	{
@@ -5417,7 +5575,7 @@ CMFCRibbonBaseElement* CMFCRibbonBar::FindNearest(CPoint pt, const CArray<CMFCRi
 	return NULL;
 }
 
-CMFCRibbonBaseElement* CMFCRibbonBar::FindNextFocusedElement(
+CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 	int nChar, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arElems,
 	CRect rectElems, CMFCRibbonBaseElement* pFocused,
 	BOOL bIsScrollLeftAvailable, BOOL bIsScrollRightAvailable, int& nScroll)

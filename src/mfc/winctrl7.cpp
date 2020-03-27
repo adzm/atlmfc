@@ -14,6 +14,11 @@
 
 #define new DEBUG_NEW
 
+// Forward declaration
+HRESULT GetCommCtrlVersion(
+	_Out_ LPDWORD pdwMajor,
+	_Out_ LPDWORD pdwMinor);
+
 /////////////////////////////////////////////////////////////////////////////
 // CImageList
 
@@ -23,13 +28,13 @@ BOOL CImageList::DrawIndirect(IMAGELISTDRAWPARAMS* pimldp)
 	ASSERT_POINTER(pimldp, IMAGELISTDRAWPARAMS);
 
 	DWORD dwMajor = 0, dwMinor = 0;
-	AtlGetCommCtrlVersion(&dwMajor, &dwMinor);
+	GetCommCtrlVersion(&dwMajor, &dwMinor);
 	if (dwMajor < 6)
 	{
 		pimldp->cbSize = IMAGELISTDRAWPARAMS_V3_SIZE;
 	}
 	pimldp->himl = m_hImageList;
-	return AfxImageList_DrawIndirect(pimldp);
+	return ImageList_DrawIndirect(pimldp);
 }
 
 BOOL CImageList::DrawIndirect(CDC* pDC, int nImage, POINT pt,
@@ -67,7 +72,7 @@ BOOL CImageList::DrawIndirect(CDC* pDC, int nImage, POINT pt,
 BOOL CImageList::Create(CImageList* pImageList)
 {
 	ASSERT(pImageList != NULL);
-	return Attach(AfxImageList_Duplicate(pImageList->m_hImageList));
+	return Attach(ImageList_Duplicate(pImageList->m_hImageList));
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -138,10 +138,22 @@ BOOL CMFCStatusBar::CreateEx(CWnd* pParentWnd, DWORD /*dwCtrlStyle*/, DWORD dwSt
 
 	if (pParentWnd->GetStyle() & WS_THICKFRAME)
 	{
-		dwStyle |= SBARS_SIZEGRIP;
+		CMDIChildWndEx *pChildFrame = DYNAMIC_DOWNCAST(CMDIChildWndEx, pParentWnd);
+		if (pChildFrame != NULL)
+		{
+			CMDIFrameWndEx* pTopLevelFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, pChildFrame->GetParentFrame());
+			if (pTopLevelFrame == NULL || !pTopLevelFrame->AreMDITabs())
+			{
+				dwStyle |= SBARS_SIZEGRIP;
+			}
+		}
+		else
+		{
+			dwStyle |= SBARS_SIZEGRIP;
+		}
 	}
 
-	if (!CWnd::Create(afxGlobalData.RegisterWindowClass(_T("Afx:StatusBar")), NULL, dwStyle | WS_CLIPSIBLINGS, rect, pParentWnd, nID))
+	if (!CWnd::Create(GetGlobalData()->RegisterWindowClass(_T("Afx:StatusBar")), NULL, dwStyle | WS_CLIPSIBLINGS, rect, pParentWnd, nID))
 	{
 		return FALSE;
 	}
@@ -946,8 +958,8 @@ void CMFCStatusBar::DoPaint(CDC* pDCPaint)
 	HGDIOBJ hOldFont = pDC->SelectObject(hFont);
 
 	int nOldMode = pDC->SetBkMode(TRANSPARENT);
-	COLORREF crTextColor = pDC->SetTextColor(afxGlobalData.clrBtnText);
-	COLORREF crBkColor = pDC->SetBkColor(afxGlobalData.clrBtnFace);
+	COLORREF crTextColor = pDC->SetTextColor(GetGlobalData()->clrBtnText);
+	COLORREF crBkColor = pDC->SetBkColor(GetGlobalData()->clrBtnFace);
 
 	CMFCStatusBarPaneInfo* pSBP = (CMFCStatusBarPaneInfo*)m_pData;
 	for (int i = 0; i < m_nCount; i++, pSBP++)
@@ -971,7 +983,6 @@ void CMFCStatusBar::DoPaint(CDC* pDCPaint)
 /////////////////////////////////////////////////////////////////////////////
 // CMFCStatusBar message handlers
 
-//{{AFX_MSG_MAP(CMFCStatusBar)
 BEGIN_MESSAGE_MAP(CMFCStatusBar, CPane)
 	ON_WM_NCHITTEST()
 	ON_WM_SYSCOMMAND()
@@ -986,10 +997,9 @@ BEGIN_MESSAGE_MAP(CMFCStatusBar, CPane)
 	ON_MESSAGE(WM_SETTEXT, &CMFCStatusBar::OnSetText)
 	ON_MESSAGE(WM_GETTEXT, &CMFCStatusBar::OnGetText)
 	ON_MESSAGE(WM_GETTEXTLENGTH, &CMFCStatusBar::OnGetTextLength)
-	ON_MESSAGE(WM_STYLECHANGED, &CMFCStatusBar::OnStyleChanged)
+	ON_WM_STYLECHANGED()
 	ON_WM_SHOWWINDOW()
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 int CMFCStatusBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
@@ -1152,7 +1162,7 @@ LRESULT CMFCStatusBar::OnGetText(WPARAM wParam, LPARAM lParam)
 			return 0;
 		}
 
-		nLen = pSBP->lpszText != NULL ? lstrlen(pSBP->lpszText) : 0;
+		nLen = pSBP->lpszText != NULL ? static_cast<int>(_tcslen(pSBP->lpszText)) : 0;
 		if (nLen > nMaxLen)
 			nLen = nMaxLen - 1; // number of characters to copy(less term.)
 		memcpy(lpszDest, pSBP->lpszText, nLen*sizeof(TCHAR));
@@ -1176,7 +1186,7 @@ LRESULT CMFCStatusBar::OnGetTextLength(WPARAM, LPARAM)
 
 		if (pSBP->lpszText != NULL)
 		{
-			nLen = lstrlen(pSBP->lpszText);
+			nLen = static_cast<int>(_tcslen(pSBP->lpszText));
 		}
 	}
 
@@ -1239,7 +1249,7 @@ void CMFCStatusBar::OnDrawPane(CDC* pDC, CMFCStatusBarPaneInfo* pPane)
 		CRect rectProgress = rectText;
 		rectProgress.DeflateRect(1, 1);
 
-		COLORREF clrBar = (pPane->clrProgressBar == (COLORREF)-1) ? afxGlobalData.clrHilite : pPane->clrProgressBar;
+		COLORREF clrBar = (pPane->clrProgressBar == (COLORREF)-1) ? GetGlobalData()->clrHilite : pPane->clrProgressBar;
 
 		CMFCVisualManager::GetInstance()->OnDrawStatusBarProgress(pDC, this, rectProgress,
 			pPane->nProgressTotal, pPane->nProgressCurr, clrBar, pPane->clrProgressBarDest, pPane->clrProgressText, pPane->bProgressText);
@@ -1251,7 +1261,7 @@ void CMFCStatusBar::OnDrawPane(CDC* pDC, CMFCStatusBarPaneInfo* pPane)
 		{
 			COLORREF clrText = pDC->SetTextColor(CMFCVisualManager::GetInstance()->GetStatusBarPaneTextColor(this, pPane));
 
-			pDC->DrawText(pPane->lpszText, lstrlen(pPane->lpszText), rectText, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+			pDC->DrawText(pPane->lpszText, static_cast<int>(_tcslen(pPane->lpszText)), rectText, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 			pDC->SetTextColor(clrText);
 		}
 	}
@@ -1442,7 +1452,7 @@ INT_PTR CMFCStatusBar::OnToolHitTest(CPoint point, TOOLINFO* pTI) const
 	CToolTipCtrl* pToolTip = AfxGetModuleState()->m_thread.GetDataNA()->m_pToolTip;
 	if (pToolTip != NULL && pToolTip->GetSafeHwnd() != NULL)
 	{
-		pToolTip->SetFont(&afxGlobalData.fontTooltip, FALSE);
+		pToolTip->SetFont(&(GetGlobalData()->fontTooltip), FALSE);
 	}
 
 	return nHit;
@@ -1483,22 +1493,17 @@ long CMFCStatusBar::GetPaneProgress(int nIndex) const
 
 HFONT CMFCStatusBar::GetCurrentFont() const
 {
-	return m_hFont == NULL ? (HFONT) afxGlobalData.fontRegular.GetSafeHandle() : m_hFont;
+	return m_hFont == NULL ? (HFONT) GetGlobalData()->fontRegular.GetSafeHandle() : m_hFont;
 }
 
-LRESULT CMFCStatusBar::OnStyleChanged(WPARAM wp, LPARAM lp)
+void CMFCStatusBar::OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct)
 {
-	int nStyleType = (int) wp;
-	LPSTYLESTRUCT lpStyleStruct = (LPSTYLESTRUCT) lp;
-
 	CPane::OnStyleChanged(nStyleType, lpStyleStruct);
 
 	if ((lpStyleStruct->styleNew & SBARS_SIZEGRIP) && (lpStyleStruct->styleOld & SBARS_SIZEGRIP) == 0)
 	{
 		RecalcLayout();
 	}
-
-	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////

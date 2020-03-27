@@ -11,8 +11,6 @@
 #include "stdafx.h"
 #include <stddef.h>
 
-
-
 #pragma warning(disable: 4074)
 #pragma init_seg(compiler)
 
@@ -74,6 +72,7 @@ AFX_MAINTAIN_STATE::~AFX_MAINTAIN_STATE()
 
 AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2(AFX_MODULE_STATE* pNewState) throw()
 {
+	pNewState; // to make the compiler happy...
 #ifdef _AFXDLL
 	m_pThreadState = _afxThreadState.GetData();
 	ASSERT(m_pThreadState);
@@ -91,16 +90,6 @@ AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2(AFX_MODULE_STATE* pNewState) throw()
 		m_pThreadState=NULL;
 	}
 #endif
-
-	if (AfxGetAmbientActCtx() && 
-		pNewState->m_hActCtx != INVALID_HANDLE_VALUE)
-	{
-		m_bValidActCtxCookie = ActivateActCtx(pNewState->m_hActCtx, &m_ulActCtxCookie);
-	}
-	else
-	{
-		m_bValidActCtxCookie = FALSE;
-	}
 }
 
 AFX_MAINTAIN_STATE2::~AFX_MAINTAIN_STATE2()
@@ -112,13 +101,6 @@ AFX_MAINTAIN_STATE2::~AFX_MAINTAIN_STATE2()
 		m_pThreadState->m_pModuleState = m_pPrevModuleState;
 	}
 #endif
-
-	if (m_bValidActCtxCookie)
-	{
-		BOOL bRet;
-		bRet = DeactivateActCtx(0, m_ulActCtxCookie);
-		ASSERT(bRet == TRUE);
-	}
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -206,95 +188,9 @@ AFX_MODULE_STATE::AFX_MODULE_STATE(BOOL bDLL)
 #ifdef _AFXDLL
 	m_libraryList.Construct(offsetof(CDynLinkLibrary, m_pNextDLL));
 #endif
-	
 
-	bEnable = AfxEnableMemoryTracking(FALSE);		
-	//Fusion: allocate dll wrappers array.
-	m_pDllIsolationWrappers = new CDllIsolationWrapperBase*[_AFX_ISOLATION_WRAPPER_ARRAY_SIZE];
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-	m_pDllIsolationWrappers[_AFX_COMCTL32_ISOLATION_WRAPPER_INDEX] = new CComCtlWrapper;
-#endif
-	m_pDllIsolationWrappers[_AFX_COMMDLG_ISOLATION_WRAPPER_INDEX] = new CCommDlgWrapper;
-	m_pDllIsolationWrappers[_AFX_SHELL_ISOLATION_WRAPPER_INDEX] = new CShellWrapper;
-	AfxEnableMemoryTracking(bEnable);
-	m_bSetAmbientActCtx = TRUE;
-	m_hActCtx = NULL;
 	m_bInitNetworkAddressControl = FALSE;
 	m_bInitNetworkAddressControlCalled = FALSE;
-}
-
-HANDLE AFXAPI AfxCreateActCtxW(PCACTCTXW pActCtx)
-{
-	HANDLE hCtx = CreateActCtxW(pActCtx);
-	return hCtx;
-}
-
-void AFXAPI AfxReleaseActCtx(HANDLE hActCtx)
-{
-	ReleaseActCtx(hActCtx);
-}
-
-BOOL AFXAPI AfxActivateActCtx(HANDLE hActCtx, ULONG_PTR *lpCookie)
-{
-	BOOL rc = ActivateActCtx(hActCtx, lpCookie);
-	return rc;
-}
-
-BOOL AFXAPI AfxDeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie)
-{
-	BOOL rc = DeactivateActCtx(dwFlags, ulCookie);
-	return rc;
-}
-
-eActCtxResult AFXAPI AfxActivateActCtxWrapper(HANDLE hActCtx, ULONG_PTR *lpCookie)
-{
-	ENSURE_ARG(lpCookie!=NULL);
-
-	eActCtxResult eResult = ActivateActCtx(hActCtx, lpCookie) ? ActCtxSucceeded : ActCtxFailed;
-
-	return eResult;
-}
-
-void AFX_MODULE_STATE::CreateActivationContext()
-{
-	HMODULE hModule = m_hCurrentInstanceHandle;
-
-	WCHAR rgchFullModulePath[MAX_PATH + 2];
-	rgchFullModulePath[_countof(rgchFullModulePath) - 1] = 0;
-	rgchFullModulePath[_countof(rgchFullModulePath) - 2] = 0;
-	DWORD dw = GetModuleFileNameW(hModule, rgchFullModulePath, _countof(rgchFullModulePath)-1);
-	if (dw == 0)
-	{
-		return;
-	}
-	if (rgchFullModulePath[_countof(rgchFullModulePath) - 2] != 0)
-	{
-		SetLastError(ERROR_BUFFER_OVERFLOW);
-		return;
-	}
-	//First try ID 2 and then ID 1 - this is to consider also a.dll.manifest file
-	//for dlls, which ID 2 ignores.
-	ACTCTXW actCtx;
-	actCtx.cbSize = sizeof(actCtx);
-	actCtx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
-	actCtx.lpSource = rgchFullModulePath;
-	actCtx.lpResourceName =  MAKEINTRESOURCEW(ISOLATIONAWARE_MANIFEST_RESOURCE_ID);
-	actCtx.hModule = hModule;
-	m_hActCtx = CreateActCtxW(&actCtx);
-	if (m_hActCtx == INVALID_HANDLE_VALUE)
-	{		
-		actCtx.lpResourceName =  MAKEINTRESOURCEW(ISOLATIONAWARE_NOSTATICIMPORT_MANIFEST_RESOURCE_ID);
-		m_hActCtx = CreateActCtxW(&actCtx);
-	}
-	if (m_hActCtx == INVALID_HANDLE_VALUE)
-	{		
-		actCtx.lpResourceName =  MAKEINTRESOURCEW(CREATEPROCESS_MANIFEST_RESOURCE_ID);
-		m_hActCtx = CreateActCtxW(&actCtx);
-	}
-	if (m_hActCtx == INVALID_HANDLE_VALUE)
-	{
-		m_hActCtx = NULL;
-	}		
 }
 
 AFX_MODULE_STATE::~AFX_MODULE_STATE()
@@ -308,18 +204,6 @@ AFX_MODULE_STATE::~AFX_MODULE_STATE()
 	{
 		m_pTypeLibCacheMap->RemoveAll(&m_typeLibCache);
 		delete m_pTypeLibCacheMap;
-	}
-	//Fusion: delete each member of the array and the array itself
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-	delete m_pDllIsolationWrappers[_AFX_COMCTL32_ISOLATION_WRAPPER_INDEX];
-#endif
-	delete m_pDllIsolationWrappers[_AFX_COMMDLG_ISOLATION_WRAPPER_INDEX];
-	delete m_pDllIsolationWrappers[_AFX_SHELL_ISOLATION_WRAPPER_INDEX];
-	delete [] m_pDllIsolationWrappers;
-	if (m_hActCtx != NULL && m_hActCtx != INVALID_HANDLE_VALUE)
-	{
-		ReleaseActCtx(m_hActCtx);
-		m_hActCtx = INVALID_HANDLE_VALUE;
 	}
 }
 

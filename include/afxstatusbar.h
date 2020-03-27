@@ -73,7 +73,7 @@ public:
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCStatusBar window
 
 class CMFCStatusBar : public CPane
@@ -153,7 +153,6 @@ protected:
 	BOOL  m_bDrawExtendedArea;
 
 	inline CMFCStatusBarPaneInfo* _GetPanePtr(int nIndex) const;
-	void RecalcLayout();
 	CMFCStatusBarPaneInfo* HitTest(CPoint pt) const;
 
 	HFONT GetCurrentFont() const;
@@ -161,6 +160,7 @@ protected:
 // Overrides:
 protected:
 	virtual void OnDrawPane(CDC* pDC, CMFCStatusBarPaneInfo* pPane);
+	virtual void RecalcLayout();
 	virtual void DoPaint(CDC* pDC);
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
 	virtual INT_PTR OnToolHitTest(CPoint point, TOOLINFO* pTI) const;
@@ -168,7 +168,6 @@ protected:
 	virtual BOOL AllowShowOnPaneMenu() const { return FALSE; }
 	virtual BOOL HideInPrintPreviewMode() const { return FALSE; }
 
-	//{{AFX_MSG(CMFCStatusBar)
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
@@ -181,10 +180,10 @@ protected:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnDestroy();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg LRESULT OnStyleChanged(WPARAM wp, LPARAM lp);
+	afx_msg void OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

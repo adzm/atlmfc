@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -46,6 +46,8 @@ IMPLEMENT_DYNCREATE(CMDIFrameWndEx, CMDIFrameWnd)
 
 BOOL CMDIFrameWndEx::m_bDisableSetRedraw = TRUE;
 
+extern UINT AFX_WM_AFTER_TASKBAR_ACTIVATE;
+
 #pragma warning(disable : 4355)
 
 CMDIFrameWndEx::CMDIFrameWndEx() :
@@ -55,19 +57,11 @@ CMDIFrameWndEx::CMDIFrameWndEx() :
 {
 	// Allow WM_DWMSENDICONICTHUMBNAIL and WM_DWMSENDICONICLIVEPREVIEWBITMAP through the UIPI filter, so
 	// an MFC application running as administrator can show thumbnails correctly in the Windows7 taskbar.
-	if (afxGlobalData.bIsWindows7)
+	if (GetGlobalData()->bIsWindows7)
 	{
-		HMODULE hUser = AfxCtxLoadLibraryW(L"USER32.DLL");
-		if (hUser != NULL)
-		{
-			PFNCHANGEWINDOWMESSAGEFILTER pfnChangeWindowMessageFilter = (PFNCHANGEWINDOWMESSAGEFILTER)GetProcAddress(hUser, "ChangeWindowMessageFilter");
-			if (pfnChangeWindowMessageFilter != NULL)
-			{
-				BOOL bFilter;
-				bFilter = pfnChangeWindowMessageFilter(WM_DWMSENDICONICTHUMBNAIL, MSGFLT_ADD);
-				bFilter = pfnChangeWindowMessageFilter(WM_DWMSENDICONICLIVEPREVIEWBITMAP, MSGFLT_ADD);
-			}
-		}
+		BOOL bFilter;
+		bFilter = _AfxChangeWindowMessageFilter(WM_DWMSENDICONICTHUMBNAIL, MSGFLT_ADD);
+		bFilter = _AfxChangeWindowMessageFilter(WM_DWMSENDICONICLIVEPREVIEWBITMAP, MSGFLT_ADD);
 	}
 }
 
@@ -77,7 +71,6 @@ CMDIFrameWndEx::~CMDIFrameWndEx()
 {
 }
 
-//{{AFX_MSG_MAP(CMDIFrameWndEx)
 BEGIN_MESSAGE_MAP(CMDIFrameWndEx, CMDIFrameWnd)
 	ON_WM_MENUCHAR()
 	ON_WM_WINDOWPOSCHANGED()
@@ -98,10 +91,11 @@ BEGIN_MESSAGE_MAP(CMDIFrameWndEx, CMDIFrameWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_ACTIVATEAPP()
 	ON_WM_SYSCOLORCHANGE()
+	ON_WM_EXITSIZEMOVE()
+	ON_WM_DWMCOMPOSITIONCHANGED()
+	ON_WM_POWERBROADCAST()
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CMDIFrameWndEx::OnIdleUpdateCmdUI)
 	ON_MESSAGE(WM_SETTEXT, &CMDIFrameWndEx::OnSetText)
-	ON_MESSAGE(WM_DWMCOMPOSITIONCHANGED, &CMDIFrameWndEx::OnDWMCompositionChanged)
-	ON_MESSAGE(WM_EXITSIZEMOVE, &CMDIFrameWndEx::OnExitSizeMove)
 	ON_COMMAND(ID_CONTEXT_HELP, &CMDIFrameWndEx::OnContextHelp)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_STATUS_BAR, &CMDIFrameWndEx::OnUpdatePaneMenu)
 	ON_COMMAND_EX(ID_VIEW_STATUS_BAR, &CMDIFrameWndEx::OnPaneCheck)
@@ -115,9 +109,8 @@ BEGIN_MESSAGE_MAP(CMDIFrameWndEx, CMDIFrameWnd)
 	ON_REGISTERED_MESSAGE(AFX_WM_POSTSETPREVIEWFRAME, &CMDIFrameWndEx::OnPostPreviewFrame)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMDIFrameWndEx::OnToolbarCreateNew)
 	ON_REGISTERED_MESSAGE(AFX_WM_DELETETOOLBAR, &CMDIFrameWndEx::OnToolbarDelete)
-	ON_MESSAGE(WM_POWERBROADCAST, &OnPowerBroadcast)
+	ON_REGISTERED_MESSAGE(AFX_WM_AFTER_TASKBAR_ACTIVATE, &CMDIFrameWndEx::OnAfterTaskbarActivate)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMDIFrameWndEx message handlers
@@ -130,7 +123,7 @@ BOOL CMDIFrameWndEx::OnSetMenu(HMENU hmenu)
 		return FALSE;
 	}
 
-	if (m_Impl.m_pRibbonBar != NULL && (m_Impl.m_pRibbonBar->GetStyle() & WS_VISIBLE))
+	if (m_Impl.m_pRibbonBar != NULL && ((m_Impl.m_pRibbonBar->GetStyle() & WS_VISIBLE) == WS_VISIBLE || m_Impl.IsFullScreeen()))
 	{
 		SetMenu(NULL);
 		m_Impl.m_pRibbonBar->SetActiveMDIChild(MDIGetActive());
@@ -227,9 +220,9 @@ BOOL CMDIFrameWndEx::PreTranslateMessage(MSG* pMsg)
 		}
 
 	case WM_CONTEXTMENU:
-		if (!afxGlobalData.m_bSysUnderlineKeyboardShortcuts && !afxGlobalData.m_bUnderlineKeyboardShortcuts)
+		if (!GetGlobalData()->m_bSysUnderlineKeyboardShortcuts && !GetGlobalData()->m_bUnderlineKeyboardShortcuts)
 		{
-			afxGlobalData.m_bUnderlineKeyboardShortcuts = TRUE;
+			GetGlobalData()->m_bUnderlineKeyboardShortcuts = TRUE;
 			CMFCToolBar::RedrawUnderlines ();
 		}
 
@@ -269,7 +262,7 @@ BOOL CMDIFrameWndEx::PreTranslateMessage(MSG* pMsg)
 				}
 				else
 				{
-					if ((pMsg->lParam &(1 << 29)) == 0)
+					if ((pMsg->wParam == VK_MENU) || ((pMsg->lParam & (1 << 29)) == 0))
 					{
 						m_Impl.m_pMenuBar->SetFocus();
 					}
@@ -468,7 +461,14 @@ void CMDIFrameWndEx::OnClose()
 		m_Impl.OnCloseFrame();
 	}
 
+	HWND hwndThis = GetSafeHwnd();
+
 	CMDIFrameWnd::OnClose();
+
+	if (::IsWindow(hwndThis))
+	{
+		m_bClosing = FALSE;
+	}
 }
 
 BOOL CMDIFrameWndEx::PreCreateWindow(CREATESTRUCT& cs)
@@ -573,7 +573,7 @@ BOOL CMDIFrameWndEx::ShowPopupMenu(CMFCPopupMenu* pMenuPopup)
 
 void CMDIFrameWndEx::OnClosePopupMenu(CMFCPopupMenu* pMenuPopup)
 {
-	if (afxGlobalData.IsAccessibilitySupport() && pMenuPopup != NULL)
+	if (GetGlobalData()->IsAccessibilitySupport() && pMenuPopup != NULL)
 	{
 		CMFCPopupMenu* pPopupParent = pMenuPopup->GetParentPopupMenu();
 		CMFCToolBarMenuButton* pParentButton  = pMenuPopup->GetParentButton();
@@ -1150,11 +1150,10 @@ int CMDIFrameWndEx::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-LRESULT CMDIFrameWndEx::OnExitSizeMove(WPARAM, LPARAM)
+void CMDIFrameWndEx::OnExitSizeMove()
 {
 	RecalcLayout ();
 	m_dockManager.FixupVirtualRects();
-	return 0;
 }
 
 void CMDIFrameWndEx::OnUpdatePaneMenu(CCmdUI* pCmdUI)
@@ -1350,7 +1349,7 @@ void CMDIFrameWndEx::OnContextMenu(CWnd* pWnd, CPoint point)
 		return;
 	}
 
-	if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0) // Left mouse button is pressed
+	if ((GetAsyncKeyState(::GetSystemMetrics(SM_SWAPBUTTON) ? VK_RBUTTON : VK_LBUTTON) & 0x8000) != 0) // "Left" mouse button is pressed
 	{
 		return;
 	}
@@ -1410,7 +1409,7 @@ void CMDIFrameWndEx::OnContextMenu(CWnd* pWnd, CPoint point)
 
 BOOL CMDIFrameWndEx::OnShowPopupMenu(CMFCPopupMenu* pMenuPopup)
 {
-	if (afxGlobalData.IsAccessibilitySupport() && pMenuPopup != NULL)
+	if (GetGlobalData()->IsAccessibilitySupport() && pMenuPopup != NULL)
 	{
 		::NotifyWinEvent(EVENT_SYSTEM_MENUPOPUPSTART, pMenuPopup->GetSafeHwnd(), OBJID_WINDOW , CHILDID_SELF);
 	}
@@ -1639,7 +1638,7 @@ void CMDIFrameWndEx::RegisterAllMDIChildrenWithTaskbar(BOOL bRegister)
 	else
 	{
 		// if we're unregistering we need to reset clip rect on the main frame
-		ITaskbarList3* pTaskbarList3 = afxGlobalData.GetITaskbarList3();
+		ITaskbarList3* pTaskbarList3 = GetGlobalData()->GetITaskbarList3();
 		if (pTaskbarList3 != NULL)
 		{
 			pTaskbarList3->SetThumbnailClip(GetSafeHwnd(), NULL);
@@ -1714,22 +1713,21 @@ BOOL CMDIFrameWndEx::OnShowMDITabContextMenu(CPoint point, DWORD dwAllowedItems,
 	return TRUE;
 }
 
-LRESULT CMDIFrameWndEx::OnDWMCompositionChanged(WPARAM,LPARAM)
+void CMDIFrameWndEx::OnCompositionChanged()
 {
-	m_Impl.OnDWMCompositionChanged();
-	return 0;
+	m_Impl.OnCompositionChanged();
 }
 
-LRESULT CMDIFrameWndEx::OnPowerBroadcast(WPARAM wp, LPARAM)
+UINT CMDIFrameWndEx::OnPowerBroadcast(UINT nPowerEvent, UINT /* nEventData */)
 {
 	LRESULT lres = Default();
 
-	if (wp == PBT_APMRESUMESUSPEND)
+	if (nPowerEvent == PBT_APMRESUMESUSPEND)
 	{
-		afxGlobalData.Resume();
+		GetGlobalData()->Resume();
 	}
 
-	return lres;
+	return (UINT)lres;
 }
 
 void CMDIFrameWndEx::OnSysColorChange()
@@ -1737,4 +1735,22 @@ void CMDIFrameWndEx::OnSysColorChange()
 	CMDIFrameWnd::OnSysColorChange();
 	m_Impl.OnChangeVisualManager();
 	SetWindowRgn(NULL, TRUE);
+}
+
+LRESULT CMDIFrameWndEx::OnAfterTaskbarActivate(WPARAM, LPARAM lp)
+{
+	AdjustDockingLayout();
+	RecalcLayout();
+
+	SetWindowPos(NULL, -1, -1, -1, -1, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_UPDATENOW | RDW_ALLCHILDREN | RDW_ERASE);
+
+	m_dockManager.RedrawAllMiniFrames();
+
+	HWND hwndMDIChild = (HWND)lp;
+	if (hwndMDIChild != NULL && ::IsWindow(hwndMDIChild))
+	{
+		::SetFocus(hwndMDIChild);
+	}
+	return 0;
 }

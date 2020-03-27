@@ -25,9 +25,7 @@ DEFINE_GUID(IID_IPrintDialogCallback, 0x5852a2c3, 0x6530, 0x11d1, 0xb6, 0xa3, 0x
 DEFINE_GUID(IID_IPrintDialogServices, 0x509aaeda, 0x5639, 0x11d1, 0xb6, 0xa1, 0x0, 0x0, 0xf8, 0x75, 0x7b, 0xf9);
 
 BEGIN_MESSAGE_MAP(CPrintDialogEx, CCommonDialog)
-	//{{AFX_MSG_MAP(CPrintDialogEx)
 	ON_MESSAGE(WM_INITDIALOG, &CPrintDialogEx::HandleInitDialog)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 CPrintDialogEx::CPrintDialogEx(DWORD dwFlags, CWnd* pParentWnd)
@@ -49,7 +47,7 @@ INT_PTR CPrintDialogEx::DoModal()
 	m_pdex.hwndOwner = PreModal();
 	ASSERT(m_pdex.lpCallback == NULL);
 	m_pdex.lpCallback = (IUnknown*)(IPrintDialogCallback*)this;
-	INT_PTR nResult = ::AfxCtxPrintDlgEx(&m_pdex);
+	INT_PTR nResult = PrintDlgEx(&m_pdex);
 	PostModal();
 	return nResult;
 }
@@ -67,15 +65,15 @@ int CPrintDialogEx::GetCopies() const
 	ASSERT_VALID(this);
 
 	if (m_pdex.Flags & PD_USEDEVMODECOPIES)
-    {
-        LPDEVMODE pDevMode=GetDevMode();
-        ENSURE(pDevMode);
+	{
+		LPDEVMODE pDevMode=GetDevMode();
+		ENSURE(pDevMode);
 		return pDevMode->dmCopies;
-    }
+	}
 	else
-    {
+	{
 		return m_pdex.nCopies;
-    }
+	}
 }
 
 LPDEVMODE CPrintDialogEx::GetDevMode() const
@@ -123,7 +121,7 @@ BOOL CPrintDialogEx::GetDefaults()
 		m_pdex.hwndOwner = CWnd::GetSafeOwner_(m_pParentWnd->GetSafeHwnd(), &m_hWndTop);
 	}
 
-	return SUCCEEDED(::AfxCtxPrintDlgEx(&m_pdex));
+	return SUCCEEDED(PrintDlgEx(&m_pdex));
 }
 
 ////////////////////////////////////////////////////////////////////////////

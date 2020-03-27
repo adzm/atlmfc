@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -27,9 +27,9 @@ class CMFCStatusBar;
 class CMFCRibbonBar;
 class CMFCRibbonButton;
 
-void AFXPrintPreview(CView* pView);
+void AFX_CDECL AFXPrintPreview(CView* pView);
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPrintPreviewToolBar toolbar
 
 class CMFCPrintPreviewToolBar : public CMFCToolBar
@@ -39,17 +39,16 @@ class CMFCPrintPreviewToolBar : public CMFCToolBar
 	DECLARE_DYNAMIC(CMFCPrintPreviewToolBar)
 
 protected:
-	//{{AFX_MSG(CMFCPrintPreviewToolBar)
 	afx_msg void OnContextMenu(CWnd *pWnd, CPoint pos);
 	afx_msg void OnDestroy();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	virtual INT_PTR OnToolHitTest(CPoint point, TOOLINFO* pTI) const;
 	virtual BOOL AllowShowOnPaneMenu() const { return FALSE; }
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CPreviewViewEx window
 
 class CPreviewViewEx : public CPreviewView
@@ -89,12 +88,11 @@ protected:
 	AFX_IMPORT_DATA static BOOL m_bScaleLargeImages;
 
 protected:
-	//{{AFX_MSG(CPreviewViewEx)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnUpdatePreviewNumPage(CCmdUI* pCmdUI);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -6,8 +6,7 @@
 // Microsoft Foundation Classes Reference and related
 // electronic documentation provided with the library.
 // See these sources for detailed information regarding the
-// Microsoft Foundation Classes product.  
-//
+// Microsoft Foundation Classes product.
 
 #include "stdafx.h"
 #include "afxcontrolbarutil.h"
@@ -17,7 +16,6 @@
 #include "afxglobalutils.h"
 #include "afxvisualmanager.h"
 #include "afxdockingpanesrow.h"
-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -91,7 +89,7 @@ CSize CMFCAutoHideButton::GetSize() const
 		CSize sizeIcon(0, 0);
 		if (hIcon != NULL)
 		{
-			sizeIcon = afxGlobalData.m_sizeSmallIcon;
+			sizeIcon = GetGlobalData()->m_sizeSmallIcon;
 		}
 
 		int nSpacing = 0;
@@ -101,12 +99,12 @@ CSize CMFCAutoHideButton::GetSize() const
 			if (bHorz)
 			{
 				int cy = max(sizeIcon.cy, sizeText.cy) + size.cy;
-				nSpacing = cy * 2 / 3 + afxGlobalData.GetTextHeight();
+				nSpacing = cy * 2 / 3 + GetGlobalData()->GetTextHeight();
 			}
 			else
 			{
 				int cx = max(sizeIcon.cx, sizeText.cx) + size.cx;
-				nSpacing = cx * 2 / 3 + afxGlobalData.GetTextHeight();
+				nSpacing = cx * 2 / 3 + GetGlobalData()->GetTextHeight();
 			}
 		}
 		else
@@ -236,7 +234,7 @@ void CMFCAutoHideButton::OnDraw(CDC* pDC)
 		HICON hIcon = m_pAutoHideWindow->GetPaneIcon(FALSE);
 		if (hIcon != NULL)
 		{
-			CSize sizeIcon(afxGlobalData.m_sizeSmallIcon);
+			CSize sizeIcon(GetGlobalData()->m_sizeSmallIcon);
 
 			int dx = IsHorizontal() ? 0 : (rectDraw.Width() - sizeIcon.cx) / 2;
 			int dy = IsHorizontal() ? (rectDraw.Height() - sizeIcon.cy) / 2 : 0;
@@ -272,7 +270,7 @@ void CMFCAutoHideButton::OnDraw(CDC* pDC)
 		{
 			int nOldMode = pDC->SetBkMode(TRANSPARENT);
 
-			CFont* pFontOld = (CFont*) pDC->SelectObject(IsHorizontal() ? &afxGlobalData.fontRegular : &afxGlobalData.fontVert);
+			CFont* pFontOld = (CFont*) pDC->SelectObject(IsHorizontal() ? &(GetGlobalData()->fontRegular) : &(GetGlobalData()->fontVert));
 			ENSURE(pFontOld != NULL);
 
 			pDC->SetTextColor(CMFCVisualManager::GetInstance()->GetAutoHideButtonTextColor(this));
@@ -323,7 +321,7 @@ CSize CMFCAutoHideButton::GetTextSize() const
 		{
 			CWindowDC dc(m_pParentBar);
 
-			CFont* pFontOld = (CFont*) dc.SelectObject(IsHorizontal() ? &afxGlobalData.fontRegular : &afxGlobalData.fontVert);
+			CFont* pFontOld = (CFont*) dc.SelectObject(IsHorizontal() ? &(GetGlobalData()->fontRegular) : &(GetGlobalData()->fontVert));
 			ENSURE(pFontOld != NULL);
 			size = dc.GetTextExtent(strText);
 			size.cx += m_nMarginSize;

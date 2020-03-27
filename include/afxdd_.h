@@ -36,7 +36,7 @@ void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, DWORD& value);
 void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, LONGLONG& value);
 void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, ULONGLONG& value);
 void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, CString& value);
-void AFXAPI DDX_Text(_Inout_ CDataExchange* pDX, _In_ int nIDC, _Out_z_cap_(nMaxLen) LPTSTR value, _In_ int nMaxLen);
+void AFXAPI DDX_Text(_Inout_ CDataExchange* pDX, _In_ int nIDC, _Out_writes_z_(nMaxLen) LPTSTR value, _In_ int nMaxLen);
 void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, float& value);
 void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, double& value);
 void AFXAPI DDX_Text(CDataExchange* pDX, int nIDC, COleCurrency& value);

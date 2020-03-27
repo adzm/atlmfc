@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -72,9 +72,7 @@ CMFCDropDownListBox::~CMFCDropDownListBox()
 }
 
 BEGIN_MESSAGE_MAP(CMFCDropDownListBox, CMFCPopupMenu)
-	//{{AFX_MSG_MAP(CMFCDropDownListBox)
 	ON_WM_KEYDOWN()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CMFCDropDownListBox::Track(CPoint point, CWnd *pWndOwner)
@@ -91,6 +89,7 @@ void CMFCDropDownListBox::Track(CPoint point, CWnd *pWndOwner)
 	pMenuBar->m_bDisableSideBarInXPMode = TRUE;
 
 	HighlightItem(m_nCurSel);
+	pMenuBar->RedrawWindow();
 
 	CRect rect;
 	GetWindowRect(&rect);
@@ -320,7 +319,7 @@ void CMFCDropDownListBox::OnDrawItem(CDC* pDC, CMFCToolBarMenuButton* pItem, BOO
 		}
 	}
 
-	pDC->DrawText(pItem->m_strText, &rectText, DT_SINGLELINE | DT_VCENTER);
+	pDC->DrawText(pItem->m_strText, &rectText, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 }
 
 CSize CMFCDropDownListBox::OnGetItemSize(CDC* pDC, CMFCToolBarMenuButton* pItem, CSize sizeDefault)

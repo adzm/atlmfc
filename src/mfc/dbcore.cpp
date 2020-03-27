@@ -46,6 +46,7 @@ AFX_STATIC_DATA const char _afxODBCDLL[] = "ODBC32.DLL";
 // for dynamic load of ODBC32.DLL
 
 #pragma comment(lib, "odbc32.lib")
+#pragma comment(lib, "crypt32.lib")
 
 /////////////////////////////////////////////////////////////////////////////
 // CDBException
@@ -145,7 +146,7 @@ void CDBException::BuildErrorString(CDatabase* pdb, HSTMT hstmt, BOOL bTrace)
 }
 
 
-BOOL CDBException::GetErrorMessage(_Out_z_cap_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
+BOOL CDBException::GetErrorMessage(_Out_writes_z_(nMaxError) LPTSTR lpszError, _In_ UINT nMaxError,
 		_Out_opt_ PUINT pnHelpContext /* = NULL */) const
 {
 	ASSERT(lpszError != NULL && AfxIsValidString(lpszError, nMaxError));
@@ -216,15 +217,16 @@ CDatabase::CDatabase()
 	m_bStripTrailingSpaces = FALSE;
 	m_bIncRecordCountOnAdd = FALSE;
 	m_bAddForUpdate = FALSE;
+
+	m_blobConnect.pbData = NULL;
 }
 
 CDatabase::~CDatabase()
 {
 	AFX_BEGIN_DESTRUCTOR
 
-		ASSERT_VALID(this);
-
-		Free();
+	ASSERT_VALID(this);
+	Free();
 
 	AFX_END_DESTRUCTOR
 }
@@ -241,14 +243,13 @@ BOOL CDatabase::Open(LPCTSTR lpszDSN, BOOL bExclusive,
 		strConnect = lpszConnect;
 
 	// if there is a "ODBC;" (or "odbc;") prefix in the connect string...
-	if (_tcsnicmp(strConnect, _afxODBCTrail, lstrlen(_afxODBCTrail)) == 0)
+	if (_tcsnicmp(strConnect, _afxODBCTrail, AtlStrLen(_afxODBCTrail)) == 0)
 	{
 		// Strip "ODBC;"
-		strConnect = strConnect.Right(strConnect.GetLength()
-			- lstrlen(_afxODBCTrail));
+		strConnect = strConnect.Right(strConnect.GetLength() - AtlStrLen(_afxODBCTrail));
 	}
 
-	if (lpszDSN != NULL && lstrlen(lpszDSN) != 0)
+	if (lpszDSN != NULL && _tcslen(lpszDSN) != 0)
 	{
 		// Append "DSN=" lpszDSN
 		strConnect += _T(";DSN=");
@@ -283,6 +284,15 @@ BOOL CDatabase::OpenEx(LPCTSTR lpszConnectString, DWORD dwOptions)
 	TRY
 	{
 		m_strConnect = lpszConnectString;
+
+		DATA_BLOB connectBlob;
+		connectBlob.pbData = (BYTE *)(LPCTSTR)m_strConnect;
+		connectBlob.cbData = (DWORD)(AtlStrLen(m_strConnect) + 1) * sizeof(TCHAR);
+		if (CryptProtectData(&connectBlob, NULL, NULL, NULL, NULL, 0, &m_blobConnect))
+		{
+			SecureZeroMemory((BYTE *)(LPCTSTR)m_strConnect, m_strConnect.GetLength() * sizeof(TCHAR));
+			m_strConnect.Empty();
+		}
 
 		// Allocate the HDBC and make connection
 		AllocConnect(dwOptions);
@@ -424,6 +434,11 @@ void CDatabase::Free()
 	}
 	END_CATCH_ALL
 
+	if (m_blobConnect.pbData != NULL)
+	{
+		LocalFree(m_blobConnect.pbData);
+	}
+
 	// free henv if refcount goes to 0
 	_AFX_DB_STATE* pDbState = _afxDbState;
 	AfxLockGlobals(CRIT_ODBC);
@@ -454,8 +469,8 @@ void CDatabase::OnSetOptions(HSTMT hstmt)
 	if (m_dwQueryTimeout != -1)
 	{
 		// Attempt to set query timeout.  Ignore failure
-		AFX_SQL_SYNC(::SQLSetStmtOption(hstmt, SQL_QUERY_TIMEOUT,
-			m_dwQueryTimeout));
+		AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_QUERY_TIMEOUT,
+			(SQLPOINTER) m_dwQueryTimeout, 0));
 		if (!Check(nRetCode))
 			// don't attempt it again
 			m_dwQueryTimeout = (DWORD)-1;
@@ -503,8 +518,8 @@ BOOL CDatabase::BeginTrans()
 #endif
 
 	RETCODE nRetCode;
-	AFX_SQL_SYNC(::SQLSetConnectOption(m_hdbc, SQL_AUTOCOMMIT,
-		SQL_AUTOCOMMIT_OFF));
+	AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc, SQL_AUTOCOMMIT,
+		(SQLPOINTER) SQL_AUTOCOMMIT_OFF, 0));
 	DEBUG_ONLY(m_bTransactionPending = TRUE);
 
 	return Check(nRetCode);
@@ -529,8 +544,8 @@ BOOL CDatabase::CommitTrans()
 	BOOL bSuccess = Check(nRetCode);
 
 	// Turn back on auto commit
-	AFX_SQL_SYNC(::SQLSetConnectOption(m_hdbc, SQL_AUTOCOMMIT,
-		SQL_AUTOCOMMIT_ON));
+	AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc, SQL_AUTOCOMMIT,
+		(SQLPOINTER) SQL_AUTOCOMMIT_ON, 0));
 	DEBUG_ONLY(m_bTransactionPending = FALSE);
 
 	return bSuccess;
@@ -555,8 +570,8 @@ BOOL CDatabase::Rollback()
 	BOOL bSuccess = Check(nRetCode);
 
 	// Turn back on auto commit
-	AFX_SQL_SYNC(::SQLSetConnectOption(m_hdbc, SQL_AUTOCOMMIT,
-		SQL_AUTOCOMMIT_ON));
+	AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc, SQL_AUTOCOMMIT,
+		(SQLPOINTER) SQL_AUTOCOMMIT_ON, 0));
 	DEBUG_ONLY(m_bTransactionPending = FALSE);
 
 	return bSuccess;
@@ -689,14 +704,14 @@ void CDatabase::AllocConnect(DWORD dwOptions)
 #ifdef _DEBUG
 	if (bTraceSql)
 	{
-		::SQLSetConnectOption(m_hdbc, SQL_OPT_TRACEFILE,
-			(SQLULEN)(DWORD_PTR)"odbccall.txt");
-		::SQLSetConnectOption(m_hdbc, SQL_OPT_TRACE, 1);
+		::SQLSetConnectAttr(m_hdbc, SQL_OPT_TRACEFILE,
+			(SQLPOINTER)"odbccall.txt", sizeof("odbccall.txt"));
+		::SQLSetConnectAttr(m_hdbc, SQL_OPT_TRACE, (SQLPOINTER) 1, 0);
 	}
 #endif // _DEBUG
 
-	AFX_SQL_SYNC(::SQLSetConnectOption(m_hdbc, SQL_LOGIN_TIMEOUT,
-		m_dwLoginTimeout));
+	AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc, SQL_LOGIN_TIMEOUT,
+		(SQLPOINTER) m_dwLoginTimeout, 0));
 #ifdef _DEBUG
 	if (nRetCode != SQL_SUCCESS && nRetCode != SQL_SUCCESS_WITH_INFO)
 		TRACE(traceDatabase, 0, _T("Warning: Failure setting login timeout.\n"));
@@ -704,8 +719,8 @@ void CDatabase::AllocConnect(DWORD dwOptions)
 
 	if (!m_bUpdatable)
 	{
-		AFX_SQL_SYNC(::SQLSetConnectOption(m_hdbc, SQL_ACCESS_MODE,
-			SQL_MODE_READ_ONLY));
+		AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc, SQL_ACCESS_MODE,
+			(SQLPOINTER) SQL_MODE_READ_ONLY, 0));
 #ifdef _DEBUG
 		if (nRetCode != SQL_SUCCESS && nRetCode != SQL_SUCCESS_WITH_INFO)
 			TRACE(traceDatabase, 0, _T("Warning: Failure setting read only access mode.\n"));
@@ -715,8 +730,7 @@ void CDatabase::AllocConnect(DWORD dwOptions)
 	// Turn on cursor lib support
 	if (dwOptions & useCursorLib)
 	{
-		AFX_SQL_SYNC(::SQLSetConnectOption(m_hdbc,
-			SQL_ODBC_CURSORS, SQL_CUR_USE_ODBC));
+		AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc, SQL_ATTR_ODBC_CURSORS, (SQLPOINTER)SQL_CUR_USE_DRIVER, 0));
 		// With cursor library added records immediately in result set
 		m_bIncRecordCountOnAdd = TRUE;
 	}
@@ -728,6 +742,17 @@ BOOL CDatabase::Connect(DWORD dwOptions)
 	HWND hWnd = CWnd::GetSafeOwner_(NULL, &hWndTop);
 	if (hWnd == NULL)
 		hWnd = ::GetDesktopWindow();
+
+	if (m_strConnect.GetLength() == 0)
+	{
+		DATA_BLOB connectBlob;
+		if (CryptUnprotectData(&m_blobConnect, NULL, NULL, NULL, NULL, 0, &connectBlob))
+		{
+			m_strConnect = (LPTSTR)connectBlob.pbData;
+			LocalFree(m_blobConnect.pbData);
+			LocalFree(connectBlob.pbData);
+		}
+	}
 
 	TCHAR szConnectOutput[MAX_CONNECT_LEN];
 	TCHAR *pszConnectInput = const_cast<LPTSTR>(static_cast<LPCTSTR>(m_strConnect));
@@ -749,6 +774,7 @@ BOOL CDatabase::Connect(DWORD dwOptions)
 	if (nRetCode == SQL_NO_DATA_FOUND)
 	{
 		Free();
+		SecureZeroMemory((BYTE *)szConnectOutput, sizeof(szConnectOutput));
 		return FALSE;
 	}
 
@@ -758,6 +784,7 @@ BOOL CDatabase::Connect(DWORD dwOptions)
 		if (hWnd == NULL)
 			TRACE(traceDatabase, 0, _T("Error: No default window (AfxGetApp()->m_pMainWnd) for SQLDriverConnect.\n"));
 #endif
+		SecureZeroMemory((BYTE *)szConnectOutput, sizeof(szConnectOutput));
 		ThrowDBException(nRetCode);
 	}
 
@@ -766,6 +793,16 @@ BOOL CDatabase::Connect(DWORD dwOptions)
 	// Save connect string returned from ODBC
 	m_strConnect += szConnectOutput;
 
+	DATA_BLOB connectBlob;
+	connectBlob.pbData = (BYTE *)(LPCTSTR)m_strConnect;
+	connectBlob.cbData = (DWORD)(AtlStrLen(m_strConnect) + 1) * sizeof(TCHAR);
+	if (CryptProtectData(&connectBlob, NULL, NULL, NULL, NULL, 0, &m_blobConnect))
+	{
+		SecureZeroMemory((BYTE *)(LPCTSTR)m_strConnect, m_strConnect.GetLength() * sizeof(TCHAR));
+		m_strConnect.Empty();
+	}
+
+	SecureZeroMemory((BYTE *)szConnectOutput, sizeof(szConnectOutput));
 	return TRUE;
 }
 
@@ -875,8 +912,8 @@ void CDatabase::GetConnectInfo()
 	else
 	{
 		// Make data source is !Updatable
-		AFX_SQL_SYNC(::SQLSetConnectOption(m_hdbc,
-			SQL_ACCESS_MODE, SQL_MODE_READ_ONLY));
+		AFX_SQL_SYNC(::SQLSetConnectAttr(m_hdbc,
+			SQL_ACCESS_MODE, (SQLPOINTER) SQL_MODE_READ_ONLY, 0));
 	}
 
 	// Cache the quote char to use when constructing SQL
@@ -926,8 +963,20 @@ void CDatabase::Dump(CDumpContext& dc) const
 {
 	CObject::Dump(dc);
 
+	CString strConnect = m_strConnect;
+
+	if (strConnect.GetLength() == 0)
+	{
+		DATA_BLOB connectBlob;
+		if (CryptUnprotectData((DATA_BLOB *)&m_blobConnect, NULL, NULL, NULL, NULL, 0, &connectBlob))
+		{
+			strConnect = (LPTSTR)connectBlob.pbData;
+			LocalFree(connectBlob.pbData);
+		}
+	}
+
 	dc << _T("m_hdbc = ") << m_hdbc;
-	dc << _T("\nm_strConnect = ") << m_strConnect;
+	dc << _T("\nm_strConnect = ") << strConnect;
 	dc << _T("\nm_bUpdatable = ") << m_bUpdatable;
 	dc << _T("\nm_bTransactions = ") << m_bTransactions;
 	dc << _T("\nm_bTransactionPending = ") << m_bTransactionPending;
@@ -1575,8 +1624,8 @@ void CRecordset::SetRowsetSize(DWORD dwNewRowsetSize)
 	}
 
 	RETCODE nRetCode;
-	AFX_SQL_SYNC(::SQLSetStmtOption(m_hstmt, SQL_ROWSET_SIZE,
-		m_dwRowsetSize));
+	AFX_SQL_SYNC(::SQLSetStmtAttr(m_hstmt, SQL_ROWSET_SIZE,
+		(SQLPOINTER) m_dwRowsetSize, 0));
 }
 
 void CRecordset::AddNew()
@@ -2442,8 +2491,8 @@ void CRecordset::PrepareAndExecute()
 				}
 
 				// Attempt to reset the concurrency model.
-				AFX_SQL_SYNC(::SQLSetStmtOption(m_hstmt, SQL_CONCURRENCY,
-					m_dwConcurrency));
+				AFX_SQL_SYNC(::SQLSetStmtAttr(m_hstmt, SQL_CONCURRENCY,
+					(SQLPOINTER) m_dwConcurrency, 0));
 				if (!Check(nRetCode))
 				{
 					TRACE(traceDatabase, 0, _T("Error: ODBC failure setting recordset concurrency.\n"));
@@ -2474,7 +2523,8 @@ void CRecordset::PrepareAndExecute()
 		// Check if concurrency was changed in order to mark
 		// recordset non-updatable if necessary
 		DWORD dwConcurrency;
-		AFX_SQL_SYNC(::SQLGetStmtOption(m_hstmt, SQL_CONCURRENCY, &dwConcurrency));
+		SQLINTEGER returned;
+		AFX_SQL_SYNC(::SQLGetStmtAttr(m_hstmt, SQL_CONCURRENCY, (SQLPOINTER) &dwConcurrency, 0, &returned));
 		if (!Check(nRetCode))
 			ThrowDBException(nRetCode);
 
@@ -2665,8 +2715,8 @@ void CRecordset::EnableBookmarks()
 		// Set stmt option if bookmarks supported by driver
 		if (m_pDatabase->GetBookmarkPersistence() & SQL_BP_SCROLL)
 		{
-			AFX_SQL_SYNC(::SQLSetStmtOption(m_hstmt, SQL_USE_BOOKMARKS,
-				SQL_UB_ON));
+			AFX_SQL_SYNC(::SQLSetStmtAttr(m_hstmt, SQL_USE_BOOKMARKS,
+				(SQLPOINTER) SQL_UB_ON, 0));
 			if (!Check(nRetCode))
 			{
 				TRACE(traceDatabase, 0, _T("Error: Can't enable bookmark support.\n"));
@@ -2729,7 +2779,7 @@ void CRecordset::SetConcurrencyAndCursorType(HSTMT hstmt, DWORD dwScrollOptions)
 	}
 
 	// Set cursor type (Let rowset size default to 1).
-	AFX_SQL_SYNC(::SQLSetStmtOption(hstmt, SQL_CURSOR_TYPE, dwScrollOptions));
+	AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_CURSOR_TYPE, (SQLPOINTER) dwScrollOptions, 0));
 	if (!Check(nRetCode))
 	{
 		TRACE(traceDatabase, 0, _T("Error: ODBC failure setting recordset cursor type.\n"));
@@ -2737,7 +2787,7 @@ void CRecordset::SetConcurrencyAndCursorType(HSTMT hstmt, DWORD dwScrollOptions)
 	}
 
 	// Set the concurrency model (NOTE: may have to reset concurrency later).
-	AFX_SQL_SYNC(::SQLSetStmtOption(hstmt, SQL_CONCURRENCY, m_dwConcurrency));
+	AFX_SQL_SYNC(::SQLSetStmtAttr(hstmt, SQL_CONCURRENCY, (SQLPOINTER) m_dwConcurrency, 0));
 	if (!Check(nRetCode))
 	{
 		TRACE(traceDatabase, 0, _T("Error: ODBC failure setting recordset concurrency.\n"));
@@ -2750,8 +2800,8 @@ BOOL CRecordset::IsSQLUpdatable(LPCTSTR lpszSQL)
 {
 	ENSURE_ARG(lpszSQL);
 	// Parse for query procedure call keyword or return param
-	if (!(_tcsnicmp(lpszSQL, _afxCall, lstrlen(_afxCall)-1) == 0 ||
-		_tcsnicmp(lpszSQL, _afxParamCall, lstrlen(_afxParamCall)-1) == 0))
+	if (!(_tcsnicmp(lpszSQL, _afxCall, AtlStrLen(_afxCall)-1) == 0 ||
+		_tcsnicmp(lpszSQL, _afxParamCall, AtlStrLen(_afxParamCall)-1) == 0))
 		// Assume this is a select query
 		return IsSelectQueryUpdatable(lpszSQL);
 	else
@@ -2809,7 +2859,7 @@ BOOL CRecordset::IsSelectQueryUpdatable(LPCTSTR lpszSQL)
 	else
 	{
 		Checked::memmove_s(lpszSQLStart, strSQL.GetLength()*sizeof(TCHAR), 
-			lpchTokenFrom, (lstrlen(lpchTokenFrom) + 1) * sizeof(TCHAR));
+			lpchTokenFrom, (AtlStrLen(lpchTokenFrom) + 1) * sizeof(TCHAR));
 	}
 
 	strSQL.ReleaseBuffer();
@@ -2914,7 +2964,7 @@ LPCTSTR PASCAL CRecordset::FindSQLToken(LPCTSTR lpszSQL, LPCTSTR lpszSQLToken)
 
 		// If first iteration, reset the offset to jump over found token
 		if (nTokenOffset == 0)
-			nTokenOffset = lstrlen(lpszSQLToken);
+			nTokenOffset = AtlStrLen(lpszSQLToken);
 
 	} while (bInLiteral || bInBrackets);
 
@@ -3232,11 +3282,11 @@ void CRecordset::BuildSelectSQL()
 	ASSERT(m_hstmt != SQL_NULL_HSTMT);
 
 	// Ignore queries with procedure call keyword or output param
-	if (!(_tcsnicmp(m_strSQL, _afxCall, lstrlen(_afxCall)-1) == 0 ||
-		_tcsnicmp(m_strSQL, _afxParamCall, lstrlen(_afxParamCall)-1) == 0))
+	if (!(_tcsnicmp(m_strSQL, _afxCall, AtlStrLen(_afxCall)-1) == 0 ||
+		_tcsnicmp(m_strSQL, _afxParamCall, AtlStrLen(_afxParamCall)-1) == 0))
 	{
 		// Ignore queries already built
-		if (_tcsnicmp(m_strSQL, _afxSelect, lstrlen(_afxSelect)-1) != 0)
+		if (_tcsnicmp(m_strSQL, _afxSelect, AtlStrLen(_afxSelect)-1) != 0)
 		{
 			// Assume m_strSQL specifies table name
 			ASSERT(m_nFields != 0);
@@ -4413,9 +4463,8 @@ void* PASCAL CRecordset::GetDataBuffer(CDBVariant& varValue,
 		}
 		else
 		{
-			// better know the length!
-			ASSERT(nPrecision != 0);
-			*pnLen = nPrecision;
+			// pvData can't be NULL, so nLen must be at least 1
+			*pnLen = nPrecision == 0 ? 1 : nPrecision;
 		}
 
 		varValue.m_pbinary->m_hData = ::GlobalAlloc(GMEM_MOVEABLE, *pnLen);
@@ -4496,9 +4545,9 @@ SQLLEN PASCAL CRecordset::GetData(CDatabase* pdb, HSTMT hstmt,
 
 		// If not a data truncated warning on long var column,
 		// then send debug output
-		if ((nSQLType != SQL_LONGVARCHAR &&
-			nSQLType != SQL_WLONGVARCHAR &&
-			nSQLType != SQL_LONGVARBINARY) ||
+		if ((nSQLType != SQL_LONGVARCHAR && nSQLType != SQL_VARCHAR &&
+			nSQLType != SQL_WLONGVARCHAR && nSQLType != SQL_WVARCHAR &&
+			nSQLType != SQL_LONGVARBINARY && nSQLType != SQL_VARBINARY) ||
 			(e.m_strStateNativeOrigin.Find(_afxDataTruncated) < 0))
 		{
 			TRACE(traceDatabase, 0, _T("Warning: ODBC Success With Info on field %d.\n"),
@@ -4536,7 +4585,7 @@ inline static void PASCAL GetLongCharDataAndCleanup(CDatabase* pdb,
 	// If long data, may need to call SQLGetData again
 	if (nLen <= nActualSize &&
 		(nSQLType == SQL_WLONGVARCHAR || nSQLType == SQL_LONGVARCHAR ||
-		nSQLType == SQL_LONGVARBINARY || nSQLType == SQL_VARCHAR))
+		nSQLType == SQL_LONGVARBINARY || nSQLType == SQL_VARCHAR || nSQLType == SQL_WVARCHAR))
 	{
 		// Reallocate the size (this will copy the data)
 		if (nActualSize > (INT_MAX-1))

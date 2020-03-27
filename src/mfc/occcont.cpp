@@ -630,7 +630,7 @@ UINT COleControlContainer::GetDlgItemInt(int nID, BOOL* lpTrans, BOOL bSigned) c
 		return _tcstoul(szText, NULL, 10);
 }
 
-int COleControlContainer::GetDlgItemText(_In_ int nID, _Out_cap_post_count_(nMaxCount, return + 1) _Pre_notnull_ _Post_z_ LPTSTR lpStr, _In_ int nMaxCount) const
+int COleControlContainer::GetDlgItemText(_In_ int nID, _Out_writes_to_(nMaxCount, return + 1) _Pre_notnull_ _Post_z_ LPTSTR lpStr, _In_ int nMaxCount) const
 {
 	CWnd* pWnd = GetDlgItem(nID);
 	if (pWnd == NULL)

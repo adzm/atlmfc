@@ -1,4 +1,4 @@
-,// This is a part of the Microsoft Foundation Classes C++ library.
+// This is a part of the Microsoft Foundation Classes C++ library.
 // Copyright(C) Microsoft Corporation
 // All rights reserved.
 //
@@ -48,8 +48,8 @@ void CMFCVisualManagerVS2008::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRe
 	ASSERT_VALID(pBar);
 	ASSERT_VALID(pDC);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 ||
-		afxGlobalData.IsHighContrastMode() ||
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 ||
+		GetGlobalData()->IsHighContrastMode() ||
 		!pBar->IsKindOf(RUNTIME_CLASS(CMFCPopupMenuBar)) ||
 		pBar->IsKindOf(RUNTIME_CLASS(CMFCColorBar)) ||
 		GetStandardWindowsTheme() != WinXpTheme_Blue)
@@ -92,7 +92,7 @@ void CMFCVisualManagerVS2008::OnHighlightRarelyUsedMenuItems(CDC* pDC, CRect rec
 {
 	ASSERT_VALID(pDC);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() ||
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode() ||
 		GetStandardWindowsTheme() != WinXpTheme_Blue)
 	{
 		CMFCVisualManagerVS2005::OnHighlightRarelyUsedMenuItems(pDC, rectRarelyUsed);
@@ -172,7 +172,7 @@ void CMFCVisualManagerVS2008::OnHighlightMenuItem(CDC *pDC, CMFCToolBarMenuButto
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pButton);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode())
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode())
 	{
 		CMFCVisualManagerVS2005::OnHighlightMenuItem(pDC, pButton, rect, clrText);
 		return;
@@ -221,7 +221,7 @@ void CMFCVisualManagerVS2008::OnEraseTabsArea(CDC* pDC, CRect rect, const CMFCBa
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pTabWnd);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() ||
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode() ||
 		!pTabWnd->IsVS2005Style() ||
 		pTabWnd->IsDialogControl())
 	{
@@ -238,7 +238,7 @@ void CMFCVisualManagerVS2008::OnEraseTabsArea(CDC* pDC, CRect rect, const CMFCBa
 
 		rect.top = rectMain.top;
 		rect.left = rectMain.left;
-		rect.right = rect.left + afxGlobalData.m_rectVirtual.Width() + 10;
+		rect.right = rect.left + GetGlobalData()->m_rectVirtual.Width() + 10;
 	}
 
 	CDrawingManager dm(*pDC);
@@ -251,7 +251,7 @@ void CMFCVisualManagerVS2008::OnEraseTabsButton(CDC* pDC, CRect rect, CMFCButton
 	ASSERT_VALID(pButton);
 	ASSERT_VALID(pWndTab);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() ||
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode() ||
 		!pWndTab->IsVS2005Style() ||
 		pWndTab->IsDialogControl() ||
 		pButton->IsPressed() || pButton->IsHighlighted())
@@ -274,7 +274,7 @@ void CMFCVisualManagerVS2008::OnEraseTabsButton(CDC* pDC, CRect rect, CMFCButton
 
 		rect.top = rectMain.top;
 		rect.left = rectMain.left;
-		rect.right = rect.left + afxGlobalData.m_rectVirtual.Width() + 10;
+		rect.right = rect.left + GetGlobalData()->m_rectVirtual.Width() + 10;
 	}
 
 	CDrawingManager dm(*pDC);
@@ -288,7 +288,7 @@ BOOL CMFCVisualManagerVS2008::OnEraseTabsFrame(CDC* pDC, CRect rect, const CMFCB
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pTabWnd);
 
-	if (!pTabWnd->IsVS2005Style() || afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode())
+	if (!pTabWnd->IsVS2005Style() || GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode())
 	{
 		return CMFCVisualManagerVS2005::OnEraseTabsFrame(pDC, rect, pTabWnd);
 	}
@@ -313,7 +313,7 @@ void CMFCVisualManagerVS2008::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL 
 	const COLORREF clrTab = pTabWnd->GetTabBkColor(iTab);
 	const BOOL bIsHighlight = (iTab == pTabWnd->GetHighlightedTab());
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() ||
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode() ||
 		pTabWnd->IsDialogControl() ||
 		pTabWnd->IsFlatTab() || 
 		clrTab != (COLORREF)-1)
@@ -371,7 +371,7 @@ void CMFCVisualManagerVS2008::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL 
 
 	if (rectTab.Width() > 25)	// DrawThemeBackground will draw < 25 width tab bad
 	{
-		(*m_pfDrawThemeBackground)(m_hThemeTab, pDC->GetSafeHdc(), TABP_TABITEM, nState, &rectTab, 0);
+		DrawThemeBackground(m_hThemeTab, pDC->GetSafeHdc(), TABP_TABITEM, nState, &rectTab, 0);
 
 		if (pTabWnd->GetLocation() == CMFCBaseTabCtrl::LOCATION_BOTTOM)
 		{
@@ -380,15 +380,15 @@ void CMFCVisualManagerVS2008::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL 
 		}
 	}
 
-	COLORREF clrTabText = afxGlobalData.clrWindowText;
+	COLORREF clrTabText = GetGlobalData()->clrWindowText;
 
 	if (!bIsActive)
 	{
-		clrTabText = afxGlobalData.clrBtnDkShadow;
+		clrTabText = GetGlobalData()->clrBtnDkShadow;
 	}
-	else if (m_pfGetThemeColor != NULL)
+	else
 	{
-		(*m_pfGetThemeColor)(m_hThemeTab, TABP_TABITEM, nState, TMT_TEXTCOLOR, &clrTabText);
+		::GetThemeColor(m_hThemeTab, TABP_TABITEM, nState, TMT_TEXTCOLOR, &clrTabText);
 	}
 
 	COLORREF cltTextOld = pDC->SetTextColor(clrTabText);
@@ -405,7 +405,7 @@ void CMFCVisualManagerVS2008::OnDrawAutoHideButtonBorder(CDC* pDC, CRect rect, C
 	ASSERT_VALID(pDC);
 	ASSERT_VALID(pButton);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() || m_hThemeTab == NULL)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode() || m_hThemeTab == NULL)
 	{
 		CMFCVisualManagerVS2005::OnDrawAutoHideButtonBorder(pDC, rect, rectBorderSize, pButton);
 		return;
@@ -431,7 +431,7 @@ void CMFCVisualManagerVS2008::OnDrawAutoHideButtonBorder(CDC* pDC, CRect rect, C
 
 			CBitmap* pBmpOld = (CBitmap*) dcMem.SelectObject(&bmpMem);
 
-			(*m_pfDrawThemeBackground)(m_hThemeTab, dcMem.GetSafeHdc(), TABP_TABITEM, nState, &rectTab, 0);
+			DrawThemeBackground(m_hThemeTab, dcMem.GetSafeHdc(), TABP_TABITEM, nState, &rectTab, 0);
 
 			dm.DrawRotated(rect, dcMem, dwAlign == CBRS_ALIGN_LEFT);
 			dcMem.SelectObject(pBmpOld);
@@ -440,7 +440,7 @@ void CMFCVisualManagerVS2008::OnDrawAutoHideButtonBorder(CDC* pDC, CRect rect, C
 
 	case CBRS_ALIGN_TOP:
 	case CBRS_ALIGN_BOTTOM:
-		(*m_pfDrawThemeBackground)(m_hThemeTab, pDC->GetSafeHdc(), TABP_TABITEM, nState, &rect, 0);
+		DrawThemeBackground(m_hThemeTab, pDC->GetSafeHdc(), TABP_TABITEM, nState, &rect, 0);
 
 		if (dwAlign == CBRS_ALIGN_TOP)
 		{
@@ -463,28 +463,27 @@ COLORREF CMFCVisualManagerVS2008::OnDrawPaneCaption(CDC* pDC, CDockablePane* pBa
 
 	CDrawingManager dm(*pDC);
 	dm.FillGradient(rectCaption, 
-		bActive ? afxGlobalData.clrActiveCaptionGradient : afxGlobalData.clrInactiveCaptionGradient, 
-		bActive ? afxGlobalData.clrActiveCaption : afxGlobalData.clrInactiveCaption, 
+		bActive ? GetGlobalData()->clrActiveCaptionGradient : GetGlobalData()->clrInactiveCaptionGradient, 
+		bActive ? GetGlobalData()->clrActiveCaption : GetGlobalData()->clrInactiveCaption, 
 		TRUE);
 
-	return bActive ? afxGlobalData.clrCaptionText : afxGlobalData.clrInactiveCaptionText;
+	return bActive ? GetGlobalData()->clrCaptionText : GetGlobalData()->clrInactiveCaptionText;
 }
 
 void CMFCVisualManagerVS2008::OnUpdateSystemColors()
 {
-	m_bOSColors = afxGlobalData.bIsWindowsVista &&
-		m_hThemeExplorerBar != NULL &&
-		afxGlobalData.m_nBitsPerPixel > 8 && !afxGlobalData.IsHighContrastMode();
+	m_bOSColors = m_hThemeExplorerBar != NULL &&
+		GetGlobalData()->m_nBitsPerPixel > 8 && !GetGlobalData()->IsHighContrastMode();
 
 	CMFCVisualManagerVS2005::OnUpdateSystemColors();
 
-	if (!m_bOSColors || m_pfGetThemeColor == NULL)
+	if (!m_bOSColors)
 	{
 		return;
 	}
 
-	(*m_pfGetThemeColor)(m_hThemeExplorerBar, 0, 0, TMT_EDGEHIGHLIGHTCOLOR, &m_clrToolBarGradientLight);
-	(*m_pfGetThemeColor)(m_hThemeExplorerBar, 0, 0, TMT_GRADIENTCOLOR2, &m_clrToolBarGradientDark);
+	::GetThemeColor(m_hThemeExplorerBar, 0, 0, TMT_EDGEHIGHLIGHTCOLOR, &m_clrToolBarGradientLight);
+	::GetThemeColor(m_hThemeExplorerBar, 0, 0, TMT_GRADIENTCOLOR2, &m_clrToolBarGradientDark);
 
 	m_clrBarGradientDark = CDrawingManager::SmartMixColors(m_clrToolBarGradientDark, m_clrToolBarGradientLight,
 		1., 2, 1);
@@ -518,7 +517,7 @@ void CMFCVisualManagerVS2008::OnUpdateSystemColors()
 
 COLORREF CMFCVisualManagerVS2008::OnFillCommandsListBackground(CDC* pDC, CRect rect, BOOL bIsSelected)
 {
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode())
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode())
 	{
 		return CMFCVisualManagerVS2005::OnFillCommandsListBackground(pDC, rect, bIsSelected);
 	}
@@ -579,7 +578,7 @@ COLORREF CMFCVisualManagerVS2008::OnFillCommandsListBackground(CDC* pDC, CRect r
 			dm.FillGradient(rectImages, m_clrToolBarGradientLight, m_clrToolBarGradientDark, FALSE);
 		}
 
-		return afxGlobalData.clrBarText;
+		return GetGlobalData()->clrBarText;
 	}
 }
 
@@ -594,12 +593,12 @@ void CMFCVisualManagerVS2008::GetTabFrameColors(const CMFCBaseTabCtrl* pTabWnd, 
 			   clrDarkShadow, clrLight,
 			   pbrFace, pbrBlack);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() || pTabWnd->IsFlatTab())
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode() || pTabWnd->IsFlatTab())
 	{
 		return;
 	}
 
-	clrBlack = afxGlobalData.clrBarShadow;
+	clrBlack = GetGlobalData()->clrBarShadow;
 }
 
 void CMFCVisualManagerVS2008::OnDrawTabResizeBar(CDC* pDC, CMFCBaseTabCtrl* pWndTab, BOOL bIsVert, CRect rect, CBrush* pbrFace, CPen* pPen)
@@ -609,7 +608,7 @@ void CMFCVisualManagerVS2008::OnDrawTabResizeBar(CDC* pDC, CMFCBaseTabCtrl* pWnd
 	ASSERT_VALID(pPen);
 	ASSERT_VALID(pWndTab);
 
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() || pWndTab->IsFlatTab())
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode() || pWndTab->IsFlatTab())
 	{
 		CMFCVisualManagerVS2005::OnDrawTabResizeBar(pDC, pWndTab, bIsVert, rect, pbrFace, pPen);
 		return;
@@ -629,7 +628,7 @@ void CMFCVisualManagerVS2008::OnDrawTabResizeBar(CDC* pDC, CMFCBaseTabCtrl* pWnd
 
 		rect.top = rectMain.top;
 		rect.left = rectMain.left;
-		rect.right = rect.left + afxGlobalData.m_rectVirtual.Width() + 10;
+		rect.right = rect.left + GetGlobalData()->m_rectVirtual.Width() + 10;
 	}
 
 	CDrawingManager dm(*pDC);
@@ -640,7 +639,7 @@ void CMFCVisualManagerVS2008::OnDrawTabResizeBar(CDC* pDC, CMFCBaseTabCtrl* pWnd
 
 AFX_SMARTDOCK_THEME CMFCVisualManagerVS2008::GetSmartDockingTheme()
 {
-	if (afxGlobalData.m_nBitsPerPixel <= 8 || afxGlobalData.IsHighContrastMode() || !afxGlobalData.IsWindowsLayerSupportAvailable() || !afxGlobalData.bIsWindowsVista)
+	if (GetGlobalData()->m_nBitsPerPixel <= 8 || GetGlobalData()->IsHighContrastMode())
 	{
 		return CMFCVisualManagerVS2005::GetSmartDockingTheme();
 	}

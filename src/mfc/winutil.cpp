@@ -119,11 +119,11 @@ void AFXAPI AfxSetWindowText(HWND hWndCtrl, LPCTSTR lpszNew)
 	ENSURE(hWndCtrl);
 	ENSURE(lpszNew);
 
-	int nNewLen = lstrlen(lpszNew);
+	size_t nNewLen = _tcslen(lpszNew);
 	TCHAR szOld[256]=_T("");
 	// fast check to see if text really changes (reduces flash in controls)
 	if (nNewLen > _countof(szOld) ||
-		::GetWindowText(hWndCtrl, szOld, _countof(szOld)) != nNewLen ||
+		::GetWindowText(hWndCtrl, szOld, _countof(szOld)) != static_cast<int>(nNewLen) ||
 		lstrcmp(szOld, lpszNew) != 0)
 	{
 		// change it
@@ -229,5 +229,56 @@ int AFX_CDECL AfxCriticalNewHandler(size_t nSize)
 	AfxThrowMemoryException();      // oops
 }
 #endif // !_AFX_PORTABLE
+
+
+#pragma warning(push)  // disable 4191
+#pragma warning(disable : 4191)	// 'type cast' : unsafe conversion from 'FARPROC' to 'DLLGETVERSIONPROC'
+
+// Common Control Versions:
+//   WinNT 4.0          maj=4 min=00
+//   IE 3.x             maj=4 min=70
+//   IE 4.0             maj=4 min=71
+//   IE 5.0             maj=5 min=80
+//   Win2000            maj=5 min=81
+HRESULT GetCommCtrlVersion(
+	_Out_ LPDWORD pdwMajor,
+	_Out_ LPDWORD pdwMinor)
+{
+	*pdwMajor = 0;
+	*pdwMinor = 0;
+
+	HINSTANCE hInstDLL = ::LoadLibraryW(L"comctl32.dll");
+	if(hInstDLL == NULL)
+	{
+		return AtlHresultFromLastError();
+	}
+
+	// We must get this function explicitly because some DLLs don't implement it.
+	DLLGETVERSIONPROC pfnDllGetVersion = (DLLGETVERSIONPROC)::GetProcAddress(hInstDLL, "DllGetVersion");
+	HRESULT hRet;
+
+	if(pfnDllGetVersion != NULL)
+	{
+		DLLVERSIONINFO dvi;
+		memset(&dvi, 0, sizeof(dvi));
+		dvi.cbSize = sizeof(dvi);
+
+		hRet = (*pfnDllGetVersion)(&dvi);
+		if (SUCCEEDED(hRet))
+		{
+			*pdwMajor = dvi.dwMajorVersion;
+			*pdwMinor = dvi.dwMinorVersion;
+		}
+	}
+	else
+	{
+		hRet = E_NOTIMPL;
+	}
+	
+	::FreeLibrary(hInstDLL);
+	return hRet;
+}
+
+#pragma warning(pop)  // disable 4191
 
 /////////////////////////////////////////////////////////////////////////////

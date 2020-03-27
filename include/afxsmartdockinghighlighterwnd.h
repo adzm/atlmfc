@@ -18,7 +18,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CSmartDockingHighlighterWnd window
 
 class CSmartDockingHighlighterWnd : public CWnd
@@ -55,11 +55,10 @@ public:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CSmartDockingHighlighterWnd)
 	afx_msg void OnPaint();
 	afx_msg void OnClose();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -23,7 +23,7 @@
 
 class CMFCOutlookBarPane;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCOutlookBar window
 
 class CMFCOutlookBar : public CBaseTabbedPane
@@ -74,10 +74,9 @@ public:
 	virtual void GetPaneName(CString& strName) const { strName = m_strBarName; }
 
 protected:
-	//{{AFX_MSG(CMFCOutlookBar)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnPaint();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Attributes

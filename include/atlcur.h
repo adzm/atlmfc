@@ -91,6 +91,7 @@ public:
 	{
 		*this = dSrc;
 	}
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	explicit CComCurrency(_In_z_ LPCSTR szSrc)
 	{
 		ATLASSERT(szSrc);
@@ -129,6 +130,7 @@ public:
 		if (FAILED(hRes))
 			AtlThrow(hRes);
 	}
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 // assignment operators
 	const CComCurrency& operator=(_In_ CURRENCY cySrc) throw()

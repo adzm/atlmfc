@@ -39,13 +39,11 @@ CMFCPropertyGridToolTipCtrl::~CMFCPropertyGridToolTipCtrl()
 {
 }
 
-//{{AFX_MSG_MAP(CMFCPropertyGridToolTipCtrl)
 BEGIN_MESSAGE_MAP(CMFCPropertyGridToolTipCtrl, CWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_PAINT()
 	ON_MESSAGE(WM_SETFONT, &CMFCPropertyGridToolTipCtrl::OnSetFont)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCPropertyGridToolTipCtrl message handlers
@@ -156,7 +154,7 @@ void CMFCPropertyGridToolTipCtrl::Track(CRect rect, const CString& strText)
 	int nTextWidth = rect.Width();
 	if (m_strText.FindOneOf(_T("\n")) != -1) // multi-line tooltip
 	{
-		const int nDefaultHeight = afxGlobalData.GetTextHeight();
+		const int nDefaultHeight = GetGlobalData()->GetTextHeight();
 		const int nDefaultWidth = 200;
 		CRect rectText(0, 0, nDefaultWidth, nDefaultHeight);
 

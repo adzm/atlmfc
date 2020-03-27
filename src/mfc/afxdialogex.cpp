@@ -119,7 +119,6 @@ BOOL CDialogEx::SetBackgroundImage(UINT uiBmpResId, BackgroundLocation location,
 }
 
 BEGIN_MESSAGE_MAP(CDialogEx, CDialog)
-	//{{AFX_MSG_MAP(CDialogEx)
 	ON_WM_ACTIVATE()
 	ON_WM_NCACTIVATE()
 	ON_WM_ERASEBKGND()
@@ -127,7 +126,6 @@ BEGIN_MESSAGE_MAP(CDialogEx, CDialog)
 	ON_WM_CTLCOLOR()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_SETTINGCHANGE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -135,6 +133,7 @@ END_MESSAGE_MAP()
 
 void CDialogEx::OnActivate(UINT nState, CWnd *pWndOther, BOOL /*bMinimized*/)
 {
+	Default();
 	m_Impl.OnActivate(nState, pWndOther);
 }
 
@@ -250,7 +249,7 @@ HBRUSH CDialogEx::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			{
 				pDC->SetBkMode(TRANSPARENT);
 
-				if (m_brBkgr.GetSafeHandle() != NULL && CThemeHelper::IsAppThemed())
+				if (m_brBkgr.GetSafeHandle() != NULL && IsAppThemed())
 				{
 					return (HBRUSH)m_brBkgr.GetSafeHandle();
 				}
@@ -296,7 +295,7 @@ void CDialogEx::OnSysColorChange()
 
 	if (AfxGetMainWnd() == this)
 	{
-		afxGlobalData.UpdateSysColors();
+		GetGlobalData()->UpdateSysColors();
 	}
 }
 
@@ -306,6 +305,6 @@ void CDialogEx::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 
 	if (AfxGetMainWnd() == this)
 	{
-		afxGlobalData.OnSettingChange();
+		GetGlobalData()->OnSettingChange();
 	}
 }

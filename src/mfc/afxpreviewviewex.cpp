@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -33,10 +33,8 @@ static const int nSimplePaneIndex = 255;
 IMPLEMENT_DYNAMIC(CMFCPrintPreviewToolBar, CMFCToolBar)
 
 BEGIN_MESSAGE_MAP(CMFCPrintPreviewToolBar, CMFCToolBar)
-	//{{AFX_MSG_MAP(CMFCPrintPreviewToolBar)
 	ON_WM_CONTEXTMENU()
 	ON_WM_DESTROY()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CMFCPrintPreviewToolBar::OnContextMenu(CWnd* /*pWnd*/, CPoint /*pos*/)
@@ -101,12 +99,10 @@ CPreviewViewEx::~CPreviewViewEx()
 }
 
 BEGIN_MESSAGE_MAP(CPreviewViewEx, CPreviewView)
-	//{{AFX_MSG_MAP(CPreviewViewEx)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
 	ON_UPDATE_COMMAND_UI(AFX_ID_PREVIEW_NUMPAGE, &CPreviewViewEx::OnUpdatePreviewNumPage)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -142,7 +138,7 @@ int CPreviewViewEx::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 	else
 	{
-		const UINT uiToolbarHotID = afxGlobalData.Is32BitIcons() ? IDR_AFXRES_PRINT_PREVIEW32 : 0;
+		const UINT uiToolbarHotID = GetGlobalData()->Is32BitIcons() ? IDR_AFXRES_PRINT_PREVIEW32 : 0;
 
 		if (!m_wndToolBar.Create(m_pToolBar) || !m_wndToolBar.LoadToolBar( IDR_AFXRES_PRINT_PREVIEW, 0, 0, TRUE /* Locked */, 0, 0, uiToolbarHotID))
 		{
@@ -289,7 +285,7 @@ void CPreviewViewEx::OnDisplayPageNumber(UINT nPage, UINT nPagesDisplayed)
 	}
 }
 
-void AFXPrintPreview(CView* pView)
+void AFX_CDECL AFXPrintPreview(CView* pView)
 {
 	ASSERT_VALID(pView);
 

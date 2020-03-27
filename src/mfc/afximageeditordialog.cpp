@@ -44,15 +44,12 @@ CMFCImageEditorDialog::CMFCImageEditorDialog(CBitmap* pBitmap, CWnd* pParent /*=
 void CMFCImageEditorDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCImageEditorDialog)
 	DDX_Control(pDX, IDC_AFXBARRES_COLORS, m_wndColorPickerLocation);
 	DDX_Control(pDX, IDC_AFXBARRES_PALETTE, m_wndPaletteBarLocation);
 	DDX_Control(pDX, IDC_AFXBARRES_PREVIEW_AREA, m_wndPreview);
 	DDX_Control(pDX, IDC_AFXBARRES_DRAW_AREA, m_wndLargeDrawArea);
-	//}}AFX_DATA_MAP
 }
 
-//{{AFX_MSG_MAP(CMFCImageEditorDialog)
 BEGIN_MESSAGE_MAP(CMFCImageEditorDialog, CDialogEx)
 	ON_WM_PAINT()
 	ON_COMMAND(ID_AFX_TOOL_CLEAR, &CMFCImageEditorDialog::OnToolClear)
@@ -74,7 +71,6 @@ BEGIN_MESSAGE_MAP(CMFCImageEditorDialog, CDialogEx)
 	ON_MESSAGE(WM_KICKIDLE, &CMFCImageEditorDialog::OnKickIdle)
 	ON_COMMAND(IDC_AFXBARRES_COLORS, &CMFCImageEditorDialog::OnColors)
 END_MESSAGE_MAP()
-//}}AFX_MSG_MAP
 
 /////////////////////////////////////////////////////////////////////////////
 // CMFCImageEditorDialog message handlers
@@ -109,7 +105,7 @@ BOOL CMFCImageEditorDialog::OnInitDialog()
 		m_wndPaletteBar.EnableLargeIcons(FALSE);
 		m_wndPaletteBar.Create(this);
 
-		const UINT uiToolbarHotID = afxGlobalData.Is32BitIcons() ? IDR_AFXRES_PALETTE32 : 0;
+		const UINT uiToolbarHotID = GetGlobalData()->Is32BitIcons() ? IDR_AFXRES_PALETTE32 : 0;
 
 		m_wndPaletteBar.LoadToolBar( IDR_AFXRES_PALETTE, 0, 0, TRUE /* Locked bar */, 0, 0, uiToolbarHotID);
 		m_wndPaletteBar.SetPaneStyle(m_wndPaletteBar.GetPaneStyle() | CBRS_TOOLTIPS | CBRS_FLYBY);
@@ -192,7 +188,7 @@ void CMFCImageEditorDialog::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 
-	dc.FillRect(m_rectPreviewFrame, &afxGlobalData.brBtnFace);
+	dc.FillRect(m_rectPreviewFrame, &(GetGlobalData()->brBtnFace));
 
 	CBitmap* pbmOld = NULL;
 	CDC dcMem;
@@ -201,7 +197,7 @@ void CMFCImageEditorDialog::OnPaint()
 	pbmOld = dcMem.SelectObject(m_pBitmap);
 
 	dc.BitBlt(m_rectPreviewImage.left, m_rectPreviewImage.top, m_sizeImage.cx, m_sizeImage.cy, &dcMem, 0, 0, SRCCOPY);
-	dc.Draw3dRect(&m_rectPreviewFrame, afxGlobalData.clrBtnHilite, afxGlobalData.clrBtnShadow);
+	dc.Draw3dRect(&m_rectPreviewFrame, GetGlobalData()->clrBtnHilite, GetGlobalData()->clrBtnShadow);
 
 	dcMem.SelectObject(pbmOld);
 	dcMem.DeleteDC();
@@ -218,7 +214,7 @@ void CMFCImageEditorDialog::OnColors()
 	COLORREF color = m_wndColorBar.GetColor();
 	if (color == RGB(192, 192, 192))
 	{
-		color = afxGlobalData.clrBtnFace;
+		color = GetGlobalData()->clrBtnFace;
 	}
 
 	m_wndLargeDrawArea.SetColor(color);
@@ -246,7 +242,7 @@ void CMFCImageEditorDialog::OnToolClear()
 	CBitmap* pOldBitmap = memDC.SelectObject(m_pBitmap);
 
 	CRect rect(0, 0, m_sizeImage.cx, m_sizeImage.cy);
-	memDC.FillRect(&rect, &afxGlobalData.brBtnFace);
+	memDC.FillRect(&rect, &(GetGlobalData()->brBtnFace));
 
 	memDC.SelectObject(pOldBitmap);
 
@@ -372,7 +368,7 @@ void CMFCImageEditorDialog::OnToolPaste()
 		return;
 	}
 
-	memDCDst.FillRect(CRect(0, 0, m_sizeImage.cx, m_sizeImage.cy), &afxGlobalData.brBtnFace);
+	memDCDst.FillRect(CRect(0, 0, m_sizeImage.cx, m_sizeImage.cy), &(GetGlobalData()->brBtnFace));
 
 	int x = max(0, (m_sizeImage.cx - bmp.bmWidth) / 2);
 	int y = max(0, (m_sizeImage.cy - bmp.bmHeight) / 2);

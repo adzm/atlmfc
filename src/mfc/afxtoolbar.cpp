@@ -29,7 +29,6 @@
 #include "afxcustomizebutton.h"
 #include "afxcommandmanager.h"
 #include "afxregpath.h"
-#include "afxtrackmouse.h"
 #include "afxoleipframewndex.h"
 #include "afxusertoolsmanager.h"
 #include "afxsound.h"
@@ -69,8 +68,7 @@
 #define AFX_REG_ENTRY_SHOW_ALL_MENUS_DELAY _T("ShowAllMenusAfterDelay")
 #define AFX_REG_ENTRY_CMD_USAGE_COUNT _T("CommandsUsage")
 #define AFX_REG_ENTRY_RESET_ITEMS _T("OrigResetItems")
-
-static const CString strToolbarProfile = _T("MFCToolBars");
+#define AFX_MFC_TOOLBAR_PROFILE _T("MFCToolBars")
 
 #ifdef AFX_INIT_SEG
 #pragma code_seg(AFX_INIT_SEG)
@@ -97,7 +95,6 @@ CObList afxAllToolBars;
 
 const UINT AFX_ACCELERATOR_POPUP_TIMER_DELAY  = 1300;
 const UINT AFX_ACCELERATOR_TIMER_DELAY  = 500;
-const UINT AFX_ACCELERATOR_NOTIFY_EVENT = 20;
 
 BOOL CMFCToolBar::m_bCustomizeMode = FALSE;
 BOOL CMFCToolBar::m_bAltCustomizeMode = FALSE;
@@ -110,14 +107,14 @@ int  CMFCToolBar::m_nGrayImagePercentage = 0;
 BOOL CMFCToolBar::m_bDisableLabelsEdit = FALSE;
 CMFCToolBarDropSource CMFCToolBar::m_DropSource;
 
-CMFCToolBarImages CMFCToolBar::m_Images;
-CMFCToolBarImages CMFCToolBar::m_ColdImages;
-CMFCToolBarImages CMFCToolBar::m_MenuImages;
-CMFCToolBarImages CMFCToolBar::m_DisabledImages;
-CMFCToolBarImages CMFCToolBar::m_DisabledMenuImages;
-CMFCToolBarImages CMFCToolBar::m_LargeImages;
-CMFCToolBarImages CMFCToolBar::m_LargeColdImages;
-CMFCToolBarImages CMFCToolBar::m_LargeDisabledImages;
+CMFCToolBarImages CMFCToolBar::m_Images(TRUE);
+CMFCToolBarImages CMFCToolBar::m_ColdImages(TRUE);
+CMFCToolBarImages CMFCToolBar::m_MenuImages(TRUE);
+CMFCToolBarImages CMFCToolBar::m_DisabledImages(TRUE);
+CMFCToolBarImages CMFCToolBar::m_DisabledMenuImages(TRUE);
+CMFCToolBarImages CMFCToolBar::m_LargeImages(TRUE);
+CMFCToolBarImages CMFCToolBar::m_LargeColdImages(TRUE);
+CMFCToolBarImages CMFCToolBar::m_LargeDisabledImages(TRUE);
 
 CMFCToolBarImages* CMFCToolBar::m_pUserImages = NULL;
 
@@ -179,6 +176,11 @@ m_bMenuMode(FALSE),
 m_Impl(this),
 m_bIgnoreSetText(FALSE)
 {
+	if (GetGlobalData()->IsAccessibilitySupport())
+	{
+		EnableActiveAccessibility();
+	}
+
 	m_iButtonCapture = -1;      // nothing captured
 	m_iHighlighted = -1;
 	m_iSelected = -1;
@@ -252,6 +254,15 @@ m_bIgnoreSetText(FALSE)
 	m_bInUpdateShadow     = FALSE;
 
 	m_pToolTip            = NULL;
+
+	m_Images.Initialize();
+	m_ColdImages.Initialize();
+	m_MenuImages.Initialize();
+	m_DisabledImages.Initialize();
+	m_DisabledMenuImages.Initialize();
+	m_LargeImages.Initialize();
+	m_LargeColdImages.Initialize();
+	m_LargeDisabledImages.Initialize();
 }
 
 #pragma warning(default : 4355)
@@ -333,7 +344,7 @@ BOOL CMFCToolBar::CreateEx(CWnd* pParentWnd, DWORD dwCtrlStyle, DWORD dwStyle, C
 	rect.SetRectEmpty();
 
 	if (!CMFCBaseToolBar::Create(
-		afxGlobalData.RegisterWindowClass(_T("Afx:ToolBar")), dwStyle, rect, pParentWnd, nID, 0))
+		GetGlobalData()->RegisterWindowClass(_T("Afx:ToolBar")), dwStyle, rect, pParentWnd, nID, 0))
 	{
 		return FALSE;
 	}
@@ -372,10 +383,10 @@ void __stdcall CMFCToolBar::SetSizes(SIZE sizeButton, SIZE sizeImage)
 
 	if (m_pUserImages != NULL && m_pUserImages->GetScale() == 1.)
 	{
-		if (afxGlobalData.GetRibbonImageScale() != 1.)
+		if (GetGlobalData()->GetRibbonImageScale() != 1.)
 		{
-			m_pUserImages->SetTransparentColor (afxGlobalData.clrBtnFace);
-			m_pUserImages->SmoothResize (afxGlobalData.GetRibbonImageScale());
+			m_pUserImages->SetTransparentColor (GetGlobalData()->clrBtnFace);
+			m_pUserImages->SmoothResize (GetGlobalData()->GetRibbonImageScale());
 		}
 		else
 		{
@@ -836,9 +847,9 @@ BOOL CMFCToolBar::LoadToolBarEx(UINT uiToolbarResID, CMFCToolBarInfo& params, BO
 
 	BOOL bDontScaleImages = bLocked ? m_bDontScaleLocked : m_bDontScaleImages;
 
-	if (!bDontScaleImages && afxGlobalData.GetRibbonImageScale() != 1.)
+	if (!bDontScaleImages && GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
-		double dblImageScale = afxGlobalData.GetRibbonImageScale();
+		double dblImageScale = GetGlobalData()->GetRibbonImageScale();
 		sizeButton = CSize ((int)(.5 + sizeButton.cx * dblImageScale), (int)(.5 + sizeButton.cy * dblImageScale));
 	}
 
@@ -1424,7 +1435,7 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 
 	OnFillBackground(pDC);
 
-	pDC->SetTextColor(afxGlobalData.clrBtnText);
+	pDC->SetTextColor(GetGlobalData()->clrBtnText);
 	pDC->SetBkMode(TRANSPARENT);
 
 	CRect rect;
@@ -1441,7 +1452,7 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 	}
 
 	BOOL bDontScaleImages = m_bLocked ? m_bDontScaleLocked : m_bDontScaleImages;
-	const double dblImageScale = bDontScaleImages ? 1.0 : afxGlobalData.GetRibbonImageScale();
+	const double dblImageScale = bDontScaleImages ? 1.0 : GetGlobalData()->GetRibbonImageScale();
 
 	CMFCToolBarImages* pImages = GetImageList(m_Images, m_ImagesLocked, m_LargeImages, m_LargeImagesLocked);
 	CMFCToolBarImages* pHotImages = pImages;
@@ -1452,7 +1463,7 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 
 	BOOL bDrawImages = pImages->IsValid();
 
-	pHotImages->SetTransparentColor(afxGlobalData.clrBtnFace);
+	pHotImages->SetTransparentColor(GetGlobalData()->clrBtnFace);
 
 	BOOL bFadeInactiveImages = CMFCVisualManager::GetInstance()->IsFadeInactiveImage();
 
@@ -1493,7 +1504,7 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 	}
 	else
 	{
-		pOldFont = (CFont*) pDC->SelectObject(&afxGlobalData.fontVert);
+		pOldFont = (CFont*) pDC->SelectObject(&(GetGlobalData()->fontVert));
 	}
 
 	if (pColdImages->GetCount() > 0)
@@ -1595,7 +1606,7 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 				{
 					pImages->EndDrawImage(ds);
 
-					pNewImages->SetTransparentColor(afxGlobalData.clrBtnFace);
+					pNewImages->SetTransparentColor(GetGlobalData()->clrBtnFace);
 					if (dblImageScale != 1.0 && pNewImages->GetScale() == 1.0)
 					{
 						pNewImages->SmoothResize(dblImageScale);
@@ -1626,9 +1637,9 @@ void CMFCToolBar::DoPaint(CDC* pDCPaint)
 		{
 			CRect rectDrag1 = pSelButton->Rect();
 
-			pDC->Draw3dRect(&rectDrag1, afxGlobalData.clrBtnText, afxGlobalData.clrBtnText);
+			pDC->Draw3dRect(&rectDrag1, GetGlobalData()->clrBtnText, GetGlobalData()->clrBtnText);
 			rectDrag1.DeflateRect(1, 1);
-			pDC->Draw3dRect(&rectDrag1, afxGlobalData.clrBtnText, afxGlobalData.clrBtnText);
+			pDC->Draw3dRect(&rectDrag1, GetGlobalData()->clrBtnText, GetGlobalData()->clrBtnText);
 		}
 	}
 
@@ -1849,7 +1860,6 @@ int CMFCToolBar::HitTest(CPoint point) // in window relative coords
 // CMFCToolBar message handlers
 
 BEGIN_MESSAGE_MAP(CMFCToolBar, CMFCBaseToolBar)
-	//{{AFX_MSG_MAP(CMFCToolBar)
 	ON_WM_CONTEXTMENU()
 	ON_WM_MOUSEMOVE()
 	ON_WM_CANCELMODE()
@@ -1873,6 +1883,7 @@ BEGIN_MESSAGE_MAP(CMFCToolBar, CMFCBaseToolBar)
 	ON_WM_SHOWWINDOW()
 	ON_WM_NCHITTEST()
 	ON_WM_RBUTTONDOWN()
+	ON_WM_MOUSELEAVE()
 	ON_COMMAND(ID_AFXBARRES_TOOLBAR_APPEARANCE, &CMFCToolBar::OnToolbarAppearance)
 	ON_COMMAND(ID_AFXBARRES_TOOLBAR_DELETE, &CMFCToolBar::OnToolbarDelete)
 	ON_COMMAND(ID_AFXBARRES_TOOLBAR_IMAGE, &CMFCToolBar::OnToolbarImage)
@@ -1882,7 +1893,6 @@ BEGIN_MESSAGE_MAP(CMFCToolBar, CMFCBaseToolBar)
 	ON_COMMAND(ID_AFXBARRES_TOOLBAR_RESET, &CMFCToolBar::OnToolbarReset)
 	ON_COMMAND(ID_AFXBARRES_COPY_IMAGE, &CMFCToolBar::OnCopyImage)
 	ON_COMMAND(ID_AFXBARRES_TOOLBAR_NEW_MENU, &CMFCToolBar::OnToolbarNewMenu)
-	ON_MESSAGE(WM_MOUSELEAVE, &CMFCToolBar::OnMouseLeave)
 	ON_MESSAGE(WM_HELPHITTEST, &CMFCToolBar::OnHelpHitTest)
 	ON_MESSAGE(TB_BUTTONCOUNT, &CMFCToolBar::OnGetButtonCount)
 	ON_MESSAGE(TB_GETITEMRECT, &CMFCToolBar::OnGetItemRect)
@@ -1891,7 +1901,6 @@ BEGIN_MESSAGE_MAP(CMFCToolBar, CMFCBaseToolBar)
 	ON_REGISTERED_MESSAGE(AFX_WM_RESETRPROMPT, &CMFCToolBar::OnPromptReset)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCToolBar::OnUpdateToolTips)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCToolBar::OnNeedTipText)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CMFCToolBar::OnLButtonDown(UINT nFlags, CPoint point)
@@ -1938,7 +1947,7 @@ void CMFCToolBar::OnLButtonDown(UINT nFlags, CPoint point)
 
 		if (CanFloat())
 		{
-			SetCursor(afxGlobalData.m_hcurSizeAll);
+			SetCursor(GetGlobalData()->m_hcurSizeAll);
 		}
 
 		CMFCBaseToolBar::OnLButtonDown(nFlags, point);
@@ -1985,11 +1994,19 @@ void CMFCToolBar::OnLButtonDown(UINT nFlags, CPoint point)
 
 		ShowCommandMessageString(pButton->m_nID);
 
+		BOOL bWasDroppedDown = pButton->IsDroppedDown();
+
 		if (pButton->OnClick(this, FALSE /* No delay*/))
 		{
+			BOOL bIsRemoved = FALSE;
+
 			if (m_Buttons.Find(pButton) != NULL)
 			{
 				pButton->m_nStyle &= ~TBBS_PRESSED;
+			}
+			else
+			{
+				bIsRemoved = TRUE;
 			}
 
 			m_iButtonCapture = -1;
@@ -1999,6 +2016,16 @@ void CMFCToolBar::OnLButtonDown(UINT nFlags, CPoint point)
 
 			InvalidateButton(iButton);
 			UpdateWindow(); // immediate feedback
+
+			if (!bIsRemoved && bWasDroppedDown != pButton->IsDroppedDown())
+			{
+				int nChildID = AccGetChildIdByButtonIndex(iButton);
+				if (nChildID > 0)
+				{
+					::NotifyWinEvent(EVENT_OBJECT_STATECHANGE, GetSafeHwnd(), OBJID_CLIENT, nChildID);
+					::NotifyWinEvent(EVENT_OBJECT_FOCUS, GetSafeHwnd(), OBJID_CLIENT, nChildID);
+				}
+			}
 		}
 		else
 		{
@@ -2050,7 +2077,7 @@ void CMFCToolBar::OnLButtonDown(UINT nFlags, CPoint point)
 			}
 
 			m_pWndLastCapture = SetCapture();
-			::SetCursor(afxGlobalData.m_hcurStretch);
+			::SetCursor(GetGlobalData()->m_hcurStretch);
 		}
 		else if (m_pDragButton->CanBeStored() && m_pDragButton->OnBeforeDrag())
 		{
@@ -2147,6 +2174,8 @@ void CMFCToolBar::OnLButtonDown(UINT nFlags, CPoint point)
 	}
 }
 
+static CMFCToolBar *g_pLastToolbarTracked = NULL;
+
 void CMFCToolBar::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (m_bDragMode)
@@ -2170,7 +2199,7 @@ void CMFCToolBar::OnMouseMove(UINT nFlags, CPoint point)
 				dc.DrawDragRect(&m_rectTrack, CSize(2, 2), &rectTrackOld, CSize(2, 2));
 			}
 
-			::SetCursor(afxGlobalData.m_hcurStretch);
+			::SetCursor(GetGlobalData()->m_hcurStretch);
 		}
 
 		return;
@@ -2210,7 +2239,7 @@ void CMFCToolBar::OnMouseMove(UINT nFlags, CPoint point)
 
 	if (m_bMenuMode && m_iHighlighted == -1)
 	{
-		if (afxGlobalData.IsAccessibilitySupport())
+		if (GetGlobalData()->IsAccessibilitySupport())
 		{
 			int nIndex = HitTest(point);
 			if (nIndex != -1)
@@ -2218,7 +2247,7 @@ void CMFCToolBar::OnMouseMove(UINT nFlags, CPoint point)
 				if (nIndex != m_iAccHotItem)
 				{
 					m_iAccHotItem = nIndex;
-					SetTimer(AFX_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_TIMER_DELAY, NULL);
+					SetTimer(AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_TIMER_DELAY, NULL);
 				}
 			}
 		}
@@ -2227,13 +2256,13 @@ void CMFCToolBar::OnMouseMove(UINT nFlags, CPoint point)
 	if (!m_bTracked)
 	{
 		m_bTracked = TRUE;
+		g_pLastToolbarTracked = this;
 
 		TRACKMOUSEEVENT trackmouseevent;
 		trackmouseevent.cbSize = sizeof(trackmouseevent);
 		trackmouseevent.dwFlags = TME_LEAVE;
 		trackmouseevent.hwndTrack = GetSafeHwnd();
-		trackmouseevent.dwHoverTime = HOVER_DEFAULT;
-		::AFXTrackMouse(&trackmouseevent);
+		TrackMouseEvent(&trackmouseevent);
 	}
 
 	if (iPrevHighlighted != nTracked)
@@ -2288,9 +2317,8 @@ void CMFCToolBar::OnMouseMove(UINT nFlags, CPoint point)
 			InvalidateButton(m_iHighlighted);
 			bNeedUpdate = TRUE;
 
-			if (afxGlobalData.IsAccessibilitySupport())
+			if (GetGlobalData()->IsAccessibilitySupport() && m_bMenuMode)
 			{
-
 				BOOL bDropDown = FALSE;
 				CMFCToolBarMenuButton* pMenuButton = DYNAMIC_DOWNCAST(CMFCToolBarMenuButton, GetButton(m_iHighlighted));
 				if (pMenuButton != NULL && pMenuButton->m_bDrawDownArrow)
@@ -2302,14 +2330,14 @@ void CMFCToolBar::OnMouseMove(UINT nFlags, CPoint point)
 				if (nIndex != m_iAccHotItem)
 				{
 					m_iAccHotItem = nIndex;
-					KillTimer(AFX_ACCELERATOR_NOTIFY_EVENT);
+					KillTimer(AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT);
 					if (bDropDown)
 					{
-						SetTimer(AFX_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_POPUP_TIMER_DELAY, NULL);
+						SetTimer(AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_POPUP_TIMER_DELAY, NULL);
 					}
 					else
 					{
-						SetTimer(AFX_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_TIMER_DELAY, NULL);
+						SetTimer(AFX_TIMER_ID_ACCELERATOR_NOTIFY_EVENT, AFX_ACCELERATOR_TIMER_DELAY, NULL);
 					}
 				}
 			}
@@ -2555,7 +2583,7 @@ void CMFCToolBar::OnCancelMode()
 
 void CMFCToolBar::OnSysColorChange()
 {
-	afxGlobalData.UpdateSysColors();
+	GetGlobalData()->UpdateSysColors();
 
 	CMFCVisualManager::GetInstance()->OnUpdateSystemColors();
 
@@ -2807,19 +2835,19 @@ int CMFCToolBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CMFCBaseToolBar::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	if (afxGlobalData.m_hcurStretch == NULL)
+	if (GetGlobalData()->m_hcurStretch == NULL)
 	{
-		afxGlobalData.m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
+		GetGlobalData()->m_hcurStretch = AfxGetApp()->LoadCursor(AFX_IDC_HSPLITBAR);
 	}
 
-	if (afxGlobalData.m_hcurStretchVert == NULL)
+	if (GetGlobalData()->m_hcurStretchVert == NULL)
 	{
-		afxGlobalData.m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
+		GetGlobalData()->m_hcurStretchVert = AfxGetApp()->LoadCursor(AFX_IDC_VSPLITBAR);
 	}
 
-	if (afxGlobalData.m_hcurSizeAll == NULL)
+	if (GetGlobalData()->m_hcurSizeAll == NULL)
 	{
-		afxGlobalData.m_hcurSizeAll = AfxGetApp()->LoadStandardCursor(IDC_SIZEALL);
+		GetGlobalData()->m_hcurSizeAll = AfxGetApp()->LoadStandardCursor(IDC_SIZEALL);
 	}
 
 	CFrameWnd* pParent = AFXGetParentFrame(this) == NULL ? NULL : AFXGetTopLevelFrame(AFXGetParentFrame(this));
@@ -2838,7 +2866,7 @@ int CMFCToolBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		}
 	}
 
-	m_penDrag.CreatePen(PS_SOLID, 1, afxGlobalData.clrBtnText);
+	m_penDrag.CreatePen(PS_SOLID, 1, GetGlobalData()->clrBtnText);
 
 	CTooltipManager::CreateToolTip(m_pToolTip, this, AFX_TOOLTIP_TYPE_TOOLBAR);
 
@@ -3494,7 +3522,7 @@ void CMFCToolBar::Serialize(CArchive& ar)
 
 					if (CanBeRestored())
 					{
-						RestoreOriginalstate();
+						RestoreOriginalState();
 					}
 					AdjustLocations();
 					return;
@@ -3581,7 +3609,7 @@ void CMFCToolBar::Serialize(CArchive& ar)
 
 BOOL CMFCToolBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MFC_TOOLBAR_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -3658,7 +3686,7 @@ BOOL CMFCToolBar::SaveState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 
 BOOL CMFCToolBar::RemoveStateFromRegistry(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MFC_TOOLBAR_PROFILE, lpszProfileName);
 
 	if (nIndex == -1)
 	{
@@ -3683,7 +3711,7 @@ BOOL CMFCToolBar::RemoveStateFromRegistry(LPCTSTR lpszProfileName, int nIndex, U
 
 BOOL CMFCToolBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MFC_TOOLBAR_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -3739,7 +3767,7 @@ BOOL CMFCToolBar::LoadState(LPCTSTR lpszProfileName, int nIndex, UINT uiID)
 		m_Buttons.RemoveAll(); // Memory leak! Don't delete wrong objects.
 		if (CanBeRestored())
 		{
-			RestoreOriginalstate();
+			RestoreOriginalState();
 		}
 
 	}
@@ -4173,7 +4201,7 @@ BOOL CMFCToolBar::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 	if (bStretch)
 	{
-		::SetCursor(afxGlobalData.m_hcurStretch);
+		::SetCursor(GetGlobalData()->m_hcurStretch);
 		return TRUE;
 	}
 
@@ -4185,7 +4213,7 @@ BOOL CMFCToolBar::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 	if (rectGripper.PtInRect(ptCursorClient) && CMFCPopupMenu::GetActiveMenu() == NULL)
 	{
-		SetCursor(afxGlobalData.m_hcurSizeAll);
+		SetCursor(GetGlobalData()->m_hcurSizeAll);
 		return TRUE;
 	}
 
@@ -4473,7 +4501,7 @@ CSize CMFCToolBar::CalcSize(BOOL bVertDock)
 	}
 	else
 	{
-		pOldFont = dc.SelectObject(&afxGlobalData.fontVert);
+		pOldFont = dc.SelectObject(&(GetGlobalData()->fontVert));
 	}
 
 	ENSURE(pOldFont != NULL);
@@ -4566,7 +4594,7 @@ int CMFCToolBar::WrapToolBar(int nWidth, int nHeight /*= 32767*/, CDC* pDC /* = 
 		}
 		else
 		{
-			pOldFont = pDC->SelectObject(&afxGlobalData.fontVert);
+			pOldFont = pDC->SelectObject(&(GetGlobalData()->fontVert));
 		}
 
 		ENSURE(pOldFont != NULL);
@@ -4671,7 +4699,7 @@ void CMFCToolBar::SizeToolBar(int nLength, BOOL bVert)
 	}
 	else
 	{
-		pOldFont = (CFont*) dc.SelectObject(&afxGlobalData.fontVert);
+		pOldFont = (CFont*) dc.SelectObject(&(GetGlobalData()->fontVert));
 	}
 
 	ENSURE(pOldFont != NULL);
@@ -4800,7 +4828,7 @@ void CMFCToolBar::AdjustLocations()
 	}
 	else
 	{
-		pOldFont = (CFont*) dc.SelectObject(&afxGlobalData.fontVert);
+		pOldFont = (CFont*) dc.SelectObject(&(GetGlobalData()->fontVert));
 	}
 
 	ENSURE(pOldFont != NULL);
@@ -5192,7 +5220,7 @@ void CMFCToolBar::OnCustomizeMode(BOOL bSet)
 	}
 }
 
-BOOL CMFCToolBar::RestoreOriginalstate()
+BOOL CMFCToolBar::RestoreOriginalState()
 {
 	if (m_uiOriginalResID == 0)
 	{
@@ -5255,11 +5283,11 @@ void CMFCToolBar::ShowCommandMessageString(UINT uiCmdId)
 	GetOwner()->SendMessage(WM_SETMESSAGESTRING, (WPARAM) uiTrackId);
 }
 
-afx_msg LRESULT CMFCToolBar::OnMouseLeave(WPARAM,LPARAM)
+void CMFCToolBar::OnMouseLeave()
 {
 	if (m_hookMouseHelp != NULL || (m_bMenuMode && !IsCustomizeMode() && GetDroppedDownMenu() != NULL))
 	{
-		return 0;
+		return;
 	}
 
 	m_bTracked = FALSE;
@@ -5280,7 +5308,7 @@ afx_msg LRESULT CMFCToolBar::OnMouseLeave(WPARAM,LPARAM)
 		}
 	}
 
-	if (m_iHighlighted < 0)
+	if ((m_iHighlighted < 0) && (g_pLastToolbarTracked == this))
 	{
 		ShowCommandMessageString((UINT) -1);
 	}
@@ -5294,13 +5322,11 @@ afx_msg LRESULT CMFCToolBar::OnMouseLeave(WPARAM,LPARAM)
 		CMFCToolBarButton* pButton = InvalidateButton(iButton);
 		UpdateWindow(); // immediate feedback
 
-		if (pButton == NULL || !pButton->IsDroppedDown())
+		if ((pButton == NULL || !pButton->IsDroppedDown()) && (g_pLastToolbarTracked == this))
 		{
 			GetOwner()->SendMessage(WM_SETMESSAGESTRING, AFX_IDS_IDLEMESSAGE);
 		}
 	}
-
-	return 0;
 }
 
 BOOL CMFCToolBar::CanBeRestored() const
@@ -5342,7 +5368,7 @@ void __stdcall CMFCToolBar::SetHotTextColor(COLORREF clrText)
 
 COLORREF __stdcall CMFCToolBar::GetHotTextColor()
 {
-	return m_clrTextHot == (COLORREF) -1 ? afxGlobalData.clrBtnText : m_clrTextHot;
+	return m_clrTextHot == (COLORREF) -1 ? GetGlobalData()->clrBtnText : m_clrTextHot;
 }
 
 void CMFCToolBar::OnToolbarReset()
@@ -5641,7 +5667,7 @@ void CMFCToolBar::OnCopyImage()
 	CMFCToolBarButton* pButton = GetButton(m_iSelected);
 	ENSURE(pButton != NULL);
 
-	ASSERT_VALID (pButton);
+	ASSERT_VALID(pButton);
 	ASSERT(!(pButton->m_nStyle & TBBS_SEPARATOR));
 	ASSERT(pButton->GetImage() >= 0);
 
@@ -5704,11 +5730,11 @@ CSize __stdcall CMFCToolBar::GetMenuImageSize()
 {
 	CSize size = (m_sizeMenuImage.cx == -1) ? m_sizeImage : m_sizeMenuImage;
 
-	if (afxGlobalData.GetRibbonImageScale() != 1.)
+	if (GetGlobalData()->GetRibbonImageScale() != 1.)
 	{
 		size = CSize (
-			(int)(.5 + size.cx * afxGlobalData.GetRibbonImageScale()),
-			(int)(.5 + size.cy * afxGlobalData.GetRibbonImageScale()));
+			(int)(.5 + size.cx * GetGlobalData()->GetRibbonImageScale()),
+			(int)(.5 + size.cy * GetGlobalData()->GetRibbonImageScale()));
 	}
 
 	return size;
@@ -5818,9 +5844,21 @@ void CMFCToolBar::OnChangeHot(int iHot)
 	CMFCToolBarMenuButton* pCurrPopupMenu = GetDroppedDownMenu();
 	if (pCurrPopupMenu == NULL && !CMFCToolBar::IsCustomizeMode())
 	{
+		CMFCMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCMenuBar, this);
+		if (pMenuBar != NULL && GetGlobalData()->IsAccessibilitySupport())
+		{
+			if (GetFocus () == this)
+            {
+				int nChildID = AccGetChildIdByButtonIndex(m_iHot);
+				if (nChildID > 0)
+				{
+					::NotifyWinEvent(EVENT_OBJECT_FOCUS, GetSafeHwnd(), OBJID_CLIENT , nChildID);
+				}
+            }
+		}
+
 		return;
 	}
-
 	if (pCurrPopupMenu != NULL && pCurrPopupMenu->IsExclusive())
 	{
 		return;
@@ -5907,6 +5945,19 @@ void CMFCToolBar::OnChangeHot(int iHot)
 
 	if (m_iHot >= 0 && m_iHot != m_iHighlighted)
 	{
+		CMFCMenuBar* pMenuBar = DYNAMIC_DOWNCAST(CMFCMenuBar, this);
+		if (pMenuBar != NULL && GetGlobalData()->IsAccessibilitySupport ())
+		{
+			if (m_iHighlighted == -1)
+			{
+				int nChildID = AccGetChildIdByButtonIndex(m_iHot);
+				if (nChildID > 0)
+				{
+					::NotifyWinEvent(EVENT_OBJECT_FOCUS, GetSafeHwnd(), OBJID_CLIENT, nChildID);
+				}
+			}
+		}
+
 		int iCurrHighlighted = m_iHighlighted;
 		if (iCurrHighlighted >= 0)
 		{
@@ -6155,7 +6206,7 @@ void CMFCToolBar::Deactivate()
 
 BOOL __stdcall CMFCToolBar::SaveParameters(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MFC_TOOLBAR_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -6178,7 +6229,7 @@ BOOL __stdcall CMFCToolBar::SaveParameters(LPCTSTR lpszProfileName)
 
 BOOL __stdcall CMFCToolBar::LoadParameters(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MFC_TOOLBAR_PROFILE, lpszProfileName);
 
 	BOOL bResult = FALSE;
 
@@ -6208,7 +6259,7 @@ BOOL __stdcall CMFCToolBar::LoadParameters(LPCTSTR lpszProfileName)
 
 BOOL __stdcall CMFCToolBar::LoadLargeIconsState(LPCTSTR lpszProfileName)
 {
-	CString strProfileName = ::AFXGetRegPath(strToolbarProfile, lpszProfileName);
+	CString strProfileName = ::AFXGetRegPath(AFX_MFC_TOOLBAR_PROFILE, lpszProfileName);
 
 	CString strSection;
 	strSection.Format(AFX_REG_PARAMS_FMT, (LPCTSTR)strProfileName);
@@ -6244,9 +6295,9 @@ void CMFCToolBar::RestoreFocus()
 
 	m_hwndLastFocus = NULL;
 
-	if (afxGlobalData.m_bUnderlineKeyboardShortcuts && !afxGlobalData.m_bSysUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode ())
+	if (GetGlobalData()->m_bUnderlineKeyboardShortcuts && !GetGlobalData()->m_bSysUnderlineKeyboardShortcuts && !CMFCToolBar::IsCustomizeMode ())
 	{
-		afxGlobalData.m_bUnderlineKeyboardShortcuts = FALSE;
+		GetGlobalData()->m_bUnderlineKeyboardShortcuts = FALSE;
 		RedrawUnderlines ();
 	}
 }
@@ -6392,12 +6443,22 @@ BOOL __stdcall CMFCToolBar::IsCommandRarelyUsed(UINT uiCmd)
 		return FALSE;
 	}
 
-	return !IsBasicCommand(uiCmd) && !m_UsageCount.IsFreqeuntlyUsedCmd(uiCmd);
+	return !IsBasicCommand(uiCmd) && !m_UsageCount.IsFrequentlyUsedCmd(uiCmd);
 }
 
 BOOL __stdcall CMFCToolBar::SetCommandUsageOptions(UINT nStartCount, UINT nMinUsagePercentage)
 {
 	return m_UsageCount.SetOptions(nStartCount, nMinUsagePercentage);
+}
+
+int CMFCToolBar::GetRowHeight() const
+{
+	if (m_bDrawTextLabels)
+	{
+		ASSERT(m_nMaxBtnHeight > 0);
+		return m_nMaxBtnHeight;
+	}
+	return max((int)(GetGlobalData()->GetTextHeight(m_dwStyle & CBRS_ORIENT_HORZ)), (int)(m_bMenuMode ? (m_sizeMenuButton.cy > 0 ? m_sizeMenuButton.cy : m_sizeButton.cy) : GetButtonSize().cy));
 }
 
 void CMFCToolBar::EnableLargeIcons(BOOL bEnable)
@@ -6654,7 +6715,7 @@ void __stdcall CMFCToolBar::ResetAll()
 
 		if (pToolBar->CanBeRestored())
 		{
-			pToolBar->RestoreOriginalstate();
+			pToolBar->RestoreOriginalState();
 		}
 	}
 }
@@ -6704,7 +6765,7 @@ void CMFCToolBar::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 
 	if (uFlags == SPI_SETNONCLIENTMETRICS || uFlags == SPI_SETWORKAREA || uFlags == SPI_SETICONTITLELOGFONT)
 	{
-		afxGlobalData.UpdateFonts();
+		GetGlobalData()->UpdateFonts();
 		AdjustLayout();
 	}
 }
@@ -7013,7 +7074,7 @@ BOOL CMFCToolBar::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 
 	pTTDispInfo->lpszText = const_cast<LPTSTR>((LPCTSTR) strTipText);
 
-	m_pToolTip->SetFont(&afxGlobalData.fontRegular, FALSE);
+	m_pToolTip->SetFont(&(GetGlobalData()->fontRegular), FALSE);
 	return TRUE;
 }
 
@@ -7057,31 +7118,186 @@ BOOL CMFCToolBar::OnSetAccData(long lVal)
 {
 	ASSERT_VALID(this);
 
-	CPoint pt(LOWORD(lVal), HIWORD(lVal));
-	ScreenToClient(&pt);
-
-	int nHit = HitTest(pt);
-	if (nHit < 0)
-	{
-		return FALSE;
-	}
-
 	m_AccData.Clear();
 
-	CMFCToolBarButton* pButton = GetButton(nHit);
-	ASSERT_VALID(pButton);
-
+	CMFCToolBarButton* pButton = AccGetButtonByChildId (lVal);
 	if (pButton != NULL)
 	{
-		pButton->SetACCData(this, m_AccData);
+		pButton->SetACCData (this, m_AccData);
+		return TRUE;	
+	}
+	
+	return FALSE;
+}
+
+HRESULT CMFCToolBar::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+{
+	if( !pvarChild )
+    {
+        return E_INVALIDARG;
+    }
+
+	pvarChild->vt = VT_I4;
+	pvarChild->lVal = CHILDID_SELF;
+
+	CPoint pt(xLeft, yTop);
+	ScreenToClient(&pt);
+
+	int count = 1;
+
+	for (POSITION pos = m_Buttons.GetHeadPosition(); pos != NULL;)
+	{
+		CMFCToolBarButton* pButton = (CMFCToolBarButton*)m_Buttons.GetNext(pos);
+		ASSERT_VALID(pButton);
+
+		if (pButton->GetAccCount() > 0)
+		{
+			if (pButton->Rect().PtInRect(pt))
+			{
+				pvarChild->lVal = count;
+				pButton->SetACCData(this, m_AccData);
+				break;
+			}
+			
+			count++;
+		}
 	}
 
-	return TRUE;
+	return S_OK;
+}
+
+HRESULT CMFCToolBar::get_accChildCount(long *pcountChildren)
+{
+	if (pcountChildren == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+	*pcountChildren = AccGetButtonsCount ();
+	return S_OK;
+}
+
+HRESULT CMFCToolBar::get_accChild(VARIANT varChild, IDispatch **ppdispChild)
+{
+	if (ppdispChild == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+	*ppdispChild = NULL;
+
+	if (varChild.vt == VT_I4 && varChild.lVal != CHILDID_SELF)
+	{
+		CMFCToolBarMenuButton* pMenuButton = DYNAMIC_DOWNCAST(CMFCToolBarMenuButton, AccGetButtonByChildId(varChild.lVal));
+		if (pMenuButton != NULL && pMenuButton->GetPopupMenu()->GetSafeHwnd() != NULL)
+		{
+            return AccessibleObjectFromWindow(pMenuButton->GetPopupMenu()->GetSafeHwnd(), (DWORD)OBJID_CLIENT, IID_IAccessible, (void**)ppdispChild);
+		}
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCToolBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEndUpAt)
+{
+	if (pvarEndUpAt == NULL)
+	{
+        return E_INVALIDARG;
+	}
+
+    pvarEndUpAt->vt = VT_EMPTY;
+
+    if (varStart.vt != VT_I4)
+    {
+        return E_INVALIDARG;
+    }
+
+	int count = AccGetButtonsCount ();
+
+	switch (navDir)
+    {
+	case NAVDIR_FIRSTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = 1;
+			return S_OK;	
+		}
+		break;
+
+	case NAVDIR_LASTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = count;
+			return S_OK;
+		}
+		break;
+
+	case NAVDIR_NEXT:   
+	case NAVDIR_RIGHT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal + 1;
+			if (pvarEndUpAt->lVal > count)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+			return S_OK;
+		}
+		break;
+
+   	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal - 1;
+			if (pvarEndUpAt->lVal <= 0)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+			return S_OK;
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCToolBar::accDoDefaultAction(VARIANT varChild)
+{
+	if (varChild.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	CMFCToolBarButton* pButton = AccGetButtonByChildId (varChild.lVal);
+
+	if (varChild.lVal != CHILDID_SELF && pButton != NULL)
+	{
+		if (pButton->m_nID != 0 && pButton->m_nID != (UINT) -1)
+		{
+			if (!pButton->OnClickUp())
+			{
+				GetOwner()->SendMessage(WM_COMMAND, pButton->m_nID); 
+			}
+		}
+		else
+		{
+			pButton->OnClick (this, FALSE);
+		}
+	}
+
+	return S_OK;
 }
 
 void CMFCToolBar::AccNotifyObjectFocusEvent(int iButton)
 {
-	if (!afxGlobalData.IsAccessibilitySupport())
+	if (!GetGlobalData()->IsAccessibilitySupport())
 	{
 		return;
 	}
@@ -7092,7 +7308,11 @@ void CMFCToolBar::AccNotifyObjectFocusEvent(int iButton)
 		ASSERT_VALID(pButton);
 		pButton->SetACCData(this, m_AccData);
 
-		::NotifyWinEvent(EVENT_OBJECT_FOCUS, GetSafeHwnd(), OBJID_CLIENT, iButton + 1);
+		int nChildID = AccGetChildIdByButtonIndex(iButton);
+		if (nChildID > 0)
+		{
+			::NotifyWinEvent(EVENT_OBJECT_FOCUS, GetSafeHwnd(), OBJID_CLIENT, nChildID);
+		}
 	}
 }
 
@@ -7326,7 +7546,7 @@ LRESULT CMFCToolBar::OnPromptReset(WPARAM, LPARAM)
 	//Ask for reset
 	if (AfxMessageBox(strPrompt, MB_OKCANCEL|MB_ICONWARNING) == IDOK)
 	{
-		RestoreOriginalstate();
+		RestoreOriginalState();
 	}
 
 	return 0;
@@ -7740,3 +7960,68 @@ void __stdcall CMFCToolBar::RedrawUnderlines()
 		}
 	}
 }
+int CMFCToolBar::AccGetButtonsCount()
+{
+	int i = 0; int count = 0;
+	for (POSITION pos = m_Buttons.GetHeadPosition (); pos != NULL; i ++)
+	{
+		CMFCToolBarButton* pButton = (CMFCToolBarButton*) m_Buttons.GetNext (pos);
+		ASSERT (pButton != NULL);
+
+		count += pButton->GetAccCount();
+	}
+
+	return count;
+}
+
+CMFCToolBarButton* CMFCToolBar::AccGetButtonByChildId (long lVal)
+{
+	int count = 1;
+	for (POSITION pos = m_Buttons.GetHeadPosition (); pos != NULL;)
+	{
+		CMFCToolBarButton* pButton = (CMFCToolBarButton*) m_Buttons.GetNext(pos);
+		ASSERT_VALID (pButton);
+
+		if (pButton->GetAccCount() > 0)
+		{
+			if (count == lVal)
+			{
+				return pButton;
+			}
+			
+			count++;
+		}
+	}
+
+	return NULL;
+}
+
+int CMFCToolBar::AccGetChildIdByButtonIndex(int nButtonIndex)
+{
+	if (nButtonIndex < 0 || nButtonIndex >= m_Buttons.GetCount())
+	{
+		return 0;
+	}
+
+	int count = 1;
+	int i = 0;
+
+	for (POSITION pos = m_Buttons.GetHeadPosition(); pos != NULL; i++)
+	{
+		CMFCToolBarButton* pButton = (CMFCToolBarButton*)m_Buttons.GetNext(pos);
+		ASSERT_VALID (pButton);
+
+		if (pButton->GetAccCount() > 0)
+		{
+			if (i == nButtonIndex)
+			{
+				return count;
+			}
+			
+			count++;
+		}
+	}
+
+	return 0;
+}
+

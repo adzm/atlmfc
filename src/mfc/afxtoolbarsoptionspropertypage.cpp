@@ -32,13 +32,11 @@ IMPLEMENT_DYNCREATE(CMFCToolBarsOptionsPropertyPage, CPropertyPage)
 CMFCToolBarsOptionsPropertyPage::CMFCToolBarsOptionsPropertyPage(BOOL bIsMenuBarExist) :
 	CPropertyPage(CMFCToolBarsOptionsPropertyPage::IDD), m_bIsMenuBarExist(bIsMenuBarExist)
 {
-	//{{AFX_DATA_INIT(CMFCToolBarsOptionsPropertyPage)
 	m_bShowTooltips = CMFCToolBar::m_bShowTooltips;
 	m_bShowShortcutKeys = CMFCToolBar::m_bShowShortcutKeys;
 	m_bRecentlyUsedMenus = CMFCMenuBar::m_bRecentlyUsedMenus;
 	m_bShowAllMenusDelay = CMFCMenuBar::m_bShowAllMenusDelay;
 	m_bLargeIcons = CMFCToolBar::m_bLargeIcons;
-	//}}AFX_DATA_INIT
 }
 
 CMFCToolBarsOptionsPropertyPage::~CMFCToolBarsOptionsPropertyPage()
@@ -48,7 +46,6 @@ CMFCToolBarsOptionsPropertyPage::~CMFCToolBarsOptionsPropertyPage()
 void CMFCToolBarsOptionsPropertyPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMFCToolBarsOptionsPropertyPage)
 	DDX_Control(pDX, IDC_AFXBARRES_LARGE_ICONS, m_wndLargeIcons);
 	DDX_Control(pDX, IDC_AFXBARRES_SHOW_RECENTLY_USED_MENUS, m_wndRUMenus);
 	DDX_Control(pDX, IDC_AFXBARRES_RESET_USAGE_DATA, m_wndResetUsageBtn);
@@ -61,18 +58,15 @@ void CMFCToolBarsOptionsPropertyPage::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_AFXBARRES_SHOW_RECENTLY_USED_MENUS, m_bRecentlyUsedMenus);
 	DDX_Check(pDX, IDC_AFXBARRES_SHOW_MENUS_DELAY, m_bShowAllMenusDelay);
 	DDX_Check(pDX, IDC_AFXBARRES_LARGE_ICONS, m_bLargeIcons);
-	//}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CMFCToolBarsOptionsPropertyPage, CPropertyPage)
-	//{{AFX_MSG_MAP(CMFCToolBarsOptionsPropertyPage)
 	ON_BN_CLICKED(IDC_AFXBARRES_SHOW_TOOLTIPS_WITH_KEYS, &CMFCToolBarsOptionsPropertyPage::OShowTooltipsWithKeys)
 	ON_BN_CLICKED(IDC_AFXBARRES_SHOW_TOOLTIPS, &CMFCToolBarsOptionsPropertyPage::OnShowTooltips)
 	ON_BN_CLICKED(IDC_AFXBARRES_RESET_USAGE_DATA, &CMFCToolBarsOptionsPropertyPage::OnResetUsageData)
 	ON_BN_CLICKED(IDC_AFXBARRES_SHOW_RECENTLY_USED_MENUS, &CMFCToolBarsOptionsPropertyPage::OnShowRecentlyUsedMenus)
 	ON_BN_CLICKED(IDC_AFXBARRES_SHOW_MENUS_DELAY, &CMFCToolBarsOptionsPropertyPage::OnShowMenusDelay)
 	ON_BN_CLICKED(IDC_AFXBARRES_LARGE_ICONS, &CMFCToolBarsOptionsPropertyPage::OnLargeIcons)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

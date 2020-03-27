@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -28,7 +28,7 @@
 class CMFCRibbonBaseElement;
 class CMFCRibbonBar;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCRibbonKeyboardCustomizeDialog dialog
 
 class CMFCRibbonKeyboardCustomizeDialog : public CDialogEx
@@ -39,7 +39,6 @@ public:
 	virtual ~CMFCRibbonKeyboardCustomizeDialog();
 
 // Dialog Data
-	//{{AFX_DATA(CMFCRibbonKeyboardCustomizeDialog)
 	enum { IDD = IDD_AFXBARRES_RIBBON_KEYBOARD_DLG };
 	CString    m_strDescription;
 	CString    m_strAssignedTo;
@@ -52,7 +51,6 @@ public:
 	CComboBox  m_wndViewTypeList;
 	CMFCAcceleratorKeyAssignCtrl m_wndNewKey;
 	CMFCRibbonCommandsListBox m_wndCommandsList;
-	//}}AFX_DATA
 
 // Overrides
 protected:
@@ -60,7 +58,6 @@ protected:
 
 // Implementation
 protected:
-	//{{AFX_MSG(CMFCRibbonKeyboardCustomizeDialog)
 	virtual BOOL OnInitDialog();
 	afx_msg void OnAssign();
 	afx_msg void OnSelchangeCategory();
@@ -70,7 +67,7 @@ protected:
 	afx_msg void OnResetAll();
 	afx_msg void OnSelchangeViewType();
 	afx_msg void OnUpdateNewShortcutKey();
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 // Operations:

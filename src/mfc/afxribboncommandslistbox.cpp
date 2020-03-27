@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -21,13 +21,14 @@
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonCommandsListBox
 
-CMFCRibbonCommandsListBox::CMFCRibbonCommandsListBox(CMFCRibbonBar* pRibbonBar, BOOL bIncludeSeparator/* = TRUE*/, BOOL bDrawDefaultIcon/* = FALSE*/)
+CMFCRibbonCommandsListBox::CMFCRibbonCommandsListBox(CMFCRibbonBar* pRibbonBar, BOOL bIncludeSeparator/* = TRUE*/, BOOL bDrawDefaultIcon/* = FALSE*/, BOOL bCommandsOnly/* = FALSE*/)
 {
 	ASSERT_VALID(pRibbonBar);
 
 	m_pRibbonBar = pRibbonBar;
 	m_nTextOffset = 0;
 	m_bDrawDefaultIcon = bDrawDefaultIcon;
+	m_bCommandsOnly = bCommandsOnly;
 
 	if (bIncludeSeparator)
 	{
@@ -48,10 +49,8 @@ CMFCRibbonCommandsListBox::~CMFCRibbonCommandsListBox()
 }
 
 BEGIN_MESSAGE_MAP(CMFCRibbonCommandsListBox, CListBox)
-	//{{AFX_MSG_MAP(CMFCRibbonCommandsListBox)
 	ON_WM_DRAWITEM_REFLECT()
 	ON_WM_MEASUREITEM_REFLECT()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -69,8 +68,8 @@ void CMFCRibbonCommandsListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 		return;
 	}
 
-	BOOL bIsRibbonImageScale = afxGlobalData.IsRibbonImageScaleEnabled();
-	afxGlobalData.EnableRibbonImageScale(FALSE);
+	BOOL bIsRibbonImageScale = GetGlobalData()->IsRibbonImageScaleEnabled();
+	GetGlobalData()->EnableRibbonImageScale(FALSE);
 
 	pDC->SetBkMode(TRANSPARENT);
 
@@ -90,13 +89,13 @@ void CMFCRibbonCommandsListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	}
 	else if (bIsSelected)
 	{
-		pDC->FillRect(rect, &afxGlobalData.brBtnFace);
-		pDC->SetTextColor(afxGlobalData.clrBtnText);
+		pDC->FillRect(rect, &(GetGlobalData()->brBtnFace));
+		pDC->SetTextColor(GetGlobalData()->clrBtnText);
 	}
 	else
 	{
-		pDC->FillRect(rect, &afxGlobalData.brWindow);
-		pDC->SetTextColor(afxGlobalData.clrWindowText);
+		pDC->FillRect(rect, &(GetGlobalData()->brWindow));
+		pDC->SetTextColor(GetGlobalData()->clrWindowText);
 	}
 
 	BOOL bDrawDefaultIconSaved = pCommand->m_bDrawDefaultIcon;
@@ -104,7 +103,7 @@ void CMFCRibbonCommandsListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	pCommand->OnDrawOnList(pDC, strText, m_nTextOffset, rect, bIsSelected, bIsHighlighted);
 	pCommand->m_bDrawDefaultIcon = bDrawDefaultIconSaved;
 
-	afxGlobalData.EnableRibbonImageScale(bIsRibbonImageScale);
+	GetGlobalData()->EnableRibbonImageScale(bIsRibbonImageScale);
 }
 
 void CMFCRibbonCommandsListBox::MeasureItem(LPMEASUREITEMSTRUCT lpMIS)
@@ -156,8 +155,8 @@ void CMFCRibbonCommandsListBox::FillFromArray(const CArray<CMFCRibbonBaseElement
 	ResetContent();
 	m_nTextOffset = 0;
 
-	BOOL bIsRibbonImageScale = afxGlobalData.IsRibbonImageScaleEnabled();
-	afxGlobalData.EnableRibbonImageScale(FALSE);
+	BOOL bIsRibbonImageScale = GetGlobalData()->IsRibbonImageScaleEnabled();
+	GetGlobalData()->EnableRibbonImageScale(FALSE);
 
 	for (int i = 0; i < arElements.GetSize(); i++)
 	{
@@ -181,7 +180,7 @@ void CMFCRibbonCommandsListBox::FillFromArray(const CArray<CMFCRibbonBaseElement
 		SetCurSel(0);
 	}
 
-	afxGlobalData.EnableRibbonImageScale(bIsRibbonImageScale);
+	GetGlobalData()->EnableRibbonImageScale(bIsRibbonImageScale);
 }
 
 void CMFCRibbonCommandsListBox::FillFromIDs(const CList<UINT,UINT>& lstCommands, BOOL bDeep)
@@ -275,12 +274,12 @@ BOOL CMFCRibbonCommandsListBox::AddCommand(CMFCRibbonBaseElement* pCmd, BOOL bSe
 
 	if (m_nTextOffset == 0)
 	{
-		BOOL bIsRibbonImageScale = afxGlobalData.IsRibbonImageScaleEnabled();
-		afxGlobalData.EnableRibbonImageScale(FALSE);
+		BOOL bIsRibbonImageScale = GetGlobalData()->IsRibbonImageScaleEnabled();
+		GetGlobalData()->EnableRibbonImageScale(FALSE);
 
 		m_nTextOffset = pCmd->GetImageSize(CMFCRibbonBaseElement::RibbonImageSmall).cx + 2;
 
-		afxGlobalData.EnableRibbonImageScale(bIsRibbonImageScale);
+		GetGlobalData()->EnableRibbonImageScale(bIsRibbonImageScale);
 	}
 
 	nIndex = pCmd->AddToListBox(this, bDeep);

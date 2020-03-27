@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -20,7 +20,7 @@
 
 IMPLEMENT_DYNCREATE(CMFCRibbonCheckBox, CMFCRibbonButton)
 
-#define AFX_CHECK_BOX_DEFAULT_SIZE (afxGlobalData.GetRibbonImageScale() == 1. ? 16 : 20)
+#define AFX_CHECK_BOX_DEFAULT_SIZE (GetGlobalData()->GetRibbonImageScale() == 1. ? 16 : 20)
 
 const int nTextMarginLeft = 4;
 const int nTextMarginRight = 6;
@@ -75,8 +75,18 @@ void CMFCRibbonCheckBox::OnDraw(CDC* pDC)
 	rectCheck.bottom = rectCheck.top + sizeCheckBox.cy;
 
 	const BOOL bIsHighlighted = (IsHighlighted() || IsFocused()) && !IsDisabled();
+	int nState = 0;
 
-	CMFCVisualManager::GetInstance()->OnDrawCheckBoxEx(pDC, rectCheck, IsChecked() ||(IsPressed() && bIsHighlighted) ? 1 : 0,
+	if (m_bIsChecked == 2)
+	{
+		nState = 2;
+	}
+	else if (IsChecked() || (IsPressed() && bIsHighlighted))
+	{
+		nState = 1;
+	}
+
+	CMFCVisualManager::GetInstance()->OnDrawCheckBoxEx(pDC, rectCheck, nState,
 		bIsHighlighted, IsPressed() && bIsHighlighted, !IsDisabled());
 
 	// Draw text:

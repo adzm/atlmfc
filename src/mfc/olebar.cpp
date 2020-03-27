@@ -54,14 +54,12 @@ BOOL COleResizeBar::Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID)
 // COleResizeBar message handling
 
 BEGIN_MESSAGE_MAP(COleResizeBar, CControlBar)
-	//{{AFX_MSG_MAP(COleResizeBar)
 	ON_WM_ERASEBKGND()
 	ON_WM_PAINT()
 	ON_WM_SIZE()
 	ON_WM_SETCURSOR()
 	ON_WM_LBUTTONDOWN()
 	ON_MESSAGE(WM_SIZEPARENT, &COleResizeBar::OnSizeParent)
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL COleResizeBar::OnEraseBkgnd(CDC*)

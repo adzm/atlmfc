@@ -20,13 +20,13 @@ static bool WINAPI ShouldTraceOutput(
 	_In_ DWORD_PTR dwModule,
 	_In_ DWORD_PTR dwCategory,
 	_In_ UINT nLevel,
-	_Deref_out_opt_ const CAtlTraceCategory **ppCategory,
-	_Deref_out_opt_ CAtlTraceModule::fnCrtDbgReport_t *pfnCrtDbgReport);
+	_Outptr_result_maybenull_ const CAtlTraceCategory **ppCategory,
+	_Outptr_result_maybenull_ CAtlTraceModule::fnCrtDbgReport_t *pfnCrtDbgReport);
 
 void WINAPI NotifyTool()
 {
 	HANDLE hEvent;
-	hEvent = OpenEventA(EVENT_MODIFY_STATE, FALSE, g_pszUpdateEventName);
+	hEvent = OpenEventW(EVENT_MODIFY_STATE, FALSE, UpdateEventNameU);
 
 	if(hEvent)
 	{
@@ -69,7 +69,7 @@ BOOL __stdcall AtlTraceUnregister(_In_ DWORD_PTR dwModule)
 
 DWORD_PTR __stdcall AtlTraceRegisterCategoryA(
 	_In_ DWORD_PTR dwModule,
-	_In_z_count_c_(ATL_TRACE_MAX_NAME_SIZE) const CHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE])
+	_In_reads_z_(ATL_TRACE_MAX_NAME_SIZE) const CHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE])
 {
 	if( szCategoryName == NULL )
 	{
@@ -80,7 +80,7 @@ DWORD_PTR __stdcall AtlTraceRegisterCategoryA(
 
 DWORD_PTR __stdcall AtlTraceRegisterCategoryU(
 	_In_ DWORD_PTR dwModule,
-	_In_z_count_c_(ATL_TRACE_MAX_NAME_SIZE) const WCHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE])
+	_In_reads_z_(ATL_TRACE_MAX_NAME_SIZE) const WCHAR szCategoryName[ATL_TRACE_MAX_NAME_SIZE])
 {
 	if( szCategoryName == NULL )
 		return 0;
@@ -319,7 +319,7 @@ BOOL __stdcall AtlTraceGetCategory(
 
 void __stdcall AtlTraceGetUpdateEventNameA(_Inout_z_ CHAR *pszEventName)
 {
-	if( g_pszUpdateEventName == NULL || pszEventName == NULL )
+	if( pszEventName == NULL )
 	{
 		return;
 	}
@@ -328,24 +328,24 @@ void __stdcall AtlTraceGetUpdateEventNameA(_Inout_z_ CHAR *pszEventName)
 	// This API is deprecated because the size of the buffer cannot be
 	// known. Therefore, we have to use unsafe version of strcpy. The
 	// warning is disabled to prevent build problems.
-	strcpy(pszEventName, g_pszUpdateEventName);
+	strcpy(pszEventName, UpdateEventName);
 #pragma warning(pop)
 }
 
 void __stdcall AtlTraceGetUpdateEventNameA_s(
-	_Out_z_cap_(cchEventName) CHAR *pszEventName,
+	_Out_writes_z_(cchEventName) CHAR *pszEventName,
 	_In_ size_t cchEventName)
 {
-	if( g_pszUpdateEventName == NULL || pszEventName == NULL )
+	if( pszEventName == NULL )
 	{
 		return;
 	}
-	Checked::strcpy_s(pszEventName, cchEventName, g_pszUpdateEventName);
+	Checked::strcpy_s(pszEventName, cchEventName, UpdateEventName);
 }
 
 void __stdcall AtlTraceGetUpdateEventNameU(_Inout_z_ WCHAR *pszEventName)
 {
-	if( g_pszUpdateEventName == NULL || pszEventName == NULL )
+	if( pszEventName == NULL )
 	{
 		return;
 	}
@@ -354,19 +354,19 @@ void __stdcall AtlTraceGetUpdateEventNameU(_Inout_z_ WCHAR *pszEventName)
 	// This API is deprecated because the size of the buffer cannot be
 	// known. Therefore, we have to use unsafe version of wcscpy. The
 	// warning is disabled to prevent build problems.
-	wcscpy(pszEventName, CA2W(g_pszUpdateEventName));
+	wcscpy(pszEventName, UpdateEventNameU);
 #pragma warning(pop)
 }
 
 void __stdcall AtlTraceGetUpdateEventNameU_s(
-	_Out_z_cap_(cchEventName) WCHAR *pszEventName,
+	_Out_writes_z_(cchEventName) WCHAR *pszEventName,
 	_In_ size_t cchEventName)
 {
-	if( g_pszUpdateEventName == NULL || pszEventName == NULL )
+	if( pszEventName == NULL )
 	{
 		return;
 	}
-	Checked::wcscpy_s(pszEventName, cchEventName, CA2W(g_pszUpdateEventName));
+	Checked::wcscpy_s(pszEventName, cchEventName, UpdateEventNameU);
 }
 
 void __cdecl AtlTraceVA(
@@ -480,8 +480,8 @@ DWORD_PTR __stdcall AtlTraceOpenProcess(_In_ DWORD idProcess)
 {
 	CAtlAllocator* pAllocator = new CAtlAllocator;
 
-	char szBuf[64];
-	ATL_CRT_ERRORCHECK_SPRINTF(_snprintf_s(szBuf, _countof(szBuf), _countof(szBuf) - 1, g_pszKernelObjFmt, g_pszAllocFileMapName, idProcess));
+	WCHAR szBuf[64];
+	ATL_CRT_ERRORCHECK_SPRINTF(_snwprintf_s(szBuf, _countof(szBuf), _countof(szBuf) - 1, KernelObjFmtU, AllocFileMapNameU, idProcess));
 	if( !pAllocator->Open(szBuf) )
 	{
 		delete pAllocator;
@@ -627,8 +627,8 @@ static bool WINAPI ShouldTraceOutput(
 	_In_ DWORD_PTR dwModule,
 	_In_ DWORD_PTR dwCategory,
 	_In_ UINT nLevel,
-	_Deref_out_opt_ const CAtlTraceCategory **ppCategory,
-	_Deref_out_opt_ CAtlTraceModule::fnCrtDbgReport_t *pfnCrtDbgReport)
+	_Outptr_result_maybenull_ const CAtlTraceCategory **ppCategory,
+	_Outptr_result_maybenull_ CAtlTraceModule::fnCrtDbgReport_t *pfnCrtDbgReport)
 {
 	bool bFound = false;
 

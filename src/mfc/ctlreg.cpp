@@ -44,7 +44,7 @@ void _AfxUnregisterInterfaces(ITypeLib* pTypeLib)
 {
 	TCHAR szKey[128];
 	Checked::tcscpy_s(szKey, _countof(szKey), _T("Interface\\"));
-	LPTSTR pszGuid = szKey + lstrlen(szKey);
+	LPTSTR pszGuid = szKey + _tcslen(szKey);
 
 	int cTypeInfo = pTypeLib->GetTypeInfoCount();
 
@@ -151,8 +151,13 @@ BOOL AFXAPI AfxOleRegisterTypeLib(HINSTANCE hInstance, REFGUID tlid,
 	return bSuccess;
 }
 
-#define TYPELIBWIN   _T("win32")
-#define TYPELIBWIN_2 _T("win16")
+#if defined(_M_AMD64)
+#define TYPELIB_PLATFORM_1   _T("win64")
+#define TYPELIB_PLATFORM_2   _T("win32")
+#else
+#define TYPELIB_PLATFORM_1   _T("win32")
+#define TYPELIB_PLATFORM_2   _T("win64")
+#endif
 
 BOOL AFXAPI AfxOleUnregisterTypeLib(REFGUID tlid, WORD wVerMajor,
 	WORD wVerMinor, LCID lcid)
@@ -231,16 +236,16 @@ BOOL AFXAPI AfxOleUnregisterTypeLib(REFGUID tlid, WORD wVerMajor,
 					continue;
 				}
 
-				// Check if a 16-bit key is found when unregistering 32-bit
+				// Check if a key for another platform is found when unregistering this platform
 				HKEY hkey;
-				if (RegOpenKeyEx(hKeyLocale, TYPELIBWIN_2, 0, STANDARD_RIGHTS_READ, &hkey) ==
+				if (RegOpenKeyEx(hKeyLocale, TYPELIB_PLATFORM_2, 0, STANDARD_RIGHTS_READ, &hkey) ==
 					ERROR_SUCCESS)
 				{
 					RegCloseKey(hkey);
 
-					// Only remove the keys specific to the 32-bit version
-					// of control, leaving things intact for 16-bit version.
-					error = _AfxRecursiveRegDeleteKey(hKeyLocale, TYPELIBWIN);
+					// Only remove the keys specific to this platform of the typelib for the
+					// control, leaving things intact for any other platform registered.
+					error = _AfxRecursiveRegDeleteKey(hKeyLocale, TYPELIB_PLATFORM_1);
 					bSurgicalVersion = TRUE;
 					RegCloseKey(hKeyLocale);
 				}
@@ -492,7 +497,7 @@ BOOL AFXAPI AfxOleUnregisterClass(REFCLSID clsid, LPCTSTR pszProgID)
 		error = _AfxRecursiveRegDeleteKey(HKEY_CLASSES_ROOT, szKey);
 		bRetCode = bRetCode && _AfxRegDeleteKeySucceeded(error);
 
-		if ((pszProgID != NULL) && (lstrlen(pszProgID) > 0))
+		if ((pszProgID != NULL) && (_tcslen(pszProgID) > 0))
 		{
 			error = _AfxRecursiveRegDeleteKey(HKEY_CLASSES_ROOT,
 				(LPTSTR)pszProgID);

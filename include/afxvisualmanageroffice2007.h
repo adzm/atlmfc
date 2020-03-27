@@ -4,7 +4,7 @@
 // included with the MFC C++ library software.  
 // License terms to copy, use or distribute the Fluent UI are available separately.  
 // To learn more about our Fluent UI licensing program, please visit 
-// http://msdn.microsoft.com/officeui.
+// http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
 // All rights reserved.
@@ -99,7 +99,7 @@ public:
 	BOOL IsRibbonPresent(CWnd* pWnd) const;
 	CMFCRibbonBar*	GetRibbonBar(CWnd* pWnd) const;
 
-	virtual BOOL IsOwnerDrawCaption() { return CanDrawImage() && !afxGlobalData.DwmIsCompositionEnabled(); }
+	virtual BOOL IsOwnerDrawCaption() { return CanDrawImage() && !GetGlobalData()->IsDwmCompositionEnabled(); }
 
 	virtual BOOL OnNcActivate(CWnd* pWnd, BOOL bActive);
 	virtual BOOL OnNcPaint(CWnd* pWnd, const CObList& lstSysButtons, CRect rectRedraw);
@@ -170,6 +170,7 @@ public:
 	virtual BOOL AlwaysHighlight3DTabs() const { return CanDrawImage() ? TRUE : CMFCVisualManagerOffice2003::AlwaysHighlight3DTabs(); }
 	virtual COLORREF GetTabTextColor(const CMFCBaseTabCtrl* pTabWnd, int iTab, BOOL bIsActive);
 	virtual int GetTabHorzMargin(const CMFCBaseTabCtrl* pTabWnd);
+	virtual void AdjustTabTextRect(CRect& rectTabText) { rectTabText.OffsetRect(-3, 0); }
 
 	virtual void OnDrawCaptionBarInfoArea(CDC* pDC, CMFCCaptionBar* pBar, CRect rect);
 	virtual COLORREF GetCaptionBarTextColor(CMFCCaptionBar* pBar);
@@ -202,9 +203,7 @@ public:
 	virtual void OnDrawRibbonCategoryScroll(CDC* pDC, CRibbonCategoryScroll* pScroll);
 
 	virtual void OnDrawRibbonPanelCaption(CDC* pDC, CMFCRibbonPanel* pPanel, CRect rectCaption);
-#ifdef ENABLE_RIBBON_LAUNCH_BUTTON
 	virtual void OnDrawRibbonLaunchButton(CDC* pDC, CMFCRibbonLaunchButton* pButton, CMFCRibbonPanel* pPanel);
-#endif // ENABLE_RIBBON_LAUNCH_BUTTON
 
 	virtual COLORREF OnFillRibbonButton(CDC* pDC, CMFCRibbonButton* pButton);
 
@@ -268,7 +267,7 @@ public:
 protected:
 	BOOL CanDrawImage() const
 	{
-		return afxGlobalData.m_nBitsPerPixel > 8 && !afxGlobalData.IsHighContrastMode() && m_bLoaded;
+		return GetGlobalData()->m_nBitsPerPixel > 8 && !GetGlobalData()->IsHighContrastMode() && m_bLoaded;
 	}
 
 	static CString __stdcall MakeResourceID(LPCTSTR lpszID);

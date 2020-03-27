@@ -27,7 +27,7 @@
 #pragma component(minrebuild, off)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertyGridProperty object
 
 class CMFCPropertyGridProperty : public CObject
@@ -198,16 +198,6 @@ public:
 	BOOL IsModified() const { return m_bIsModified; }
 	BOOL IsVisible() const { return m_bIsVisible; }
 
-public:
-	// Data formats
-	AFX_IMPORT_DATA static CString m_strFormatChar;
-	AFX_IMPORT_DATA static CString m_strFormatShort;
-	AFX_IMPORT_DATA static CString m_strFormatLong;
-	AFX_IMPORT_DATA static CString m_strFormatUShort;
-	AFX_IMPORT_DATA static CString m_strFormatULong;
-	AFX_IMPORT_DATA static CString m_strFormatFloat;
-	AFX_IMPORT_DATA static CString m_strFormatDouble;
-
 protected:
 	COleVariant m_varValue;     // Property value
 	COleVariant m_varValueOrig; // Property original value
@@ -250,7 +240,7 @@ protected:
 	CList<CMFCPropertyGridProperty*, CMFCPropertyGridProperty*> m_lstSubItems; // Sub-properies list
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertyGridColorProperty object
 
 class CMFCPropertyGridColorProperty : public CMFCPropertyGridProperty
@@ -305,7 +295,7 @@ protected:
 	BOOL m_bStdColorDlg;   // Use standard Windows color dialog
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertyGridFileProperty object
 
 class CMFCPropertyGridFileProperty : public CMFCPropertyGridProperty
@@ -335,7 +325,7 @@ protected:
 	CString m_strFilter;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertyGridFontProperty object
 
 class CMFCPropertyGridFontProperty : public CMFCPropertyGridProperty
@@ -372,7 +362,7 @@ protected:
 	virtual void ResetOriginalValue();
 };
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCPropertyGridCtrl window
 
 #define AFX_PROPLIST_ID_INPLACE 3
@@ -438,8 +428,8 @@ public:
 	void GetCustomColors(COLORREF& clrBackground, COLORREF& clrText, COLORREF& clrGroupBackground, COLORREF& clrGroupText,
 		COLORREF& clrDescriptionBackground, COLORREF& clrDescriptionText, COLORREF& clrLine);
 
-	COLORREF GetTextColor() const { return m_clrText == (COLORREF)-1 ? afxGlobalData.clrWindowText : m_clrText; }
-	COLORREF GetBkColor() const { return m_clrBackground == (COLORREF)-1 ? afxGlobalData.clrWindow : m_clrBackground; }
+	COLORREF GetTextColor() const { return m_clrText == (COLORREF)-1 ? GetGlobalData()->clrWindowText : m_clrText; }
+	COLORREF GetBkColor() const { return m_clrBackground == (COLORREF)-1 ? GetGlobalData()->clrWindow : m_clrBackground; }
 
 	CFont& GetBoldFont() { return m_fontBold; }
 
@@ -606,7 +596,6 @@ public:
 	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
 
 protected:
-	//{{AFX_MSG(CMFCPropertyGridCtrl)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
@@ -646,7 +635,7 @@ protected:
 	afx_msg LRESULT OnGetObject(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
-	//}}AFX_MSG
+
 	DECLARE_MESSAGE_MAP()
 
 	//------------------

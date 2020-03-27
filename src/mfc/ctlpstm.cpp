@@ -51,20 +51,32 @@ STDMETHODIMP COleControl::XPersistStreamInit::IsDirty()
 STDMETHODIMP COleControl::XPersistStreamInit::Load(LPSTREAM pStm)
 {
 	METHOD_PROLOGUE_EX(COleControl, PersistStreamInit)
+
+	if (pStm == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
 	return pThis->LoadState(pStm);
 }
 
-STDMETHODIMP COleControl::XPersistStreamInit::Save(LPSTREAM pStm,
-	BOOL fClearDirty)
+STDMETHODIMP COleControl::XPersistStreamInit::Save(LPSTREAM pStm, BOOL fClearDirty)
 {
 	METHOD_PROLOGUE_EX(COleControl, PersistStreamInit)
+
+	if (pStm == NULL)
+	{
+		return E_INVALIDARG;
+	}
 
 	// Delegate to SaveState.
 	HRESULT hr = pThis->SaveState(pStm);
 
 	// Bookkeeping:  Clear the dirty flag, if requested.
 	if (fClearDirty)
+	{
 		pThis->m_bModified = FALSE;
+	}
 
 	return hr;
 }

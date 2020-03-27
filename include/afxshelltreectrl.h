@@ -23,7 +23,7 @@
 
 class CMFCShellListCtrl;
 
-/////////////////////////////////////////////////////////////////////////////
+/*============================================================================*/
 // CMFCShellTreeCtrl window
 
 class CMFCShellTreeCtrl : public CTreeCtrl
@@ -48,8 +48,8 @@ public:
 // Operations
 public:
 	void Refresh();
-	BOOL SelectPath(LPCTSTR lpszPath);
-	BOOL SelectPath(LPCITEMIDLIST lpidl);
+	BOOL SelectPath(LPCTSTR lpszPath, BOOL fExpandToShowChildren = TRUE);
+	BOOL SelectPath(LPCITEMIDLIST lpidl, BOOL fExpandToShowChildren = TRUE);
 
 	void EnableShellContextMenu(BOOL bEnable = TRUE);
 
@@ -72,7 +72,6 @@ public:
 	virtual ~CMFCShellTreeCtrl();
 
 protected:
-	//{{AFX_MSG(CMFCShellTreeCtrl)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnItemexpanding(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult);
@@ -80,7 +79,6 @@ protected:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
 

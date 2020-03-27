@@ -13,6 +13,11 @@
 
 #pragma once
 
+#include <atldef.h>
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+#error This file is not compatible with the current WINAPI_FAMILY
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // Classes declared in this file
 
@@ -137,6 +142,7 @@ public:
 		_In_ int b) throw();
 	// copy constructor
 	CRect(_In_ const RECT& srcRect) throw();
+
 	// from a pointer to another rect
 	CRect(_In_ LPCRECT lpSrcRect) throw();
 	// from a point and size
