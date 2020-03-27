@@ -601,7 +601,6 @@ const COleVariant& COleVariant::operator=(long lSrc)
 	return *this;
 }
 
-#if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
 const COleVariant& COleVariant::operator=(LONGLONG nSrc)
 {
 	if (vt != VT_I8)
@@ -625,7 +624,6 @@ const COleVariant& COleVariant::operator=(ULONGLONG nSrc)
 	ullVal = nSrc;
 	return *this;
 }
-#endif
 
 const COleVariant& COleVariant::operator=(const COleCurrency& curSrc)
 {
@@ -877,11 +875,9 @@ CArchive& AFXAPI operator<<(CArchive& ar, COleVariant varSrc)
 			// QI for IPersistStream or IPeristStreamInit
 			SCODE sc = pSrc->punkVal->QueryInterface(
 				IID_IPersistStream, (void**)&pPersistStream);
-#ifndef _AFX_NO_OCC_SUPPORT
 			if (FAILED(sc))
 				sc = pSrc->punkVal->QueryInterface(
 					IID_IPersistStreamInit, (void**)&pPersistStream);
-#endif
 			AfxCheckError(sc);
 
 			TRY
@@ -1026,11 +1022,9 @@ CArchive& AFXAPI operator>>(CArchive& ar, COleVariant& varSrc)
 				// QI for IPersistStream or IPeristStreamInit
 				sc = pSrc->punkVal->QueryInterface(
 					IID_IPersistStream, (void**)&pPersistStream);
-#ifndef _AFX_NO_OCC_SUPPORT
 				if (FAILED(sc))
 					sc = pSrc->punkVal->QueryInterface(
 						IID_IPersistStreamInit, (void**)&pPersistStream);
-#endif
 				AfxCheckError(sc);
 
 				// Always assumes object is dirty

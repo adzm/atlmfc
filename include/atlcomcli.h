@@ -15,12 +15,15 @@
 
 #include <atlcore.h>
 #include <ole2.h>
+#ifndef _ATL_USE_WINAPI_FAMILY_PHONE_APP
 #include <olectl.h>
+#endif // _ATL_USE_WINAPI_FAMILY_PHONE_APP
 
 #pragma warning (push)
 #pragma warning (disable: 4127)  // conditional expression constant
+#pragma warning (disable: 4510)  // compiler cannot generate default constructor
 #pragma warning (disable: 4571)  //catch(...) blocks compiled with /EHs do NOT catch or re-throw Structured Exceptions
-
+#pragma warning (disable: 4610)  // class has no user-defined or default constructors
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
@@ -28,6 +31,7 @@ namespace ATL
 /////////////////////////////////////////////////////////////////////////////
 // Error to HRESULT helpers
 
+_Post_satisfies_(FAILED(return))
 ATL_NOINLINE inline HRESULT AtlHresultFromLastError() throw()
 {
     DWORD dwErr = ::GetLastError();
@@ -76,8 +80,6 @@ _Check_return_ inline HRESULT AtlInternalOleLoadFromStream(
 
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
-#ifndef _ATL_DLL
-
 ATLINLINE ATLAPI_(IUnknown*) AtlComPtrAssign(
     _Inout_opt_ _Deref_pre_maybenull_ _Deref_post_maybenull_ IUnknown** pp, 
     _In_opt_ IUnknown* lp)
@@ -110,8 +112,6 @@ ATLINLINE ATLAPI_(IUnknown*) AtlComQIPtrAssign(
         pTemp->Release();
     return *pp;
 }
-
-#endif // _ATL_DLL
 
 /////////////////////////////////////////////////////////////////////////////
 // COM Smart pointers
@@ -792,7 +792,9 @@ public:
     CComBSTR(_In_ REFGUID guid)
     {
         OLECHAR szGUID[64];
+ATLPREFAST_SUPPRESS(6031)
         ::StringFromGUID2(guid, szGUID, 64);
+ATLPREFAST_UNSUPPRESS()
         m_str = ::SysAllocString(szGUID);
         if (!*this)
         {
@@ -1517,7 +1519,7 @@ public:
                 ATLTRACE(atlTraceCOM, 0, _T("Input stream is corrupted."));
                 hr = E_FAIL;
             }
-            // security checks when system hang for huge stream of data
+            // security checks for huge stream of data
             else if (cbStrLen > _ATL_STREAM_MAX_SIZE)
             {
                 ATLTRACE(atlTraceCOM, 0, _T("String exceeded the maximum allowed size see _ATL_STREAM_MAX_SIZE."));
@@ -1566,7 +1568,9 @@ public:
                         
                     if (FAILED(hr))
                     {
+ATLPREFAST_SUPPRESS(6102)
                         ::SysFreeString(m_str);
+ATLPREFAST_UNSUPPRESS()
                         m_str = NULL;
                     }
                 }
@@ -2233,7 +2237,6 @@ public:
         }
     }
 
-#if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
     CComVariant(_In_ LONGLONG nSrc) throw()
     {
         vt = VT_I8;
@@ -2244,7 +2247,6 @@ public:
         vt = VT_UI8;
         ullVal = nSrc;
     }
-#endif
     CComVariant(_In_ CY cySrc) throw()
     {
         vt = VT_CY;
@@ -2321,15 +2323,27 @@ public:
             HRESULT hRes = ::SafeArrayCopy((LPSAFEARRAY)pSrc, &pCopy);
             if (SUCCEEDED(hRes))
             {
-                ::ATL::AtlSafeArrayGetActualVartype((LPSAFEARRAY)pSrc, &vt);
-                vt |= VT_ARRAY;
-                parray = pCopy;
+                hRes = ::ATL::AtlSafeArrayGetActualVartype((LPSAFEARRAY)pSrc, &vt);
+                if (SUCCEEDED(hRes))
+                {
+                    vt |= VT_ARRAY;
+                    parray = pCopy;
+                }
+                else
+                {
+                    vt = VT_ERROR;
+                    scode = hRes;
+                }
             }
             else
             {
                 vt = VT_ERROR;
                 scode = hRes;
+            }
+
 #ifndef _ATL_NO_VARIANT_THROW
+            if (FAILED(hRes))
+            {
                 if(hRes == E_OUTOFMEMORY)
                 {
                     AtlThrow(E_OUTOFMEMORY);
@@ -2338,8 +2352,8 @@ public:
                 {
                     ATLENSURE_THROW(FALSE, hRes);
                 }
-#endif
             }
+#endif
         }
     }
 // Assignment Operators
@@ -2665,7 +2679,6 @@ public:
         return *this;
     }
 
-#if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
     CComVariant& operator=(_In_ LONGLONG nSrc) ATLVARIANT_THROW()
     {
         if (vt != VT_I8)
@@ -2711,7 +2724,6 @@ public:
         pullVal = pnSrc;
         return *this;
     }
-#endif
 
     CComVariant& operator=(_In_ float* pfSrc) ATLVARIANT_THROW()
     {
@@ -3104,8 +3116,10 @@ _Check_return_ inline HRESULT CComVariant::ReadFromStream(
     ULONG cbRead = 0;
 
     hr = pStream->Read(&vtRead, sizeof(VARTYPE), &cbRead);
+ATLPREFAST_SUPPRESS(6102)
     if (hr == S_FALSE || (cbRead != sizeof(VARTYPE) && hr == S_OK))
         hr = E_FAIL;
+ATLPREFAST_UNSUPPRESS()
     if (FAILED(hr))
         return hr;
     if (vtExpected != VT_EMPTY && vtRead != vtExpected)

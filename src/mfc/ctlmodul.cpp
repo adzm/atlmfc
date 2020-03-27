@@ -11,11 +11,7 @@
 #include "stdafx.h"
 #include "afxcontrolbarutil.h"
 
-#ifndef _AFX_NO_OCX_SUPPORT
-
-
 #define new DEBUG_NEW
-
 
 /////////////////////////////////////////////////////////////////////////////
 // COleControlModule::InitInstance
@@ -48,5 +44,3 @@ int COleControlModule::ExitInstance()
 	COleObjectFactory::RevokeAll();
 	return CWinApp::ExitInstance();
 }
-
-#endif // !_AFX_NO_OCX_SUPPORT

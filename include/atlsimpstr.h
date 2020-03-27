@@ -18,19 +18,11 @@
 #include <atlexcept.h>
 #include <atlmem.h>
 
-extern "C"
-{
-	LONG __cdecl _InterlockedIncrement(/* _Inout_ */ LONG volatile * pn);
-	LONG __cdecl _InterlockedDecrement(/* _Inout_ */ LONG volatile * pn);
-};
-
-#pragma intrinsic( _InterlockedIncrement )
-#pragma intrinsic( _InterlockedDecrement )
+#include <intrin.h>
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
-
 struct CStringData;
 
 __interface IAtlStringMgr
@@ -54,26 +46,6 @@ public:
 	IAtlStringMgr* Clone() throw();
 };
 
-#ifdef _M_IX86
-#ifndef _M_CEE
-#define _AtlInterlockedIncrement _InterlockedIncrement
-#define _AtlInterlockedDecrement _InterlockedDecrement
-#else
-#define _AtlInterlockedIncrement InterlockedIncrement
-#define _AtlInterlockedDecrement InterlockedDecrement
-/* managed code must use the non-intrinsics */
-#ifdef InterlockedIncrement
-#undef InterlockedIncrement
-#endif
-#ifdef InterlockedDecrement
-#undef InterlockedDecrement
-#endif
-#endif  // !_M_CEE
-#else
-#define _AtlInterlockedIncrement InterlockedIncrement
-#define _AtlInterlockedDecrement InterlockedDecrement
-#endif  // _M_IX86_
-
 struct CStringData
 {
 	IAtlStringMgr* pStringMgr;  // String manager for this CStringData
@@ -90,7 +62,7 @@ struct CStringData
 	void AddRef() throw()
 	{
 		ATLASSERT(nRefs > 0);
-		_AtlInterlockedIncrement(&nRefs);
+		_InterlockedIncrement(&nRefs);
 	}
 	bool IsLocked() const throw()
 	{
@@ -113,7 +85,7 @@ struct CStringData
 	{
 		ATLASSERT( nRefs != 0 );
 
-		if( _AtlInterlockedDecrement( &nRefs ) <= 0 )
+		if( _InterlockedDecrement( &nRefs ) <= 0 )
 		{
 			pStringMgr->Free( this );
 		}
@@ -949,6 +921,7 @@ public:
 	static const DWORD SET_LENGTH = 0x02;  // Set the length of the string object at GetBuffer time
 
 public:
+#pragma warning(suppress: 4987) // nonstandard extension used: 'throw(...)'
 	explicit CStrBufT(_In_ StringType& str) throw( ... ) :
 		m_str( str ),
 		m_pszBuffer( NULL ),
@@ -963,6 +936,7 @@ public:
 	CStrBufT(
 			_In_ StringType& str,
 			_In_ int nMinLength,
+#pragma warning(suppress: 4987) // nonstandard extension used: 'throw(...)'
 			_In_ DWORD dwFlags = AUTO_LENGTH) throw( ... ) :
 		m_str( str ),
 		m_pszBuffer( NULL ),

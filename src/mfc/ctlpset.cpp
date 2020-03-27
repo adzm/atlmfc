@@ -144,7 +144,15 @@ BOOL COleControl::GetPropsetData(LPFORMATETC lpFormatEtc,
 	CLSID clsid;
 	GetClassID(&clsid);
 	CPropertySet pset(clsid);
+
+// Fix for warnings when building against WinBlue build 9444.0.130614-1739
+// warning C4996: 'GetVersion': was declared deprecated
+// externalapis\windows\winblue\sdk\inc\sysinfoapi.h(110)
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	pset.SetOSVersion(MAKELONG(LOWORD(GetVersion()), OSTYPE));
+#pragma warning( default : 4996 )
+
 	CPropertySection* ppsec = pset.AddSection(fmtid);
 	if (ppsec == NULL)
 	{

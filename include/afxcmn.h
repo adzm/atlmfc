@@ -11,10 +11,6 @@
 #ifndef __AFXCMN_H__
 #define __AFXCMN_H__
 
-#ifdef _AFX_NO_AFXCMN_SUPPORT
-	#error Windows Common Control classes not supported in this library variant.
-#endif
-
 #ifndef __AFXWIN_H__
 	#include <afxwin.h>
 #endif
@@ -39,23 +35,19 @@
 #pragma pack(push, _AFX_PACKING)
 #endif
 
-#if (_WIN32_WINNT >= 0x0501)
-	#include <uxtheme.h>
-#endif	// _WIN32_WINNT >= 0x0501
+#include <uxtheme.h>
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
-	#ifndef _RICHEDIT_
-		#include <richedit.h>
+#ifndef _RICHEDIT_
+	#include <richedit.h>
+#endif
+#ifdef __AFXOLE_H__  // only include richole if OLE support is included
+	#ifndef _RICHOLE_
+		#include <richole.h>
+		#define _RICHOLE_
 	#endif
-	#ifdef __AFXOLE_H__  // only include richole if OLE support is included
-		#ifndef _RICHOLE_
-			#include <richole.h>
-			#define _RICHOLE_
-		#endif
-	#else
-		struct IRichEditOle;
-		struct IRichEditOleCallback;
-	#endif
+#else
+	struct IRichEditOle;
+	struct IRichEditOleCallback;
 #endif
 
 #ifdef _AFX_ALL_WARNINGS
@@ -97,7 +89,7 @@
 			class CPagerCtrl;
 			class CLinkCtrl;
 
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if defined(UNICODE)
 			class CNetAddressCtrl;
 #endif
 
@@ -552,8 +544,6 @@ public:
 	BOOL SortItems(_In_ PFNLVCOMPARE pfnCompare, _In_ DWORD_PTR dwData);
 	BOOL SortItemsEx(_In_ PFNLVCOMPARE pfnCompare, _In_ DWORD_PTR dwData);
 
-#if (_WIN32_WINNT >= 0x0501)
-
 	// Sets the selected column in a report-mode control.
 	AFX_ANSI_DEPRECATED void SetSelectedColumn(_In_ int iCol);
 
@@ -647,9 +637,7 @@ public:
 	// Cancels an item text editing operation in the control.
 	AFX_ANSI_DEPRECATED void CancelEditLabel();
 
-#endif	// _WIN32_WINNT >= 0x0501
-
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 	// REVIEW: Retrieves the string displayed when the list-view is empty.
 	CString GetEmptyText() const;
 
@@ -689,7 +677,7 @@ public:
 	// Indicates if an item in the list-view control is visible.
 	BOOL IsItemVisible(_In_ int index) const;
 
-#endif	// _WIN32_WINNT >= 0x0600 && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 // Overridables
 	// Override to perform owner draw. Control must
@@ -812,11 +800,9 @@ public:
 	BOOL SetItem(_In_ HTREEITEM hItem, _In_ UINT nMask, _In_opt_z_ LPCTSTR lpszItem, _In_ int nImage,
 		_In_ int nSelectedImage, _In_ UINT nState, _In_ UINT nStateMask, _In_ LPARAM lParam);
 
-#if (_WIN32_IE >= 0x0600)
 	BOOL SetItemEx(_In_ HTREEITEM hItem, _In_ UINT nMask, _In_opt_z_ LPCTSTR lpszItem, _In_ int nImage,
 		_In_ int nSelectedImage, _In_ UINT nState, _In_ UINT nStateMask, _In_ LPARAM lParam,
 		_In_ UINT uStateEx, _In_opt_ HWND hWnd, _In_ int iExpandedImage);
-#endif
 
 	// Sets the text of the specified item.
 	BOOL SetItemText(_In_ HTREEITEM hItem, _In_z_ LPCTSTR lpszItem);
@@ -885,15 +871,10 @@ public:
 	// spend smooth scrolling its content.
 	UINT GetScrollTime() const;
 
-#if _WIN32_IE >= 0x0500
 	COLORREF GetLineColor() const;
 	COLORREF SetLineColor(_In_ COLORREF clrNew = CLR_DEFAULT);
-#endif
 
-#if (_WIN32_IE >= 0x0600)
-#endif
-
-#if (_WIN32_WINNT >= 0x0501) && defined(UNICODE)
+#if defined(UNICODE)
 	// Maps treeview item id to accessibility identifier.
 	UINT MapItemToAccId(_In_ HTREEITEM hItem) const;
 
@@ -904,7 +885,7 @@ public:
 	BOOL SetAutoscrollInfo(_In_ UINT uPixelsPerSec, _In_ UINT uUpdateTime);
 #endif
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 	// Get count of selected items in the tree control.
 	UINT GetSelectedCount();
 
@@ -928,7 +909,7 @@ public:
 
 	// Set extended styles on the tree control.
 	DWORD SetExtendedStyle(_In_ DWORD dwExMask, _In_ DWORD dwExStyles);
-#endif
+#endif //  (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 // Operations
 
@@ -986,7 +967,7 @@ public:
 	// Terminates label editing operation.
 	BOOL EndEditLabelNow(_In_ BOOL fCancelWithoutSave);
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if defined(UNICODE)
 	// Shows information tooltip on the specified item.
 	void ShowInfoTip(_In_ HTREEITEM hItem);
 #endif
@@ -1055,13 +1036,11 @@ public:
 	void GetRange(_Out_ int &lower, _Out_ int& upper) const;
 	void GetRange32(_Out_ int &lower, _Out_ int& upper) const;
 
-#if _WIN32_IE >= 0x0500
 	// Retrieves the current position of the up-down control with 32-bit precision.
 	int GetPos32(_Out_opt_ LPBOOL lpbError = NULL) const;
 
 	// Sets the current position of an up-down control with 32-bit precision.
 	int SetPos32(_In_ int nPos);
-#endif
 
 // Implementation
 public:
@@ -1235,17 +1214,15 @@ public:
 	// Sets the control's background color.
 	COLORREF SetBkColor(_In_ COLORREF clrNew);
 
-#if (_WIN32_IE >= 0x0400)
 	// Sets the color of the progress indicator bar in the progress bar control.
 	COLORREF SetBarColor(_In_ COLORREF clrBar);
-#endif	// _WIN32_IE >= 0x0400
 
-#if (_WIN32_WINNT >= 0x0501) && defined(UNICODE)
+#if defined(UNICODE)
 	// Sets the progress bar control to marquee mode.
 	BOOL SetMarquee(_In_ BOOL fMarqueeMode, _In_ int nInterval);
-#endif	// _WIN32_WINNT >= 0x0501 && defined(UNICODE)
+#endif	// defined(UNICODE)
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if defined(UNICODE)
 	// REVIEW: Retrieves the step increment for the progress bar control.
 	int GetStep() const;
 
@@ -1260,7 +1237,7 @@ public:
 
 	// REVIEW: Retrieves the state of the progress bar.
 	int GetState() const;
-#endif	// _WIN32_WINNT >= 0x0600 && defined(UNICODE)
+#endif	// defined(UNICODE)
 
 // Operations
 
@@ -1306,9 +1283,7 @@ public:
 	CImageList* GetImageList() const;
 	CImageList* SetImageList(_In_ CImageList* pImageList);
 
-#if (_WIN32_WINNT >= 0x0501)
 	AFX_ANSI_DEPRECATED HRESULT SetWindowTheme(_In_z_ LPCWSTR pszSubAppName);
-#endif
 
 	// These functions are supported by the Windows ComboBox control,
 	// but not supported by the Windows ComboBoxEx control.
@@ -1373,15 +1348,13 @@ public:
 	// Determines which header item, if any, is at the specified point.
 	int HitTest(_Inout_ LPHDHITTESTINFO pHeaderHitTestInfo);
 
-#if _WIN32_IE >= 0x0500
 	// Retrieves the width of the bitmap margin for the header control.
 	int GetBitmapMargin() const;
 
 	// Sets the width of the bitmap margin for the header control.
 	int SetBitmapMargin(_In_ int nWidth);
-#endif
 
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if defined(UNICODE)
 	// REVIEW:
 	BOOL GetItemDropDownRect(_In_ int iItem, _Out_ LPRECT lpRect) const;
 
@@ -1393,7 +1366,7 @@ public:
 
 	// Sets the focus to the specified item in the header control.
 	BOOL SetFocusedItem(_In_ int iItem);
-#endif // _WIN32_WINNT >= 0x600 && defined(UNICODE)
+#endif // defined(UNICODE)
 
 // Operations
 	// Inserts a new item into the header control.
@@ -1413,7 +1386,6 @@ public:
 	int SetHotDivider(_In_ CPoint pt);
 	int SetHotDivider(_In_ int nIndex);
 
-#if _WIN32_IE >= 0x0500
 	// Sets the timeout interval between the time a change takes place in the
 	// filter attributes and the posting of an HDN_FILTERCHANGE notification.
 	int SetFilterChangeTimeout(_In_ DWORD dwTimeOut);
@@ -1426,7 +1398,6 @@ public:
 
 	// Clears all filters for all columns in the header control.
 	BOOL ClearAllFilters();
-#endif
 
 // Overridables
 	virtual void DrawItem(_In_ LPDRAWITEMSTRUCT lpDrawItemStruct);
@@ -1549,15 +1520,11 @@ public:
 	// Retrieves the information for the current tool in the ToolTip control.
 	BOOL GetCurrentTool(_Out_ LPTOOLINFO lpToolInfo) const;
 
-#if _WIN32_IE >= 0x0500
 	// Returns the width and height of the ToolTip control.
 	CSize GetBubbleSize(_In_ LPTOOLINFO lpToolInfo) const;
-#endif
 
-#if (_WIN32_WINNT >= 0x0501)
 	// Sets the visual style of the ToolTip control.
 	AFX_ANSI_DEPRECATED HRESULT SetWindowTheme(_In_z_ LPCWSTR pszSubAppName);
-#endif
 
 // Operations
 	// Activates or deactivates the ToolTip control.
@@ -1591,7 +1558,6 @@ public:
 	// Removes the displayed ToolTip window from view.
 	void Pop();
 
-#if _WIN32_IE >= 0x0500
 	// Calculates a ToolTip control's text display rectangle
 	// from its window rectangle, or the ToolTip window rectangle
 	// needed to display a specified text display rectangle.
@@ -1599,9 +1565,8 @@ public:
 
 	// Adds a standard icon and title string to the ToolTip.
 	BOOL SetTitle(_In_ UINT uIcon, _In_z_ LPCTSTR lpstrTitle);
-#endif
 
-#if (_WIN32_WINNT >= 0x0501) && defined(UNICODE)
+#if defined(UNICODE)
 	// Causes the ToolTip to display at the coordinates of the last mouse message.
 	void Popup();
 
@@ -1794,7 +1759,7 @@ public:
 	// Displays the specified frame of the AVI clip opened in the animation control.
 	BOOL Seek(_In_ UINT nTo);
 
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if defined(UNICODE)
 	// REVIEW: Determines whether the animation control is playing a clip.
 	BOOL IsPlaying() const;
 #endif
@@ -2004,7 +1969,6 @@ public:
 	// Sets the color scheme information for the toolbar control.
 	void SetColorScheme(_In_ const COLORSCHEME* lpcs);
 
-#if (_WIN32_WINNT >= 0x0501)
 	// Retrieves the metrics of the toolbar control.
 	AFX_ANSI_DEPRECATED void GetMetrics(_Out_ LPTBMETRICS ptbm) const;
 
@@ -2013,15 +1977,14 @@ public:
 
 	// Sets the visual style of the toolbar control.
 	AFX_ANSI_DEPRECATED HRESULT SetWindowTheme(_In_z_ LPCWSTR pszSubAppName);
-#endif
 
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if defined(UNICODE)
 	// REVIEW: Sets the image list that the toolbar control uses to display buttons in a pressed state.
 	CImageList* SetPressedImageList(_In_ int iImageID, _In_ CImageList* pImageList);
 
 	// REVIEW: Retrieves the image list that the toolbar control uses to display buttons in a pressed state.
 	CImageList* GetPressedImageList() const;
-#endif // _WIN32_WINNT >= 0x600 && defined(UNICODE)
+#endif // defined(UNICODE)
 
 // Operations
 public:
@@ -2089,10 +2052,8 @@ public:
 	// Causes the toolbar control to be resized.
 	void AutoSize();
 
-#if _WIN32_IE >= 0x0500
 	int GetString(_In_ int nString, _Out_writes_to_(cchMaxLen, return + 1) LPTSTR lpstrString, _In_ size_t cchMaxLen) const;
 	int GetString(_In_ int nString, _Out_ CString& str) const;
-#endif
 
 // Implementation
 public:
@@ -2204,15 +2165,13 @@ public:
 	// Sets the color scheme information for the rebar control.
 	void SetColorScheme(_In_ const COLORSCHEME* lpcs);
 
-#if (_WIN32_WINNT >= 0x0501)
 	// Retrieves the margins of a band in the rebar control.
 	AFX_ANSI_DEPRECATED void GetBandMargins(_Out_ PMARGINS pMargins) const;
 
 	// Sets the visual style of the rebar control.
 	AFX_ANSI_DEPRECATED HRESULT SetWindowTheme(_In_z_ LPCWSTR pszSubAppName);
-#endif
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if defined(UNICODE)
 	// REVIEW: Sets the width for a docked band in the rebar control.
 	BOOL SetBandWidth(_In_ UINT uBand, _In_ int cxWidth);
 
@@ -2221,7 +2180,7 @@ public:
 
 	// REVIEW: Retrieves the extended style of the rebar control.
 	DWORD GetExtendedStyle() const;
-#endif // _WIN32_WINNT >= 0x0600 && defined(UNICODE)
+#endif // defined(UNICODE)
 
 // Operations
 public:
@@ -2262,10 +2221,8 @@ public:
 	// Moves the specified band from one index to another in the rebar control.
 	BOOL MoveBand(_In_ UINT uFrom, _In_ UINT uTo);
 
-#if _WIN32_IE >= 0x0500
 	// Programmatically push a chevron in the rebar control.
 	void PushChevron(_In_ UINT uBand, _In_ LPARAM lAppValue);
-#endif
 
 // Implementation
 public:
@@ -2273,7 +2230,6 @@ public:
 	virtual ~CReBarCtrl();
 };
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 /*============================================================================*/
 // CRichEditCtrl
 
@@ -2407,7 +2363,7 @@ public:
 	// virtual OK here - ~CWnd is already virtual
 	virtual ~CRichEditCtrl();
 };
-#endif //!_AFX_NO_RICHEDIT_SUPPORT
+
 
 
 /*============================================================================*/
@@ -2534,7 +2490,6 @@ public:
 	virtual ~CPagerCtrl();
 };
 
-#if (_WIN32_WINNT >= 0x0501)
 /*============================================================================*/
 // CLinkCtrl
 
@@ -2562,10 +2517,10 @@ public:
 	// Retrieves the preferred height of a link for the control's current width.
 	int GetIdealHeight() const;
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if defined(UNICODE)
 	// REVIEW: Retrieves the preferred size of a link for the specified width.
 	int GetIdealSize(_In_ int cxMaxWidth, _Out_ SIZE* pSize) const;
-#endif // (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#endif // defined(UNICODE)
 
 // Operations
 	// Set the states and attributes of an item.
@@ -2590,9 +2545,7 @@ public:
 	virtual ~CLinkCtrl();
 };
 
-#endif	// _WIN32_WINNT >= 0x0501
-
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /*============================================================================*/
 // CNetAddressCtrl
@@ -2631,7 +2584,7 @@ public:
 	virtual ~CNetAddressCtrl();
 };
 
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 // Inline function declarations

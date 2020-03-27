@@ -2272,8 +2272,6 @@ BOOL CHttpFile::SendRequest(CString& strHeaders,
 BOOL CHttpFile::QueryInfo(DWORD dwInfoLevel,
 	LPVOID lpvBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex) const
 {
-	ASSERT(((HTTP_QUERY_HEADER_MASK & dwInfoLevel) <= HTTP_QUERY_MAX || 
-		dwInfoLevel == HTTP_QUERY_CUSTOM) && dwInfoLevel != 0);
 	ASSERT(lpvBuffer != NULL && *lpdwBufferLength > 0);
 	ASSERT_VALID(this);
 	ASSERT(m_hFile != NULL);
@@ -2335,10 +2333,10 @@ BOOL CHttpFile::QueryInfo(DWORD dwInfoLevel, CString& str,
 		// now that we know how long it is, ask for exactly that much
 		// space and really request the header from the API
 
-		LPTSTR pstr = str.GetBufferSetLength(dwLen);
+		LPTSTR pstr = str.GetBufferSetLength(dwLen / sizeof(TCHAR));
 		bRet = HttpQueryInfo(m_hFile, dwInfoLevel, pstr, &dwLen, lpdwIndex);
 		if (bRet)
-			str.ReleaseBuffer(dwLen);
+			str.ReleaseBuffer(dwLen / sizeof(TCHAR));
 		else
 			str.ReleaseBuffer(0);
 	}

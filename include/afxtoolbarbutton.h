@@ -196,7 +196,7 @@ public:
 	BOOL    m_bDragFromCollection; // Button is dragged from collection
 	UINT    m_nID;           // Command ID that this button sends
 	UINT    m_nStyle;        // TBBS_ styles
-	DWORD   m_dwdItemData;   // User-defined data
+	DWORD_PTR m_dwdItemData;   // User-defined data
 	CString m_strText;       // Button text (for user-defined buttons only!)
 	CString m_strTextCustom; // Text appear on the customization list
 

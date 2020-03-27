@@ -39,11 +39,11 @@
 #define AFX_MFCM_EXPORT __declspec(dllimport)
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "110"
+#define _MFC_FILENAME_VER "120"
 #endif
 
 #ifndef _MFC_FILENAME_VER_DOT
-#define _MFC_FILENAME_VER_DOT "11.0"
+#define _MFC_FILENAME_VER_DOT "12.0"
 #endif
 
 #ifndef _UNICODE

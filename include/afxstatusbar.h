@@ -170,11 +170,11 @@ protected:
 
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnGetFont(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnGetText(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnGetTextLength(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
+	afx_msg HFONT OnGetFont();
+	afx_msg int OnSetText(LPCTSTR lpszText);
+	afx_msg int OnGetText(int nMaxChars, LPTSTR lpszText);
+	afx_msg UINT OnGetTextLength();
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);

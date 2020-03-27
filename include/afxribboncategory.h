@@ -55,8 +55,15 @@ class CMFCRibbonTab : public CMFCRibbonBaseElement
 public:
 	BOOL IsSelected() const;
 
+	// Accessibility:
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
 	virtual void OnAccDefaultAction();
+
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction);
+	virtual HRESULT accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
 };
 
 /*============================================================================*/
@@ -88,7 +95,7 @@ public:
 class CMFCRibbonPanel;
 class CMFCRibbonBar;
 
-class CMFCRibbonCategory : public CObject
+class CMFCRibbonCategory : public CMFCBaseAccessibleObject
 {
 	friend class CMFCRibbonBar;
 	friend class CMFCRibbonTab;
@@ -96,6 +103,7 @@ class CMFCRibbonCategory : public CObject
 	friend class CMFCRibbonPanelMenuBar;
 	friend class CMFCRibbonBaseElement;
 	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonTabsGroup;
 
 	DECLARE_DYNCREATE(CMFCRibbonCategory)
 
@@ -180,6 +188,8 @@ public:
 	/// TRUE if the parent ribbon has Windows 7-style look; otherwise FALSE.</returns>
 	BOOL IsWindows7Look() const;
 
+	CMFCRibbonTab* GetTab() { return &m_Tab; }
+
 // Operations
 public:
 	CMFCRibbonPanel* AddPanel(LPCTSTR lpszPanelName, HICON hIcon = 0, CRuntimeClass* pRTI = NULL);
@@ -237,6 +247,17 @@ public:
 	/// Called by the framework when a user presses a keyboard button.</summary>
 	/// <param name="nChar">The virtual-key code for the key that a user pressed.</param>
 	virtual BOOL OnKey(UINT nChar);
+
+	//Accessibility
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT get_accChild(VARIANT varChild, IDispatch **ppdispChild);
+	virtual HRESULT accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual CWnd* GetParentWnd () const { return m_pParentRibbonBar; }
+	virtual BOOL OnSetAccData (long lVal);
+	virtual BOOL SetACCData (CWnd* pParent, CAccessibilityData& data);
 
 // Implementation
 public:

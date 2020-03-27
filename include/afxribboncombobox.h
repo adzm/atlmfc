@@ -100,6 +100,8 @@ protected:
 	virtual BOOL OnDrawDropListItem(CDC* pDC, int nIndex, CMFCToolBarMenuButton* pItem, BOOL bHighlight);
 	virtual CSize OnGetDropListItemSize(CDC* pDC, int nIndex, CMFCToolBarMenuButton* pItem, CSize sizeDefault);
 
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+
 // Attributes:
 protected:
 	CStringList                 m_lstItems;

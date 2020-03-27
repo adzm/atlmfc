@@ -981,7 +981,7 @@ void CMFCVisualManagerWindows7::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* pBa
 	const BOOL bGlass  = pBar->IsTransparentCaption();
 
 	{
-		CSize szSysBorder(GetSystemBorders(TRUE));
+		CSize szSysBorder(afxGlobalUtils.GetSystemBorders(pBar->GetParent()));
 
 		if (!bGlass)
 		{
@@ -2755,6 +2755,12 @@ BOOL CMFCVisualManagerWindows7::OnNcActivate(CWnd* pWnd, BOOL bActive)
 		return FALSE;
 	}
 
+	CMFCRibbonBar* pBar = GetRibbonBar(pWnd);
+	if (pBar->GetSafeHwnd() == NULL || !pBar->IsWindowVisible() || !pBar->IsReplaceFrameCaption())
+	{
+		return FALSE;
+	}
+
 	// stay active if WF_STAYACTIVE bit is on
 	if (pWnd->m_nFlags & WF_STAYACTIVE)
 	{
@@ -2809,6 +2815,7 @@ BOOL CMFCVisualManagerWindows7::OnNcPaint(CWnd* pWnd, const CObList& lstSysButto
 
 	ASSERT_VALID(pWnd);
 
+	const DWORD dwStyle = pWnd->GetStyle();
 	CMFCRibbonBar* pBar = GetRibbonBar(pWnd);
 	BOOL bRibbonCaption  = pBar != NULL && pBar->IsWindowVisible() && pBar->IsReplaceFrameCaption();
 	if (!bRibbonCaption)
@@ -2817,7 +2824,6 @@ BOOL CMFCVisualManagerWindows7::OnNcPaint(CWnd* pWnd, const CObList& lstSysButto
 	}
 	else
 	{
-		const DWORD dwStyle = pWnd->GetStyle();
 		BOOL bMaximized = (dwStyle & WS_MAXIMIZE) == WS_MAXIMIZE;
 		if (bMaximized)
 		{
@@ -2866,7 +2872,7 @@ BOOL CMFCVisualManagerWindows7::OnNcPaint(CWnd* pWnd, const CObList& lstSysButto
 		}
 
 		CRect rectCaption(rtWindow);
-		CSize szSysBorders(GetSystemBorders(bRibbonCaption));
+		CSize szSysBorders(afxGlobalUtils.GetSystemBorders(dwStyle));
 
 		rectCaption.bottom = rectCaption.top + szSysBorders.cy + pBar->GetCaptionHeight();
 

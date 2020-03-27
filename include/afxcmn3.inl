@@ -12,8 +12,6 @@
 // Contains wrappers for API's messages not in all supported
 // platforms
 
-#if (_WIN32_WINNT >= 0x0501)
-
 #include <atlchecked.h>
 
 AFX_INLINE HRESULT CToolTipCtrl::SetWindowTheme(_In_z_ LPCWSTR pszSubAppName)
@@ -45,9 +43,7 @@ AFX_INLINE void CToolBarCtrl::SetMetrics(_In_ LPTBMETRICS ptbm)
 AFX_INLINE HRESULT CToolBarCtrl::SetWindowTheme(_In_z_ LPCWSTR pszSubAppName)
 	{ ASSERT(::IsWindow(m_hWnd)); return (HRESULT)::SendMessage(m_hWnd, TB_SETWINDOWTHEME, 0, (LPARAM)pszSubAppName); }
 
-#endif	// _WIN32_WINNT >= 0x0501
-
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 AFX_INLINE CImageList* CToolBarCtrl::SetPressedImageList(_In_ int iImageID, _In_ CImageList* pImageList)
 	{ ASSERT(::IsWindow(m_hWnd)); return CImageList::FromHandle((HIMAGELIST) ::SendMessage(m_hWnd, TB_SETPRESSEDIMAGELIST, (WPARAM)iImageID, (LPARAM)pImageList->GetSafeHandle())); }
@@ -55,9 +51,7 @@ AFX_INLINE CImageList* CToolBarCtrl::SetPressedImageList(_In_ int iImageID, _In_
 AFX_INLINE CImageList* CToolBarCtrl::GetPressedImageList() const
 { ASSERT(::IsWindow(m_hWnd)); return CImageList::FromHandle((HIMAGELIST) ::SendMessage(m_hWnd, TB_GETPRESSEDIMAGELIST, 0, 0L)); }
 
-#endif // _WIN32_WINNT >= 0x600 && defined(UNICODE)
-
-#if (_WIN32_WINNT >= 0x0501)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 AFX_INLINE void CListCtrl::SetSelectedColumn(_In_ int iCol)
 {
@@ -220,9 +214,7 @@ AFX_INLINE void CListCtrl::CancelEditLabel()
 	ListView_CancelEditLabel(m_hWnd); // LVM_CANCELEDITLABEL
 }
 
-#endif	// _WIN32_WINNT >= 0x0501
-
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 AFX_INLINE CString CListCtrl::GetEmptyText() const
 {
@@ -299,7 +291,7 @@ AFX_INLINE BOOL CListCtrl::IsItemVisible(_In_ int index) const
 	ASSERT(::IsWindow(m_hWnd));
 	return (BOOL)ListView_IsItemVisible(m_hWnd, index); // LVM_ISITEMVISIBLE
 }
-#endif	// _WIN32_WINNT >= 0x0600 && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 // CPagerCtrl
@@ -424,8 +416,6 @@ AFX_INLINE void CPagerCtrl::ForwardMouse(_In_ BOOL bForward)
 	return Pager_ForwardMouse(m_hWnd, bForward); // PGM_FORWARDMOUSE
 }
 
-#if (_WIN32_WINNT >= 0x0501)
-
 /////////////////////////////////////////////////////////////////////////////
 // CLinkCtrl
 
@@ -444,13 +434,13 @@ AFX_INLINE int CLinkCtrl::GetIdealHeight() const
 	return (int) ::SendMessage(m_hWnd, LM_GETIDEALHEIGHT, 0, 0);
 }
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if defined(UNICODE)
 AFX_INLINE int CLinkCtrl::GetIdealSize(_In_ int cxMaxWidth, _Out_ SIZE* pSize) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 	return (int) ::SendMessage(m_hWnd, LM_GETIDEALSIZE, (WPARAM)cxMaxWidth, (LPARAM)pSize);
 }
-#endif // (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#endif // defined(UNICODE)
 
 // operations
 AFX_INLINE BOOL CLinkCtrl::SetItem(_In_ PLITEM pItem)
@@ -613,9 +603,7 @@ AFX_INLINE BOOL CLinkCtrl::HitTest(_In_ PLHITTESTINFO phti)  const
 	return (BOOL) ::SendMessage(m_hWnd, LM_HITTEST, 0, (LPARAM)phti);
 }
 
-#endif	// _WIN32_WINNT >= 0x0501
-
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 // CNetAddressCtrl
@@ -654,4 +642,4 @@ AFX_INLINE HRESULT CNetAddressCtrl::DisplayErrorTip()
 	return NetAddr_DisplayErrorTip(m_hWnd); // NCM_DISPLAYERRORTIP
 }
 
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICDOE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)

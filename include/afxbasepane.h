@@ -252,9 +252,9 @@ protected:
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
 	afx_msg LRESULT OnHelpHitTest(WPARAM, LPARAM lParam);
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
-	afx_msg LRESULT OnSetIcon(WPARAM,LPARAM);
+	afx_msg HICON OnSetIcon(BOOL bIsLarge, HICON hIcon);
 	afx_msg LRESULT OnGetObject(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
+	afx_msg LRESULT OnPrintClient(CDC* pDC, UINT nFlags);
 
 	DECLARE_MESSAGE_MAP()
 

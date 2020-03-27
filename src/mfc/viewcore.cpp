@@ -34,7 +34,7 @@ BEGIN_MESSAGE_MAP(CView, CWnd)
 	// special command for Initial Update
 	ON_MESSAGE_VOID(WM_INITIALUPDATE, CView::OnInitialUpdate)
 
-	ON_MESSAGE(WM_PRINTCLIENT, &CView::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -212,24 +212,20 @@ void CView::OnDraw(CDC*)
 {
 }
 
-LRESULT CView::OnPrintClient(WPARAM wp, LPARAM lp)
+LRESULT CView::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	DWORD dwFlags = (DWORD)lp;
-
-	if (dwFlags & PRF_ERASEBKGND)
+	ASSERT_VALID(pDC);
+	if (nFlags & PRF_ERASEBKGND)
 	{
-		SendMessage(WM_ERASEBKGND, wp);
+		SendMessage(WM_ERASEBKGND, (WPARAM)pDC->GetSafeHdc());
 	}
 
-	if (dwFlags & PRF_CLIENT)
+	if (nFlags & PRF_CLIENT)
 	{
-		CDC* pDC = CDC::FromHandle((HDC)wp);
-		ASSERT_VALID(pDC);
-
 		OnDraw(pDC);
 	}
 
-	return 0;
+	return 0L;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -309,11 +305,7 @@ BOOL CView::OnScrollBy(CSize /*sizeScroll*/, BOOL /*bDoScroll*/)
 
 DROPEFFECT CView::OnDragScroll(DWORD /*dwKeyState*/, CPoint /*point*/)
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	return DROPEFFECT_SCROLL; // this means do the default
-#else
-	return 0;
-#endif
 }
 
 DROPEFFECT CView::OnDragEnter(COleDataObject* /*pDataObject*/,
@@ -531,7 +523,7 @@ void CView::AssertValid() const
 
 BEGIN_MESSAGE_MAP(CCtrlView, CView)
 	ON_WM_PAINT()
-	ON_MESSAGE(WM_PRINTCLIENT, &CCtrlView::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 CCtrlView::~CCtrlView()
@@ -572,7 +564,7 @@ void CCtrlView::OnPaint()
 	Default();
 }
 
-LRESULT CCtrlView::OnPrintClient(WPARAM /*wp*/, LPARAM /*lp*/)
+LRESULT CCtrlView::OnPrintClient(CDC* /*pDC*/, UINT /*nFlags*/)
 {
 	return Default();
 }

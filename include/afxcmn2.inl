@@ -37,12 +37,10 @@ _AFXCMN_INLINE void CSpinButtonCtrl::SetRange32(_In_ int nLower, _In_ int nUpper
 _AFXCMN_INLINE void CSpinButtonCtrl::GetRange32(_Out_ int& nLower, _Out_ int& nUpper) const
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, UDM_GETRANGE32, (WPARAM) &nLower, (LPARAM) &nUpper); }
 
-#if _WIN32_IE >= 0x0500
 _AFXCMN_INLINE int CSpinButtonCtrl::GetPos32(_Out_opt_ LPBOOL lpbError /*= NULL*/) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, UDM_GETPOS32, 0, (LPARAM)lpbError); }
 _AFXCMN_INLINE int CSpinButtonCtrl::SetPos32(_In_ int nPos)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, UDM_SETPOS32, 0, (LPARAM)nPos); }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -107,13 +105,11 @@ _AFXCMN_INLINE BOOL CToolBarCtrl::MarkButton(_In_ int nID, _In_ BOOL bHighlight)
 _AFXCMN_INLINE BOOL CToolBarCtrl::MoveButton(_In_ UINT nOldPos, _In_ UINT nNewPos)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, TB_MOVEBUTTON, nOldPos, nNewPos); }
 
-#if _WIN32_IE >= 0x0500
 #pragma warning(push)
 #pragma warning(disable: 6054)
 _AFXCMN_INLINE int CToolBarCtrl::GetString(_In_ int nString, _Out_writes_to_(cchMaxLen, return + 1) LPTSTR lpstrString, _In_ size_t cchMaxLen) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int) ::SendMessage(m_hWnd, TB_GETSTRING, MAKEWPARAM(cchMaxLen, nString), (LPARAM)lpstrString); lpstrString[cchMaxLen]=_T('\0'); }
 #pragma warning(pop)
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -169,7 +165,6 @@ _AFXCMN_INLINE CImageList* CHeaderCtrl::SetImageList(_In_ CImageList* pImageList
 _AFXCMN_INLINE CImageList* CHeaderCtrl::CreateDragImage(_In_ int nIndex)
 	{ ASSERT(::IsWindow(m_hWnd)); return CImageList::FromHandle((HIMAGELIST) ::SendMessage(m_hWnd, HDM_CREATEDRAGIMAGE, nIndex, 0L)); }
 
-#if _WIN32_IE >= 0x0500
 _AFXCMN_INLINE int CHeaderCtrl::GetBitmapMargin() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int)::SendMessage(m_hWnd, HDM_GETBITMAPMARGIN, 0, 0L); }
 _AFXCMN_INLINE int CHeaderCtrl::SetBitmapMargin(_In_ int nWidth)
@@ -182,9 +177,8 @@ _AFXCMN_INLINE BOOL CHeaderCtrl::ClearFilter(_In_ int nColumn)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, HDM_CLEARFILTER, nColumn, 0L); }
 _AFXCMN_INLINE BOOL CHeaderCtrl::ClearAllFilters()
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, HDM_CLEARFILTER, (WPARAM)-1, 0L); }
-#endif
 
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 _AFXCMN_INLINE BOOL CHeaderCtrl::GetItemDropDownRect(_In_ int iItem, _Out_ LPRECT lpRect) const
 	{ ASSERT(::IsWindow(m_hWnd)); return Header_GetItemDropDownRect(m_hWnd, iItem, lpRect); } // HDM_GETITEMDROPDOWNRECT
 _AFXCMN_INLINE BOOL CHeaderCtrl::GetOverflowRect(_Out_ LPRECT lpRect) const
@@ -193,7 +187,7 @@ _AFXCMN_INLINE int CHeaderCtrl::GetFocusedItem() const
 	{ ASSERT(::IsWindow(m_hWnd)); return Header_GetFocusedItem(m_hWnd); } // HDM_GETFOCUSEDITEM
 _AFXCMN_INLINE BOOL CHeaderCtrl::SetFocusedItem(_In_ int iItem)
 	{ ASSERT(::IsWindow(m_hWnd)); return Header_SetFocusedItem(m_hWnd, iItem); } // HDM_SETFOCUSEDITEM
-#endif // _WIN32_WINNT >= 0x600 && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -266,19 +260,17 @@ _AFXCMN_INLINE CPalette* CReBarCtrl::SetPalette(_In_ HPALETTE hPal)
 _AFXCMN_INLINE BOOL CReBarCtrl::MoveBand(_In_ UINT uFrom, _In_ UINT uTo)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, RB_MOVEBAND, uFrom, uTo); }
 
-#if _WIN32_IE >= 0x0500
 _AFXCMN_INLINE void CReBarCtrl::PushChevron(_In_ UINT uBand, _In_ LPARAM lAppValue)
 	{ ASSERT(::IsWindow(m_hWnd)); ::SendMessage(m_hWnd, RB_PUSHCHEVRON, uBand, lAppValue); }
-#endif
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 _AFXCMN_INLINE BOOL CReBarCtrl::SetBandWidth(_In_ UINT uBand, _In_ int cxWidth)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, RB_SETBANDWIDTH, (WPARAM)uBand, (LPARAM)cxWidth); }
 _AFXCMN_INLINE DWORD CReBarCtrl::SetExtendedStyle(_In_ DWORD dwMask, _In_ DWORD dwStyleEx)
 	{ ASSERT(::IsWindow(m_hWnd)); return (DWORD) ::SendMessage(m_hWnd, RB_SETEXTENDEDSTYLE, dwMask, dwStyleEx); }
 _AFXCMN_INLINE DWORD CReBarCtrl::GetExtendedStyle() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (DWORD) ::SendMessage(m_hWnd, RB_GETEXTENDEDSTYLE, 0, 0L); }
-#endif // _WIN32_WINNT >= 0x0600 && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -311,16 +303,14 @@ _AFXCMN_INLINE void CToolTipCtrl::Update()
 _AFXCMN_INLINE BOOL CToolTipCtrl::GetCurrentTool(_Out_ LPTOOLINFO lpToolInfo) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, TTM_GETCURRENTTOOL, 0, (LPARAM)lpToolInfo); }
 
-#if _WIN32_IE >= 0x0500
 _AFXCMN_INLINE CSize CToolTipCtrl::GetBubbleSize(_In_ LPTOOLINFO lpToolInfo) const
 	{ ASSERT(::IsWindow(m_hWnd));  return CSize((DWORD)::SendMessage(m_hWnd, TTM_GETBUBBLESIZE, 0, (LPARAM)lpToolInfo)); }
 _AFXCMN_INLINE BOOL CToolTipCtrl::AdjustRect(_Out_ LPRECT lprc, _In_ BOOL bLarger /*= TRUE*/)
 	{ ASSERT(::IsWindow(m_hWnd));  return (BOOL)::SendMessage(m_hWnd, TTM_ADJUSTRECT, bLarger, (LPARAM)lprc); }
 _AFXCMN_INLINE BOOL CToolTipCtrl::SetTitle(_In_ UINT uIcon, _In_z_ LPCTSTR lpstrTitle)
 	{ ASSERT(::IsWindow(m_hWnd));  return (BOOL)::SendMessage(m_hWnd, TTM_SETTITLE, uIcon, (LPARAM)lpstrTitle); }
-#endif
 
-#if (_WIN32_WINNT >= 0x0501) && defined(UNICODE)
+#if defined(UNICODE)
 _AFXCMN_INLINE void CToolTipCtrl::Popup()
 	{ ASSERT(::IsWindow(m_hWnd));  ::SendMessage(m_hWnd, TTM_POPUP, 0, 0L); }
 _AFXCMN_INLINE void CToolTipCtrl::GetTitle(_Out_ PTTGETTITLE pTTGetTitle) const
@@ -368,17 +358,15 @@ _AFXCMN_INLINE int CComboBoxEx::InsertString(_In_ int nIndex, _In_z_ LPCTSTR lps
 _AFXCMN_INLINE int CProgressCtrl::SetPos(_In_ int nPos)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int) ::SendMessage(m_hWnd, PBM_SETPOS, nPos, 0L); }
 
-#if (_WIN32_IE >= 0x0400)
 _AFXCMN_INLINE COLORREF CProgressCtrl::SetBarColor(_In_ COLORREF clrBar)
 	{ ASSERT(::IsWindow(m_hWnd)); return (COLORREF) ::SendMessage(m_hWnd, PBM_SETBARCOLOR, 0, clrBar); }
-#endif	// _WIN32_IE >= 0x0400
 
-#if (_WIN32_WINNT >= 0x0501) && defined(UNICODE)
+#if defined(UNICODE)
 _AFXCMN_INLINE BOOL CProgressCtrl::SetMarquee(_In_ BOOL fMarqueeMode, _In_ int nInterval)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, PBM_SETMARQUEE, (WPARAM)fMarqueeMode, (LPARAM)nInterval); }
-#endif	// _WIN32_WINNT >= 0x0501 && defined(UNICODE)
+#endif	// defined(UNICODE)
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 _AFXCMN_INLINE int CProgressCtrl::GetStep() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int) ::SendMessage(m_hWnd, PBM_GETSTEP, 0, 0L); }
 _AFXCMN_INLINE COLORREF CProgressCtrl::GetBkColor() const
@@ -389,7 +377,7 @@ _AFXCMN_INLINE int CProgressCtrl::SetState(_In_ int iState)
 	{ ASSERT(::IsWindow(m_hWnd)); return (int) ::SendMessage(m_hWnd, PBM_SETSTATE, (WPARAM)iState, 0L); }
 _AFXCMN_INLINE int CProgressCtrl::GetState() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (int) ::SendMessage(m_hWnd, PBM_GETSTATE, 0, 0L); }
-#endif	// _WIN32_WINNT >= 0x0600 && defined(UNICODE)
+#endif //(NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 

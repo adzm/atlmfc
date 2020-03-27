@@ -35,15 +35,13 @@ INT_PTR CALLBACK AfxDlgProc(HWND hWnd, UINT message, WPARAM, LPARAM)
 /////////////////////////////////////////////////////////////////////////////
 // CDialog - Modeless and Modal
 
-static BOOL g_bClosedByEndDialog = FALSE;
-
 BEGIN_MESSAGE_MAP(CDialog, CWnd)
 	ON_COMMAND(IDOK, &CDialog::OnOK)
 	ON_COMMAND(IDCANCEL, &CDialog::OnCancel)
 	ON_MESSAGE(WM_COMMANDHELP, &CDialog::OnCommandHelp)
 	ON_MESSAGE(WM_HELPHITTEST, &CDialog::OnHelpHitTest)
 	ON_MESSAGE(WM_INITDIALOG, &CDialog::HandleInitDialog)
-	ON_MESSAGE(WM_SETFONT, &CDialog::HandleSetFont)
+	ON_WM_SETFONT()
 	ON_WM_PAINT()
 	ON_WM_QUERYENDSESSION()
 	ON_WM_ENDSESSION()
@@ -150,10 +148,8 @@ void CDialog::Initialize()
 	m_lpDialogInit = NULL;
 	m_pParentWnd = NULL;
 	m_hWndTop = NULL;
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_pOccDialogInfo = NULL;
-#endif
-	g_bClosedByEndDialog = FALSE;
+	m_bClosedByEndDialog = FALSE;
 }
 
 void CDialog::OnPaint()
@@ -303,10 +299,8 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 	if(!hInst)
 		hInst = AfxGetResourceHandle();
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	_AFX_OCC_DIALOG_INFO occDialogInfo;
 	COccManager* pOccManager = afxOccManager;
-#endif
 
 	HGLOBAL hTemplate = NULL;
 
@@ -326,7 +320,6 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 
 		AfxRegisterMFCCtrlClasses();
 
-#ifndef _AFX_NO_OCC_SUPPORT
 		// separately create OLE controls in the dialog template
 		if (pOccManager != NULL)
 		{
@@ -339,7 +332,6 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 
 		if (lpDialogTemplate == NULL)
 			return FALSE;
-#endif //!_AFX_NO_OCC_SUPPORT
 
 		// If no font specified, set the system font.
 		CString strFace;
@@ -405,7 +397,6 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
          *        hWnd == NULL, the object has been destroyed already.
  	 */
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	if (pOccManager != NULL)
 	{
 		pOccManager->PostCreateDialog(&occDialogInfo);
@@ -415,20 +406,17 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 			SetOccDialogInfo(NULL);
 		}
 	}
-#endif //!_AFX_NO_OCC_SUPPORT
 
 	if (!AfxUnhookWindowCreate())
 		PostNcDestroy();        // cleanup if Create fails too soon
 
 	// handle EndDialog calls during OnInitDialog
 #ifdef _DEBUG
-#ifndef _AFX_NO_OCC_SUPPORT
         // Saving the old flag for checking WF_CONTINUEMODAL (if the object has not been destroyed)
         // This needs to be after ::CreateDialogIndirect().
 	DWORD dwOldFlags = 0;
         if (hWnd != NULL)
             dwOldFlags = m_nFlags;
-#endif
 #endif
 	if (hWnd != NULL && !(m_nFlags & WF_CONTINUEMODAL))
 	{
@@ -446,7 +434,6 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 	if (hWnd == NULL)
 	{
 #ifdef _DEBUG
-#ifndef _AFX_NO_OCC_SUPPORT
 		if (dwOldFlags & WF_CONTINUEMODAL)
 		{
 			if (afxOccManager == NULL)
@@ -460,7 +447,6 @@ BOOL CWnd::CreateDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate,
 				TRACE(traceAppMsg, 0, "Warning: Dialog creation failed!  GetLastError returns 0x%8.8X\n", dwError);
 			}
 		}
-#endif //!_AFX_NO_OCC_SUPPORT
 #endif //_DEBUG
 		return FALSE;
 	}
@@ -493,8 +479,6 @@ BOOL CWnd::CreateRunDlgIndirect(LPCDLGTEMPLATE lpDialogTemplate, CWnd* pParentWn
 	return bRet;
 }
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 BOOL CDialog::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO* pOccDialogInfo)
 {
 	m_pOccDialogInfo = pOccDialogInfo;
@@ -505,8 +489,6 @@ _AFX_OCC_DIALOG_INFO* CDialog::GetOccDialogInfo()
 {
 	return m_pOccDialogInfo;	
 }
-
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Modal Dialogs
@@ -627,15 +609,12 @@ INT_PTR CDialog::DoModal()
 	HWND hWndParent = PreModal();
 	AfxUnhookWindowCreate();
 	BOOL bEnableParent = FALSE;
-#ifndef _AFX_NO_OLE_SUPPORT
 	CWnd* pMainWnd = NULL;
 	BOOL bEnableMainWnd = FALSE;
-#endif
 	if (hWndParent && hWndParent != ::GetDesktopWindow() && ::IsWindowEnabled(hWndParent))
 	{
 		::EnableWindow(hWndParent, FALSE);
 		bEnableParent = TRUE;
-#ifndef _AFX_NO_OLE_SUPPORT
 		pMainWnd = AfxGetMainWnd();
 		if (pMainWnd && pMainWnd->IsFrameWnd() && pMainWnd->IsWindowEnabled())
 		{
@@ -645,21 +624,20 @@ INT_PTR CDialog::DoModal()
 			pMainWnd->EnableWindow(FALSE);
 			bEnableMainWnd = TRUE;
 		}
-#endif
 	}
 
 	TRY
 	{
 		// create modeless dialog
 		AfxHookWindowCreate(this);
-		if (!CreateRunDlgIndirect(lpDialogTemplate, CWnd::FromHandle(hWndParent), hInst) && !g_bClosedByEndDialog)
+		if (!CreateRunDlgIndirect(lpDialogTemplate, CWnd::FromHandle(hWndParent), hInst) && !m_bClosedByEndDialog)
 		{
 			// If the resource handle is a resource-only DLL, the dialog may fail to launch. Use the
 			// module instance handle as the fallback dialog creator instance handle if necessary.
 			CreateRunDlgIndirect(lpDialogTemplate, CWnd::FromHandle(hWndParent), AfxGetInstanceHandle());
 		}
 
-		g_bClosedByEndDialog = FALSE;
+		m_bClosedByEndDialog = FALSE;
 	}
 	CATCH_ALL(e)
 	{
@@ -669,10 +647,8 @@ INT_PTR CDialog::DoModal()
 	}
 	END_CATCH_ALL
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	if (bEnableMainWnd)
 		pMainWnd->EnableWindow(TRUE);
-#endif
 	if (bEnableParent)
 		::EnableWindow(hWndParent, TRUE);
 	if (hWndParent != NULL && ::GetActiveWindow() == m_hWnd)
@@ -695,7 +671,7 @@ void CDialog::EndDialog(int nResult)
 {
 	ASSERT(::IsWindow(m_hWnd));
 
-	g_bClosedByEndDialog = TRUE;
+	m_bClosedByEndDialog = TRUE;
 
 	if (m_nFlags & (WF_MODALLOOP|WF_CONTINUEMODAL))
 		EndModalLoop(nResult);
@@ -706,10 +682,10 @@ void CDialog::EndDialog(int nResult)
 /////////////////////////////////////////////////////////////////////////////
 // Standard CDialog implementation
 
-LRESULT CDialog::HandleSetFont(WPARAM wParam, LPARAM)
+void CDialog::OnSetFont(CFont* pFont, BOOL /*bRedraw*/)
 {
-	OnSetFont(CFont::FromHandle((HFONT)wParam));
-	return Default();
+	OnSetFont(pFont);
+	Default();
 }
 
 void CDialog::PreInitDialog()
@@ -721,7 +697,6 @@ LRESULT CDialog::HandleInitDialog(WPARAM, LPARAM)
 {
 	PreInitDialog();
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	// create OLE controls
 	COccManager* pOccManager = afxOccManager;
 	if ((pOccManager != NULL) && (m_pOccDialogInfo != NULL))
@@ -741,12 +716,10 @@ LRESULT CDialog::HandleInitDialog(WPARAM, LPARAM)
 			return FALSE;
 		}
 	}
-#endif
 
 	// Default will call the dialog proc, and thus OnInitDialog
 	LRESULT bResult = Default();
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	if (bResult && (m_nFlags & WF_OLECTLCONTAINER))
 	{
 		if (m_pCtrlCont != NULL)
@@ -762,7 +735,6 @@ LRESULT CDialog::HandleInitDialog(WPARAM, LPARAM)
 			
 		}
 	}
-#endif
 
 	return bResult;
 }

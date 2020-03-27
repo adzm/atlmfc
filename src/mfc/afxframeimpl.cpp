@@ -604,38 +604,39 @@ BOOL CFrameImpl::ProcessKeyboard(int nKey, BOOL* pbProcessAccel)
 	}
 
 	// If popup menu is active, pass keyboard control to menu:
-	if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
+	CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+	if (pActivePopupMenu != NULL)
 	{
 		CWnd* pFocus = CWnd::GetFocus();
 
-		if (CMFCPopupMenu::m_pActivePopupMenu->IsRibbonMiniToolBar())
+		if (pActivePopupMenu->IsRibbonMiniToolBar())
 		{
 			BOOL bIsFloatyActive = (pFocus->GetSafeHwnd() != NULL &&
-				(CMFCPopupMenu::m_pActivePopupMenu->IsChild(pFocus) || pFocus->GetSafeHwnd() == CMFCPopupMenu::m_pActivePopupMenu->GetSafeHwnd()));
+				(pActivePopupMenu->IsChild(pFocus) || pFocus->GetSafeHwnd() == pActivePopupMenu->GetSafeHwnd()));
 
 			if (bIsFloatyActive)
 			{
 				return FALSE;
 			}
 
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
+			pActivePopupMenu->SendMessage(WM_CLOSE);
 			return FALSE;
 		}
 
-		if (pFocus->GetSafeHwnd() != NULL && CMFCPopupMenu::m_pActivePopupMenu->IsChild(pFocus))
+		if (pFocus->GetSafeHwnd() != NULL && pActivePopupMenu->IsChild(pFocus))
 		{
 			return FALSE;
 		}
 
-		BOOL bIsDropList = CMFCPopupMenu::m_pActivePopupMenu->GetMenuBar()->IsDropDownListMode();
+		BOOL bIsDropList = pActivePopupMenu->GetMenuBar()->IsDropDownListMode();
 
-		CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_KEYDOWN, nKey);
+		pActivePopupMenu->SendMessage(WM_KEYDOWN, nKey);
 		if (!bIsDropList)
 		{
 			return TRUE;
 		}
 
-		CMFCDropDownListBox* pDropDownList = DYNAMIC_DOWNCAST(CMFCDropDownListBox, CMFCPopupMenu::m_pActivePopupMenu);
+		CMFCDropDownListBox* pDropDownList = DYNAMIC_DOWNCAST(CMFCDropDownListBox, CMFCPopupMenu::GetSafeActivePopupMenu());
 
 		return pDropDownList == NULL || !pDropDownList->IsEditFocused();
 	}
@@ -776,12 +777,9 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 
 	BOOL bStopProcessing = FALSE;
 
-	if (!CMFCToolBar::IsCustomizeMode() && CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
+	CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+	if (!CMFCToolBar::IsCustomizeMode() && pActivePopupMenu != NULL)
 	{
-		// If CMFCPopupMenu::m_pActivePopupMenu is owned by another UI thread, the CMFCPopupMenu::m_pActivePopupMenu pointer may be set to
-		// NULL in the midst of this processing.  So save the pointer and use the saved value to close the active popup menu and continue.
-		CMFCPopupMenu *pActivePopupMenu = CMFCPopupMenu::m_pActivePopupMenu;
-
 		CMFCPopupMenu::MENUAREA_TYPE clickArea = pActivePopupMenu->CheckArea(pt);
 
 		if (clickArea == CMFCPopupMenu::OUTSIDE)
@@ -872,7 +870,7 @@ BOOL CFrameImpl::ProcessMouseClick(UINT uiMsg, POINT pt, HWND hwnd)
 				}
 			}
 
-			CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::m_pActivePopupMenu;
+			CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
 			if (pActivePopupMenu != NULL && !pActivePopupMenu->InCommand())
 			{
 				bStopProcessing = !pActivePopupMenu->DefaultMouseClickOnClose();
@@ -961,15 +959,19 @@ BOOL CFrameImpl::ProcessMouseMove(POINT pt)
 			}
 		}
 
-		CRect rectMenu;
-		CMFCPopupMenu::m_pActivePopupMenu->GetWindowRect(rectMenu);
-
-		if (rectMenu.PtInRect(pt) || CMFCPopupMenu::m_pActivePopupMenu->GetMenuBar()->FindDestintationToolBar(pt) != NULL)
+		CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+		if (pActivePopupMenu != NULL)
 		{
-			return FALSE; // Default processing
-		}
+			CRect rectMenu;
+			pActivePopupMenu->GetWindowRect(rectMenu);
 
-		return TRUE; // Active menu "capturing"
+			if (rectMenu.PtInRect(pt) || pActivePopupMenu->GetMenuBar()->FindDestintationToolBar(pt) != NULL)
+			{
+				return FALSE; // Default processing
+			}
+
+			return TRUE; // Active menu "capturing"
+		}
 	}
 
 	return FALSE; // Default processing
@@ -977,24 +979,25 @@ BOOL CFrameImpl::ProcessMouseMove(POINT pt)
 
 BOOL CFrameImpl::ProcessMouseWheel(WPARAM wParam, LPARAM lParam)
 {
-	if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
+	CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+	if (pActivePopupMenu != NULL)
 	{
-		if (CMFCPopupMenu::m_pActivePopupMenu->IsScrollable())
+		if (pActivePopupMenu->IsScrollable())
 		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_MOUSEWHEEL, wParam, lParam);
+			pActivePopupMenu->SendMessage(WM_MOUSEWHEEL, wParam, lParam);
 		}
 
-		if (CMFCPopupMenu::m_pActivePopupMenu->IsRibbonMiniToolBar ())
+		if (pActivePopupMenu->IsRibbonMiniToolBar ())
 		{
 			CWnd* pFocus = CWnd::GetFocus();
 
 			BOOL bIsFloatyActive = (pFocus->GetSafeHwnd () != NULL && 
-				(CMFCPopupMenu::m_pActivePopupMenu->IsChild (pFocus) || 
-				pFocus->GetSafeHwnd () == CMFCPopupMenu::m_pActivePopupMenu->GetSafeHwnd ()));
+				(pActivePopupMenu->IsChild (pFocus) || 
+				pFocus->GetSafeHwnd () == pActivePopupMenu->GetSafeHwnd ()));
 
 			if (!bIsFloatyActive)
 			{
-				CMFCPopupMenu::m_pActivePopupMenu->SendMessage (WM_CLOSE);
+				pActivePopupMenu->SendMessage (WM_CLOSE);
 			}
 		}
 
@@ -1186,7 +1189,7 @@ BOOL __stdcall CFrameImpl::IsHelpKey(LPMSG lpMsg)
 
 void CFrameImpl::DeactivateMenu()
 {
-	if (!CMFCToolBar::IsCustomizeMode() && CMFCPopupMenu::m_pActivePopupMenu != NULL)
+	if (!CMFCToolBar::IsCustomizeMode() && CMFCPopupMenu::GetSafeActivePopupMenu() != NULL)
 	{
 		if (m_pMenuBar != NULL)
 		{
@@ -1409,7 +1412,7 @@ void CFrameImpl::AddDefaultButtonsToCustomizePane(CMFCPopupMenu* pMenuPane, UINT
 	{
 		CMFCToolBarButton* pButtonCurr = (CMFCToolBarButton*)lstOrigButtons.GetNext(posCurr);
 
-		UINT uiID = pButtonCurr->m_nID;
+		UINT uiID = pButtonCurr == 0 ? 0 : pButtonCurr->m_nID;
 
 		if ((pButtonCurr == NULL) ||
 			(pButtonCurr->m_nStyle & TBBS_SEPARATOR) ||
@@ -1610,6 +1613,11 @@ void CFrameImpl::OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI)
 			::SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
 		}
 
+		if (bIsRibbonCaption && GetGlobalData()->IsDwmCompositionEnabled())
+		{
+			rect.OffsetRect(-rect.TopLeft());
+		}
+
 		int nShellAutohideBars = GetGlobalData()->GetShellAutohideBars();
 
 		if (nShellAutohideBars & AFX_AUTOHIDE_BOTTOM)
@@ -1651,6 +1659,7 @@ BOOL CFrameImpl::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS FAR* l
 	ENSURE(lpncsp != NULL);
 
 	BOOL bIsRibbonCaption = FALSE;
+	CSize szSystemBorder(afxGlobalUtils.GetSystemBorders(m_pFrame));
 
 	if (m_pRibbonBar->GetSafeHwnd() != NULL && ((m_pRibbonBar->IsWindowVisible()|| IsFullScreeen ()) || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
 	{
@@ -1658,9 +1667,9 @@ BOOL CFrameImpl::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS FAR* l
 
 		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
-			lpncsp->rgrc[0].bottom -= GetSystemMetrics(SM_CYSIZEFRAME);
-			lpncsp->rgrc[0].left += GetSystemMetrics(SM_CYSIZEFRAME);
-			lpncsp->rgrc[0].right -= GetSystemMetrics(SM_CXSIZEFRAME);
+			lpncsp->rgrc[0].left += szSystemBorder.cx;
+			lpncsp->rgrc[0].right -= szSystemBorder.cx;
+			lpncsp->rgrc[0].bottom -= szSystemBorder.cy;
 
 			return TRUE;
 		}
@@ -1675,7 +1684,7 @@ BOOL CFrameImpl::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS FAR* l
 		if (IsOwnerDrawCaption() && !m_pFrame->IsZoomed())
 		{
 			m_pRibbonStatusBar->m_bBottomFrame = TRUE;
-			lpncsp->rgrc[0].bottom += GetSystemMetrics(SM_CYSIZEFRAME);
+			lpncsp->rgrc[0].bottom += szSystemBorder.cy;
 		}
 		else
 		{
@@ -1779,7 +1788,7 @@ CRect CFrameImpl::GetCaptionRect()
 {
 	ASSERT_VALID(m_pFrame);
 
-	CSize szSystemBorder(::GetSystemMetrics(SM_CXSIZEFRAME), ::GetSystemMetrics(SM_CYSIZEFRAME));
+	CSize szSystemBorder (afxGlobalUtils.GetSystemBorders(m_pFrame));
 
 	if (m_pFrame->IsIconic() || (m_pFrame->GetStyle() & WS_MAXIMIZE) == WS_MAXIMIZE)
 	{
@@ -1925,7 +1934,7 @@ UINT CFrameImpl::OnNcHitTest(CPoint point)
 
 	m_pFrame->ScreenToClient(&point);
 
-	const CSize szSystemBorder(::GetSystemMetrics(SM_CXSIZEFRAME), ::GetSystemMetrics(SM_CYSIZEFRAME));
+	CSize szSystemBorder(afxGlobalUtils.GetSystemBorders(m_pFrame));
 
 	int cyOffset = szSystemBorder.cy;
 	if (!m_pFrame->IsIconic())

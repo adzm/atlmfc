@@ -958,7 +958,7 @@ void CMFCShellListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 							CMINVOKECOMMANDINFO cmi;
 							cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
 							cmi.fMask = 0;
-							cmi.hwnd = (HWND) GetParent();
+							cmi.hwnd = GetParent()->GetSafeHwnd();
 							cmi.lpVerb = (LPCSTR)(INT_PTR)(idCmd - 1);
 							cmi.lpParameters = NULL;
 							cmi.lpDirectory = NULL;

@@ -29,6 +29,8 @@
 #include "afxribbonbar.h"
 #include "afxribbonstatusbar.h"
 
+#include <Basetsd.h>
+
 #pragma comment(lib,"imm32") // ImmXxx
 
 #ifdef _DEBUG
@@ -95,7 +97,7 @@ BEGIN_MESSAGE_MAP(CMDIFrameWndEx, CMDIFrameWnd)
 	ON_WM_DWMCOMPOSITIONCHANGED()
 	ON_WM_POWERBROADCAST()
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CMDIFrameWndEx::OnIdleUpdateCmdUI)
-	ON_MESSAGE(WM_SETTEXT, &CMDIFrameWndEx::OnSetText)
+	ON_WM_SETTEXT()
 	ON_COMMAND(ID_CONTEXT_HELP, &CMDIFrameWndEx::OnContextHelp)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_STATUS_BAR, &CMDIFrameWndEx::OnUpdatePaneMenu)
 	ON_COMMAND_EX(ID_VIEW_STATUS_BAR, &CMDIFrameWndEx::OnPaneCheck)
@@ -220,21 +222,23 @@ BOOL CMDIFrameWndEx::PreTranslateMessage(MSG* pMsg)
 		}
 
 	case WM_CONTEXTMENU:
-		if (!GetGlobalData()->m_bSysUnderlineKeyboardShortcuts && !GetGlobalData()->m_bUnderlineKeyboardShortcuts)
 		{
-			GetGlobalData()->m_bUnderlineKeyboardShortcuts = TRUE;
-			CMFCToolBar::RedrawUnderlines ();
-		}
+			if (!GetGlobalData()->m_bSysUnderlineKeyboardShortcuts && !GetGlobalData()->m_bUnderlineKeyboardShortcuts)
+			{
+				GetGlobalData()->m_bUnderlineKeyboardShortcuts = TRUE;
+				CMFCToolBar::RedrawUnderlines ();
+			}
 
-		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd) &&
-			pMsg->wParam == VK_MENU)
-		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
-			return TRUE;
-		}
-		else if (m_Impl.ProcessKeyboard((int) pMsg->wParam))
-		{
-			return TRUE;
+			CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+			if (pActivePopupMenu != NULL && pMsg->wParam == VK_MENU)
+			{
+				pActivePopupMenu->SendMessage(WM_CLOSE);
+				return TRUE;
+			}
+			else if (m_Impl.ProcessKeyboard((int) pMsg->wParam))
+			{
+				return TRUE;
+			}
 		}
 		break;
 
@@ -270,7 +274,7 @@ BOOL CMDIFrameWndEx::PreTranslateMessage(MSG* pMsg)
 				return TRUE;
 			}
 
-			if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
+			if (CMFCPopupMenu::GetSafeActivePopupMenu() != NULL)
 			{
 				return TRUE; // To prevent system menu opening
 			}
@@ -635,7 +639,7 @@ void CMDIFrameWndEx::HtmlHelp(DWORD_PTR dwData, UINT nCmd)
 	}
 }
 
-void CMDIFrameWndEx::WinHelp(DWORD dwData, UINT nCmd)
+void CMDIFrameWndEx::WinHelp(DWORD_PTR dwData, UINT nCmd)
 {
 	if (dwData > 0 || !m_bContextHelp)
 	{
@@ -1440,12 +1444,12 @@ void CMDIFrameWndEx::OnNcPaint()
 	}
 }
 
-LRESULT CMDIFrameWndEx::OnSetText(WPARAM, LPARAM lParam)
+int CMDIFrameWndEx::OnSetText(LPCTSTR lpszText)
 {
 	LRESULT lRes = Default();
 
-	m_Impl.OnSetText((LPCTSTR)lParam);
-	return lRes;
+	m_Impl.OnSetText(lpszText);
+	return (int)lRes;
 }
 
 BOOL CMDIFrameWndEx::OnNcActivate(BOOL bActive)
@@ -1591,7 +1595,7 @@ void CMDIFrameWndEx::UpdateMDITabbedBarsIcons()
 			ASSERT_VALID(pBar);
 
 #pragma warning(disable : 4311)
-			SetClassLongPtr(hwndMDIChild, GCLP_HICONSM, (long) pBar->GetIcon(FALSE));
+			SetClassLongPtr(hwndMDIChild, GCLP_HICONSM, (long) PtrToLong(reinterpret_cast<void*>(pBar->GetIcon(FALSE))));
 #pragma warning(default : 4311)
 		}
 
@@ -1718,7 +1722,7 @@ void CMDIFrameWndEx::OnCompositionChanged()
 	m_Impl.OnCompositionChanged();
 }
 
-UINT CMDIFrameWndEx::OnPowerBroadcast(UINT nPowerEvent, UINT /* nEventData */)
+UINT CMDIFrameWndEx::OnPowerBroadcast(UINT nPowerEvent, LPARAM /*lEventData*/)
 {
 	LRESULT lres = Default();
 

@@ -160,7 +160,6 @@ inline bool SafeStringCopy(
 	return _SafeStringCopy(Destination, Source, sizeof(Destination));
 }
 
-#if(_WIN32_WINNT >= 0x0400)
 // Helper class for reverting the thread impersonation token
 // and then restoring it back to what it was
 class CRevertThreadToken
@@ -221,21 +220,6 @@ public:
 		return dwError;
 	}
 };
-#else
-// Dummy version for downlevel support
-class CRevertThreadToken
-{
-public:
-	BOOL Initialize() throw()
-	{
-		return FALSE;
-	}
-	DWORD Restore() throw()
-	{
-		return 0;
-	}
-};
-#endif // _WIN32_WINNT >= 0x0400)
 
 #ifndef ATL_ISAPI_BUFFER_SIZE
 #define ATL_ISAPI_BUFFER_SIZE 4096
@@ -1590,7 +1574,8 @@ ATL_NOINLINE inline BOOL AtlEscapeUrlMetaHelper(
 
 //Convert all unsafe characters in szStringIn to escape sequences
 //lpszStringIn and lpszStringOut should be different strings
-inline _Success_(return != FALSE) BOOL AtlEscapeUrl(
+_Success_(return != FALSE)
+inline BOOL AtlEscapeUrl(
 	_In_z_ LPCSTR szStringIn,
 	_Out_writes_to_(dwMaxLength, *pdwStrLen) LPSTR szStringOut,
 	_Out_opt_ DWORD* pdwStrLen,
@@ -1861,59 +1846,64 @@ inline BOOL AtlUnescapeUrl(
 	ATLENSURE(szStringIn != NULL);
 	ATLENSURE(szStringOut != NULL);
 
-	int nValue = 0;
 	char ch;
 	DWORD dwLen = 0;
-	BOOL bRet = TRUE;
+
 	while ((ch = *szStringIn) != 0)
 	{
-		if (dwLen == dwMaxLength)
-			bRet = FALSE;
-
-		if (bRet)
+		if (ch == '%')
 		{
-			if (ch == '%')
+			if ((*(szStringIn + 1) == '\0') || (*(szStringIn + 2) == '\0')) 
 			{
-				if ((*(szStringIn+1) == '\0') || (*(szStringIn+2) == '\0'))
-				{
-					bRet = FALSE;
-					break;
-				}
-				ch = *(++szStringIn);
-				//currently assuming 2 hex values after '%'
-				//as per the RFC 2396 document
-				short nFirstDigit = AtlHexValue(ch);
-				short nSecondDigit = AtlHexValue(*(++szStringIn));
+				// '%' sequence incomplete, set the output buffer size to
+				// what we've counted so far, but it would not reflect the real
+				// size requirements
+				if (pdwStrLen)
+					*pdwStrLen = dwLen + 1;
+				return FALSE;
+			}
 
-				if(nFirstDigit < 0 || nSecondDigit < 0)
-				{
-					bRet = FALSE;
-					break;
-				}
-				nValue = 16*nFirstDigit;
-				nValue+= nSecondDigit;
-				*szStringOut++ = static_cast<char>(nValue);
-			}
-			else //non-escape character
+			// Per RFC2396, two hex values follow the '%'.
+			short nFirstDigit = AtlHexValue(*(++szStringIn));
+			short nSecondDigit = AtlHexValue(*(++szStringIn));
+
+			if (nFirstDigit < 0 || nSecondDigit < 0 || (nFirstDigit == 0 && nSecondDigit == 0))
 			{
-				if (bRet)
-					*szStringOut++ = ch;
+				// Unexpected sequence after '%', or NUL encountered. Set the output buffer size to
+				// what we've counted so far, but it would not reflect the real size requirements.
+				if (pdwStrLen)
+					*pdwStrLen = dwLen + 1;
+				return FALSE;
 			}
+
+			// If the buffer is not large enough, use the loop to compute the size requirements
+			if (dwLen < dwMaxLength)
+				*szStringOut++ = static_cast<char>(((16*nFirstDigit) + nSecondDigit));
 		}
+		else
+		{
+			// Non-escaped character
+			// If the buffer is not large enough, use the loop to compute the size requirements
+			if (dwLen < dwMaxLength)
+				*szStringOut++ = ch;
+		}
+
 		dwLen++;
 		szStringIn++;
 	}
 
-	if (bRet && dwLen < dwMaxLength)
+	// Only own setting null termination when succeeded
+	if (dwLen < dwMaxLength)
 		*szStringOut = '\0';
 
+	// Size requirements, plus one byte for null termination
 	if (pdwStrLen)
 		*pdwStrLen = dwLen + 1;
 
-	if (dwLen+1 > dwMaxLength)
-		bRet = FALSE;
+	if (dwLen + 1 > dwMaxLength)
+		return FALSE;
 
-	return bRet;
+	return TRUE;
 }
 
 _Success_(return != FALSE)
@@ -1998,7 +1988,10 @@ inline BOOL AtlUnescapeUrl(
 	return bRet;
 }
 
+
+ATLPREFAST_SUPPRESS(6103)
 //Canonicalize a URL (same as InternetCanonicalizeUrl)
+_Success_(return != FALSE) 
 inline BOOL AtlCanonicalizeUrl(
 	_In_z_ LPCTSTR szUrl,
 	_Out_writes_(*pdwMaxLength) LPTSTR szCanonicalized,
@@ -2011,7 +2004,9 @@ inline BOOL AtlCanonicalizeUrl(
 
 	return AtlEscapeUrl(szUrl, szCanonicalized, pdwMaxLength, *pdwMaxLength, dwFlags | ATL_URL_CANONICALIZE);
 }
+ATLPREFAST_UNSUPPRESS()
 
+ATLPREFAST_SUPPRESS(6103)
 //Combine a base and relative URL (same as InternetCombineUrl)
 _Success_(return != FALSE)
 inline BOOL AtlCombineUrl(
@@ -2067,6 +2062,7 @@ inline BOOL AtlCombineUrl(
 	}
 	return AtlEscapeUrl(szCombined, szBuffer, pdwMaxLength, *pdwMaxLength, dwFlags | ATL_URL_COMBINE | ATL_URL_CANONICALIZE);
 }
+ATLPREFAST_UNSUPPRESS()
 
 class CUrl
 {
@@ -2185,6 +2181,7 @@ public:
 		return bRet;
 	}
 
+ATLPREFAST_SUPPRESS(6103)    
 	_Success_(return != FALSE)
 	inline BOOL CreateUrl(
 		_Out_writes_to_(*pdwMaxLength,*pdwMaxLength) LPTSTR lpszUrl,
@@ -2307,13 +2304,14 @@ ATLPREFAST_UNSUPPRESS()
 				return TRUE;
 			}
 			else
-			{
+			{              
 				return FALSE;
 			}
 		}
 
 		return TRUE;
 	}
+ATLPREFAST_UNSUPPRESS()
 
 	inline void Clear() throw()
 	{
@@ -3224,7 +3222,6 @@ public:
 		return hr;
 	}
 
-#if (_WIN32_WINNT >= 0x0400) || (_WIN32_WINDOWS > 0x0400)
 	_Check_return_ HRESULT AddTimer(
 		_In_ DWORD dwInterval,
 		_In_ IWorkerThreadClient *pClient,
@@ -3268,7 +3265,6 @@ public:
 			*phTimer = hTimer;
 		return S_OK;
 	}
-#endif
 
 	_Check_return_ HRESULT RemoveHandle(_In_ HANDLE hObject) throw()
 	{

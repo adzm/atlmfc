@@ -201,7 +201,7 @@ protected:
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnCancelMode();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
+	afx_msg LRESULT OnPrintClient(CDC* pDC, UINT nFlags);
 
 	DECLARE_MESSAGE_MAP()
 };

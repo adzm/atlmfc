@@ -186,7 +186,7 @@ public:
 		_In_reads_bytes_(nBufSize) LPCVOID pBuffer,
 		_In_ DWORD nBufSize,
 		_Inout_ LPOVERLAPPED pOverlapped,
-		_In_opt_ LPOVERLAPPED_COMPLETION_ROUTINE pfnCompletionRoutine) throw()
+		_In_ LPOVERLAPPED_COMPLETION_ROUTINE pfnCompletionRoutine) throw()
 	{
 		ATLASSUME(m_h != NULL);
 

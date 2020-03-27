@@ -2063,7 +2063,7 @@ void CMFCVisualManagerOffice2007::DrawNcCaption(CDC* pDC, CRect rectCaption, DWO
 {
 	const BOOL bIsRTL = (dwStyleEx & WS_EX_LAYOUTRTL) == WS_EX_LAYOUTRTL;
 	const int nSysCaptionHeight = ::GetSystemMetrics(SM_CYCAPTION);
-	CSize szSysBorder(GetSystemBorders(FALSE));
+	CSize szSysBorder(afxGlobalUtils.GetSystemBorders(dwStyle));
 
 	CDC memDC;
 	memDC.CreateCompatibleDC(pDC);
@@ -2272,11 +2272,11 @@ BOOL CMFCVisualManagerOffice2007::OnNcPaint(CWnd* pWnd, const CObList& lstSysBut
 		}
 
 		CRect rectCaption(rtWindow);
-		CSize szSysBorder(GetSystemBorders(bRibbonCaption));
+		const DWORD dwStyle = pWnd->GetStyle();
+		CSize szSysBorder(afxGlobalUtils.GetSystemBorders(dwStyle));
 
 		rectCaption.bottom = rectCaption.top + szSysBorder.cy;
 
-		const DWORD dwStyle = pWnd->GetStyle();
 		BOOL bMaximized = (dwStyle & WS_MAXIMIZE) == WS_MAXIMIZE;
 
 		if (!bRibbonCaption)
@@ -2429,7 +2429,7 @@ BOOL CMFCVisualManagerOffice2007::OnNcPaint(CWnd* pWnd, const CObList& lstSysBut
 
 			int nHeight = rectStatus.Height();
 			rectStatus.bottom = rtWindow.bottom;
-			rectStatus.top    = rectStatus.bottom - nHeight -(bBottomFrame ? -1 : szSysBorder.cy);
+			rectStatus.top    = rectStatus.bottom - nHeight - (bBottomFrame ? 0 : szSysBorder.cy);
 			rectStatus.left   = rtWindow.left;
 			rectStatus.right  = rtWindow.right;
 
@@ -2776,7 +2776,7 @@ void CMFCVisualManagerOffice2007::OnFillBarBackground(CDC* pDC, CBasePane* pBar,
 	}
 	else if (pBar->IsKindOf(RUNTIME_CLASS(CMFCStatusBar)))
 	{
-		CSize szSysBorder(GetSystemBorders(TRUE));
+		CSize szSysBorder(afxGlobalUtils.GetSystemBorders(pBar->GetParent()));
 
 		CRect rect(rectClient);
 		CRect rectExt(0, 0, 0, 0);
@@ -2808,7 +2808,7 @@ void CMFCVisualManagerOffice2007::OnFillBarBackground(CDC* pDC, CBasePane* pBar,
 	{
 		CMFCRibbonStatusBar* pRibbonStatusBar = DYNAMIC_DOWNCAST(CMFCRibbonStatusBar, pBar);
 
-		CSize szSysBorder(GetSystemBorders(TRUE));
+		CSize szSysBorder(afxGlobalUtils.GetSystemBorders(pBar->GetParent()));
 
 		CRect rect(rectClient);
 		CRect rectExt(0, 0, 0, 0);
@@ -2826,12 +2826,12 @@ void CMFCVisualManagerOffice2007::OnFillBarBackground(CDC* pDC, CBasePane* pBar,
 
 		BOOL bActive = IsWindowActive(pWnd);
 
-		rect.InflateRect(szSysBorder.cx, 0, szSysBorder.cx, bBottomFrame ? -1 : szSysBorder.cy);
+		rect.InflateRect(szSysBorder.cx, 0, szSysBorder.cx, bBottomFrame ? 0 : szSysBorder.cy);
 		m_ctrlStatusBarBack.Draw(pDC, rect, bActive ? 0 : 1);
 
 		if (bExtended)
 		{
-			rectExt.InflateRect(0, 0, szSysBorder.cx, bBottomFrame ? -1 : szSysBorder.cy);
+			rectExt.InflateRect(0, 0, szSysBorder.cx, bBottomFrame ? 0 : szSysBorder.cy);
 			rectExt.left -= m_ctrlStatusBarBack_Ext.GetParams().m_rectCorners.left;
 			m_ctrlStatusBarBack_Ext.Draw(pDC, rectExt, bActive ? 0 : 1);
 		}
@@ -4658,10 +4658,8 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCaption(CDC* pDC, CMFCRibbonBar* p
 	const BOOL bActive    = IsWindowActive(pWnd);
 	const BOOL bGlass	  = pBar->IsTransparentCaption();
 
-	//int nExtraWidth = 0;
-
 	{
-		CSize szSysBorder(GetSystemBorders(TRUE));
+		CSize szSysBorder(afxGlobalUtils.GetSystemBorders(pBar->GetParent()));
 		CRect rectCaption1(rectCaption);
 		CRect rectBorder(m_ctrlMainBorderCaption.GetParams().m_rectSides);
 		CRect rectQAT = pBar->GetQuickAccessToolbarLocation();

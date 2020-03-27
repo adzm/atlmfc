@@ -11,10 +11,6 @@
 #ifndef __AFXOLE_H__
 #define __AFXOLE_H__
 
-#ifdef _AFX_NO_OLE_SUPPORT
-	#error OLE classes not supported in this library variant.
-#endif
-
 #ifndef __AFXEXT_H__
 	#include <afxext.h>
 #endif

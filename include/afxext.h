@@ -335,9 +335,9 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnWindowPosChanging(LPWINDOWPOS);
-	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnGetText(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnGetTextLength(WPARAM wParam, LPARAM lParam);
+	afx_msg int OnSetText(LPCTSTR lpszText);
+	afx_msg int OnGetText(int nMaxChars, LPTSTR lpszText);
+	afx_msg UINT OnGetTextLength();
 	afx_msg LRESULT OnSetMinHeight(WPARAM wParam, LPARAM lParam);
 
 	DECLARE_MESSAGE_MAP()
@@ -507,7 +507,6 @@ public:
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
 
 protected:
-#ifndef _AFX_NO_OCC_SUPPORT
 	// data and functions necessary for OLE control containment
 	_AFX_OCC_DIALOG_INFO* m_pOccDialogInfo;
 	LPCTSTR m_lpszTemplateName;
@@ -516,7 +515,6 @@ protected:
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
 
 	DECLARE_MESSAGE_MAP()
-#endif
 };
 
 /*============================================================================*/
@@ -752,7 +750,7 @@ protected:
 	afx_msg BOOL OnNcCreate(LPCREATESTRUCT lpcs);
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnDisplayChange();
-	afx_msg LRESULT OnPrintClient(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPrintClient(CDC* pDC, UINT nFlags);
 
 	DECLARE_MESSAGE_MAP()
 };
@@ -819,18 +817,16 @@ protected:
 	virtual void OnActivateFrame(UINT, CFrameWnd*);
 	BOOL SaveFocusControl();    // updates m_hWndFocus
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	// data and functions necessary for OLE control containment
 	_AFX_OCC_DIALOG_INFO* m_pOccDialogInfo;
 	_AFX_OCC_DIALOG_INFO* m_pCreatedOccDialogInfo;
 	virtual BOOL SetOccDialogInfo(_AFX_OCC_DIALOG_INFO* pOccDialogInfo);
 	virtual _AFX_OCC_DIALOG_INFO* GetOccDialogInfo();
 	afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
-#endif
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpcs);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	afx_msg LRESULT OnPrintClient(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPrintClient(CDC* pDC, UINT nFlags);
 
 	DECLARE_MESSAGE_MAP()
 };
@@ -930,7 +926,7 @@ protected:
 		UINT nAdjustType = adjustBorder);
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
 	afx_msg void OnUpdateNeedSel(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateNeedClip(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateNeedText(CCmdUI* pCmdUI);

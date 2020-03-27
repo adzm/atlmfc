@@ -35,6 +35,563 @@ static inline BOOL __stdcall IsSystemCommand(UINT uiCmd)
 }
 
 //////////////////////////////////////////////////////////////////////
+// CMFCBaseAccessibleObject
+
+IMPLEMENT_DYNAMIC(CMFCBaseAccessibleObject, CCmdTarget)
+
+BEGIN_INTERFACE_MAP(CMFCBaseAccessibleObject, CCmdTarget)
+	INTERFACE_PART(CMFCBaseAccessibleObject, IID_IAccessible, Accessible)
+END_INTERFACE_MAP()
+
+CMFCBaseAccessibleObject::CMFCBaseAccessibleObject()
+{
+	EnableAutomation();
+}
+
+CMFCBaseAccessibleObject::~CMFCBaseAccessibleObject()
+{
+	ExternalDisconnect ();
+}
+
+//**************************************************************************************
+// IUnknown interface
+
+STDMETHODIMP_(ULONG) CMFCBaseAccessibleObject::XAccessible::AddRef()
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->ExternalAddRef();
+}
+
+STDMETHODIMP_(ULONG) CMFCBaseAccessibleObject::XAccessible::Release()
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->ExternalRelease();
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::QueryInterface(REFIID iid, LPVOID far* ppvObj)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->ExternalQueryInterface(&iid, ppvObj);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::GetTypeInfoCount(UINT FAR* pctinfo)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+
+	LPDISPATCH lpDispatch = pThis->GetIDispatch(FALSE);
+	ASSERT(lpDispatch != NULL);
+
+	return lpDispatch->GetTypeInfoCount(pctinfo);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::GetTypeInfo(UINT itinfo, LCID lcid, ITypeInfo FAR* FAR* pptinfo)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+
+	LPDISPATCH lpDispatch = pThis->GetIDispatch(FALSE);
+	ASSERT(lpDispatch != NULL);
+
+	return lpDispatch->GetTypeInfo(itinfo, lcid, pptinfo);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::GetIDsOfNames(REFIID riid, OLECHAR FAR* FAR* rgszNames, UINT cNames, LCID lcid, DISPID FAR* rgdispid) 
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+
+	LPDISPATCH lpDispatch = pThis->GetIDispatch(FALSE);
+	ASSERT(lpDispatch != NULL);
+
+	return lpDispatch->GetIDsOfNames(riid, rgszNames, cNames, lcid, rgdispid);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::Invoke(DISPID dispidMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS FAR* pdispparams, VARIANT FAR* pvarResult, EXCEPINFO FAR* pexcepinfo, UINT FAR* puArgErr)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	
+	LPDISPATCH lpDispatch = pThis->GetIDispatch(FALSE);
+	ASSERT(lpDispatch != NULL);
+
+	return lpDispatch->Invoke(dispidMember, riid, lcid, wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr);
+}
+
+//*********************************************************************************************
+// Accessible:
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accParent(THIS_ IDispatch * FAR* ppdispParent)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accParent(ppdispParent);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accChildCount(THIS_ long FAR* pChildCount)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accChildCount(pChildCount);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accChild(THIS_ VARIANT varChildIndex, IDispatch * FAR* ppdispChild)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accChild(varChildIndex, ppdispChild);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accName(THIS_ VARIANT varChild, BSTR* pszName)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accName(varChild, pszName);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accValue(THIS_ VARIANT varChild, BSTR* pszValue)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accValue(varChild, pszValue);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accDescription(THIS_ VARIANT varChild, BSTR FAR* pszDescription)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accDescription(varChild, pszDescription);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accRole(THIS_ VARIANT varChild, VARIANT *pvarRole)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accRole(varChild, pvarRole);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accState(THIS_ VARIANT varChild, VARIANT *pvarState)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accState(varChild, pvarState);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accHelp(THIS_ VARIANT varChild, BSTR* pszHelp)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accHelp(varChild, pszHelp);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accHelpTopic(THIS_ BSTR* pszHelpFile, VARIANT varChild, long* pidTopic)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accHelpTopic(pszHelpFile, varChild, pidTopic);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accKeyboardShortcut(THIS_ VARIANT varChild, BSTR* pszKeyboardShortcut)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accKeyboardShortcut(varChild, pszKeyboardShortcut);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accFocus(THIS_ VARIANT FAR * pvarFocusChild)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accFocus(pvarFocusChild);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accSelection(THIS_ VARIANT FAR * pvarSelectedChildren)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accSelection(pvarSelectedChildren);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::get_accDefaultAction(THIS_ VARIANT varChild, BSTR* pszDefaultAction)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->get_accDefaultAction(varChild, pszDefaultAction);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::accSelect(THIS_ long flagsSelect, VARIANT varChild)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->accSelect(flagsSelect, varChild);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::accLocation(THIS_ long* pxLeft, long* pyTop, long* pcxWidth, long* pcyHeight, VARIANT varChild)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->accLocation(pxLeft, pyTop, pcxWidth, pcyHeight, varChild);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::accNavigate(THIS_ long navDir, VARIANT varStart, VARIANT * pvarEndUpAt)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->accNavigate(navDir, varStart, pvarEndUpAt);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::accHitTest(THIS_ long xLeft, long yTop, VARIANT * pvarChildAtPoint)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->accHitTest(xLeft, yTop, pvarChildAtPoint);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::accDoDefaultAction(THIS_ VARIANT varChild)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->accDoDefaultAction(varChild);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::put_accName(THIS_ VARIANT varChild, BSTR szName)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->put_accName(varChild, szName);
+}
+
+STDMETHODIMP CMFCBaseAccessibleObject::XAccessible::put_accValue(THIS_ VARIANT varChild, BSTR pszValue)
+{
+	METHOD_PROLOGUE(CMFCBaseAccessibleObject, Accessible)
+	return pThis->put_accValue(varChild, pszValue);
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accParent(IDispatch** ppdispParent)
+{
+	if (!ppdispParent)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispParent = NULL;
+	return S_OK;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accChildCount(long *pcountChildren)
+{
+	if (!pcountChildren)
+	{
+		return E_INVALIDARG;
+	}
+
+	*pcountChildren = 0;
+	return S_OK;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accChild(VARIANT varChild, IDispatch **ppdispChild)
+{
+	if (!ppdispChild)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispChild = NULL;
+
+	return varChild.vt != VT_I4 ? E_INVALIDARG : S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accName(VARIANT varChild, BSTR* pszName)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CWnd* pWnd = GetParentWnd();
+		if (pWnd->GetSafeHwnd() != NULL)
+		{
+			ASSERT_VALID (pWnd);
+
+			SetACCData(pWnd, m_AccData);
+			*pszName = m_AccData.m_strAccName.AllocSysString();
+
+			return S_OK;
+		}
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		if (m_AccData.m_strAccName.IsEmpty())
+		{
+			return S_FALSE;
+		}
+
+		*pszName = m_AccData.m_strAccName.AllocSysString();
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accValue(VARIANT varChild, BSTR *pszValue)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CWnd* pWnd = GetParentWnd();
+
+		if (pWnd->GetSafeHwnd() != NULL)
+		{
+			ASSERT_VALID (pWnd);
+
+			SetACCData(pWnd, m_AccData);
+			*pszValue = m_AccData.m_strAccValue.AllocSysString();
+
+			return S_OK;
+		}
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		if (m_AccData.m_strAccValue.IsEmpty())
+		{
+			return S_FALSE;
+		}
+
+		*pszValue = m_AccData.m_strAccValue.AllocSysString();
+		return S_OK;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accDescription(VARIANT varChild, BSTR *pszDescription)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CWnd* pWnd = GetParentWnd();
+
+		if (pWnd->GetSafeHwnd () != NULL)
+		{
+			ASSERT_VALID (pWnd);
+
+			SetACCData(pWnd, m_AccData);
+			*pszDescription = m_AccData.m_strDescription.AllocSysString();
+
+			return S_OK;
+		}
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+		if (m_AccData.m_strDescription.IsEmpty())
+		{
+			return S_FALSE;
+		}
+		*pszDescription = m_AccData.m_strDescription.AllocSysString();
+		return S_OK;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accRole(VARIANT varChild, VARIANT *pvarRole)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CWnd* pWnd = GetParentWnd();
+		if (pWnd->GetSafeHwnd () != NULL)
+		{
+			ASSERT_VALID (pWnd);
+			SetACCData(pWnd, m_AccData);
+			pvarRole->vt = VT_I4;
+			pvarRole->lVal = m_AccData.m_nAccRole;
+			return S_OK;
+		}
+	}
+
+	if (!pvarRole || (varChild.vt != VT_I4 && varChild.lVal != CHILDID_SELF))
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		pvarRole->vt = VT_I4;
+		OnSetAccData(varChild.lVal);
+		pvarRole->lVal = m_AccData.m_nAccRole;
+		return S_OK;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accState(VARIANT varChild, VARIANT *pvarState)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CWnd* pWnd = GetParentWnd();
+		if (pWnd->GetSafeHwnd () != NULL)
+		{
+			ASSERT_VALID (pWnd);
+			SetACCData(pWnd, m_AccData);
+			pvarState->vt = VT_I4;
+			pvarState->lVal = m_AccData.m_bAccState;
+			return S_OK;
+		}
+	}
+
+	if (!pvarState || (varChild.vt != VT_I4 && varChild.lVal != CHILDID_SELF))
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+		pvarState->vt = VT_I4;
+		pvarState->lVal = m_AccData.m_bAccState;
+		return S_OK; 
+	}
+
+	return E_INVALIDARG;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accHelp(VARIANT varChild, BSTR *pszHelp)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		 return S_FALSE;
+	}
+
+	if (varChild.vt != VT_I4 || NULL == pszHelp)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+		*pszHelp = m_AccData.m_strAccHelp.AllocSysString();
+
+		return S_OK; 
+	}
+
+	return E_INVALIDARG;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accHelpTopic(BSTR* /*pszHelpFile*/, VARIANT /*varChild*/, long* /*pidTopic*/)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accKeyboardShortcut(VARIANT varChild, BSTR* pszKeyboardShortcut)
+{
+	if (varChild.vt != VT_I4 && varChild.lVal != CHILDID_SELF)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CWnd* pWnd = GetParentWnd();
+		if (pWnd->GetSafeHwnd() != NULL)
+		{
+			ASSERT_VALID (pWnd);
+
+			SetACCData(pWnd, m_AccData);
+			*pszKeyboardShortcut = m_AccData.m_strAccKeys.AllocSysString();
+
+			return S_OK;
+		}
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+		*pszKeyboardShortcut = m_AccData.m_strAccKeys.AllocSysString();
+
+		return S_OK;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accFocus(VARIANT *pvarChild)
+{
+	if (!pvarChild)
+	{
+		return E_INVALIDARG;
+	}
+
+	return E_NOTIMPL;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accSelection(VARIANT *pvarChildren)
+{
+	if (!pvarChildren)
+	{
+		return E_INVALIDARG;
+	}
+
+	return E_NOTIMPL;
+}
+
+HRESULT CMFCBaseAccessibleObject::get_accDefaultAction(VARIANT varChild, BSTR* pszDefaultAction)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CWnd* pWnd = GetParentWnd();
+		if (pWnd->GetSafeHwnd () != NULL)
+		{
+			ASSERT_VALID (pWnd);
+
+			SetACCData(pWnd, m_AccData);
+			*pszDefaultAction = m_AccData.m_strAccDefAction.AllocSysString();
+
+			return S_OK;
+		}
+	}
+
+	if (varChild.vt != VT_I4 && varChild.lVal != CHILDID_SELF)
+	{
+		return E_INVALIDARG;
+	}
+
+	OnSetAccData(varChild.lVal);
+
+	if (m_AccData.m_strAccDefAction.IsEmpty())
+	{
+		return S_FALSE;
+	}
+
+	*pszDefaultAction = m_AccData.m_strAccDefAction.AllocSysString();
+	return S_OK;
+}
+
+HRESULT CMFCBaseAccessibleObject::accSelect(long /*flagsSelect*/, VARIANT /*varChild*/)
+{
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::accLocation(long* /*pxLeft*/, long* /*pyTop*/, long* /*pcxWidth*/, long* /*pcyHeight*/, VARIANT /*varChild*/)
+{
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::accNavigate(long /*navDir*/, VARIANT /*varStart*/, VARIANT* /*pvarEndUpAt*/)
+{
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::accHitTest(long /*xLeft*/, long /*yTop*/, VARIANT* /*pvarChild*/)
+{
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::accDoDefaultAction(VARIANT /*varChild*/)
+{
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::put_accName(VARIANT /*varChild*/, BSTR /*szName*/)
+{
+	return S_FALSE;
+}
+
+HRESULT CMFCBaseAccessibleObject::put_accValue(VARIANT /*varChild*/, BSTR /*szValue*/)
+{
+	return S_FALSE;
+}
+
+BOOL CMFCBaseAccessibleObject::OnSetAccData(long /*lVal*/)
+{
+	return FALSE;
+}
+
+BOOL CMFCBaseAccessibleObject::SetACCData(CWnd* /*pParent*/, CAccessibilityData& /*data*/)
+{ 
+	return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////
 // CMFCRibbonSeparator
 
 IMPLEMENT_DYNCREATE(CMFCRibbonSeparator, CMFCRibbonBaseElement)
@@ -162,7 +719,7 @@ void CMFCRibbonSeparator::OnDrawOnList(CDC* pDC, CString strText, int nTextOffse
 //////////////////////////////////////////////////////////////////////
 // CMFCRibbonBaseElement
 
-IMPLEMENT_DYNAMIC(CMFCRibbonBaseElement, CObject)
+IMPLEMENT_DYNAMIC(CMFCRibbonBaseElement, CMFCBaseAccessibleObject)
 
 CMFCRibbonBaseElement::CMFCRibbonBaseElement()
 {
@@ -200,6 +757,7 @@ CMFCRibbonBaseElement::CMFCRibbonBaseElement()
 	m_bOnBeforeShowItemMenuIsSent = FALSE;
 	m_bEnableUpdateTooltipInfo   = TRUE;
 	m_bEnableTooltipInfoShortcut = TRUE;
+	m_bIsTabElement = FALSE;
 }
 
 CMFCRibbonBaseElement::~CMFCRibbonBaseElement()
@@ -1025,6 +1583,16 @@ BOOL CMFCRibbonBaseElement::SetACCData(CWnd* pParent, CAccessibilityData& data)
 	data.m_rectAccLocation = m_rect;
 	pParent->ClientToScreen(&data.m_rectAccLocation);
 
+	if (IsSeparator())
+	{
+		data.m_strAccName =  m_strText.IsEmpty() ?  _T("Separator") : m_strText;
+		data.m_nAccRole = ROLE_SYSTEM_SEPARATOR;
+		data.m_bAccState = STATE_SYSTEM_NORMAL;
+		data.m_strAccDefAction.Empty();
+
+		return TRUE;
+	}
+
 	CString strKeys = m_strKeys;
 
 	if (!m_bQuickAccessMode && m_pParentMenu != NULL && strKeys.GetLength() < 2)
@@ -1254,5 +1822,194 @@ void CMFCRibbonBaseElement::GetVisibleElements(CArray <CMFCRibbonBaseElement*, C
 	}
 }
 
+HRESULT CMFCRibbonBaseElement::get_accParent(IDispatch **ppdispParent)
+{
+	if (!ppdispParent)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispParent = NULL;
+
+	if (!IsTabElement() || m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	LPDISPATCH lpDispatch = m_pRibbonBar->GetAccessibleDispatch();
+	if (lpDispatch != NULL)
+	{
+		*ppdispParent = lpDispatch;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonBaseElement::accLocation(long* pxLeft, long* pyTop, long* pcxWidth, long* pcyHeight, VARIANT varChild)
+{
+	if (!pxLeft || !pyTop || !pcxWidth || !pcyHeight)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{		
+		CRect rectLocation = m_rect;
+		
+		CWnd* pParentWnd = m_pRibbonBar;
+		if (pParentWnd->GetSafeHwnd() == NULL)
+		{
+			pParentWnd = GetParentWnd();
+			if (pParentWnd->GetSafeHwnd() == NULL)
+			{
+				return S_FALSE;
+			}
+		}
+
+		pParentWnd->ClientToScreen(&rectLocation);
+
+		*pxLeft = rectLocation.left;
+		*pyTop = rectLocation.top;
+		*pcxWidth = rectLocation.Width();
+		*pcyHeight = rectLocation.Height();
+
+		return S_OK;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		*pxLeft = m_AccData.m_rectAccLocation.left;
+		*pyTop = m_AccData.m_rectAccLocation.top;
+		*pcxWidth = m_AccData.m_rectAccLocation.Width();
+		*pcyHeight = m_AccData.m_rectAccLocation.Height();
+
+		return S_OK;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonBaseElement::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEndUpAt)
+{
+	if (!IsTabElement())
+	{
+		return S_FALSE;
+	}
+
+	pvarEndUpAt->vt = VT_EMPTY;
+
+	if (varStart.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	CMFCRibbonButtonsGroup* pGroup = GetParentGroup();
+	if (pGroup == NULL)
+	{
+		return S_FALSE;
+	}
+
+	ASSERT_VALID(pGroup);
+
+	switch (navDir)
+	{
+	case NAVDIR_NEXT:   
+	case NAVDIR_RIGHT:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			int nIndex = pGroup->GetButtonIndex(this) + 1;
+			if (nIndex < pGroup->GetCount())
+			{	
+				CMFCRibbonBaseElement* pElement = pGroup->GetButton(nIndex);
+				if (pElement != NULL)
+				{
+					ASSERT_VALID(pElement);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pElement->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+			else
+			{
+				CMFCRibbonCategory* pCategory = m_pRibbonBar->GetActiveCategory();
+				if (pCategory != NULL)
+				{
+					ASSERT_VALID(pCategory);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pCategory->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+		}
+		break;
+
+	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			int nIndex = pGroup->GetButtonIndex(this) - 1;
+			if (nIndex >= 0)
+			{	
+				CMFCRibbonBaseElement* pElement = pGroup->GetButton(nIndex);
+				if (pElement != NULL)
+				{
+					ASSERT_VALID (pElement);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pElement->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+			else
+			{
+				CMFCRibbonTabsGroup* pTabs = m_pRibbonBar->GetTabs();
+				if (pTabs != NULL)
+				{
+					ASSERT_VALID(pTabs);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pTabs->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonBaseElement::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+{
+	if (!pvarChild)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (m_pRibbonBar->GetSafeHwnd() != NULL)
+	{
+		pvarChild->vt = VT_I4;
+		pvarChild->lVal = CHILDID_SELF;
+
+		CPoint pt(xLeft, yTop);
+		m_pRibbonBar->ScreenToClient(&pt);
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonBaseElement::accDoDefaultAction(VARIANT /*varChild*/)
+{
+	OnAccDefaultAction();
+	return S_OK;
+}
 
 

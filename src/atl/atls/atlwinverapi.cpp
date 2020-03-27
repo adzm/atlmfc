@@ -592,7 +592,7 @@ int GetTableIndexFromLcid(__in LCID lcid)
 	return -1;
 }
 
-LCID _AtlDownlevelLocaleNameToLCID(LPCWSTR localeName)
+LCID __cdecl _AtlDownlevelLocaleNameToLCID(LPCWSTR localeName)
 {
 	if (localeName == NULL)
 	{
@@ -608,7 +608,7 @@ LCID _AtlDownlevelLocaleNameToLCID(LPCWSTR localeName)
 	return LcidToLocaleNameTable[index].lcid;
 }
 
-int _AtlDownlevelLCIDToLocaleName(LCID lcid, LPWSTR outLocaleName, int cchLocaleName)
+int __cdecl _AtlDownlevelLCIDToLocaleName(LCID lcid, LPWSTR outLocaleName, int cchLocaleName)
 {
 	if (lcid == 0 || lcid == LOCALE_USER_DEFAULT || lcid == LOCALE_SYSTEM_DEFAULT)
 	{
@@ -642,7 +642,7 @@ int _AtlDownlevelLCIDToLocaleName(LCID lcid, LPWSTR outLocaleName, int cchLocale
 	return (int) count + 1;
 }
 
-int _AtlLCMapStringEx(_In_opt_ LPCWSTR lpLocaleName, _In_ DWORD dwMapFlags, _In_ LPCWSTR lpSrcStr, _In_ int cchSrc, _Out_opt_ LPWSTR lpDestStr, _In_ int cchDest, _In_opt_ LPNLSVERSIONINFO lpVersionInformation, _In_opt_ LPVOID lpReserved, _In_opt_ LPARAM sortHandle)
+int __cdecl _AtlLCMapStringEx(_In_opt_ LPCWSTR lpLocaleName, _In_ DWORD dwMapFlags, _In_ LPCWSTR lpSrcStr, _In_ int cchSrc, _Out_opt_ LPWSTR lpDestStr, _In_ int cchDest, _In_opt_ LPNLSVERSIONINFO lpVersionInformation, _In_opt_ LPVOID lpReserved, _In_opt_ LPARAM sortHandle)
 {
 #if (_ATL_NTDDI_MIN >= NTDDI_VISTA)
 	return LCMapStringEx(lpLocaleName, dwMapFlags, lpSrcStr, cchSrc, lpDestStr, cchDest, lpVersionInformation, lpReserved, sortHandle);

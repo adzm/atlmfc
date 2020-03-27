@@ -42,6 +42,7 @@ public:
 	}
 	virtual ~CAtlStringMgr() throw()
 	{
+		isInitialized = false;
 	}
 
 	void SetMemoryManager(_In_ IAtlMemMgr* pMemMgr) throw()
@@ -50,19 +51,37 @@ public:
 		m_pMemMgr = pMemMgr;
 	}
 
+	static IAtlStringMgr* GetInstance()
+	{
+#pragma warning(push)
+#pragma warning(disable: 4640)
+		static CWin32Heap strHeap( ::GetProcessHeap() );
+		static CAtlStringMgr strMgr(&strHeap);
+#pragma warning(pop)
+
+		return &strMgr;
+	}
 // IAtlStringMgr
 public:
 	virtual _Ret_maybenull_ _Post_writable_byte_size_(sizeof(CStringData) + nChars*nCharSize) CStringData* Allocate(
 		_In_ int nChars,
 		_In_ int nCharSize) throw()
 	{
+		ATLENSURE_RETURN_VAL( nChars>=0, NULL );
+
 		size_t nTotalSize;
 		CStringData* pData;
 		size_t nDataBytes;
 
-		nChars = AtlAlignUp( nChars + 1, 8 );  // Prevent excessive reallocation.  The heap will usually round up anyway.
+		if( FAILED(::ATL::AtlAdd(&nChars, nChars, 1)) )
+		{
+			return NULL;
+		}
 
-		if(	FAILED(::ATL::AtlMultiply(&nDataBytes, static_cast<size_t>(nChars), static_cast<size_t>(nCharSize))) ||
+		int nAlignedChars = ::ATL::AtlAlignUp( nChars, 8 );  // Prevent excessive reallocation.  The heap will usually round up anyway.
+		ATLENSURE_RETURN_VAL( nChars<=nAlignedChars, NULL );
+
+		if(	FAILED(::ATL::AtlMultiply(&nDataBytes, static_cast<size_t>(nAlignedChars), static_cast<size_t>(nCharSize))) ||
 			FAILED(::ATL::AtlAdd(&nTotalSize, static_cast<size_t>(sizeof( CStringData )), nDataBytes)))
 		{
 			return NULL;
@@ -74,7 +93,7 @@ public:
 		}
 		pData->pStringMgr = this;
 		pData->nRefs = 1;
-		pData->nAllocLength = nChars - 1;
+		pData->nAllocLength = nAlignedChars - 1;
 		pData->nDataLength = 0;
 
 		return( pData );
@@ -91,14 +110,22 @@ public:
 		_In_ int nChars,
 		_In_ int nCharSize) throw()
 	{
+		ATLENSURE_RETURN_VAL( nChars>=0, NULL );
+		ATLASSERT( pData->pStringMgr == this );
+
 		CStringData* pNewData;
 		ULONG nTotalSize;
 		ULONG nDataBytes;
 
-		ATLASSERT( pData->pStringMgr == this );
-		nChars = AtlAlignUp( nChars+1, 8 );  // Prevent excessive reallocation.  The heap will usually round up anyway.
+		if( FAILED(::ATL::AtlAdd(&nChars, nChars, 1)) )
+		{
+			return NULL;
+		}
 
-		if(	FAILED(::ATL::AtlMultiply(&nDataBytes, static_cast<ULONG>(nChars), static_cast<ULONG>(nCharSize))) ||
+		int nAlignedChars = ::ATL::AtlAlignUp( nChars, 8 );  // Prevent excessive reallocation.  The heap will usually round up anyway.
+		ATLENSURE_RETURN_VAL( nChars<=nAlignedChars, NULL );
+
+		if(	FAILED(::ATL::AtlMultiply(&nDataBytes, static_cast<ULONG>(nAlignedChars), static_cast<ULONG>(nCharSize))) ||
 			FAILED(::ATL::AtlAdd(&nTotalSize, static_cast<ULONG>(sizeof( CStringData )), nDataBytes)))
 		{
 			return NULL;
@@ -108,7 +135,7 @@ public:
 		{
 			return NULL;
 		}
-		pNewData->nAllocLength = nChars - 1;
+		pNewData->nAllocLength = nAlignedChars - 1;
 
 		return pNewData;
 	}
@@ -125,13 +152,17 @@ public:
 protected:
 	IAtlMemMgr* m_pMemMgr;
 	CNilStringData m_nil;
+private:
+	static bool StaticInitialize()
+	{
+		GetInstance();
+		return true;
+	}
+
+	static bool isInitialized;
 };
 
-#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
-extern CAtlStringMgr g_strmgr;
-#else
-extern CAtlStringMgr g_strmgrApp;
-#endif
+__declspec(selectany) bool CAtlStringMgr::isInitialized = CAtlStringMgr::StaticInitialize();
 
 template <class ChTraits>
 inline typename ChTraits::PCXSTR strstrT(typename ChTraits::PCXSTR pStr,typename ChTraits::PCXSTR pCharSet);
@@ -757,6 +788,8 @@ protected:
 	{
 		return ::CharUpperW(psz);
 	}
+ATLPREFAST_SUPPRESS(6103)    
+    _Success_(return != 0 && return < nSize) 
 	static DWORD _GetEnvironmentVariableW(
 		_In_z_ LPCWSTR pszName,
 		_Out_writes_opt_z_(nSize) LPWSTR pszBuffer,
@@ -764,6 +797,8 @@ protected:
 	{
 		return ::GetEnvironmentVariableW(pszName, pszBuffer, nSize);
 	}
+ATLPREFAST_UNSUPPRESS()
+
 public:
 	static int tclen(_In_opt_z_ const wchar_t*) throw()
 	{
@@ -1213,6 +1248,8 @@ ATLPREFAST_UNSUPPRESS()
 		return int( p-psz );
 	}
 
+ATLPREFAST_SUPPRESS(6103)    
+    _Success_(return != 0 && return < dwSize) 
 	static DWORD GetEnvironmentVariable(
 		_In_z_ const wchar_t* pstrVar,
 		_Out_writes_opt_z_(dwSize) wchar_t* pstrBuffer,
@@ -1220,6 +1257,7 @@ ATLPREFAST_UNSUPPRESS()
 	{
 		return ::GetEnvironmentVariableW(pstrVar, pstrBuffer, dwSize);
 	}
+ATLPREFAST_UNSUPPRESS()
 };
 
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
@@ -1267,11 +1305,7 @@ public:
 
 	static IAtlStringMgr* GetDefaultManager() throw()
 	{
-#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
-		return( &g_strmgr );
-#else
-		return (&g_strmgrApp);
-#endif
+		return CAtlStringMgr::GetInstance();
 	}
 };
 

@@ -91,28 +91,28 @@ void CMFCOutlookBarPaneList::EnsureVisible(int iButton)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CMFCProperySheetListBox
+// CMFCPropertySheetListBox
 
-CMFCProperySheetListBox::CMFCProperySheetListBox()
+CMFCPropertySheetListBox::CMFCPropertySheetListBox()
 {
 	m_nHighlightedItem = -1;
 	m_bTracked = FALSE;
 	m_pParent = NULL;
 }
 
-BEGIN_MESSAGE_MAP(CMFCProperySheetListBox, CListBox)
+BEGIN_MESSAGE_MAP(CMFCPropertySheetListBox, CListBox)
 	ON_WM_DRAWITEM_REFLECT()
 	ON_WM_MEASUREITEM_REFLECT()
 	ON_WM_MOUSEMOVE()
 	ON_WM_MOUSELEAVE()
 END_MESSAGE_MAP()
 
-void CMFCProperySheetListBox::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
+void CMFCPropertySheetListBox::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 {
 	lpMeasureItemStruct->itemHeight = GetGlobalData()->GetTextHeight() + 12;
 }
 
-void CMFCProperySheetListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
+void CMFCPropertySheetListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 {
 	ASSERT_VALID(m_pParent);
 
@@ -165,7 +165,7 @@ void CMFCProperySheetListBox::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	pDC->SelectObject(pOldFont);
 }
 
-void CMFCProperySheetListBox::OnMouseMove(UINT nFlags, CPoint point)
+void CMFCPropertySheetListBox::OnMouseMove(UINT nFlags, CPoint point)
 {
 	CListBox::OnMouseMove(nFlags, point);
 
@@ -217,7 +217,7 @@ void CMFCProperySheetListBox::OnMouseMove(UINT nFlags, CPoint point)
 	}
 }
 
-void CMFCProperySheetListBox::OnMouseLeave()
+void CMFCPropertySheetListBox::OnMouseLeave()
 {
 	m_bTracked = FALSE;
 

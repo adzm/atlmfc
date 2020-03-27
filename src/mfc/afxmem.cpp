@@ -25,32 +25,18 @@ void* __cdecl operator new[](size_t nSize, int nType, LPCSTR lpszFileName, int n
 
 void* PASCAL CObject::operator new(size_t nSize)
 {
-#ifdef _AFX_NO_DEBUG_CRT
-	return ::operator new(nSize);
-#else
 	return ::operator new(nSize, _AFX_CLIENT_BLOCK, NULL, 0);
-#endif // _AFX_NO_DEBUG_CRT
 }
 
 void PASCAL CObject::operator delete(void* p)
 {
-#ifdef _AFX_NO_DEBUG_CRT
-	free(p);
-#else
 	_free_dbg(p, _AFX_CLIENT_BLOCK);
-#endif
 }
 
 void PASCAL CObject::operator delete(void* p, void*)
 {
-#ifdef _AFX_NO_DEBUG_CRT
-	free(p);
-#else
 	_free_dbg(p, _AFX_CLIENT_BLOCK);
-#endif
 }
-
-#ifndef _AFX_NO_DEBUG_CRT
 
 void* __cdecl operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
 {
@@ -84,11 +70,7 @@ void PASCAL
 CObject::operator delete(void *pObject, LPCSTR /* lpszFileName */,
 	int /* nLine */)
 {
-#ifdef _AFX_NO_DEBUG_CRT
-	free(pObject);
-#else
 	_free_dbg(pObject, _AFX_CLIENT_BLOCK);
-#endif
 }
 
 void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject,  LPCSTR lpszFileName, int nLine)
@@ -266,7 +248,6 @@ BOOL AFXAPI AfxDumpMemoryLeaks()
 	return _CrtDumpMemoryLeaks();
 }
 
-#endif // _AFX_NO_DEBUG_CRT
 #endif // _DEBUG
 
 /////////////////////////////////////////////////////////////////////////////
@@ -317,7 +298,7 @@ void* __cdecl operator new(size_t nSize)
 #endif
 	for (;;)
 	{
-#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+#if defined(_DEBUG)
 		pResult = _malloc_dbg(nSize, _NORMAL_BLOCK, NULL, 0);
 #else
 		pResult = malloc(nSize);
@@ -343,7 +324,7 @@ void* __cdecl operator new(size_t nSize)
 
 void __cdecl operator delete(void* p)
 {
-#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+#if defined(_DEBUG)
 		_free_dbg(p, _NORMAL_BLOCK);
 #else
 		free(p);
@@ -364,12 +345,6 @@ void __cdecl operator delete[](void* p)
 
 void* __cdecl operator new(size_t nSize, int nType, LPCSTR lpszFileName, int nLine)
 {
-#ifdef _AFX_NO_DEBUG_CRT
-	UNUSED_ALWAYS(nType);
-	UNUSED_ALWAYS(lpszFileName);
-	UNUSED_ALWAYS(nLine);
-	return ::operator new(nSize);
-#else
 	void* pResult;
 #ifdef _AFXDLL
 	_PNH pfnNewHandler = _pfnUninitialized;
@@ -394,12 +369,12 @@ void* __cdecl operator new(size_t nSize, int nType, LPCSTR lpszFileName, int nLi
 #endif
 	}
 	return pResult;
-#endif
+
 }
 
 void __cdecl operator delete(void* p, int nType, LPCSTR /* lpszFileName */, int /* nLine */)
 {
-#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+#if defined(_DEBUG)
 		_free_dbg(p, nType);
 #else
 		free(p);

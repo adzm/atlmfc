@@ -16,6 +16,8 @@
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 #endif
 
+#include <windows.h>
+
 namespace ATL
 {
 
@@ -42,8 +44,10 @@ CAtlBaseModule::CAtlBaseModule() throw()
 
 	if (FAILED(m_csResource.Init()))
 	{
-		ATLTRACE(atlTraceGeneral, 0, _T("ERROR : Unable to initialize critical section in CAtlBaseModule\n"));
-		ATLASSERT(0);
+		if (IsDebuggerPresent())
+		{
+			OutputDebugStringW(L"ERROR : Unable to initialize critical section in CAtlBaseModule\n");
+		}
 		CAtlBaseModule::m_bInitFailed = true;
 	}
 }
@@ -58,8 +62,11 @@ bool CAtlBaseModule::AddResourceInstance(_In_ HINSTANCE hInst) throw()
 	CComCritSecLock<CComCriticalSection> lock(m_csResource, false);
 	if (FAILED(lock.Lock()))
 	{
-		ATLTRACE(atlTraceGeneral, 0, _T("ERROR : Unable to lock critical section in CAtlBaseModule\n"));
-		ATLASSERT(0);
+		if (IsDebuggerPresent())
+		{
+			OutputDebugStringW(L"ERROR : Unable to lock critical section in CAtlBaseModule\n");
+		}
+
 		return false;
 	}
 	return m_rgResourceInstance.Add(hInst) != FALSE;
@@ -70,8 +77,11 @@ bool CAtlBaseModule::RemoveResourceInstance(_In_ HINSTANCE hInst) throw()
 	CComCritSecLock<CComCriticalSection> lock(m_csResource, false);
 	if (FAILED(lock.Lock()))
 	{
-			ATLTRACE(atlTraceGeneral, 0, _T("ERROR : Unable to lock critical section in CAtlBaseModule\n"));
-		ATLASSERT(0);
+		if (IsDebuggerPresent())
+		{
+			OutputDebugStringW(L"ERROR : Unable to lock critical section in CAtlBaseModule\n");
+		}
+
 		return false;
 	}
 	for (int i = 0; i < m_rgResourceInstance.GetSize(); i++)
@@ -89,8 +99,11 @@ HINSTANCE CAtlBaseModule::GetHInstanceAt(_In_ int i) throw()
 	CComCritSecLock<CComCriticalSection> lock(m_csResource, false);
 	if (FAILED(lock.Lock()))
 	{
-		ATLTRACE(atlTraceGeneral, 0, _T("ERROR : Unable to lock critical section in CAtlBaseModule\n"));
-		ATLASSERT(0);
+		if (IsDebuggerPresent())
+		{
+			OutputDebugStringW(L"ERROR : Unable to lock critical section in CAtlBaseModule\n");
+		}
+
 		return NULL;
 	}
 	if (i > m_rgResourceInstance.GetSize() || i < 0)

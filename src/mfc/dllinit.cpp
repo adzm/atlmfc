@@ -35,9 +35,7 @@ IMPLEMENT_DYNAMIC(CDynLinkLibrary, CCmdTarget)
 // Constructor - will wire into the current application's list
 CDynLinkLibrary::CDynLinkLibrary(AFX_EXTENSION_MODULE& state, BOOL bSystem)
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	m_factoryList.Construct(offsetof(COleObjectFactory, m_pNextFactory));
-#endif
 	m_classList.Construct(offsetof(CRuntimeClass, m_pNextClass));
 
 	// copy info from AFX_EXTENSION_MODULE struct
@@ -45,9 +43,7 @@ CDynLinkLibrary::CDynLinkLibrary(AFX_EXTENSION_MODULE& state, BOOL bSystem)
 	m_hModule = state.hModule;
 	m_hResource = state.hResource;
 	m_classList.m_pHead = state.pFirstSharedClass;
-#ifndef _AFX_NO_OLE_SUPPORT
 	m_factoryList.m_pHead = state.pFirstSharedFactory;
-#endif
 	m_bSystem = bSystem;
 
 	// insert at the head of the list (extensions will go in front of core DLL)
@@ -59,17 +55,13 @@ CDynLinkLibrary::CDynLinkLibrary(AFX_EXTENSION_MODULE& state, BOOL bSystem)
 
 CDynLinkLibrary::CDynLinkLibrary(HINSTANCE hModule, HINSTANCE hResource)
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	m_factoryList.Construct(offsetof(COleObjectFactory, m_pNextFactory));
-#endif
 	m_classList.Construct(offsetof(CRuntimeClass, m_pNextClass));
 
 	m_hModule = hModule;
 	m_hResource = hResource;
 	m_classList.m_pHead = NULL;
-#ifndef _AFX_NO_OLE_SUPPORT
 	m_factoryList.m_pHead = NULL;
-#endif
 	m_bSystem = FALSE;
 
 	// insert at the head of the list (extensions will go in front of core DLL)
@@ -147,11 +139,9 @@ BOOL AFXAPI AfxInitExtensionModule(AFX_EXTENSION_MODULE& state, HMODULE hModule)
 	state.pFirstSharedClass = pModuleState->m_classList.GetHead();
 	pModuleState->m_classList.m_pHead = pModuleState->m_pClassInit;
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// save the start of the class factory list
 	state.pFirstSharedFactory = pModuleState->m_factoryList.GetHead();
 	pModuleState->m_factoryList.m_pHead = pModuleState->m_pFactoryInit;
-#endif
 
 	return TRUE;
 }

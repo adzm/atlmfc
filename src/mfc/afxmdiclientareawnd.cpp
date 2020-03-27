@@ -95,6 +95,7 @@ CMDIClientAreaWnd::CMDIClientAreaWnd()
 {
 	m_bTabIsVisible = FALSE;
 	m_bTabIsEnabled = FALSE;
+	m_bLastActiveTab = FALSE;
 
 	m_bIsMDITabbedGroup = FALSE;
 	m_groupAlignment = GROUP_NO_ALIGN;
@@ -330,10 +331,10 @@ void CMDIClientAreaWnd::ApplyParams(CMFCTabCtrl* pTabWnd)
 BEGIN_MESSAGE_MAP(CMDIClientAreaWnd, CWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_STYLECHANGING()
-	ON_MESSAGE(WM_MDISETMENU, &CMDIClientAreaWnd::OnSetMenu)
-	ON_MESSAGE(WM_MDIREFRESHMENU, &CMDIClientAreaWnd::OnMDIRefreshMenu)
-	ON_MESSAGE(WM_MDIDESTROY, &CMDIClientAreaWnd::OnMDIDestroy)
-	ON_MESSAGE(WM_MDINEXT, &CMDIClientAreaWnd::OnMDINext)
+	ON_WM_MDISETMENU()
+	ON_WM_MDIREFRESHMENU()
+	ON_WM_MDIDESTROY()
+	ON_WM_MDINEXT()
 	ON_MESSAGE(AFX_UM_UPDATE_TABS, &CMDIClientAreaWnd::OnUpdateTabs)
 	ON_REGISTERED_MESSAGE(AFX_WM_GETDRAGBOUNDS, &CMDIClientAreaWnd::OnGetDragBounds)
 	ON_REGISTERED_MESSAGE(AFX_WM_ON_DRAGCOMPLETE, &CMDIClientAreaWnd::OnDragComplete)
@@ -346,27 +347,27 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CMDIClientAreaWnd message handlers
 
-afx_msg LRESULT CMDIClientAreaWnd::OnSetMenu(WPARAM wp, LPARAM lp)
+HMENU CMDIClientAreaWnd::OnMDISetMenu(HMENU hmenuFrameWindow, HMENU hmenuNewWindow)
 {
 	CMDIFrameWndEx* pMainFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetParentFrame());
 	if (pMainFrame != NULL && ::IsWindow(pMainFrame->GetSafeHwnd()))
 	{
-		if (pMainFrame->OnSetMenu((HMENU) wp))
+		if (pMainFrame->OnSetMenu(hmenuFrameWindow))
 		{
-			wp = NULL;
+			hmenuFrameWindow = NULL;
 		}
 	}
 	else
 	{
-		wp = NULL;
+		hmenuFrameWindow = NULL;
 	}
 
-	return DefWindowProc(WM_MDISETMENU, wp, lp);
+	return (HMENU)DefWindowProc(WM_MDISETMENU, (WPARAM)hmenuFrameWindow, (LPARAM)hmenuNewWindow);
 }
 
-LRESULT CMDIClientAreaWnd::OnMDIRefreshMenu(WPARAM /*wp*/, LPARAM /*lp*/)
+HMENU CMDIClientAreaWnd::OnMDIRefreshMenu()
 {
-	LRESULT lRes = Default();
+	HMENU hmenuRes = (HMENU)Default();
 
 	CMDIFrameWndEx* pMainFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetParentFrame());
 	if (pMainFrame != NULL)
@@ -382,7 +383,7 @@ LRESULT CMDIClientAreaWnd::OnMDIRefreshMenu(WPARAM /*wp*/, LPARAM /*lp*/)
 		}
 	}
 
-	return lRes;
+	return hmenuRes;
 }
 
 BOOL CMDIClientAreaWnd::OnEraseBkgnd(CDC* pDC)
@@ -414,12 +415,11 @@ BOOL CMDIClientAreaWnd::OnEraseBkgnd(CDC* pDC)
 	return CWnd::OnEraseBkgnd(pDC);
 }
 
-LRESULT CMDIClientAreaWnd::OnMDIDestroy(WPARAM wParam, LPARAM)
+void CMDIClientAreaWnd::OnMDIDestroy(CWnd* pWndMDIChild)
 {
-	LRESULT lRes = 0;
 	CMDIFrameWndEx* pParentFrame = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetParentFrame());
 
-	CMDIChildWndEx* pMDIChild = DYNAMIC_DOWNCAST(CMDIChildWndEx, CWnd::FromHandle((HWND)wParam));
+	CMDIChildWndEx* pMDIChild = DYNAMIC_DOWNCAST(CMDIChildWndEx, pWndMDIChild);
 	BOOL bTabHeightChanged = FALSE;
 
 	if (!pParentFrame->m_bClosing && !CMDIFrameWndEx::m_bDisableSetRedraw)
@@ -436,7 +436,7 @@ LRESULT CMDIClientAreaWnd::OnMDIDestroy(WPARAM wParam, LPARAM)
 		{
 			int nTabsHeight = pTabWnd->GetTabsHeight();
 
-			int iTab = pTabWnd->GetTabFromHwnd((HWND)wParam);
+			int iTab = pTabWnd->GetTabFromHwnd(pWndMDIChild->GetSafeHwnd());
 			if (iTab >= 0)
 			{
 				pMDIChild->m_bToBeDestroyed = TRUE;
@@ -498,7 +498,7 @@ LRESULT CMDIClientAreaWnd::OnMDIDestroy(WPARAM wParam, LPARAM)
 	if (m_wndTab.GetSafeHwnd() != NULL)
 	{
 		int nTabsHeight = m_wndTab.GetTabsHeight();
-		int iTab = m_wndTab.GetTabFromHwnd((HWND)wParam);
+		int iTab = m_wndTab.GetTabFromHwnd(pWndMDIChild->GetSafeHwnd());
 		if (iTab >= 0)
 		{
 			CMDIChildWndEx* pMDIChildTab = DYNAMIC_DOWNCAST(CMDIChildWndEx, m_wndTab.GetTabWnd(iTab));
@@ -512,7 +512,8 @@ LRESULT CMDIClientAreaWnd::OnMDIDestroy(WPARAM wParam, LPARAM)
 		bTabHeightChanged = (nTabsHeight != m_wndTab.GetTabsHeight());
 	}
 
-	lRes = Default();
+	Default();
+
 	if (bTabHeightChanged && pParentFrame != NULL)
 	{
 		pParentFrame->RecalcLayout();
@@ -530,8 +531,6 @@ LRESULT CMDIClientAreaWnd::OnMDIDestroy(WPARAM wParam, LPARAM)
 		SetRedraw(TRUE);
 		GetParent()->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
 	}
-
-	return lRes;
 }
 
 void CMDIClientAreaWnd::CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType)
@@ -1056,6 +1055,11 @@ CMFCTabCtrl* CMDIClientAreaWnd::CreateTabGroup(CMFCTabCtrl* pWndTab)
 			TRACE(_T("CMDIClientAreaWnd::OnCreate: can't create tabs window\n"));
 			delete pWndTab;
 			return NULL;
+		}
+
+		if (m_bLastActiveTab)
+		{
+			pWndTab->EnableActivateLastActive();
 		}
 	}
 	else
@@ -2925,14 +2929,13 @@ void CMDIClientAreaWnd::Serialize(CArchive& ar)
 	}
 }
 
-LRESULT CMDIClientAreaWnd::OnMDINext(WPARAM wp, LPARAM lp)
+void CMDIClientAreaWnd::OnMDINext(CWnd* pWndMDIChild, BOOL bIsPrev)
 {
 	if (!m_bIsMDITabbedGroup && !m_bTabIsEnabled)
 	{
-		return Default();
+		Default();
+		return;
 	}
-
-	BOOL bNext = (lp == 0);
 
 	CMFCTabCtrl* pActiveTabWnd = NULL;
 	int nActiveTab = -1;
@@ -2958,7 +2961,7 @@ LRESULT CMDIClientAreaWnd::OnMDINext(WPARAM wp, LPARAM lp)
 
 	nActiveTab = pActiveTabWnd->GetActiveTab();
 
-	bNext ? nActiveTab++ : nActiveTab--;
+	bIsPrev ? nActiveTab-- : nActiveTab++;
 
 	if (nActiveTab < 0)
 	{
@@ -3003,12 +3006,28 @@ LRESULT CMDIClientAreaWnd::OnMDINext(WPARAM wp, LPARAM lp)
 	CWnd* pWnd = pActiveTabWnd->GetTabWnd(nActiveTab);
 	ASSERT_VALID(pWnd);
 
-	if (pWnd->GetSafeHwnd() != (HWND) wp)
+	if (pWnd->GetSafeHwnd() != pWndMDIChild->GetSafeHwnd())
 	{
 		SetActiveTab(pWnd->GetSafeHwnd());
 	}
-	return 0L;
 }
 
+void CMDIClientAreaWnd::EnableMDITabsLastActiveActivation(BOOL bLastActiveTab)
+{
+	if (m_bLastActiveTab == bLastActiveTab)
+	{
+		return;
+	}
 
+	m_bLastActiveTab = bLastActiveTab;
 
+	m_wndTab.EnableActivateLastActive(bLastActiveTab);
+
+	for (POSITION pos = m_lstTabbedGroups.GetHeadPosition(); pos != NULL;)
+	{
+		CMFCTabCtrl* pNextTabWnd = DYNAMIC_DOWNCAST(CMFCTabCtrl, m_lstTabbedGroups.GetNext(pos));
+		ASSERT_VALID(pNextTabWnd);
+
+		pNextTabWnd->EnableActivateLastActive(bLastActiveTab);
+	}
+}

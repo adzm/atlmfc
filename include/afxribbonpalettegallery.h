@@ -86,7 +86,7 @@ public:
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data)
 	{
 		CMFCRibbonButton::SetACCData(pParent, data);
-		data.m_nAccRole = IsCommandAreaHighlighted() ? ROLE_SYSTEM_SPLITBUTTON : ROLE_SYSTEM_BUTTONDROPDOWNGRID;
+		data.m_nAccRole = ROLE_SYSTEM_BUTTONDROPDOWNGRID;
 		return TRUE;
 	}
 

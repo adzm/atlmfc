@@ -44,7 +44,7 @@ BEGIN_MESSAGE_MAP(CEditView, CCtrlView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CLEAR, &CEditView::OnUpdateNeedSel)
 	ON_CONTROL_REFLECT_EX(EN_CHANGE, &CEditView::OnEditChange)
 	ON_WM_CREATE()
-	ON_MESSAGE(WM_SETFONT, &CEditView::OnSetFont)
+	ON_WM_SETFONT()
 	ON_COMMAND(ID_EDIT_CUT, &CEditView::OnEditCut)
 	ON_COMMAND(ID_EDIT_COPY, &CEditView::OnEditCopy)
 	ON_COMMAND(ID_EDIT_PASTE, &CEditView::OnEditPaste)
@@ -782,13 +782,12 @@ void CEditView::OnEditSelectAll()
 /////////////////////////////////////////////////////////////////////////////
 // CEditView Font Handling
 
-LRESULT CEditView::OnSetFont(WPARAM, LPARAM)
+void CEditView::OnSetFont(CFont* /*pFont*/, BOOL /*bRedraw*/)
 {
 	ASSERT_VALID(this);
 	Default();
 	GetEditCtrl().SetTabStops(m_nTabStops);
 	ASSERT_VALID(this);
-	return 0;
 }
 
 void CEditView::SetPrinterFont(CFont* pFont)

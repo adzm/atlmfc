@@ -655,7 +655,7 @@ BOOL CMFCShellTreeCtrl::SelectPath(LPCITEMIDLIST lpidl, BOOL fExpandToShowChildr
 					SHFILEINFO sfi2;
 
 					if (SHGetFileInfo((LPCTSTR) pItem->pidlFQ, 0, &sfi1, sizeof(sfi1), SHGFI_PIDL | SHGFI_DISPLAYNAME) &&
-						SHGetFileInfo((LPCTSTR) lpidlList, 0, &sfi2, sizeof(sfi2), SHGFI_PIDL | SHGFI_DISPLAYNAME) && lstrcmp(sfi1.szDisplayName, sfi2.szDisplayName) == 0)
+						SHGetFileInfo((LPCTSTR) lpidlList, 0, &sfi2, sizeof(sfi2), SHGFI_PIDL | SHGFI_DISPLAYNAME) && lstrcmpi(sfi1.szDisplayName, sfi2.szDisplayName) == 0)
 					{
 						bFound = TRUE;
 						htreeItem = hTreeChild;

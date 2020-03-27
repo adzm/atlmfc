@@ -278,14 +278,12 @@ typedef struct tagAFX_OLDREBARBANDINFO{
 	UINT cx;
 	HBITMAP hbmBack;
 	UINT wID;
-#if (_WIN32_IE >= 0x0400)
 	UINT cyChild;  
 	UINT cyMaxChild;
 	UINT cyIntegral;
 	UINT cxIdeal;
 	LPARAM lParam;
 	UINT cxHeader;
-#endif
  } AFX_OLDREBARBANDINFO;
 
 // special AFX window class name mangling
@@ -406,10 +404,7 @@ DWORD AFXAPI _AfxGetComCtlVersion();
 #define _countof(array) (sizeof(array)/sizeof(array[0]))
 #endif
 
-#ifndef _AFX_PORTABLE
 int AFX_CDECL AfxCriticalNewHandler(size_t nSize);
-#endif
-
 void AFXAPI AfxGlobalFree(HGLOBAL hGlobal);
 
 /////////////////////////////////////////////////////////////////////////////
@@ -543,7 +538,6 @@ UINT AFXAPI AfxGetFileName(LPCTSTR lpszPathName, _Out_writes_opt_(nMax) LPTSTR l
 void AFX_CDECL AfxTimeToFileTime(const CTime& time, LPFILETIME pFileTime);
 void AFXAPI AfxGetRoot(LPCTSTR lpszPath, CString& strRoot);
 
-#ifndef _AFX_NO_OLE_SUPPORT
 class AFX_COM
 {
 public:
@@ -556,7 +550,6 @@ CString AFXAPI AfxStringFromCLSID(REFCLSID rclsid);
 BOOL AFXAPI AfxGetInProcServer(LPCTSTR lpszCLSID, CString& str);
 BOOL AFXAPI AfxResolveShortcut(CWnd* pWnd, LPCTSTR pszShortcutFile,
 	_Out_writes_(cchPath) LPTSTR pszPath, int cchPath);
-#endif // _AFX_NO_OLE_SUPPORT
 
 #define NULL_TLS ((DWORD)-1)
 
@@ -584,6 +577,7 @@ union MessageMapFunctions
 	int (AFX_MSG_CALL CCmdTarget::*pfn_i_u_u)(UINT, UINT);
 	int (AFX_MSG_CALL CCmdTarget::*pfn_i_W_u_u)(CWnd*, UINT, UINT);
 	int (AFX_MSG_CALL CWnd::*pfn_i_s)(LPTSTR);
+	int (AFX_MSG_CALL CWnd::*pfn_i_S)(LPCTSTR);
 	LRESULT (AFX_MSG_CALL CWnd::*pfn_l_w_l)(WPARAM, LPARAM);
 	LRESULT (AFX_MSG_CALL CWnd::*pfn_l_u_u_M)(UINT, UINT, CMenu*);
 	void (AFX_MSG_CALL CWnd::*pfn_v_b_h)(BOOL, HANDLE);
@@ -636,11 +630,19 @@ union MessageMapFunctions
 	void (AFX_MSG_CALL CWnd::*pfn_APPCOMMAND)(CWnd*, UINT, UINT, UINT);
 	BOOL (AFX_MSG_CALL CWnd::*pfn_RAWINPUT)(UINT, HRAWINPUT);
 	UINT (AFX_MSG_CALL CWnd::*pfn_u_u_u)(UINT, UINT);
+	UINT (AFX_MSG_CALL CWnd::*pfn_u_u_l)(UINT, LPARAM);
 	void (AFX_MSG_CALL CWnd::*pfn_MOUSE_XBUTTON)(UINT, UINT, CPoint);
 	void (AFX_MSG_CALL CWnd::*pfn_MOUSE_NCXBUTTON)(short, UINT, CPoint);
 	void (AFX_MSG_CALL CWnd::*pfn_INPUTLANGCHANGE)(UINT, UINT);
 	BOOL (AFX_MSG_CALL CWnd::*pfn_v_u_h)(UINT, HANDLE);
 	void (AFX_MSG_CALL CWnd::*pfn_INPUTDEVICECHANGE)(unsigned short, HANDLE);
+	LRESULT (AFX_MSG_CALL CWnd::*pfn_l_D_u)(CDC*, UINT);
+	void (AFX_MSG_CALL CWnd::*pfn_v_F_b)(CFont*, BOOL);
+	HANDLE (AFX_MSG_CALL CWnd::*pfn_h_v)();
+	HANDLE (AFX_MSG_CALL CWnd::*pfn_h_b_h)(BOOL, HANDLE);
+	BOOL (AFX_MSG_CALL CWnd::*pfn_b_v_ii)(int, int);
+	HANDLE (AFX_MSG_CALL CWnd::*pfn_h_h_h)(HANDLE, HANDLE);
+	void (AFX_MSG_CALL CWnd::*pfn_v_W_b)(CWnd*, BOOL);
 
 	// type safe variant for thread messages
 	void (AFX_MSG_CALL CWinThread::*pfn_THREAD)(WPARAM, LPARAM);

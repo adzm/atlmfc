@@ -725,7 +725,7 @@ BOOL CMFCPopupMenuBar::ImportFromMenu(HMENU hMenu, BOOL bShowAllCommands)
 
 		UINT uiCmd = mii.wID;
 		UINT uiState = pMenu->GetMenuState(i, MF_BYPOSITION);
-		DWORD dwMenuItemData = (DWORD) mii.dwItemData;
+		DWORD_PTR dwMenuItemData = (DWORD_PTR) mii.dwItemData;
 
 		if (mii.fType == MFT_SEPARATOR)
 		{

@@ -316,7 +316,7 @@ public:
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_APPEARANCE, var);
-		ATLASSERT(var.vt == VT_I2 || var.vt == VT_UI2 || var.vt == VT_I4 || var.vt == VT_UI4 || FAILED(hRes));
+		ATLASSERT(FAILED(hRes) || var.vt == VT_I2 || var.vt == VT_UI2 || var.vt == VT_I4 || var.vt == VT_UI4);
 		if (SUCCEEDED(hRes))
 		{
 			if (var.vt == VT_EMPTY)
@@ -332,8 +332,9 @@ public:
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_BACKCOLOR, var);
-		ATLASSERT(var.vt == VT_I4 || var.vt == VT_UI4 || FAILED(hRes));
-		BackColor = var.lVal;
+		ATLASSERT(FAILED(hRes) || var.vt == VT_I4 || var.vt == VT_UI4);
+		if (SUCCEEDED(hRes))
+            BackColor = var.lVal;
 		return hRes;
 	}
 	HRESULT GetAmbientDisplayName(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrDisplayName)
@@ -366,7 +367,7 @@ ATLPREFAST_SUPPRESS(6387)
 		*ppFont = NULL;
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_FONT, var);
-		ATLASSERT((var.vt == VT_UNKNOWN || var.vt == VT_DISPATCH) || FAILED(hRes));
+		ATLASSERT(FAILED(hRes) || (var.vt == VT_UNKNOWN || var.vt == VT_DISPATCH));
 		if (SUCCEEDED(hRes) && var.pdispVal)
 		{
 			if (var.vt == VT_UNKNOWN || var.vt == VT_DISPATCH)
@@ -387,7 +388,7 @@ ATLPREFAST_SUPPRESS(6387)
 		*ppFont = NULL;
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_FONT, var);
-		ATLASSERT((var.vt == VT_UNKNOWN || var.vt == VT_DISPATCH) || FAILED(hRes));
+		ATLASSERT(FAILED(hRes) || (var.vt == VT_UNKNOWN || var.vt == VT_DISPATCH));
 		if (SUCCEEDED(hRes) && var.pdispVal)
 		{
 			if (var.vt == VT_UNKNOWN || var.vt == VT_DISPATCH)
@@ -403,16 +404,18 @@ ATLPREFAST_UNSUPPRESS()
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_FORECOLOR, var);
-		ATLASSERT(var.vt == VT_I4 || var.vt == VT_UI4 || FAILED(hRes));
-		ForeColor = var.lVal;
+		ATLASSERT(FAILED(hRes) || var.vt == VT_I4 || var.vt == VT_UI4);
+		if (SUCCEEDED(hRes))
+            ForeColor = var.lVal;
 		return hRes;
 	}
 	HRESULT GetAmbientLocaleID(_Out_ LCID& lcid)
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_LOCALEID, var);
-		ATLASSERT((var.vt == VT_UI4 || var.vt == VT_I4) || FAILED(hRes));
-		lcid = var.lVal;
+		ATLASSERT(FAILED(hRes) || (var.vt == VT_UI4 || var.vt == VT_I4));
+		if (SUCCEEDED(hRes))
+            lcid = var.lVal;
 		return hRes;
 	}
 	HRESULT GetAmbientScaleUnits(_Inout_ _Outref_result_maybenull_ _Post_z_ BSTR& bstrScaleUnits)
@@ -426,7 +429,7 @@ ATLPREFAST_UNSUPPRESS()
 		}
 
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_SCALEUNITS, var);
-		ATLASSERT(var.vt == VT_BSTR || FAILED(hRes));
+		ATLASSERT(FAILED(hRes) || var.vt == VT_BSTR);
 		if (SUCCEEDED(hRes))
 		{
 			if (var.vt != VT_BSTR)
@@ -441,7 +444,7 @@ ATLPREFAST_UNSUPPRESS()
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_TEXTALIGN, var);
-		ATLASSERT(var.vt == VT_I2 || FAILED(hRes));
+		ATLASSERT(FAILED(hRes) || var.vt == VT_I2);
 		if (SUCCEEDED(hRes))
 		{
 			if (var.vt == VT_EMPTY)
@@ -560,11 +563,13 @@ ATLPREFAST_UNSUPPRESS()
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_PALETTE, var);
 #ifdef _WIN64
-		ATLASSERT(var.vt == VT_I8 || var.vt == VT_UI8 || FAILED(hRes));
-		hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.llVal));
+		ATLASSERT(FAILED(hRes) || var.vt == VT_I8 || var.vt == VT_UI8);
+        if (SUCCEEDED(hRes))
+		    hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.llVal));
 #else
-		ATLASSERT(var.vt == VT_I4 || var.vt == VT_UI4 || FAILED(hRes));
-		hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.lVal));
+		ATLASSERT(FAILED(hRes) || var.vt == VT_I4 || var.vt == VT_UI4);
+        if (SUCCEEDED(hRes))
+    		hPalette = reinterpret_cast<HPALETTE>(static_cast<LONG_PTR>(var.lVal));
 #endif
 		return hRes;
 	}
@@ -573,8 +578,9 @@ ATLPREFAST_UNSUPPRESS()
 	{
 		CComVariant var;
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_CODEPAGE, var);
-		ATLASSERT(var.vt == VT_UI4 || FAILED(hRes));
-		ulCodePage = var.ulVal;
+		ATLASSERT(FAILED(hRes) || var.vt == VT_UI4);
+		if (SUCCEEDED(hRes))
+            ulCodePage = var.ulVal;
 		return hRes;
 	}
 
@@ -589,7 +595,7 @@ ATLPREFAST_UNSUPPRESS()
 		}
 
 		HRESULT hRes = GetAmbientProperty(DISPID_AMBIENT_CHARSET, var);
-		ATLASSERT(var.vt == VT_BSTR || FAILED(hRes));
+		ATLASSERT(FAILED(hRes) || var.vt == VT_BSTR);
 		if (SUCCEEDED(hRes))
 		{
 			if (var.vt != VT_BSTR)
@@ -922,8 +928,9 @@ inline HRESULT CComControlBase::DoVerbProperties(
 			{
 				LPOLESTR szTitle = NULL;
 
-				spObj->GetUserType(USERCLASSTYPE_SHORT, &szTitle);
-
+				hr = spObj->GetUserType(USERCLASSTYPE_SHORT, &szTitle);
+                _Analysis_assume_(SUCCEEDED(hr) || (szTitle = NULL) == NULL);
+                
 				LCID lcid;
 				if (FAILED(GetAmbientLocaleID(lcid)))
 					lcid = LOCALE_USER_DEFAULT;
@@ -1036,8 +1043,10 @@ inline HRESULT CComControlBase::InPlaceActivate(
 	HWND hwndParent;
 	if (m_spInPlaceSite->GetWindow(&hwndParent) == S_OK)
 	{
-		m_spInPlaceSite->GetWindowContext(&spInPlaceFrame,
+		hr = m_spInPlaceSite->GetWindowContext(&spInPlaceFrame,
 			&spInPlaceUIWindow, &rcPos, &rcClip, &frameInfo);
+        if (FAILED(hr))
+            return hr;
 
 		if (!m_bWndLess)
 		{
@@ -2884,6 +2893,7 @@ public:
 	// declare empty map in case derived classes doesn't want to specify one
 	DECLARE_EMPTY_PROP_VAL_MAP()
 
+    _Success_(return == S_OK)
 	STDMETHOD(GetDisplayString)(
 		_In_ DISPID dispID, 
 		_Outptr_result_maybenull_z_ BSTR *pBstr)
@@ -3947,6 +3957,7 @@ END_COM_MAP()
 		CComQIPtr<IServiceProvider, &__uuidof(IServiceProvider)> spServiceProvider(pUnkContainer);
 		CComPtr<IBindHost>	spBindHost;
 		CComPtr<IStream>	spStream;
+		CComPtr<IBindStatusCallback>	spPrevCallback;
 		if (spServiceProvider)
 			spServiceProvider->QueryService(SID_IBindHost, __uuidof(IBindHost), (void**)&spBindHost);
 
@@ -3959,7 +3970,7 @@ END_COM_MAP()
 				hr = CreateBindCtx(0, &m_spBindCtx);
 
 			if (SUCCEEDED(hr))
-				hr = RegisterBindStatusCallback(m_spBindCtx, static_cast<IBindStatusCallback*>(this), 0, 0L);
+				hr = RegisterBindStatusCallback(m_spBindCtx, static_cast<IBindStatusCallback*>(this), &spPrevCallback, 0L);
 			else
 				m_spMoniker.Release();
 
@@ -3970,7 +3981,7 @@ END_COM_MAP()
 		{
 			hr = CreateBindCtx(0, &m_spBindCtx);
 			if (SUCCEEDED(hr))
-				hr = RegisterBindStatusCallback(m_spBindCtx, static_cast<IBindStatusCallback*>(this), 0, 0L);
+				hr = RegisterBindStatusCallback(m_spBindCtx, static_cast<IBindStatusCallback*>(this), &spPrevCallback, 0L);
 
 			if (SUCCEEDED(hr))
 			{

@@ -2477,9 +2477,10 @@ public:
 		ATLASSERT(pEntries->pFunc == _ATL_SIMPLEMAPENTRY);
 	#if defined(_ATL_DEBUG_INTERFACES) || defined(_ATL_DEBUG_QI)
 		LPCTSTR pszClassName = (LPCTSTR) pEntries[-1].dw;
+		(pszClassName);
 	#endif // _ATL_DEBUG_INTERFACES
 		HRESULT hRes = AtlInternalQueryInterface(pThis, pEntries, iid, ppvObject);
-	#ifdef _ATL_DEBUG_INTERFACES
+	#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.AddThunk((IUnknown**)ppvObject, pszClassName, iid);
 	#endif // _ATL_DEBUG_INTERFACES
 		return _ATLDUMPIID(iid, pszClassName, hRes);
@@ -2851,12 +2852,6 @@ typedef CComObjectRootEx<CComObjectThreadModel> CComObjectRoot;
 		} \
 	}
 
-//DECLARE_STATIC_* provided for backward compatibility
-#ifdef _ATL_STATIC_REGISTRY
-#define DECLARE_STATIC_REGISTRY_RESOURCE(x) DECLARE_REGISTRY_RESOURCE(x)
-#define DECLARE_STATIC_REGISTRY_RESOURCEID(x) DECLARE_REGISTRY_RESOURCEID(x)
-#endif //_ATL_STATIC_REGISTRY
-
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 #define DECLARE_OLEMISC_STATUS(x) \
@@ -2881,6 +2876,25 @@ public:
 	}
 };
 
+// ModuleLockHelper handles unlocking module while going out of scope
+class ModuleLockHelper
+{
+public:
+	ModuleLockHelper() 
+	{
+#ifndef _ATL_STATIC_LIB_IMPL
+		_pAtlModule->Lock();
+#endif
+	}
+
+	~ModuleLockHelper()
+	{
+#ifndef _ATL_STATIC_LIB_IMPL
+		_pAtlModule->Unlock();
+#endif
+	}
+};
+
 //Base is the user's class that derives from CComObjectRoot and whatever
 //interfaces the user wants to support on the object
 template <class Base>
@@ -2899,7 +2913,7 @@ public:
 	{
 		m_dwRef = -(LONG_MAX/2);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
 #endif
 		_pAtlModule->Unlock();
@@ -2914,7 +2928,11 @@ public:
 	{
 		ULONG l = InternalRelease();
 		if (l == 0)
+		{
+			// Lock the module to avoid DLL unload when destruction of member variables take a long time
+			ModuleLockHelper lock;
 			delete this;
+		}
 		return l;
 	}
 	//if _InternalQueryInterface is undefined then you forgot BEGIN_COM_MAP
@@ -2985,7 +3003,7 @@ public:
 	{
 		m_dwRef = -(LONG_MAX/2);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
 #endif
 	}
@@ -3069,7 +3087,7 @@ public:
 	{
 		m_dwRef = -(LONG_MAX/2);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
 #endif
 	}
@@ -3129,7 +3147,7 @@ public:
 		{
 			FinalRelease();
 		}
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
 #endif
 	}
@@ -3168,7 +3186,7 @@ public:
 	virtual ~CComObjectStack()
 	{
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
 #endif
 	}
@@ -3222,7 +3240,7 @@ public:
 		// alive while clients have references to its interfaces.
 		ATLASSUME(m_dwRef == 0);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
 #endif
 	}
@@ -3265,7 +3283,7 @@ public:
 	{
 		m_pOuterUnknown = (IUnknown*)pv;
 	}
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 	virtual ~CComContainedObject()
 	{
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
@@ -3297,7 +3315,7 @@ public:
 	//DECLARE_GET_CONTROLLING_UNKNOWN()
 	IUnknown* GetControllingUnknown() throw()
 	{
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		IUnknown* p;
 		_AtlDebugInterfacesModule.AddNonAddRefThunk(m_pOuterUnknown, _T("CComContainedObject"), &p);
 		return p;
@@ -3348,7 +3366,7 @@ public:
 	{
 		m_dwRef = -(LONG_MAX/2);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(this);
 #endif
 		_pAtlModule->Unlock();
@@ -3362,7 +3380,10 @@ public:
 	{
 		ULONG l = InternalRelease();
 		if (l == 0)
+		{
+			ModuleLockHelper lock;
 			delete this;
+		}
 		return l;
 	}
 	STDMETHOD(QueryInterface)(
@@ -3379,7 +3400,7 @@ public:
 		{
 			*ppvObject = (void*)(IUnknown*)this;
 			AddRef();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 			_AtlDebugInterfacesModule.AddThunk((IUnknown**)ppvObject, (LPCTSTR)contained::_GetEntries()[-1].dw, iid);
 #endif // _ATL_DEBUG_INTERFACES
 		}
@@ -3472,7 +3493,7 @@ public:
 	{
 		m_dwRef = -(LONG_MAX/2);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(this);
 #endif
 		_pAtlModule->Unlock();
@@ -3486,7 +3507,10 @@ public:
 	{
 		ULONG l = InternalRelease();
 		if (l == 0)
+		{
+			ModuleLockHelper lock;
 			delete this;
+		}
 		return l;
 	}
 	STDMETHOD(QueryInterface)(
@@ -3505,7 +3529,7 @@ public:
 		{
 			*ppvObject = (void*)(IUnknown*)this;
 			AddRef();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 			_AtlDebugInterfacesModule.AddThunk((IUnknown**)ppvObject, (LPCTSTR)contained::_GetEntries()[-1].dw, iid);
 #endif // _ATL_DEBUG_INTERFACES
 		}
@@ -3571,7 +3595,7 @@ public:
 	{
 		m_dwRef = -(LONG_MAX/2);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(_GetRawUnknown());
 #endif
 		m_pOwner->Release();
@@ -3636,7 +3660,7 @@ public:
 	{
 		m_dwRef = -(LONG_MAX/2);
 		FinalRelease();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 		_AtlDebugInterfacesModule.DeleteNonAddRefThunk(this);
 #endif
 	}
@@ -3666,7 +3690,7 @@ public:
 		{
 			*ppvObject = (void*)(IUnknown*)this;
 			AddRef();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 			_AtlDebugInterfacesModule.AddThunk((IUnknown**)ppvObject, (LPCTSTR)contained::_GetEntries()[-1].dw, iid);
 #endif // _ATL_DEBUG_INTERFACES
 		}
@@ -4073,28 +4097,6 @@ public:
 	int m_nCount;
 
 public:
-
-#ifdef _ATL_DLL_IMPL
-	CComTypeInfoHolder(
-		_In_ const GUID* pguid, 
-		_In_ const GUID* plibid, 
-		_In_ WORD wMajor, 
-		_In_ WORD wMinor) :
-		m_pguid(pguid), m_plibid(plibid), m_wMajor(wMajor), m_wMinor(wMinor), 
-		m_pInfo(NULL), m_dwRef(0), m_pMap(NULL), m_nCount(0)
-	{
-	}
-
-	~CComTypeInfoHolder()
-	{
-		if (m_pInfo != NULL)
-			m_pInfo->Release();
-		m_pInfo = NULL;
-		delete [] m_pMap;
-		m_pMap = NULL;
-	}
-#endif
-
 	HRESULT GetTI(
 		_In_ LCID lcid, 
 		_Outptr_result_maybenull_ ITypeInfo** ppInfo)
@@ -4351,9 +4353,7 @@ inline HRESULT CComTypeInfoHolder::GetTI(_In_ LCID lcid)
 					spInfo = spTypeInfo2;
 
 				m_pInfo = spInfo.Detach();
-#ifndef _ATL_DLL_IMPL
 				_pAtlModule->AddTermFunc(Cleanup, (DWORD_PTR)this);
-#endif
 			}
 			pTypeLib->Release();
 		}
@@ -4645,7 +4645,7 @@ public:
 		{
 			*ppvObject = this;
 			AddRef();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 			_AtlDebugInterfacesModule.AddThunk((IUnknown**)ppvObject, _T("IDispEventImpl"), riid);
 #endif // _ATL_DEBUG_INTERFACES
 			return S_OK;
@@ -5178,26 +5178,6 @@ public:
 		wFlags, pdispparams, pvarResult, pexcepinfo, puArgErr);
 	}
 
-#ifdef _ATL_DLL_IMPL
-	// Do not cache type info if it is used in the ATL dll
-	IDispatchImpl() : _tih(piid, plibid, wMajor, wMinor)
-	{
-	}
-	virtual ~IDispatchImpl()
-	{
-	}
-
-protected:
-	_tihclass _tih;
-	HRESULT GetTI(
-		_In_ LCID lcid, 
-		_Outptr_ ITypeInfo** ppInfo)
-	{
-		return _tih.GetTI(lcid, ppInfo);
-	}
-
-#else
-
 protected:
 	static _tihclass _tih;
 	static HRESULT GetTI(
@@ -5206,18 +5186,12 @@ protected:
 	{
 		return _tih.GetTI(lcid, ppInfo);
 	}
-
-#endif
 };
-
-#ifndef _ATL_DLL_IMPL
 
 template <class T, const IID* piid, const GUID* plibid, WORD wMajor, WORD wMinor, class tihclass>
 typename IDispatchImpl<T, piid, plibid, wMajor, wMinor, tihclass>::_tihclass
 IDispatchImpl<T, piid, plibid, wMajor, wMinor, tihclass>::_tih =
 {piid, plibid, wMajor, wMinor, NULL, 0, NULL, 0};
-
-#endif
 
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
@@ -6319,7 +6293,7 @@ public:
 		{
 			*ppvObject = this;
 			AddRef();
-#ifdef _ATL_DEBUG_INTERFACES
+#if defined(_ATL_DEBUG_INTERFACES) && !defined(_ATL_STATIC_LIB_IMPL)
 			_AtlDebugInterfacesModule.AddThunk((IUnknown**)ppvObject, _T("IConnectionPointImpl"), riid);
 #endif // _ATL_DEBUG_INTERFACES
 			return S_OK;
@@ -6642,9 +6616,6 @@ public:
 
 #pragma pack(pop)
 
-// All exports go here
-#ifndef _ATL_DLL
-
 /////////////////////////////////////////////////////////////////////////////
 // IDispatch Error handling
 #pragma warning(suppress: 6262) // Stack size of '1088' bytes is OK
@@ -6685,7 +6656,8 @@ ATLINLINE ATLAPI AtlSetErrorInfo(
 		CComPtr<IErrorInfo> pErrorInfo;
 		pICEI->SetGUID(iid);
 		LPOLESTR lpsz;
-		ProgIDFromCLSID(clsid, &lpsz);
+		if (FAILED(ProgIDFromCLSID(clsid, &lpsz)))
+            lpsz = NULL;
 		if (lpsz != NULL)
 			pICEI->SetSource(lpsz);
 		if (dwHelpID != 0 && lpszHelpFile != NULL)
@@ -7222,8 +7194,6 @@ ATLINLINE ATLAPI AtlGetObjectSourceInterface(
 }
 
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
-
-#endif	// !_ATL_DLL
 
 }	// namespace ATL
 #pragma pack(pop)

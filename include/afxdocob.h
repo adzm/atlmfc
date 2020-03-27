@@ -24,10 +24,6 @@
 #define PRINT_E_NOSUCHPAGE 0x80040161L
 #endif
 
-#ifdef _AFX_NO_OLE_SUPPORT
-	#error OLE classes not supported in this library variant.
-#endif
-
 #ifndef __AFXOLE_H__
 	#include <afxole.h>
 #endif

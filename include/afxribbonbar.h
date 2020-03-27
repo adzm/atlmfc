@@ -80,6 +80,7 @@ protected:
 	virtual CSize GetCompactSize(CDC* pDC) { return GetRegularSize(pDC); }
 	virtual BOOL IsShowTooltipOnBottom() const { return FALSE; }
 	virtual int AddToListBox(CMFCRibbonCommandsListBox* /*pWndListBox*/, BOOL /*bDeep*/) { return -1; }
+	virtual BOOL IsCaptionButton() const { return TRUE; }
 
 	HWND m_hwndMDIChild;
 };
@@ -98,12 +99,24 @@ public:
 	int GetRightTabX() const { return m_nRightTabX; }
 	UINT GetContextID() const { return m_uiID; }
 
+	int GetContextCategoryCount();
+	void GetContextCategories(CArray<CMFCRibbonCategory*,CMFCRibbonCategory*>& arCategories);
+	int GetContextCaptionIndex(CMFCRibbonContextCaption* pContextCaption);
+
 protected:
 	CMFCRibbonContextCaption(LPCTSTR lpszName, UINT uiID, AFX_RibbonCategoryColor clrContext);
 	CMFCRibbonContextCaption();
 
 	virtual void OnDraw(CDC* pDC);
 	virtual void OnLButtonUp(CPoint point);
+
+	// Accessibility:
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual BOOL OnSetAccData (long lVal);
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
 
 	AFX_RibbonCategoryColor m_Color;
 	UINT m_uiID;
@@ -128,6 +141,8 @@ class CMFCRibbonBar : public CPane
 	friend class CMFCRibbonPanel;
 	friend class CMFCRibbonConstructor;
 	friend class CMFCRibbonCollector;
+	friend class CMFCRibbonTabsGroup;
+	friend class CMFCRibbonTab;
 
 	DECLARE_DYNAMIC(CMFCRibbonBar)
 
@@ -264,6 +279,16 @@ public:
 	BOOL OnSysKeyDown(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM lParam);
 	BOOL OnSysKeyUp(CFrameWnd* pFrameWnd, WPARAM wParam, LPARAM lParam);
 
+	void EnableSingleLevelAccessibilityMode(BOOL bEnable = TRUE)
+	{
+		m_bSingleLevelAccessibilityMode = bEnable;
+	}
+
+	BOOL IsSingleLevelAccessibilityMode() const
+	{
+		return m_bSingleLevelAccessibilityMode;
+	}
+
 	//--------------------
 	// Save ribbon to XML:
 	//--------------------
@@ -286,6 +311,8 @@ public:
 	BOOL IsReplaceFrameCaption() const { return m_bReplaceFrameCaption; }
 	CMFCRibbonApplicationButton* GetApplicationButton() const { return m_pMainButton; }
 	CMFCRibbonCategory* GetMainCategory() const { return m_pMainCategory; }
+
+	CMFCRibbonQuickAccessToolBar* GetQuickAccessToolbar () { return &m_QAToolbar; }
 
 	virtual CMFCRibbonBaseElement* HitTest(CPoint point, BOOL bCheckActiveCategory = FALSE, BOOL bCheckPanelCaption = FALSE);
 
@@ -321,12 +348,22 @@ public:
 	CObject* GetKeyboardNavLevelParent() const { return m_pKeyboardNavLevelParent; }
 	CObject* GetKeyboardNavLevelCurrent() const { return m_pKeyboardNavLevelCurrent; }
 
+	// Accessibility:
 	virtual BOOL OnSetAccData(long lVal);
 	virtual HRESULT get_accChildCount(long *pcountChildren);
 	virtual HRESULT get_accChild(VARIANT varChild, IDispatch **ppdispChild);
 	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
 	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
 	virtual HRESULT accDoDefaultAction(VARIANT varChild);
+	virtual HRESULT accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild);
+
+	CMFCRibbonTabsGroup* GetTabs() { return &m_Tabs;}
+
+	LPDISPATCH GetAccessibleDispatch();
+	BOOL IsCaptionButtons();
+	CMFCBaseAccessibleObject* AccessibleObjectByIndex(long lVal);
+	CMFCBaseAccessibleObject* AccessibleObjectFromPoint(CPoint point);
+	int GetAccObjectCount();
 
 protected:
 	int m_nTabsHeight;
@@ -389,6 +426,8 @@ protected:
 
 	CMFCRibbonCaptionButton      m_CaptionButtons[AFX_RIBBON_CAPTION_BUTTONS];
 	CMFCRibbonQuickAccessToolBar m_QAToolbar;
+	BOOL							m_bSingleLevelAccessibilityMode;
+	CMFCRibbonTabsGroup			m_Tabs;
 
 	BOOL m_bWindows7Look;
 
@@ -451,6 +490,10 @@ public:
 	void ShowKeyTips(BOOL bRepos = FALSE);
 	void HideKeyTips();
 
+	int GetVisibleContextCaptionCount(); 
+	void GetVisibleContextCaptions(CArray<int, int>* arCaptions);
+	void GetVisibleContextCaptions(CArray<CMFCRibbonContextCaption*, CMFCRibbonContextCaption*>& arCaptions);
+
 protected:
 	void ShowSysMenu(const CPoint& point);
 	void SetPrintPreviewMode(BOOL bSet = TRUE);
@@ -483,13 +526,12 @@ protected:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
-	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
-	afx_msg LRESULT OnGetFont(WPARAM, LPARAM);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
+	afx_msg HFONT OnGetFont();
 	afx_msg void OnMouseLeave();
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg LRESULT OnPostRecalcLayout(WPARAM,LPARAM);
-
 	DECLARE_MESSAGE_MAP()
 };
 
@@ -544,14 +586,6 @@ protected:
 
 	virtual void DrawImage(CDC* pDC, RibbonImageType /*type*/, CRect rectImage);
 
-	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data)
-	{
-		CMFCRibbonButton::SetACCData(pParent, data);
-		data.m_nAccRole = ROLE_SYSTEM_BUTTONDROPDOWNGRID;
-		data.m_bAccState |= STATE_SYSTEM_HASPOPUP;
-		return TRUE;
-	}
-
 	virtual void OnLButtonDown(CPoint point);
 	virtual void OnLButtonDblClk(CPoint point);
 	virtual void OnAccDefaultAction() { ShowMainMenu(); }
@@ -560,6 +594,11 @@ protected:
 	virtual BOOL IsDrawTooltipImage() const { return FALSE; }
 
 	BOOL ShowMainMenu();
+
+	// Accessibility:
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
 
 	CMFCToolBarImages m_Image;
 	CMFCToolBarImages m_ImageWindows7;

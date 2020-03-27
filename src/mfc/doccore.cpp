@@ -22,7 +22,6 @@ BEGIN_MESSAGE_MAP(CDocument, CCmdTarget)
 	ON_COMMAND(ID_FILE_SAVE_AS, &CDocument::OnFileSaveAs)
 END_MESSAGE_MAP()
 
-#if WINVER >= 0x0600
 BEGIN_INTERFACE_MAP(CDocument, CCmdTarget)
 	INTERFACE_PART(CDocument, IID_IInitializeWithStream, InitializeWithStream)
 	INTERFACE_PART(CDocument, IID_IPreviewHandler, PreviewHandler)
@@ -30,7 +29,6 @@ BEGIN_INTERFACE_MAP(CDocument, CCmdTarget)
 	INTERFACE_PART(CDocument, IID_IObjectWithSite, ObjectWithSite)
 	INTERFACE_PART(CDocument, IID_IOleWindow, OleWindow)
 END_INTERFACE_MAP()
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // CDocument construction/destruction
@@ -1244,7 +1242,6 @@ void CDocument::OnRichPreviewUnload()
 	m_grfMode = 0;
 }
 
-#if WINVER >= 0x0600
 /////////////////////////////////////////////////////////////////////////////
 // IInitializeWithStream interface implementation
 STDMETHODIMP_(ULONG) CDocument::XInitializeWithStream::AddRef()
@@ -1592,7 +1589,6 @@ STDMETHODIMP CDocument::XOleWindow::ContextSensitiveHelp(BOOL)
 	METHOD_PROLOGUE(CDocument, OleWindow);
 	return E_NOTIMPL;
 }
-#endif
 
 void CDocument::OnDrawThumbnail(CDC& dc, LPRECT lprcBounds)
 {

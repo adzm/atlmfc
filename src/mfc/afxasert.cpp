@@ -17,7 +17,6 @@
 
 BOOL AFXAPI AfxAssertFailedLine(LPCSTR lpszFileName, int nLine)
 {
-#ifndef _AFX_NO_DEBUG_CRT
 	// we remove WM_QUIT because if it is in the queue then the message box
 	// won't display
 	MSG msg;
@@ -26,9 +25,6 @@ BOOL AFXAPI AfxAssertFailedLine(LPCSTR lpszFileName, int nLine)
 	if (bQuit)
 		PostQuitMessage((int)msg.wParam);
 	return bResult;
-#else
-	// Not supported.
-#error _AFX_NO_DEBUG_CRT is not supported.
-#endif // _AFX_NO_DEBUG_CRT
 }
+
 #endif // _DEBUG

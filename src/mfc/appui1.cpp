@@ -22,22 +22,16 @@ void CWinApp::EnableModeless(BOOL bEnable)
 
 void CWinApp::DoEnableModeless(BOOL bEnable)
 {
-#ifdef _AFX_NO_OLE_SUPPORT
-	UNUSED(bEnable);
-#endif
-
 	// no-op if main window is NULL or not a CFrameWnd
 	CWnd* pMainWnd = AfxGetMainWnd();
 	if (pMainWnd == NULL || !pMainWnd->IsFrameWnd())
 		return;
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// check if notify hook installed
 	ASSERT_KINDOF(CFrameWnd, pMainWnd);
 	CFrameWnd* pFrameWnd = (CFrameWnd*)pMainWnd;
 	if (pFrameWnd->m_pNotifyHook != NULL)
 		pFrameWnd->m_pNotifyHook->OnEnableModeless(bEnable);
-#endif
 }
 
 int CWinApp::DoMessageBox(LPCTSTR lpszPrompt, UINT nType, UINT nIDPrompt)

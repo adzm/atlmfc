@@ -11,10 +11,6 @@
 #ifndef __AFXDISP_H__
 #define __AFXDISP_H__
 
-#ifdef _AFX_NO_OLE_SUPPORT
-	#error OLE classes not supported in this library variant.
-#endif
-
 #pragma once
 
 #ifndef __AFXWIN_H__
@@ -44,7 +40,7 @@
 #include <atlcomcli.h>
 #include <atlcomtime.h>
 #include <atlcommem.h>
-#include <cstringt.inl>
+#include <cstringt.h>
 
 using ATL::CComBSTR;
 using ATL::COleDateTime;
@@ -704,8 +700,6 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 // EventSink Maps
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 #ifdef _AFXDLL
 #define BEGIN_EVENTSINK_MAP(theClass, baseClass) \
 	PTM_WARNING_DISABLE \
@@ -808,8 +802,6 @@ public:
 
 #endif
 
-#endif // !_AFX_NO_OCC_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Macros for type library information
 
@@ -892,10 +884,8 @@ public:
 	COleVariant(long lSrc, VARTYPE vtSrc = VT_I4);
 	COleVariant(const COleCurrency& curSrc);
 
-#if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
 	COleVariant(LONGLONG nSrc);
 	COleVariant(ULONGLONG nSrc);
-#endif
 
 	COleVariant(float fltSrc);
 	COleVariant(double dblSrc);
@@ -929,10 +919,8 @@ public:
 	const COleVariant& operator=(long lSrc);
 	const COleVariant& operator=(const COleCurrency& curSrc);
 
-#if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
 	const COleVariant& operator=(LONGLONG nSrc);
 	const COleVariant& operator=(ULONGLONG nSrc);
-#endif
 
 	const COleVariant& operator=(float fltSrc);
 	const COleVariant& operator=(double dblSrc);
@@ -1142,8 +1130,6 @@ CDumpContext& AFXAPI operator<<(CDumpContext& dc, COleSafeArray& saSrc);
 /////////////////////////////////////////////////////////////////////////////
 // DDX_ functions for OLE controls on dialogs
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 void AFXAPI DDX_OCText(CDataExchange* pDX, int nIDC, DISPID dispid,
 	CString& value);
 void AFXAPI DDX_OCTextRO(CDataExchange* pDX, int nIDC, DISPID dispid,
@@ -1177,21 +1163,14 @@ void AFXAPI DDX_OCFloat(CDataExchange* pDX, int nIDC, DISPID dispid,
 void AFXAPI DDX_OCFloatRO(CDataExchange* pDX, int nIDC, DISPID dispid,
 	double& value);
 
-#endif // !_AFX_NO_OCC_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Function to enable containment of OLE controls
-
-#ifndef _AFX_NO_OCC_SUPPORT
 
 #ifndef __AFXOCC_H__
 	#include <afxocc.h>
 #endif
 
 void AFX_CDECL AfxEnableControlContainer(COccManager* pOccManager=NULL);
-#else
-#define AfxEnableControlContainer()
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Inline function declarations

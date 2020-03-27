@@ -61,8 +61,7 @@ public:
 protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnPaint();
-	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
-
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
 	DECLARE_MESSAGE_MAP()
 };
 

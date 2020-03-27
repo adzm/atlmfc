@@ -72,7 +72,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
 	afx_msg LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
-	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
+	afx_msg LRESULT OnPrintClient(CDC* pDC, UINT nFlags);
 
 	DECLARE_MESSAGE_MAP()
 };

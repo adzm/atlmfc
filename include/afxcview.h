@@ -13,10 +13,6 @@
 
 #pragma once
 
-#ifdef _AFX_NO_AFXCMN_SUPPORT
-	#error Windows common control classes not supported in this library variant.
-#endif
-
 #ifndef __AFXWIN_H__
 	#include <afxwin.h>
 #endif

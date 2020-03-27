@@ -791,7 +791,7 @@ public:
 		return ExecHelperSetVal(IDM_BACKCOLOR, nColor, OLECMDF_ENABLED|OLECMDF_SUPPORTED);
 	}
 
-	HRESULT SetDefaultComposeSettings(LPCSTR szFontName=NULL,
+	HRESULT SetDefaultComposeSettings(LPCTSTR szFontName=NULL,
 									  unsigned short nFontSize=3,
 									  COLORREF crFontColor=0xFF000000,
 									  COLORREF crFontBgColor=0xFF000000,

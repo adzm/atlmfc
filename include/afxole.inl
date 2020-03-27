@@ -147,12 +147,10 @@ _AFXDISP_INLINE COleVariant::COleVariant(BYTE nSrc)
 	{ vt = VT_UI1; bVal = nSrc; }
 _AFXDISP_INLINE COleVariant::COleVariant(const COleCurrency& curSrc)
 	{ vt = VT_CY; cyVal = curSrc.m_cur; }
-#if (_WIN32_WINNT >= 0x0501) || defined(_ATL_SUPPORT_VT_I8)
 _AFXDISP_INLINE COleVariant::COleVariant(LONGLONG nSrc)
 	{ vt = VT_I8; llVal = nSrc; }
 _AFXDISP_INLINE COleVariant::COleVariant(ULONGLONG nSrc)
 	{ vt = VT_UI8; ullVal = nSrc; }
-#endif
 _AFXDISP_INLINE COleVariant::COleVariant(float fltSrc)
 	{ vt = VT_R4; fltVal = fltSrc; }
 _AFXDISP_INLINE COleVariant::COleVariant(double dblSrc)

@@ -292,7 +292,6 @@ struct AFX_GLOBAL_DATA
 	BOOL Resume();
 	BOOL GetNonClientMetrics (NONCLIENTMETRICS& info);
 
-#if (WINVER >= 0x0600)
 	/// <summary>
 	/// Creates and initializes a Shell item object from a parsing name.</summary>
 	/// <param name="pszPath">[in] A pointer to a display name.</param> 
@@ -301,7 +300,6 @@ struct AFX_GLOBAL_DATA
 	/// <param name="ppv">[out] When this function returns, contains the interface pointer requested in riid. This will typically be IShellItem or IShellItem2.</param> 
 	/// <returns>Returns S_OK if successful, or an error value otherwise. </returns>
 	HRESULT ShellCreateItemFromParsingName(PCWSTR pszPath, IBindCtx *pbc, REFIID riid, void **ppv);
-#endif
 
 #if (NTDDI_VERSION >= NTDDI_WIN7)
 	/// <summary>

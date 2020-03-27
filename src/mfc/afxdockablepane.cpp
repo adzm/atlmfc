@@ -127,7 +127,7 @@ BEGIN_MESSAGE_MAP(CDockablePane, CPane)
 	ON_WM_SETTINGCHANGE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_SETFOCUS()
-	ON_MESSAGE(WM_SETTEXT, &CDockablePane::OnSetText)
+	ON_WM_SETTEXT()
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CDockablePane::OnNeedTipText)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CDockablePane::OnUpdateToolTips)
 END_MESSAGE_MAP()
@@ -2837,9 +2837,8 @@ BOOL CDockablePane::PreTranslateMessage(MSG* pMsg)
 	if (pMsg->message == WM_KEYDOWN && IsTabbed() && pMsg->wParam == VK_ESCAPE)
 	{
 		CBaseTabbedPane* pParentBar = GetParentTabbedPane();
-		CPaneFrameWnd* pParentMiniFrame = pParentBar->GetParentMiniFrame();
+		CPaneFrameWnd* pParentMiniFrame = pParentBar == NULL ? NULL : pParentBar->GetParentMiniFrame();
 		if (pParentBar != NULL && (pParentBar->IsTracked() || pParentMiniFrame != NULL && pParentMiniFrame->IsCaptured()))
-
 		{
 			if (pParentMiniFrame != NULL)
 			{
@@ -2931,13 +2930,13 @@ void CDockablePane::Serialize(CArchive& ar)
 	}
 }
 
-LRESULT CDockablePane::OnSetText(WPARAM, LPARAM lParam)
+int CDockablePane::OnSetText(LPCTSTR lpszText)
 {
 	LRESULT lRes = Default();
 
 	if (!lRes)
 	{
-		return lRes;
+		return (int)lRes;
 	}
 
 	CPaneFrameWnd* pParentMiniFrame = NULL;
@@ -2953,15 +2952,15 @@ LRESULT CDockablePane::OnSetText(WPARAM, LPARAM lParam)
 
 		if (pWndTabbedControlBar != NULL)
 		{
-			LPCTSTR lpcszTitle = reinterpret_cast<LPCTSTR>(lParam);
 			int iTab = pParentTabWnd->GetTabFromHwnd(GetSafeHwnd());
-			CString strLabel;
 			if (iTab >= 0 && iTab < pParentTabWnd->GetTabsNum())
 			{
+				CString strLabel;
 				VERIFY(pParentTabWnd->GetTabLabel(iTab, strLabel));
-				if (strLabel != lpcszTitle)
+
+				if (lpszText != NULL && strLabel != lpszText)
 				{
-					VERIFY(pParentTabWnd->SetTabLabel(iTab, lpcszTitle));
+					VERIFY(pParentTabWnd->SetTabLabel(iTab, lpszText));
 				}
 			}
 		}
@@ -2982,7 +2981,7 @@ LRESULT CDockablePane::OnSetText(WPARAM, LPARAM lParam)
 		SetWindowPos(NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	}
 
-	return lRes;
+	return (int)lRes;
 }
 
 CPane* CDockablePane::DockPaneStandard(BOOL& bWasDocked)

@@ -69,7 +69,6 @@ _AFXDLGS_INLINE HDC CPrintDialog::GetPrinterDC() const
 		return m_pd.hDC; }
 
 // CPrintDialogEx
-#if WINVER >= 0x0500
 _AFXDLGS_INLINE BOOL CPrintDialogEx::PrintSelection() const
 	{ return m_pdex.Flags & PD_SELECTION ? TRUE : FALSE; }
 _AFXDLGS_INLINE BOOL CPrintDialogEx::PrintRange() const
@@ -84,7 +83,6 @@ _AFXDLGS_INLINE HDC CPrintDialogEx::GetPrinterDC() const
 	{ ASSERT_VALID(this);
 		ASSERT(m_pdex.Flags & PD_RETURNDC);
 		return m_pdex.hDC; }
-#endif //(WINVER >= 0x0500)
 
 // CFindReplaceDialog
 _AFXDLGS_INLINE BOOL CFindReplaceDialog::IsTerminating() const

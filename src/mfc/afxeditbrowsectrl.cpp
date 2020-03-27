@@ -305,8 +305,7 @@ void CMFCEditBrowseCtrl::OnBrowse()
 			GetWindowText(strFolder);
 
 			CString strResult;
-			LPCTSTR lpszTitle = m_strBrowseFolderTitle != _T("") ? m_strBrowseFolderTitle : (LPCTSTR)NULL;
-			if (afxShellManager->BrowseForFolder(strResult, this, strFolder, lpszTitle, m_ulBrowseFolderFlags) &&
+			if (afxShellManager->BrowseForFolder(strResult, this, strFolder, m_strBrowseFolderTitle.IsEmpty() ? NULL : (LPCTSTR)m_strBrowseFolderTitle, m_ulBrowseFolderFlags) &&
 				(strResult != strFolder))
 			{
 				SetWindowText(strResult);

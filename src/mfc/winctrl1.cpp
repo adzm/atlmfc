@@ -9,11 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#ifndef _AFX_NO_OCC_SUPPORT
 #include "occimpl.h"
-#endif
-
-
 
 #define new DEBUG_NEW
 
@@ -99,7 +95,7 @@ BOOL CButton::OnChildNotify(UINT message, WPARAM wParam, LPARAM lParam,
 /////////////////////////////////////////////////////////////////////////////
 // CSplitButton
 
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if defined(UNICODE)
 BEGIN_MESSAGE_MAP(CSplitButton, CButton)
 	ON_NOTIFY_REFLECT(BCN_DROPDOWN, &CSplitButton::OnDropDown)
 END_MESSAGE_MAP()
@@ -166,7 +162,7 @@ void CSplitButton::OnDropDown(NMHDR* /*pNMHDR*/, LRESULT *pResult)
 	}
 	*pResult = 0;
 }
-#endif // (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#endif // defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 // CListBox
@@ -338,9 +334,9 @@ CScrollBar::~CScrollBar()
 
 IMPLEMENT_DYNAMIC(CStatic, CWnd)
 IMPLEMENT_DYNAMIC(CButton, CWnd)
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if defined(UNICODE)
 IMPLEMENT_DYNAMIC(CSplitButton, CButton)
-#endif// (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#endif// defined(UNICODE)
 IMPLEMENT_DYNAMIC(CListBox, CWnd)
 IMPLEMENT_DYNAMIC(CComboBox, CWnd)
 IMPLEMENT_DYNAMIC(CEdit, CWnd)

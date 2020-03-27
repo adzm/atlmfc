@@ -35,7 +35,7 @@
 
 // General OLE features
 
-#if (!defined _AFX_NO_OLE_SUPPORT) && (defined _OBJBASE_H_)
+#if (defined _OBJBASE_H_)
 
 // Implementation structures
 struct AFX_EVENT;               // Event sink implementation
@@ -69,7 +69,7 @@ class COleControlLock;
 /////////////////////////////////////////////////////////////////////////////
 // General OLE features
 
-#if (!defined _AFX_NO_OLE_SUPPORT) && (defined _OBJBASE_H_)
+#if (defined _OBJBASE_H_)
 #ifndef __AFXPRIV2_H__OLE__
 #define __AFXPRIV2_H__OLE__
 
@@ -146,7 +146,7 @@ public:
 };
 
 #endif // __AFXPRIV2_H__OLE__
-#endif //(!defined _AFX_NO_OLE_SUPPORT) && (defined _OBJBASE_H_)
+#endif // (defined _OBJBASE_H_)
 
 /////////////////////////////////////////////////////////////////////////////
 // OLE Automation features

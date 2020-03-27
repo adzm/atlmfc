@@ -437,6 +437,7 @@ void CDatabase::Free()
 	if (m_blobConnect.pbData != NULL)
 	{
 		LocalFree(m_blobConnect.pbData);
+		m_blobConnect.pbData = NULL;
 	}
 
 	// free henv if refcount goes to 0
@@ -502,6 +503,24 @@ CString CDatabase::GetDatabaseName() const
 			str.Empty();
 	}
 	return str;
+}
+
+CString CDatabase::GetConnect() const
+{
+	ASSERT_VALID(this);
+	CString strConnect = m_strConnect;
+
+	if (strConnect.GetLength() == 0)
+	{
+		DATA_BLOB connectBlob;
+		if (CryptUnprotectData((DATA_BLOB *)&m_blobConnect, NULL, NULL, NULL, NULL, 0, &connectBlob))
+		{
+			strConnect = (LPTSTR)connectBlob.pbData;
+			LocalFree(connectBlob.pbData);
+		}
+	}
+
+	return strConnect;
 }
 
 BOOL CDatabase::BeginTrans()
@@ -750,6 +769,7 @@ BOOL CDatabase::Connect(DWORD dwOptions)
 		{
 			m_strConnect = (LPTSTR)connectBlob.pbData;
 			LocalFree(m_blobConnect.pbData);
+			m_blobConnect.pbData = NULL;
 			LocalFree(connectBlob.pbData);
 		}
 	}
@@ -1925,7 +1945,7 @@ void CRecordset::GetFieldValue(short nIndex,
 
 		case SQL_C_WCHAR:
 			GetLongCharDataAndCleanup(m_pDatabase, m_hstmt, nIndex,
-				nActualSize, &pvData, nLen, *varValue.m_pstringW,
+				nActualSize / sizeof(WCHAR), &pvData, nLen, *varValue.m_pstringW,
 				m_rgODBCFieldInfos[nIndex - 1].m_nSQLType, SQL_C_WCHAR);
 			break;
 
@@ -2522,7 +2542,7 @@ void CRecordset::PrepareAndExecute()
 	{
 		// Check if concurrency was changed in order to mark
 		// recordset non-updatable if necessary
-		DWORD dwConcurrency;
+		DWORD_PTR dwConcurrency;
 		SQLINTEGER returned;
 		AFX_SQL_SYNC(::SQLGetStmtAttr(m_hstmt, SQL_CONCURRENCY, (SQLPOINTER) &dwConcurrency, 0, &returned));
 		if (!Check(nRetCode))

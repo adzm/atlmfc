@@ -9,9 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#ifndef _AFX_NO_OCC_SUPPORT
 #include "occimpl.h"
-#endif
 
 #include <atlacc.h>	// Accessible Proxy from ATL
 #include "sal.h"
@@ -99,10 +97,8 @@ CWnd::CWnd()
 	m_pfnSuper = NULL;
 	m_nModalResult = 0;
 	m_pDropTarget = NULL;
-#ifndef _AFX_NO_OCC_SUPPORT	
 	m_pCtrlCont = NULL;
 	m_pCtrlSite = NULL;
-#endif
 	m_pMFCCtrlContainer = NULL;
 
 	m_ptGestureFrom = CPoint(-1, -1);
@@ -122,10 +118,8 @@ CWnd::CWnd(HWND hWnd)
 	m_pfnSuper = NULL;
 	m_nModalResult = 0;
 	m_pDropTarget = NULL;
-#ifndef _AFX_NO_OCC_SUPPORT	
 	m_pCtrlCont = NULL;
 	m_pCtrlSite = NULL;
-#endif
 	m_pMFCCtrlContainer = NULL;
 
 	m_ptGestureFrom = CPoint(-1, -1);
@@ -274,11 +268,9 @@ LRESULT AFXAPI AfxCallWndProc(CWnd* pWnd, HWND hWnd, UINT nMsg,
 	LRESULT lResult;
 	TRY
 	{
-#ifndef _AFX_NO_OCC_SUPPORT
 		// special case for WM_DESTROY
 		if ((nMsg == WM_DESTROY) && (pWnd->m_pCtrlCont != NULL))
 			pWnd->m_pCtrlCont->OnUIActivate(NULL);
-#endif
 
 		// special case for WM_INITDIALOG
 		CRect rectOld;
@@ -332,16 +324,13 @@ CHandleMap* PASCAL afxMapHWND(BOOL bCreate)
 	if (pState->m_pmapHWND == NULL && bCreate)
 	{
 		BOOL bEnable = AfxEnableMemoryTracking(FALSE);
-#ifndef _AFX_PORTABLE
 		_PNH pnhOldHandler = AfxSetNewHandler(&AfxCriticalNewHandler);
-#endif
+
 		pState->m_pmapHWND = new CHandleMap(RUNTIME_CLASS(CWnd),
 			ConstructDestruct<CWnd>::Construct, ConstructDestruct<CWnd>::Destruct, 
 			offsetof(CWnd, m_hWnd));
 
-#ifndef _AFX_PORTABLE
 		AfxSetNewHandler(pnhOldHandler);
-#endif
 		AfxEnableMemoryTracking(bEnable);
 	}
 	return pState->m_pmapHWND;
@@ -353,9 +342,7 @@ CWnd* PASCAL CWnd::FromHandle(HWND hWnd)
 	ASSERT(pMap != NULL);
 	CWnd* pWnd = (CWnd*)pMap->FromHandle(hWnd);
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	pWnd->AttachControlSite(pMap);
-#endif
 
 	ASSERT(pWnd == NULL || pWnd->m_hWnd == hWnd);
 	return pWnd;
@@ -388,10 +375,7 @@ BOOL CWnd::Attach(HWND hWndNew)
 
 	pMap->SetPermanent(m_hWnd = hWndNew, this);
 
-
-#ifndef _AFX_NO_OCC_SUPPORT
 	AttachControlSite(pMap);
-#endif
 
 	return TRUE;
 }
@@ -407,9 +391,7 @@ HWND CWnd::Detach()
 	m_hWnd = NULL;
 	}
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_pCtrlSite = NULL;
-#endif
 
 	return hWnd;
 }
@@ -835,7 +817,6 @@ CWnd::~CWnd()
 		DestroyWindow();
 	}
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	// cleanup control container,
 	// including destroying controls
 
@@ -844,7 +825,6 @@ CWnd::~CWnd()
 	// cleanup control site
 	if (m_pCtrlSite != NULL && m_pCtrlSite->m_pWndCtrl == this)
 		m_pCtrlSite->m_pWndCtrl = NULL;
-#endif
 
 	delete m_pMFCCtrlContainer;
 
@@ -856,11 +836,9 @@ CWnd::~CWnd()
 
 void CWnd::OnDestroy()
 {
-#ifndef _AFX_NO_OCC_SUPPORT
 	// cleanup control container
 	delete m_pCtrlCont;
 	m_pCtrlCont = NULL;
-#endif
 
 	// Active Accessibility
 	if (m_pProxy != NULL)
@@ -915,20 +893,16 @@ void CWnd::OnNcDestroy()
 			pThread->m_pActiveWnd = NULL;
 	}
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// cleanup OLE drop target interface
 	if (m_pDropTarget != NULL)
 	{
 		m_pDropTarget->Revoke();
 		m_pDropTarget = NULL;
 	}
-#endif
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	// cleanup control container
 	delete m_pCtrlCont;
 	m_pCtrlCont = NULL;
-#endif
 
 	// cleanup tooltip support
 	if (m_nFlags & WF_TOOLTIPS)
@@ -1095,10 +1069,6 @@ BOOL CWnd::DestroyWindow()
 #endif
 	}
 
-#ifdef _AFX_NO_OCC_SUPPORT
-	if (m_hWnd != NULL)
-		bResult = ::DestroyWindow(m_hWnd);
-#else //_AFX_NO_OCC_SUPPORT
 	if ((m_hWnd != NULL) || (m_pCtrlSite != NULL))
 	{
 		if (m_pCtrlSite == NULL)
@@ -1106,7 +1076,6 @@ BOOL CWnd::DestroyWindow()
 		else
 			bResult = m_pCtrlSite->DestroyControl();
 	}
-#endif //_AFX_NO_OCC_SUPPORT
 
 	if (hWndOrig != NULL)
 	{
@@ -1214,21 +1183,16 @@ void CWnd::GetWindowText(CString& rString) const
 {
 	ASSERT(::IsWindow(m_hWnd));
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	if (m_pCtrlSite == NULL)
 	{
-#endif
 		int nLen = ::GetWindowTextLength(m_hWnd);
 		::GetWindowText(m_hWnd, rString.GetBufferSetLength(nLen), nLen+1);
 		rString.ReleaseBuffer();
-
-#ifndef _AFX_NO_OCC_SUPPORT
 	}
 	else
 	{
 		m_pCtrlSite->GetWindowText(rString);
 	}
-#endif
 }
 
 int CWnd::GetDlgItemText(int nID, CString& rString) const
@@ -1236,10 +1200,8 @@ int CWnd::GetDlgItemText(int nID, CString& rString) const
 	ASSERT(::IsWindow(m_hWnd));
 	rString = _T("");    // empty without deallocating
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	if (m_pCtrlCont == NULL)
 	{
-#endif
 		HWND hWnd = ::GetDlgItem(m_hWnd, nID);
 		if (hWnd != NULL)
 		{
@@ -1247,8 +1209,6 @@ int CWnd::GetDlgItemText(int nID, CString& rString) const
 			::GetWindowText(hWnd, rString.GetBufferSetLength(nLen), nLen+1);
 			rString.ReleaseBuffer();
 		}
-
-#ifndef _AFX_NO_OCC_SUPPORT
 	}
 	else
 	{
@@ -1256,7 +1216,6 @@ int CWnd::GetDlgItemText(int nID, CString& rString) const
 		if (pWnd != NULL)
 			pWnd->GetWindowText(rString);
 	}
-#endif
 
 	return (int)rString.GetLength();
 }
@@ -2030,11 +1989,9 @@ BEGIN_MESSAGE_MAP(CWnd, CCmdTarget)
 	ON_WM_DEVMODECHANGE()
 	ON_WM_HELPINFO()
 	ON_WM_SETTINGCHANGE()
-#ifndef _AFX_NO_OCC_SUPPORT
 	ON_WM_DESTROY()
-#endif
 	ON_MESSAGE(WM_ACTIVATETOPLEVEL, &CWnd::OnActivateTopLevel)
-	ON_MESSAGE(WM_DISPLAYCHANGE, &CWnd::OnDisplayChange)
+	ON_WM_DISPLAYCHANGE()
 	ON_REGISTERED_MESSAGE(CWnd::m_nMsgDragList, &CWnd::OnDragList)
 	ON_MESSAGE(WM_GETOBJECT, &CWnd::OnGetObject)
 	ON_MESSAGE(WM_TOUCH, &CWnd::OnTouchMessage)
@@ -2049,7 +2006,7 @@ const AFX_MSGMAP_ENTRY* AFXAPI
 AfxFindMessageEntry(const AFX_MSGMAP_ENTRY* lpEntry,
 	UINT nMsg, UINT nCode, UINT nID)
 {
-#if defined(_M_IX86) && !defined(_AFX_PORTABLE)
+#if defined(_M_IX86)
 // 32-bit Intel 386/486 version.
 
 	ASSERT(offsetof(AFX_MSGMAP_ENTRY, nMessage) == 0);
@@ -2090,7 +2047,7 @@ AfxFindMessageEntry(const AFX_MSGMAP_ENTRY* lpEntry,
 	__end:
 	}
 	return lpEntry;
-#else  // _AFX_PORTABLE
+#else // _M_IX86
 	// C version of search routine
 	while (lpEntry->nSig != AfxSig_end)
 	{
@@ -2102,7 +2059,7 @@ AfxFindMessageEntry(const AFX_MSGMAP_ENTRY* lpEntry,
 		lpEntry++;
 	}
 	return NULL;    // not found
-#endif  // _AFX_PORTABLE
+#endif // _M_IX86
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2318,6 +2275,10 @@ LDispatch:
 		lResult = (this->*mmf.pfn_b_D)(CDC::FromHandle(reinterpret_cast<HDC>(wParam)));
 		break;
 
+	case AfxSig_l_D_u:
+		lResult = (this->*mmf.pfn_l_D_u)(CDC::FromHandle(reinterpret_cast<HDC>(wParam)), (UINT)lParam);
+		break;
+
 	case AfxSig_b_b_v:
 		lResult = (this->*mmf.pfn_b_b)(static_cast<BOOL>(wParam));
 		break;
@@ -2380,7 +2341,6 @@ LDispatch:
 			CWnd* pWnd = CWnd::FromHandlePermanent(wndTemp.m_hWnd);
 			if (pWnd == NULL)
 			{
-#ifndef _AFX_NO_OCC_SUPPORT
 				// determine the site of the OLE control if it is one
 				COleControlSite* pSite;
 				if (m_pCtrlCont != NULL && (pSite = (COleControlSite*)
@@ -2388,7 +2348,7 @@ LDispatch:
 				{
 					wndTemp.m_pCtrlSite = pSite;
 				}
-#endif
+
 				pWnd = &wndTemp;
 			}
 			HBRUSH hbr = (this->*mmf.pfn_B_D_W_u)(&dcTemp, pWnd, nCtlType);
@@ -2430,6 +2390,35 @@ LDispatch:
 
 	case AfxSig_i_v_s:
 		lResult = (this->*mmf.pfn_i_s)(reinterpret_cast<LPTSTR>(lParam));
+		break;
+
+	case AfxSig_i_v_S:
+		lResult = (this->*mmf.pfn_i_S)(reinterpret_cast<LPCTSTR>(lParam));
+		break;
+
+	case AfxSig_v_F_b:
+		(this->*mmf.pfn_v_F_b)(CFont::FromHandle(reinterpret_cast<HFONT>(wParam)), (BOOL)LOWORD(lParam));
+		break;
+
+	case AfxSig_h_v_v:
+		{
+			HANDLE handle = (this->*mmf.pfn_h_v)();
+			lResult = reinterpret_cast<LRESULT>(handle);
+		}
+		break;
+
+	case AfxSig_h_b_h:
+		{
+			HANDLE handle = (this->*mmf.pfn_h_b_h)(static_cast<BOOL>(wParam), reinterpret_cast<HANDLE>(lParam));
+			lResult = reinterpret_cast<LRESULT>(handle);
+		}
+		break;
+
+	case AfxSig_h_h_h:
+		{
+			HANDLE handle = (this->*mmf.pfn_h_h_h)(reinterpret_cast<HANDLE>(wParam), reinterpret_cast<HANDLE>(lParam));
+			lResult = reinterpret_cast<LRESULT>(handle);
+		}
 		break;
 
 	case AfxSig_l_w_l:
@@ -2495,6 +2484,10 @@ LDispatch:
 		(this->*mmf.pfn_v_b_W_W)(m_hWnd == reinterpret_cast<HWND>(lParam),
 			CWnd::FromHandle(reinterpret_cast<HWND>(lParam)),
 			CWnd::FromHandle(reinterpret_cast<HWND>(wParam)));
+		break;
+
+	case AfxSig_MDINext:
+		(this->*mmf.pfn_v_W_b)(CWnd::FromHandle(reinterpret_cast<HWND>(wParam)), static_cast<BOOL>(lParam));
 		break;
 
 	case AfxSig_v_D_v:
@@ -2652,6 +2645,9 @@ LDispatch:
 	case AfxSig_u_u_u:
 		lResult = (this->*mmf.pfn_u_u_u)(static_cast<UINT>(wParam), static_cast<UINT>(lParam));
 		break;
+	case AfxSig_u_u_l:
+		lResult = (this->*mmf.pfn_u_u_l)(static_cast<UINT>(wParam), lParam);
+		break;
 	case AfxSig_MOUSE_XBUTTON:
 		(this->*mmf.pfn_MOUSE_XBUTTON)(static_cast<UINT>(GET_KEYSTATE_WPARAM(wParam)), static_cast<UINT>(GET_XBUTTON_WPARAM(wParam)), CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
 		lResult = TRUE;
@@ -2669,6 +2665,9 @@ LDispatch:
 		break;
 	case AfxSig_v_u_hkl:
 		(this->*mmf.pfn_v_u_h)(static_cast<UINT>(wParam), reinterpret_cast<HKL>(lParam));
+		break;
+	case AfxSig_b_v_ii:
+		lResult = (this->*mmf.pfn_b_v_ii)(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		break;
 	}
 	goto LReturnTrue;
@@ -3129,9 +3128,9 @@ int CWnd::GetScrollLimit(int nBar)
 	int nMin, nMax;
 	GetScrollRange(nBar, &nMin, &nMax);
 	SCROLLINFO info;
-	if (GetScrollInfo(nBar, &info, SIF_PAGE))
+	if (GetScrollInfo(nBar, &info, SIF_PAGE) && info.nPage > 1)
 	{
-		nMax -= __max(info.nPage-1,0);
+		nMax -= (info.nPage - 1);
 	}
 	return nMax;
 }
@@ -3168,16 +3167,12 @@ void CWnd::ScrollWindow(int xAmount, int yAmount,
 		}
 	}
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 	if ((m_pCtrlCont == NULL) || (lpRect != NULL))
 		return;
 
 	// the following code is for OLE control containers only
 
 	m_pCtrlCont->ScrollChildren(xAmount, yAmount);
-
-#endif // !_AFX_NO_OCC_SUPPORT
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3395,7 +3390,6 @@ BOOL PASCAL CWnd::ReflectLastMsg(HWND hWndChild, LRESULT* pResult)
 	ASSERT(pWnd == NULL || pWnd->m_hWnd == hWndChild);
 	if (pWnd == NULL)
 	{
-#ifndef _AFX_NO_OCC_SUPPORT
 		// check if the window is an OLE control
 		CWnd* pWndParent = (CWnd*)pMap->LookupPermanent(::GetParent(hWndChild));
 		if (pWndParent != NULL && pWndParent->m_pCtrlCont != NULL)
@@ -3412,7 +3406,7 @@ BOOL PASCAL CWnd::ReflectLastMsg(HWND hWndChild, LRESULT* pResult)
 				return lResult != 0;
 			}
 		}
-#endif //!_AFX_NO_OCC_SUPPORT
+
 		return FALSE;
 	}
 
@@ -3423,7 +3417,6 @@ BOOL PASCAL CWnd::ReflectLastMsg(HWND hWndChild, LRESULT* pResult)
 
 BOOL CWnd::OnChildNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-#ifndef _AFX_NO_OCC_SUPPORT
 	if (m_pCtrlSite != NULL)
 	{
 		// first forward raw OCM_ messages to OLE control sources
@@ -3438,7 +3431,6 @@ BOOL CWnd::OnChildNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* pResu
 			*pResult = lResult;
 		return TRUE;
 	}
-#endif
 
 	return ReflectChildNotify(uMsg, wParam, lParam, pResult);
 }
@@ -3529,12 +3521,11 @@ void CWnd::OnSetFocus(CWnd*)
    BOOL bHandled;
 
    bHandled = FALSE;
-#ifndef _AFX_NO_OCC_SUPPORT
    if (m_pCtrlCont != NULL)
    {
 	  bHandled = m_pCtrlCont->HandleSetFocus();
    }
-#endif  //!_AFX_NO_OCC_SUPPORT
+
    if( !bHandled )
    {
 	  Default();
@@ -3585,7 +3576,7 @@ void CWnd::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 		m_pCtrlCont->BroadcastAmbientPropertyChange( DISPID_AMBIENT_LOCALEID );
 	}
 
-	CWnd::OnDisplayChange(0, 0);    // to update system metrics, etc.
+	CWnd::OnDisplayChange(0, 0, 0);    // to update system metrics, etc.
 }
 
 void CWnd::OnDevModeChange(_In_z_ LPTSTR lpDeviceName)
@@ -3620,8 +3611,12 @@ BOOL CWnd::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 	return Default() != 0;
 }
 
-LRESULT CWnd::OnDisplayChange(WPARAM, LPARAM)
+void CWnd::OnDisplayChange(UINT nImageDepth, int cxScreen, int cyScreen)
 {
+	UNUSED_ALWAYS(nImageDepth);
+	UNUSED_ALWAYS(cxScreen);
+	UNUSED_ALWAYS(cyScreen);
+
 	// update metrics if this window is the main window
 	if (AfxGetMainWnd() == this)
 	{
@@ -3637,7 +3632,7 @@ LRESULT CWnd::OnDisplayChange(WPARAM, LPARAM)
 			TRUE, TRUE);
 	}
 
-	return Default();
+	Default();
 }
 
 LRESULT CWnd::OnDragList(WPARAM, LPARAM lParam)
@@ -4705,8 +4700,6 @@ void CWnd::OnDrawIconicThumbnailOrLivePreview(CDC& dc, CRect /*rect*/, CSize /*s
 	SendMessage(WM_PRINT, (WPARAM)dc.GetSafeHdc(), (LPARAM)(PRF_CLIENT | PRF_ERASEBKGND | PRF_CHILDREN | PRF_NONCLIENT));
 }
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 BOOL CWnd::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO*)
 {
 	ASSERT(FALSE); // this class doesn't support dialog creation
@@ -4716,8 +4709,6 @@ _AFX_OCC_DIALOG_INFO* CWnd::GetOccDialogInfo()
 {	
 	return NULL;
 }
-
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Standard init called by WinMain
@@ -4980,7 +4971,6 @@ BOOL CWnd::SubclassDlgItem(UINT nID, CWnd* pParent)
 	if (hWndControl != NULL)
 		return SubclassWindow(hWndControl);
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	if (pParent->m_pCtrlCont != NULL)
 	{
 		// normal dialog control not found
@@ -4990,17 +4980,14 @@ BOOL CWnd::SubclassDlgItem(UINT nID, CWnd* pParent)
 			ASSERT(pSite->m_hWnd != NULL);
 			VERIFY(SubclassWindow(pSite->m_hWnd));
 
-#ifndef _AFX_NO_OCC_SUPPORT
 			// If the control has reparented itself (e.g., invisible control),
 			// make sure that the CWnd gets properly wired to its control site.
 			if (pParent->m_hWnd != ::GetParent(pSite->m_hWnd))
 				AttachControlSite(pParent);
-#endif //!_AFX_NO_OCC_SUPPORT
 
 			return TRUE;
 		}
 	}
-#endif
 
 	return FALSE;   // control not found
 }

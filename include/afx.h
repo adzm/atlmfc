@@ -25,6 +25,22 @@
 #endif
 #endif
 
+#ifndef NO_WARN_MBCS_MFC_DEPRECATION
+#ifdef _MBCS
+// Warn about MBCS support being deprecated: see http://go.microsoft.com/fwlink/p/?LinkId=279048 for more information.
+#pragma warning(push)
+#pragma warning(1 : 4996)
+inline __declspec(deprecated("MBCS support in MFC is deprecated and may be removed in a future version of MFC.")) void MBCS_Support_Deprecated_In_MFC() { }
+
+class MBCS_Deprecated_MFC
+{
+public:
+	MBCS_Deprecated_MFC() { MBCS_Support_Deprecated_In_MFC(); }
+};
+#pragma warning(pop)
+#endif
+#endif
+
 #if !defined(_M_IX86) && !defined(_M_AMD64) && !defined(_M_ARM)
 	#error Compiling for unsupported platform.  Only x86, x64 and ARM platforms are supported by MFC.
 #endif
@@ -125,13 +141,13 @@
 #endif
 
 #ifdef _DLL
-	#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+	#if defined(_DEBUG)
 		#pragma comment(lib, "msvcrtd.lib")
 	#else
 		#pragma comment(lib, "msvcrt.lib")
 	#endif
 #else
-	#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+	#if defined(_DEBUG)
 		#pragma comment(lib, "libcmtd.lib")
 	#else
 		#pragma comment(lib, "libcmt.lib")
@@ -230,11 +246,9 @@ class CDumpContext;                   // object diagnostic dumping
 
 #include <malloc.h>
 
-#ifndef _AFX_NO_DEBUG_CRT
 #ifndef _INC_CRTDBG
 	#include <crtdbg.h>
 #endif
-#endif // _AFX_NO_DEBUG_CRT
 
 #ifdef _AFX_OLD_EXCEPTIONS
 #error MFC no longer supports setjmp/longjmp exception handling.
@@ -544,7 +558,7 @@ public:
 	void PASCAL operator delete(void* p);
 	void PASCAL operator delete(void* p, void* pPlace);
 
-#if defined(_DEBUG) && !defined(_AFX_NO_DEBUG_CRT)
+#if defined(_DEBUG)
 	// for file name/line number tracking using DEBUG_NEW
 	void* PASCAL operator new(size_t nSize, LPCSTR lpszFileName, int nLine);
 	void PASCAL operator delete(void *p, LPCSTR lpszFileName, int nLine);
@@ -1431,7 +1445,7 @@ BOOL AFXAPI AfxIsValidString(LPCSTR lpsz, int nLength = -1);
 BOOL AfxIsValidAtom(ATOM nAtom);
 BOOL AfxIsValidAtom(LPCTSTR psz);
 
-#if defined(_DEBUG) && !defined(_AFX_NO_DEBUG_CRT)
+#if defined(_DEBUG)
 
 // Memory tracking allocation
 void* AFX_CDECL operator new(size_t nSize, LPCSTR lpszFileName, int nLine);

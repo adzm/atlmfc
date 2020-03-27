@@ -109,7 +109,7 @@ public:
 class CMFCTasksPaneTask : public CObject
 {
 public:
-	CMFCTasksPaneTask(CMFCTasksPaneTaskGroup* pGroup, LPCTSTR lpszName, int nIcon, UINT uiCommandID, DWORD dwUserData = 0, HWND hwndTask = NULL, BOOL bAutoDestroyWindow = FALSE, int nWindowHeight = 0)
+	CMFCTasksPaneTask(CMFCTasksPaneTaskGroup* pGroup, LPCTSTR lpszName, int nIcon, UINT uiCommandID, DWORD_PTR dwUserData = 0, HWND hwndTask = NULL, BOOL bAutoDestroyWindow = FALSE, int nWindowHeight = 0)
 	{
 		m_pGroup = pGroup;
 		m_strName = lpszName == NULL ? _T("") : lpszName;
@@ -155,7 +155,7 @@ public:
 	int      m_nIcon;
 	int      m_nWindowHeight;
 	UINT     m_uiCommandID;
-	DWORD    m_dwUserData;
+	DWORD_PTR m_dwUserData;
 	HWND     m_hwndTask;
 	BOOL     m_bAutoDestroyWindow;
 	BOOL     m_bVisible;
@@ -353,7 +353,7 @@ public:
 	// -------------
 	// Task support:
 	// -------------
-	int AddTask(int nGroup, LPCTSTR lpszTaskName, int nTaskIcon = -1, UINT uiCommandID = 0, DWORD dwUserData = 0);
+	int AddTask(int nGroup, LPCTSTR lpszTaskName, int nTaskIcon = -1, UINT uiCommandID = 0, DWORD_PTR dwUserData = 0);
 	int AddSeparator(int nGroup) { return AddTask(nGroup, NULL); }
 
 	BOOL SetTaskName(int nGroup, int nTask, LPCTSTR lpszTaskName);
@@ -376,7 +376,7 @@ public:
 		return (int) pGroup->m_lstTasks.GetCount();
 	}
 	
-	int AddWindow(int nGroup, HWND hwndTask, int nWndHeight, BOOL bAutoDestroyWindow = FALSE, DWORD dwUserData = 0);
+	int AddWindow(int nGroup, HWND hwndTask, int nWndHeight, BOOL bAutoDestroyWindow = FALSE, DWORD_PTR dwUserData = 0);
 	BOOL SetWindowHeight(int nGroup, HWND hwndTask, int nWndHeight);
 	BOOL SetWindowHeight(HWND hwndTask, int nWndHeight);
 
@@ -499,7 +499,7 @@ public:
 
 // Overrides
 public:
-	virtual void OnClickTask(int nGroupNumber, int nTaskNumber, UINT uiCommandID, DWORD dwUserData);
+	virtual void OnClickTask(int nGroupNumber, int nTaskNumber, UINT uiCommandID, DWORD_PTR dwUserData);
 
 public:
 	virtual void OnOK();
@@ -554,8 +554,8 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
-	afx_msg LRESULT OnGetFont(WPARAM, LPARAM);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
+	afx_msg HFONT OnGetFont();
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg void OnBack();
 	afx_msg void OnForward();
@@ -565,7 +565,7 @@ protected:
 	afx_msg void OnUpdateBack(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateForward(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateClose(CCmdUI* pCmdUI);
-	afx_msg LRESULT OnSetText(WPARAM, LPARAM);
+	afx_msg int OnSetText(LPCTSTR lpszText);
 
 	DECLARE_MESSAGE_MAP()
 

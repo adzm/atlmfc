@@ -232,6 +232,8 @@ void CMFCBaseTabCtrl::CleanUp()
 	CTooltipManager::DeleteToolTip(m_pToolTipClose);
 
 	m_arTabs.RemoveAll();
+	m_arTabIndices.RemoveAll();
+
 	m_iTabsNum = 0;
 	m_iActiveTab = -1;
 }
@@ -310,6 +312,8 @@ void CMFCBaseTabCtrl::InsertTab(CWnd* pNewWnd, LPCTSTR lpszTabLabel, int nInsert
 	}
 
 	m_nNextTabID ++;
+
+	m_arTabIndices.RemoveAll();
 
 	OnChangeTabs();
 	RecalcLayout();
@@ -399,6 +403,8 @@ BOOL CMFCBaseTabCtrl::RemoveTab(int iTab, BOOL bRecalcLayout)
 	//----------------------------
 	m_arTabs.RemoveAt(iTab);
 	m_iTabsNum --;
+
+	m_arTabIndices.RemoveAll();
 
 	//-----------------------------------
 	// Destroy tab window and delete tab:
@@ -506,6 +512,7 @@ void CMFCBaseTabCtrl::RemoveAllTabs()
 	}
 
 	m_arTabs.RemoveAll();
+	m_arTabIndices.RemoveAll();
 
 	OnChangeTabs();
 
@@ -1815,7 +1822,7 @@ void CMFCBaseTabCtrl::MoveTab(int nSource, int nDest)
 {
 	ASSERT_VALID(this);
 
-	if (nSource == nDest)
+	if (nSource == nDest && !IsMDITab())
 	{
 		return;
 	}
@@ -1825,29 +1832,72 @@ void CMFCBaseTabCtrl::MoveTab(int nSource, int nDest)
 
 	ASSERT(nDest < m_arTabs.GetSize());
 
-	if (nDest == -1)
+	if (IsMDITab())
 	{
-		m_arTabs.Add(pSource);
-		m_arTabs.RemoveAt(nSource);
+		// Don't change order in MDI Tabs - use indexes instead:
+		if (m_arTabIndices.GetSize() != m_arTabs.GetSize())
+		{
+			m_arTabIndices.RemoveAll();
+
+			for (int i = 0; i < (int)m_arTabs.GetSize(); i++)
+			{
+				m_arTabIndices.Add(i);
+			}
+		}
+
+		if (nDest == -1)
+		{
+			nDest = (int)m_arTabs.GetSize() - 1;
+		}
+
+		int nSourceIndex = -1;
+
+		for (int i = 0; i < (int)m_arTabIndices.GetSize(); i++)
+		{
+			if (m_arTabIndices[i] == nSource)
+			{
+				nSourceIndex = i;
+				break;
+			}
+		}
+
+		if (nSourceIndex != -1)
+		{
+			m_arTabIndices.RemoveAt(nSourceIndex);
+			m_arTabIndices.InsertAt(nDest, nSource);
+		}
+		else
+		{
+			ASSERT(FALSE);
+		}
 	}
 	else
 	{
-		m_arTabs.RemoveAt(nSource);
-		m_arTabs.InsertAt(nDest, pSource);
-	}
-
-	for (int iTab = 0; iTab < m_arTabs.GetSize(); iTab++)
-	{
-		if (pActive == (CMFCTabInfo*) m_arTabs [iTab])
+		if (nDest == -1)
 		{
-			if (iTab != m_iActiveTab)
+			m_arTabs.Add(pSource);
+			m_arTabs.RemoveAt(nSource);
+		}
+		else
+		{
+			m_arTabs.RemoveAt(nSource);
+			m_arTabs.InsertAt(nDest, pSource);
+		}
+
+		for (int iTab = 0; iTab < m_arTabs.GetSize(); iTab++)
+		{
+			if (pActive == (CMFCTabInfo*) m_arTabs [iTab])
 			{
-				SetActiveTab(iTab);
-				FireChangeActiveTab(m_iActiveTab);
+				if (iTab != m_iActiveTab)
+				{
+					SetActiveTab(iTab);
+					FireChangeActiveTab(m_iActiveTab);
+				}
+				break;
 			}
-			break;
 		}
 	}
+
 	RecalcLayout();
 }
 

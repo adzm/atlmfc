@@ -46,9 +46,7 @@ ATLPREFAST_UNSUPPRESS()
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "gdiplus.lib")
-#if WINVER >= 0x0500
 #pragma comment(lib, "msimg32.lib")
-#endif  // WINVER >= 0x0500
 #endif  // !_ATL_NO_DEFAULT_LIBS
 
 #pragma pack(push, _ATL_PACKING)
@@ -140,7 +138,6 @@ public:
 	virtual ~CImage() throw();
 
 	operator HBITMAP() const throw();
-#if WINVER >= 0x0500
 	BOOL AlphaBlend(
 		_In_ HDC hDestDC,
 		_In_ int xDest,
@@ -170,7 +167,6 @@ public:
 		_In_ const RECT& rectSrc,
 		_In_ BYTE bSrcAlpha = 0xff,
 		_In_ BYTE bBlendOp = AC_SRC_OVER) const throw();
-#endif  // WINVER >= 0x0500
 	void Attach(
 		_In_ HBITMAP hBitmap,
 		_In_ DIBOrientation eOrientation = DIBOR_DEFAULT) throw();
@@ -395,7 +391,6 @@ public:
 		_In_ const RECT& rectDest,
 		_In_ const RECT& rectSrc,
 		_In_ DWORD dwROP = SRCCOPY) const throw();
-#if WINVER >= 0x0500
 	BOOL TransparentBlt(
 		_In_ HDC hDestDC,
 		_In_ int xDest,
@@ -423,7 +418,6 @@ public:
 		_In_ const RECT& rectDest,
 		_In_ const RECT& rectSrc,
 		_In_ UINT crTransparent = CLR_INVALID) const throw();
-#endif  // WINVER >= 0x0500
 
 	static BOOL IsTransparencySupported() throw();
 
@@ -439,12 +433,16 @@ private:
 	LONG m_iTransparentColor;
 	COLORREF m_clrTransparentColor;
 
-	static CInitGDIPlus s_initGDIPlus;
+	static CInitGDIPlus* GetInitGDIPlusInstance()
+	{
+		static CInitGDIPlus gdiPlus;
+		return &gdiPlus;
+	}
 
 public:
 	inline static void ReleaseGDIPlus()
 	{
-		s_initGDIPlus.ReleaseGDIPlus();
+		GetInitGDIPlusInstance()->ReleaseGDIPlus();
 	}
 
 
@@ -488,8 +486,23 @@ private:
 	mutable int m_nDCRefCount;
 	mutable HBITMAP m_hOldBitmap;
 
-	static CDCCache s_cache;
+	static CDCCache* GetCDCCacheInstance()
+	{
+		static CDCCache cache;
+		return &cache;
+	}
+
+	static bool CImageStaticInitialize()
+	{
+		GetInitGDIPlusInstance();
+		GetCDCCacheInstance();
+		return true;
+	}
+
+	static bool isCImageStaticInitialized;
 };
+
+__declspec(selectany) bool CImage::isCImageStaticInitialized = CImage::CImageStaticInitialize();
 
 inline CImageDC::CImageDC(_In_ const CImage& image) throw( ... ) :
 	m_image( image ),
@@ -514,11 +527,7 @@ inline CImageDC::operator HDC() const throw()
 inline CImage::CInitGDIPlus::CInitGDIPlus() throw() :
 	m_dwToken( 0 ), m_nCImageObjects( 0 ), m_dwLastError(S_OK)
 {
-#if defined(_ATL_STATIC_LIB_IMPL)
 	if (!_AtlInitializeCriticalSectionEx(&m_sect, 0, 0))
-#else
-	if (!InitializeCriticalSectionAndSpinCount(&m_sect, 0))
-#endif
 	{
 		m_dwLastError = HRESULT_FROM_WIN32(GetLastError());
 	}
@@ -656,13 +665,13 @@ inline CImage::CImage() throw() :
 	m_bHasAlphaChannel( false ),
 	m_bIsDIBSection( false )
 {
-	s_initGDIPlus.IncreaseCImageCount();
+	GetInitGDIPlusInstance()->IncreaseCImageCount();
 }
 
 inline CImage::~CImage() throw()
 {
 	Destroy();
-	s_initGDIPlus.DecreaseCImageCount();
+	GetInitGDIPlusInstance()->DecreaseCImageCount();
 }
 
 inline CImage::operator HBITMAP() const throw()
@@ -670,7 +679,6 @@ inline CImage::operator HBITMAP() const throw()
 	return( m_hBitmap );
 }
 
-#if WINVER >= 0x0500
 inline BOOL CImage::AlphaBlend(
 	_In_ HDC hDestDC,
 	_In_ int xDest,
@@ -742,8 +750,6 @@ inline BOOL CImage::AlphaBlend(
 		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top, bSrcAlpha,
 		bBlendOp);
 }
-#endif  // WINVER >= 0x0500
-
 inline void CImage::Attach(
 	_In_ HBITMAP hBitmap,
 	_In_ DIBOrientation eOrientation) throw()
@@ -982,7 +988,6 @@ inline BOOL CImage::Draw(
 
 	GetDC();
 
-#if WINVER >= 0x0500
 	if( ((m_iTransparentColor != -1) || (m_clrTransparentColor != (COLORREF)-1)) && IsTransparencySupported() )
 	{
 		bResult = ::TransparentBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight,
@@ -1000,7 +1005,6 @@ inline BOOL CImage::Draw(
 			m_hDC, xSrc, ySrc, nSrcWidth, nSrcHeight, bf );
 	}
 	else
-#endif  // WINVER >= 0x0500
 	{
 		bResult = ::StretchBlt( hDestDC, xDest, yDest, nDestWidth, nDestHeight,
 			m_hDC, xSrc, ySrc, nSrcWidth, nSrcHeight, SRCCOPY );
@@ -1081,7 +1085,7 @@ inline HDC CImage::GetDC() const throw()
 	m_nDCRefCount++;
 	if( m_hDC == NULL )
 	{
-		m_hDC = s_cache.GetDC();
+		m_hDC = GetCDCCacheInstance()->GetDC();
 		m_hOldBitmap = HBITMAP( ::SelectObject( m_hDC, m_hBitmap ) );
 	}
 
@@ -1192,6 +1196,9 @@ inline HRESULT CImage::GetImporterFilterString(
 	Gdiplus::ImageCodecInfo* pCodecs;
 
 	status = Gdiplus::GetImageDecodersSize( &nCodecs, &nSize );
+    if (status != Gdiplus::Ok)
+        return( E_FAIL );
+    
 	USES_ATL_SAFE_ALLOCA;
 	pCodecs = static_cast< Gdiplus::ImageCodecInfo* >( _ATL_SAFE_ALLOCA(nSize, _ATL_SAFE_ALLOCA_DEF_THRESHOLD) );
 
@@ -1199,6 +1206,9 @@ inline HRESULT CImage::GetImporterFilterString(
 		return E_OUTOFMEMORY;
 
 	status = Gdiplus::GetImageDecoders( nCodecs, nSize, pCodecs );
+    if (status != Gdiplus::Ok)
+        return( E_FAIL );
+
 	BuildCodecFilterString( pCodecs, nCodecs, strImporters, aguidFileTypes, pszAllFilesDescription, dwExclude, chSeparator );
 
 	return( S_OK );
@@ -1222,14 +1232,20 @@ inline HRESULT CImage::GetExporterFilterString(
 	Gdiplus::ImageCodecInfo* pCodecs;
 
 	status = Gdiplus::GetImageDecodersSize( &nCodecs, &nSize );
-	USES_ATL_SAFE_ALLOCA;
+    if (status != Gdiplus::Ok)
+        return( E_FAIL );
+
+    USES_ATL_SAFE_ALLOCA;
 	pCodecs = static_cast< Gdiplus::ImageCodecInfo* >( _ATL_SAFE_ALLOCA(nSize, _ATL_SAFE_ALLOCA_DEF_THRESHOLD) );
 
 	if( pCodecs == NULL )
 		return E_OUTOFMEMORY;
 
 	status = Gdiplus::GetImageDecoders( nCodecs, nSize, pCodecs );
-	BuildCodecFilterString( pCodecs, nCodecs, strExporters, aguidFileTypes, pszAllFilesDescription, dwExclude, chSeparator );
+    if (status != Gdiplus::Ok)
+        return( E_FAIL );
+
+    BuildCodecFilterString( pCodecs, nCodecs, strExporters, aguidFileTypes, pszAllFilesDescription, dwExclude, chSeparator );
 
 	return( S_OK );
 }
@@ -1589,7 +1605,7 @@ inline void CImage::ReleaseDC() const throw()
 	{
 		hBitmap = HBITMAP( ::SelectObject( m_hDC, m_hOldBitmap ) );
 		ATLASSERT( hBitmap == m_hBitmap );
-		s_cache.ReleaseDC( m_hDC );
+		GetCDCCacheInstance()->ReleaseDC( m_hDC );
 		m_hDC = NULL;
 	}
 }
@@ -1911,7 +1927,6 @@ inline BOOL CImage::StretchBlt(
 		rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top, dwROP );
 }
 
-#if WINVER >= 0x0500
 inline BOOL CImage::TransparentBlt(
 	_In_ HDC hDestDC,
 	_In_ int xDest,
@@ -1975,7 +1990,6 @@ inline BOOL CImage::TransparentBlt(
 		rectSrc.top, rectSrc.right-rectSrc.left, rectSrc.bottom-rectSrc.top,
 		crTransparent );
 }
-#endif  // WINVER >= 0x0500
 
 inline BOOL CImage::IsTransparencySupported() throw()
 {
@@ -2041,7 +2055,7 @@ inline COLORREF CImage::GetTransparentRGB() const
 
 inline bool CImage::InitGDIPlus() throw()
 {
-	bool bSuccess = s_initGDIPlus.Init();
+	bool bSuccess = GetInitGDIPlusInstance()->Init();
 	return( bSuccess );
 }
 

@@ -808,3 +808,55 @@ HICON CGlobalUtils::GetWndIcon(CWnd* pWnd)
 
 	return hIcon;
 }
+
+CSize CGlobalUtils::GetSystemBorders(CWnd *pWnd)
+{
+	CSize size(0, 0);
+
+	if (::IsWindow(pWnd->GetSafeHwnd()))
+	{
+		size = GetSystemBorders(pWnd->GetStyle());
+	}
+
+	return size;
+}
+
+CSize CGlobalUtils::GetSystemBorders(DWORD dwStyle)
+{
+	CSize size(0, 0);
+
+	BOOL bCaption = (dwStyle & (WS_CAPTION | WS_DLGFRAME)) != 0;
+
+	if ((dwStyle & WS_THICKFRAME) == WS_THICKFRAME)
+	{
+		if ((dwStyle & (WS_CHILD | WS_MINIMIZE)) != (WS_CHILD | WS_MINIMIZE))
+		{
+			size.cx = ::GetSystemMetrics(SM_CXSIZEFRAME);
+			size.cy = ::GetSystemMetrics(SM_CYSIZEFRAME);
+
+			if (!bCaption)
+			{
+				size.cx -= ::GetSystemMetrics(SM_CXBORDER);
+				size.cy -= ::GetSystemMetrics(SM_CYBORDER);
+			}
+
+			if (size.cx != 0 && size.cy != 0)
+			{
+				size.cx += ::GetSystemMetrics(SM_CXPADDEDBORDER);
+				size.cy += ::GetSystemMetrics(SM_CXPADDEDBORDER);
+			}
+		}
+		else
+		{
+			size.cx = ::GetSystemMetrics(SM_CXFIXEDFRAME);
+			size.cy = ::GetSystemMetrics(SM_CYFIXEDFRAME);
+		}
+	}
+	else if (bCaption || (dwStyle & (WS_BORDER | DS_MODALFRAME)) != 0)
+	{
+		size.cx = ::GetSystemMetrics(SM_CXFIXEDFRAME);
+		size.cy = ::GetSystemMetrics(SM_CYFIXEDFRAME);
+	}
+
+	return size;
+}

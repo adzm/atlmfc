@@ -874,7 +874,7 @@ void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsAct
 		BOOL bIsCutted = FALSE;
 
 		const BOOL bIsOneNote = pTabWnd->IsOneNoteStyle() || pTabWnd->IsVS2005Style();
-		const int nExtra = bIsOneNote ? ((iTab == 0 || bIsActive || pTabWnd->IsVS2005Style()) ? 0 : rectTab.Height()) : 0;
+		const int nExtra = bIsOneNote ? ((pTabWnd->IsFirstTab(iTab) || bIsActive || pTabWnd->IsVS2005Style()) ? 0 : rectTab.Height()) : 0;
 
 		if (rectTab.left + nExtra + 10 > rectClipTab.right || rectTab.right - 10 <= rectClipTab.left)
 		{
@@ -971,7 +971,7 @@ void CMFCVisualManager::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, BOOL bIsAct
 
 					pDC->ExcludeClipRect(rectLeft);
 
-					if (iTab > 0 && !bIsActive && iTab != pTabWnd->GetFirstVisibleTabNum())
+					if (!pTabWnd->IsFirstTab(iTab) && !bIsActive && iTab != pTabWnd->GetFirstVisibleTabNum())
 					{
 						CRect rectLeftTab = rectClipTab;
 						rectLeftTab.right = rectFill.left + rectFill.Height() - 10;

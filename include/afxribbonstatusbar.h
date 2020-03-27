@@ -115,6 +115,8 @@ protected:
 	virtual void OnRTLChanged(BOOL bIsRTL);
 	virtual void OnDrawInformation(CDC* pDC, CString& strInfo, CRect rectInfo);
 
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+
 // Implementation
 public:
 	virtual ~CMFCRibbonStatusBar();

@@ -196,7 +196,7 @@ public:
 	void SetScreenSize(CSize& size);
 };
 
-#if (WINVER >= 0x0601)
+#if (NTDDI_VERSION >= NTDDI_WIN7)
 class CJumpList
 {
 public:

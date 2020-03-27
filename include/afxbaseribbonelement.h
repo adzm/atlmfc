@@ -12,6 +12,7 @@
 #pragma once
 
 #include "afxcontrolbarutil.h"
+#include "afxaccessibility.h"
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -21,7 +22,6 @@
 #pragma component(minrebuild, off)
 #endif
 
-class CAccessibilityData;
 class CMFCRibbonCategory;
 class CMFCRibbonPanel;
 class CMFCRibbonCmdUI;
@@ -33,7 +33,82 @@ class CMFCPopupMenu;
 class CMFCRibbonQuickAccessToolBar;
 class CMFCRibbonKeyTip;
 
-class CMFCRibbonBaseElement : public CObject
+// CMFCBaseAccessibleObject command target
+
+class CMFCBaseAccessibleObject : public CCmdTarget
+{
+	DECLARE_DYNAMIC(CMFCBaseAccessibleObject)
+
+protected:
+	CAccessibilityData	m_AccData;
+
+public:
+	CMFCBaseAccessibleObject();
+	virtual ~CMFCBaseAccessibleObject();
+
+public:
+	DECLARE_INTERFACE_MAP()
+
+	BEGIN_INTERFACE_PART(Accessible, IAccessible)
+		//IDispatch methods
+		STDMETHOD(GetTypeInfoCount)(UINT FAR* pctinfo);
+		STDMETHOD(GetTypeInfo)(UINT itinfo, LCID lcid, ITypeInfo FAR* FAR* pptinfo);
+		STDMETHOD(GetIDsOfNames)(REFIID riid, OLECHAR FAR* FAR* rgszNames, UINT cNames, LCID lcid, DISPID FAR* rgdispid);
+
+		//IAccessible methods
+		STDMETHOD(Invoke)(DISPID dispidMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS FAR* pdispparams, VARIANT FAR* pvarResult, EXCEPINFO FAR* pexcepinfo, UINT FAR* puArgErr);
+		STDMETHOD(get_accParent)(THIS_ IDispatch * FAR* ppdispParent);
+		STDMETHOD(get_accChildCount)(THIS_ long FAR* pChildCount);
+		STDMETHOD(get_accChild)(THIS_ VARIANT varChildIndex, IDispatch * FAR* ppdispChild);
+		STDMETHOD(get_accName)(THIS_ VARIANT varChild, BSTR* pszName);
+		STDMETHOD(get_accValue)(THIS_ VARIANT varChild, BSTR* pszValue);
+		STDMETHOD(get_accDescription)(THIS_ VARIANT varChild, BSTR FAR* pszDescription);
+		STDMETHOD(get_accRole)(THIS_ VARIANT varChild, VARIANT *pvarRole);
+		STDMETHOD(get_accState)(THIS_ VARIANT varChild, VARIANT *pvarState);
+		STDMETHOD(get_accHelp)(THIS_ VARIANT varChild, BSTR* pszHelp);
+		STDMETHOD(get_accHelpTopic)(THIS_ BSTR* pszHelpFile, VARIANT varChild, long* pidTopic);
+		STDMETHOD(get_accKeyboardShortcut)(THIS_ VARIANT varChild, BSTR* pszKeyboardShortcut);
+		STDMETHOD(get_accFocus)(THIS_ VARIANT FAR * pvarFocusChild);
+		STDMETHOD(get_accSelection)(THIS_ VARIANT FAR * pvarSelectedChildren);
+		STDMETHOD(get_accDefaultAction)(THIS_ VARIANT varChild, BSTR* pszDefaultAction);
+		STDMETHOD(accSelect)(THIS_ long flagsSelect, VARIANT varChild);
+		STDMETHOD(accLocation)(THIS_ long* pxLeft, long* pyTop, long* pcxWidth, long* pcyHeight, VARIANT varChild);
+		STDMETHOD(accNavigate)(THIS_ long navDir, VARIANT varStart, VARIANT * pvarEndUpAt);
+		STDMETHOD(accHitTest)(THIS_ long xLeft, long yTop, VARIANT * pvarChildAtPoint);
+		STDMETHOD(accDoDefaultAction)(THIS_ VARIANT varChild);
+		STDMETHOD(put_accName)(THIS_ VARIANT varChild, BSTR szName);
+		STDMETHOD(put_accValue)(THIS_ VARIANT varChild, BSTR pszValue);
+	END_INTERFACE_PART(Accessible)
+
+public:
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT get_accChild(VARIANT varChild, IDispatch **ppdispChild);
+	virtual HRESULT get_accName(VARIANT varChild, BSTR *pszName);
+	virtual HRESULT get_accValue(VARIANT varChild, BSTR *pszValue);
+	virtual HRESULT get_accDescription(VARIANT varChild, BSTR *pszDescription);
+	virtual HRESULT get_accRole(VARIANT varChild, VARIANT *pvarRole);
+	virtual HRESULT get_accState(VARIANT varChild, VARIANT *pvarState);
+	virtual HRESULT get_accHelp(VARIANT varChild, BSTR *pszHelp);
+	virtual HRESULT get_accHelpTopic(BSTR *pszHelpFile, VARIANT varChild, long *pidTopic);
+	virtual HRESULT get_accKeyboardShortcut(VARIANT varChild, BSTR *pszKeyboardShortcut);
+	virtual HRESULT get_accFocus(VARIANT *pvarChild);
+	virtual HRESULT get_accSelection(VARIANT *pvarChildren);
+	virtual HRESULT get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction);
+	virtual HRESULT accSelect(long flagsSelect, VARIANT varChild);
+	virtual HRESULT accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
+	virtual HRESULT put_accName(VARIANT varChild, BSTR szName);
+	virtual HRESULT put_accValue(VARIANT varChild, BSTR szValue);
+
+	virtual CWnd* GetParentWnd() const { return NULL; }
+	virtual BOOL OnSetAccData(long lVal);
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+};
+
+class CMFCRibbonBaseElement : public CMFCBaseAccessibleObject
 {
 	friend class CMFCRibbonPanel;
 	friend class CMFCRibbonBar;
@@ -49,6 +124,8 @@ class CMFCRibbonBaseElement : public CObject
 	friend class CMFCRibbonCommandsListBox;
 	friend class CMFCRibbonCollector;
 	friend class CMFCRibbonConstructor;
+	friend class CMFCRibbonApplicationButton;
+	friend class CMFCRibbonTabsGroup;
 
 	DECLARE_DYNAMIC(CMFCRibbonBaseElement)
 
@@ -270,7 +347,14 @@ public:
 	}
 
 	CMFCRibbonBaseElement*	GetOriginal() const { return m_pOriginal; }
+	BOOL IsTabElement() const { return m_bIsTabElement; }
 
+	// Accessibility:
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT accLocation(long* pxLeft, long* pyTop, long* pcxWidth, long* pcyHeight, VARIANT varChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
 	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
 	virtual void OnAccDefaultAction();
 
@@ -386,6 +470,7 @@ protected:
 	virtual int GetDropDownImageWidth() const;
 
 	virtual BOOL OnProcessKey(UINT /*nChar*/) { return FALSE; }
+	virtual BOOL IsCaptionButton() const { return FALSE; }
 
 // Operations
 public:
@@ -443,6 +528,7 @@ protected:
 	BOOL m_bOnBeforeShowItemMenuIsSent;
 	BOOL m_bEnableUpdateTooltipInfo;
 	BOOL m_bEnableTooltipInfoShortcut;
+	BOOL m_bIsTabElement;
 };
 
 class CMFCRibbonSeparator : public CMFCRibbonBaseElement

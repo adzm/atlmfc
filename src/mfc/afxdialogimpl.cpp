@@ -37,14 +37,10 @@ CDialogImpl::~CDialogImpl()
 
 BOOL CDialogImpl::ProcessMouseClick(POINT pt)
 {
-	if (!CMFCToolBar::IsCustomizeMode() && CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
+	CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+	if (!CMFCToolBar::IsCustomizeMode() && pActivePopupMenu != NULL)
 	{
-		// If CMFCPopupMenu::m_pActivePopupMenu is owned by another UI thread, the CMFCPopupMenu::m_pActivePopupMenu pointer may be set to
-		// NULL in the midst of this processing.  So save the pointer and use the saved value to close the active popup menu and continue.
-		CMFCPopupMenu *pActivePopupMenu = CMFCPopupMenu::m_pActivePopupMenu;
-
 		CMFCPopupMenu::MENUAREA_TYPE clickArea = pActivePopupMenu->CheckArea(pt);
-
 		if (clickArea == CMFCPopupMenu::OUTSIDE)
 		{
 			// Click outside of menu
@@ -103,7 +99,8 @@ BOOL CDialogImpl::ProcessMouseClick(POINT pt)
 				}
 			}
 
-			if (!pActivePopupMenu->InCommand())
+			pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+			if (pActivePopupMenu != NULL && !pActivePopupMenu->InCommand())
 			{
 				pActivePopupMenu->SendMessage(WM_CLOSE);
 
@@ -135,15 +132,19 @@ BOOL CDialogImpl::ProcessMouseMove(POINT pt)
 {
 	if (!CMFCToolBar::IsCustomizeMode() && CMFCPopupMenu::m_pActivePopupMenu != NULL)
 	{
-		CRect rectMenu;
-		CMFCPopupMenu::m_pActivePopupMenu->GetWindowRect(rectMenu);
-
-		if (rectMenu.PtInRect(pt) || CMFCPopupMenu::m_pActivePopupMenu->GetMenuBar()->FindDestintationToolBar(pt) != NULL)
+		CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+		if (pActivePopupMenu != NULL)
 		{
-			return FALSE; // Default processing
-		}
+			CRect rectMenu;
+			pActivePopupMenu->GetWindowRect(rectMenu);
 
-		return TRUE; // Active menu "capturing"
+			if (rectMenu.PtInRect(pt) || pActivePopupMenu->GetMenuBar()->FindDestintationToolBar(pt) != NULL)
+			{
+				return FALSE; // Default processing
+			}
+
+			return TRUE; // Active menu "capturing"
+		}
 	}
 
 	return FALSE; // Default processing
@@ -155,15 +156,18 @@ BOOL CDialogImpl::PreTranslateMessage(MSG* pMsg)
 	{
 	case WM_SYSKEYDOWN:
 	case WM_CONTEXTMENU:
-		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd) && pMsg->wParam == VK_MENU)
 		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_CLOSE);
-			return TRUE;
+			CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+			if (pActivePopupMenu != NULL && pMsg->wParam == VK_MENU)
+			{
+				pActivePopupMenu->SendMessage(WM_CLOSE);
+				return TRUE;
+			}
 		}
 		break;
 
 	case WM_SYSKEYUP:
-		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
+		if (CMFCPopupMenu::GetSafeActivePopupMenu() != NULL)
 		{
 			return TRUE; // To prevent system menu opening
 		}
@@ -171,10 +175,13 @@ BOOL CDialogImpl::PreTranslateMessage(MSG* pMsg)
 
 	case WM_KEYDOWN:
 		// Pass keyboard action to the active menu:
-		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
 		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_KEYDOWN, (int) pMsg->wParam);
-			return TRUE;
+			CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+			if (pActivePopupMenu != NULL)
+			{
+				pActivePopupMenu->SendMessage(WM_KEYDOWN, (int)pMsg->wParam);
+				return TRUE;
+			}
 		}
 		break;
 
@@ -217,10 +224,12 @@ BOOL CDialogImpl::PreTranslateMessage(MSG* pMsg)
 		break;
 
 	case WM_MOUSEWHEEL:
-		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd) && CMFCPopupMenu::m_pActivePopupMenu->IsScrollable())
 		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_MOUSEWHEEL, pMsg->wParam, pMsg->lParam);
-
+			CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+			if (pActivePopupMenu != NULL && pActivePopupMenu->IsScrollable())
+			{
+				pActivePopupMenu->SendMessage(WM_MOUSEWHEEL, pMsg->wParam, pMsg->lParam);
+			}
 		}
 		break;
 
@@ -319,10 +328,11 @@ BOOL CDialogImpl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 
 		CMFCToolBar::AddCommandUsage(uiCmd);
 
-		// Simmulate ESC keystroke...
-		if (CMFCPopupMenu::m_pActivePopupMenu != NULL && ::IsWindow(CMFCPopupMenu::m_pActivePopupMenu->m_hWnd))
+		// Simulate ESC keystroke...
+		CMFCPopupMenu* pActivePopupMenu = CMFCPopupMenu::GetSafeActivePopupMenu();
+		if (pActivePopupMenu != NULL)
 		{
-			CMFCPopupMenu::m_pActivePopupMenu->SendMessage(WM_KEYDOWN, VK_ESCAPE);
+			pActivePopupMenu->SendMessage(WM_KEYDOWN, VK_ESCAPE);
 			return TRUE;
 		}
 

@@ -151,7 +151,7 @@ protected:
 public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL);
-	virtual void WinHelp(DWORD dwData, UINT nCmd = HELP_CONTEXT);
+	virtual void WinHelp(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 	virtual void OnSetPreviewMode(BOOL bPreview, CPrintPreviewState* pState);
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 
@@ -227,11 +227,11 @@ public:
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam = 0, LPARAM lParam = 0);
 	afx_msg void OnExitSizeMove();
 	afx_msg LRESULT OnToolbarContextMenu(WPARAM,LPARAM);
-	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
+	afx_msg int OnSetText(LPCTSTR lpszText);
 	afx_msg LRESULT OnChangeVisualManager(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPostPreviewFrame(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnCompositionChanged();
-	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, UINT nEventData);
+	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM lEventData);
 	afx_msg void OnSysColorChange();
 
 	DECLARE_MESSAGE_MAP()

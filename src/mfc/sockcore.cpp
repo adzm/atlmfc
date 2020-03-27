@@ -477,7 +477,7 @@ void PASCAL CAsyncSocket::AttachHandle(
 					_T("Socket Notification Sink"),
 					WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL))
 				{
-					TRACE(traceSocket, 0, "Warning: unable to create socket notify window!\n");
+					TRACE(atlTraceGeneral, 0, "Warning: unable to create socket notify window!\n");
 					delete pWnd;
 					AfxThrowResourceException();
 				}
@@ -1013,7 +1013,7 @@ BOOL CSocket::PumpMessages(UINT uStopFlag)
 		}
 		CATCH_ALL(e)
 		{
-			TRACE(traceSocket, 0, "Error: caught exception in PumpMessage - continuing.\n");
+			TRACE(atlTraceGeneral, 0, "Error: caught exception in PumpMessage - continuing.\n");
 			DELETE_EXCEPTION(e);
 			bPeek = TRUE;
 		}
@@ -1165,7 +1165,7 @@ ULONGLONG CSocketFile::GetPosition() const
 ULONGLONG CSocketFile::Seek(LONGLONG lOff, UINT nFrom)
 {
 	if (lOff != 0L || nFrom != current)
-		TRACE(traceSocket, 0, "Warning - Attempt made to seek on a CSocketFile\n");
+		TRACE(atlTraceGeneral, 0, "Warning - Attempt made to seek on a CSocketFile\n");
 	return 0;
 }
 

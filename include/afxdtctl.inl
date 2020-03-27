@@ -37,7 +37,7 @@ _AFXDTCTL_INLINE COLORREF CDateTimeCtrl::GetMonthCalColor(_In_ int iColor) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (COLORREF) ::SendMessage(m_hWnd, DTM_GETMCCOLOR, (WPARAM) iColor, 0); }
 _AFXDTCTL_INLINE BOOL CDateTimeCtrl::SetFormat(_In_z_ LPCTSTR pstrFormat)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, DTM_SETFORMAT, 0, (LPARAM) pstrFormat); }
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 _AFXDTCTL_INLINE DWORD CDateTimeCtrl::SetMonthCalStyle(_In_ DWORD dwStyle)
 	{ ASSERT(::IsWindow(m_hWnd)); return (DWORD) DateTime_SetMonthCalStyle(m_hWnd, dwStyle); } // DTM_SETMCSTYLE
 _AFXDTCTL_INLINE DWORD CDateTimeCtrl::GetMonthCalStyle() const
@@ -55,7 +55,7 @@ _AFXDTCTL_INLINE BOOL CDateTimeCtrl::GetIdealSize(_Out_ LPSIZE pSize) const
 	{ ASSERT(::IsWindow(m_hWnd)); return DateTime_GetIdealSize(m_hWnd, pSize); } // DTM_GETIDEALSIZE
 _AFXDTCTL_INLINE void CDateTimeCtrl::CloseMonthCal()
 	{ ASSERT(::IsWindow(m_hWnd)); DateTime_CloseMonthCal(m_hWnd); } // DTM_CLOSEMONTHCAL
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 //CMonthCalCtrl
 _AFXDTCTL_INLINE CMonthCalCtrl::CMonthCalCtrl()
@@ -87,7 +87,7 @@ _AFXDTCTL_INLINE BOOL CMonthCalCtrl::GetCurSel(_Out_ LPSYSTEMTIME pDateTime) con
 	pDateTime->wHour = pDateTime->wMinute = pDateTime->wSecond = pDateTime->wMilliseconds = 0; return bRetVal;}
 _AFXDTCTL_INLINE DWORD CMonthCalCtrl::GetMaxTodayWidth() const
 	{ ASSERT(m_hWnd != NULL); return MonthCal_GetMaxTodayWidth(m_hWnd); } // MCM_GETMAXTODAYWIDTH
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 _AFXDTCTL_INLINE BOOL CMonthCalCtrl::IsMonthView() const // REVIEW: do we need this method?
 	{ ASSERT(m_hWnd != NULL); return (GetCurrentView() == MCMV_MONTH); }
 _AFXDTCTL_INLINE BOOL CMonthCalCtrl::IsYearView() const // REVIEW: do we need this method?
@@ -124,7 +124,7 @@ _AFXDTCTL_INLINE BOOL CMonthCalCtrl::SetCenturyView() // REVIEW: do we need this
 	{ ASSERT(m_hWnd != NULL); return (SetCurrentView(MCMV_CENTURY)); }
 _AFXDTCTL_INLINE BOOL CMonthCalCtrl::SetCurrentView(_In_ DWORD dwNewView)
 	{ ASSERT(m_hWnd != NULL); return MonthCal_SetCurrentView(m_hWnd, dwNewView); } // MCM_SETCURRENTVIEW
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 #pragma warning(pop)
 

@@ -28,6 +28,10 @@
 	#error atlwin.h requires atlbase.h to be included first
 #endif
 
+#ifdef _ATL_NO_WIN_SUPPORT
+	#error Windowing support has been disabled
+#endif
+
 #if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
 #error This file is not compatible with the current WINAPI_FAMILY
 #endif
@@ -751,7 +755,9 @@ public:
 
 			while (cbOffset > 0)
 			{
-				pStream->Read(pTemp, (cbOffset < 1000 ? cbOffset : 1000), &uRead);
+				hr = pStream->Read(pTemp, (cbOffset < 1000 ? cbOffset : 1000), &uRead);
+                if (FAILED(hr))
+                    return hr;
 				cbOffset -= uRead;
 			}
 			return S_OK;
@@ -2075,9 +2081,6 @@ ATLPREFAST_UNSUPPRESS()
 			}
 
 			// center within screen coordinates
-#if WINVER < 0x0500
-			::SystemParametersInfo(SPI_GETWORKAREA, NULL, &rcArea, NULL);
-#else
 			HMONITOR hMonitor = NULL;
 			if(hWndCenter != NULL)
 			{
@@ -2095,7 +2098,7 @@ ATLPREFAST_UNSUPPRESS()
 			ATLENSURE_RETURN_VAL(bResult, FALSE);
 
 			rcArea = minfo.rcWork;
-#endif
+
 			if(hWndCenter == NULL)
 				rcCenter = rcArea;
 			else
@@ -4210,7 +4213,9 @@ public:
 									ATLASSUME(pSource != NULL);
 									Checked::memcpy_s(pBytes, dwLen, pSource, dwLen);
 									GlobalUnlock(h);
+ATLPREFAST_SUPPRESS(6031)
 									CreateStreamOnHGlobal(h, TRUE, &spStream);
+ATLPREFAST_UNSUPPRESS()
 								}
 								else
 								{
@@ -5090,6 +5095,7 @@ public:
 	typedef _ATL_WNDCLASSINFOA	_ATL_WNDCLASSINFO;
 	typedef WNDCLASSEXA			WNDCLASSEX;
 
+    _Success_(return != FALSE)
 	static BOOL GetClassInfoEx(
 		_In_opt_ HINSTANCE hinst,
 		_In_z_ PCXSTR lpszClass,
@@ -5144,6 +5150,7 @@ public:
 	typedef _ATL_WNDCLASSINFOW	_ATL_WNDCLASSINFO;
 	typedef WNDCLASSEXW			WNDCLASSEX;
 
+    _Success_(return != FALSE)
 	static BOOL GetClassInfoEx(
 		_In_opt_ HINSTANCE hinst,
 		_In_z_ PCXSTR lpszClass,
@@ -5265,7 +5272,7 @@ ATLINLINE ATOM AtlModuleRegisterWndClassInfoT(
 					// try process local
 					if(!T::GetClassInfoEx(pBaseModule->m_hInst, p->m_lpszOrigName, &wc))
 					{
-						ATLTRACE(atlTraceWindowing, 0, "ERROR : Could not obtain Window Class information for %s\n", p->m_lpszOrigName);
+						ATLTRACE(atlTraceWindowing, 0, _T("ERROR : Could not obtain Window Class information for %s\n"), p->m_lpszOrigName);
 						return 0;
 					}
 				}
@@ -5329,9 +5336,6 @@ ATLINLINE ATLAPIINL_(ATOM) AtlWinModuleRegisterWndClassInfoW(
 		pBaseModule, pWinModule, p, pProc, templateParameter);
 }
 ATLPREFAST_UNSUPPRESS()
-
-//All exports go here
-#ifndef _ATL_DLL
 
 ATLINLINE ATLAPI_(HDC) AtlCreateTargetDC(
 	_In_ HDC hdc,
@@ -5412,7 +5416,6 @@ ATLINLINE ATLAPI_(void) AtlPixelToHiMetric(
 	lpSizeInHiMetric->cx = MAP_PIX_TO_LOGHIM(lpSizeInPix->cx, nPixelsPerInchX);
 	lpSizeInHiMetric->cy = MAP_PIX_TO_LOGHIM(lpSizeInPix->cy, nPixelsPerInchY);
 }
-#endif // !_ATL_DLL
 
 } //namespace ATL
 

@@ -419,13 +419,8 @@ CCmdTarget* PASCAL CCmdTarget::FromIDispatch(LPDISPATCH lpDispatch)
 
 	// vtable ptrs match, so must have originally been retrieved with
 	//  CCmdTarget::GetIDispatch.
-#ifndef _AFX_NO_NESTED_DERIVATION
-	CCmdTarget* pTarget = (CCmdTarget*)
-		((BYTE*)lpDispatch - ((COleDispatchImpl*)lpDispatch)->m_nOffset);
-#else
 	CCmdTarget* pTarget = (CCmdTarget*)
 		((BYTE*)lpDispatch - offsetof(CCmdTarget, m_xDispatch));
-#endif
 	ASSERT_VALID(pTarget);
 	return pTarget;
 }

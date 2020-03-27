@@ -112,8 +112,8 @@ BEGIN_MESSAGE_MAP(CMFCButton, CButton)
 	ON_WM_LBUTTONDBLCLK()
 	ON_WM_TIMER()
 	ON_WM_DESTROY()
-	ON_MESSAGE(WM_SETFONT, &CMFCButton::OnSetFont)
-	ON_MESSAGE(WM_GETFONT, &CMFCButton::OnGetFont)
+	ON_WM_SETFONT()
+	ON_WM_GETFONT()
 	ON_MESSAGE(BM_GETCHECK, &CMFCButton::OnGetCheck)
 	ON_MESSAGE(BM_SETCHECK, &CMFCButton::OnSetCheck)
 	ON_MESSAGE(BM_SETIMAGE, &CMFCButton::OnSetImage)
@@ -1112,24 +1112,20 @@ CFont* CMFCButton::SelectFont(CDC* pDC)
 	return pOldFont;
 }
 
-afx_msg LRESULT CMFCButton::OnSetFont(WPARAM wParam, LPARAM lParam)
+void CMFCButton::OnSetFont(CFont* pFont, BOOL bRedraw)
 {
-	BOOL bRedraw = (BOOL) LOWORD(lParam);
-
-	m_hFont = (HFONT) wParam;
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 
 	if (bRedraw)
 	{
 		Invalidate();
 		UpdateWindow();
 	}
-
-	return 0;
 }
 
-afx_msg LRESULT CMFCButton::OnGetFont(WPARAM, LPARAM)
+HFONT CMFCButton::OnGetFont()
 {
-	return(LRESULT) m_hFont;
+	return m_hFont;
 }
 
 void CMFCButton::EnableMenuFont(BOOL bOn, BOOL bRedraw)

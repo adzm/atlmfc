@@ -77,6 +77,11 @@ BOOL __stdcall CTooltipManager::CreateToolTip(CToolTipCtrl*& pToolTip, CWnd* pWn
 		return FALSE;
 	}
 
+	if (pWndParent->GetSafeHwnd() != NULL && (pWndParent->GetExStyle() & WS_EX_LAYOUTRTL) != 0)
+	{
+		pToolTip->ModifyStyleEx(0, WS_EX_LAYOUTRTL);
+	}
+
 	pToolTip->Activate(TRUE);
 
 	if (GetGlobalData()->m_nMaxToolTipWidth != -1)

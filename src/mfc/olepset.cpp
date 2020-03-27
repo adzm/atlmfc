@@ -1326,7 +1326,15 @@ CPropertySet::CPropertySet()
 {
 	m_PH.wByteOrder = 0xFFFE;
 	m_PH.wFormat = 0;
+
+// Fix for warnings when building against WinBlue build 9444.0.130614-1739
+// warning C4996: 'GetVersion': was declared deprecated
+// externalapis\windows\winblue\sdk\inc\sysinfoapi.h(110)
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	m_PH.dwOSVer = (DWORD)MAKELONG(LOWORD(GetVersion()), 2);
+#pragma warning( default : 4996 )
+
 	m_PH.clsID =  GUID_NULL;
 	m_PH.cSections = 0;
 
@@ -1336,7 +1344,15 @@ CPropertySet::CPropertySet(CLSID clsID)
 {
 	m_PH.wByteOrder = 0xFFFE;
 	m_PH.wFormat = 0;
+
+// Fix for warnings when building against WinBlue build 9444.0.130614-1739
+// warning C4996: 'GetVersion': was declared deprecated
+// externalapis\windows\winblue\sdk\inc\sysinfoapi.h(110)
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	m_PH.dwOSVer = (DWORD)MAKELONG(LOWORD(GetVersion()), 2);
+#pragma warning( default : 4996 )
+
 	m_PH.clsID = clsID;
 	m_PH.cSections = 0;
 }

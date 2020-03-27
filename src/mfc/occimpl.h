@@ -8,8 +8,6 @@
 // See these sources for detailed information regarding the
 // Microsoft Foundation Classes product.
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 // MFC doesn't use the OLEDB 1.5 features of ATL and it causes
 // compile problems, so just make ATL think it's not version 1.5
 #if (OLEDBVER >= 0x0150)
@@ -129,5 +127,3 @@ public:
 	BOOL m_bIsDirty;
 	CDataBoundProperty* m_pNext;
 };
-
-#endif // !_AFX_NO_OCC_SUPPORT

@@ -576,10 +576,9 @@ AFX_CS_STATUS CDockingManager::DeterminePaneAndStatus(CPoint pt, int nSensitivit
 		if ((*ppTargetBar)->GetParentMiniFrame() != NULL && (pBarToDock->GetPaneStyle() & CBRS_FLOAT_MULTI) &&
 			((*ppTargetBar)->GetPaneStyle() & CBRS_FLOAT_MULTI) || (*ppTargetBar)->GetParentMiniFrame() == NULL)
 		{
-
 			CDockablePane* pDockingBar = DYNAMIC_DOWNCAST(CDockablePane, *ppTargetBar);
 
-			if (!pDockingBar->IsFloating() && (pDockingBar->GetCurrentAlignment() & dwEnabledAlignment) == 0)
+			if (pDockingBar != NULL && !pDockingBar->IsFloating() && (pDockingBar->GetCurrentAlignment() & dwEnabledAlignment) == 0)
 			{
 				return CS_NOTHING;
 			}
@@ -1577,8 +1576,8 @@ void CDockingManager::AdjustDockingLayout(HDWP hdwp)
 		return;
 	}
 
-	if (AFXGetTopLevelFrame(m_pParentWnd) != NULL && AFXGetTopLevelFrame(m_pParentWnd)->IsIconic())
-
+	CWnd* pWndTopLevelFrame = AFXGetTopLevelFrame(m_pParentWnd);
+	if (pWndTopLevelFrame->GetSafeHwnd() != NULL && ::IsWindow(pWndTopLevelFrame->GetSafeHwnd()) && pWndTopLevelFrame->IsIconic())
 	{
 		return;
 	}

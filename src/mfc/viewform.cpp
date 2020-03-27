@@ -20,10 +20,8 @@
 BEGIN_MESSAGE_MAP(CFormView, CScrollView)
 	ON_WM_SETFOCUS()
 	ON_WM_CREATE()
-	ON_MESSAGE(WM_PRINTCLIENT, &CFormView::OnPrintClient)
-#ifndef _AFX_NO_OCC_SUPPORT
+	ON_WM_PRINTCLIENT()
 	ON_MESSAGE(WM_INITDIALOG, &CFormView::HandleInitDialog)
-#endif
 END_MESSAGE_MAP()
 
 CFormView::CFormView(LPCTSTR lpszTemplateName)
@@ -31,10 +29,8 @@ CFormView::CFormView(LPCTSTR lpszTemplateName)
 	m_lpszTemplateName = lpszTemplateName;
 	m_pCreateContext = NULL;
 	m_hWndFocus = NULL;     // focus window is unknown
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_pOccDialogInfo = NULL;
 	m_pCreatedOccDialogInfo = NULL;
-#endif
 	EnableActiveAccessibility();
 }
 
@@ -44,10 +40,8 @@ CFormView::CFormView(UINT nIDTemplate)
 	m_lpszTemplateName = MAKEINTRESOURCE(nIDTemplate);
 	m_pCreateContext = NULL;
 	m_hWndFocus = NULL;     // focus window is unknown
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_pOccDialogInfo = NULL;
 	m_pCreatedOccDialogInfo = NULL;
-#endif
 	EnableActiveAccessibility();
 }
 
@@ -55,19 +49,17 @@ CFormView::~CFormView()
 {
 	AFX_BEGIN_DESTRUCTOR
 
-#ifndef _AFX_NO_OCC_SUPPORT
-		if (m_pCreatedOccDialogInfo != NULL)
+	if (m_pCreatedOccDialogInfo != NULL)
+	{
+		COccManager* pOccManager = afxOccManager;
+		if (pOccManager != NULL)
 		{
-			COccManager* pOccManager = afxOccManager;
-			if (pOccManager != NULL)
-			{
-				pOccManager->PostCreateDialog(m_pCreatedOccDialogInfo);
-			}
-			delete m_pCreatedOccDialogInfo;
-			m_pCreatedOccDialogInfo = NULL;
-			m_pOccDialogInfo = NULL;
+			pOccManager->PostCreateDialog(m_pCreatedOccDialogInfo);
 		}
-#endif
+		delete m_pCreatedOccDialogInfo;
+		m_pCreatedOccDialogInfo = NULL;
+		m_pOccDialogInfo = NULL;
+	}
 
 	AFX_END_DESTRUCTOR
 }
@@ -196,9 +188,9 @@ void CFormView::OnSetFocus(CWnd*)
 	::SetFocus(m_hWndFocus);
 }
 
-LRESULT CFormView::OnPrintClient(WPARAM wParam, LPARAM lParam)
+LRESULT CFormView::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	return CView::OnPrintClient(wParam, lParam);
+	return CView::OnPrintClient(pDC, nFlags);
 }
 
 BOOL CFormView::PreTranslateMessage(MSG* pMsg)
@@ -250,8 +242,6 @@ void CFormView::OnDraw(CDC* pDC)
 	UNUSED(pDC);     // unused in release build
 }
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 LRESULT CFormView::HandleInitDialog(WPARAM, LPARAM)
 {
 	Default();  // allow default to initialize first (common dialogs/etc)
@@ -279,7 +269,6 @@ BOOL CFormView::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO* pOccDialogInfo)
 
 _AFX_OCC_DIALOG_INFO* CFormView::GetOccDialogInfo()
 {
-#ifndef _AFX_NO_OCC_SUPPORT
     if (m_pOccDialogInfo == NULL && m_lpszTemplateName != NULL)
     {
         LPCDLGTEMPLATE lpDialogTemplate = NULL;
@@ -309,11 +298,8 @@ _AFX_OCC_DIALOG_INFO* CFormView::GetOccDialogInfo()
         }
         
     }
-#endif
     return m_pOccDialogInfo;	
 }
-
-#endif //!_AFX_NO_OCC_SUPPORT
 
 //////////////////////////////////////////////////////////////////////////
 // CFormView diagnostics

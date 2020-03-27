@@ -35,8 +35,8 @@ public:
 	HBITMAP GetClientBitmap(int nWidth, int nHeight, BOOL bIsThumbnail);
 
 protected:
-	afx_msg LRESULT OnSendIconicThumbnail(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnSendIconicLivePreviewBitmap(WPARAM wParam, LPARAM lParam);
+	afx_msg BOOL OnSendIconicThumbnail(int cx, int cy);
+	afx_msg BOOL OnSendIconicLivePreviewBitmap();
 	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -341,8 +341,8 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg LRESULT OnSetText(WPARAM,LPARAM);
-	afx_msg LRESULT OnSetIcon(WPARAM,LPARAM);
+	afx_msg int OnSetText(LPCTSTR lpszText);
+	afx_msg HICON OnSetIcon(BOOL bIsLarge, HICON hIcon);
 	afx_msg LRESULT OnIdleUpdateCmdUI(WPARAM wParam = 0, LPARAM lParam = 0);
 	afx_msg void OnStyleChanged(int nStyleType, LPSTYLESTRUCT lpStyleStruct);
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);

@@ -22,40 +22,9 @@ AFX_STATIC long AFXAPI _AfxMultMultDivDiv(
 	int factor, int num1, int num2,
 	int den1, int den2)
 {
-#ifdef _AFX_PORTABLE
-	// make sure that (num1 * num2) does not overflow 31-bits.
-	long temp = num1 < 0 ? -num1 : num1;
-	for (int nBitsResult = 0; temp != 0; nBitsResult++)
-		temp >>= 1;
-	temp = num2 < 0 ? -num2 : num2;
-	for (; temp != 0; nBitsResult++)
-		temp >>= 1;
-	if (nBitsResult > 31)
-	{
-		num1 >>= nBitsResult - 31;
-		num2 >>= nBitsResult - 31;
-	}
-
-	// make sure that (den1 * den2) does not overflow 31-bits
-	temp = den1 < 0 ? -den1 : den1;
-	for (nBitsResult = 0; temp != 0; nBitsResult++)
-		temp >>= 1;
-	temp = den2 < 0 ? -den2 : den2;
-	for (; temp != 0; nBitsResult++)
-		temp >>= 1;
-	if (nBitsResult > 31)
-	{
-		den1 >>= nBitsResult - 31;
-		den2 >>= nBitsResult - 31;
-	}
-
-	long numerator = (long)num1 * (long)num2;   // no overflow
-	long denominator = (long)den1 * (long)den2; // no overflow
-#else
 	__int64 numerator = (__int64)num1 * (__int64)num2;   // no overflow
 	__int64 denominator = (__int64)den1 * (__int64)den2; // no overflow
 	__int64 temp;
-#endif
 
 	temp = numerator < 0 ? -numerator : numerator;
 	int nBitsInNum;

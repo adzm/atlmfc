@@ -19,15 +19,12 @@
 
 #pragma warning(disable: 4786) // identifier was truncated in the debug information
 #pragma warning(disable: 4127) // constant expression
+#pragma warning(disable: 4949) // pragmas 'managed' and 'unmanaged' are meaningful only when compiled with /clr
 
 #include <atldef.h>
 #include <windows.h>
 #include <ole2.h>
 #include <sdkddkver.h>
-
-#if _WIN32_WINNT < 0x0403
-#error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
-#endif
 
 // This file contains declarations of wrappers for methods used
 // in ATL that are only available in later versions of Windows.
@@ -85,11 +82,11 @@ namespace ATL
 #endif
 #pragma managed(pop)
 
-	int _AtlLCMapStringEx(_In_opt_ LPCWSTR lpLocaleName, _In_ DWORD dwMapFlags, _In_ LPCWSTR lpSrcStr, _In_ int cchSrc, _Out_opt_ LPWSTR lpDestStr, _In_ int cchDest, _In_opt_ LPNLSVERSIONINFO lpVersionInformation, _In_opt_ LPVOID lpReserved, _In_opt_ LPARAM sortHandle);
+	int __cdecl _AtlLCMapStringEx(_In_opt_ LPCWSTR lpLocaleName, _In_ DWORD dwMapFlags, _In_ LPCWSTR lpSrcStr, _In_ int cchSrc, _Out_opt_ LPWSTR lpDestStr, _In_ int cchDest, _In_opt_ LPNLSVERSIONINFO lpVersionInformation, _In_opt_ LPVOID lpReserved, _In_opt_ LPARAM sortHandle);
 
 	// Needed for downlevel NLS APIs
-	LCID _AtlDownlevelLocaleNameToLCID(LPCWSTR localeName);
-	int  _AtlDownlevelLCIDToLocaleName(LCID lcid, LPWSTR outLocaleName, int cchLocaleName);
+	LCID __cdecl _AtlDownlevelLocaleNameToLCID(LPCWSTR localeName);
+	int __cdecl _AtlDownlevelLCIDToLocaleName(LCID lcid, LPWSTR outLocaleName, int cchLocaleName);
 
 }	// namespace ATL
 #pragma pack(pop)

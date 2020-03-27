@@ -77,9 +77,9 @@ BEGIN_MESSAGE_MAP(CFrameWnd, CWnd)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXTA, 0, 0xFFFF, &CFrameWnd::OnToolTipText)
 	ON_NOTIFY_EX_RANGE(RBN_CHEVRONPUSHED, 0, 0xFFFF, &CFrameWnd::OnChevronPushed)
 	// message handling for standard DDE commands
-	ON_MESSAGE(WM_DDE_INITIATE, &CFrameWnd::OnDDEInitiate)
-	ON_MESSAGE(WM_DDE_EXECUTE, &CFrameWnd::OnDDEExecute)
-	ON_MESSAGE(WM_DDE_TERMINATE, &CFrameWnd::OnDDETerminate)
+	ON_WM_DDE_INITIATE()
+	ON_WM_DDE_EXECUTE()
+	ON_WM_DDE_TERMINATE()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -253,11 +253,9 @@ BOOL CFrameWnd::PreTranslateMessage(MSG* pMsg)
 	if (CWnd::PreTranslateMessage(pMsg))
 		return TRUE;
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow hook to consume message
 	if (m_pNotifyHook != NULL && m_pNotifyHook->OnPreTranslateMessage(pMsg))
 		return TRUE;
-#endif
 
 	if (pMsg->message >= WM_KEYFIRST && pMsg->message <= WM_KEYLAST)
 	{
@@ -279,18 +277,14 @@ void CFrameWnd::PostNcDestroy()
 void CFrameWnd::OnPaletteChanged(CWnd* pFocusWnd)
 {
 	CWnd::OnPaletteChanged(pFocusWnd);
-#ifndef _AFX_NO_OLE_SUPPORT
 	if (m_pNotifyHook != NULL)
 		m_pNotifyHook->OnPaletteChanged(pFocusWnd);
-#endif
 }
 
 BOOL CFrameWnd::OnQueryNewPalette()
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	if (m_pNotifyHook != NULL && m_pNotifyHook->OnQueryNewPalette())
 		return TRUE;
-#endif
 	return CWnd::OnQueryNewPalette();
 }
 
@@ -514,11 +508,9 @@ void CFrameWnd::OnEnable(BOOL bEnable)
 	CWnd *pParentWnd = GetParent();
 	if (pParentWnd != NULL)
 	{
-#ifndef _AFX_NO_OLE_SUPPORT
 		DWORD dwProcessId = 0;
 		::GetWindowThreadProcessId(pParentWnd->GetSafeHwnd(), &dwProcessId);
 		if (::GetCurrentProcessId() == dwProcessId)
-#endif
 			return;
 	}
 
@@ -1028,7 +1020,6 @@ LRESULT CFrameWnd::OnActivateTopLevel(WPARAM wParam, LPARAM lParam)
 	// exit Shift+F1 help mode on activation changes
 	ExitHelpMode();
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow OnFrameWindowActivate to be sent to in-place items
 	if (m_pNotifyHook != NULL)
 	{
@@ -1036,7 +1027,6 @@ LRESULT CFrameWnd::OnActivateTopLevel(WPARAM wParam, LPARAM lParam)
 		m_pNotifyHook->OnActivate(
 			LOWORD(wParam) != WA_INACTIVE && !HIWORD(wParam));
 	}
-#endif
 
 	// deactivate current active view
 	CWinThread *pThread = AfxGetThread();
@@ -1222,13 +1212,18 @@ void CFrameWnd::OnEndSession(BOOL bEnding)
 /////////////////////////////////////////////////////////////////////////////
 // Support for Shell DDE Execute messages
 
-LRESULT CFrameWnd::OnDDEInitiate(WPARAM wParam, LPARAM lParam)
+void CFrameWnd::OnDDEInitiate(CWnd* pWndClient, UINT uiAtomApp, UINT uiAtomTopic)
 {
+	if (pWndClient->GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
 	CWinApp* pApp = AfxGetApp();
 	if (pApp != NULL && 
-		LOWORD(lParam) != 0 && HIWORD(lParam) != 0 &&
-		(ATOM)LOWORD(lParam) == pApp->m_atomApp &&
-		(ATOM)HIWORD(lParam) == pApp->m_atomSystemTopic)
+		uiAtomApp != 0 && uiAtomTopic != 0 &&
+		(ATOM)uiAtomApp == pApp->m_atomApp &&
+		(ATOM)uiAtomTopic == pApp->m_atomSystemTopic)
 	{
 		// make duplicates of the incoming atoms (really adding a reference)
 		TCHAR szAtomName[_MAX_PATH];
@@ -1240,19 +1235,22 @@ LRESULT CFrameWnd::OnDDEInitiate(WPARAM wParam, LPARAM lParam)
 		VERIFY(GlobalAddAtom(szAtomName) == pApp->m_atomSystemTopic);
 
 		// send the WM_DDE_ACK (caller will delete duplicate atoms)
-		::SendMessage((HWND)wParam, WM_DDE_ACK, (WPARAM)m_hWnd,
-			MAKELPARAM(pApp->m_atomApp, pApp->m_atomSystemTopic));
+		pWndClient->SendMessage(WM_DDE_ACK, (WPARAM)m_hWnd, MAKELPARAM(pApp->m_atomApp, pApp->m_atomSystemTopic));
 	}
-	return 0L;
 }
 
 // always ACK the execute command - even if we do nothing
-LRESULT CFrameWnd::OnDDEExecute(WPARAM wParam, LPARAM lParam)
+void CFrameWnd::OnDDEExecute(CWnd* pWndClient, HANDLE handle)
 {
+	if (pWndClient->GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
 	// unpack the DDE message
-   UINT_PTR unused;
-	HGLOBAL hData;
-	VERIFY(UnpackDDElParam(WM_DDE_EXECUTE, lParam, &unused, (UINT_PTR*)&hData));
+	UINT_PTR unused;
+	HGLOBAL hData = (HGLOBAL)handle;
+	VERIFY(UnpackDDElParam(WM_DDE_EXECUTE, (LPARAM)handle, &unused, (UINT_PTR*)&hData));
 
 	// get the command string
 	LPCTSTR lpsz = (LPCTSTR)GlobalLock(hData);
@@ -1270,8 +1268,8 @@ LRESULT CFrameWnd::OnDDEExecute(WPARAM wParam, LPARAM lParam)
 	END_CATCH
 
 	// acknowledge now - before attempting to execute
-	::PostMessage((HWND)wParam, WM_DDE_ACK, (WPARAM)m_hWnd,
-		ReuseDDElParam(lParam, WM_DDE_EXECUTE, WM_DDE_ACK,
+	pWndClient->PostMessage(WM_DDE_ACK, (WPARAM)m_hWnd,
+		ReuseDDElParam((LPARAM)handle, WM_DDE_EXECUTE, WM_DDE_ACK,
 		(UINT)0x8000, (UINT_PTR)hData));
 
 	// don't execute the command when the window is disabled
@@ -1279,7 +1277,7 @@ LRESULT CFrameWnd::OnDDEExecute(WPARAM wParam, LPARAM lParam)
 	{
 		TRACE(traceAppMsg, 0, _T("Warning: DDE command '%s' ignored because window is disabled.\n"),
 			strCommand.GetString());
-		return 0;
+		return;
 	}
 
 	// execute the command
@@ -1287,13 +1285,14 @@ LRESULT CFrameWnd::OnDDEExecute(WPARAM wParam, LPARAM lParam)
 	if (!AfxGetApp()->OnDDECommand(lpszCommand))
 		TRACE(traceAppMsg, 0, _T("Error: failed to execute DDE command '%s'.\n"), lpszCommand);
 	strCommand.ReleaseBuffer();
-	return 0L;
 }
 
-LRESULT CFrameWnd::OnDDETerminate(WPARAM wParam, LPARAM lParam)
+void CFrameWnd::OnDDETerminate(CWnd* pWnd)
 {
-	::PostMessage((HWND)wParam, WM_DDE_TERMINATE, (WPARAM)m_hWnd, lParam);
-	return 0L;
+	if (pWnd->GetSafeHwnd() != NULL)
+	{
+		pWnd->PostMessage(WM_DDE_TERMINATE, (WPARAM)m_hWnd);
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1430,11 +1429,9 @@ void CFrameWnd::ShowControlBar(CControlBar* pBar, BOOL bShow, BOOL bDelay)
 
 void CFrameWnd::OnInitMenu(CMenu* pMenu)
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow hook to consume message
 	if (m_pNotifyHook != NULL)
 		m_pNotifyHook->OnInitMenu(pMenu);
-#endif
 
 	Default();
 }
@@ -1446,14 +1443,12 @@ void CFrameWnd::OnInitMenuPopup(CMenu* pMenu, UINT nIndex, BOOL bSysMenu)
 	if (bSysMenu)
 		return;     // don't support system menu
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow hook to consume message
 	if (m_pNotifyHook != NULL &&
 		m_pNotifyHook->OnInitMenuPopup(pMenu, nIndex, bSysMenu))
 	{
 		return;
 	}
-#endif
 
 	ENSURE_VALID(pMenu);
 	
@@ -1540,14 +1535,12 @@ void CFrameWnd::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 	CFrameWnd* pFrameWnd = GetTopLevelFrame();
 	ENSURE_VALID(pFrameWnd);
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow hook to consume message
 	if (m_pNotifyHook != NULL &&
 		m_pNotifyHook->OnMenuSelect(nItemID, nFlags, hSysMenu))
 	{
 		return;
 	}
-#endif
 
 	// set the tracking state (update on idle)
 	if (nFlags == 0xFFFF)
@@ -1932,11 +1925,9 @@ void CFrameWnd::OnUpdateFrameTitle(BOOL bAddToTitle)
 	if ((GetStyle() & FWS_ADDTOTITLE) == 0)
 		return;     // leave it alone!
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow hook to set the title (used for OLE support)
 	if (m_pNotifyHook != NULL && m_pNotifyHook->OnUpdateFrameTitle())
 		return;
-#endif
 
 	CDocument* pDocument = GetActiveDocument();
 	if (bAddToTitle && pDocument != NULL)
@@ -2002,12 +1993,10 @@ void CFrameWnd::OnSetPreviewMode(BOOL bPreview, CPrintPreviewState* pState)
 	ENSURE_ARG(pState != NULL);
 	// default implementation changes control bars, menu and main pane window
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	CFrameWnd* pActiveFrame = GetActiveFrame();
 	ENSURE_VALID(pActiveFrame);
 	if (bPreview && pActiveFrame->m_pNotifyHook != NULL)
 		pActiveFrame->m_pNotifyHook->OnDocActivate(FALSE);
-#endif
 
 	// Set visibility of standard ControlBars (only the first 32)
 	DWORD dwOldStates = 0;
@@ -2104,10 +2093,9 @@ void CFrameWnd::OnSetPreviewMode(BOOL bPreview, CPrintPreviewState* pState)
 		}
 
 		// recalc layout now, before showing the main pane
-#ifndef _AFX_NO_OLE_SUPPORT
 		if (pActiveFrame->m_pNotifyHook != NULL)
 			pActiveFrame->m_pNotifyHook->OnDocActivate(TRUE);
-#endif
+
 		RecalcLayout();
 
 		// now show main pane that was hidden
@@ -2176,11 +2164,9 @@ void CFrameWnd::RecalcLayout(BOOL bNotify)
 		bNotify = TRUE;
 	m_nIdleFlags &= ~(idleLayout|idleNotify);
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// call the layout hook -- OLE support uses this hook
 	if (bNotify && m_pNotifyHook != NULL)
 		m_pNotifyHook->OnRecalcLayout();
-#endif
 
 	// reposition all the child windows (regardless of ID)
 	if (GetStyle() & FWS_SNAPTOBARS)
@@ -2635,7 +2621,6 @@ BOOL CFrameWnd::GetMenuBarInfo(LONG idObject, LONG idItem, PMENUBARINFO pmbi) co
 	return ::GetMenuBarInfo(m_hWnd, idObject, idItem, pmbi);
 }
 /////////////////////////////////////////////////////////////////////////////
-#if (WINVER >= 0x0601)
 void CFrameWnd::SetProgressBarRange(int nRangeMin, int nRangeMax)
 {
 	m_nProgressBarRangeMin = nRangeMin;
@@ -2719,4 +2704,3 @@ BOOL CFrameWnd::SetTaskbarOverlayIcon(HICON hIcon, LPCTSTR lpcszDescr)
 	return SUCCEEDED(pTaskbarList->SetOverlayIcon(GetSafeHwnd(), hIcon, lpwszDescr));
 #endif
 }
-#endif

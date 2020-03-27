@@ -559,13 +559,6 @@ void CEnumConnPoints::AddConnPoint(LPCONNECTIONPOINT pConnPt)
 class COleConnPtContainer : public IConnectionPointContainer
 {
 public:
-#ifndef _AFX_NO_NESTED_DERIVATION
-	// required for METHOD_PROLOGUE_EX
-	size_t m_nOffset;
-	COleConnPtContainer::COleConnPtContainer()
-		{ m_nOffset = offsetof(CCmdTarget, m_xConnPtContainer); }
-#endif
-
 	STDMETHOD_(ULONG, AddRef)();
 	STDMETHOD_(ULONG, Release)();
 	STDMETHOD(QueryInterface)(REFIID, LPVOID*);

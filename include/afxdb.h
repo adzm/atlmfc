@@ -11,10 +11,6 @@
 #ifndef __AFXDB_H__
 #define __AFXDB_H__
 
-#ifdef _AFX_NO_DB_SUPPORT
-	#error Database classes not supported in this library variant.
-#endif
-
 #pragma once
 
 #ifndef __AFXEXT_H__
@@ -237,7 +233,7 @@ public:
 	BOOL CanTransact() const;   // Are Transactions supported?
 
 	CString GetDatabaseName() const;
-	const CString& GetConnect() const;
+	CString GetConnect() const;
 
 	DWORD GetBookmarkPersistence() const;
 	int GetCursorCommitBehavior() const;

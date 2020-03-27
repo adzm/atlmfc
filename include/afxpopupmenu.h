@@ -184,6 +184,8 @@ public:
 	}
 
 	static CMFCPopupMenu* __stdcall GetActiveMenu() { return m_pActivePopupMenu; }
+	static CMFCPopupMenu* __stdcall GetSafeActivePopupMenu();
+
 	DROP_DIRECTION GetDropDirection() const { return m_DropDirection; }
 
 	void SetRightAlign(BOOL bRightAlign = TRUE) { m_bRightAlign = bRightAlign; }

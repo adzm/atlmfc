@@ -13,20 +13,11 @@
 
 #pragma once
 
-#ifdef _AFX_NO_SOCKET_SUPPORT
-	#error Windows Sockets classes not supported in this library variant.
-#endif
-
 #ifndef __AFXWIN_H__
 	#include <afxwin.h>
 #endif
 
-#if _WIN32_WINNT >= 0x0502
-	#include <atlsocket.h>
-#else
-    #include <winsock2.h>
-    #include <mswsock.h>
-#endif  // _WIN32_WINNT
+#include <atlsocket.h>
 
 #ifndef _WINSOCK2API_
 #ifdef _WINSOCKAPI_
@@ -110,10 +101,8 @@ public:
 		long lEvent = FD_READ | FD_WRITE | FD_OOB | FD_ACCEPT | FD_CONNECT | FD_CLOSE,
 		LPCTSTR lpszSocketAddress = NULL);
 
-#if _WIN32_WINNT >= 0x0502
 	BOOL CreateEx(ADDRINFOT* pAI, 
 		long lEvent = FD_READ | FD_WRITE | FD_OOB | FD_ACCEPT | FD_CONNECT | FD_CLOSE);
-#endif  // _WIN32_WINNT
 
 // Attributes
 public:
@@ -126,15 +115,11 @@ public:
 
 	BOOL GetPeerName(CString& rPeerAddress, UINT& rPeerPort);
 	BOOL GetPeerName(SOCKADDR* lpSockAddr, int* lpSockAddrLen);
-#if _WIN32_WINNT >= 0x0502
 	BOOL GetPeerNameEx(CString& rPeerAddress, UINT& rPeerPort);	
-#endif  // _WIN32_WINNT
 
 	BOOL GetSockName(CString& rSocketAddress, UINT& rSocketPort);
 	BOOL GetSockName(SOCKADDR* lpSockAddr, int* lpSockAddrLen);
-#if _WIN32_WINNT >= 0x0502
 	BOOL GetSockNameEx(CString& rSocketAddress, UINT& rSocketPort);
-#endif  // _WIN32_WINNT
 
 	BOOL SetSockOpt(int nOptionName, const void* lpOptionValue,
 		int nOptionLen, int nLevel = SOL_SOCKET);
@@ -152,17 +137,13 @@ public:
 
 	BOOL Bind(UINT nSocketPort, LPCTSTR lpszSocketAddress = NULL);
 	BOOL Bind (const SOCKADDR* lpSockAddr, int nSockAddrLen);
-#if _WIN32_WINNT >= 0x0502
 	BOOL BindEx(ADDRINFOT* pAI);
-#endif  // _WIN32_WINNT
 
 	virtual void Close();
 
 	BOOL Connect(LPCTSTR lpszHostAddress, UINT nHostPort);
 	BOOL Connect(const SOCKADDR* lpSockAddr, int nSockAddrLen);
-#if _WIN32_WINNT >= 0x0502
 	BOOL ConnectEx(ADDRINFOT* pAI);
-#endif  // _WIN32_WINNT
 
 	BOOL IOCtl(long lCommand, DWORD* lpArgument);
 
@@ -174,10 +155,8 @@ public:
 		CString& rSocketAddress, UINT& rSocketPort, int nFlags = 0);
 	int ReceiveFrom(void* lpBuf, int nBufLen,
 		SOCKADDR* lpSockAddr, int* lpSockAddrLen, int nFlags = 0);
-#if _WIN32_WINNT >= 0x0502
 	int ReceiveFromEx(void* lpBuf, int nBufLen,
 		CString& rSocketAddress, UINT& rSocketPort, int nFlags = 0);
-#endif  // _WIN32_WINNT
 
 	enum { receives = 0, sends = 1, both = 2 };
 	BOOL ShutDown(int nHow = sends);
@@ -188,10 +167,8 @@ public:
 		UINT nHostPort, LPCTSTR lpszHostAddress = NULL, int nFlags = 0);
 	int SendTo(const void* lpBuf, int nBufLen,
 		const SOCKADDR* lpSockAddr, int nSockAddrLen, int nFlags = 0);
-#if _WIN32_WINNT >= 0x0502
 	int SendToEx(const void* lpBuf, int nBufLen,
 		UINT nHostPort, LPCTSTR lpszHostAddress = NULL, int nFlags = 0);
-#endif  // _WIN32_WINNT
 
 	BOOL AsyncSelect(long lEvent =
 		FD_READ | FD_WRITE | FD_OOB | FD_ACCEPT | FD_CONNECT | FD_CLOSE);
@@ -361,8 +338,6 @@ void AFXAPI AfxSocketTerm();
 #undef _AFXSOCK_INLINE
 #endif
 
-#if _WIN32_WINNT >= 0x0502
-
 inline BOOL CAsyncSocket::CreateEx(ADDRINFOT* pAI, long lEvent)
 {
 	if (pAI == NULL)
@@ -402,13 +377,13 @@ inline BOOL CAsyncSocket::GetPeerNameEx(CString& rPeerAddress, UINT& rPeerPort)
 	BOOL bResult = GetPeerName((SOCKADDR*)&sockAddr, &nSockAddrLen);
 	if (bResult)
 	{
-#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 		wchar_t szName[NI_MAXHOST];
 		BOOL bResult2 = GetNameInfoW((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
 #else
 		char szName[NI_MAXHOST];
 		BOOL bResult2 = getnameinfo((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
-#endif // ( _WIN32_WINNT >= 0x600 ) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 		if (!bResult2)
 		{
 			rPeerAddress = szName;
@@ -427,13 +402,13 @@ inline BOOL CAsyncSocket::GetSockNameEx(CString& rSocketAddress, UINT& rSocketPo
 	BOOL bResult = GetSockName((SOCKADDR*)&sockAddr, &nSockAddrLen);
 	if (bResult)
 	{
-#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 		wchar_t szName[NI_MAXHOST];
 		BOOL bResult2 = GetNameInfoW((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
 #else
 		char szName[NI_MAXHOST];
 		BOOL bResult2 = getnameinfo((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
-#endif // ( _WIN32_WINNT >= 0x600 ) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 		if (!bResult2)
 		{
 			rSocketAddress = szName;
@@ -452,13 +427,13 @@ inline int CAsyncSocket::ReceiveFromEx(void* lpBuf, int nBufLen, CString& rSocke
 	int nResult = ReceiveFrom(lpBuf, nBufLen, (SOCKADDR*)&sockAddr, &nSockAddrLen, nFlags);
 	if (nResult != SOCKET_ERROR)
 	{
-#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 		wchar_t szName[NI_MAXHOST];
 		BOOL bResult = GetNameInfoW((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
 #else
 		char szName[NI_MAXHOST];
 		BOOL bResult = getnameinfo((SOCKADDR*)&sockAddr, nSockAddrLen, szName, NI_MAXHOST, NULL, 0, 0);
-#endif // ( _WIN32_WINNT >= 0x600 ) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 		if (!bResult)
 		{
 			rSocketAddress = szName;
@@ -508,8 +483,6 @@ inline int CAsyncSocket::SendToEx(const void* lpBuf, int nBufLen, UINT nHostPort
 
 	return SendTo(lpBuf, nBufLen, p->ai_addr, (int)p->ai_addrlen, nFlags);
 }
-
-#endif  // _WIN32_WINNT
 
 #undef AFX_DATA
 #define AFX_DATA

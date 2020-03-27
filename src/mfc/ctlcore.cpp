@@ -26,6 +26,26 @@
 /////////////////////////////////////////////////////////////////////////////
 // Window to serve as "parking space" for not-yet-activated subclassed controls
 
+#pragma warning(disable:4483) // expected C++ identifier
+
+#if defined(UNICODE)
+#if defined(_X86_)
+#define _imp_DefWindowProc __identifier("_imp__DefWindowProcW@16")
+#else
+#define _imp_DefWindowProc __imp_DefWindowProcW
+#endif
+#else
+#if defined(_X86_)
+#define _imp_DefWindowProc __identifier("_imp__DefWindowProcA@16")
+#else
+#define _imp_DefWindowProc __imp_DefWindowProcA
+#endif
+#endif
+
+extern "C" {
+	extern LRESULT (CALLBACK *_imp_DefWindowProc)(_In_ HWND hWnd, _In_ UINT Msg, _In_ WPARAM wParam, _In_ LPARAM lParam);
+}
+
 #ifdef _AFXDLL
 AFX_MODULE_STATE* AFXAPI _AfxGetOleModuleState();
 #endif
@@ -83,7 +103,7 @@ AFX_STATIC void AFXAPI _AfxReleaseParkingWindow()
 		ASSERT(pThreadState->m_pWndPark->m_hWnd != NULL);
 		ASSERT(::GetWindow(pThreadState->m_pWndPark->m_hWnd, GW_CHILD) == NULL);
 		HWND hWnd = pThreadState->m_pWndPark->Detach();
-		::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (INT_PTR)DefWindowProc);
+		::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (INT_PTR)_imp_DefWindowProc);
 		::DestroyWindow(hWnd);
 		delete pThreadState->m_pWndPark;
 		pThreadState->m_pWndPark = NULL;
@@ -135,7 +155,7 @@ BEGIN_MESSAGE_MAP(COleControl, CWnd)
 	ON_WM_MOVE()
 	ON_WM_SHOWWINDOW()
 	ON_WM_CREATE()
-	ON_MESSAGE(WM_SETTEXT, &COleControl::OnSetText)
+	ON_WM_SETTEXT()
 	ON_WM_NCPAINT()
 	ON_WM_DESTROY()
 	ON_WM_ENTERIDLE()

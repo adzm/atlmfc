@@ -619,8 +619,8 @@ protected:
 	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
 	afx_msg void OnNcPaint();
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
-	afx_msg LRESULT OnGetFont(WPARAM, LPARAM);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
+	afx_msg HFONT OnGetFont();
 	afx_msg void OnHeaderItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnHeaderTrack(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnHeaderEndTrack(NMHDR* pNMHDR, LRESULT* pResult);
@@ -634,7 +634,7 @@ protected:
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg LRESULT OnGetObject(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnPrintClient(WPARAM wp, LPARAM lp);
+	afx_msg LRESULT OnPrintClient(CDC* pDC, UINT nFlags);
 
 	DECLARE_MESSAGE_MAP()
 

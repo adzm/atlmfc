@@ -51,11 +51,11 @@ class CMFCPropertySheetTabCtrl : public CMFCTabCtrl
 	CMFCPropertySheet* m_pParent;
 };
 
-class CMFCProperySheetListBox : public CListBox
+class CMFCPropertySheetListBox : public CListBox
 {
 	friend class CMFCPropertySheet;
 
-	CMFCProperySheetListBox();
+	CMFCPropertySheetListBox();
 
 	afx_msg void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
@@ -128,7 +128,7 @@ protected:
 	PropSheetLook  m_look;
 	CMFCOutlookBarPaneList m_wndPane1;
 	CMFCPropertySheetTabCtrl  m_wndTab;
-	CMFCProperySheetListBox m_wndList;
+	CMFCPropertySheetListBox m_wndList;
 	CMFCOutlookBar    m_wndOutlookBar;
 	CTreeCtrl      m_wndTree;
 	CImageList     m_Icons;

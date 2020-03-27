@@ -190,13 +190,11 @@ _AFXWIN_INLINE DWORD CBitmap::GetBitmapBits(DWORD dwCount, LPVOID lpBits) const
 _AFXWIN_INLINE BOOL CBitmap::LoadBitmap(LPCTSTR lpszResourceName)
 	{ return Attach(::LoadBitmap(AfxFindResourceHandle(
 		lpszResourceName, RT_BITMAP), lpszResourceName));}
-#ifndef _AFX_NO_AFXCMN_SUPPORT
 _AFXWIN_INLINE BOOL CBitmap::LoadMappedBitmap(UINT nIDBitmap, UINT nFlags,
 	LPCOLORMAP lpColorMap, int nMapSize)
 	{ return Attach(CreateMappedBitmap(AfxFindResourceHandle(
 		MAKEINTRESOURCE(nIDBitmap), RT_BITMAP), nIDBitmap, (WORD)nFlags,
 		lpColorMap, nMapSize)); }
-#endif
 _AFXWIN_INLINE CSize CBitmap::SetBitmapDimension(int nWidth, int nHeight)
 	{
 		SIZE size;

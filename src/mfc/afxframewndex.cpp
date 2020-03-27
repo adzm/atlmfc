@@ -73,7 +73,7 @@ BEGIN_MESSAGE_MAP(CFrameWndEx, CFrameWnd)
 	ON_WM_POWERBROADCAST()
 	ON_WM_DWMCOMPOSITIONCHANGED()
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CFrameWndEx::OnIdleUpdateCmdUI)
-	ON_MESSAGE(WM_SETTEXT, &CFrameWndEx::OnSetText)
+	ON_WM_SETTEXT()
 	ON_UPDATE_COMMAND_UI(ID_VIEW_STATUS_BAR, &CFrameWndEx::OnUpdatePaneMenu)
 	ON_COMMAND_EX(ID_VIEW_STATUS_BAR, &CFrameWndEx::OnPaneCheck)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_TOOLBAR, &CFrameWndEx::OnUpdatePaneMenu)
@@ -423,7 +423,7 @@ void CFrameWndEx::HtmlHelp(DWORD_PTR dwData, UINT nCmd)
 	}
 }
 
-void CFrameWndEx::WinHelp(DWORD dwData, UINT nCmd)
+void CFrameWndEx::WinHelp(DWORD_PTR dwData, UINT nCmd)
 {
 	if (dwData > 0 || !m_bContextHelp)
 	{
@@ -1033,12 +1033,12 @@ void CFrameWndEx::OnNcPaint()
 	}
 }
 
-LRESULT CFrameWndEx::OnSetText(WPARAM, LPARAM lParam)
+int CFrameWndEx::OnSetText(LPCTSTR lpszText)
 {
 	LRESULT lRes = Default();
 
-	m_Impl.OnSetText((LPCTSTR)lParam);
-	return lRes;
+	m_Impl.OnSetText(lpszText);
+	return (int)lRes;
 }
 
 BOOL CFrameWndEx::OnNcActivate(BOOL bActive)
@@ -1166,7 +1166,7 @@ void CFrameWndEx::OnUpdateFrameTitle(BOOL bAddToTitle)
 	}
 }
 
-UINT CFrameWndEx::OnPowerBroadcast(UINT nPowerEvent, UINT /* nEventData */)
+UINT CFrameWndEx::OnPowerBroadcast(UINT nPowerEvent, LPARAM /*lEventData*/)
 {
 	LRESULT lres = Default();
 

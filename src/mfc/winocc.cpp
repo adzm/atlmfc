@@ -12,11 +12,7 @@
 #include "occimpl.h"
 #include "sal.h"
 
-
-
 #define new DEBUG_NEW
-
-#ifndef _AFX_NO_OCC_SUPPORT
 
 /////////////////////////////////////////////////////////////////////////////
 // CWnd overridable for ambient properties
@@ -987,5 +983,3 @@ void COleControlContainer::AttachControlSite(CWnd* pWnd, UINT nIDC)
 		pSite->m_pWndCtrl = pWnd;
 	}
 }
-
-#endif // !_AFX_NO_OCC_SUPPORT

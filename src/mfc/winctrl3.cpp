@@ -87,7 +87,7 @@ BEGIN_MESSAGE_MAP(CCheckListBox, CListBox)
 	ON_WM_KEYDOWN()
 	ON_WM_CREATE()
 	ON_WM_LBUTTONDBLCLK()
-	ON_MESSAGE(WM_SETFONT, &CCheckListBox::OnSetFont)
+	ON_WM_SETFONT()
 	ON_MESSAGE(LB_ADDSTRING, &CCheckListBox::OnLBAddString)
 	ON_MESSAGE(LB_FINDSTRING, &CCheckListBox::OnLBFindString)
 	ON_MESSAGE(LB_FINDSTRINGEXACT, &CCheckListBox::OnLBFindStringExact)
@@ -788,15 +788,13 @@ int CCheckListBox::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-LRESULT CCheckListBox::OnSetFont(WPARAM , LPARAM)
+void CCheckListBox::OnSetFont(CFont* /*pFont*/, BOOL /*bRedraw*/)
 {
 	Default();
 
 	if ((GetStyle() & (LBS_OWNERDRAWFIXED | LBS_HASSTRINGS))
 		== (LBS_OWNERDRAWFIXED | LBS_HASSTRINGS))
 		SetItemHeight(0, CalcMinimumItemHeight());
-
-	return 0;
 }
 
 LRESULT CCheckListBox::OnLBAddString(WPARAM wParam, LPARAM lParam)

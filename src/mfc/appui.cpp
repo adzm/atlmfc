@@ -75,11 +75,7 @@ void CWinApp::AddToRecentFileList(LPCTSTR lpszPathName)
 	
 	if (m_pRecentFileList != NULL)
 	{
-#if (WINVER >= 0x0601)
 		m_pRecentFileList->Add(lpszPathName, m_pszAppID);
-#else
-		m_pRecentFileList->Add(lpszPathName);
-#endif
 	}
 }
 

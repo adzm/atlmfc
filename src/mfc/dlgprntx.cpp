@@ -270,7 +270,6 @@ LRESULT CPrintDialogEx::HandleInitDialog(WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
 	PreInitDialog();
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	// create OLE controls
 	COccManager* pOccManager = afxOccManager;
 	if ((pOccManager != NULL) && (m_pOccDialogInfo != NULL))
@@ -290,13 +289,10 @@ LRESULT CPrintDialogEx::HandleInitDialog(WPARAM /*wParam*/, LPARAM /*lParam*/)
 			return FALSE;
 		}
 	}
-#endif
 
 	// Call OnInitDialog
 	BOOL bResult = OnInitDialog();
 
-
-#ifndef _AFX_NO_OCC_SUPPORT
 	if (bResult && (m_nFlags & WF_OLECTLCONTAINER))
 	{
 		CWnd* pWndNext = GetNextDlgTabItem(NULL);
@@ -306,7 +302,6 @@ LRESULT CPrintDialogEx::HandleInitDialog(WPARAM /*wParam*/, LPARAM /*lParam*/)
 			bResult = FALSE;
 		}
 	}
-#endif
 
 	return bResult;
 }

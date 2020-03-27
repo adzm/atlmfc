@@ -358,6 +358,16 @@ public:
 		return (CToolTipCtrl&)*m_pToolTip;
 	}
 
+	BOOL IsFirstTab(int iTab) const
+	{
+		if (m_arTabIndices.GetSize() != m_arTabs.GetSize())
+		{
+			return iTab == 0;
+		}
+
+		return m_arTabIndices[0] == iTab;
+	}
+
 	BOOL IsTabCloseButtonHighlighted() const { return m_bTabCloseButtonHighlighted; }
 	BOOL IsTabCloseButtonPressed() const { return m_bTabCloseButtonPressed; }
 	CRect GetTabCloseButton() const { return m_rectCloseButton; }
@@ -410,6 +420,7 @@ protected:
 
 	Location   m_location; // Tabs location
 	CPtrArray  m_arTabs;   // Array of CMFCTabInfo objects
+	CArray<int,int> m_arTabIndices; // Array of tab indices
 	int m_iTabsNum;        // m_arTabs size
 	int m_iActiveTab;      // Active tab number
 	int m_iTabBeforeDrag;  // tab before drag

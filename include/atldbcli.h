@@ -454,8 +454,12 @@ ATLPREFAST_UNSUPPRESS()
 	typedef x _classtype; \
 	typedef x _ParamClass; \
 	static bool HasParameters() throw () { return true; } \
+	/* If pBinding == NULL means we only return the column number */ \
+	/* If pBuffer != NULL then it points to the accessor buffer and */ \
+	/* we release any appropriate memory e.g. BSTR's or interface pointers */ \
+ATLPREFAST_SUPPRESS(6101 6054) \
 	static HRESULT _GetParamEntries( \
-		_Out_writes_opt_(*pColumns) _Outptr_result_z_ LPOLESTR* pColumnNames, \
+		_Out_writes_opt_(*pColumns) _Outptr_opt_result_maybenull_z_ LPOLESTR* pColumnNames, \
 		_Out_ DBORDINAL* pColumns, \
 		_In_opt_ DBBINDING *pBinding, \
 		_In_opt_ BYTE* pBuffer = NULL, \
@@ -469,7 +473,8 @@ ATLPREFAST_UNSUPPRESS()
 #define END_PARAM_MAP() \
 		*pColumns = nColumns; \
 		return S_OK; \
-	}
+	} \
+ATLPREFAST_UNSUPPRESS()
 
 #define SET_PARAM_TYPE(type) \
 	eParamIO = type;
@@ -557,11 +562,11 @@ public:
 	HRESULT GetAllErrorInfo(
 		_In_ ULONG ulRecordNum,
 		_In_ LCID lcid,
-		_Deref_opt_out_z_ BSTR* pbstrDescription,
-		_Deref_opt_out_z_ BSTR* pbstrSource = NULL,
+		_Outptr_opt_result_maybenull_z_ BSTR* pbstrDescription,
+		_Outptr_opt_result_maybenull_z_ BSTR* pbstrSource = NULL,
 		_Out_opt_ GUID* pguid = NULL,
 		_Out_opt_ DWORD* pdwHelpContext = NULL,
-		_Deref_opt_out_z_ BSTR* pbstrHelpFile = NULL) const throw()
+		_Outptr_opt_result_maybenull_z_ BSTR* pbstrHelpFile = NULL) const throw()
 	{
 		CComPtr<IErrorInfo> spErrorInfo;
 
@@ -581,19 +586,24 @@ public:
 		}
 
 		if (pbstrDescription != NULL)
-			spErrorInfo->GetDescription(pbstrDescription);
+			if (FAILED(spErrorInfo->GetDescription(pbstrDescription)))
+                    *pbstrDescription = NULL;
 
 		if (pguid != NULL)
-			spErrorInfo->GetGUID(pguid);
+            if (FAILED(spErrorInfo->GetGUID(pguid)))
+                memcpy_s(pguid, sizeof(GUID), &__uuidof(NULL), sizeof(GUID));
 
 		if (pdwHelpContext != NULL)
-			spErrorInfo->GetHelpContext(pdwHelpContext);
+			if (FAILED(spErrorInfo->GetHelpContext(pdwHelpContext)))
+                *pdwHelpContext = 0;
 
 		if (pbstrHelpFile != NULL)
-			spErrorInfo->GetHelpFile(pbstrHelpFile);
+			if (FAILED(spErrorInfo->GetHelpFile(pbstrHelpFile)))
+                *pbstrHelpFile = NULL;
 
 		if (pbstrSource != NULL)
-			spErrorInfo->GetSource(pbstrSource);
+			if (FAILED(spErrorInfo->GetSource(pbstrSource)))
+                *pbstrSource = NULL;
 
 		return S_OK;
 	}
@@ -658,7 +668,7 @@ inline void AtlTraceErrorRecords(_In_ HRESULT hrErr = S_OK)
 	LCID lcLocale = GetSystemDefaultLCID();
 
 	hr = ErrorInfo.GetErrorRecords(&cRecords);
-	if (FAILED(hr) && ErrorInfo.m_spErrorInfo == NULL)
+	if (FAILED(hr) || ErrorInfo.m_spErrorInfo == NULL)
 	{
 		ATLTRACE(atlTraceDBClient, 0, _T("No OLE DB Error Information found: hr = 0x%x\n"), hr);
 	}
@@ -674,7 +684,9 @@ inline void AtlTraceErrorRecords(_In_ HRESULT hrErr = S_OK)
 					_T("OLE DB Error Record dump retrieval failed: hr = 0x%x\n"), hr);
 				return;
 			}
+ATLPREFAST_SUPPRESS(6031)
 			StringFromGUID2(guid, wszGuid, sizeof(wszGuid) / sizeof(WCHAR));
+ATLPREFAST_UNSUPPRESS()
 			ATLTRACE(atlTraceDBClient, 0,
 				_T("Row #: %4d Source: \"%s\" Description: \"%s\" Help File: \"%s\" Help Context: %4d GUID: %s\n"),
 				i, static_cast<TCHAR*>(COLE2T(bstrSource)), static_cast<TCHAR*>(COLE2T(bstrDesc)), static_cast<TCHAR*>(COLE2T(bstrHelpFile)), dwHelpContext, static_cast<TCHAR*>(COLE2T(wszGuid)));
@@ -2871,7 +2883,9 @@ public:
 		CComHeapPtr<OLECHAR>		spStringsBuffer;
 
 		// First time just get the number of entries by passing in &nColumns
-		_OutputColumnsClass::_GetBindEntries(NULL, &nColumns, NULL, nAccessor, NULL);
+		hr = _OutputColumnsClass::_GetBindEntries(NULL, &nColumns, NULL, nAccessor, NULL);
+        if (FAILED(hr))
+            return hr;
 
 		ATLASSERT(nColumns > 0);
 
@@ -2914,10 +2928,12 @@ public:
 			hr = BindEntries(spBindings, nColumns, &m_pAccessorInfo[nAccessor].hAccessor, nSize, pAccessor);
 		}
 		else
-		{
-			// free any DBBINDING::pObject's
+		{            
+ATLPREFAST_SUPPRESS(6102)
+            // free any DBBINDING::pObject's
 			for( ULONG i = 0; i < nColumns; i++ )
 				delete spBindings[i].pObject;
+ATLPREFAST_UNSUPPRESS()
 
 		}
 		return hr;
@@ -6740,11 +6756,15 @@ ATLPREFAST_UNSUPPRESS()
 		if (FAILED(hr))
 			return hr;
 
-		spPersist->GetClassID(&clsid);
+        hr = spPersist->GetClassID(&clsid);
+		if (FAILED(hr))
+            return hr;
 
 		ULONG       ulPropSets=0;
 		CDBPropSet* pPropSets=NULL;
-		pIDBProperties->GetProperties(0, NULL, &ulPropSets, (DBPROPSET**)&pPropSets);
+		hr = pIDBProperties->GetProperties(0, NULL, &ulPropSets, (DBPROPSET**)&pPropSets);
+        if (FAILED(hr))
+            return hr;
 
 		hr = Open(clsid, &pPropSets[0], ulPropSets);
 
@@ -7442,14 +7462,17 @@ public:
 		return Execute( (IUnknown**)ppRowset, pParams, pPropSet, pRowsAffected, ulPropSets );
 	}
 
+
 	HRESULT Execute(
-		_Inout_opt_ IUnknown** ppInterface,
+		_Outptr_opt_result_maybenull_ IUnknown** ppInterface,
 		_In_opt_ DBPARAMS* pParams,
 		_Inout_updates_opt_(ulPropSets) DBPROPSET *pPropSet,
 		_Out_opt_ DBROWCOUNT* pRowsAffected,
 		_In_ ULONG ulPropSets = 0) throw()
 	{
 		HRESULT hr;
+        if (ppInterface)
+            *ppInterface = NULL;
 
 		// Specify the properties if we have some
 		if (pPropSet)

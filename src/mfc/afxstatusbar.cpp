@@ -992,11 +992,11 @@ BEGIN_MESSAGE_MAP(CMFCStatusBar, CPane)
 	ON_WM_TIMER()
 	ON_WM_DESTROY()
 	ON_WM_CREATE()
-	ON_MESSAGE(WM_SETFONT, &CMFCStatusBar::OnSetFont)
-	ON_MESSAGE(WM_GETFONT, &CMFCStatusBar::OnGetFont)
-	ON_MESSAGE(WM_SETTEXT, &CMFCStatusBar::OnSetText)
-	ON_MESSAGE(WM_GETTEXT, &CMFCStatusBar::OnGetText)
-	ON_MESSAGE(WM_GETTEXTLENGTH, &CMFCStatusBar::OnGetTextLength)
+	ON_WM_SETFONT()
+	ON_WM_GETFONT()
+	ON_WM_SETTEXT()
+	ON_WM_GETTEXT()
+	ON_WM_GETTEXTLENGTH()
 	ON_WM_STYLECHANGED()
 	ON_WM_SHOWWINDOW()
 END_MESSAGE_MAP()
@@ -1114,42 +1114,37 @@ void CMFCStatusBar::OnSize(UINT nType, int cx, int cy)
 	UpdateWindow();
 }
 
-LRESULT CMFCStatusBar::OnSetFont(WPARAM wParam, LPARAM lParam)
+void CMFCStatusBar::OnSetFont(CFont* pFont, BOOL bRedraw)
 {
-	m_hFont = (HFONT)wParam;
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 	ASSERT(m_hFont != NULL);
 
 	RecalcLayout();
 
-	if ((BOOL)lParam)
+	if (bRedraw)
 	{
 		Invalidate();
 		UpdateWindow();
 	}
-
-	return 0L;      // does not re-draw or invalidate - resize parent instead
 }
 
-LRESULT CMFCStatusBar::OnGetFont(WPARAM, LPARAM)
+HFONT CMFCStatusBar::OnGetFont()
 {
-	HFONT hFont = GetCurrentFont();
-	return(LRESULT)(UINT_PTR)hFont;
+	return GetCurrentFont();
 }
 
-LRESULT CMFCStatusBar::OnSetText(WPARAM, LPARAM lParam)
+int CMFCStatusBar::OnSetText(LPCTSTR lpszText)
 {
 	int nIndex = CommandToIndex(0);
 	if (nIndex < 0)
 		return -1;
-	return SetPaneText(nIndex, (LPCTSTR)lParam) ? 0 : -1;
+	return SetPaneText(nIndex, lpszText) ? 0 : -1;
 }
 
-LRESULT CMFCStatusBar::OnGetText(WPARAM wParam, LPARAM lParam)
+int CMFCStatusBar::OnGetText(int nMaxChars, LPTSTR lpszText)
 {
-	int nMaxLen = (int)wParam;
-	if (nMaxLen == 0)
+	if (nMaxChars == 0 || lpszText == NULL)
 		return 0;       // nothing copied
-	LPTSTR lpszDest = (LPTSTR)lParam;
 
 	int nLen = 0;
 	int nIndex = CommandToIndex(0); // use pane with ID zero
@@ -1163,15 +1158,15 @@ LRESULT CMFCStatusBar::OnGetText(WPARAM wParam, LPARAM lParam)
 		}
 
 		nLen = pSBP->lpszText != NULL ? static_cast<int>(_tcslen(pSBP->lpszText)) : 0;
-		if (nLen > nMaxLen)
-			nLen = nMaxLen - 1; // number of characters to copy(less term.)
-		memcpy(lpszDest, pSBP->lpszText, nLen*sizeof(TCHAR));
+		if (nLen > nMaxChars)
+			nLen = nMaxChars - 1; // number of characters to copy(less term.)
+		memcpy(lpszText, pSBP->lpszText, nLen*sizeof(TCHAR));
 	}
-	lpszDest[nLen] = '\0';
+	lpszText[nLen] = '\0';
 	return nLen+1;      // number of bytes copied
 }
 
-LRESULT CMFCStatusBar::OnGetTextLength(WPARAM, LPARAM)
+UINT CMFCStatusBar::OnGetTextLength()
 {
 	int nLen = 0;
 	int nIndex = CommandToIndex(0); // use pane with ID zero

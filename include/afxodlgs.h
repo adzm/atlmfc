@@ -11,10 +11,6 @@
 #ifndef __AFXODLGS_H__
 #define __AFXODLGS_H__
 
-#ifdef _AFX_NO_OLE_SUPPORT
-	#error OLE classes not supported in this library variant.
-#endif
-
 #pragma once
 
 #ifndef __AFXOLE_H__

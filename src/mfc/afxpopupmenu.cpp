@@ -4112,3 +4112,12 @@ HRESULT CMFCPopupMenu::get_accState(VARIANT varChild, VARIANT *pvarState)
 	return S_FALSE;
 }
 
+CMFCPopupMenu* CMFCPopupMenu::GetSafeActivePopupMenu()
+{
+	if (m_pActivePopupMenu != NULL && ::IsWindow(m_pActivePopupMenu->m_hWnd) && CWnd::FromHandlePermanent(m_pActivePopupMenu->m_hWnd) != NULL)
+	{
+		return m_pActivePopupMenu;
+	}
+
+	return NULL;
+}

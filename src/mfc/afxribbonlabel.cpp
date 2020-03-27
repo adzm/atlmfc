@@ -44,8 +44,10 @@ BOOL CMFCRibbonLabel::SetACCData(CWnd* pParent, CAccessibilityData& data)
 
 	CMFCRibbonBaseElement::SetACCData(pParent, data);
 
-	data.m_nAccRole = ROLE_SYSTEM_GROUPING;
+	data.m_nAccRole = ROLE_SYSTEM_STATICTEXT;
 	data.m_bAccState = 0;
+	data.m_strAccDefAction.Empty();
+
 	return TRUE;
 }
 

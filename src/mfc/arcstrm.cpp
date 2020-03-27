@@ -17,8 +17,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // CArchiveStream
 
-#ifndef _AFX_NO_OLE_SUPPORT
-
 CArchiveStream::CArchiveStream(CArchive* pArchive)
 {
 	m_pArchive = pArchive;
@@ -163,5 +161,3 @@ STDMETHODIMP CArchiveStream::Clone(LPSTREAM*)
 {
 	return E_NOTIMPL;
 }
-
-#endif // _AFX_NO_OLE_SUPPORT

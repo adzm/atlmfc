@@ -1233,7 +1233,7 @@ void CMFCVisualManagerOffice2003::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, B
 	CRect rectClip;
 	pTabWnd->GetTabsRect(rectClip);
 
-	const int nExtra = (iTab == 0 || bIsActive) ? 0 : rectTab.Height();
+	const int nExtra = (pTabWnd->IsFirstTab(iTab) || bIsActive) ? 0 : rectTab.Height();
 
 	if (rectTab.left + nExtra + 10 > rectClip.right || rectTab.right - 10 <= rectClip.left)
 	{
@@ -1344,7 +1344,7 @@ void CMFCVisualManagerOffice2003::OnDrawTab(CDC* pDC, CRect rectTab, int iTab, B
 
 	pDC->ExcludeClipRect(rectLeft);
 
-	if (iTab > 0 && !bIsActive && iTab != pTabWnd->GetFirstVisibleTabNum())
+	if (!pTabWnd->IsFirstTab(iTab) && !bIsActive && iTab != pTabWnd->GetFirstVisibleTabNum())
 	{
 		CRect rectLeftTab = rectClip;
 		rectLeftTab.right = rectFill.left + rectFill.Height() - 10;

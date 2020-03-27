@@ -191,15 +191,11 @@ void CPropertyPage::CommonConstruct(LPCTSTR lpszTemplateName, UINT nIDCaption, U
 CPropertyPage::~CPropertyPage()
 {
 	free(m_pPSP);
-#ifndef _AFX_NO_OCC_SUPPORT
 	Cleanup();
-#endif
 
 	if (m_hDialogTemplate != NULL)
 		GlobalFree(m_hDialogTemplate);
 }
-
-#ifndef _AFX_NO_OCC_SUPPORT
 
 void CPropertyPage::Cleanup()
 {
@@ -246,8 +242,6 @@ const DLGTEMPLATE* CPropertyPage::InitDialogInfo(const DLGTEMPLATE* pTemplate)
 	return afxOccManager->PreCreateDialog(m_pOccDialogInfo, pTemplate);
 }
 
-#endif
-
 void CPropertyPage::PreProcessPageTemplate(PROPSHEETPAGE& psp, BOOL bWizard)
 {
 	const DLGTEMPLATE* pTemplate;
@@ -275,11 +269,9 @@ void CPropertyPage::PreProcessPageTemplate(PROPSHEETPAGE& psp, BOOL bWizard)
 		}
 	}
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	// if the dialog could contain OLE controls, deal with them now
 	if (afxOccManager != NULL)
 		pTemplate = InitDialogInfo(pTemplate);
-#endif
 
 	// set font of property page to same font used by property sheet
 	HGLOBAL hTemplate = _AfxChangePropPageFont(pTemplate, bWizard);

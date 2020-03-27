@@ -15,6 +15,7 @@
 #include "afxvisualmanager.h"
 #include "afxribbonbar.h"
 #include "afxribbonstatusbar.h"
+#include "afxribboncategory.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -790,4 +791,340 @@ CMFCRibbonBaseElement* CMFCRibbonButtonsGroup::GetLastTabStop()
 	}
 
 	return NULL;
+}
+
+int CMFCRibbonButtonsGroup::GetButtonIndex(const CMFCRibbonBaseElement* pButton) const
+{
+	if (pButton == NULL)
+	{
+		return -1;
+	}
+
+	ASSERT_VALID(this);
+	ASSERT_VALID(pButton);
+
+	for (int i = 0; i < m_arButtons.GetSize(); i++)
+	{
+		if (m_arButtons [i] == pButton)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+IMPLEMENT_DYNCREATE(CMFCRibbonTabsGroup, CMFCRibbonButtonsGroup)
+
+CMFCRibbonTabsGroup::CMFCRibbonTabsGroup()
+{
+}
+
+CMFCRibbonTabsGroup::CMFCRibbonTabsGroup(CMFCRibbonBaseElement* pButton)
+{
+	AddButton(pButton);
+}
+
+CMFCRibbonTabsGroup::~CMFCRibbonTabsGroup()
+{
+	m_arButtons.RemoveAll();
+}
+
+BOOL CMFCRibbonTabsGroup::SetACCData(CWnd* /*pParent*/, CAccessibilityData& /*data*/)
+{
+	ASSERT_VALID(this);
+
+	m_AccData.Clear();
+	m_AccData.m_strAccName = _T("Ribbon Tabs"); 
+	m_AccData.m_nAccRole = ROLE_SYSTEM_GROUPING;
+	m_AccData.m_bAccState = STATE_SYSTEM_NORMAL;
+	m_AccData.m_rectAccLocation = m_rect;
+
+	if (m_pRibbonBar->GetSafeHwnd() != NULL)
+	{
+		m_pRibbonBar->ClientToScreen(&m_AccData.m_rectAccLocation);
+	}
+
+	return TRUE;
+}
+
+BOOL CMFCRibbonTabsGroup::OnSetAccData (long lVal)
+{
+	ASSERT_VALID(this);
+
+	m_AccData.Clear();
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return FALSE;
+	}
+
+	ASSERT_VALID (m_pRibbonBar);
+
+	int nIndex = (int)lVal - 1;
+
+	if (nIndex < 0 || nIndex >= m_arButtons.GetSize())
+	{
+		return FALSE;
+	}
+
+	ASSERT_VALID(m_arButtons[nIndex]);
+	return m_arButtons[nIndex]->SetACCData (m_pRibbonBar, m_AccData);
+}
+
+HRESULT CMFCRibbonTabsGroup::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+{
+	if (!pvarChild)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	pvarChild->vt = VT_I4;
+	pvarChild->lVal = CHILDID_SELF;
+
+	CPoint pt(xLeft, yTop);
+	m_pRibbonBar->ScreenToClient(&pt);
+
+	for (int i = 0; i < m_arButtons.GetSize (); i++)
+	{
+		CMFCRibbonBaseElement* pElem = m_arButtons[i];
+		if (pElem != NULL)
+		{
+			ASSERT_VALID(pElem);
+
+			if (pElem->GetRect().PtInRect(pt))
+			{
+				pvarChild->lVal = i + 1;
+				pElem->SetACCData(m_pRibbonBar, m_AccData);
+				break;
+			}
+		}
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonTabsGroup::get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction)
+{
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		return S_FALSE;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+		*pszDefaultAction = m_AccData.m_strAccDefAction.AllocSysString();
+		return S_OK; 
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonTabsGroup::accDoDefaultAction(VARIANT varChild)
+{
+	if (varChild.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.lVal != CHILDID_SELF)
+	{
+		int nIndex = (int)varChild.lVal - 1;
+		if (nIndex < 0 || nIndex >= m_arButtons.GetSize())
+		{
+			return E_INVALIDARG;
+		}
+
+		CMFCRibbonBaseElement* pElem = m_arButtons[nIndex];
+		if (pElem != NULL)
+		{
+			ASSERT_VALID (pElem);
+
+			pElem->OnAccDefaultAction();
+			return S_OK;
+		}
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonTabsGroup::get_accParent(IDispatch **ppdispParent)
+{
+	if (!ppdispParent)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispParent = NULL;
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	LPDISPATCH lpDispatch = (LPDISPATCH)m_pRibbonBar->GetAccessibleDispatch();
+	if (lpDispatch != NULL)
+	{
+		*ppdispParent =  lpDispatch;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonTabsGroup::get_accChildCount(long *pcountChildren)
+{
+	if (!pcountChildren)
+	{
+		return E_INVALIDARG;
+	}
+
+	*pcountChildren = (long)m_arButtons.GetSize(); 
+	return S_OK;
+}
+
+HRESULT CMFCRibbonTabsGroup::accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt)
+{
+	pvarEndUpAt->vt = VT_EMPTY;
+
+	if (varStart.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	switch (navDir)
+	{
+	case NAVDIR_FIRSTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = 1;
+			return S_OK;	
+		}
+		break;
+
+	case NAVDIR_LASTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = (long)m_arButtons.GetSize();
+			return S_OK;
+		}
+		break;
+
+	case NAVDIR_NEXT:   
+	case NAVDIR_RIGHT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal + 1;
+			
+			if (pvarEndUpAt->lVal > m_arButtons.GetSize())
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+
+			return S_OK;
+		}
+		else
+		{
+			if (m_pRibbonBar->m_TabElements.GetCount() > 0)
+			{
+				CMFCRibbonBaseElement* pTabElement = m_pRibbonBar->m_TabElements.GetButton(0);
+				if (pTabElement != NULL)
+				{
+					ASSERT_VALID(pTabElement);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pTabElement->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+			else
+			{
+				CMFCRibbonCategory* pCatrgory = m_pRibbonBar->GetActiveCategory();
+				if (pCatrgory != NULL)
+				{
+					ASSERT_VALID(pCatrgory);
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pCatrgory->GetIDispatch(TRUE);
+					return S_OK;
+				}
+			}
+		}
+		break;
+
+	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal - 1;
+			
+			if (pvarEndUpAt->lVal <= 0)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+
+			return S_OK;
+		}
+		else
+		{
+			if (m_pRibbonBar->m_QAToolbar.IsVisible())
+			{
+				pvarEndUpAt->vt = VT_DISPATCH;
+				pvarEndUpAt->pdispVal = m_pRibbonBar->m_QAToolbar.GetIDispatch(TRUE);
+
+				return S_OK;
+			}
+			else
+			{
+				CMFCRibbonApplicationButton* pMainButton = m_pRibbonBar->GetApplicationButton();
+				if (pMainButton != NULL)
+				{
+					ASSERT_VALID(pMainButton);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pMainButton->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
+
+void CMFCRibbonTabsGroup::UpdateTabs(CArray<CMFCRibbonCategory*,CMFCRibbonCategory*>& arCategories)
+{
+	m_arButtons.RemoveAll();
+
+	for (int i = 0; i < arCategories.GetSize(); i++)
+	{
+		CMFCRibbonCategory* pCategory  = (CMFCRibbonCategory*)arCategories[i];
+		if (pCategory != NULL)
+		{
+			ASSERT_VALID(pCategory);
+
+			if (pCategory->IsVisible() && !pCategory->m_Tab.GetRect().IsRectEmpty())
+			{
+				m_arButtons.Add(&pCategory->m_Tab);
+			}
+		}
+	}
 }

@@ -347,8 +347,6 @@ BOOL CPagerCtrl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect,
 	return bRet;
 }
 
-#if (_WIN32_WINNT >= 0x0501)
-
 /////////////////////////////////////////////////////////////////////////////
 // CLinkCtrl
 
@@ -415,9 +413,7 @@ BOOL CLinkCtrl::CreateEx(LPCTSTR lpszLinkMarkup, DWORD dwExStyle, DWORD dwStyle,
 	return bRet;
 }
 
-#endif
-
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 // CNetAddressCtrl
@@ -453,7 +449,7 @@ BOOL CNetAddressCtrl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect,
 	return bRet;
 }
 
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -470,14 +466,11 @@ BOOL CNetAddressCtrl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect,
 IMPLEMENT_DYNAMIC(CIPAddressCtrl, CWnd)
 IMPLEMENT_DYNAMIC(CReBarCtrl, CWnd)
 IMPLEMENT_DYNAMIC(CPagerCtrl, CWnd)
-
-#if (_WIN32_WINNT >= 0x0501)
 IMPLEMENT_DYNAMIC(CLinkCtrl, CWnd)
-#endif	// _WIN32_WINNT >= 0x0501
 
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if defined(UNICODE)
 IMPLEMENT_DYNAMIC(CNetAddressCtrl, CEdit)
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // defined(UNICODE)
 
 
 /////////////////////////////////////////////////////////////////////////////

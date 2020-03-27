@@ -9,7 +9,10 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
+
+#define _USE_MATH_DEFINES
 #include <math.h>
+
 #include "afxcontrolbarutil.h"
 #include "afxglobals.h"
 #include "afxdrawmanager.h"
@@ -18,8 +21,6 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-const double AFX_PI = 3.1415926;
 
 #define AFX_CLR_TO_RGBA(c) c | 0xFF000000
 #define AFX_RGB_TO_RGBA(r, g, b) AFX_CLR_TO_RGBA(RGB(r, g, b))
@@ -677,7 +678,7 @@ void CDrawingManager::FillGradient2(CRect rect, COLORREF colorStart, COLORREF co
 	int nShift = 6;
 	int nSteps = 1 << nShift;
 
-	const double fAngle = AFX_PI *(nAngle + 180) / 180;
+	const double fAngle = M_PI *(nAngle + 180) / 180;
 	const int nOffset = (int)(cos(fAngle) * rect.Height());
 	const int nTotalWidth = rect.Width() + abs(nOffset);
 
@@ -831,9 +832,9 @@ BOOL CDrawingManager::DrawGradientRing(CRect rect, COLORREF colorStart, COLORREF
 	const int yCenter = (rect.top + rect.bottom) / 2;
 
 	const int nSteps = 360;
-	const double fDelta = 2. * AFX_PI / nSteps;
-	const double fStart = AFX_PI * nAngle / 180;
-	const double fFinish = fStart + 2. * AFX_PI;
+	const double fDelta = 2. * M_PI / nSteps;
+	const double fStart = M_PI * nAngle / 180;
+	const double fFinish = fStart + 2. * M_PI;
 
 	double rDelta = (double)(.5 + GetRValue(colorFinish) - GetRValue(colorStart)) / nSteps * 2;
 	double gDelta = (double)(.5 + GetGValue(colorFinish) - GetGValue(colorStart)) / nSteps * 2;
@@ -886,8 +887,8 @@ BOOL CDrawingManager::DrawGradientRing(CRect rect, COLORREF colorStart, COLORREF
 
 			COLORREF color = nLevel == 0 && colorBorder != -1 ? colorBorder : RGB(bR, bG, bB);
 
-			double dx = /*(fAngle >= 0 && fAngle <= AFX_PI / 2) ||(fAngle >= 3 * AFX_PI / 2) ? .5 : -.5*/0;
-			double dy = /*(fAngle <= AFX_PI) ? .5 : -.5*/0;
+			double dx = 0;
+			double dy = 0;
 
 			int x = xCenter +(int)(dx + cos(fAngle) * nRadius);
 			int y = yCenter +(int)(dy + sin(fAngle) * nRadius);

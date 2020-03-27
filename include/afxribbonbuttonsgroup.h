@@ -52,6 +52,8 @@ public:
 		return m_arButtons [i];
 	}
 
+	int GetButtonIndex(const CMFCRibbonBaseElement* pButton) const;
+
 // Operations
 public:
 	void AddButton(CMFCRibbonBaseElement* pButton);
@@ -119,6 +121,35 @@ protected:
 	CMFCToolBarImages m_HotImages;
 	CMFCToolBarImages m_DisabledImages;
 };
+
+class CMFCRibbonTabsGroup : public CMFCRibbonButtonsGroup  
+{
+	friend class CMFCRibbonBar;
+
+	DECLARE_DYNCREATE(CMFCRibbonTabsGroup)
+
+	// Construction
+public:
+	CMFCRibbonTabsGroup();
+	CMFCRibbonTabsGroup(CMFCRibbonBaseElement* pButton);
+
+	~CMFCRibbonTabsGroup();
+
+protected:
+	// Accessibility:
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
+	virtual HRESULT get_accDefaultAction(VARIANT varChild, BSTR *pszDefaultAction);
+	virtual BOOL OnSetAccData(long lVal);
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+
+public:
+	void UpdateTabs(CArray<CMFCRibbonCategory*,CMFCRibbonCategory*>& arCategories);
+};
+
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, on)

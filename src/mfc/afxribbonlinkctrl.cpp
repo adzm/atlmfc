@@ -177,3 +177,23 @@ void CMFCRibbonLinkCtrl::SetLink(LPCTSTR lpszLink)
 {
 	m_strLink = lpszLink;
 }
+
+BOOL CMFCRibbonLinkCtrl::SetACCData(CWnd* pParent, CAccessibilityData& data)
+{
+	ASSERT_VALID(this);
+
+	if (!CMFCRibbonButton::SetACCData(pParent, data))
+	{
+		return FALSE;
+	}
+
+	data.m_nAccRole = ROLE_SYSTEM_LINK;
+	data.m_strAccDefAction = _T("Jump");
+	data.m_bAccState = STATE_SYSTEM_LINKED;
+
+	return TRUE;
+}
+void CMFCRibbonLinkCtrl::OnAccDefaultAction()
+{
+	OpenLink();
+}

@@ -38,6 +38,8 @@
 #include "afxglobalutils.h"
 #include "afxdockingmanager.h"
 
+#include <Basetsd.h>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -97,9 +99,9 @@ BEGIN_MESSAGE_MAP(CBasePane, CWnd)
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CBasePane::OnIdleUpdateCmdUI)
 	ON_MESSAGE(WM_HELPHITTEST, &CBasePane::OnHelpHitTest)
 	ON_MESSAGE(WM_INITDIALOG, &CBasePane::HandleInitDialog)
-	ON_MESSAGE(WM_SETICON, &CBasePane::OnSetIcon)
+	ON_WM_SETICON()
 	ON_MESSAGE(WM_GETOBJECT, &CBasePane::OnGetObject)
-	ON_MESSAGE(WM_PRINTCLIENT, &CBasePane::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -161,7 +163,7 @@ BOOL CBasePane::CreateEx(DWORD dwStyleEx, LPCTSTR lpszClassName, LPCTSTR lpszWin
 		}
 
 #pragma warning (disable : 4311)
-		SetClassLongPtr(m_hWnd, GCLP_HBRBACKGROUND, (long) ::GetSysColorBrush(COLOR_BTNFACE));
+		SetClassLongPtr(m_hWnd, GCLP_HBRBACKGROUND, PtrToLong(reinterpret_cast<void*>(::GetSysColorBrush(COLOR_BTNFACE))));
 #pragma warning (default : 4311)
 
 		SetDlgCtrlID(nID);
@@ -1073,9 +1075,9 @@ LRESULT CBasePane::HandleInitDialog(WPARAM, LPARAM)
 	return TRUE;
 }
 
-LRESULT CBasePane::OnSetIcon(WPARAM,LPARAM)
+HICON CBasePane::OnSetIcon(BOOL /*bIsLarge*/, HICON /*hIcon*/)
 {
-	LRESULT lres = Default();
+	HICON hIcon = (HICON)Default();
 
 	if (IsTabbed())
 	{
@@ -1092,7 +1094,7 @@ LRESULT CBasePane::OnSetIcon(WPARAM,LPARAM)
 		}
 	}
 
-	return lres;
+	return hIcon;
 }
 
 LRESULT CBasePane::OnGetObject(WPARAM wParam, LPARAM lParam)
@@ -1506,22 +1508,19 @@ HRESULT CBasePane::get_accValue(VARIANT varChild, BSTR *pszValue)
 	return S_OK;
 }
 
-LRESULT CBasePane::OnPrintClient(WPARAM wp, LPARAM lp)
+LRESULT CBasePane::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	DWORD dwFlags = (DWORD)lp;
+	ASSERT_VALID(pDC);
 
-	if (dwFlags & PRF_ERASEBKGND)
+	if (nFlags & PRF_ERASEBKGND)
 	{
-		SendMessage(WM_ERASEBKGND, wp);
+		SendMessage(WM_ERASEBKGND, (WPARAM)pDC->GetSafeHdc());
 	}
 
-	if (dwFlags & PRF_CLIENT)
+	if (nFlags & PRF_CLIENT)
 	{
-		CDC* pDC = CDC::FromHandle((HDC) wp);
-		ASSERT_VALID(pDC);
-
 		DoPaint(pDC);
 	}
 
-	return 0;
+	return 0L;
 }

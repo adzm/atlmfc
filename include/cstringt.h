@@ -103,6 +103,8 @@ template <class StringType,int t_nChars> struct CConstFixedStringT
 /////////////////////////////////////////////////////////////////////////////
 // inline helpers
 
+_Success_(return != 0)  
+_When_(count != 0, _Post_equal_to_(_String_length_(mbstr)+1))  
 inline int _wcstombsz(
 	_Out_writes_(count) char* mbstr,
 	_In_z_ const wchar_t* wcstr,
@@ -118,6 +120,8 @@ inline int _wcstombsz(
 	return result;
 }
 
+_Success_(return != 0)  
+_When_(count != 0, _Post_equal_to_(_String_length_(wcstr)+1))  
 inline int _mbstowcsz(
 	_Out_writes_(count) wchar_t* wcstr,
 	_In_z_ const char* mbstr,
@@ -141,6 +145,8 @@ inline int _mbstowcsz(
 /////////////////////////////////////////////////////////////////////////////
 //
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+#pragma warning (push)
+#pragma warning (disable: 6103)    
 
 template< typename _CharType = char >
 class ChTraitsCRT :
@@ -261,7 +267,7 @@ public:
 
 	static LPSTR __cdecl StringUppercase(
 		_Inout_updates_z_(size) LPSTR psz,
-		_In_ size_t size) throw()
+		_In_ size_t size)
 	{
 		Checked::mbsupr_s(reinterpret_cast< unsigned char* >( psz ), size);
 		return psz;
@@ -269,7 +275,7 @@ public:
 
 	static LPSTR __cdecl StringLowercase(
 		_Inout_updates_z_(size) LPSTR psz,
-		_In_ size_t size) throw()
+		_In_ size_t size)
 	{
 		Checked::mbslwr_s( reinterpret_cast< unsigned char* >( psz ), size );
 		return psz;
@@ -339,7 +345,7 @@ public:
 		_Out_writes_(nDestLength) LPSTR pszDest,
 		_In_ int nDestLength,
 		_In_z_ LPCSTR pszSrc,
-		_In_ int nSrcLength = -1) throw()
+		_In_ int nSrcLength = -1)
 	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
 		// nLen is in XCHARs
@@ -425,13 +431,13 @@ public:
 		BSTR bstr = ::SysAllocStringLen( NULL, nLen );
 		if( bstr != NULL )
 		{
-			::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength,
-				bstr, nLen );
+			::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength, bstr, nLen );
 		}
 
 		return bstr;
 	}
 
+    _Success_(return != FALSE)
 	static BOOL __cdecl ReAllocSysString(
 		_In_reads_(nDataLength) const char* pchData,
 		_Inout_ _Deref_post_opt_valid_ _Post_z_ BSTR* pbstr,
@@ -441,7 +447,7 @@ public:
 		BOOL bSuccess = ::SysReAllocStringLen( pbstr, NULL, nLen );
 		if( bSuccess )
 		{
-			::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength, *pbstr, nLen );
+			bSuccess = ( 0 != ::MultiByteToWideChar( _AtlGetConversionACP(), 0, pchData, nDataLength, *pbstr, nLen ));
 		}
 
 		return bSuccess;
@@ -499,6 +505,7 @@ public:
 		return int( _mbclen( reinterpret_cast< const unsigned char* >( pch ) ) );
 	}
 
+    _Success_(return != 0 && return < dwSize)  
 	static DWORD __cdecl _AFX_FUNCNAME(GetEnvironmentVariable)(
 		_In_z_ LPCSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPSTR pszBuffer,
@@ -508,6 +515,7 @@ public:
 	}
 
 #if defined(_AFX)
+    _Success_(return != 0 && return < dwSize)  
 	static DWORD __cdecl GetEnvironmentVariable(
 		_In_z_ LPCSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPSTR pszBuffer,
@@ -517,7 +525,7 @@ public:
 	}
 #endif
 };
-
+#pragma warning (pop)
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 
@@ -733,7 +741,7 @@ public:
 		_Out_writes_(nDestLength) LPWSTR pszDest,
 		_In_ int nDestLength,
 		_In_ LPCWSTR pszSrc,
-		_In_ int nSrcLength = -1 ) throw()
+		_In_ int nSrcLength = -1 )
 	{
 		if (nSrcLength == -1) { nSrcLength=1 + GetBaseTypeLength(pszSrc); }
 		// nLen is in wchar_ts
@@ -792,7 +800,9 @@ public:
 		return (int)( _mbclen( reinterpret_cast< const unsigned char* >( pch ) ) );
 	}
 
-#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP	
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+ATLPREFAST_SUPPRESS(6103)
+    _Success_(return != 0 && return < dwSize)     
 	static DWORD __cdecl _AFX_FUNCNAME(GetEnvironmentVariable)(
 		_In_z_ LPCWSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPWSTR pszBuffer,
@@ -800,8 +810,11 @@ public:
 	{
 		return ::GetEnvironmentVariableW(pszVar, pszBuffer, dwSize);
 	}
+ATLPREFAST_UNSUPPRESS()
 
 #if defined(_AFX)
+ATLPREFAST_SUPPRESS(6103)
+    _Success_(return != 0 && return < dwSize) 
 	static DWORD __cdecl GetEnvironmentVariable(
 		_In_z_ LPCWSTR pszVar,
 		_Out_writes_opt_z_(dwSize) LPWSTR pszBuffer,
@@ -809,6 +822,7 @@ public:
 	{
 		return _AFX_FUNCNAME(GetEnvironmentVariable)(pszVar, pszBuffer, dwSize);
 	}
+ATLPREFAST_UNSUPPRESS()
 #endif
 
 	static void __cdecl ConvertToOem(_In_opt_z_ LPWSTR /*psz*/)
@@ -2875,7 +2889,7 @@ public:
 	virtual CStringData* Reallocate(
 		_Inout_ CStringData* pData,
 		_In_ int nChars,
-		_In_ int nCharSize) throw()
+		_In_ int nCharSize)
 	{
 		CStringData* pNewData;
 
@@ -3153,7 +3167,74 @@ public:
 
 
 #ifdef __ATLCOMCLI_H__
-#include <cstringt.inl>
+
+namespace ATL
+{
+
+template< typename BaseType, class StringTraits >
+CStringT< BaseType, StringTraits >::CStringT(_In_ const VARIANT& varSrc) :
+	CThisSimpleString( StringTraits::GetDefaultManager() )
+{
+	CComVariant varResult;
+	HRESULT hr = ::VariantChangeType( &varResult, const_cast< VARIANT* >( &varSrc ), 0, VT_BSTR );
+	if( FAILED( hr ) )
+	{
+		AtlThrow( hr );
+	}
+
+	*this = V_BSTR( &varResult );
+}
+
+template< typename BaseType, class StringTraits >
+CStringT< BaseType, StringTraits >::CStringT(
+		_In_ const VARIANT& varSrc,
+		_In_ IAtlStringMgr* pStringMgr) :
+	CThisSimpleString( pStringMgr )
+{
+	CComVariant varResult;
+	HRESULT hr = ::VariantChangeType( &varResult, const_cast< VARIANT* >( &varSrc ), 0, VT_BSTR );
+	if( FAILED( hr ) )
+	{
+		AtlThrow( hr );
+	}
+
+	*this = V_BSTR( &varResult );
+}
+
+template< typename BaseType, class StringTraits >
+CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator=(
+	_In_ const VARIANT& var)
+{
+	CComVariant varResult;
+	HRESULT hr = ::VariantChangeType( &varResult, const_cast< VARIANT* >( &var ), 0, VT_BSTR );
+	if( FAILED( hr ) )
+	{
+		AtlThrow( hr );
+	}
+
+	*this = V_BSTR( &varResult );
+
+	return( *this );
+}
+
+template< typename BaseType, class StringTraits >
+CStringT< BaseType, StringTraits >& CStringT< BaseType, StringTraits >::operator+=(
+	_In_ const VARIANT& var)
+{
+	CComVariant varResult;
+	HRESULT hr = ::VariantChangeType( &varResult, const_cast< VARIANT* >( &var ), 0, VT_BSTR );
+	if( FAILED( hr ) )
+	{
+		AtlThrow( hr );
+	}
+
+	*this += V_BSTR( &varResult );
+
+	return( *this );
+}
+
+}	// namespace ATL
+
 #endif	// __ATLCOMCLI_H__
 
 

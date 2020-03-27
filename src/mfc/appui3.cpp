@@ -56,14 +56,12 @@ void CWinApp::SetAppID(LPCTSTR lpcszAppID)
 
 	m_pszAppID = lpcszAppID;
 
-#if(WINVER >= 0x0601)
 #ifdef UNICODE
 	pfnSetAppUserModelID(lpcszAppID);
 #else
 	USES_CONVERSION;
 	LPCWSTR lpID = A2W(lpcszAppID);
 	pfnSetAppUserModelID(lpID);
-#endif
 #endif
 }
 

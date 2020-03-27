@@ -53,6 +53,10 @@ public:
 	LPCTSTR GetLink() const { return m_strLink; }
 	void SetLink(LPCTSTR lpszLink);
 
+protected:
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+	virtual void OnAccDefaultAction();
+
 // Attributes:
 protected:
 	CString m_strLink;

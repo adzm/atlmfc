@@ -428,11 +428,9 @@ public:
 		DWORD dwAccess = GENERIC_READ,
 		DWORD dwFlags = FTP_TRANSFER_TYPE_BINARY, DWORD_PTR dwContext = 1);
 
-#if _WIN32_IE >= 0x0500
 	CInternetFile* Command(LPCTSTR pszCommand, CmdResponseType eResponse = CmdRespNone,
 		DWORD dwFlags = FTP_TRANSFER_TYPE_BINARY,
 		DWORD_PTR dwContext = 1);
-#endif
 
 // Implementation
 	~CFtpConnection();

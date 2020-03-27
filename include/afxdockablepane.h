@@ -220,7 +220,7 @@ protected:
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
+	afx_msg int OnSetText(LPCTSTR lpszText);
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);

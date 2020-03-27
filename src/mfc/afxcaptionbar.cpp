@@ -166,8 +166,8 @@ BEGIN_MESSAGE_MAP(CMFCCaptionBar, CPane)
 	ON_WM_MOUSEMOVE()
 	ON_WM_RBUTTONUP()
 	ON_WM_DESTROY()
-	ON_MESSAGE(WM_SETFONT, &CMFCCaptionBar::OnSetFont)
-	ON_MESSAGE(WM_GETFONT, &CMFCCaptionBar::OnGetFont)
+	ON_WM_SETFONT()
+	ON_WM_GETFONT()
 	ON_WM_MOUSELEAVE()
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCCaptionBar::OnUpdateToolTips)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCCaptionBar::OnNeedTipText)
@@ -633,17 +633,15 @@ void CMFCCaptionBar::RemoveText()
 	AdjustLayout();
 }
 
-afx_msg LRESULT CMFCCaptionBar::OnSetFont(WPARAM wParam, LPARAM /*lParam*/)
+void CMFCCaptionBar::OnSetFont(CFont* pFont, BOOL /*bRedraw*/)
 {
-	m_hFont = (HFONT) wParam;
-
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 	AdjustLayout();
-	return 0;
 }
 
-afx_msg LRESULT CMFCCaptionBar::OnGetFont(WPARAM, LPARAM)
+HFONT CMFCCaptionBar::OnGetFont()
 {
-	return(LRESULT) m_hFont;
+	return m_hFont;
 }
 
 CMFCCaptionBar::BarElementAlignment CMFCCaptionBar::GetAlignment(BarElement elem)

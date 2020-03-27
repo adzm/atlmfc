@@ -18,10 +18,21 @@
 // Check if building using WINAPI_FAMILY_APP
 #ifndef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 #ifdef WINAPI_FAMILY
-#include <winapifamily.h>  
+#include <winapifamily.h>
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 #define _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
-#endif
+#else // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#ifdef WINAPI_FAMILY_PHONE_APP
+#if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP
+#define _ATL_USE_WINAPI_FAMILY_PHONE_APP
+#endif // WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP
+#endif // WINAPI_FAMILY_PHONE_APP
+#ifdef WINAPI_FAMILY_APP
+#if WINAPI_FAMILY == WINAPI_FAMILY_APP
+#define _ATL_USE_WINAPI_FAMILY_APP
+#endif // WINAPI_FAMILY == WINAPI_FAMILY_APP
+#endif // WINAPI_FAMILY_APP
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 #else // WINAPI_FAMILY
 // Default to Desktop family app
 #define _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
@@ -45,6 +56,11 @@
 #ifndef  _ATL_NO_COMMODULE
 // No CComModule
 #define _ATL_NO_COMMODULE
+#endif
+
+#ifndef _ATL_NO_WIN_SUPPORT
+// No AtlWinModule support
+#define _ATL_NO_WIN_SUPPORT
 #endif
 
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
@@ -133,16 +149,9 @@
 #endif
 #endif
 
-#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
-#if !defined(_UNICODE)
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP) && !defined(_UNICODE)
 #error _UNICODE has to be defined to use ATL under the current WINAPI_FAMILY
 #endif
-
-#if defined(_ATL_DLL)
-#error Cannot link to ATL DLL under the current WINAPI_FAMILY
-#endif
-#endif
-
 
 //PREFAST support static_assert from version 16.00
 #if defined(_PREFAST_) && (_MSC_VER < 1600)
@@ -223,7 +232,7 @@ So we've done a broad replace of all the member-related ATLASSERT to ATLASSUME.
 */
 
 #ifndef ATLASSUME
-#define ATLASSUME(expr) do { ATLASSERT(expr); _Analysis_assume_(!!(expr)); } while(0)
+#define ATLASSUME(expr) do { ATLASSERT(expr); _Analysis_assume_(!!(expr)); } __pragma(warning(suppress:4127)) while (0)
 #endif // ATLASSUME
 
 #ifndef ATLVERIFY
@@ -240,7 +249,7 @@ do {                                       \
 	int __atl_condVal=!!(expr);            \
 	ATLASSUME(__atl_condVal);              \
 	if(!(__atl_condVal)) AtlThrow(hr);     \
-} while (0)
+} __pragma(warning(suppress:4127)) while (0)
 #endif // ATLENSURE_THROW
 
 #ifndef ATLENSURE
@@ -252,7 +261,7 @@ do {                                       \
 do {															\
 	HRESULT __atl_hresult = (hrExpr);							\
 	ATLENSURE_THROW(SUCCEEDED(__atl_hresult), __atl_hresult);   \
-} while (0)
+} __pragma(warning(suppress:4127)) while (0)
 #endif // ATLENSURE_SUCCEEDED
 
 /* Used inside COM methods that do not want to throw */
@@ -262,7 +271,7 @@ do {                                           \
 	int __atl_condVal=!!(expr);                \
 	ATLASSERT(__atl_condVal);                  \
 	if(!(__atl_condVal)) return val;           \
-} while (0) 
+} __pragma(warning(suppress:4127)) while (0) 
 #endif // ATLENSURE_RETURN_VAL
 
 /* Used inside COM methods that do not want to throw */
@@ -297,7 +306,7 @@ do { \
 	{ \
 		errno = _saveErrno; \
 	} \
-} while (0)
+} __pragma(warning(suppress:4127)) while (0)
 #endif // ATL_CRT_ERRORCHECK_SPRINTF
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -348,18 +357,6 @@ do { \
 #define ATL_DEPRECATED(_Message) __declspec( deprecated(_Message) )
 #endif
 
-// If ATLXX.DLL is being used then _ATL_STATIC_REGISTRY doesn't really make sense
-#ifdef _ATL_DLL
-#undef _ATL_STATIC_REGISTRY
-#else
-// If not linking to ATLXX.DLL, use the static registrar and not building atl.dll
-#ifndef _ATL_DLL_IMPL
-#ifndef _ATL_STATIC_REGISTRY
-#define _ATL_STATIC_REGISTRY
-#endif
-#endif
-#endif
-
 #ifdef _ATL_DEBUG_REFCOUNT
 #ifndef _ATL_DEBUG_INTERFACES
 #define _ATL_DEBUG_INTERFACES
@@ -390,25 +387,11 @@ do { \
 #define _ATL_PACKING 8
 #endif
 
-#if defined(_ATL_DLL)
-	#define ATLAPI extern "C" HRESULT __declspec(dllimport) __stdcall
-	#define ATLAPI_(x) extern "C" __declspec(dllimport) x __stdcall
-	#define ATLINLINE
-	#define ATLAPIINL extern "C" inline HRESULT __stdcall
-	#define ATLAPIINL_(x) extern "C" inline x __stdcall
-#elif defined(_ATL_DLL_IMPL)
-	#define ATLAPI extern "C" inline HRESULT __stdcall
-	#define ATLAPI_(x) extern "C" inline x __stdcall
-	#define ATLAPIINL ATLAPI
-	#define ATLAPIINL_(x) ATLAPI_(x)
-	#define ATLINLINE
-#else
-	#define ATLAPI __declspec(nothrow) HRESULT __stdcall
-	#define ATLAPI_(x) __declspec(nothrow) x __stdcall
-	#define ATLAPIINL ATLAPI
-	#define ATLAPIINL_(x) ATLAPI_(x)
-	#define ATLINLINE inline
-#endif
+#define ATLAPI __declspec(nothrow) HRESULT __stdcall
+#define ATLAPI_(x) __declspec(nothrow) x __stdcall
+#define ATLAPIINL ATLAPI
+#define ATLAPIINL_(x) ATLAPI_(x)
+#define ATLINLINE inline
 
 #ifdef _ATL_NO_EXCEPTIONS
 	#ifdef _AFX
@@ -527,18 +510,18 @@ this end
 // Master version numbers
 
 #define _ATL     1      // Active Template Library
-#define _ATL_VER 0x0B00 // Active Template Library version 11.00
+#define _ATL_VER 0x0C00 // Active Template Library version 12.00
 
 #ifndef _ATL_FILENAME_VER
-#define _ATL_FILENAME_VER "110"
+#define _ATL_FILENAME_VER "120"
 #endif
 
 #ifndef _ATL_FILENAME_VER_NUM
-#define _ATL_FILENAME_VER_NUM 110
+#define _ATL_FILENAME_VER_NUM 120
 #endif
 
 #ifndef _ATL_VER_RBLD
-#define _ATL_VER_RBLD "11.00"
+#define _ATL_VER_RBLD "12.00"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -599,8 +582,8 @@ this end
 // #define ATLAXWIN_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWin, _ATL_FILENAME_VER_NUM))
 // #define ATLAXWINLIC_CLASS	_ATL_STRINGIZE(_ATL_APPEND(AtlAxWinLic, _ATL_FILENAME_VER_NUM))
 
-#define ATLAXWIN_CLASS "AtlAxWin110"
-#define ATLAXWINLIC_CLASS "AtlAxWinLic110"
+#define ATLAXWIN_CLASS "AtlAxWin120"
+#define ATLAXWINLIC_CLASS "AtlAxWinLic120"
 
 #if defined(_ATL_SECURE_NO_DEPRECATE) && !defined(_ATL_SECURE_NO_WARNINGS)
 #define _ATL_SECURE_NO_WARNINGS
@@ -620,7 +603,7 @@ This is called when something really bad happens -- so bad
 that we consider it dangerous to even throw an exception
 */
 #if !defined(_ATL_FATAL_SHUTDOWN) && defined( _ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
-#define _ATL_FATAL_SHUTDOWN do { ::TerminateProcess(::GetCurrentProcess(), 0); } while(0)
+#define _ATL_FATAL_SHUTDOWN do { ::TerminateProcess(::GetCurrentProcess(), 0); } __pragma(warning(suppress:4127)) while (0)
 #endif
 
 //ATL/MFC code should use standard pointer to member standard syntax &MyClass::MyMethod, instead

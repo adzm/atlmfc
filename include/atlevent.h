@@ -19,11 +19,8 @@
 		#error ATL requires C++ compilation (use a .cpp suffix)
 #endif
 
-#if _WIN32_WINNT < 0x0403
-#error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
-#endif
-
 #include <new.h>
+#include <atlwinverapi.h>
 
 struct __EventingCriticalSectionStub 
 {
@@ -66,14 +63,13 @@ public:
 	}
 	__EventingCriticalSectionAuto()
 	{
-#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP) || defined(_ATL_STATIC_LIB_IMPL)
-		_AtlInitializeCriticalSectionEx(&m_sec, 0, 0);
-#else
-		if (!InitializeCriticalSectionAndSpinCount(&m_sec, 0))
+		if (!::ATL::_AtlInitializeCriticalSectionEx(&m_sec, 0, 0))
 		{
+#if defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
+
 			EmitError(GetLastError());
-		}
 #endif
+		}
 	}
 	~__EventingCriticalSectionAuto()
 	{
@@ -193,6 +189,7 @@ namespace ATL {
         return hr;
     }
 
+ATLPREFAST_SUPPRESS(6102)
 	inline HRESULT __ComInvokeEventHandler(
 		_Inout_ IDispatch* pDispatch,
 		_In_ DISPID id,
@@ -217,6 +214,7 @@ namespace ATL {
 		}
 		return hr;
 	}
+ATLPREFAST_UNSUPPRESS()
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 	struct __EventHandlerProxy 

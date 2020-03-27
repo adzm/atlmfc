@@ -2558,8 +2558,8 @@ BEGIN_MESSAGE_MAP(CMFCPropertyGridCtrl, CWnd)
 	ON_WM_NCPAINT()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_STYLECHANGED()
-	ON_MESSAGE(WM_SETFONT, &CMFCPropertyGridCtrl::OnSetFont)
-	ON_MESSAGE(WM_GETFONT, &CMFCPropertyGridCtrl::OnGetFont)
+	ON_WM_SETFONT()
+	ON_WM_GETFONT()
 	ON_MESSAGE(AFX_UM_UPDATESPIN, &CMFCPropertyGridCtrl::OnUpdateSpin)
 	ON_MESSAGE(WM_GETOBJECT, &CMFCPropertyGridCtrl::OnGetObject)
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCPropertyGridCtrl::OnInitControl)
@@ -2572,7 +2572,7 @@ BEGIN_MESSAGE_MAP(CMFCPropertyGridCtrl, CWnd)
 	ON_CBN_SELENDOK(AFX_PROPLIST_ID_INPLACE, &CMFCPropertyGridCtrl::OnSelectCombo)
 	ON_CBN_CLOSEUP(AFX_PROPLIST_ID_INPLACE, &CMFCPropertyGridCtrl::OnCloseCombo)
 	ON_CBN_KILLFOCUS(AFX_PROPLIST_ID_INPLACE, &CMFCPropertyGridCtrl::OnComboKillFocus)
-	ON_MESSAGE(WM_PRINTCLIENT, &CMFCPropertyGridCtrl::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2794,19 +2794,18 @@ void CMFCPropertyGridCtrl::OnSize(UINT nType, int cx, int cy)
 	AdjustLayout();
 }
 
-LRESULT CMFCPropertyGridCtrl::OnSetFont(WPARAM wParam, LPARAM /*lParam*/)
+void CMFCPropertyGridCtrl::OnSetFont(CFont* pFont, BOOL /*bRedraw*/)
 {
-	m_hFont = (HFONT) wParam;
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 
 	CreateBoldFont();
 	CalcEditMargin();
 	AdjustLayout();
-	return 0;
 }
 
-LRESULT CMFCPropertyGridCtrl::OnGetFont(WPARAM, LPARAM)
+HFONT CMFCPropertyGridCtrl::OnGetFont()
 {
-	return(LRESULT)(m_hFont != NULL ? m_hFont : ::GetStockObject(DEFAULT_GUI_FONT));
+	return (m_hFont != NULL) ? m_hFont : (HFONT)::GetStockObject(DEFAULT_GUI_FONT);
 }
 
 void CMFCPropertyGridCtrl::CreateBoldFont()
@@ -5670,15 +5669,14 @@ LRESULT CMFCPropertyGridCtrl::OnInitControl(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CMFCPropertyGridCtrl::OnPrintClient(WPARAM wp, LPARAM lp)
+LRESULT CMFCPropertyGridCtrl::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	if (lp & PRF_CLIENT)
-	{
-		CDC* pDC = CDC::FromHandle((HDC) wp);
-		ASSERT_VALID(pDC);
+	ASSERT_VALID(pDC);
 
+	if (nFlags & PRF_CLIENT)
+	{
 		OnDraw(pDC);
 	}
 
-	return 0;
+	return 0L;
 }

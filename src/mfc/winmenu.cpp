@@ -23,16 +23,13 @@ CHandleMap* PASCAL afxMapHMENU(BOOL bCreate)
 	if (pState->m_pmapHMENU == NULL && bCreate)
 	{
 		BOOL bEnable = AfxEnableMemoryTracking(FALSE);
-#ifndef _AFX_PORTABLE
 		_PNH pnhOldHandler = AfxSetNewHandler(&AfxCriticalNewHandler);
-#endif
+
 		pState->m_pmapHMENU = new CHandleMap(RUNTIME_CLASS(CMenu),
 			ConstructDestruct<CMenu>::Construct, ConstructDestruct<CMenu>::Destruct, 
 			offsetof(CMenu, m_hMenu)),
 
-#ifndef _AFX_PORTABLE
 		AfxSetNewHandler(pnhOldHandler);
-#endif
 		AfxEnableMemoryTracking(bEnable);
 	}
 	return pState->m_pmapHMENU;

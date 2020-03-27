@@ -318,7 +318,7 @@ BOOL CMFCRibbonDefaultPanelButton::OnKey(BOOL /*bIsMenuKey*/)
 
 UINT CMFCRibbonPanel::m_nNextPanelID = (UINT)-10;
 
-IMPLEMENT_DYNCREATE(CMFCRibbonPanel, CObject)
+IMPLEMENT_DYNCREATE(CMFCRibbonPanel, CMFCBaseAccessibleObject)
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -4078,4 +4078,325 @@ CRect CMFCRibbonPanel::GetGalleryRect()
 	}
 
 	return rectPalette;
+}
+
+BOOL CMFCRibbonPanel::OnSetAccData (long lVal)
+{
+	ASSERT_VALID(this);
+
+	m_AccData.Clear();
+
+	int nIndex = (int)lVal - 1;
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arElements;
+	GetVisibleElements(arElements);
+
+	if (nIndex < 0 || nIndex >= arElements.GetSize())
+	{
+		return FALSE;
+	}
+
+	if (GetParentWnd()->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	ASSERT_VALID(arElements[nIndex]);
+	return arElements[nIndex]->SetACCData(GetParentWnd(), m_AccData);
+}
+
+HRESULT CMFCRibbonPanel::get_accParent(IDispatch **ppdispParent)
+{
+	if (ppdispParent)
+	{
+		*ppdispParent = m_pParent->GetIDispatch(TRUE);
+		if (*ppdispParent)
+		{
+			return S_OK;
+		}
+	}
+
+	return E_INVALIDARG;
+}
+
+HRESULT CMFCRibbonPanel::get_accChildCount(long *pcountChildren)
+{
+	if (!pcountChildren)
+	{
+		return E_INVALIDARG;
+	}
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arElements;
+	GetVisibleElements (arElements);
+
+	*pcountChildren = (long)arElements.GetSize();
+	return S_OK;
+}
+
+HRESULT CMFCRibbonPanel::accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild)
+{
+	if (!pxLeft || !pyTop || !pcxWidth || !pcyHeight)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{	
+		if (GetParentWnd()->GetSafeHwnd() == NULL)
+		{
+			return S_FALSE;
+		}
+
+		CRect rectPanel = m_rect;
+		GetParentWnd ()->ClientToScreen(&rectPanel);
+
+		*pxLeft = rectPanel.left;
+		*pyTop = rectPanel.top;
+		*pcxWidth = rectPanel.Width();
+		*pcyHeight = rectPanel.Height();
+
+		return S_OK;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		*pxLeft = m_AccData.m_rectAccLocation.left;
+		*pyTop = m_AccData.m_rectAccLocation.top;
+		*pcxWidth = m_AccData.m_rectAccLocation.Width();
+		*pcyHeight = m_AccData.m_rectAccLocation.Height();
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonPanel::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEndUpAt)
+{
+	if (pvarEndUpAt == NULL)
+	{
+		return E_INVALIDARG;
+	}
+
+	pvarEndUpAt->vt = VT_EMPTY;
+
+	if (varStart.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements(arButtons);
+
+	switch (navDir)
+	{
+	case NAVDIR_FIRSTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = 1;
+			return S_OK;	
+		}
+		break;
+
+	case NAVDIR_LASTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = (int)arButtons.GetSize();
+			return S_OK;
+		}
+		break;
+
+	case NAVDIR_NEXT:   
+	case NAVDIR_RIGHT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal + 1;
+
+			if (pvarEndUpAt->lVal > arButtons.GetSize())
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+			return S_OK;
+		}
+		else if (m_pParent != NULL)
+		{
+			ASSERT_VALID(m_pParent);
+
+			// Next Panel:
+			int nIndex =  m_pParent->GetPanelIndex(this) + 1;
+			if (nIndex < m_pParent->GetPanelCount())
+			{
+				CMFCRibbonPanel* pPanel = m_pParent->GetPanel(nIndex);
+				if (pPanel != NULL)
+				{
+					ASSERT_VALID(pPanel);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pPanel->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+		}
+		break;
+
+	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal - 1;
+
+			if (pvarEndUpAt->lVal <= 0)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+			return S_OK;
+		}
+		else if (m_pParent != NULL)
+		{
+			ASSERT_VALID(m_pParent);
+
+			// Prev Panel:
+			int nIndex =  m_pParent->GetPanelIndex(this) - 1;
+			if (nIndex >= 0)
+			{
+				CMFCRibbonPanel* pPanel = m_pParent->GetPanel(nIndex);
+				if (pPanel != NULL)
+				{
+					ASSERT_VALID(pPanel);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pPanel->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonPanel::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+{
+	if (!pvarChild)
+	{
+		return E_INVALIDARG;
+	}
+
+	pvarChild->vt = VT_I4;
+	pvarChild->lVal = CHILDID_SELF;
+
+	if (GetParentWnd()->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	CMFCRibbonBar* pParentRibbonBar = NULL;
+
+	if (m_pParent != NULL)
+	{
+		ASSERT_VALID(m_pParent);
+		pParentRibbonBar = m_pParent->GetParentRibbonBar();
+	}
+
+	if (pParentRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	ASSERT_VALID(pParentRibbonBar);
+
+	CPoint pt(xLeft, yTop);
+	GetParentWnd ()->ScreenToClient(&pt);
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arElements;
+	GetVisibleElements(arElements);
+
+	for (int i = 0; i < arElements.GetSize(); i++)
+	{
+		CMFCRibbonBaseElement* pElem = arElements[i];
+		if (pElem != NULL)
+		{
+			ASSERT_VALID(pElem);
+
+			CRect rectElem = pElem->GetRect();
+		
+			if (rectElem.PtInRect(pt))
+			{
+				pvarChild->lVal = i + 1;
+				pElem->SetACCData(pParentRibbonBar, m_AccData);
+				break;
+			}
+		}
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonPanel::accDoDefaultAction(VARIANT varChild)
+{
+	if (varChild.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.lVal != CHILDID_SELF)
+	{
+		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arElements;
+		GetVisibleElements(arElements);
+
+		int nIndex = (int)varChild.lVal - 1;
+		if (nIndex < 0 || nIndex >= arElements.GetSize())
+		{
+			return E_INVALIDARG;
+		}
+
+		CMFCRibbonBaseElement* pElem = arElements[nIndex];
+		if (pElem != NULL)
+		{
+			ASSERT_VALID(pElem);
+
+			pElem->OnAccDefaultAction();
+			return S_OK;
+		}
+	}
+
+	return S_FALSE;
+}
+
+BOOL CMFCRibbonPanel::SetACCData(CWnd* /*pParent*/, CAccessibilityData& data)
+{
+	ASSERT_VALID (this);
+
+	data.m_strAccDefAction.Empty();
+	data.m_strAccValue.Empty();
+	data.m_strDescription.Empty();
+	data.m_strAccKeys.Empty();
+	data.m_strAccName = m_strName;
+	data.m_nAccRole = ROLE_SYSTEM_TOOLBAR;
+	data.m_strAccValue = _T("Group");
+	data.m_rectAccLocation = GetRect();
+
+	if (m_pParent != NULL)
+	{
+		ASSERT_VALID(m_pParent);
+		
+		CMFCRibbonBar* pParentRibbonBar = m_pParent->GetParentRibbonBar();
+		if (pParentRibbonBar->GetSafeHwnd() != NULL)
+		{
+			ASSERT_VALID(pParentRibbonBar);
+			pParentRibbonBar->ClientToScreen(&data.m_rectAccLocation);
+		}
+	}
+
+	data.m_bAccState = 0;
+	return TRUE;
 }

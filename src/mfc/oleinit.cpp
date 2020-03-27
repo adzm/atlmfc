@@ -100,9 +100,7 @@ void AFXAPI AfxOleTerm(BOOL bJustRevoke)
 	// revoke all class factories
 	COleObjectFactory::RevokeAll();
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	AfxOleUnlockAllControls();
-#endif
 
 	if (!bJustRevoke)
 	{

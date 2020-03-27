@@ -17,10 +17,6 @@
 	#include <afx.h>
 #endif
 
-#if _WIN32_WINNT < 0x0403
-#error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
-#endif
-
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
 #endif 

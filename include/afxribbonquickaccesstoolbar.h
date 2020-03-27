@@ -76,6 +76,16 @@ protected:
 
 	virtual BOOL IsQuickAccessToolBar() const { return TRUE; }
 
+	// Accessibility:
+	virtual HRESULT get_accParent(IDispatch **ppdispParent);
+	virtual HRESULT get_accChildCount(long *pcountChildren);
+	virtual HRESULT accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild);
+	virtual HRESULT accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt);
+	virtual HRESULT accHitTest(long xLeft, long yTop, VARIANT *pvarChild);
+	virtual HRESULT accDoDefaultAction(VARIANT varChild);
+	virtual BOOL OnSetAccData(long lVal);
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+
 	void Add(CMFCRibbonBaseElement* pElem);
 	void Remove(CMFCRibbonBaseElement* pElem);
 

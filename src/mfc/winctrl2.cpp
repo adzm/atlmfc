@@ -764,7 +764,6 @@ BOOL CTreeCtrl::SetItem(HTREEITEM hItem, UINT nMask, LPCTSTR lpszItem, int nImag
 	return (BOOL)::SendMessage(m_hWnd, TVM_SETITEM, 0, (LPARAM)&item);
 }
 
-#if (_WIN32_IE >= 0x0600)
 BOOL CTreeCtrl::SetItemEx(HTREEITEM hItem, UINT nMask, LPCTSTR lpszItem, int nImage,
 	int nSelectedImage, UINT nState, UINT nStateMask, LPARAM lParam, 
 	UINT uStateEx, HWND hWnd, int iExpandedImage)
@@ -784,7 +783,6 @@ BOOL CTreeCtrl::SetItemEx(HTREEITEM hItem, UINT nMask, LPCTSTR lpszItem, int nIm
 	item.iExpandedImage = iExpandedImage;
 	return (BOOL)::SendMessage(m_hWnd, TVM_SETITEM, 0, (LPARAM)&item);
 }
-#endif
 
 HTREEITEM CTreeCtrl::InsertItem(UINT nMask, LPCTSTR lpszItem, int nImage,
 	int nSelectedImage, UINT nState, UINT nStateMask, LPARAM lParam,
@@ -874,7 +872,7 @@ BOOL CTreeCtrl::SetCheck(HTREEITEM hItem, BOOL fCheck)
 	return (BOOL)::SendMessage(m_hWnd, TVM_SETITEM, 0, (LPARAM)&item);
 }
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if defined(UNICODE)
 
 BOOL CTreeCtrl::GetItemPartRect(HTREEITEM hItem, TVITEMPART nPart, LPRECT lpRect)
 { 
@@ -1324,8 +1322,6 @@ CAnimateCtrl::~CAnimateCtrl()
 	DestroyWindow();
 }
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // CRichEdit
 
@@ -1333,8 +1329,6 @@ CRichEditCtrl::~CRichEditCtrl()
 {
 	DestroyWindow();
 }
-
-#endif //!_AFX_NO_RICHEDIT_SUPPORT
 
 /////////////////////////////////////////////////////////////////////////////
 // CImageList
@@ -1345,16 +1339,13 @@ CHandleMap* PASCAL afxMapHIMAGELIST(BOOL bCreate)
 	if (pState->m_pmapHIMAGELIST == NULL && bCreate)
 	{
 		BOOL bEnable = AfxEnableMemoryTracking(FALSE);
-#ifndef _AFX_PORTABLE
 		_PNH pnhOldHandler = AfxSetNewHandler(&AfxCriticalNewHandler);
-#endif
+
 		pState->m_pmapHIMAGELIST = new CHandleMap(RUNTIME_CLASS(CImageList),
 			ConstructDestruct<CImageList>::Construct, ConstructDestruct<CImageList>::Destruct, 
 			offsetof(CImageList, m_hImageList));
 
-#ifndef _AFX_PORTABLE
 		AfxSetNewHandler(pnhOldHandler);
-#endif
 		AfxEnableMemoryTracking(bEnable);
 	}
 	return pState->m_pmapHIMAGELIST;
@@ -1461,7 +1452,6 @@ BOOL CImageList::Attach(HIMAGELIST hImageList)
 	return TRUE;
 }
 
-#ifndef _AFX_NO_OLE_SUPPORT
 BOOL CImageList::Read(CArchive* pArchive)
 {
 	ASSERT(m_hImageList == NULL);
@@ -1481,7 +1471,6 @@ BOOL CImageList::Write(CArchive* pArchive)
 	CArchiveStream arcstream(pArchive);
 	return ImageList_Write(m_hImageList, &arcstream);
 }
-#endif //_AFX_NO_OLE_SUPPORT
 
 #ifdef _DEBUG
 void CImageList::Dump(CDumpContext& dc) const
@@ -1540,9 +1529,6 @@ IMPLEMENT_DYNAMIC(CListCtrl, CWnd)
 IMPLEMENT_DYNAMIC(CToolBarCtrl, CWnd)
 IMPLEMENT_DYNAMIC(CStatusBarCtrl, CWnd)
 IMPLEMENT_DYNCREATE(CImageList, CObject)
-
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 IMPLEMENT_DYNAMIC(CRichEditCtrl, CWnd)
-#endif
 
 /////////////////////////////////////////////////////////////////////////////

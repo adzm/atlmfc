@@ -26,9 +26,7 @@ IMPLEMENT_SERIAL(CPaneDialog, CDockablePane, VERSIONABLE_SCHEMA | 1)
 
 CPaneDialog::CPaneDialog()
 {
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_pOccDialogInfo = NULL;
-#endif
 }
 
 CPaneDialog::~CPaneDialog()
@@ -81,14 +79,13 @@ BEGIN_MESSAGE_MAP(CPaneDialog, CDockablePane)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_WINDOWPOSCHANGING()
 	ON_MESSAGE(WM_INITDIALOG, &CPaneDialog::HandleInitDialog)
-	ON_MESSAGE(WM_PRINTCLIENT, &CPaneDialog::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 LRESULT CPaneDialog::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	CBasePane::HandleInitDialog(wParam, lParam);
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	Default();  // allow default to initialize first(common dialogs/etc)
 
 	// create OLE controls
@@ -101,19 +98,15 @@ LRESULT CPaneDialog::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 			return FALSE;
 		}
 	}
-#endif //!_AFX_NO_OCC_SUPPORT
 
 	return TRUE;
 }
-
-#ifndef _AFX_NO_OCC_SUPPORT
 
 BOOL CPaneDialog::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO* pOccDialogInfo)
 {
 	m_pOccDialogInfo = pOccDialogInfo;
 	return TRUE;
 }
-#endif //!_AFX_NO_OCC_SUPPORT
 
 BOOL CPaneDialog::OnEraseBkgnd(CDC* pDC)
 {
@@ -180,14 +173,12 @@ void CPaneDialog::OnWindowPosChanging(WINDOWPOS FAR* lpwndpos)
 	}
 }
 
-LRESULT CPaneDialog::OnPrintClient(WPARAM wp, LPARAM lp)
+LRESULT CPaneDialog::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	DWORD dwFlags = (DWORD)lp;
-
-	if (dwFlags & PRF_ERASEBKGND)
+	if (nFlags & PRF_ERASEBKGND)
 	{
-		SendMessage(WM_ERASEBKGND, wp);
+		SendMessage(WM_ERASEBKGND, (WPARAM)pDC->GetSafeHdc());
 	}
 
-	return 0;
+	return 0L;
 }

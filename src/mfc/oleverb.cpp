@@ -14,8 +14,6 @@
 
 #define new DEBUG_NEW
 
-#ifndef _AFX_NO_OLE_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Signature for verb functions
 
@@ -183,8 +181,6 @@ BOOL CCmdTarget::DoOleVerb(LONG iVerb, LPMSG lpMsg, HWND hWndParent,
 
 	return TRUE;
 }
-
-#endif //!_AFX_NO_OLE_SUPPORT
 
 /////////////////////////////////////////////////////////////////////////////
 // Force any extra compiler-generated code into AFX_INIT_SEG

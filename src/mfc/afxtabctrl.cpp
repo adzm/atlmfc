@@ -447,8 +447,15 @@ void CMFCTabCtrl::OnDraw(CDC* pDC)
 		CRgn rgn;
 		rgn.CreateRectRgnIndirect(rectClip);
 
-		for (int i = m_iTabsNum - 1; i >= 0; i--)
+		for (int nIndex = m_iTabsNum - 1; nIndex >= 0; nIndex--)
 		{
+			int i = nIndex;
+
+			if (m_arTabIndices.GetSize() == m_iTabsNum)
+			{
+				i = m_arTabIndices[nIndex];
+			}
+
 			CMFCTabInfo* pTab = (CMFCTabInfo*) m_arTabs [i];
 			ASSERT_VALID(pTab);
 
@@ -899,8 +906,17 @@ void CMFCTabCtrl::AdjustTabs()
 	int x = m_rectTabsArea.left - m_nTabsHorzOffset;
 	int i = 0;
 
-	for (i = 0; i < m_iTabsNum; i++)
+	for (int nIndex = 0; nIndex < m_iTabsNum; nIndex++)
 	{
+		if (m_arTabIndices.GetSize() == m_iTabsNum)
+		{
+			i = m_arTabIndices[nIndex];
+		}
+		else
+		{
+			i = nIndex;
+		}
+
 		CMFCTabInfo* pTab = (CMFCTabInfo*) m_arTabs [i];
 		ASSERT_VALID(pTab);
 
@@ -933,7 +949,7 @@ void CMFCTabCtrl::AdjustTabs()
 			}
 			else if (m_bIsVS2005Style)
 			{
-				pTab->m_nFullWidth += m_rectTabsArea.Height() - AFX_TAB_IMAGE_MARGIN;
+				pTab->m_nFullWidth += m_rectTabsArea.Height();
 				nExtraWidth = m_rectTabsArea.Height() - AFX_TAB_IMAGE_MARGIN - 1;
 			}
 
@@ -979,7 +995,7 @@ void CMFCTabCtrl::AdjustTabs()
 		{
 			BOOL bHideTab = TRUE;
 
-			if (i == m_iActiveTab && i == 0)
+			if (i == m_iActiveTab && nIndex == 0)
 			{
 				int nWidth = m_rectTabsArea.right - pTab->m_rect.left;
 
@@ -1027,7 +1043,7 @@ void CMFCTabCtrl::AdjustTabs()
 		x += pTab->m_rect.Width() + 1 - nExtraWidth;
 		m_nTabsTotalWidth += pTab->m_rect.Width() + 1;
 
-		if (i > 0)
+		if (!IsFirstTab(i))
 		{
 			m_nTabsTotalWidth -= nExtraWidth;
 		}
@@ -1064,8 +1080,17 @@ void CMFCTabCtrl::AdjustTabs()
 		int nRest = 0;
 		int nCutTabsNum = nVisibleTabsNum;
 
-		for (i = 0; i < m_iTabsNum; i ++)
+		for (int nIndex = 0; nIndex < m_iTabsNum; nIndex++)
 		{
+			if (m_arTabIndices.GetSize() == m_iTabsNum)
+			{
+				i = m_arTabIndices[nIndex];
+			}
+			else
+			{
+				i = nIndex;
+			}
+
 			CMFCTabInfo* pTab = (CMFCTabInfo*) m_arTabs [i];
 			ASSERT_VALID(pTab);
 
@@ -1089,8 +1114,18 @@ void CMFCTabCtrl::AdjustTabs()
 			// Last pass: set actual rectangles:
 			//----------------------------------
 			x = m_rectTabsArea.left;
-			for (i = 0; i < m_iTabsNum; i ++)
+
+			for (int nIndex = 0; nIndex < m_iTabsNum; nIndex++)
 			{
+				if (m_arTabIndices.GetSize() == m_iTabsNum)
+				{
+					i = m_arTabIndices[nIndex];
+				}
+				else
+				{
+					i = nIndex;
+				}
+
 				CMFCTabInfo* pTab = (CMFCTabInfo*) m_arTabs [i];
 				ASSERT_VALID(pTab);
 
@@ -1879,6 +1914,13 @@ void CMFCTabCtrl::RecalcLayout()
 
 	AdjustWndScroll();
 	AdjustTabs();
+
+	if (!m_bHiddenDocuments && m_arTabIndices.GetSize() == m_arTabs.GetSize())
+	{
+		m_arTabIndices.RemoveAll();
+		AdjustTabs ();
+	}
+
 	AdjustTabsScroll();
 
 	CRect rectFrame = rectClient;
@@ -2336,11 +2378,12 @@ BOOL CMFCTabCtrl::EnsureVisible(int iTab)
 	//---------------------------------------------------------
 	// Be sure, that active tab is visible(not out of scroll):
 	//---------------------------------------------------------
-	CRect rectTab = ((CMFCTabInfo*) m_arTabs [iTab])->m_rect;
+	CMFCTabInfo* pTabInfo = (CMFCTabInfo*)m_arTabs[iTab];
+	CRect rectTab = pTabInfo->m_rect;
 
 	if (m_bTabDocumentsMenu)
 	{
-		if (rectTab.left >= m_rectTabsArea.right || rectTab.IsRectEmpty())
+		if (rectTab.left + pTabInfo->m_nFullWidth > m_rectTabsArea.right || rectTab.IsRectEmpty())
 		{
 			CMFCBaseTabCtrl::MoveTab(iTab, 0);
 		}
@@ -2450,6 +2493,11 @@ void CMFCTabCtrl::HideNoTabs(BOOL bHide)
 
 BOOL CMFCTabCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 {
+	if (lParam == 0)
+	{
+		return CMFCBaseTabCtrl::OnCommand(wParam, lParam);
+	}
+
 	const int nScrollOffset = 20;
 
 	BOOL bScrollTabs = FALSE;
@@ -2804,7 +2852,7 @@ int CMFCTabCtrl::GetTabFromPoint(CPoint& pt) const
 
 		if (rectTab.PtInRect(pt))
 		{
-			if (m_iActiveTab > 0 && pt.x < rectTab.left + rectTab.Height())
+			if (!IsFirstTab(m_iActiveTab) && pt.x < rectTab.left + rectTab.Height())
 			{
 				const int x = pt.x - rectTab.left;
 				const int y = pt.y - rectTab.top;
@@ -2828,8 +2876,15 @@ int CMFCTabCtrl::GetTabFromPoint(CPoint& pt) const
 		}
 	}
 
-	for (int i = 0; i < m_iTabsNum; i++)
+	for (int nIndex = 0; nIndex < m_iTabsNum; nIndex++)
 	{
+		int i = nIndex;
+
+		if (m_arTabIndices.GetSize() == m_iTabsNum)
+		{
+			i = m_arTabIndices[nIndex];
+		}
+
 		CMFCTabInfo* pTab = (CMFCTabInfo*) m_arTabs [i];
 		ASSERT_VALID(pTab);
 

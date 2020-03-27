@@ -23,7 +23,6 @@
 #include <propvarutil.h>
 #include <shobjidl.h>
 
-#if (WINVER >= 0x0601)
 CJumpList::CJumpList(BOOL bAutoCommit) 
 {
 	m_bInitialized = FALSE;
@@ -758,4 +757,4 @@ BOOL CAppDestinations::Init()
 
 	return TRUE;
 }
-#endif
+

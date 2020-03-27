@@ -38,6 +38,8 @@
 
 class CVSListBoxBase : public CStatic
 {
+	DECLARE_DYNAMIC(CVSListBoxBase)
+
 // Construction
 protected:
 	CVSListBoxBase();
@@ -133,9 +135,9 @@ protected:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnEnable(BOOL bEnable);
 	afx_msg UINT OnGetDlgCode();
-	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnGetFont(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
+	afx_msg HFONT OnGetFont();
+	afx_msg int OnSetText(LPCTSTR lpszText);
 
 	DECLARE_MESSAGE_MAP()
 };
@@ -145,6 +147,8 @@ protected:
 
 class CVSListBoxEditCtrl : public CMFCEditBrowseCtrl
 {
+	DECLARE_DYNAMIC(CVSListBoxEditCtrl)
+
 // Construction
 public:
 	CVSListBoxEditCtrl();
@@ -189,6 +193,8 @@ protected:
 
 class CVSListBox : public CVSListBoxBase
 {
+	DECLARE_DYNAMIC(CVSListBox)
+
 // Construction
 public:
 	CVSListBox();

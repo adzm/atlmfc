@@ -55,6 +55,9 @@ public:
 
 	HICON GetWndIcon(CWnd* pWnd);
 
+	CSize GetSystemBorders(DWORD dwStyle);
+	CSize GetSystemBorders(CWnd *pWnd);
+
 	BOOL m_bDialogApp;
 	BOOL m_bIsDragging;
 };

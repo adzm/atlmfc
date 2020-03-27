@@ -53,10 +53,9 @@ namespace ATL
 //AtlAxWinTerm is not exported
 inline BOOL AtlAxWinTerm()
 {
-#ifndef _ATL_DLL //don't unregister DLL's version
 	UnregisterClass(CAxWindow::GetWndClassName(), _AtlBaseModule.GetModuleInstance());
 	UnregisterClass(CAxWindow2::GetWndClassName(), _AtlBaseModule.GetModuleInstance());
-#endif
+
 	return TRUE;
 }
 
@@ -708,6 +707,8 @@ public:
 		HRESULT hr = S_FALSE;
 		if (m_bInPlaceActive && m_bWindowless && m_spInPlaceObjectWindowless)
 			hr = m_spInPlaceObjectWindowless->OnWindowMessage(uMsg, wParam, lParam, &lRes);
+        if (FAILED(hr))
+            return 0;        
 		if (hr == S_FALSE)
 			bHandled = FALSE;
 		return lRes;
@@ -718,9 +719,14 @@ public:
 		_In_ LPARAM lParam,
 		_Inout_ BOOL& bHandled)
 	{
+        HRESULT hr;
 		LRESULT lRes = 0;
 		if (m_bInPlaceActive && m_bWindowless && m_spInPlaceObjectWindowless)
-			m_spInPlaceObjectWindowless->OnWindowMessage(uMsg, wParam, lParam, &lRes);
+        {
+			hr = m_spInPlaceObjectWindowless->OnWindowMessage(uMsg, wParam, lParam, &lRes);
+            if (FAILED(hr))
+                return 0;
+        }
 		bHandled = FALSE;
 		return lRes;
 	}
@@ -802,6 +808,7 @@ public:
 		CComPtr<IUnknown> p;
 		return CreateControlLicEx(lpTricsData, hWnd, pStream, &p, IID_NULL, NULL, NULL);
 	}
+ATLPREFAST_SUPPRESS(6103)    
 	STDMETHOD(CreateControlEx)(
 		_In_z_ LPCOLESTR lpszTricsData,
 		_In_ HWND hWnd,
@@ -812,6 +819,7 @@ public:
 	{
 		return CreateControlLicEx(lpszTricsData, hWnd, pStream, ppUnk, iidAdvise, punkSink, NULL);
 	}
+ATLPREFAST_UNSUPPRESS()
 	STDMETHOD(AttachControl)(
 		_Inout_ IUnknown* pUnkControl,
 		_In_ HWND hWnd)
@@ -2206,8 +2214,12 @@ ATLPREFAST_UNSUPPRESS()
 				m_pxSize.cx = m_rcPos.right - m_rcPos.left;
 				m_pxSize.cy = m_rcPos.bottom - m_rcPos.top;
 				AtlPixelToHiMetric(&m_pxSize, &m_hmSize);
-				m_spOleObject->SetExtent(DVASPECT_CONTENT, &m_hmSize);
-				m_spOleObject->GetExtent(DVASPECT_CONTENT, &m_hmSize);
+				hr = m_spOleObject->SetExtent(DVASPECT_CONTENT, &m_hmSize);
+                if (FAILED(hr))
+                    return hr;
+				hr = m_spOleObject->GetExtent(DVASPECT_CONTENT, &m_hmSize);
+                if (FAILED(hr))
+                    return hr;                
 				AtlHiMetricToPixel(&m_hmSize, &m_pxSize);
 				m_rcPos.right = m_rcPos.left + m_pxSize.cx;
 				m_rcPos.bottom = m_rcPos.top + m_pxSize.cy;
@@ -2378,7 +2390,9 @@ ATLPREFAST_UNSUPPRESS()
 		{
 			LRESULT lRes = 0;
 			if (m_bInPlaceActive && m_spInPlaceObjectWindowless)
-				m_spInPlaceObjectWindowless->OnWindowMessage(OCM__BASE + uMsg, wParam, lParam, &lRes);
+                if (FAILED(m_spInPlaceObjectWindowless->OnWindowMessage(OCM__BASE + uMsg, wParam, lParam, &lRes)))
+                    return 0;
+                
 			return lRes;
 		}
 
@@ -2426,7 +2440,9 @@ static LRESULT CALLBACK AtlAxWindowProc(
 		{
 			// create control from a PROGID in the title
 			// This is to make sure drag drop works
+ATLPREFAST_SUPPRESS(6031)
 			::OleInitialize(NULL);
+ATLPREFAST_UNSUPPRESS()
 
 			CREATESTRUCT* lpCreate = (CREATESTRUCT*)lParam;
 			int nLen = ::GetWindowTextLength(hWnd);
@@ -2446,7 +2462,7 @@ static LRESULT CALLBACK AtlAxWindowProc(
 			if (nCreateSize)
 			{
 				HGLOBAL h = GlobalAlloc(GHND, nCreateSize);
-ATLPREFAST_SUPPRESS(6387)
+ATLPREFAST_SUPPRESS(6031 6387)
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
@@ -2531,7 +2547,9 @@ static LRESULT CALLBACK AtlAxWindowProc2(
 		{
 		// create control from a PROGID in the title
 			// This is to make sure drag drop works
+ATLPREFAST_SUPPRESS(6031)
 			::OleInitialize(NULL);
+ATLPREFAST_UNSUPPRESS()
 
 			CREATESTRUCT* lpCreate = (CREATESTRUCT*)lParam;
 			int nLen = ::GetWindowTextLength(hWnd);
@@ -2563,7 +2581,7 @@ static LRESULT CALLBACK AtlAxWindowProc2(
 			if (nCreateSize)
 			{
 				HGLOBAL h = GlobalAlloc(GHND, nCreateSize);
-ATLPREFAST_SUPPRESS(6387)
+ATLPREFAST_SUPPRESS(6031 6387)
 				if (h)
 				{
 					BYTE* pBytes = (BYTE*) GlobalLock(h);
@@ -2639,9 +2657,6 @@ ATLPREFAST_UNSUPPRESS()
 
 	return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
-
-//All exports go here
-#ifndef _ATL_DLL
 
 inline HRSRC AtlFindResource(
 	_In_opt_ HMODULE hModule,
@@ -2891,11 +2906,6 @@ ATLINLINE ATLAPI AtlAxAttachControl(
 	return hr;
 }
 ATLPREFAST_UNSUPPRESS()
-	
-#ifdef _ATL_DLL_IMPL
-// global variable in ATL.DLL to keep track if AtlAxWin window class has been registered in ATL.DLL
-bool __declspec(selectany) bAtlAxWinInitialized;
-#endif
 
 //This either registers a global class (if AtlAxWinInit is in ATL.DLL)
 // or it registers a local class
@@ -2920,12 +2930,7 @@ ATLINLINE ATLAPI_(BOOL) AtlAxWinInit()
 	if(!bRet)
 	{
 		wc.cbSize = sizeof(WNDCLASSEX);
-#ifdef _ATL_DLL_IMPL
-		wc.style = CS_GLOBALCLASS | CS_DBLCLKS;
-		bAtlAxWinInitialized = true;
-#else
 		wc.style = CS_DBLCLKS;
-#endif
 		wc.lpfnWndProc = AtlAxWindowProc;
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
@@ -2960,11 +2965,7 @@ ATLINLINE ATLAPI_(BOOL) AtlAxWinInit()
 		if(!bRet)
 		{
 			wc.cbSize = sizeof(WNDCLASSEX);
-#ifdef _ATL_DLL_IMPL
-			wc.style = CS_GLOBALCLASS | CS_DBLCLKS;
-#else
 			wc.style = CS_DBLCLKS;
-#endif
 			wc.lpfnWndProc = AtlAxWindowProc2;
 			wc.cbClsExtra = 0;
 			wc.cbWndExtra = 0;
@@ -3016,8 +3017,6 @@ ATLINLINE ATLAPI AtlAxGetHost(
 	return (*pp) ? S_OK : E_FAIL;
 }
 ATLPREFAST_UNSUPPRESS()
-
-#endif // _ATL_DLL
 
 }; //namespace ATL
 #pragma pack(pop)

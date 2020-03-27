@@ -57,7 +57,7 @@ BOOL CSimpleList::Remove(void* p)
 /////////////////////////////////////////////////////////////////////////////
 // CNoTrackObject
 
-#if defined(_DEBUG) && !defined(_AFX_NO_DEBUG_CRT)
+#if defined(_DEBUG)
 void* PASCAL CNoTrackObject::operator new(size_t nSize, LPCSTR, int)
 {
 	return CNoTrackObject::operator new(nSize);

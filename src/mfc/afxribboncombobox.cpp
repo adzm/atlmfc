@@ -621,6 +621,27 @@ CSize CMFCRibbonComboBox::OnGetDropListItemSize(CDC* /*pDC*/, int /*nIndex*/, CM
 	return CSize(0, 0);
 }
 
+BOOL CMFCRibbonComboBox::SetACCData(CWnd* pParent, CAccessibilityData& data)
+{
+	ASSERT_VALID(this);
+
+	CMFCRibbonEdit::SetACCData(pParent, data);
+
+	data.m_nAccRole = ROLE_SYSTEM_COMBOBOX;
+
+	if (!m_bHasEditBox)
+	{
+		data.m_bAccState = STATE_SYSTEM_READONLY;
+	}
+
+	if (m_bIsDisabled)
+	{
+		data.m_bAccState = STATE_SYSTEM_UNAVAILABLE;
+	}
+
+	return TRUE;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonFontComboBox
 

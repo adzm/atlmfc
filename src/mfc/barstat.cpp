@@ -490,9 +490,9 @@ BEGIN_MESSAGE_MAP(CStatusBar, CControlBar)
 	ON_WM_NCCALCSIZE()
 	ON_WM_SIZE()
 	ON_WM_WINDOWPOSCHANGING()
-	ON_MESSAGE(WM_SETTEXT, &CStatusBar::OnSetText)
-	ON_MESSAGE(WM_GETTEXT, &CStatusBar::OnGetText)
-	ON_MESSAGE(WM_GETTEXTLENGTH, &CStatusBar::OnGetTextLength)
+	ON_WM_SETTEXT()
+	ON_WM_GETTEXT()
+	ON_WM_GETTEXTLENGTH()
 	ON_MESSAGE(SB_SETMINHEIGHT, &CStatusBar::OnSetMinHeight)
 END_MESSAGE_MAP()
 
@@ -580,7 +580,7 @@ void CStatusBar::OnWindowPosChanging(LPWINDOWPOS lpWndPos)
 	m_dwStyle = dwStyle;
 }
 
-LRESULT CStatusBar::OnSetText(WPARAM, LPARAM lParam)
+int CStatusBar::OnSetText(LPCTSTR lpszText)
 {
 	ASSERT_VALID(this);
 	ASSERT(::IsWindow(m_hWnd));
@@ -588,18 +588,16 @@ LRESULT CStatusBar::OnSetText(WPARAM, LPARAM lParam)
 	int nIndex = CommandToIndex(0);
 	if (nIndex < 0)
 		return -1;
-	return SetPaneText(nIndex, (LPCTSTR)lParam) ? 0 : -1;
+	return SetPaneText(nIndex, lpszText) ? 0 : -1;
 }
 
-LRESULT CStatusBar::OnGetText(WPARAM wParam, LPARAM lParam)
+int CStatusBar::OnGetText(int nMaxChars, LPTSTR lpszText)
 {
 	ASSERT_VALID(this);
 	ASSERT(::IsWindow(m_hWnd));
 
-	int nMaxLen = (int)wParam;
-	if (nMaxLen == 0)
+	if (nMaxChars == 0)
 		return 0;       // nothing copied
-	LPTSTR lpszDest = (LPTSTR)lParam;
 
 	INT_PTR nLen = 0;
 	int nIndex = CommandToIndex(0); // use pane with ID zero
@@ -607,17 +605,17 @@ LRESULT CStatusBar::OnGetText(WPARAM wParam, LPARAM lParam)
 	{
 		AFX_STATUSPANE* pSBP = _GetPanePtr(nIndex);
 		nLen = pSBP->strText.GetLength();
-		if (nLen > nMaxLen)
-			nLen = nMaxLen - 1; // number of characters to copy (less term.)
+		if (nLen > nMaxChars)
+			nLen = nMaxChars - 1; // number of characters to copy (less term.)
 
-		Checked::memcpy_s(lpszDest, nMaxLen*sizeof(TCHAR), 
+		Checked::memcpy_s(lpszText, nMaxChars*sizeof(TCHAR), 
 			(LPCTSTR)pSBP->strText, nLen*sizeof(TCHAR));
 	}
-	lpszDest[nLen] = '\0';
-	return nLen+1;      // number of bytes copied
+	lpszText[nLen] = '\0';
+	return (int)nLen+1;      // number of bytes copied
 }
 
-LRESULT CStatusBar::OnGetTextLength(WPARAM, LPARAM)
+UINT CStatusBar::OnGetTextLength()
 {
 	ASSERT_VALID(this);
 	ASSERT(::IsWindow(m_hWnd));
@@ -629,7 +627,7 @@ LRESULT CStatusBar::OnGetTextLength(WPARAM, LPARAM)
 		AFX_STATUSPANE* pSBP = _GetPanePtr(nIndex);
 		nLen = pSBP->strText.GetLength();
 	}
-	return nLen;
+	return (UINT)nLen;
 }
 
 LRESULT CStatusBar::OnSetMinHeight(WPARAM wParam, LPARAM)

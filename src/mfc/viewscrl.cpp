@@ -32,7 +32,7 @@ BEGIN_MESSAGE_MAP(CScrollView, CView)
 	ON_WM_VSCROLL()
 	ON_WM_MOUSEWHEEL()
 	ON_MESSAGE(WM_MBUTTONDOWN, &CScrollView::HandleMButtonDown)
-	ON_MESSAGE(WM_PRINTCLIENT, &CScrollView::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 // Special mapping modes just for CScrollView implementation
@@ -795,21 +795,17 @@ LRESULT CScrollView::HandleMButtonDown(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-LRESULT CScrollView::OnPrintClient(WPARAM wParam, LPARAM lParam)
+LRESULT CScrollView::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	UNREFERENCED_PARAMETER(lParam);
+	UNREFERENCED_PARAMETER(nFlags);
 
-	HDC hdc = (HDC) wParam;
-	if (hdc == NULL)
+	if (pDC->GetSafeHdc() == NULL)
 	{
 		return 0L;
 	}
 
-	CDC dc;
-	dc.Attach(hdc);
-
 	CDC dcView;
-	dcView.CreateCompatibleDC(&dc);
+	dcView.CreateCompatibleDC(pDC);
 
 	CRect rect;
 	GetClientRect(rect);
@@ -819,7 +815,7 @@ LRESULT CScrollView::OnPrintClient(WPARAM wParam, LPARAM lParam)
 
 	HBITMAP hBmpOld = (HBITMAP)dcView.SelectObject((HBITMAP)bmpSrc);
 
-	dcView.BitBlt(0, 0, rect.Width(), rect.Height(), &dc, 0, 0, SRCCOPY);
+	dcView.BitBlt(0, 0, rect.Width(), rect.Height(), pDC, 0, 0, SRCCOPY);
 
 	dcView.SetViewportOrg(0, 0);
 	dcView.SetWindowOrg(0, 0);
@@ -828,10 +824,9 @@ LRESULT CScrollView::OnPrintClient(WPARAM wParam, LPARAM lParam)
 	OnPrepareDC(&dcView, NULL);
 	OnDraw(&dcView);
 
-	dc.BitBlt(0, 0, rect.Width(), rect.Height(), &dcView, 0, 0, SRCCOPY);
+	pDC->BitBlt(0, 0, rect.Width(), rect.Height(), &dcView, 0, 0, SRCCOPY);
 
 	dcView.SelectObject(hBmpOld);
-	dc.Detach();
 
 	return 0L;
 }

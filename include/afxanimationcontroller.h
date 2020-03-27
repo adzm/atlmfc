@@ -761,7 +761,7 @@ protected:
 	/// <summary>
 	/// Stores user-defined data.
 	/// </summary>
-	DWORD 	m_dwUserData;
+	DWORD_PTR 	m_dwUserData;
 
 	/// <summary>
 	/// Specifies whether related transitions should be automatically destroyed.
@@ -791,7 +791,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">User-defined data, which can be associated with animation object and retrieved later at runtime.</param>
-	CAnimationBaseObject(UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationBaseObject(UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// The destructor. Called when an animation object is being destroyed.
@@ -828,7 +828,7 @@ public:
 	/// Use this method to associate a custom data with an animation object. This data may be retrieved later at runtime by GetUserData.
 	/// </remarks>
 	/// <param name="dwUserData">Specifies the custom data.</param>
-	void SetUserData (DWORD dwUserData)
+	void SetUserData (DWORD_PTR dwUserData)
 	{
 		m_dwUserData = dwUserData;
 	}
@@ -875,7 +875,7 @@ public:
 	/// <remarks>
 	/// Call this method to retrieve the custom data at runtime. The returned value will be 0 if it was not explicitly initialized in constructor or with SetUserData.
 	/// </remarks>
-	DWORD GetUserData() const {return m_dwUserData;}
+	DWORD_PTR GetUserData() const {return m_dwUserData;}
 
 	/// <summary>
 	/// Sets a flag that orders to automatically destroy transitions.
@@ -1038,7 +1038,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">specifies user-defined data.</param>
-	CAnimationValue(DOUBLE dblDefaultValue, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationValue(DOUBLE dblDefaultValue, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// Sets default value.
@@ -1214,7 +1214,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">Specifies user-defined data.</param>
-	CAnimationPoint(const CPoint& ptDefault, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationPoint(const CPoint& ptDefault, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// Sets default value.
@@ -1370,7 +1370,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">Specifies user-defined data.</param>
-	CAnimationSize(const CSize& szDefault, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationSize(const CSize& szDefault, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// Sets default value.
@@ -1532,7 +1532,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">Specifies user-defined data.</param>
-	CAnimationColor(COLORREF color, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationColor(COLORREF color, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// Sets default value.
@@ -1714,7 +1714,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">Specifies user-defined data.</param>
-	CAnimationRect(const CRect& rect, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationRect(const CRect& rect, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// Constructs an animation rect object.
@@ -1728,7 +1728,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">Specifies user-defined data.</param>
-	CAnimationRect(const CPoint& pt, const CSize& sz, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationRect(const CPoint& pt, const CSize& sz, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// Constructs an animation rect object.
@@ -1744,7 +1744,7 @@ public:
 	/// <param name="nGroupID">Specifies Group ID.</param>
 	/// <param name="nObjectID">Specifies Object ID.</param>
 	/// <param name="dwUserData">Specifies user-defined data.</param>
-	CAnimationRect(int nLeft, int nTop, int nRight, int nBottom, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD dwUserData = 0);
+	CAnimationRect(int nLeft, int nTop, int nRight, int nBottom, UINT32 nGroupID, UINT32 nObjectID = (UINT32)-1, DWORD_PTR dwUserData = 0);
 
 	/// <summary>
 	/// Sets default value.
@@ -2264,7 +2264,7 @@ public:
 	/// UI_ANIMATION_PHT_TRIM_REMOVE - remove Trim comparison handler
 	/// </remarks>
 	/// <param name="dwHandlerType">A combination of UI_ANIMATION_PHT_ flags (see remarks), which specifies what handlers to set or release.</param>
-	virtual BOOL EnablePriorityComparisonHandler(DWORD dwHandlerType);
+	virtual BOOL EnablePriorityComparisonHandler(DWORD_PTR dwHandlerType);
 
 	/// <summary>
 	/// Sets or releases a handler for storyboard status and update events.

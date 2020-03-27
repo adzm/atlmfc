@@ -452,4 +452,21 @@ void CMFCRibbonSlider::OnDrawOnList(CDC* pDC, CString strText, int nTextOffset, 
 	m_bIsDisabled = bIsDisabled;
 }
 
+BOOL CMFCRibbonSlider::SetACCData(CWnd* pParent, CAccessibilityData& data)
+{
+	ASSERT_VALID(this);
+
+	if (!CMFCRibbonBaseElement::SetACCData(pParent, data))
+	{
+		return FALSE;
+	}
+
+	data.m_nAccRole = ROLE_SYSTEM_SLIDER;
+	data.m_strAccDefAction.Empty();
+	data.m_bAccState = STATE_SYSTEM_NORMAL;
+	data.m_strAccValue.Format (_T("%d"), m_nPos);
+
+	return TRUE;
+}
+
 

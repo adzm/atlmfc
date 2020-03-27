@@ -158,13 +158,6 @@ public:
 class COleDispatchImpl : public IDispatch
 {
 public:
-#ifndef _AFX_NO_NESTED_DERIVATION
-	// required for METHOD_PROLOGUE_EX
-	size_t m_nOffset;
-	COleDispatchImpl::COleDispatchImpl()
-		{ m_nOffset = offsetof(CCmdTarget, m_xDispatch); }
-#endif
-
 	STDMETHOD_(ULONG, AddRef)();
 	STDMETHOD_(ULONG, Release)();
 	STDMETHOD(QueryInterface)(REFIID, LPVOID*);

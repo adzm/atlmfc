@@ -16,6 +16,7 @@
 #ifndef _ATL_NO_PRAGMA_WARNINGS
 #pragma warning (push)
 #pragma warning(disable: 4127) // unreachable code
+#pragma warning(disable: 4987) // nonstandard extension used: 'throw(...)'
 #endif //!_ATL_NO_PRAGMA_WARNINGS
 
 #ifndef __cplusplus
@@ -389,7 +390,9 @@ private:
 			if (GetLastError()==ERROR_INSUFFICIENT_BUFFER)
 			{
 				nLengthW = ::MultiByteToWideChar( nCodePage, 0, psz, nLengthA, NULL, 0);
+ATLPREFAST_SUPPRESS(6102)                
 				AtlConvAllocMemory(&m_psz,nLengthW,m_szBuffer,t_nBufferLength);
+ATLPREFAST_UNSUPPRESS()
 				bFailed=(0 == ::MultiByteToWideChar( nCodePage, 0, psz, nLengthA, m_psz, nLengthW ) );
 			}			
 		}
@@ -456,7 +459,9 @@ private:
 			if (GetLastError()==ERROR_INSUFFICIENT_BUFFER)
 			{
 				nLengthA = ::WideCharToMultiByte( nConvertCodePage, 0, psz, nLengthW, NULL, 0, NULL, NULL );
-				AtlConvAllocMemory(&m_psz,nLengthA,m_szBuffer,t_nBufferLength);
+ATLPREFAST_SUPPRESS(6102)
+                AtlConvAllocMemory(&m_psz,nLengthA,m_szBuffer,t_nBufferLength);
+ATLPREFAST_UNSUPPRESS()
 				bFailed=(0 == ::WideCharToMultiByte( nConvertCodePage, 0, psz, nLengthW, m_psz, nLengthA, NULL, NULL ));
 			}			
 		}
@@ -1130,6 +1135,7 @@ _Ret_z_ inline LPCTSTR A2CT(_In_z_ LPCSTR lp)
 
 #endif // defined(_UNICODE)
 
+ATLPREFAST_SUPPRESS(6103)
 _Check_return_ _Ret_maybenull_z_ inline BSTR A2WBSTR(
 	_In_opt_z_ LPCSTR lp, 
 	_In_ int nLen = -1)
@@ -1139,9 +1145,8 @@ _Check_return_ _Ret_maybenull_z_ inline BSTR A2WBSTR(
 	USES_CONVERSION_EX;
 	BSTR str = NULL;
 
-ATLPREFAST_SUPPRESS(6385)
 	int nConvertedLen = MultiByteToWideChar(_acp_ex, 0, lp, nLen, NULL, 0);
-ATLPREFAST_UNSUPPRESS()
+
 	int nAllocLen = nConvertedLen;
 	if (nLen == -1)
 		nAllocLen -= 1;  // Don't allocate terminating '\0'
@@ -1152,15 +1157,18 @@ ATLPREFAST_UNSUPPRESS()
 		int nResult;
 		nResult = MultiByteToWideChar(_acp_ex, 0, lp, nLen, str, nConvertedLen);
 		ATLASSERT(nResult == nConvertedLen);
-		if(nResult != nConvertedLen)
+		if (nResult != nConvertedLen)
 		{
+ATLPREFAST_SUPPRESS(6102)
 			SysFreeString(str);
+ATLPREFAST_UNSUPPRESS()
 			return NULL;
 		}
 
 	}
 	return str;
 }
+ATLPREFAST_UNSUPPRESS()
 
 _Ret_maybenull_z_ inline BSTR OLE2BSTR(_In_opt_z_ LPCOLESTR lp) 
 {
@@ -1467,8 +1475,6 @@ inline LPTEXTMETRICOLE TEXTMETRICT2OLE(_In_ LPTEXTMETRICW lp)
 
 /////////////////////////////////////////////////////////////////////////////
 
-#ifndef _ATL_DLL
-
 #ifdef _WINGDI_
 
 ATLINLINE ATLAPI_(LPDEVMODEA) AtlDevModeW2A(
@@ -1513,8 +1519,6 @@ ATLINLINE ATLAPI_(LPDEVMODEA) AtlDevModeW2A(
 }
 
 #endif //_WINGDI
-
-#endif // !_ATL_DLL
 
 #ifndef _ATL_NO_PRAGMA_WARNINGS
 #pragma warning (pop)

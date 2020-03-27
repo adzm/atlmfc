@@ -375,21 +375,19 @@ _AFXCMN_INLINE COLORREF CTreeCtrl::SetInsertMarkColor(_In_ COLORREF clrNew)
 _AFXCMN_INLINE BOOL CTreeCtrl::EndEditLabelNow(_In_ BOOL fCancelWithoutSave)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, TVM_ENDEDITLABELNOW, (WPARAM)fCancelWithoutSave, 0); }
 
-#if _WIN32_IE >= 0x0500
 _AFXCMN_INLINE COLORREF CTreeCtrl::GetLineColor() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (COLORREF)::SendMessage(m_hWnd, TVM_GETLINECOLOR, 0, 0L); }
 _AFXCMN_INLINE COLORREF CTreeCtrl::SetLineColor(_In_ COLORREF clrNew /*= CLR_DEFAULT*/)
 	{ ASSERT(::IsWindow(m_hWnd)); return (COLORREF)::SendMessage(m_hWnd, TVM_SETLINECOLOR, 0, (LPARAM)clrNew); }
-#endif
 
-#if (_WIN32_WINNT >= 0x0501) && defined(UNICODE)
+#if defined(UNICODE)
 _AFXCMN_INLINE UINT CTreeCtrl::MapItemToAccId(_In_ HTREEITEM hItem) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (UINT) ::SendMessage(m_hWnd, TVM_MAPHTREEITEMTOACCID, (WPARAM)hItem, 0); }
 _AFXCMN_INLINE HTREEITEM CTreeCtrl::MapAccIdToItem(_In_ UINT uAccId) const
 	{ ASSERT(::IsWindow(m_hWnd)); return (HTREEITEM) ::SendMessage(m_hWnd, TVM_MAPACCIDTOHTREEITEM, (WPARAM)uAccId, 0); }
-#endif
+#endif // defined(UNICODE)
 
-#if (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 _AFXCMN_INLINE UINT CTreeCtrl::GetSelectedCount()
 	{ ASSERT(::IsWindow(m_hWnd)); return (UINT) ::SendMessage(m_hWnd, TVM_GETSELECTEDCOUNT, 0, 0); }
 _AFXCMN_INLINE void CTreeCtrl::ShowInfoTip(_In_ HTREEITEM hItem)
@@ -404,7 +402,7 @@ _AFXCMN_INLINE DWORD CTreeCtrl::SetExtendedStyle(_In_ DWORD dwExMask, _In_ DWORD
 	{ ASSERT(::IsWindow(m_hWnd)); return (DWORD) ::SendMessage(m_hWnd, TVM_SETEXTENDEDSTYLE, (WPARAM)dwExMask, (LPARAM)dwExStyles); }
 _AFXCMN_INLINE BOOL CTreeCtrl::SetAutoscrollInfo(_In_ UINT uPixelsPerSec, _In_ UINT uUpdateTime)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL) ::SendMessage(m_hWnd, TVM_SETAUTOSCROLLINFO, (WPARAM)uPixelsPerSec, (LPARAM)uUpdateTime); }
-#endif
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -631,14 +629,13 @@ _AFXCMN_INLINE BOOL CAnimateCtrl::Close()
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, ACM_OPEN, 0, 0L); }
 _AFXCMN_INLINE BOOL CAnimateCtrl::Seek(_In_ UINT nTo)
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, ACM_PLAY, 1, MAKELPARAM(nTo, nTo)); }
-#if (_WIN32_WINNT >= 0x600) && defined(UNICODE)
+#if defined(UNICODE)
 _AFXCMN_INLINE BOOL CAnimateCtrl::IsPlaying() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (BOOL)::SendMessage(m_hWnd, ACM_ISPLAYING, 0, 0L); }
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 _AFXCMN_INLINE CRichEditCtrl::CRichEditCtrl()
 	{ }
 _AFXCMN_INLINE BOOL CRichEditCtrl::CanUndo() const
@@ -779,7 +776,6 @@ _AFXCMN_INLINE long CRichEditCtrl::StreamOut(_In_ int nFormat, EDITSTREAM &es)
 _AFXCMN_INLINE long CRichEditCtrl::GetTextLength() const
 	{ ASSERT(::IsWindow(m_hWnd)); return (long)::SendMessage(m_hWnd, WM_GETTEXTLENGTH, NULL, NULL); }
 
-#endif //!_AFX_NO_RICHEDIT_SUPPORT
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma warning(pop)

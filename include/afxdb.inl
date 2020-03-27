@@ -28,8 +28,6 @@ _AFXDBCORE_INLINE void CDatabase::SetLoginTimeout(DWORD dwSeconds)
 	{ ASSERT_VALID(this); m_dwLoginTimeout = dwSeconds; }
 _AFXDBCORE_INLINE void CDatabase::SetQueryTimeout(DWORD dwSeconds)
 	{ ASSERT_VALID(this); m_dwQueryTimeout = dwSeconds; }
-_AFXDBCORE_INLINE const CString& CDatabase::GetConnect() const
-	{ ASSERT_VALID(this); return m_strConnect; }
 _AFXDBCORE_INLINE DWORD CDatabase::GetBookmarkPersistence() const
 	{ ASSERT_VALID(this); return m_dwBookmarkAttributes; }
 _AFXDBCORE_INLINE int CDatabase::GetCursorCommitBehavior() const

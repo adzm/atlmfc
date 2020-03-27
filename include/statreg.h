@@ -309,19 +309,10 @@ protected:
 	};
 };
 
-#if defined(_ATL_DLL) || defined(_ATL_DLL_IMPL)
-class ATL_NO_VTABLE CRegObject :
-	public IRegistrar
-#else
 class CRegObject :
 	public IRegistrarBase
-#endif
 {
 public:
-
-#if defined(_ATL_DLL) || defined(_ATL_DLL_IMPL)
-
-#else
 	STDMETHOD(QueryInterface)(
 		const IID &,
 		__RPC__deref_out void ** )
@@ -340,7 +331,7 @@ public:
 		ATLASSERT(_T("statically linked in CRegObject is not a com object. Do not callthis function"));
 		return 0;
 	}
-#endif
+
 	virtual ~CRegObject()
 	{
 		ClearReplacements();
@@ -1064,7 +1055,10 @@ inline HRESULT CRegParser::AddValue(
 			if(lpszV == NULL)
 				return E_OUTOFMEMORY;
 	#endif
-			VarUI4FromStr(lpszV, 0, 0, &ulVal);
+
+			hr = VarUI4FromStr(lpszV, 0, 0, &ulVal);
+            if (FAILED(hr))
+                return hr;
 
 			lRes = rkParent.SetDWORDValue(szValueName, ulVal);
 			ATLTRACE(atlTraceRegistrar, 2, _T("Setting Value %d at %s\n"), ulVal, !szValueName ? _T("default") : szValueName);

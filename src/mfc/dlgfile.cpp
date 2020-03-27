@@ -27,7 +27,14 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,
 	OSVERSIONINFO vi;
 	ZeroMemory(&vi, sizeof(OSVERSIONINFO));
 	vi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+// Fix for warnings when building against WinBlue build 9444.0.130614-1739
+// warning C4996: 'GetVersionExW': was declared deprecated
+// externalapis\windows\winblue\sdk\inc\sysinfoapi.h(442)
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	::GetVersionEx(&vi);
+#pragma warning( default : 4996 )
 
 	// if running under Vista
 	if (vi.dwMajorVersion >= 6)
@@ -201,7 +208,7 @@ void CFileDialog::UpdateOFNFromShellDialog()
 					offset++;
 				}
 #ifdef UNICODE
-				wcsncpy_s(m_ofn.lpstrFile, m_ofn.nMaxFile - 1, wcPathName, _TRUNCATE);
+				wcsncpy_s(m_ofn.lpstrFile, m_ofn.nMaxFile, wcPathName, _TRUNCATE);
 				wcsncpy_s(m_ofn.lpstrFileTitle, m_ofn.nMaxFileTitle, wcPathName + offset, _TRUNCATE);
 #else
 				::WideCharToMultiByte(CP_ACP, 0, wcPathName + offset,
@@ -242,7 +249,7 @@ void CFileDialog::UpdateOFNFromShellDialog()
 							{
 								::PathRemoveFileSpecW(wcPathName);
 #ifdef UNICODE
-								wcsncpy_s(pszFileName, m_ofn.nMaxFile - 1, wcPathName, _TRUNCATE);
+								wcsncpy_s(pszFileName, m_ofn.nMaxFile, wcPathName, _TRUNCATE);
 								pszFileName += AtlStrLen(wcPathName) + 1;
 #else
 								pszFileName += ::WideCharToMultiByte(CP_ACP, 0, wcPathName, -1,

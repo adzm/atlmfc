@@ -72,6 +72,7 @@ protected:
 	CMFCTabCtrl m_wndTab;
 	BOOL    m_bTabIsVisible;
 	BOOL    m_bTabIsEnabled;
+	BOOL	m_bLastActiveTab;
 
 	CImageList m_TabIcons;
 	CMap<HICON,HICON,int,int> m_mapIcons; // Icons already loaded into the image list
@@ -110,6 +111,8 @@ public:
 
 	void SetActiveTab(HWND hwnd);
 	void UpdateTabs(BOOL bSetActiveTabVisible = FALSE);
+
+	void EnableMDITabsLastActiveActivation(BOOL bLastActiveTab = TRUE);
 
 	// ---- MDITabGroup+
 	void EnableMDITabbedGroups(BOOL bEnable, const CMDITabInfo& mdiTabParams);
@@ -183,11 +186,11 @@ public:
 protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnStyleChanging(int nStyleType, LPSTYLESTRUCT lpStyleStruct);
-	afx_msg LRESULT OnSetMenu(WPARAM wp, LPARAM);
+	afx_msg HMENU OnMDISetMenu(HMENU hmenuFrameWindow, HMENU hmenuNewWindow);
 	afx_msg LRESULT OnUpdateTabs(WPARAM, LPARAM);
-	afx_msg LRESULT OnMDIRefreshMenu(WPARAM wp, LPARAM);
-	afx_msg LRESULT OnMDIDestroy(WPARAM wp, LPARAM);
-	afx_msg LRESULT OnMDINext(WPARAM wp, LPARAM);
+	afx_msg HMENU OnMDIRefreshMenu();
+	afx_msg void OnMDIDestroy(CWnd* pWndMDIChild);
+	afx_msg void OnMDINext(CWnd* pWndMDIChild, BOOL bIsPrev);
 	afx_msg LRESULT OnGetDragBounds(WPARAM wp, LPARAM lp);
 	afx_msg LRESULT OnDragComplete(WPARAM wp, LPARAM lp);
 	afx_msg LRESULT OnTabGroupMouseMove(WPARAM wp, LPARAM lp);

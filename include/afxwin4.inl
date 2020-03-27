@@ -12,8 +12,6 @@
 
 #pragma once
 
-#if (_WIN32_WINNT >= 0x0500)
-
 AFX_INLINE COLORREF CDC::GetDCBrushColor() const
 	{ ENSURE(m_hDC != NULL); return ::GetDCBrushColor(m_hDC); }
 AFX_INLINE COLORREF CDC::SetDCBrushColor(COLORREF crColor)
@@ -41,10 +39,6 @@ AFX_INLINE BOOL CDC::GetTextExtentPointI(LPWORD pgiIn, int cgi, _Out_opt_ LPSIZE
 	ENSURE(m_hDC != NULL);
 	return ::GetTextExtentPointI(m_hDC, pgiIn, cgi, lpSize);
 }
-
-#endif
-
-#if(WINVER >= 0x0500)
 
 AFX_INLINE BOOL CWnd::GetWindowInfo(PWINDOWINFO pwi) const
 	{ ASSERT(::IsWindow(m_hWnd)); return ::GetWindowInfo(m_hWnd, pwi); }
@@ -101,9 +95,7 @@ AFX_INLINE BOOL CMenu::SetMenuInfo(LPCMENUINFO lpcmi)
 AFX_INLINE BOOL CMenu::GetMenuInfo(LPMENUINFO lpcmi) const
 	{ ASSERT(::IsMenu(m_hMenu)); return ::GetMenuInfo(m_hMenu, lpcmi); }
 
-#endif	// WINVER >= 0x0500
-
-#if (_WIN32_WINNT >= 0x501) && defined(UNICODE)
+#if defined(UNICODE)
 AFX_INLINE BOOL CComboBox::SetMinVisibleItems(_In_ int iMinVisible)
 {
 	ASSERT(::IsWindow(m_hWnd));
@@ -147,9 +139,7 @@ AFX_INLINE BOOL CComboBox::GetCueBanner(_Out_writes_z_(cchText) LPWSTR lpszText,
 	return ComboBox_GetCueBannerText(m_hWnd, lpszText, cchText); // CB_GETCUEBANNER
 }
 #endif  // CB_SETCUEBANNER
-#endif  // (_WIN32_WINNT >= 0x501) && defined(UNICODE)
-
-#if(_WIN32_WINNT >= 0x0500)
+#endif  // defined(UNICODE)
 
 AFX_INLINE BOOL CWnd::SetLayeredWindowAttributes(COLORREF crKey, BYTE bAlpha, DWORD dwFlags)
 {
@@ -164,10 +154,6 @@ AFX_INLINE BOOL CWnd::UpdateLayeredWindow(CDC* pDCDst, POINT *pptDst, SIZE *psiz
 	return ::UpdateLayeredWindow(m_hWnd, pDCDst->GetSafeHdc(), pptDst, psize,
 		pDCSrc->GetSafeHdc(), pptSrc, crKey, pblend, dwFlags);
 }
-
-#endif	// _WIN32_WINNT >= 0x0500
-
-#if(_WIN32_WINNT >= 0x0501)
 
 AFX_INLINE BOOL CWnd::GetLayeredWindowAttributes(COLORREF *pcrKey, BYTE *pbAlpha, DWORD *pdwFlags) const
 {
@@ -253,9 +239,7 @@ AFX_INLINE BOOL CEdit::HideBalloonTip()
 }
 #endif // (UNICODE)
 
-#endif // (_WIN32_WINNT >= 0x0501)
-
-#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 AFX_INLINE void CEdit::SetHighlight(_In_ int ichStart, _In_ int ichEnd)
 {
@@ -277,9 +261,7 @@ AFX_INLINE BOOL CEdit::GetHighlight(_Out_ int* pichStart, _Out_ int* pichEnd) co
 	return TRUE;
 }
 
-#endif  // (_WIN32_WINNT >= 0x0600) && defined(UNICODE)
-
-#if (_WIN32_WINNT >= 0x501)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 #pragma warning(push)
 #pragma warning(disable: 6001)
@@ -322,9 +304,7 @@ AFX_INLINE BOOL CButton::GetTextMargin(_Out_ RECT* pmargin) const
 }
 #pragma warning(pop)
 
-#endif	// _WIN32_WINNT >= 0x0501
-
-#if ( _WIN32_WINNT >= 0x0600 ) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 AFX_INLINE CString CButton::GetNote() const
 {
@@ -480,4 +460,4 @@ AFX_INLINE HICON CButton::SetShield(_In_ BOOL fElevationRequired)
 	return (HICON)(Button_SetElevationRequiredState(m_hWnd, fElevationRequired)); // BCM_SETSHIELD
 }
 
-#endif // _WIN32_WINNT >= 0x600 && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)

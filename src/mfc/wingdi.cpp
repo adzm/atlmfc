@@ -66,16 +66,13 @@ CHandleMap* PASCAL afxMapHDC(BOOL bCreate)
 	if (pState->m_pmapHDC == NULL && bCreate)
 	{
 		BOOL bEnable = AfxEnableMemoryTracking(FALSE);
-#ifndef _AFX_PORTABLE
 		_PNH pnhOldHandler = AfxSetNewHandler(&AfxCriticalNewHandler);
-#endif
+
 		pState->m_pmapHDC = new CHandleMap(RUNTIME_CLASS(CDC),
 			ConstructDestruct<CDC>::Construct, ConstructDestruct<CDC>::Destruct, 
 			offsetof(CDC, m_hDC), 2);
 
-#ifndef _AFX_PORTABLE
 		AfxSetNewHandler(pnhOldHandler);
-#endif
 		AfxEnableMemoryTracking(bEnable);
 	}
 	return pState->m_pmapHDC;
@@ -1090,16 +1087,13 @@ CHandleMap* PASCAL afxMapHGDIOBJ(BOOL bCreate)
 	if (pState->m_pmapHGDIOBJ == NULL && bCreate)
 	{
 		BOOL bEnable = AfxEnableMemoryTracking(FALSE);
-#ifndef _AFX_PORTABLE
 		_PNH pnhOldHandler = AfxSetNewHandler(&AfxCriticalNewHandler);
-#endif
+
 		pState->m_pmapHGDIOBJ = new CHandleMap(RUNTIME_CLASS(CGdiObject),
 			ConstructDestruct<CGdiObject>::Construct, ConstructDestruct<CGdiObject>::Destruct, 
 			offsetof(CGdiObject, m_hObject));
 
-#ifndef _AFX_PORTABLE
 		AfxSetNewHandler(pnhOldHandler);
-#endif
 		AfxEnableMemoryTracking(bEnable);
 	}
 	return pState->m_pmapHGDIOBJ;

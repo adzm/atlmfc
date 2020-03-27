@@ -31,14 +31,22 @@
 #pragma message("_WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)")
 #define _WIN32_WINNT _WIN32_WINNT_MAXVER
 #endif
-#else
-#if _WIN32_WINNT < 0x0400
-#error MFC requires _WIN32_WINNT to be #defined to 0x0400 or greater
-#endif
 #endif
 
 // SDKDDKVer.h will set any of WINVER, NTDDI_VERSION and _WIN32_IE that are yet unset.
 #include <sdkddkver.h>
+
+#if (WINVER < 0x0501)
+#error MFC does not support WINVER less than 0x0501.  Please change the definition of WINVER in your project properties or precompiled header.
+#endif
+
+#if (_WIN32_WINNT < _WIN32_WINNT_WINXP)
+#error MFC does not support _WIN32_WINNT less than _WIN32_WINNT_WINXP.  Please change the definition of _WIN32_WINNT in your project properties or precompiled header.
+#endif
+
+#if (NTDDI_VERSION < NTDDI_WINXP)
+#error MFC does not support NTDDI_VERSION less than NTDDI_WINXP.  Please change the definition of NTDDI_VERSION in your project properties or precompiled header.
+#endif
 
 // certain parts of WINDOWS.H are necessary
 #undef NOKERNEL
@@ -222,22 +230,6 @@ AFX_INLINE BOOL WINAPI DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC lpOutputFunc
 #else
 	{ return ::DrawStateA(hdc, hbr, lpOutputFunc, lData, wData, x, y, cx, cy,
 		fuFlags); }
-#endif
-#endif
-
-// Avoid mapping CStatusBar::DrawStatusText to DrawStatusText[A/W]
-#ifdef DrawStatusText
-#undef DrawStatusText
-AFX_INLINE void WINAPI AfxDrawStatusTextA(HDC hDC, LPRECT lprc, LPCTSTR szText,
-	UINT uFlags);
-AFX_INLINE void WINAPI AfxDrawStatusTextW(HDC hDC, LPRECT lprc, LPCTSTR szText,
-	UINT uFlags);
-AFX_INLINE void WINAPI DrawStatusText(HDC hDC, LPRECT lprc, LPCTSTR szText,
-	UINT uFlags) 
-#ifdef UNICODE
-	{ ::AfxDrawStatusTextW(hDC, lprc, szText, uFlags); }
-#else
-	{ ::AfxDrawStatusTextA(hDC, lprc, szText, uFlags); }
 #endif
 #endif
 

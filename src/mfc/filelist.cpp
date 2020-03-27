@@ -11,10 +11,7 @@
 #include "stdafx.h"
 #include "sal.h"
 
-#if (WINVER >= 0x0601)
 #include <ShlObj.h>
-#endif
-
 #include <AtlConv.h>
 
 /////////////////////////////////////////////////////////////////////////////
@@ -204,7 +201,6 @@ void CRecentFileList::Add(LPCTSTR lpszPathName, LPCTSTR lpszAppID)
 
 	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
 
-#if (WINVER >= 0x0601)
 	ASSERT(AfxIsValidString(lpszPathName));
 
 	Add(lpszPathName);
@@ -225,8 +221,8 @@ void CRecentFileList::Add(LPCTSTR lpszPathName, LPCTSTR lpszAppID)
 	ENSURE(SUCCEEDED(hr));
 
 	Add(psi, strAppID);
-#endif
 }
+
 void CRecentFileList::Add(IShellItem* pItem, LPCTSTR lpszAppID)
 {
 	CWinApp* pApp = AfxGetApp();
@@ -244,7 +240,6 @@ void CRecentFileList::Add(IShellItem* pItem, LPCTSTR lpszAppID)
 
 	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
 
-#if (WINVER >= 0x0601)
 	SHARDAPPIDINFO info;
 
 #ifdef UNICODE
@@ -258,7 +253,6 @@ void CRecentFileList::Add(IShellItem* pItem, LPCTSTR lpszAppID)
 
 	info.psi = pItem;
 	SHAddToRecentDocs(SHARD_APPIDINFO, &info);
-#endif
 }
 
 void CRecentFileList::Add(IShellLink* pLink, LPCTSTR lpszAppID)
@@ -278,7 +272,6 @@ void CRecentFileList::Add(IShellLink* pLink, LPCTSTR lpszAppID)
 
 	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
 
-#if (WINVER >= 0x0601)
 	SHARDAPPIDINFOLINK info;
 
 #ifdef UNICODE
@@ -295,7 +288,6 @@ void CRecentFileList::Add(IShellLink* pLink, LPCTSTR lpszAppID)
 		SHAddToRecentDocs(SHARD_LINK, &info);
 	else
 		SHAddToRecentDocs(SHARD_APPIDINFOLINK, &info);
-#endif
 }
 
 void CRecentFileList::Add(PIDLIST_ABSOLUTE pidl, LPCTSTR lpszAppID)
@@ -308,7 +300,6 @@ void CRecentFileList::Add(PIDLIST_ABSOLUTE pidl, LPCTSTR lpszAppID)
 
 	CString strAppID = lpszAppID == NULL ? _T("") : lpszAppID;
 
-#if (WINVER >= 0x0601)
 	SHARDAPPIDINFOIDLIST info;
 
 #ifdef UNICODE
@@ -322,8 +313,6 @@ void CRecentFileList::Add(PIDLIST_ABSOLUTE pidl, LPCTSTR lpszAppID)
 
 	info.pidl = pidl;
 	SHAddToRecentDocs(SHARD_APPIDINFOIDLIST, &info);
-#endif
-
 }
 
 void CRecentFileList::Remove(int nIndex)

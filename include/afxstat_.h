@@ -67,8 +67,6 @@ EXTERN_PROCESS_LOCAL(_AFX_WIN_STATE, _afxWinState)
 /////////////////////////////////////////////////////////////////////////////
 // Type library cache - AFX_INTERNAL
 
-#ifndef _AFX_NO_OLE_SUPPORT
-
 struct ITypeInfo;
 typedef __RPC_unique_pointer ITypeInfo* LPTYPEINFO;
 
@@ -99,8 +97,6 @@ protected:
 	LPTYPEINFO m_ptinfo;
 	long m_cRef;
 };
-
-#endif //!_AFX_NO_OLE_SUPPORT
 
 /////////////////////////////////////////////////////////////////////////////
 // AFX_MODULE_STATE : portion of state that is pushed/popped
@@ -151,7 +147,6 @@ public:
 	// thread-local MFC new handler (separate from C-runtime)
 	_PNH m_pfnNewHandler;
 
-#ifndef _AFX_NO_SOCKET_SUPPORT
 	// WinSock specific thread state
 	HWND m_hSocketWindow;
 #ifdef _AFXDLL
@@ -162,7 +157,6 @@ public:
 	CMapPtrToPtr* m_pmapSocketHandle;
 	CMapPtrToPtr* m_pmapDeadSockets;
 	CPtrList* m_plistSocketNotifications;
-#endif
 #endif
 
 	// common controls thread state
@@ -184,18 +178,14 @@ class CWnd;
 class CDynLinkLibrary;
 #endif
 
-#ifndef _AFX_NO_OCC_SUPPORT
 class COccManager;
 class COleControlLock;
-#endif
 
 #ifndef _AFX_NO_DAO_SUPPORT
 class _AFX_DAO_STATE;
 #endif
 
-#ifndef _AFX_NO_AFXCMN_SUPPORT
 class CComCtlWrapper;
-#endif
 class CCommDlgWrapper;
 
 class CTypeLibCacheMap : public CMapPtrToPtr
@@ -234,12 +224,11 @@ public:
 	CTypedSimpleList<CRuntimeClass*> m_classList;
 
 	// OLE object factories
-#ifndef _AFX_NO_OLE_SUPPORT
 #ifdef _AFXDLL
 	COleObjectFactory* m_pFactoryInit;
 #endif
 	CTypedSimpleList<COleObjectFactory*> m_factoryList;
-#endif
+
 	// number of locked OLE objects
 	long m_nObjectCount;
 	BOOL m_bUserCtrl;
@@ -265,22 +254,18 @@ public:
 	HINSTANCE m_appLangDLL;
 #endif
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	// OLE control container manager
 	COccManager* m_pOccManager;
 	// locked OLE controls
 	CTypedSimpleList<COleControlLock*> m_lockList;
-#endif
 
 #ifndef _AFX_NO_DAO_SUPPORT
 	_AFX_DAO_STATE* m_pDaoState;
 #endif
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// Type library caches
 	CTypeLibCache m_typeLibCache;
 	CTypeLibCacheMap* m_pTypeLibCacheMap;
-#endif
 
 	// define thread local portions of module state
 	CThreadLocal<AFX_MODULE_THREAD_STATE> m_thread;

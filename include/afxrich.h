@@ -11,10 +11,6 @@
 #ifndef __AFXRICH_H__
 #define __AFXRICH_H__
 
-#ifdef _AFX_NO_RICHEDIT_SUPPORT
-	#error Windows RichEdit classes not supported in this library variant.
-#endif
-
 #pragma once
 
 #ifndef __AFXWIN_H__

@@ -139,7 +139,7 @@ public:
 	void* PASCAL operator new(size_t nSize);
 	void PASCAL operator delete(void*);
 
-#if defined(_DEBUG) && !defined(_AFX_NO_DEBUG_CRT)
+#if defined(_DEBUG)
 	void* PASCAL operator new(size_t nSize, LPCSTR, int);
 	void PASCAL operator delete(void* pObject, LPCSTR, int);
 #endif

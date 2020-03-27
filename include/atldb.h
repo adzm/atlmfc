@@ -1106,7 +1106,7 @@ static ATL::UPROPSET* _GetPropSet( \
 	_Out_opt_ ULONG* pNumPropSets,\
 	_Out_ ULONG* pcElemPerSupported, \
 	_Inout_opt_ ATL::UPROPSET* pSet = NULL, \
-	_Out_opt_ GUID* pguidSet = NULL) \
+	_Inout_opt_ GUID* pguidSet = NULL) \
 { \
 	typedef Class _PropSetClass; \
 	USES_ATL_SAFE_ALLOCA;\
@@ -2649,6 +2649,7 @@ public:
 		return DB_E_ERRORSOCCURRED;
 	}
 
+    _Post_satisfies_(return == S_OK || return == S_FALSE)
 	_Success_(return == S_OK)
 	HRESULT	GetIndexofPropIdinPropSet(
 		_In_ ULONG iCurSet,
@@ -2871,6 +2872,7 @@ EXIT:
 	}
 ATLPREFAST_UNSUPPRESS()
 
+ATLPREFAST_SUPPRESS(6102)   
 	HRESULT	SetProperties(
 		_In_ const DWORD /*dwStatus*/,
 		_In_ const ULONG cPropertySets,
@@ -3115,6 +3117,7 @@ ATLPREFAST_UNSUPPRESS()
 
 		return S_OK;
 	}
+ATLPREFAST_UNSUPPRESS()
 
 	OUT_OF_LINE HRESULT	CopyUPropVal(
 		_In_ ULONG iPropSet,
@@ -4343,7 +4346,7 @@ EXIT:
 	OUT_OF_LINE HRESULT	GetPropValue(
 		_In_ const GUID* pguidPropSet,
 		_In_ DBPROPID dwPropId,
-		_Out_ VARIANT* pvValue)
+		_Inout_ VARIANT* pvValue)
 	{
 		HRESULT		hr = E_FAIL;
 		ULONG		iPropSet;
@@ -4629,7 +4632,7 @@ EXIT:
 		ATLASSERT((  (iPropSet < m_cUPropSet)	&& (iProp < m_pUPropSet[iPropSet].cUPropInfo) && (iProp < m_pUProp[iPropSet].cPropIds) ));
 		return m_pUPropSet[iPropSet].pUPropInfo[iProp].VarType;
 	}
-	virtual HRESULT	GetIndexofPropSet(
+	_Success_(return == S_OK) virtual HRESULT GetIndexofPropSet(
 		_In_ const GUID* pPropSet,
 		_Out_ ULONG* pulCurSet)
 	{
@@ -6074,15 +6077,18 @@ public:
 			if (ppGuid == NULL)
 				return E_OUTOFMEMORY;
 			ulPropInits = 0;
+ATLPREFAST_SUPPRESS(6386)
 			for (l=0; l<cSets; l++)
 			{
 				if (pSetTemp[l].bIsChained != true)
 					ppGuid[ulPropInits++] = pSetTemp[l].pPropSet;
 			}
-
+ATLPREFAST_UNSUPPRESS()
+ATLPREFAST_SUPPRESS(6385)
 			hr = CUtlProps<PropClass>::GetProperties(cPropertyIDSets,
 					rgPropertyIDSets, pcPropertySets, prgPropertySets,
 					ulPropInits, ppGuid);
+ATLPREFAST_UNSUPPRESS()
 		}
 		m_dwFlags &= ~ARGCHK_PROPERTIESINERROR;
 		return hr;
@@ -6130,14 +6136,17 @@ public:
 			if (ppGuid == NULL)
 				return E_OUTOFMEMORY;
 			ulPropInits = 0;
+ATLPREFAST_SUPPRESS(6386)
 			for (l=0; l<cSets; l++)
 			{
 				if (pSetTemp[l].bIsChained != true)
 					ppGuid[ulPropInits++] = pSetTemp[l].pPropSet;
 			}
-
+ATLPREFAST_UNSUPPRESS()
+ATLPREFAST_SUPPRESS(6385)
 			hr = CUtlProps<PropClass>::SetProperties(0, cPropertySets,
 					rgPropertySets, ulPropInits, ppGuid);
+ATLPREFAST_UNSUPPRESS()
 		}
 		return hr;
 	}
@@ -6604,7 +6613,9 @@ public:
 		if (dwAccessorFlags > 0x000F)
 			return DB_E_BADACCESSORFLAGS;
 		CAutoPtr<BindType> pBind;
+ATLPREFAST_SUPPRESS(6001)
 		ATLTRY(pBind . Attach ( new BindType ) )
+ATLPREFAST_UNSUPPRESS()
 		if (pBind == NULL)
 		{
 			ATLTRACE(atlTraceDBProvider, 0, _T("Failed to allocate ATL Binding struct\n"));
@@ -6747,6 +6758,7 @@ public:
 					continue;
 				}
 			}
+
 		}
 		return hr;
 	}
@@ -6846,11 +6858,9 @@ public:
 		for (DBCOUNTITEM iBinding = 0; iBinding < cBindings; iBinding++)
 		{
 			const DBBINDING& rBindCur = rgBindings[iBinding];
-			DBORDINAL iOrdAdjusted;
-			if (bHasBookmarks)
-				iOrdAdjusted = rBindCur.iOrdinal;	// Bookmarks start with ordinal 0
-			else
-				iOrdAdjusted = rBindCur.iOrdinal - 1; // Non-bookmarks start w/ ordinal 1
+			// Bookmarks start with ordinal 0, non-bookmarks start w/ ordinal 1
+			DBORDINAL iOrdAdjusted = bHasBookmarks ? rBindCur.iOrdinal : rBindCur.iOrdinal - 1;
+
 			if (rBindCur.iOrdinal > cCols)
 			{
 				hr = DB_E_ERRORSOCCURRED;
@@ -6951,6 +6961,7 @@ public:
 		bHasBookmarks = (hrLocal == S_OK &&  varBookmarks.boolVal != ATL_VARIANT_FALSE);
 
 		hr = ValidateBindings(cBindings, rgBindings, rgStatus, bHasBookmarks);
+
 		if (FAILED(hr))
 			return hr;
 		if (!m_bIsCommand)

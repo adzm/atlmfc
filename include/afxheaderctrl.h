@@ -76,8 +76,7 @@ protected:
 	afx_msg void OnCancelMode();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnMouseLeave();
-	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
-
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
 	DECLARE_MESSAGE_MAP()
 
 	void CommonInit();

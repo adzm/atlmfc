@@ -23,6 +23,9 @@
 #include <atldef.h>
 #include <windows.h>
 #include <ole2.h>
+#ifdef _ATL_USE_WINAPI_FAMILY_PHONE_APP
+#include <oleauto.h>
+#endif // _ATL_USE_WINAPI_FAMILY_PHONE_APP
 
 #include <limits.h>
 #include <tchar.h>
@@ -31,10 +34,6 @@
 #include <atlchecked.h>
 #include <atlsimpcoll.h>
 #include <atlwinverapi.h>
-
-#if _WIN32_WINNT < 0x0403
-#error This file requires _WIN32_WINNT to be #defined at least to 0x0403. Value 0x0501 or higher is recommended.
-#endif
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
@@ -128,11 +127,7 @@ public:
 	HRESULT Init() throw()
 	{
 		HRESULT hRes = S_OK;
-#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP) || defined(_ATL_STATIC_LIB_IMPL)
 		if (!_AtlInitializeCriticalSectionEx(&m_sec, 0, 0))
-#else
-		if (!InitializeCriticalSectionAndSpinCount(&m_sec, 0))
-#endif
 		{
 			hRes = HRESULT_FROM_WIN32(GetLastError());
 		}
@@ -639,10 +634,12 @@ inline HMODULE AtlLoadSystemLibraryUsingFullPath(_In_z_ const WCHAR *pszLibrary)
 	{
 		return(::LoadLibraryExW(pszLibrary, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32));
 	}
-#endif
+
 	// ...otherwise fall back to using LoadLibrary from the SYSTEM32 folder explicitly.
+#endif
 	WCHAR wszLoadPath[MAX_PATH+1];
-	if (::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath)) == 0)
+    UINT rc = ::GetSystemDirectoryW(wszLoadPath, _countof(wszLoadPath));
+	if (rc == 0 || rc >= _countof(wszLoadPath))
 	{
 		return NULL;
 	}

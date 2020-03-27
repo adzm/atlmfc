@@ -593,21 +593,21 @@ void COleControl::SetText(LPCTSTR pszText)
 	if (m_hWnd != NULL)
 		lResult = SendMessage(WM_SETTEXT, 0, (LPARAM)pszText);
 	else
-		lResult = OnSetText(0, (LPARAM)pszText);
+		lResult = OnSetText(pszText);
 
 	if (lResult == -1)
 		SetNotPermitted();
 }
 
-LRESULT COleControl::OnSetText(WPARAM wParam, LPARAM lParam)
+int COleControl::OnSetText(LPCTSTR lpszText)
 {
-	ASSERT(lParam == 0 || AfxIsValidString((LPCTSTR)lParam));
+	ASSERT(lpszText == 0 || AfxIsValidString(lpszText));
 
 	CString str = InternalGetText();
 
 	// Is the property changing?
-	if ((lParam == 0 && str.IsEmpty()) ||
-		(lParam != 0 && str == (LPCTSTR)lParam))
+	if ((lpszText == 0 && str.IsEmpty()) ||
+		(lpszText != 0 && str == lpszText))
 		return 0;
 
 	DWORD dwStockPropMask = GetStockPropMask();
@@ -621,11 +621,11 @@ LRESULT COleControl::OnSetText(WPARAM wParam, LPARAM lParam)
 			return -1;
 
 	LRESULT lResult = 0;
-	m_strText = (LPCTSTR)lParam;
+	m_strText = lpszText;
 	m_bModified = TRUE;
 
 	if (m_hWnd != NULL)
-		lResult = DefWindowProc(WM_SETTEXT, wParam, lParam);
+		lResult = DefWindowProc(WM_SETTEXT, 0, (LPARAM)lpszText);
 
 	OnTextChanged();
 
@@ -635,7 +635,7 @@ LRESULT COleControl::OnSetText(WPARAM wParam, LPARAM lParam)
 	if (dwStockPropMask & STOCKPROP_TEXT)
 		BoundPropertyChanged(DISPID_TEXT);
 
-	return lResult;
+	return (int)lResult;
 }
 
 void COleControl::OnTextChanged()

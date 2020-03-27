@@ -13,6 +13,12 @@
 
 
 #define new DEBUG_NEW
+
+// Forward declaration
+HRESULT GetCommCtrlVersion(
+						   _Out_ LPDWORD pdwMajor,
+						   _Out_ LPDWORD pdwMinor);
+
 #define STRING_REFRESH_OFFSET 1000000
 /////////////////////////////////////////////////////////////////////////////
 // CToolBar creation etc
@@ -125,53 +131,26 @@ AfxLoadSysColorBitmap(HINSTANCE hInst, HRSRC hRsrc, BOOL bMono)
 }
 
 
-struct AFX_DLLVERSIONINFO
-{
-		DWORD cbSize;
-		DWORD dwMajorVersion;                   // Major version
-		DWORD dwMinorVersion;                   // Minor version
-		DWORD dwBuildNumber;                    // Build number
-		DWORD dwPlatformID;                     // DLLVER_PLATFORM_*
-};
-
-typedef HRESULT (CALLBACK* AFX_DLLGETVERSIONPROC)(AFX_DLLVERSIONINFO *);
-
 int _afxComCtlVersion = -1;
 
 DWORD AFXAPI _AfxGetComCtlVersion()
 {
-	// return cached version if already determined...
-	if (_afxComCtlVersion != -1)
-		return _afxComCtlVersion;
-
-	// otherwise determine comctl32.dll version via DllGetVersion
-	HINSTANCE hInst = LoadLibraryW(L"comctl32.dll");
-	ASSERT(hInst != NULL);
-	AFX_DLLGETVERSIONPROC pfn;
-	pfn = (AFX_DLLGETVERSIONPROC)GetProcAddress(hInst, "DllGetVersion");
-	DWORD dwVersion = VERSION_WIN4;
-	if (pfn != NULL)
+	if (_afxComCtlVersion == -1)
 	{
-		AFX_DLLVERSIONINFO dvi;
-		memset(&dvi, 0, sizeof(dvi));
-		dvi.cbSize = sizeof(dvi);
-		HRESULT hr = (*pfn)(&dvi);
-		if (SUCCEEDED(hr))
-		{
-			ASSERT(dvi.dwMajorVersion <= 0xFFFF);
-			ASSERT(dvi.dwMinorVersion <= 0xFFFF);
-			dwVersion = MAKELONG(dvi.dwMinorVersion, dvi.dwMajorVersion);
-		}
+		DWORD dwMajor = 0, dwMinor = 0;
+		GetCommCtrlVersion(&dwMajor, &dwMinor);
+
+		_afxComCtlVersion = MAKELONG(dwMinor, dwMajor);
 	}
-	_afxComCtlVersion = dwVersion;
-	return dwVersion;
+
+	return _afxComCtlVersion;
 }
 
 int _afxDropDownWidth = -1;
 
 int AFXAPI _AfxGetDropDownWidth()
 {
-	// return cached version if already determined...
+	// return cached width if already determined...
 	if (_afxDropDownWidth != -1)
 		return _afxDropDownWidth;
 

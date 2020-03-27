@@ -185,10 +185,7 @@ public:
 
 	void EnableMDITabsLastActiveActivation(BOOL bLastActiveTab = TRUE)
 	{
-		if (AreMDITabs() || IsMDITabbedGroup())
-		{
-			m_wndClientArea.m_wndTab.EnableActivateLastActive(bLastActiveTab);
-		}
+		m_wndClientArea.EnableMDITabsLastActiveActivation(bLastActiveTab);
 	}
 
 	void EnablePaneMenu(BOOL bEnable, UINT uiCustomizeCmd, const CString& strCustomizeLabel, UINT uiViewToolbarsMenuEntryID,
@@ -234,7 +231,7 @@ protected:
 public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL);
-	virtual void WinHelp(DWORD dwData, UINT nCmd = HELP_CONTEXT);
+	virtual void WinHelp(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 
 protected:
@@ -315,11 +312,11 @@ protected:
 	afx_msg void OnExitSizeMove();
 	afx_msg void OnWindowNew();
 	afx_msg LRESULT OnToolbarContextMenu(WPARAM,LPARAM);
-	afx_msg LRESULT OnSetText(WPARAM wParam, LPARAM lParam);
+	afx_msg int OnSetText(LPCTSTR lpszText);
 	afx_msg LRESULT OnChangeVisualManager(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPostPreviewFrame(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnCompositionChanged();
-	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, UINT nEventData);
+	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM lEventData);
 	afx_msg void OnSysColorChange();
 	afx_msg LRESULT OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam);
 

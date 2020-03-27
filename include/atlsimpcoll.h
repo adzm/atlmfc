@@ -42,6 +42,7 @@ namespace ATL
 /////////////////////////////////////////////////////////////////////////////
 // Collection helpers - CSimpleArray & CSimpleMap
 
+ATLPREFAST_SUPPRESS(6319)
 // template class helpers with functions for comparing elements
 // override if using complex types without operator==
 template <class T>
@@ -55,6 +56,7 @@ public:
 		return (t1 == t2);
 	}
 };
+ATLPREFAST_UNSUPPRESS()
 
 template <class T>
 class CSimpleArrayEqualHelperFalse

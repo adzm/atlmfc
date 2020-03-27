@@ -23,7 +23,6 @@ static BOOL _afxMemoryLeakDump = TRUE;
 /////////////////////////////////////////////////////////////////////////////
 // _AFX_DEBUG_STATE implementation
 
-#ifndef _AFX_NO_DEBUG_CRT
 static _CRT_DUMP_CLIENT pfnOldCrtDumpClient = NULL;
 
 
@@ -35,11 +34,9 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 	CObject* pObject = (CObject*)pvData;
 	bool fCLRPresent=(::GetModuleHandleW(L"mscoree.dll")!=NULL);
 
-#ifndef _AFX_PORTABLE
 	// use SEH (structured exception handling) to catch even GPFs
 	//  that result from partially valid objects.
 	__try
-#endif
 	{
 		if(fCLRPresent) 
 		{
@@ -74,14 +71,12 @@ void __cdecl _AfxCrtDumpClient(void * pvData, size_t nBytes)
 			afxDump << sz;
 		}
 	}
-#ifndef _AFX_PORTABLE
 	__except(EXCEPTION_ACCESS_VIOLATION == GetExceptionCode())
 	{
 		// short form for trashed objects
 		sprintf_s(sz, _countof(sz), "faulted while dumping object at $%p, %u bytes long\n", pvData, nBytes);
 		afxDump << sz;
 	}
-#endif
 
 	if (pfnOldCrtDumpClient != NULL)
 		(*pfnOldCrtDumpClient)(pvData, nBytes);
@@ -108,22 +103,18 @@ int __cdecl _AfxCrtReportHook(int nRptType, _In_ char *szMsg, int* pResult)
 	//Allow other report hooks to be called.
 	return FALSE;
 }
-#endif // _AFX_NO_DEBUG_CRT
 
 _AFX_DEBUG_STATE::_AFX_DEBUG_STATE()
 {
-#ifndef _AFX_NO_DEBUG_CRT
 	ASSERT(pfnOldCrtDumpClient == NULL);
 	pfnOldCrtDumpClient = _CrtSetDumpClient(_AfxCrtDumpClient);
 
 	ASSERT(_CrtSetReportHook2(_CRT_RPTHOOK_INSTALL,_AfxCrtReportHook) != -1);
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_WNDW);
-#endif // _AFX_NO_DEBUG_CRT
 }
 
 _AFX_DEBUG_STATE::~_AFX_DEBUG_STATE()
 {
-#ifndef _AFX_NO_DEBUG_CRT
 	if (_afxMemoryLeakDump)
 		_CrtDumpMemoryLeaks();
 	int nOldState = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
@@ -131,7 +122,6 @@ _AFX_DEBUG_STATE::~_AFX_DEBUG_STATE()
 
 	ASSERT(_CrtSetReportHook2(_CRT_RPTHOOK_REMOVE,_AfxCrtReportHook) != -1);	
 	_CrtSetDumpClient(pfnOldCrtDumpClient);
-#endif // _AFX_NO_DEBUG_CRT
 }
 
 #pragma warning(disable: 4074)

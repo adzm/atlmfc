@@ -255,6 +255,344 @@ void CMFCRibbonContextCaption::OnLButtonUp(CPoint /*point*/)
 	}
 }
 
+int CMFCRibbonContextCaption::GetContextCategoryCount()
+{
+	ASSERT_VALID(this);
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return 0;
+	}
+
+	int nCount = 0;
+	for (int i = 0; i < m_pRibbonBar->GetCategoryCount(); i++)
+	{
+		CMFCRibbonCategory* pCategory = m_pRibbonBar->GetCategory(i);
+		if (pCategory != NULL)
+		{
+			ASSERT_VALID(pCategory);
+
+			if (pCategory->GetContextID() == m_uiID && pCategory->IsVisible())
+			{
+				nCount++;
+			}
+		}
+	}
+
+	return nCount;
+}
+
+BOOL CMFCRibbonContextCaption::OnSetAccData(long lVal)
+{
+	ASSERT_VALID(this);
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return FALSE;
+	}
+
+	CArray<CMFCRibbonCategory*,CMFCRibbonCategory*> arCategories;
+	GetContextCategories(arCategories);
+
+	int nIndex = lVal - 1;
+	if (nIndex >= 0 && nIndex < (int)arCategories.GetSize())
+	{
+		CMFCRibbonCategory* pCategory = arCategories[nIndex];
+		if (pCategory != NULL)
+		{
+			ASSERT_VALID(pCategory);
+			
+			CMFCRibbonTab* pTab = pCategory->GetTab();
+			if (pTab != NULL)
+			{
+				ASSERT_VALID(pTab);
+				return pTab->SetACCData(m_pRibbonBar, m_AccData);
+			}
+		}
+	}
+
+	return FALSE;
+}
+
+void CMFCRibbonContextCaption::GetContextCategories(CArray<CMFCRibbonCategory*,CMFCRibbonCategory*>& arCategories)
+{
+	ASSERT_VALID(this);
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	for (int i = 0; i < m_pRibbonBar->GetCategoryCount(); i++)
+	{
+		CMFCRibbonCategory* pCategory = m_pRibbonBar->GetCategory(i);
+		if (pCategory != NULL)
+		{
+			ASSERT_VALID(pCategory);
+
+			if (pCategory->GetContextID() == m_uiID && pCategory->IsVisible())
+			{
+				arCategories.Add(pCategory);
+			}
+		}
+	}
+}
+
+int CMFCRibbonContextCaption::GetContextCaptionIndex(CMFCRibbonContextCaption* pContextCaption)
+{
+	ASSERT_VALID(this);
+	ASSERT_VALID(pContextCaption);
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return -1;
+	}
+
+	CArray<CMFCRibbonContextCaption*, CMFCRibbonContextCaption*> arCaptions;
+	m_pRibbonBar->GetVisibleContextCaptions(arCaptions);
+
+	for (int i = 0; i < (int)arCaptions.GetSize(); i++)
+	{
+		if (arCaptions[i] == pContextCaption)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+BOOL CMFCRibbonContextCaption::SetACCData(CWnd* pParent, CAccessibilityData& data)
+{
+	CMFCRibbonButton::SetACCData(pParent, data);
+
+	data.m_nAccRole = ROLE_SYSTEM_PUSHBUTTON;
+	data.m_bAccState = STATE_SYSTEM_NORMAL;
+
+	return TRUE;
+}
+
+HRESULT CMFCRibbonContextCaption::get_accParent(IDispatch **ppdispParent)
+{
+	if (!ppdispParent)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispParent = NULL;
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	LPDISPATCH lpDispatch = m_pRibbonBar->GetAccessibleDispatch();
+	if (lpDispatch != NULL)
+	{
+		*ppdispParent =  lpDispatch;
+		return S_OK;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonContextCaption::get_accChildCount(long *pcountChildren)
+{
+	if (!pcountChildren)
+	{
+		return E_INVALIDARG;
+	}
+
+	int count = GetContextCategoryCount();
+
+	*pcountChildren = count; 
+	return S_OK;
+}
+
+HRESULT CMFCRibbonContextCaption::accDoDefaultAction(VARIANT varChild)
+{
+	if (varChild.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	CArray<CMFCRibbonCategory*,CMFCRibbonCategory*> arCategories;
+	GetContextCategories(arCategories);
+
+	if (varChild.lVal == CHILDID_SELF && (int)arCategories.GetSize() > 0)
+	{
+		CMFCRibbonCategory* pCategory = arCategories[0];
+		if (pCategory != NULL && pCategory->GetTab() != NULL)
+		{
+			pCategory->GetTab()->OnAccDefaultAction();
+			return S_OK;
+		}
+	}
+
+	if (varChild.lVal != CHILDID_SELF)
+	{
+		int nIndex = (int)varChild.lVal - 1;
+		if (nIndex < 0 || nIndex >= (int)arCategories.GetSize())
+		{
+			return E_INVALIDARG;
+		}
+
+		CMFCRibbonCategory* pCategory = arCategories[nIndex];
+		if (pCategory != NULL && pCategory->GetTab() != NULL)
+		{
+			pCategory->GetTab()->OnAccDefaultAction();
+			return S_OK;
+		}
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonContextCaption::accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt)
+{
+	pvarEndUpAt->vt = VT_EMPTY;
+
+	if (varStart.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	CArray<CMFCRibbonCategory*,CMFCRibbonCategory*> arCategories;
+	GetContextCategories(arCategories);
+
+	switch (navDir)
+	{
+	case NAVDIR_FIRSTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = 1;
+			return S_OK;	
+		}
+		break;
+
+	case NAVDIR_LASTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = (long)arCategories.GetSize();
+			return S_OK;
+		}
+		break;
+
+	case NAVDIR_NEXT:
+	case NAVDIR_RIGHT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal + 1;
+			if (pvarEndUpAt->lVal > (long)arCategories.GetSize())
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+			return S_OK;
+		}
+		else
+		{
+			CArray<CMFCRibbonContextCaption*, CMFCRibbonContextCaption*> arCaptions;
+			m_pRibbonBar->GetVisibleContextCaptions(arCaptions);
+
+			int nIndex = GetContextCaptionIndex(this) + 1;
+			if (nIndex < (int)arCaptions.GetSize())
+			{
+				CMFCRibbonContextCaption* pCaption = arCaptions[nIndex];
+				if (pCaption != NULL)
+				{
+					ASSERT_VALID(pCaption);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pCaption->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+
+			CMFCRibbonTabsGroup* pTabs = m_pRibbonBar->GetTabs();
+			if (pTabs != NULL)
+			{
+				ASSERT_VALID(pTabs);
+
+				pvarEndUpAt->vt = VT_DISPATCH;
+				pvarEndUpAt->pdispVal = pTabs->GetIDispatch(TRUE);
+
+				return S_OK;
+			}
+		}
+		break;
+
+	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal - 1;
+
+			if (pvarEndUpAt->lVal <= 0)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+
+			return S_OK;
+		}
+		else
+		{
+			CArray<CMFCRibbonContextCaption*, CMFCRibbonContextCaption*> arCaptions;
+			m_pRibbonBar->GetVisibleContextCaptions(arCaptions);
+
+			int nIndex = GetContextCaptionIndex (this) - 1;
+			if (nIndex > 0)
+			{
+				CMFCRibbonContextCaption* pCaption = arCaptions[nIndex];
+				if (pCaption != NULL)
+				{
+					ASSERT_VALID(pCaption);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pCaption->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+
+			if (m_pRibbonBar->GetQuickAccessToolbar() != NULL && m_pRibbonBar->GetQuickAccessToolbar()->IsVisible())
+			{
+				pvarEndUpAt->vt = VT_DISPATCH;
+				pvarEndUpAt->pdispVal = m_pRibbonBar->GetQuickAccessToolbar()->GetIDispatch(TRUE);
+
+				return S_OK;
+			}
+			else
+			{
+				CMFCRibbonApplicationButton* pMainButton = m_pRibbonBar->GetApplicationButton();
+				if (pMainButton != NULL)
+				{
+					ASSERT_VALID(pMainButton);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pMainButton->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
+
 IMPLEMENT_DYNCREATE(CMFCRibbonApplicationButton, CMFCRibbonButton);
 
 //////////////////////////////////////////////////////////////////////
@@ -533,6 +871,73 @@ BOOL CMFCRibbonApplicationButton::OnKey(BOOL bIsMenuKey)
 	return FALSE;
 }
 
+BOOL CMFCRibbonApplicationButton::SetACCData(CWnd* pParent, CAccessibilityData& data)
+{
+	CMFCRibbonButton::SetACCData(pParent, data);
+
+	data.m_strAccName = m_strText.IsEmpty() ? _T("Application menu") : m_strText;
+	data.m_nAccRole = ROLE_SYSTEM_BUTTONDROPDOWNGRID;
+	data.m_bAccState = STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_HASPOPUP;;
+	
+	return TRUE;
+}
+
+HRESULT CMFCRibbonApplicationButton::get_accParent(IDispatch **ppdispParent)
+{
+	if (!ppdispParent)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispParent = NULL;
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	LPDISPATCH lpDispatch = m_pRibbonBar->GetAccessibleDispatch();
+	if (lpDispatch != NULL)
+	{
+		*ppdispParent =  lpDispatch;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonApplicationButton::accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt)
+{
+	pvarEndUpAt->vt = VT_EMPTY;
+
+	if (varStart.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	switch(navDir)
+	{
+	case NAVDIR_NEXT:
+	case NAVDIR_RIGHT:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			if (m_pRibbonBar->m_QAToolbar.IsVisible())
+			{
+				pvarEndUpAt->vt = VT_DISPATCH;
+				pvarEndUpAt->pdispVal = m_pRibbonBar->m_QAToolbar.GetIDispatch(TRUE);
+
+				return S_OK;
+			}
+		}
+	}
+
+	return S_FALSE;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CMFCRibbonBar
 
@@ -589,6 +994,8 @@ CMFCRibbonBar::CMFCRibbonBar(BOOL bReplaceFrameCaption) : m_bReplaceFrameCaption
 	m_bWindows7Look = FALSE;
 
 	m_bQuickAccessToolbarOnTop = TRUE;
+	m_bSingleLevelAccessibilityMode = FALSE;
+
 	EnableActiveAccessibility();
 }
 
@@ -596,13 +1003,13 @@ CMFCRibbonBar::~CMFCRibbonBar()
 {
 	int i = 0;
 
-	for (i = 0; i < m_arCategories.GetSize(); i++)
+	for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arCategories [i]);
 		delete m_arCategories [i];
 	}
 
-	for (i = 0; i < m_arContextCaptions.GetSize(); i++)
+	for (i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arContextCaptions [i]);
 		delete m_arContextCaptions [i];
@@ -642,8 +1049,8 @@ BEGIN_MESSAGE_MAP(CMFCRibbonBar, CPane)
 	ON_WM_SETFOCUS()
 	ON_WM_KILLFOCUS()
 	ON_WM_SHOWWINDOW()
-	ON_MESSAGE(WM_SETFONT, &CMFCRibbonBar::OnSetFont)
-	ON_MESSAGE(WM_GETFONT, &CMFCRibbonBar::OnGetFont)
+	ON_WM_SETFONT()
+	ON_WM_GETFONT()
 	ON_WM_MOUSELEAVE()
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCRibbonBar::OnNeedTipText)
 	ON_REGISTERED_MESSAGE(AFX_WM_UPDATETOOLTIPS, &CMFCRibbonBar::OnUpdateToolTips)
@@ -821,7 +1228,7 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 
 		if (m_bRecalcCategoryHeight)
 		{
-			for (int i = 0; i < m_arCategories.GetSize(); i++)
+			for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 			{
 				CMFCRibbonCategory* pCategory = m_arCategories [i];
 				ASSERT_VALID(pCategory);
@@ -894,6 +1301,7 @@ int CMFCRibbonBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	m_QAToolbar.m_pRibbonBar = this;
+	m_Tabs.m_pRibbonBar = this;
 
 	return 0;
 }
@@ -1048,6 +1456,11 @@ CMFCRibbonCategory* CMFCRibbonBar::AddCategory(LPCTSTR lpszName, UINT uiSmallIma
 	m_bRecalcCategoryHeight = TRUE;
 	m_bRecalcCategoryWidth = TRUE;
 
+	if (!m_bSingleLevelAccessibilityMode)
+	{
+		m_Tabs.UpdateTabs(m_arCategories);
+	}
+
 	return pCategory;
 }
 
@@ -1071,13 +1484,13 @@ CMFCRibbonCategory* CMFCRibbonBar::AddContextCategory(LPCTSTR lpszName, LPCTSTR 
 
 	CMFCRibbonContextCaption* pCaption = NULL;
 
-	for (int i = 0; i < m_arContextCaptions.GetSize(); i++)
+	for (int i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arContextCaptions [i]);
 
 		if (m_arContextCaptions [i]->m_uiID == uiContextID)
 		{
-			pCaption = m_arContextCaptions [i];
+			pCaption = m_arContextCaptions[i];
 			pCaption->m_strText = lpszContextName;
 			pCaption->m_Color = clrContext;
 			break;
@@ -1140,7 +1553,7 @@ BOOL CMFCRibbonBar::SetActiveCategory(CMFCRibbonCategory* pActiveCategory, BOOL 
 		m_pActiveCategory->SetActive(FALSE);
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -1219,7 +1632,7 @@ int CMFCRibbonBar::FindCategoryIndexByData(DWORD dwData) const
 {
 	ASSERT_VALID(this);
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -1245,9 +1658,9 @@ int CMFCRibbonBar::GetVisibleCategoryCount() const
 
 	int nCount = 0;
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
-		CMFCRibbonCategory* pCategory = m_arCategories [i];
+		CMFCRibbonCategory* pCategory = m_arCategories[i];
 		ASSERT_VALID(pCategory);
 
 		if (pCategory->IsVisible())
@@ -1263,7 +1676,7 @@ CMFCRibbonCategory* CMFCRibbonBar::GetCategory(int nIndex) const
 {
 	ASSERT_VALID(this);
 
-	if (nIndex < 0 || nIndex >= m_arCategories.GetSize())
+	if (nIndex < 0 || nIndex >= (int)m_arCategories.GetSize())
 	{
 		ASSERT(FALSE);
 		return NULL;
@@ -1277,7 +1690,7 @@ int CMFCRibbonBar::GetCategoryIndex(CMFCRibbonCategory* pCategory) const
 	ASSERT_VALID(this);
 	ASSERT_VALID(pCategory);
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		if (m_arCategories [i] == pCategory)
 		{
@@ -1292,7 +1705,7 @@ void CMFCRibbonBar::ShowCategory(int nIndex, BOOL bShow/* = TRUE*/)
 {
 	ASSERT_VALID(this);
 
-	if (nIndex < 0 || nIndex >= m_arCategories.GetSize())
+	if (nIndex < 0 || nIndex >= (int)m_arCategories.GetSize())
 	{
 		ASSERT(FALSE);
 		return;
@@ -1317,7 +1730,7 @@ void CMFCRibbonBar::ShowContextCategories(UINT uiContextID, BOOL bShow/* = TRUE*
 	BOOL bChangeActiveCategory = FALSE;
 	int i = 0;
 
-	for (i = 0; i < m_arCategories.GetSize(); i++)
+	for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -1335,7 +1748,7 @@ void CMFCRibbonBar::ShowContextCategories(UINT uiContextID, BOOL bShow/* = TRUE*
 
 	if (bChangeActiveCategory)
 	{
-		for (i = 0; i < m_arCategories.GetSize(); i++)
+		for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 		{
 			CMFCRibbonCategory* pCategory = m_arCategories [i];
 			ASSERT_VALID(pCategory);
@@ -1361,7 +1774,7 @@ BOOL CMFCRibbonBar::ActivateContextCategory(UINT uiContextID)
 		return FALSE;
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -1384,7 +1797,7 @@ BOOL CMFCRibbonBar::HideAllContextCategories()
 	BOOL bChangeActiveCategory = FALSE;
 	int i = 0;
 
-	for (i = 0; i < m_arCategories.GetSize(); i++)
+	for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -1416,7 +1829,7 @@ BOOL CMFCRibbonBar::HideAllContextCategories()
 
 	if (bChangeActiveCategory)
 	{
-		for (i = 0; i < m_arCategories.GetSize(); i++)
+		for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 		{
 			CMFCRibbonCategory* pCategory = m_arCategories [i];
 			ASSERT_VALID(pCategory);
@@ -1468,7 +1881,7 @@ BOOL CMFCRibbonBar::RemoveCategory(int nIndex)
 {
 	ASSERT_VALID(this);
 
-	if (nIndex < 0 || nIndex >= m_arCategories.GetSize())
+	if (nIndex < 0 || nIndex >= (int)m_arCategories.GetSize())
 	{
 		return FALSE;
 	}
@@ -1492,7 +1905,7 @@ BOOL CMFCRibbonBar::RemoveCategory(int nIndex)
 		}
 		else
 		{
-			nIndex = min(nIndex, (int) m_arCategories.GetSize() - 1);
+			nIndex = min(nIndex, (int)m_arCategories.GetSize() - 1);
 
 			m_pActiveCategory = m_arCategories [nIndex];
 			ASSERT_VALID(m_pActiveCategory);
@@ -1501,7 +1914,7 @@ BOOL CMFCRibbonBar::RemoveCategory(int nIndex)
 			{
 				m_pActiveCategory = NULL;
 
-				for (int i = 0; i < m_arCategories.GetSize(); i++)
+				for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 				{
 					CMFCRibbonCategory* pCurrCategory = m_arCategories [i];
 					ASSERT_VALID(pCurrCategory);
@@ -1521,6 +1934,11 @@ BOOL CMFCRibbonBar::RemoveCategory(int nIndex)
 		}
 	}
 
+	if (!m_bSingleLevelAccessibilityMode)
+	{
+		m_Tabs.UpdateTabs(m_arCategories);
+	}
+
 	return TRUE;
 }
 
@@ -1530,13 +1948,13 @@ void CMFCRibbonBar::RemoveAllCategories()
 
 	int i = 0;
 
-	for (i = 0; i < m_arCategories.GetSize(); i++)
+	for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arCategories [i]);
 		delete m_arCategories [i];
 	}
 
-	for (i = 0; i < m_arContextCaptions.GetSize(); i++)
+	for (i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arContextCaptions [i]);
 		delete m_arContextCaptions [i];
@@ -1548,16 +1966,15 @@ void CMFCRibbonBar::RemoveAllCategories()
 	m_pActiveCategory = NULL;
 }
 
-LRESULT CMFCRibbonBar::OnSetFont(WPARAM wParam, LPARAM /*lParam*/)
+void CMFCRibbonBar::OnSetFont(CFont* pFont, BOOL /*bRedraw*/)
 {
-	m_hFont = (HFONT) wParam;
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 	ForceRecalcLayout();
-	return 0;
 }
 
-LRESULT CMFCRibbonBar::OnGetFont(WPARAM, LPARAM)
+HFONT CMFCRibbonBar::OnGetFont()
 {
-	return(LRESULT)(m_hFont != NULL ? m_hFont :(HFONT) GetGlobalData()->fontRegular);
+	return m_hFont != NULL ? m_hFont : (HFONT)GetGlobalData()->fontRegular.GetSafeHandle();
 }
 
 void CMFCRibbonBar::OnPaint()
@@ -1614,7 +2031,7 @@ void CMFCRibbonBar::OnPaint()
 			}
 		}
 
-		for (i = 0; i < m_arContextCaptions.GetSize(); i++)
+		for (i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
 		{
 			ASSERT_VALID(m_arContextCaptions [i]);
 			m_arContextCaptions [i]->OnDraw(pDC);
@@ -1660,7 +2077,7 @@ void CMFCRibbonBar::OnPaint()
 
 	COLORREF clrTextTabs = CMFCVisualManager::GetInstance()->OnDrawRibbonTabsFrame(pDC, this, rectTabs);
 
-	for (i = 0; i < m_arCategories.GetSize(); i++)
+	for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -1995,7 +2412,7 @@ BOOL CMFCRibbonBar::OnMouseWheel(UINT /*nFlags*/, short zDelta, CPoint /*pt*/)
 
 	int nActiveCategoryIndex = -1;
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -2022,9 +2439,9 @@ BOOL CMFCRibbonBar::OnMouseWheel(UINT /*nFlags*/, short zDelta, CPoint /*pt*/)
 		nActiveCategoryIndex = 0;
 	}
 
-	if (nActiveCategoryIndex >= m_arCategories.GetSize())
+	if (nActiveCategoryIndex >= (int)m_arCategories.GetSize())
 	{
-		nActiveCategoryIndex = (int) m_arCategories.GetSize() - 1;
+		nActiveCategoryIndex = (int)m_arCategories.GetSize() - 1;
 	}
 
 	CMFCRibbonCategory* pNewActiveCategory = m_arCategories [nActiveCategoryIndex];
@@ -2053,7 +2470,7 @@ BOOL CMFCRibbonBar::OnMouseWheel(UINT /*nFlags*/, short zDelta, CPoint /*pt*/)
 		{
 			nActiveCategoryIndex++;
 
-			while (nActiveCategoryIndex <(int) m_arCategories.GetSize())
+			while (nActiveCategoryIndex < (int)m_arCategories.GetSize())
 			{
 				pNewActiveCategory = m_arCategories [nActiveCategoryIndex];
 				ASSERT_VALID(pNewActiveCategory);
@@ -2187,7 +2604,7 @@ void CMFCRibbonBar::RecalcLayout()
 
 	const int nCaptionTextWidth = dc.GetTextExtent(strCaption).cx;
 
-	for (i = 0; i < m_arContextCaptions.GetSize(); i++)
+	for (i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arContextCaptions [i]);
 		m_arContextCaptions [i]->SetRect(CRect(0, 0, 0, 0));
@@ -2432,9 +2849,11 @@ void CMFCRibbonBar::RecalcLayout()
 			BOOL bIsFirstContextTab = TRUE;
 			BOOL bCaptionOnRight = FALSE;
 
+			m_Tabs.m_rect.SetRect(x,  yTabTop, cxTabsArea, yTabBottom);
+
 			int cxTabs = 0;
 
-			for (i = 0; i < m_arCategories.GetSize(); i++)
+			for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 			{
 				CMFCRibbonCategory* pCategory = m_arCategories [i];
 				ASSERT_VALID(pCategory);
@@ -2458,7 +2877,7 @@ void CMFCRibbonBar::RecalcLayout()
 						// for category caption width, add extra space:
 						BOOL bIsSingle = TRUE;
 
-						for (int j = 0; j < m_arCategories.GetSize(); j++)
+						for (int j = 0; j < (int)m_arCategories.GetSize(); j++)
 						{
 							CMFCRibbonCategory* pCategoryNext = m_arCategories [j];
 							ASSERT_VALID(pCategoryNext);
@@ -2497,7 +2916,7 @@ void CMFCRibbonBar::RecalcLayout()
 
 			BOOL bNoSpace = cxTabs > cxTabsArea;
 
-			for (i = 0; i < m_arCategories.GetSize(); i++)
+			for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 			{
 				CMFCRibbonCategory* pCategory = m_arCategories [i];
 				ASSERT_VALID(pCategory);
@@ -2684,6 +3103,11 @@ void CMFCRibbonBar::RecalcLayout()
 	}
 
 	UpdateToolTipsRect();
+
+	if (!m_bSingleLevelAccessibilityMode)
+	{
+		m_Tabs.UpdateTabs(m_arCategories);
+	}
 }
 
 void CMFCRibbonBar::OnFillBackground(CDC* pDC, CRect rectClient)
@@ -2749,7 +3173,7 @@ CMFCRibbonBaseElement* CMFCRibbonBar::HitTest(CPoint point, BOOL bCheckActiveCat
 	}
 
 	// Check for context captions:
-	for (i = 0; i < m_arContextCaptions.GetSize(); i++)
+	for (i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arContextCaptions [i]);
 
@@ -2760,7 +3184,7 @@ CMFCRibbonBaseElement* CMFCRibbonBar::HitTest(CPoint point, BOOL bCheckActiveCat
 	}
 
 	// Check for tabs:
-	for (i = 0; i < m_arCategories.GetSize(); i++)
+	for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -2918,7 +3342,7 @@ CMFCRibbonBaseElement* CMFCRibbonBar::FindByID(UINT uiCmdID, BOOL bVisibleOnly, 
 		}
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -2955,7 +3379,7 @@ CMFCRibbonBaseElement* CMFCRibbonBar::FindByData(DWORD_PTR dwData, BOOL bVisible
 		}
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -2988,7 +3412,7 @@ void CMFCRibbonBar::GetElementsByID(UINT uiCmdID, CArray<CMFCRibbonBaseElement*,
 		m_pMainCategory->GetElementsByID(uiCmdID, arButtons);
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -3015,7 +3439,7 @@ BOOL CMFCRibbonBar::SetElementKeys(UINT uiCmdID, LPCTSTR lpszKeys, LPCTSTR lpszM
 		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
 		m_pMainCategory->GetElementsByID(uiCmdID, arButtons);
 
-		for (int j = 0; j < arButtons.GetSize(); j++)
+		for (int j = 0; j < (int)arButtons.GetSize(); j++)
 		{
 			ASSERT_VALID(arButtons [j]);
 			arButtons [j]->SetKeys(lpszKeys, lpszMenuKeys);
@@ -3024,7 +3448,7 @@ BOOL CMFCRibbonBar::SetElementKeys(UINT uiCmdID, LPCTSTR lpszKeys, LPCTSTR lpszM
 		}
 	}
 
-	for (i = 0; i < m_arCategories.GetSize(); i++)
+	for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -3032,7 +3456,7 @@ BOOL CMFCRibbonBar::SetElementKeys(UINT uiCmdID, LPCTSTR lpszKeys, LPCTSTR lpszM
 		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
 		pCategory->GetElementsByID(uiCmdID, arButtons);
 
-		for (int j = 0; j < arButtons.GetSize(); j++)
+		for (int j = 0; j < (int)arButtons.GetSize(); j++)
 		{
 			ASSERT_VALID(arButtons [j]);
 			arButtons [j]->SetKeys(lpszKeys, lpszMenuKeys);
@@ -3044,7 +3468,7 @@ BOOL CMFCRibbonBar::SetElementKeys(UINT uiCmdID, LPCTSTR lpszKeys, LPCTSTR lpszM
 	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
 	m_TabElements.GetElementsByID(uiCmdID, arButtons);
 
-	for (i = 0; i < arButtons.GetSize(); i++)
+	for (i = 0; i < (int)arButtons.GetSize(); i++)
 	{
 		ASSERT_VALID(arButtons [i]);
 		arButtons [i]->SetKeys(lpszKeys, lpszMenuKeys);
@@ -3061,15 +3485,16 @@ void CMFCRibbonBar::AddToTabs(CMFCRibbonBaseElement* pElement)
 	ASSERT_VALID(pElement);
 
 	pElement->SetParentRibbonBar(this);
+	pElement->m_bIsTabElement = TRUE;
 	m_TabElements.AddButton(pElement);
 
 	if (m_nSystemButtonsNum > 0)
 	{
-		// Move the new lement prior to system buttons:
-		int nSize = (int) m_TabElements.m_arButtons.GetSize() - 1;
+		// Move the new element prior to system buttons:
+		int nSize = (int)m_TabElements.m_arButtons.GetSize();
 
 		m_TabElements.m_arButtons.RemoveAt(nSize - 1);
-		m_TabElements.m_arButtons.InsertAt(nSize - m_nSystemButtonsNum, pElement);
+		m_TabElements.m_arButtons.InsertAt(nSize - m_nSystemButtonsNum - 1, pElement);
 	}
 }
 
@@ -3079,7 +3504,7 @@ void CMFCRibbonBar::RemoveAllFromTabs()
 
 	if (m_nSystemButtonsNum > 0)
 	{
-		while (m_TabElements.m_arButtons.GetSize() > m_nSystemButtonsNum)
+		while ((int)m_TabElements.m_arButtons.GetSize() > m_nSystemButtonsNum)
 		{
 			delete m_TabElements.m_arButtons [0];
 			m_TabElements.m_arButtons.RemoveAt(0);
@@ -3554,7 +3979,7 @@ BOOL CMFCRibbonBar::OnShowRibbonContextMenu(CWnd* pWnd, int x, int y, CMFCRibbon
 			ENSURE(strItem.LoadString(IDS_AFXBARRES_CUSTOMIZE_QAT_TOOLTIP));
 			menu.AppendMenu(MF_STRING, (UINT) AFX_MENU_GROUP_ID, strItem);
 
-			for (int i = 0; i < m_QAToolbar.m_DefaultState.m_arCommands.GetSize(); i++)
+			for (int i = 0; i < (int)m_QAToolbar.m_DefaultState.m_arCommands.GetSize(); i++)
 			{
 				const UINT uiCmd = m_QAToolbar.m_DefaultState.m_arCommands [i];
 
@@ -3983,7 +4408,7 @@ void CMFCRibbonBar::ForceRecalcLayout()
 		m_pMainCategory->CleanUpSizes();
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -4017,7 +4442,7 @@ void CMFCRibbonBar::SetMaximizeMode(BOOL bMax, CWnd* pWnd)
 
 	for (int i = 0; i < m_nSystemButtonsNum; i++)
 	{
-		int nSize = (int) m_TabElements.m_arButtons.GetSize();
+		int nSize = (int)m_TabElements.m_arButtons.GetSize();
 
 		delete m_TabElements.m_arButtons [nSize - 1];
 		m_TabElements.m_arButtons.SetSize(nSize - 1);
@@ -4095,7 +4520,7 @@ void CMFCRibbonBar::SetActiveMDIChild(CWnd* pWnd)
 {
 	ASSERT_VALID(this);
 
-	for (int i = 0; i < m_TabElements.m_arButtons.GetSize(); i++)
+	for (int i = 0; i < (int)m_TabElements.m_arButtons.GetSize(); i++)
 	{
 		CMFCRibbonCaptionButton* pCaptionButton = DYNAMIC_DOWNCAST(CMFCRibbonCaptionButton, m_TabElements.m_arButtons [i]);
 
@@ -4158,7 +4583,7 @@ void CMFCRibbonBar::SetPrintPreviewMode(BOOL bSet)
 
 		m_arVisibleCategoriesSaved.RemoveAll();
 
-		for (int i = 0; i < m_arCategories.GetSize(); i++)
+		for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 		{
 			CMFCRibbonCategory* pCategory = m_arCategories [i];
 			ASSERT_VALID(pCategory);
@@ -4184,7 +4609,7 @@ void CMFCRibbonBar::SetPrintPreviewMode(BOOL bSet)
 	}
 	else
 	{
-		for (int i = 0; i < m_arVisibleCategoriesSaved.GetSize(); i++)
+		for (int i = 0; i < (int)m_arVisibleCategoriesSaved.GetSize(); i++)
 		{
 			ShowCategory(m_arVisibleCategoriesSaved [i]);
 		}
@@ -4329,7 +4754,7 @@ CMFCRibbonContextCaption* CMFCRibbonBar::FindContextCaption(UINT uiID) const
 	ASSERT_VALID(this);
 	ASSERT(uiID != 0);
 
-	for (int i = 0; i < m_arContextCaptions.GetSize(); i++)
+	for (int i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
 	{
 		ASSERT_VALID(m_arContextCaptions [i]);
 
@@ -4643,7 +5068,7 @@ void CMFCRibbonBar::GetItemIDsList(CList<UINT,UINT>& lstItems, BOOL bHiddenOnly/
 		m_pMainCategory->GetItemIDsList(lstItems, FALSE);
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -4818,7 +5243,7 @@ void CMFCRibbonBar::SetKeyboardNavigationLevel(CObject* pLevel, BOOL bSetFocus)
 			m_arKeyElements.Add(new CMFCRibbonKeyTip(m_pMainButton));
 		}
 
-		for (i = 0; i < m_arCategories.GetSize(); i++)
+		for (i = 0; i < (int)m_arCategories.GetSize(); i++)
 		{
 			CMFCRibbonCategory* pCategory = m_arCategories [i];
 			ASSERT_VALID(pCategory);
@@ -4905,7 +5330,7 @@ void CMFCRibbonBar::SetKeyboardNavigationLevel(CObject* pLevel, BOOL bSetFocus)
 			}
 		}
 
-		for (i = 0; i < arElems.GetSize(); i++)
+		for (i = 0; i < (int)arElems.GetSize(); i++)
 		{
 			CMFCRibbonBaseElement* pElem = arElems [i];
 			ASSERT_VALID(pElem);
@@ -4920,53 +5345,316 @@ void CMFCRibbonBar::SetKeyboardNavigationLevel(CObject* pLevel, BOOL bSetFocus)
 	RedrawWindow();
 }
 
-BOOL CMFCRibbonBar::OnSetAccData (long lVal)
+LPDISPATCH CMFCRibbonBar::GetAccessibleDispatch()
 {
-	ASSERT_VALID (this);
+	if (m_pStdObject != NULL)
+	{
+		m_pStdObject->AddRef();
+		return m_pStdObject;
+	}
+
+	return NULL;
+}
+
+CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectByIndex(long lVal)
+{
+	if (lVal <= 0)
+	{
+		return NULL;
+	}
+
+	int nMainButtonIndex = 0;
+	if (m_pMainButton != NULL && m_pMainButton->IsVisible ())
+	{
+		nMainButtonIndex = 1;
+	}
+
+	int nQatIndex = 0;
+
+	if (m_QAToolbar.IsVisible())
+	{
+		nQatIndex = nMainButtonIndex + 1;
+	}
+
+	int nTabsIndex = nQatIndex > 0 ? nQatIndex + 1 : nMainButtonIndex + 1;
+	int nContextTabsIndex = nTabsIndex + 1;
+	int nContextCountMax = nContextTabsIndex + GetVisibleContextCaptionCount();
+	int nRealActiveCategoryIndex = nContextCountMax;
+
+	if (lVal == nMainButtonIndex)
+	{
+		return m_pMainButton;
+	}
+	
+	if (lVal == nQatIndex)
+	{
+		return &m_QAToolbar;
+	}
+
+	if (lVal == nTabsIndex)
+	{
+		return &m_Tabs;
+	}
+
+	if ((nContextTabsIndex <= lVal) && (lVal < nContextCountMax))
+	{
+		int nIndex = lVal - nContextTabsIndex;
+		
+		CArray<int, int> arCaptions;
+		GetVisibleContextCaptions(&arCaptions);
+
+		if (nIndex < 0 || nIndex >= (int)arCaptions.GetSize())
+		{
+			return NULL;
+		}
+
+		UINT nContextID = arCaptions[nIndex];
+
+		CMFCRibbonContextCaption* pCaption = FindContextCaption(nContextID);
+		if (pCaption != NULL)
+		{
+			return pCaption;
+		}		
+	}
+
+	BOOL bHideCategory = (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS);
+	if (bHideCategory)
+	{
+		nRealActiveCategoryIndex--;
+	}
+
+	// Active Category:
+	if (m_pActiveCategory != NULL && m_pActiveCategory->IsVisible() && !bHideCategory && lVal == nRealActiveCategoryIndex)
+	{
+		return m_pActiveCategory;
+	}
+
+	// TabElement
+	if (lVal > nRealActiveCategoryIndex && (lVal <= (nRealActiveCategoryIndex + m_TabElements.GetCount())))
+	{
+		int nIndex = lVal - nRealActiveCategoryIndex -1;
+
+		CMFCRibbonBaseElement* pTabElement = m_TabElements.GetButton(nIndex);
+		return pTabElement == NULL ? NULL : pTabElement;
+	}
+
+	int nMinimizeButtonIndex = nRealActiveCategoryIndex + m_TabElements.GetCount() + 1;
+	int nMaximizeButtonIndex = nMinimizeButtonIndex + 1;
+	int nCloseButtonIndex = nMaximizeButtonIndex + 1;
+
+	if (IsCaptionButtons())
+	{
+		if (lVal == nMinimizeButtonIndex)
+		{
+			return &m_CaptionButtons[0];
+		}
+
+		if (lVal == nMaximizeButtonIndex)
+		{
+			return &m_CaptionButtons[1];
+		}
+
+		if (lVal == nCloseButtonIndex)
+		{
+			return &m_CaptionButtons[2];
+		}
+	}
+	return NULL;
+}
+
+CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectFromPoint(CPoint point)
+{
+	CRect rectQAT = m_QAToolbar.GetRect();
+	if (rectQAT.PtInRect(point))
+	{
+		return &m_QAToolbar;
+	}
+
+	// Maybe MainButton
+	if (m_pMainButton != NULL)
+	{	
+		ASSERT_VALID(m_pMainButton);
+
+		if (m_pMainButton->GetRect().PtInRect(point))
+		{
+			return m_pMainButton;
+		}
+	}
+
+	// Tabs 
+	CRect rectTabs = m_Tabs.GetRect();
+	if (rectTabs.PtInRect(point))
+	{
+		return &m_Tabs;
+	}
+
+	 // Context Caption
+	int i = 0;
+
+	for (i = 0; i < (int)m_arContextCaptions.GetSize(); i++)
+	{
+		CMFCRibbonContextCaption* pCaption = m_arContextCaptions[i];
+		if (pCaption != NULL)
+		{
+			ASSERT_VALID (pCaption);
+
+			if (pCaption->GetRect().PtInRect(point))
+			{
+				return pCaption;
+			}
+		}
+	}
+
+	BOOL bHideCategory = (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS);
+
+	// Active Category
+	if (m_pActiveCategory != NULL && m_pActiveCategory->IsVisible() && !bHideCategory)
+	{
+		if (m_pActiveCategory->GetRect().PtInRect(point))
+		{
+			return m_pActiveCategory;
+		}
+	}
+
+	// Maybe TabElement on Tabs right
+	for (i = 0; i < m_TabElements.GetCount(); i++)
+	{
+		CMFCRibbonBaseElement* pTabElement = m_TabElements.GetButton(i);
+		if (pTabElement != NULL)
+		{
+			ASSERT_VALID(pTabElement);
+
+			if (pTabElement->GetRect().PtInRect(point))
+			{
+				return pTabElement;
+			}
+		}
+	}
+
+	if (IsCaptionButtons())
+	{
+		// Caption button 
+		for (i = 0; i < AFX_RIBBON_CAPTION_BUTTONS; i++)
+		{
+			if (m_CaptionButtons[i].GetRect().PtInRect(point))
+			{
+				return &m_CaptionButtons[i];	
+			}
+		}
+	}
+
+	return NULL;
+}
+
+int CMFCRibbonBar::GetAccObjectCount()
+{
+	if ((m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL) || !IsVisible())
+	{
+		return 0;	
+	}
+
+	int count = 1;
+	if (m_pMainButton != NULL && m_pMainButton->IsVisible())
+	{
+		count++;
+	}
+
+	if (m_QAToolbar.IsVisible())
+	{
+		count++;
+	}
+
+	BOOL bHideCategory = (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS);
+
+	if (m_pActiveCategory != NULL && m_pActiveCategory->IsVisible() && !bHideCategory)
+	{
+		count++;
+	}
+
+	count += m_TabElements.GetCount();
+	count += GetVisibleContextCaptionCount();
+
+	return count;
+}
+
+BOOL CMFCRibbonBar::OnSetAccData(long lVal)
+{
+	ASSERT_VALID(this);
 
 	m_AccData.Clear ();
 
-	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
-	GetVisibleElements (arButtons);
-
-	int nIndex = (int)lVal - 1;
-
-	if (nIndex < 0 || nIndex >= (int)arButtons.GetSize())
+	if (m_bSingleLevelAccessibilityMode)
 	{
-		return FALSE;
+		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+		GetVisibleElements(arButtons);
+
+		int nIndex = (int)lVal - 1;
+
+		if (nIndex < 0 || nIndex >= (int)arButtons.GetSize())
+		{
+			return FALSE;
+		}
+
+		ASSERT_VALID(arButtons[nIndex]);
+		return arButtons[nIndex]->SetACCData(this, m_AccData);
+	}
+	else
+	{
+		CMFCBaseAccessibleObject* pAccObject = AccessibleObjectByIndex(lVal);
+		if (pAccObject != NULL)
+		{
+			ASSERT_VALID(pAccObject);
+
+			pAccObject->SetACCData(this, m_AccData);
+			return S_OK;
+		}
 	}
 
-	ASSERT_VALID(arButtons[nIndex]);
-	return arButtons[nIndex]->SetACCData (this, m_AccData);
+	return S_FALSE;
 }
 
 HRESULT CMFCRibbonBar::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
 {
-	if (pvarChild == NULL)
-    {
-        return E_INVALIDARG;
-    }
+	if (!pvarChild)
+	{
+		return E_INVALIDARG;
+	}
 
 	pvarChild->vt = VT_I4;
 	pvarChild->lVal = CHILDID_SELF;
 
-	CPoint pt(xLeft, yTop);
-	ScreenToClient(&pt);
+	CPoint pt (xLeft, yTop);
+	ScreenToClient (&pt);
 
-	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
-	GetVisibleElements(arButtons);
-
-	for (int i = 0; i < (int)arButtons.GetSize (); i++)
+	if (m_bSingleLevelAccessibilityMode)
 	{
-		CMFCRibbonBaseElement* pElem = arButtons[i];
-		ASSERT_VALID(pElem);
+		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+		GetVisibleElements(arButtons);
 
-		CRect rectElem = pElem->GetRect();
-		if (rectElem.PtInRect(pt))
+		for (int i = 0; i < (int)arButtons.GetSize(); i++)
 		{
-			pvarChild->lVal = (long)i + 1;
-			pElem->SetACCData(this, m_AccData);
-			break;
+			CMFCRibbonBaseElement* pElem = arButtons[i];
+			ASSERT_VALID(pElem);
+
+			CRect rectElem = pElem->GetRect();
+			if (rectElem.PtInRect(pt))
+			{
+				pvarChild->lVal = i + 1;
+				pElem->SetACCData(this, m_AccData);
+				break;
+			}
+		}
+	}
+	else
+	{
+		CMFCBaseAccessibleObject* pAccObject = AccessibleObjectFromPoint(pt);
+		if (pAccObject != NULL)
+		{
+			ASSERT_VALID(pAccObject);
+
+			pAccObject->SetACCData(this, m_AccData);
+			pvarChild->vt = VT_DISPATCH;
+			pvarChild->pdispVal = pAccObject->GetIDispatch(TRUE);
 		}
 	}
 
@@ -4975,121 +5663,255 @@ HRESULT CMFCRibbonBar::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
 
 HRESULT CMFCRibbonBar::get_accChildCount(long *pcountChildren)
 {
-	if (pcountChildren == NULL)
-    {
-        return E_INVALIDARG;
-    }
+	if (!pcountChildren)
+	{
+		return E_INVALIDARG;
+	}
 
-	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
-	GetVisibleElements(arButtons);
+	if (m_bSingleLevelAccessibilityMode)
+	{
+		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+		GetVisibleElements(arButtons);
 
-	*pcountChildren = (long)arButtons.GetSize();
+		*pcountChildren = (int)arButtons.GetSize();
+	}
+	else
+	{
+		*pcountChildren = GetAccObjectCount();
+	}
+
+
 	return S_OK;
 }
 
-HRESULT CMFCRibbonBar::get_accChild(VARIANT /*varChild*/, IDispatch **ppdispChild)
+HRESULT CMFCRibbonBar::get_accChild(VARIANT varChild, IDispatch **ppdispChild)
 {
-	if (ppdispChild == NULL)
-    {
-        return E_INVALIDARG;
-    }
+	if (!ppdispChild)
+	{
+		return E_INVALIDARG;
+	}
 
-	return S_FALSE;
+	*ppdispChild = NULL;
+
+	if (varChild.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (!m_bSingleLevelAccessibilityMode)
+	{
+		CMFCBaseAccessibleObject* pAccObject = AccessibleObjectByIndex(varChild.lVal);
+		if (pAccObject != NULL)
+		{
+			ASSERT_VALID(pAccObject);
+			*ppdispChild = pAccObject->GetIDispatch(TRUE);
+		}
+	}
+
+	return (*ppdispChild != NULL) ? S_OK : S_FALSE;
 }
 
 HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEndUpAt)
 {
-    pvarEndUpAt->vt = VT_EMPTY;
+	pvarEndUpAt->vt = VT_EMPTY;
 
-    if (varStart.vt != VT_I4)
-    {
-        return E_INVALIDARG;
-    }
-
-	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
-	GetVisibleElements (arButtons);
-
-	switch (navDir)
-    {
-	case NAVDIR_FIRSTCHILD:
-		if (varStart.lVal == CHILDID_SELF)
-		{
-			pvarEndUpAt->vt = VT_I4;
-			pvarEndUpAt->lVal = 1;
-			return S_OK;	
-		}
-		break;
-
-	case NAVDIR_LASTCHILD:
-		if (varStart.lVal == CHILDID_SELF)
-		{
-			pvarEndUpAt->vt = VT_I4;
-			pvarEndUpAt->lVal = (long)arButtons.GetSize();
-			return S_OK;
-		}
-		break;
-
-	case NAVDIR_NEXT:   
-	case NAVDIR_RIGHT:
-		if (varStart.lVal != CHILDID_SELF)
-		{
-			pvarEndUpAt->vt = VT_I4;
-			pvarEndUpAt->lVal = varStart.lVal + 1;
-
-			if (pvarEndUpAt->lVal > arButtons.GetSize())
-			{
-				pvarEndUpAt->vt = VT_EMPTY;
-				return S_FALSE;
-			}
-			return S_OK;
-		}
-		break;
-
-   	case NAVDIR_PREVIOUS: 
-	case NAVDIR_LEFT:
-		if (varStart.lVal != CHILDID_SELF)
-		{
-			pvarEndUpAt->vt = VT_I4;
-			pvarEndUpAt->lVal = varStart.lVal - 1;
-
-			if (pvarEndUpAt->lVal <= 0)
-			{
-				pvarEndUpAt->vt = VT_EMPTY;
-				return S_FALSE;
-			}
-			return S_OK;
-		}
-		break;
+	if (varStart.vt != VT_I4)
+	{
+		return E_INVALIDARG;
 	}
 
-	return S_FALSE;
+	if (m_bSingleLevelAccessibilityMode)
+	{
+		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+		GetVisibleElements(arButtons);
+
+		switch (navDir)
+		{
+		case NAVDIR_FIRSTCHILD:
+			if (varStart.lVal == CHILDID_SELF)
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = 1;
+				return S_OK;	
+			}
+			break;
+
+		case NAVDIR_LASTCHILD:
+			if (varStart.lVal == CHILDID_SELF)
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = (int)arButtons.GetSize();
+				return S_OK;
+			}
+			break;
+
+		case NAVDIR_NEXT:   
+		case NAVDIR_RIGHT:
+			if (varStart.lVal != CHILDID_SELF)
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = varStart.lVal + 1;
+				if (pvarEndUpAt->lVal > (int)arButtons.GetSize())
+				{
+					pvarEndUpAt->vt = VT_EMPTY;
+					return S_FALSE;
+				}
+				return S_OK;
+			}
+			break;
+
+		case NAVDIR_PREVIOUS: 
+		case NAVDIR_LEFT:
+			if (varStart.lVal != CHILDID_SELF)
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = varStart.lVal - 1;
+				if (pvarEndUpAt->lVal <= 0)
+				{
+					pvarEndUpAt->vt = VT_EMPTY;
+					return S_FALSE;
+				}
+				return S_OK;
+			}
+			break;
+		}
+
+		return S_FALSE;
+	}
+	else
+	{
+		switch (navDir)
+		{
+		case NAVDIR_FIRSTCHILD:
+			if (varStart.lVal == CHILDID_SELF)
+
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = 1;
+				return S_OK;	
+			}
+			break;
+
+		case NAVDIR_LASTCHILD:
+			if (varStart.lVal == CHILDID_SELF)
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = GetAccObjectCount();
+				return S_OK;
+			}
+			break;
+
+		case NAVDIR_NEXT:   
+		case NAVDIR_RIGHT:
+			if (varStart.lVal != CHILDID_SELF)
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = varStart.lVal + 1;
+
+				if (pvarEndUpAt->lVal > GetAccObjectCount())
+				{
+					pvarEndUpAt->vt = VT_EMPTY;
+					return S_FALSE;
+				}
+				
+				return S_OK;
+			}
+			break;
+
+		case NAVDIR_PREVIOUS: 
+		case NAVDIR_LEFT:
+			if (varStart.lVal != CHILDID_SELF)
+			{
+				pvarEndUpAt->vt = VT_I4;
+				pvarEndUpAt->lVal = varStart.lVal - 1;
+
+				if (pvarEndUpAt->lVal <= 0)
+				{
+					pvarEndUpAt->vt = VT_EMPTY;
+					return S_FALSE;
+				}
+
+				return S_OK;
+			}
+			break;
+		}
+
+		return S_FALSE;
+	}
 }
 
 HRESULT CMFCRibbonBar::accDoDefaultAction(VARIANT varChild)
 {
-    if (varChild.vt != VT_I4)
-    {
-        return E_INVALIDARG;
-    }
+	if (varChild.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
 
-    if (varChild.lVal != CHILDID_SELF)
-    {
-		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
-		GetVisibleElements (arButtons);
-
-		int nIndex = (int)varChild.lVal - 1;
-		if (nIndex < 0 || nIndex >= arButtons.GetSize())
+	if (m_bSingleLevelAccessibilityMode)
+	{
+		if (varChild.lVal != CHILDID_SELF)
 		{
-			return E_INVALIDARG;
+			CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+			GetVisibleElements(arButtons);
+
+			int nIndex = (int)varChild.lVal - 1;
+			if (nIndex < 0 || nIndex >= (int)arButtons.GetSize())
+			{
+				return E_INVALIDARG;
+			}
+
+			CMFCRibbonBaseElement* pElem = arButtons[nIndex];
+			if (pElem != NULL)
+			{
+				ASSERT_VALID (pElem);
+
+				pElem->OnAccDefaultAction();
+				return S_OK;
+			}
+
 		}
+		return S_FALSE;
+	}
 
-		CMFCRibbonBaseElement* pElem = arButtons [nIndex];
-		ASSERT_VALID (pElem);
+	return S_FALSE;    
+}
 
-		pElem->OnAccDefaultAction();
-    }
+HRESULT CMFCRibbonBar::accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild)
+{
+	if (m_bSingleLevelAccessibilityMode)
+	{
+		return __super::accLocation(pxLeft, pyTop, pcxWidth, pcyHeight, varChild);
+	}
 
-    return S_OK;
+	if (!pxLeft || !pyTop || !pcxWidth || !pcyHeight)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
+	{
+		CRect rc;
+		GetWindowRect (rc);
+		
+		*pxLeft = rc.left;
+		*pyTop = rc.top;
+		*pcxWidth = rc.Width();
+		*pcyHeight = rc.Height();
+
+		return S_OK;
+	}
+
+	if (varChild.vt == VT_I4)
+	{
+		OnSetAccData(varChild.lVal);
+
+		*pxLeft = m_AccData.m_rectAccLocation.left;
+		*pyTop = m_AccData.m_rectAccLocation.top;
+		*pcxWidth = m_AccData.m_rectAccLocation.Width();
+		*pcyHeight = m_AccData.m_rectAccLocation.Height();
+	}
+
+	return S_OK;
 }
 
 void CMFCRibbonBar::OnBeforeProcessKey(int& nChar)
@@ -5105,7 +5927,7 @@ BOOL CMFCRibbonBar::ProcessKey(int nChar)
 
 	BOOL bIsMenuKey = FALSE;
 
-	for (int i = 0; i < m_arKeyElements.GetSize() && pKeyElem == NULL; i++)
+	for (int i = 0; i < (int)m_arKeyElements.GetSize() && pKeyElem == NULL; i++)
 	{
 		CMFCRibbonKeyTip* pKey = m_arKeyElements [i];
 		ASSERT_VALID(pKey);
@@ -5205,7 +6027,7 @@ void CMFCRibbonBar::RemoveAllKeys()
 
 void CMFCRibbonBar::ShowKeyTips(BOOL bRepos)
 {
-	for (int i = 0; i < m_arKeyElements.GetSize(); i++)
+	for (int i = 0; i < (int)m_arKeyElements.GetSize(); i++)
 	{
 		CMFCRibbonKeyTip* pKeyTip = m_arKeyElements [i];
 		ASSERT_VALID(pKeyTip);
@@ -5236,7 +6058,7 @@ void CMFCRibbonBar::ShowKeyTips(BOOL bRepos)
 
 void CMFCRibbonBar::HideKeyTips()
 {
-	for (int i = 0; i < m_arKeyElements.GetSize(); i++)
+	for (int i = 0; i < (int)m_arKeyElements.GetSize(); i++)
 	{
 		CMFCRibbonKeyTip* pKeyTip = m_arKeyElements [i];
 		ASSERT_VALID(pKeyTip);
@@ -5258,7 +6080,7 @@ void CMFCRibbonBar::OnRTLChanged(BOOL bIsRTL)
 	m_QAToolbar.OnRTLChanged(bIsRTL);
 	m_TabElements.OnRTLChanged(bIsRTL);
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -5561,7 +6383,7 @@ BOOL CMFCRibbonBar::NavigateRibbon(int nChar)
 
 CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNearest(CPoint pt, const CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*>& arButtons)
 {
-	for (int i = 0; i < arButtons.GetSize(); i++)
+	for (int i = 0; i < (int)arButtons.GetSize(); i++)
 	{
 		CMFCRibbonBaseElement* pElem = arButtons [i];
 		ASSERT_VALID(pElem);
@@ -5585,7 +6407,7 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 	nScroll = 0;
 	int nIndexFocused = -1;
 
-	for (int i = 0; i < arElems.GetSize(); i++)
+	for (int i = 0; i < (int)arElems.GetSize(); i++)
 	{
 		if (arElems [i] == pFocused)
 		{
@@ -5651,7 +6473,7 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 		{
 			for (int i = nIndexFocused + 1; nNewIndex < 0; i++)
 			{
-				if (i >= arElems.GetSize())
+				if (i >= (int)arElems.GetSize())
 				{
 					if (bIsScrollRightAvailable)
 					{
@@ -5761,7 +6583,7 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 
 					CRect rectInter;
 
-					for (int i = 0; i < arElems.GetSize(); i++)
+					for (int i = 0; i < (int)arElems.GetSize(); i++)
 					{
 						CMFCRibbonBaseElement* pElem = arElems [i];
 						ASSERT_VALID(pElem);
@@ -5893,7 +6715,7 @@ CMFCRibbonBaseElement* CMFCRibbonBar::GetFocused()
 		}
 	}
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		if (m_arCategories [i]->m_Tab.IsFocused())
 		{
@@ -5918,7 +6740,7 @@ void CMFCRibbonBar::GetVisibleElements(CArray<CMFCRibbonBaseElement*, CMFCRibbon
 
 	m_QAToolbar.GetVisibleElements(arButtons);
 
-	for (int i = 0; i < m_arCategories.GetSize(); i++)
+	for (int i = 0; i < (int)m_arCategories.GetSize(); i++)
 	{
 		CMFCRibbonCategory* pCategory = m_arCategories [i];
 		ASSERT_VALID(pCategory);
@@ -5987,4 +6809,77 @@ UINT CMFCRibbonBar::SaveToXMLBuffer(LPBYTE* ppBuffer) const
 	}
 
 	return nSize;
+}
+
+int CMFCRibbonBar::GetVisibleContextCaptionCount ()
+{
+	int nCount = 0;
+	UINT uiContextID = 0;
+
+	for (int i = 0; i < GetCategoryCount (); i++)
+	{
+		CMFCRibbonCategory* pCategory = GetCategory(i);
+		ASSERT_VALID(pCategory);
+
+		if (pCategory->GetContextID() != 0 && pCategory->GetContextID() != uiContextID && pCategory->IsVisible())
+		{
+			uiContextID = pCategory->GetContextID();
+			nCount++;
+		}
+	}
+
+	return nCount;
+}
+
+void CMFCRibbonBar::GetVisibleContextCaptions (CArray<int, int>* arCaptions)
+{
+	UINT uiContextID = 0;
+
+	for (int i = 0; i < GetCategoryCount (); i++)
+	{
+		CMFCRibbonCategory* pCategory = GetCategory(i);
+		ASSERT_VALID(pCategory);
+
+		if (pCategory->GetContextID() != 0 && pCategory->GetContextID() != uiContextID && pCategory->IsVisible())
+		{
+			uiContextID = pCategory->GetContextID();
+			arCaptions->Add(uiContextID);
+		}
+	}
+}
+
+void CMFCRibbonBar::GetVisibleContextCaptions (CArray<CMFCRibbonContextCaption*, CMFCRibbonContextCaption*>& arCaptions)
+{
+	UINT uiContextID = 0;
+
+	for (int i = 0; i < GetCategoryCount (); i++)
+	{
+		CMFCRibbonCategory* pCategory = GetCategory(i);
+		ASSERT_VALID(pCategory);
+
+		if (pCategory->GetContextID() != 0 && pCategory->GetContextID() != uiContextID && pCategory->IsVisible())
+		{
+			uiContextID = pCategory->GetContextID();
+
+			CMFCRibbonContextCaption* pCaption = FindContextCaption(uiContextID);
+			if (pCaption != NULL)
+			{
+				ASSERT_VALID (pCaption);
+				arCaptions.Add(pCaption);
+			}
+		}
+	}
+}
+
+BOOL CMFCRibbonBar::IsCaptionButtons ()
+{
+	for (int i = 0; i < AFX_RIBBON_CAPTION_BUTTONS; i++)
+	{
+		if (m_CaptionButtons[i].GetRect().IsRectEmpty())
+		{
+			return FALSE;
+		}
+	}
+
+	return TRUE;
 }

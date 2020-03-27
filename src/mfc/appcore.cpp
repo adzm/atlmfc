@@ -244,7 +244,14 @@ CWinApp::CWinApp(LPCTSTR lpszAppName)
 	// Detect the kind of OS:
 	OSVERSIONINFO osvi;
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+// Fix for warnings when building against WinBlue build 9444.0.130614-1739
+// warning C4996: 'GetVersionExW': was declared deprecated
+// externalapis\windows\winblue\sdk\inc\sysinfoapi.h(442)
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	::GetVersionEx(&osvi);
+#pragma warning( default : 4996 )
 
 	m_bIsWindows7 = (osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1) || (osvi.dwMajorVersion > 6);
 
@@ -928,7 +935,7 @@ HRESULT CWinApp::RegisterWithRestartManager(LPCWSTR pwzCommandLineArgs, DWORD dw
 
 	if (pRecoveryCallback != NULL)
 	{
-		// Register for application recovery (application hang or crash scenario)
+		// Register for application recovery (application stops responding or crash scenario)
 		// Note that according to MSDN, UnregisterApplicationRecoveryCallback does not need to be called on normal
 		// application shutdown, but only if the application for some reason can no longer do recovery.
 		hr = _AfxRegisterApplicationRecoveryCallback(pRecoveryCallback, lpvParam, dwPingInterval, dwCallbackFlags);

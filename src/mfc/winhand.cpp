@@ -46,7 +46,6 @@ BOOL AFXAPI AfxUnlockTempMaps(BOOL bDeleteTemps)
 			pState->m_pmapHIMAGELIST->DeleteTemp();
 		}
 
-#ifndef _AFX_PORTABLE
 		CWinApp* pApp = AfxGetApp();
 		_AFX_THREAD_STATE* pThreadState = _afxThreadState.GetDataNA();
 		if( pThreadState != NULL )
@@ -91,7 +90,6 @@ BOOL AFXAPI AfxUnlockTempMaps(BOOL bDeleteTemps)
 				AfxEnableMemoryTracking(bEnable);
 			}
 		}
-#endif  // !_AFX_PORTABLE
 	}
 
 	// return TRUE if temp maps still locked
@@ -151,9 +149,7 @@ CObject* CHandleMap::FromHandle(HANDLE h)
 	// allocation, so we turn tracing off.
 
 	BOOL bEnable = AfxEnableMemoryTracking(FALSE);
-#ifndef _AFX_PORTABLE
 	_PNH pnhOldHandler = AfxSetNewHandler(&AfxCriticalNewHandler);
-#endif
 
 	CObject* pTemp = NULL;
 	TRY
@@ -173,17 +169,13 @@ CObject* CHandleMap::FromHandle(HANDLE h)
 	}
 	CATCH_ALL(e)
 	{
-#ifndef _AFX_PORTABLE
 		AfxSetNewHandler(pnhOldHandler);
-#endif
 		AfxEnableMemoryTracking(bEnable);
 		THROW_LAST();
 	}
 	END_CATCH_ALL
 
-#ifndef _AFX_PORTABLE
 	AfxSetNewHandler(pnhOldHandler);
-#endif
 	AfxEnableMemoryTracking(bEnable);
 
 	// now set the handle in the object

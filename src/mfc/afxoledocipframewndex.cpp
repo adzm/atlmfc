@@ -229,7 +229,7 @@ void COleDocIPFrameWndEx::HtmlHelp(DWORD_PTR dwData, UINT nCmd)
 	}
 }
 
-void COleDocIPFrameWndEx::WinHelp(DWORD dwData, UINT nCmd)
+void COleDocIPFrameWndEx::WinHelp(DWORD_PTR dwData, UINT nCmd)
 {
 	if (dwData > 0 || !m_bContextHelp)
 	{

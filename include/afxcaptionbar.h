@@ -47,8 +47,8 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnDestroy();
-	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
-	afx_msg LRESULT OnGetFont(WPARAM, LPARAM);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
+	afx_msg HFONT OnGetFont();
 	afx_msg void OnMouseLeave();
 	afx_msg LRESULT OnUpdateToolTips(WPARAM, LPARAM);
 	afx_msg BOOL OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult);

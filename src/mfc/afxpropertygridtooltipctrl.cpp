@@ -42,7 +42,7 @@ CMFCPropertyGridToolTipCtrl::~CMFCPropertyGridToolTipCtrl()
 BEGIN_MESSAGE_MAP(CMFCPropertyGridToolTipCtrl, CWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_PAINT()
-	ON_MESSAGE(WM_SETFONT, &CMFCPropertyGridToolTipCtrl::OnSetFont)
+	ON_WM_SETFONT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -256,19 +256,15 @@ void CMFCPropertyGridToolTipCtrl::Deactivate()
 	Hide();
 }
 
-LRESULT CMFCPropertyGridToolTipCtrl::OnSetFont(WPARAM wParam, LPARAM lParam)
+void CMFCPropertyGridToolTipCtrl::OnSetFont(CFont* pFont, BOOL bRedraw)
 {
-	BOOL bRedraw = (BOOL) LOWORD(lParam);
-
-	m_hFont = (HFONT) wParam;
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 
 	if (bRedraw)
 	{
 		Invalidate();
 		UpdateWindow();
 	}
-
-	return 0;
 }
 
 BOOL CMFCPropertyGridToolTipCtrl::PreTranslateMessage(MSG* pMsg)

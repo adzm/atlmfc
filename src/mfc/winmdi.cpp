@@ -193,11 +193,9 @@ BOOL CMDIFrameWnd::PreTranslateMessage(MSG* pMsg)
 	if (CWnd::PreTranslateMessage(pMsg))
 		return TRUE;
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow hook to consume message
 	if (m_pNotifyHook != NULL && m_pNotifyHook->OnPreTranslateMessage(pMsg))
 		return TRUE;
-#endif
 
 	CMDIChildWnd* pActiveChild = MDIGetActive();
 
@@ -968,10 +966,8 @@ void CMDIChildWnd::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd*)
 
 	// allow hook to short circuit normal activation
 	BOOL bHooked = FALSE;
-#ifndef _AFX_NO_OLE_SUPPORT
 	if (m_pNotifyHook != NULL && m_pNotifyHook->OnDocActivate(bActivate))
 		bHooked = TRUE;
-#endif
 
 	// update titles (don't AddToTitle if deactivate last)
 	if (!bHooked)
@@ -1062,11 +1058,9 @@ void CMDIFrameWnd::OnUpdateFrameTitle(BOOL bAddToTitle)
 	if ((GetStyle() & FWS_ADDTOTITLE) == 0)
 		return;     // leave it alone!
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow hook to set the title (used for OLE support)
 	if (m_pNotifyHook != NULL && m_pNotifyHook->OnUpdateFrameTitle())
 		return;
-#endif
 
 	CMDIChildWnd* pActiveChild = NULL;
 	CDocument* pDocument = GetActiveDocument();

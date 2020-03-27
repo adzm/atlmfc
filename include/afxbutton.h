@@ -198,8 +198,8 @@ protected:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnDestroy();
-	afx_msg LRESULT OnSetFont(WPARAM, LPARAM);
-	afx_msg LRESULT OnGetFont(WPARAM, LPARAM);
+	afx_msg void OnSetFont(CFont* pFont, BOOL bRedraw);
+	afx_msg HFONT OnGetFont();
 	afx_msg LRESULT OnGetCheck(WPARAM, LPARAM);
 	afx_msg LRESULT OnSetCheck(WPARAM, LPARAM);
 	afx_msg LRESULT OnSetImage(WPARAM, LPARAM);

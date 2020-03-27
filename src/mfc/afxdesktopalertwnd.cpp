@@ -99,7 +99,7 @@ BEGIN_MESSAGE_MAP(CMFCDesktopAlertWnd, CWnd)
 	ON_WM_LBUTTONUP()
 	ON_WM_CANCELMODE()
 	ON_WM_LBUTTONDOWN()
-	ON_MESSAGE(WM_PRINTCLIENT, &CMFCDesktopAlertWnd::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -580,17 +580,15 @@ void CMFCDesktopAlertWnd::OnDestroy()
 	CWnd::OnDestroy();
 }
 
-LRESULT CMFCDesktopAlertWnd::OnPrintClient(WPARAM wp, LPARAM lp)
+LRESULT CMFCDesktopAlertWnd::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	if (lp & PRF_CLIENT)
+	ASSERT_VALID(pDC);
+	if (nFlags & PRF_CLIENT)
 	{
-		CDC* pDC = CDC::FromHandle((HDC) wp);
-		ASSERT_VALID(pDC);
-
 		OnDraw(pDC);
 	}
 
-	return 0;
+	return 0L;
 }
 
 void CMFCDesktopAlertWnd::OnDraw(CDC* pDC)

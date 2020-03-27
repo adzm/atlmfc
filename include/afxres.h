@@ -23,7 +23,7 @@
 #endif
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "110"
+#define _MFC_FILENAME_VER "120"
 #endif
 
 #ifdef RC_INVOKED

@@ -59,9 +59,7 @@ public:
 	HMODULE m_hModule;
 	HMODULE m_hResource;                // for shared resources
 	CTypedSimpleList<CRuntimeClass*> m_classList;
-#ifndef _AFX_NO_OLE_SUPPORT
 	CTypedSimpleList<COleObjectFactory*> m_factoryList;
-#endif
 	BOOL m_bSystem;                     // TRUE only for MFC DLLs
 
 // Implementation

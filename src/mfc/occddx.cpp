@@ -15,8 +15,6 @@
 
 #define new DEBUG_NEW
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Private helper for read-only property exchange with OLE controls
 
@@ -151,5 +149,3 @@ void AFXAPI DDX_OCColorRO(CDataExchange* pDX, int nIDC, DISPID dispid,
 	ENSURE_ARG(pDX!=NULL);
 	DDX_OCPropertyRO(pDX, nIDC, dispid, VT_COLOR, &value);
 }
-
-#endif // !_AFX_NO_OCC_SUPPORT

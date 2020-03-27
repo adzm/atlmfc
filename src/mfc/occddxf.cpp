@@ -15,8 +15,6 @@
 
 #define new DEBUG_NEW
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 void AFXAPI DDX_OCFloat(CDataExchange* pDX, int nIDC, DISPID dispid,
 	float &value)
 {
@@ -64,5 +62,3 @@ void AFXAPI DDX_OCFloatRO(CDataExchange* pDX, int nIDC, DISPID dispid,
 		pControl->GetProperty(dispid, VT_R8, &value);
 	}
 }
-
-#endif // !_AFX_NO_OCC_SUPPORT

@@ -1779,12 +1779,25 @@ BOOL CMFCToolBarMenuButton::CompareWith(const CMFCToolBarButton& other) const
 
 	for (POSITION pos = m_listCommands.GetHeadPosition(); pos != NULL;)
 	{
-		ENSURE(pos1 != NULL);
+		if (pos1 == NULL)
+		{
+			return FALSE;
+		}
 
-		CMFCToolBarMenuButton* pItem = (CMFCToolBarMenuButton*) m_listCommands.GetNext(pos);
+		CMFCToolBarMenuButton* pItem = DYNAMIC_DOWNCAST(CMFCToolBarMenuButton, m_listCommands.GetNext(pos));
+		if (pItem == NULL)
+		{
+			return FALSE;
+		}
+
 		ASSERT_VALID(pItem);
 
-		CMFCToolBarMenuButton* pItem1 = (CMFCToolBarMenuButton*) otherMenuBtn.m_listCommands.GetNext(pos1);
+		CMFCToolBarMenuButton* pItem1 = DYNAMIC_DOWNCAST(CMFCToolBarMenuButton, otherMenuBtn.m_listCommands.GetNext(pos1));
+		if (pItem1 == NULL)
+		{
+			return FALSE;
+		}
+
 		ASSERT_VALID(pItem1);
 
 		if (!pItem->CompareWith(*pItem1))

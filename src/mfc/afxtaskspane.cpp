@@ -93,7 +93,6 @@ BOOL CMFCTasksPaneTask::SetACCData(CWnd* pParent, CAccessibilityData& data)
 	data.m_strAccDefAction = _T("Press");
 	data.m_rectAccLocation = m_rect;
 	pParent->ClientToScreen(&data.m_rectAccLocation);
-	data.m_ptAccHit;
 
 	return TRUE;
 }
@@ -524,9 +523,9 @@ BEGIN_MESSAGE_MAP(CMFCTasksPane, CDockablePane)
 	ON_WM_TIMER()
 	ON_COMMAND(IDOK, &CMFCTasksPane::OnOK)
 	ON_COMMAND(IDCANCEL, &CMFCTasksPane::OnCancel)
-	ON_MESSAGE(WM_SETFONT, &CMFCTasksPane::OnSetFont)
-	ON_MESSAGE(WM_GETFONT, &CMFCTasksPane::OnGetFont)
-	ON_MESSAGE(WM_SETTEXT, &CMFCTasksPane::OnSetText)
+	ON_WM_SETFONT()
+	ON_WM_GETFONT()
+	ON_WM_SETTEXT()
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXT, 0, 0xFFFF, &CMFCTasksPane::OnNeedTipText)
 	ON_COMMAND(ID_AFXBARRES_TASKPANE_BACK, &CMFCTasksPane::OnBack)
 	ON_COMMAND(ID_AFXBARRES_TASKPANE_FORWARD, &CMFCTasksPane::OnForward)
@@ -1669,7 +1668,7 @@ BOOL CMFCTasksPane::GetGroupLocation(CMFCTasksPaneTaskGroup* pGroup, int &nGroup
 	return FALSE; // not found
 }
 
-int CMFCTasksPane::AddTask(int nGroup, LPCTSTR lpszTaskName, int nTaskIcon/* = -1*/, UINT uiCommandID/* = 0*/, DWORD dwUserData/* = 0*/)
+int CMFCTasksPane::AddTask(int nGroup, LPCTSTR lpszTaskName, int nTaskIcon/* = -1*/, UINT uiCommandID/* = 0*/, DWORD_PTR dwUserData/* = 0*/)
 {
 	POSITION pos = m_lstTaskGroups.FindIndex(nGroup);
 	if (pos == NULL)
@@ -1959,7 +1958,7 @@ BOOL CMFCTasksPane::GetTaskLocation(CMFCTasksPaneTask* pTask, int& nGroup, int& 
 	return FALSE;
 }
 
-int CMFCTasksPane::AddWindow(int nGroup, HWND hwndTask, int nWndHeight, BOOL bAutoDestroyWindow/* = FALSE*/, DWORD dwUserData/* = 0*/)
+int CMFCTasksPane::AddWindow(int nGroup, HWND hwndTask, int nWndHeight, BOOL bAutoDestroyWindow/* = FALSE*/, DWORD_PTR dwUserData/* = 0*/)
 {
 	POSITION pos = m_lstTaskGroups.FindIndex(nGroup);
 	if (pos == NULL)
@@ -2031,19 +2030,18 @@ BOOL CMFCTasksPane::SetWindowHeight(HWND hwndTask, int nWndHeight)
 	return FALSE;
 }
 
-LRESULT CMFCTasksPane::OnSetFont(WPARAM wParam, LPARAM /*lParam*/)
+void CMFCTasksPane::OnSetFont(CFont* pFont, BOOL /*bRedraw*/)
 {
-	m_hFont = (HFONT) wParam;
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 
 	CreateFonts();
 	AdjustScroll();
 	ReposTasks();
-	return 0;
 }
 
-LRESULT CMFCTasksPane::OnGetFont(WPARAM, LPARAM)
+HFONT CMFCTasksPane::OnGetFont()
 {
-	return(LRESULT)(m_hFont != NULL ? m_hFont : ::GetStockObject(DEFAULT_GUI_FONT));
+	return m_hFont != NULL ? m_hFont : (HFONT)::GetStockObject(DEFAULT_GUI_FONT);
 }
 
 void CMFCTasksPane::CreateFonts()
@@ -2512,7 +2510,7 @@ void CMFCTasksPane::OnCancelMode()
 	m_pClickedGroupCaption = NULL;
 }
 
-void CMFCTasksPane::OnClickTask(int /*nGroupNumber*/, int /*nTaskNumber*/, UINT uiCommandID, DWORD /*dwUserData*/)
+void CMFCTasksPane::OnClickTask(int /*nGroupNumber*/, int /*nTaskNumber*/, UINT uiCommandID, DWORD_PTR /*dwUserData*/)
 {
 	if (uiCommandID != 0)
 	{
@@ -2623,7 +2621,7 @@ BOOL CMFCTasksPane::GetMRUFileName(CRecentFileList* pRecentFileList, int nIndex,
 		const int MAX_NAME_LEN = 512;
 
 		TCHAR lpcszBuffer [MAX_NAME_LEN + 1];
-		memset(lpcszBuffer, 0, MAX_NAME_LEN * sizeof(TCHAR));
+		memset(lpcszBuffer, 0, (MAX_NAME_LEN + 1) * sizeof(TCHAR));
 
 		if (GetFileTitle((*pRecentFileList)[nIndex], lpcszBuffer, MAX_NAME_LEN) == 0)
 		{
@@ -4412,16 +4410,16 @@ CSize CMFCTasksPane::GetTasksGroupBorders() const
 	return CSize(1, 1);
 }
 
-LRESULT CMFCTasksPane::OnSetText(WPARAM, LPARAM lParam)
+int CMFCTasksPane::OnSetText(LPCTSTR lpszText)
 {
 	LRESULT lRes = Default();
 
-	if (lParam != NULL)
+	if (lpszText != NULL)
 	{
-		m_strCaption = (LPCTSTR)lParam;
+		m_strCaption = lpszText;
 	}
 
-	return lRes;
+	return (int)lRes;
 }
 
 

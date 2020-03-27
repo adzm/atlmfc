@@ -79,6 +79,8 @@ protected:
 
 	virtual void OnDrawOnList(CDC* pDC, CString strText, int nTextOffset, CRect rect, BOOL bIsSelected, BOOL bHighlighted);
 
+	virtual BOOL SetACCData(CWnd* pParent, CAccessibilityData& data);
+
 // Attributes
 protected:
 	int  m_nMin;

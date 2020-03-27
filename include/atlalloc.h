@@ -496,6 +496,8 @@ public:
 		m_p( NULL )
 	{
 	}
+
+#pragma warning(suppress: 4987)  // nonstandard extension used: 'throw(...)'
 	CTempBuffer(_In_ size_t nElements) throw( ... ) :
 		m_p( NULL )
 	{
@@ -520,11 +522,13 @@ public:
 		return( m_p );
 	}
 
+#pragma warning(suppress: 4987)  // nonstandard extension used: 'throw(...)'
 	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Allocate(_In_ size_t nElements) throw( ... )
 	{
 		return( AllocateBytes( ::ATL::AtlMultiplyThrow(nElements,sizeof( T )) ) );
 	}
 
+#pragma warning(suppress: 4987)  // nonstandard extension used: 'throw(...)'
 	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Reallocate(_In_ size_t nElements) throw( ... )
 	{
 		ATLENSURE(nElements < size_t(-1)/sizeof(T) );

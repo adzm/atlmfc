@@ -23,7 +23,6 @@
 	#include <commdlg.h>    // common dialog APIs
 #endif
 
-#if WINVER >= 0x0600
 #ifndef _WIN32_IE
 #define _WIN32_IE 0x0700
 #else
@@ -32,7 +31,6 @@
 #endif
 #ifndef __shobjidl_h__
 	#include <shobjidl.h>    // for IFileDialog/IFileOpenDialog/IFileSaveDialog
-#endif
 #endif
 
 // Avoid mapping GetFileTitle to GetFileTitle[A/W]
@@ -46,10 +44,8 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #endif
 #endif
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
-	#ifndef _RICHEDIT_
-		#include <richedit.h>
-	#endif
+#ifndef _RICHEDIT_
+	#include <richedit.h>
 #endif
 
 #ifdef _AFX_MINREBUILD
@@ -85,9 +81,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 			class CColorDialog;   // Color picker dialog
 			class CFontDialog;    // Font chooser dialog
 			class CPrintDialog;   // Print/PrintSetup dialogs
-#if WINVER >= 0x0500
 			class CPrintDialogEx;   // Windows 2000 Print dialog
-#endif //(WINVER >= 0x0500)
 			class CPageSetupDialog; // Page Setup dialog
 
 	// CWnd
@@ -153,7 +147,6 @@ public:
 // Operations
 	virtual INT_PTR DoModal();
 
-#if WINVER >= 0x0600
 	/// <summary>
 	/// Determines if the current dialog in folder picker mode.</summary>
 	/// <returns> 
@@ -165,7 +158,6 @@ public:
 	/// <returns> 
 	/// If the dialog in the non-file system folder picker mode, the return value is TRUE. Otherwise - FALSE</returns>
 	BOOL IsPickNonFileSysFoldersMode() const { return m_bPickNonFileSysFoldersMode; }
-#endif
 
 	// Helpers for parsing file name after successful return
 	// or during Overridable callbacks if OFN_EXPLORER is set
@@ -195,7 +187,7 @@ public:
 	IFileSaveDialog* GetIFileSaveDialog() throw();
 	IFileDialogCustomize* GetIFileDialogCustomize() throw();
 
-#if WINVER >= 0x0600
+#if NTDDI_VERSION >= NTDDI_VISTA
 	/// <summary>
 	/// Adds a folder to the list of places available for the user to open or save items.</summary>
 	/// <param name="lpszFolder">A path to the folder to be made available to the user. This can only be a folder.</param>
@@ -434,14 +426,14 @@ public:
 	/// <param name="dwIDItem">The ID of the item</param>
 	/// <param name="strLabel">Item's text</param>
 	HRESULT SetControlItemText(DWORD dwIDCtl, DWORD dwIDItem, const CString& strLabel);
-#endif
+#endif // NTDDI_VERSION >= NTDDI_VISTA
 
 // Overridable callbacks
 protected:
 
-#if WINVER >= 0x0600
+#if NTDDI_VERSION >= NTDDI_VISTA
 	HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv);
-#endif
+#endif // NTDDI_VERSION >= NTDDI_VISTA
 
 	friend UINT_PTR CALLBACK _AfxCommDlgProc(HWND, UINT, WPARAM, LPARAM);
 	virtual UINT OnShareViolation(LPCTSTR lpszPathName);
@@ -507,8 +499,7 @@ private:
 protected:
 	DECLARE_INTERFACE_MAP()
 
-#if WINVER >= 0x0600
-
+#if NTDDI_VERSION >= NTDDI_VISTA
 	BEGIN_INTERFACE_PART(FileDialogEvents, IFileDialogEvents)
 		STDMETHOD(OnFileOk)(IFileDialog *);
 		STDMETHOD(OnFolderChange)(IFileDialog *);
@@ -526,16 +517,13 @@ protected:
 		STDMETHOD(OnCheckButtonToggled)(IFileDialogCustomize *, DWORD, BOOL);
 		STDMETHOD(OnControlActivating)(IFileDialogCustomize *, DWORD);
 	END_INTERFACE_PART_OPTIONAL(FileDialogControlEvents)
-
 #else
-	
 	BEGIN_INTERFACE_PART(FileDialogEvents, IUnknown)
 	END_INTERFACE_PART_OPTIONAL(FileDialogEvents)
 	
 	BEGIN_INTERFACE_PART(FileDialogControlEvents, IUnknown)
 	END_INTERFACE_PART_OPTIONAL(FileDialogControlEvents)
-
-#endif
+#endif // NTDDI_VERSION >= NTDDI_VISTA
 };
 
 /*============================================================================*/
@@ -579,12 +567,11 @@ public:
 		DWORD dwFlags = CF_EFFECTS | CF_SCREENFONTS,
 		CDC* pdcPrinter = NULL,
 		CWnd* pParentWnd = NULL);
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 	CFontDialog(const CHARFORMAT& charformat,
 		DWORD dwFlags = CF_SCREENFONTS,
 		CDC* pdcPrinter = NULL,
 		CWnd* pParentWnd = NULL);
-#endif
+
 // Operations
 	virtual INT_PTR DoModal();
 
@@ -601,15 +588,11 @@ public:
 	BOOL IsUnderline() const;     // return TRUE if underline
 	BOOL IsBold() const;          // return TRUE if bold font
 	BOOL IsItalic() const;        // return TRUE if italic font
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 	void GetCharFormat(CHARFORMAT& cf) const;
-#endif
 
 // Implementation
 	LOGFONT m_lf; // default LOGFONT to store the info
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 	DWORD FillInLogFont(const CHARFORMAT& cf);
-#endif
 
 #ifdef _DEBUG
 public:
@@ -774,8 +757,6 @@ protected:
 /*============================================================================*/
 // CPrintDialogEx - Windows 2000 Print Dialog
 
-#if WINVER >= 0x0500
-
 #ifndef __ocidl_h__
 	#include <ocidl.h>
 #endif
@@ -858,8 +839,6 @@ public:
 
 	DECLARE_MESSAGE_MAP()
 };
-
-#endif //(WINVER >= 0x0500)
 
 /*============================================================================*/
 // Find/FindReplace modeless dialogs
@@ -993,10 +972,8 @@ protected:
 	BOOL IsButtonEnabled(int iButton);
 
 	void PreProcessPageTemplate(PROPSHEETPAGE& psp, BOOL bWizard);
-#ifndef _AFX_NO_OCC_SUPPORT
 	void Cleanup();
 	const DLGTEMPLATE* InitDialogInfo(const DLGTEMPLATE* pTemplate);
-#endif
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 

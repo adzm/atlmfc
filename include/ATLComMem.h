@@ -144,7 +144,9 @@ inline LPWSTR AtlAllocTaskWideString(
 		ATLASSERT(nRet != 0);
 		if (nRet == 0)
 		{
-			CoTaskMemFree(lpszResult);
+ATLPREFAST_SUPPRESS(6102)
+            CoTaskMemFree(lpszResult);
+ATLPREFAST_UNSUPPRESS()
 			lpszResult = NULL;
 		}
 	}
@@ -185,7 +187,9 @@ inline LPSTR AtlAllocTaskAnsiString(
 		ATLASSERT(nRet != 0);
 		if (nRet == 0)
 		{
-			CoTaskMemFree(lpszResult);
+ATLPREFAST_SUPPRESS(6102)
+            CoTaskMemFree(lpszResult);
+ATLPREFAST_UNSUPPRESS()
 			lpszResult = NULL;
 		}
 	}

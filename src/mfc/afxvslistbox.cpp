@@ -25,6 +25,10 @@ static const int nListId = 1;
 static const int nTextMargin = 5;
 static const int nBrowseButtonWidth = 20;
 
+IMPLEMENT_DYNAMIC(CVSListBoxBase, CStatic)
+IMPLEMENT_DYNAMIC(CVSListBoxEditCtrl, CMFCEditBrowseCtrl)
+IMPLEMENT_DYNAMIC(CVSListBox, CVSListBoxBase)
+
 /////////////////////////////////////////////////////////////////////////////
 // CVSListBoxEditCtrl
 
@@ -119,9 +123,9 @@ BEGIN_MESSAGE_MAP(CVSListBoxBase, CStatic)
 	ON_WM_SETFOCUS()
 	ON_WM_ENABLE()
 	ON_WM_GETDLGCODE()
-	ON_MESSAGE(WM_SETFONT, &CVSListBoxBase::OnSetFont)
-	ON_MESSAGE(WM_GETFONT, &CVSListBoxBase::OnGetFont)
-	ON_MESSAGE(WM_SETTEXT, &CVSListBoxBase::OnSetText)
+	ON_WM_SETFONT()
+	ON_WM_GETFONT()
+	ON_WM_SETTEXT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -584,16 +588,15 @@ void CVSListBoxBase::OnKey(WORD wKey, BYTE fFlags)
 	}
 }
 
-LRESULT CVSListBoxBase::OnGetFont(WPARAM /*wParam*/, LPARAM /*lParam*/)
+HFONT CVSListBoxBase::OnGetFont()
 {
-	return(LRESULT) m_font.GetSafeHandle();
+	return (HFONT)m_font.GetSafeHandle();
 }
 
-LRESULT CVSListBoxBase::OnSetFont(WPARAM wParam, LPARAM lParam)
+void CVSListBoxBase::OnSetFont(CFont* pFont, BOOL bRedraw)
 {
-	LRESULT lResult = Default();
+	Default();
 
-	CFont* pFont = CFont::FromHandle((HFONT) wParam);
 	if (pFont != NULL)
 	{
 		LOGFONT lf;
@@ -607,14 +610,12 @@ LRESULT CVSListBoxBase::OnSetFont(WPARAM wParam, LPARAM lParam)
 	{
 		AdjustLayout();
 
-		if (lParam != 0)
+		if (bRedraw)
 		{
 			Invalidate();
 			UpdateWindow();
 		}
 	}
-
-	return lResult;
 }
 
 void CVSListBoxBase::OnEndEditLabel(LPCTSTR lpszLabel)
@@ -732,12 +733,11 @@ UINT CVSListBoxBase::OnGetDlgCode()
 	return DLGC_WANTALLKEYS;
 }
 
-LRESULT CVSListBoxBase::OnSetText(WPARAM, LPARAM lParam)
+int CVSListBoxBase::OnSetText(LPCTSTR lpszText)
 {
-	LPCTSTR lpcszTitle = reinterpret_cast<LPCTSTR>(lParam);
-	if (lpcszTitle != NULL)
+	if (lpszText != NULL)
 	{
-		m_strCaption = lpcszTitle;
+		m_strCaption = lpszText;
 		m_bDefaultCaption = FALSE;
 	}
 	else
@@ -747,7 +747,7 @@ LRESULT CVSListBoxBase::OnSetText(WPARAM, LPARAM lParam)
 	}
 
 	RedrawWindow();
-	return Default();
+	return (int)Default();
 }
 
 /////////////////////////////////////////////////////////////////////////////

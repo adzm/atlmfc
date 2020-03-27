@@ -15,8 +15,6 @@
 
 #define new DEBUG_NEW
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // _AFX_RICHEDIT_STATE
 
@@ -332,15 +330,12 @@ BOOL CRichEditCtrl::SetParaFormat(PARAFORMAT2 &pf)
 	pf.cbSize = sizeof(PARAFORMAT2);
 	return (BOOL)::SendMessage(m_hWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
 }
-#endif //!_AFX_NO_RICHEDIT_SUPPORT
 
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma warning(disable: 4074)
 #pragma init_seg(user)
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 AFX_DATADEF PROCESS_LOCAL(_AFX_RICHEDIT_STATE, _afxRichEditState)
-#endif
 
 /////////////////////////////////////////////////////////////////////////////

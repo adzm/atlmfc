@@ -4175,6 +4175,13 @@ BOOL CMFCToolBarImages::SmoothResize(double dblImageScale)
 		sizeIW.cx = bmp.bmWidth;
 		sizeIW.cy = abs(bmp.bmHeight);
 		bInvert = bmp.bmHeight < 0;
+
+#ifdef _DEBUG
+		if (sizeIW.cx != nImageCount * m_sizeImage.cx || (sizeIW.cy % m_sizeImage.cy) != 0)
+		{
+			TRACE0("CMFCToolBarImages::SmoothResize: the internal size of the image may be incorrect. Please check the image size(s).\n");
+		}
+#endif
 	}
 
 	m_dblScale *= dblImageScale;

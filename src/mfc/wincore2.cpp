@@ -90,15 +90,15 @@ BOOL CWnd::ExecuteDlgInit(LPVOID lpResource)
 #if defined(_AFXDLL) || !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
 			else if (nMsg == WM_MFC_INITCTRL)
 			{
-				if (::SendDlgItemMessageA(m_hWnd, nIDC, nMsg, (WPARAM)dwLen, (LPARAM) lpnRes) == -1)
-					bSuccess = FALSE;
-
 				// Subclass Feature Pack controls: 
 				if (m_pMFCCtrlContainer == NULL)
 				{
 					m_pMFCCtrlContainer = new CMFCControlContainer(this);
 					m_pMFCCtrlContainer->SubclassDlgControls();
 				}
+
+				if (::SendDlgItemMessageA(m_hWnd, nIDC, nMsg, (WPARAM)dwLen, (LPARAM) lpnRes) == -1)
+					bSuccess = FALSE;
 
 				if (m_pMFCCtrlContainer != NULL)
 				{
@@ -145,7 +145,6 @@ void AFXAPI DDX_Control(CDataExchange* pDX, int nIDC, CWnd& rControl)
 			ASSERT(FALSE);      // possibly trying to subclass twice?
 			AfxThrowNotSupportedException();
 		}
-#ifndef _AFX_NO_OCC_SUPPORT
 		else
 		{
 			if (hWndCtrl == NULL)
@@ -163,7 +162,5 @@ void AFXAPI DDX_Control(CDataExchange* pDX, int nIDC, CWnd& rControl)
 					rControl.AttachControlSite(pDX->m_pDlgWnd);
 			}
 		}
-#endif //!_AFX_NO_OCC_SUPPORT
-
 	}
 }

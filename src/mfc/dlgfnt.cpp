@@ -50,7 +50,6 @@ CFontDialog::CFontDialog(LPLOGFONT lplfInitial, DWORD dwFlags, CDC* pdcPrinter,
 	}
 }
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 CFontDialog::CFontDialog(const CHARFORMAT& charformat, DWORD dwFlags,
 	CDC* pdcPrinter, CWnd* pParentWnd) : CCommonDialog(pParentWnd)
 {
@@ -77,7 +76,6 @@ CFontDialog::CFontDialog(const CHARFORMAT& charformat, DWORD dwFlags,
 	if (charformat.dwMask & CFM_COLOR)
 		m_cf.rgbColors = charformat.crTextColor;
 }
-#endif
 
 INT_PTR CFontDialog::DoModal()
 {
@@ -108,7 +106,6 @@ void CFontDialog::GetCurrentFont(LPLOGFONT lplf)
 		*lplf = m_lf;
 }
 
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
 ////////////////////////////////////////////////////////////////////////////
 // CFontDialog CHARFORMAT helpers
 
@@ -235,7 +232,6 @@ void CFontDialog::GetCharFormat(CHARFORMAT& cf) const
 	}
 	cf.yOffset = 0;
 }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////
 // CFontDialog diagnostics

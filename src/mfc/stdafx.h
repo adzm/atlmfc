@@ -80,10 +80,9 @@
 #include "afxdlgs.h"
 #include "afxext.h"
 
-#ifndef _AFX_NO_OLE_SUPPORT
-	#ifndef _OLE2_H_
-		#include <ole2.h>
-	#endif
+#ifndef _OLE2_H_
+	#include <ole2.h>
+#endif
 
 #include <winspool.h>
 
@@ -111,58 +110,34 @@
 	#include "afxdao.h"
 #endif
 
-	#include "afxodlgs.h"
-#endif
-
-#ifndef _AFX_NO_OCX_SUPPORT
-	#include "afxctl.h"
-#endif
-#ifndef _AFX_NO_DB_SUPPORT
-	#include "afxdb.h"
-#endif
-#ifndef _AFX_NO_SYNC_SUPPORT
-	#include "afxmt.h"
-#endif
-#ifndef _AFX_NO_INET_SUPPORT
-	#include "afxinet.h"
-#endif
+#include "afxodlgs.h"
+#include "afxctl.h"
+#include "afxdb.h"
+#include "afxmt.h"
+#include "afxinet.h"
 
 // private headers as well
 #include "afxpriv.h"
 #include "afximpl.h"
 #include "winhand_.h"
-#ifndef _AFX_NO_OLE_SUPPORT
-	#include "oleimpl2.h"
-#endif
-#ifndef _AFX_NO_OCX_SUPPORT
-	#include "ctlimpl.h"
-#endif
-#ifndef _AFX_NO_DB_SUPPORT
-	#include "dbimpl.h"
-#endif
+#include "oleimpl2.h"
+#include "ctlimpl.h"
+#include "dbimpl.h"
 #ifndef _AFX_NO_DAO_SUPPORT
 	#include "daoimpl.h"
 #endif
-#ifndef _AFX_NO_SOCKET_SUPPORT
-	#ifndef _WINSOCKAPI_
-		#include <winsock.h>
-	#endif
-	#include "sockimpl.h"
-	#include "afxsock.h"
+#ifndef _WINSOCKAPI_
+	#include <winsock.h>
 #endif
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-	#include "afxcmn.h"
-	#include "afxcview.h"
-#endif
-#ifndef _AFX_NO_RICHEDIT_SUPPORT
-	#include "afxrich.h"
-#endif
+#include "sockimpl.h"
+#include "afxsock.h"
+#include "afxcmn.h"
+#include "afxcview.h"
+#include "afxrich.h"
 #include "afxhtml.h"
-#ifndef _AFX_NO_DHTML_SUPPORT
-	#include "afxdhtml.h"
-#endif
+#include "afxdhtml.h"
 
-#if (0x0600 <= WINVER) && defined(_UNICODE)
+#if defined(_UNICODE)
 	#include "afxtaskdialog.h"
 #endif 
 

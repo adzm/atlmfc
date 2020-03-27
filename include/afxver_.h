@@ -17,17 +17,16 @@
 
 #define _AFX     1      // Microsoft Application Framework Classes
 #ifndef _MFC_VER
-#define _MFC_VER 0x0B00 // Microsoft Foundation Classes version 11.00
+#define _MFC_VER 0x0C00 // Microsoft Foundation Classes version 12.00
 #endif
 
 #ifndef _MFC_FILENAME_VER
-#define _MFC_FILENAME_VER "110"
+#define _MFC_FILENAME_VER "120"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 // turn off reference tracking for certain often used symbols
 
-#ifndef _AFX_PORTABLE
 #pragma component(browser, off, references, "ASSERT")
 #pragma component(browser, off, references, "AfxAssertFailedLine")
 #pragma component(browser, off, references, "AfxDebugBreak")
@@ -48,7 +47,6 @@
 #pragma component(browser, off, references, "UINT")
 #pragma component(browser, off, references, "WINAPI")
 #pragma component(browser, off, references, "WORD")
-#endif  //!_AFX_PORTABLE
 
 /////////////////////////////////////////////////////////////////////////////
 // For target version (one of)
@@ -66,8 +64,6 @@
 	#define _AFX_ENABLE_INLINES
 #endif
 #endif
-
-#define _AFX_NO_NESTED_DERIVATION
 
 /////////////////////////////////////////////////////////////////////////////
 // Special configurations
@@ -97,11 +93,6 @@
 
 #ifdef _M_IX86
 	#define _AFX_MINREBUILD
-#endif
-
-#ifdef _CUSTOM
-// Put any custom configuration items in afxv_cfg.h
-	#include <afxv_cfg.h>
 #endif
 
 // setup default packing value

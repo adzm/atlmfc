@@ -275,9 +275,15 @@ BOOL CMFCDropDownFrame::Create(CWnd* pWndParent, int x, int y, CMFCDropDownToolB
 	}
 
 	DWORD dwStyle = WS_POPUP;
+	DWORD dwExStyle = 0;
+
+	if (pWndParent->GetSafeHwnd() != NULL && (pWndParent->GetExStyle () & WS_EX_LAYOUTRTL) != 0)
+	{
+		dwExStyle = WS_EX_LAYOUTRTL;
+	}
 
 	CRect rect(x, y, x, y);
-	BOOL bCreated = CMiniFrameWnd::CreateEx(0, m_strClassName, m_strCaption, dwStyle, rect, pWndParent->GetOwner() == NULL ? pWndParent : pWndParent->GetOwner());
+	BOOL bCreated = CMiniFrameWnd::CreateEx(dwExStyle, m_strClassName, m_strCaption, dwStyle, rect, pWndParent->GetOwner() == NULL ? pWndParent : pWndParent->GetOwner());
 	if (!bCreated)
 	{
 		return FALSE;

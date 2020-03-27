@@ -607,15 +607,13 @@ void CMFCRibbonStatusBar::RecalcLayout()
 
 	if (m_cxSizeBox != 0)
 	{
-		int cxMax = min(m_cxSizeBox, rect.Height()+m_cyTopBorder);
-
 		m_rectSizeBox = rect;
 		m_rectSizeBox.left = rect.right;
-		m_rectSizeBox.right = m_rectSizeBox.left + cxMax;
+		m_rectSizeBox.right = m_rectSizeBox.left + min(m_cxSizeBox, rect.Height() + m_cyTopBorder);
 
 		if (m_bBottomFrame)
 		{
-			m_rectSizeBox.OffsetRect(0, -GetSystemMetrics(SM_CYSIZEFRAME));
+			m_rectSizeBox.OffsetRect (0, -2);
 
 			m_rectResizeBottom = rect;
 			m_rectResizeBottom.top = m_rectResizeBottom.bottom - GetSystemMetrics(SM_CYSIZEFRAME);
@@ -1213,4 +1211,14 @@ void CMFCRibbonStatusBar::OnShowWindow(BOOL bShow, UINT nStatus)
 	}
 }
 
+HRESULT CMFCRibbonStatusBar::get_accChildCount(long *pcountChildren)
+{
+	if (!pcountChildren)
+	{
+		return E_INVALIDARG;
+	}
+
+	*pcountChildren = 0;
+	return S_OK;
+}
 

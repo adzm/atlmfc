@@ -66,7 +66,7 @@ protected:
 	CString m_strPath;
 	BOOL    m_bReadOnly;
 	BOOL    m_bAdmin;
-	DWORD   m_dwUserData;
+	DWORD_PTR   m_dwUserData;
 };
 
 /*============================================================================*/
@@ -77,7 +77,7 @@ class CSettingsStoreSP
 public:
 	static BOOL __stdcall SetRuntimeClass(CRuntimeClass* pRTI);
 
-	CSettingsStoreSP(DWORD dwUserData = 0) : m_pRegistry(NULL), m_dwUserData(dwUserData)
+	CSettingsStoreSP(DWORD_PTR dwUserData = 0) : m_pRegistry(NULL), m_dwUserData(dwUserData)
 	{
 	}
 
@@ -94,7 +94,7 @@ public:
 
 protected:
 	CSettingsStore* m_pRegistry;
-	DWORD      m_dwUserData;
+	DWORD_PTR      m_dwUserData;
 
 	AFX_IMPORT_DATA static CRuntimeClass* m_pRTIDefault;
 };

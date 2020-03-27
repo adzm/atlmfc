@@ -596,6 +596,296 @@ void CMFCRibbonQuickAccessToolBar::RebuildKeys()
 	}
 }
 
+BOOL CMFCRibbonQuickAccessToolBar::SetACCData(CWnd* pParent, CAccessibilityData& data)
+{
+	CMFCRibbonButtonsGroup::SetACCData (pParent, data);
+
+	data.m_strAccName = m_strText.IsEmpty() ? _T("Quick Access Toolbar") : m_strText;
+	data.m_strAccValue = data.m_strAccName;
+
+	data.m_nAccRole = ROLE_SYSTEM_TOOLBAR;
+	data.m_bAccState = STATE_SYSTEM_NORMAL;
+	
+	return TRUE;
+}
+
+BOOL CMFCRibbonQuickAccessToolBar::OnSetAccData(long lVal)
+{
+	ASSERT_VALID(this);
+
+	m_AccData.Clear();
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return FALSE;
+	}
+
+	int nIndex = (int)lVal - 1;
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements(arButtons);
+
+	if (nIndex < 0 || nIndex >= arButtons.GetSize())
+	{
+		return FALSE;
+	}
+
+	ASSERT_VALID(arButtons[nIndex]);
+	return arButtons[nIndex]->SetACCData (m_pRibbonBar, m_AccData);
+}
+
+HRESULT CMFCRibbonQuickAccessToolBar::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
+{
+	if (!pvarChild)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	pvarChild->vt = VT_I4;
+	pvarChild->lVal = CHILDID_SELF;
+
+	CPoint pt(xLeft, yTop);
+	m_pRibbonBar->ScreenToClient(&pt);
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements(arButtons);
+
+	for (int i = 0; i < arButtons.GetSize(); i++)
+	{
+		CMFCRibbonBaseElement* pElem = arButtons [i];
+		ASSERT_VALID (pElem);
+
+		CRect rectElem = pElem->GetRect();
+		if (rectElem.PtInRect(pt))
+		{
+			pvarChild->lVal = i + 1;
+			pElem->SetACCData(m_pRibbonBar, m_AccData);
+			break;
+		}
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonQuickAccessToolBar::accDoDefaultAction(VARIANT varChild)
+{
+	if (varChild.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.lVal != CHILDID_SELF)
+	{
+		CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+		GetVisibleElements(arButtons);
+
+		int nIndex = (int)varChild.lVal - 1;
+		if (nIndex < 0 || nIndex >= arButtons.GetSize())
+		{
+			return E_INVALIDARG;
+		}
+
+		CMFCRibbonBaseElement* pElem = arButtons[nIndex];
+		if (pElem != NULL)
+		{
+			ASSERT_VALID (pElem);
+
+			pElem->OnAccDefaultAction();
+			return S_OK;
+		}
+	}
+
+	return S_FALSE;
+}
+
+HRESULT CMFCRibbonQuickAccessToolBar::get_accParent(IDispatch **ppdispParent)
+{
+	if (!ppdispParent)
+	{
+		return E_INVALIDARG;
+	}
+
+	*ppdispParent = NULL;
+
+	if (m_pRibbonBar->GetSafeHwnd() == NULL)
+	{
+		return S_FALSE;
+	}
+
+	LPDISPATCH lpDispatch = m_pRibbonBar->GetAccessibleDispatch();
+	if (lpDispatch != NULL)
+	{
+		*ppdispParent =  lpDispatch;
+		return S_OK;
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonQuickAccessToolBar::get_accChildCount(long *pcountChildren)
+{
+	if (!pcountChildren)
+	{
+		return E_INVALIDARG;
+	}
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements(arButtons);
+
+	*pcountChildren = (long)arButtons.GetSize();
+	return S_OK;
+}
+
+HRESULT CMFCRibbonQuickAccessToolBar::accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild)
+{
+	if (!pxLeft || !pyTop || !pcxWidth || !pcyHeight)
+	{
+		return E_INVALIDARG;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF && m_pRibbonBar->GetSafeHwnd() != NULL)
+	{		
+		CRect rectAccLocation = m_rect;
+		m_pRibbonBar->ClientToScreen(&rectAccLocation);
+
+		*pxLeft = rectAccLocation.left;
+		*pyTop = rectAccLocation.top;
+		*pcxWidth = rectAccLocation.Width();
+		*pcyHeight = rectAccLocation.Height();
+
+		return S_OK;
+	}
+
+	if (varChild.vt == VT_I4 && varChild.lVal > 0)
+	{
+		OnSetAccData(varChild.lVal);
+
+		*pxLeft = m_AccData.m_rectAccLocation.left;
+		*pyTop = m_AccData.m_rectAccLocation.top;
+		*pcxWidth = m_AccData.m_rectAccLocation.Width();
+		*pcyHeight = m_AccData.m_rectAccLocation.Height();
+	}
+
+	return S_OK;
+}
+
+HRESULT CMFCRibbonQuickAccessToolBar::accNavigate(long navDir, VARIANT varStart, VARIANT *pvarEndUpAt)
+{
+	pvarEndUpAt->vt = VT_EMPTY;
+
+	if (varStart.vt != VT_I4)
+	{
+		return E_INVALIDARG;
+	}
+
+	CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arButtons;
+	GetVisibleElements(arButtons);
+
+	switch (navDir)
+	{
+	case NAVDIR_FIRSTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = 1;
+			return S_OK;	
+		}
+		break;
+
+	case NAVDIR_LASTCHILD:
+		if (varStart.lVal == CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = (int)arButtons.GetSize();
+			return S_OK;
+		}
+		break;
+
+	case NAVDIR_NEXT:   
+	case NAVDIR_RIGHT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal + 1;
+		
+			if (pvarEndUpAt->lVal > arButtons.GetSize())
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+
+			return S_OK;
+		}
+		else
+		{
+			CArray<CMFCRibbonContextCaption*, CMFCRibbonContextCaption*> arCaptions;
+			m_pRibbonBar->GetVisibleContextCaptions(arCaptions);
+
+			if (arCaptions.GetSize() > 0)
+			{ 
+				CMFCRibbonContextCaption* pCaption = arCaptions[0];
+				if (pCaption != NULL)
+				{
+					ASSERT_VALID(pCaption);
+
+					pvarEndUpAt->vt = VT_DISPATCH;
+					pvarEndUpAt->pdispVal = pCaption->GetIDispatch(TRUE);
+
+					return S_OK;
+				}
+			}
+
+			CMFCRibbonTabsGroup* pTabs = m_pRibbonBar->GetTabs();
+			if (pTabs != NULL)
+			{
+				ASSERT_VALID(pTabs);
+
+				pvarEndUpAt->vt = VT_DISPATCH;
+				pvarEndUpAt->pdispVal = pTabs->GetIDispatch(TRUE);
+
+				return S_OK;
+			}
+		}
+		break;
+
+	case NAVDIR_PREVIOUS: 
+	case NAVDIR_LEFT:
+		if (varStart.lVal != CHILDID_SELF)
+		{
+			pvarEndUpAt->vt = VT_I4;
+			pvarEndUpAt->lVal = varStart.lVal - 1;
+			
+			if (pvarEndUpAt->lVal <= 0)
+			{
+				pvarEndUpAt->vt = VT_EMPTY;
+				return S_FALSE;
+			}
+
+			return S_OK;
+		}
+		else
+		{
+			CMFCRibbonApplicationButton* pMainButton = m_pRibbonBar->GetApplicationButton();
+			if (pMainButton != NULL)
+			{
+				ASSERT_VALID(pMainButton);
+
+				pvarEndUpAt->vt = VT_DISPATCH;
+				pvarEndUpAt->pdispVal = pMainButton->GetIDispatch(TRUE);
+
+				return S_OK;
+			}
+		}
+		break;
+	}
+
+	return S_FALSE;
+}
 
 
 

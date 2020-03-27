@@ -199,7 +199,13 @@ public:
 
 	virtual int GetFirstVisibleTabNum() const
 	{
-		return m_nFirstVisibleTab;	// For m_bIsOneNoteStyle only!
+		// For m_bIsOneNoteStyle only!
+		if (m_arTabIndices.GetSize() != m_arTabs.GetSize() || m_arTabIndices.GetSize() == 0)
+		{
+			return m_nFirstVisibleTab;
+		}
+
+		return m_arTabIndices[0];
 	}
 
 	virtual void SwapTabs(int nFisrtTabID, int nSecondTabID);

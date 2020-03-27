@@ -82,12 +82,12 @@ protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg BOOL OnUpdateR();
 	afx_msg void OnSetFocusR();
-	afx_msg LRESULT OnCut(WPARAM, LPARAM);
-	afx_msg LRESULT OnClear(WPARAM, LPARAM);
-	afx_msg LRESULT OnPaste(WPARAM, LPARAM);
-	afx_msg LRESULT OnSetText(WPARAM, LPARAM);
-	afx_msg LRESULT OnGetText(WPARAM, LPARAM);
-	afx_msg LRESULT OnGetTextLength(WPARAM, LPARAM);
+	afx_msg void OnCut();
+	afx_msg void OnClear();
+	afx_msg void OnPaste();
+	afx_msg int OnSetText(LPCTSTR lpszText);
+	afx_msg int OnGetText(int nMaxChars, LPTSTR lpszText);
+	afx_msg UINT OnGetTextLength();
 	afx_msg LRESULT OnInitControl(WPARAM wParam, LPARAM lParam);
 
 	DECLARE_MESSAGE_MAP()

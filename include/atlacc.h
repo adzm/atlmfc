@@ -15,7 +15,7 @@
 
 #include <atldef.h>
 
-#if !defined(_CRT_USE_WINAPI_FAMILY_DESKTOP_APP)
+#if !defined(_ATL_USE_WINAPI_FAMILY_DESKTOP_APP)
 #error This file is not compatible with the current WINAPI_FAMILY.
 #endif
 

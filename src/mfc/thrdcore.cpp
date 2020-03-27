@@ -658,7 +658,7 @@ BOOL CWinThread::OnIdle(LONG lCount)
 {
 	ASSERT_VALID(this);
 
-#if defined(_DEBUG) && !defined(_AFX_NO_DEBUG_CRT)
+#if defined(_DEBUG)
 	// check MFC's allocator (before idle)
 	if (_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) & _CRTDBG_CHECK_ALWAYS_DF)
 		ASSERT(AfxCheckMemory());
@@ -711,7 +711,7 @@ BOOL CWinThread::OnIdle(LONG lCount)
 		}
 	}
 
-#if defined(_DEBUG) && !defined(_AFX_NO_DEBUG_CRT)
+#if defined(_DEBUG)
 	// check MFC's allocator (after idle)
 	if (_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) & _CRTDBG_CHECK_ALWAYS_DF)
 		ASSERT(AfxCheckMemory());

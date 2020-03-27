@@ -128,7 +128,6 @@ void CFrameWnd::OnContextHelp()
 	ASSERT(m_bHelpMode == HELP_INACTIVE || m_bHelpMode == HELP_ENTERING);
 	m_bHelpMode = HELP_ACTIVE;
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// allow any in-place active servers to go into help mode
 	if (bHelpMode != HELP_ENTERING && m_pNotifyHook != NULL &&
 		!m_pNotifyHook->OnContextHelp(TRUE))
@@ -138,7 +137,6 @@ void CFrameWnd::OnContextHelp()
 		m_bHelpMode = HELP_INACTIVE;
 		return;
 	}
-#endif
 
 	if (bHelpMode == HELP_INACTIVE)
 	{
@@ -189,11 +187,9 @@ void CFrameWnd::OnContextHelp()
 	// restore original status bar text
 	SendMessage(WM_SETMESSAGESTRING, (WPARAM)nMsgSave);
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	// tell in-place servers to exit Shift+F1 help mode
 	if (m_pNotifyHook != NULL)
 		m_pNotifyHook->OnContextHelp(FALSE);
-#endif
 
 	if (dwContext != 0)
 	{

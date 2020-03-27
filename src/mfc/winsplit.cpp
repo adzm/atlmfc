@@ -50,7 +50,7 @@ BEGIN_MESSAGE_MAP(CSplitterWnd, CWnd)
 	ON_MESSAGE_VOID(WM_DISPLAYCHANGE,CSplitterWnd::OnDisplayChange)
 	ON_MESSAGE_VOID(WM_WININICHANGE, CSplitterWnd::OnDisplayChange)
 	ON_MESSAGE_VOID(WM_SETTINGCHANGE,CSplitterWnd::OnDisplayChange)
-	ON_MESSAGE(WM_PRINTCLIENT, &CSplitterWnd::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
@@ -1570,17 +1570,14 @@ void CSplitterWnd::OnPaint()
 	OnDraw(&dc);
 }
 
-LRESULT CSplitterWnd::OnPrintClient(WPARAM wParam, LPARAM lParam)
+LRESULT CSplitterWnd::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	UNREFERENCED_PARAMETER(lParam);
 	ASSERT_VALID(this);
-
-	HDC hdc = (HDC) wParam;
-	CDC* pDC = CDC::FromHandle(hdc);
+	UNREFERENCED_PARAMETER(nFlags);
 
 	ASSERT_VALID(pDC);
 
-	if (pDC == NULL)
+	if (pDC->GetSafeHdc() == NULL)
 	{
 		return -1L;
 	}

@@ -152,9 +152,7 @@ AFX_MODULE_STATE::AFX_MODULE_STATE(BOOL bDLL, WNDPROC pfnAfxWndProc,
 AFX_MODULE_STATE::AFX_MODULE_STATE(BOOL bDLL)
 #endif
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	m_factoryList.Construct(offsetof(COleObjectFactory, m_pNextFactory));
-#endif
 	m_classList.Construct(offsetof(CRuntimeClass, m_pNextClass));
 
 	m_fRegisteredClasses = 0;
@@ -182,9 +180,8 @@ AFX_MODULE_STATE::AFX_MODULE_STATE(BOOL bDLL)
 	// app starts out in "user control"
 	m_bUserCtrl = TRUE;
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_lockList.Construct(offsetof(COleControlLock, m_pNextLock));
-#endif
+
 #ifdef _AFXDLL
 	m_libraryList.Construct(offsetof(CDynLinkLibrary, m_pNextDLL));
 #endif
@@ -262,7 +259,6 @@ AFX_MODULE_THREAD_STATE::~AFX_MODULE_THREAD_STATE()
 	delete m_pmapHGDIOBJ;
 	delete m_pmapHIMAGELIST;
 
-#ifndef _AFX_NO_SOCKET_SUPPORT
 	// cleanup socket notification list
 	if (m_plistSocketNotifications != NULL)
 		while (!m_plistSocketNotifications->IsEmpty())
@@ -273,7 +269,6 @@ AFX_MODULE_THREAD_STATE::~AFX_MODULE_THREAD_STATE()
 	delete m_pmapDeadSockets;
 	delete m_plistSocketNotifications;
 #endif
-#endif //!_AFX_NO_SOCKET_SUPPORT
 }
 
 /////////////////////////////////////////////////////////////////////////////

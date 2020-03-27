@@ -172,4 +172,19 @@ void CMFCRibbonProgressBar::OnDrawOnList(CDC* pDC, CString strText, int nTextOff
 	m_nPos = nPos;
 }
 
+BOOL CMFCRibbonProgressBar::SetACCData(CWnd* pParent, CAccessibilityData& data)
+{
+	ASSERT_VALID(this);
+
+	if (!CMFCRibbonBaseElement::SetACCData(pParent, data))
+	{
+		return FALSE;
+	}
+
+	data.m_nAccRole = ROLE_SYSTEM_PROGRESSBAR;
+	data.m_strAccDefAction.Empty();
+	data.m_bAccState = STATE_SYSTEM_NORMAL;
+	data.m_strAccValue.Format (_T("%d"), m_nPos);
+	return TRUE;
+}
 

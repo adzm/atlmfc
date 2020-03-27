@@ -49,7 +49,7 @@ BEGIN_MESSAGE_MAP(CMFCDesktopAlertDialog, CDialogEx)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_CREATE()
 	ON_WM_SETFOCUS()
-	ON_MESSAGE(WM_PRINTCLIENT, &CMFCDesktopAlertDialog::OnPrintClient)
+	ON_WM_PRINTCLIENT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -187,17 +187,16 @@ BOOL CMFCDesktopAlertDialog::OnInitDialog()
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
-LRESULT CMFCDesktopAlertDialog::OnPrintClient(WPARAM wp, LPARAM lp)
+LRESULT CMFCDesktopAlertDialog::OnPrintClient(CDC* pDC, UINT nFlags)
 {
-	if (lp & PRF_CLIENT)
-	{
-		CDC* pDC = CDC::FromHandle((HDC) wp);
-		ASSERT_VALID(pDC);
+	ASSERT_VALID(pDC);
 
+	if (nFlags & PRF_CLIENT)
+	{
 		OnDraw(pDC);
 	}
 
-	return 0;
+	return 0L;
 }
 
 void CMFCDesktopAlertDialog::OnDraw(CDC* pDC)

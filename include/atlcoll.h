@@ -2237,7 +2237,7 @@ private:
 		_In_ UINT nHash);
 	void FreeNode(_Inout_ CNode* pNode);
 	void FreePlexes() throw();
-	_Success_(return != NULL) CNode* GetNode(
+	_Ret_maybenull_ CNode* GetNode(
 		/* _In_ */ KINARGTYPE key,
 		_Out_ UINT& iBin,
 		_Out_ UINT& nHash,
@@ -2773,7 +2773,7 @@ void CAtlMap< K, V, KTraits, VTraits >::FreePlexes() throw()
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-_Success_(return != NULL) typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::GetNode(
+_Ret_maybenull_ typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAtlMap< K, V, KTraits, VTraits >::GetNode(
 	/* _In_ */ KINARGTYPE key,
 	_Out_ UINT& iBin,
 	_Out_ UINT& nHash,
@@ -2783,6 +2783,7 @@ _Success_(return != NULL) typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAt
 
 	nHash = KTraits::Hash( key );
 	iBin = nHash%m_nBins;
+	pPrev = NULL;
 
 	if( m_ppBins == NULL )
 	{
@@ -2790,7 +2791,6 @@ _Success_(return != NULL) typename CAtlMap< K, V, KTraits, VTraits >::CNode* CAt
 	}
 
 	pFollow = NULL;
-	pPrev = NULL;
 	for( CNode* pNode = m_ppBins[iBin]; pNode != NULL; pNode = pNode->m_pNext )
 	{
 		if( (pNode->GetHash() == nHash) && KTraits::CompareElements( pNode->m_key, key ) )
@@ -3667,6 +3667,9 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 	return pNode;
 }
 
+#pragma warning(push)
+#pragma warning(disable:28182 28183)
+
 template< typename K, typename V, class KTraits, class VTraits >
 typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::Find(
 	/* _In_ */ KINARGTYPE key) const throw()
@@ -3716,6 +3719,8 @@ typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTrai
 
 #pragma warning(pop)
 }
+
+#pragma warning(pop)
 
 template< typename K, typename V, class KTraits, class VTraits >
 typename CRBTree< K, V, KTraits, VTraits >::CNode* CRBTree< K, V, KTraits, VTraits >::FindPrefix(
@@ -4193,7 +4198,7 @@ public:
 	explicit CRBMap(_In_ size_t nBlockSize = 10) throw();
 	~CRBMap() throw();
 
-	bool Lookup(
+	_Success_(return == true) bool Lookup(
 		/* _In_ */ KINARGTYPE key,
 		_Out_ VOUTARGTYPE value) const throw( ... );
 	const CPair* Lookup(/* _In_ */ KINARGTYPE key) const throw();
@@ -4230,7 +4235,7 @@ typename CRBMap< K, V, KTraits, VTraits >::CPair* CRBMap< K, V, KTraits, VTraits
 }
 
 template< typename K, typename V, class KTraits, class VTraits >
-bool CRBMap< K, V, KTraits, VTraits >::Lookup(
+_Success_(return == true) bool CRBMap< K, V, KTraits, VTraits >::Lookup(
 	/* _In_ */ KINARGTYPE key,
 	_Out_ VOUTARGTYPE value) const throw( ... )
 {

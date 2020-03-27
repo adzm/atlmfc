@@ -256,15 +256,7 @@ void CMFCVisualManagerOfficeXP::OnDrawBarGripper(CDC* pDC, CRect rectGripper, BO
 	}
 	else
 	{
-		if (bHorz)
-		{
-			rectFill.DeflateRect(4, 0);
-		}
-		else
-		{
-			rectFill.DeflateRect(4, 0);
-		}
-
+		rectFill.DeflateRect(4, 0);
 		bHorz = !bHorz;
 	}
 

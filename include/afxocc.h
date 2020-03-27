@@ -13,8 +13,6 @@
 
 #pragma once
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 #include <afxtempl.h>
 #include <oledb.h>
 #include "olebind.h"
@@ -529,5 +527,4 @@ struct _AFX_OCC_DIALOG_INFO
 #pragma component(minrebuild, on)
 #endif
 
-#endif // !_AFX_NO_OCC_SUPPORT
 #endif // __AFXOCC_H__

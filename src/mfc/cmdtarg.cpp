@@ -25,23 +25,19 @@ CCmdTarget::CCmdTarget()
 	ASSERT(m_pModuleState != NULL);
 
 	// initialize state
-#ifndef _AFX_NO_OLE_SUPPORT
 	m_dwRef = 1;
 	m_pOuterUnknown = NULL;
 	m_xInnerUnknown = 0;
 	m_xDispatch.m_vtbl = 0;
 	m_bResultExpected = TRUE;
 	m_xConnPtContainer.m_vtbl = 0;
-#endif
 }
 
 CCmdTarget::~CCmdTarget()
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	if (m_xDispatch.m_vtbl != 0)
 		((COleDispatchImpl*)&m_xDispatch)->Disconnect();
 	ASSERT(m_dwRef <= 1);
-#endif
 	m_pModuleState = NULL;
 }
 
@@ -297,21 +293,18 @@ AFX_STATIC BOOL AFXAPI _AfxDispatchCmdMsg(CCmdTarget* pTarget, UINT nID, int nCo
 BOOL CCmdTarget::OnCmdMsg(UINT nID, int nCode, void* pExtra,
 	AFX_CMDHANDLERINFO* pHandlerInfo)
 {
-#ifndef _AFX_NO_OCC_SUPPORT
 	// OLE control events are a special case
 	if (nCode == CN_EVENT)
 	{
 		ENSURE(afxOccManager != NULL);
 		return afxOccManager->OnEvent(this, nID, (AFX_EVENT*)pExtra, pHandlerInfo);
 	}
-#endif // !_AFX_NO_OCC_SUPPORT
 
 	// determine the message number and code (packed into nCode)
 	const AFX_MSGMAP* pMessageMap;
 	const AFX_MSGMAP_ENTRY* lpEntry;
 	UINT nMsg = 0;
 
-#ifndef _AFX_NO_DOCOBJECT_SUPPORT
 	if (nCode == CN_OLECOMMAND)
 	{
 		BOOL bResult = FALSE;
@@ -346,7 +339,6 @@ BOOL CCmdTarget::OnCmdMsg(UINT nID, int nCode, void* pExtra,
 
 		return bResult;
 	}
-#endif
 
 	if (nCode != CN_UPDATE_COMMAND_UI)
 	{
@@ -387,19 +379,13 @@ BOOL CCmdTarget::OnCmdMsg(UINT nID, int nCode, void* pExtra,
 /////////////////////////////////////////////////////////////////////////////
 // Hook to disable automation handlers
 
-#ifndef _AFX_NO_OLE_SUPPORT
-
 BOOL CCmdTarget::IsInvokeAllowed(DISPID)
 {
 	return TRUE;    // normally, invoke is always allowed
 }
 
-#endif // !_AFX_NO_OLE_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Stubs for OLE type library functions
-
-#ifndef _AFX_NO_OLE_SUPPORT
 
 BOOL CCmdTarget::GetDispatchIID(IID*)
 {
@@ -424,8 +410,6 @@ HRESULT CCmdTarget::GetTypeLib(LCID, LPTYPELIB*)
 	// Subclass must implement (typically via IMPLEMENT_OLETYPELIB macro)
 	return TYPE_E_CANTLOADLIBRARY;
 }
-
-#endif // !_AFX_NO_OLE_SUPPORT
 
 /////////////////////////////////////////////////////////////////////////////
 // CCmdTarget routines that delegate to the WinApp
@@ -463,8 +447,6 @@ const AFX_MSGMAP* CCmdTarget::GetThisMessageMap()
 /////////////////////////////////////////////////////////////////////////////
 // Root of dispatch maps
 
-#ifndef _AFX_NO_OLE_SUPPORT
-
 UINT CCmdTarget::_dispatchEntryCount = (UINT)-1;
 DWORD CCmdTarget::_dwStockPropMask = (DWORD)-1;
 
@@ -495,12 +477,8 @@ const AFX_DISPMAP_ENTRY CCmdTarget::_dispatchEntries[] =
 	// nothing here
 };
 
-#endif //!_AFX_NO_OLE_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Root of event sink maps
-
-#ifndef _AFX_NO_OCC_SUPPORT
 
 UINT CCmdTarget::_eventsinkEntryCount = (UINT)-1;
 
@@ -530,12 +508,8 @@ const AFX_EVENTSINKMAP_ENTRY CCmdTarget::_eventsinkEntries[] =
 	// nothing here
 };
 
-#endif //!_AFX_NO_OCC_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Root of interface maps
-
-#ifndef _AFX_NO_OLE_SUPPORT
 
 const AFX_INTERFACEMAP* CCmdTarget::GetInterfaceMap() const
 {
@@ -557,15 +531,12 @@ const AFX_INTERFACEMAP CCmdTarget::interfaceMap =
 
 const AFX_INTERFACEMAP_ENTRY CCmdTarget::_interfaceEntries[] =
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	INTERFACE_PART(CCmdTarget, IID_IDispatch, Dispatch)
-#endif
 	{ NULL, (size_t)-1 }    // end of entries
 };
 
 void CCmdTarget::OnFinalRelease()
 {
-#ifndef _AFX_NO_OLE_SUPPORT
 	AfxLockGlobals(CRIT_TYPELIBCACHE);
 
 	// release the typelib cache, if any
@@ -574,7 +545,6 @@ void CCmdTarget::OnFinalRelease()
 		pTypeLibCache->Unlock();
 
 	AfxUnlockGlobals(CRIT_TYPELIBCACHE);
-#endif
 
 	delete this;
 }
@@ -589,12 +559,8 @@ LPUNKNOWN CCmdTarget::GetInterfaceHook(const void*)
 	return NULL;
 }
 
-#endif //!_AFX_NO_OLE_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Root of connection maps
-
-#ifndef _AFX_NO_OLE_SUPPORT
 
 const AFX_CONNECTIONMAP* CCmdTarget::GetConnectionMap() const
 {
@@ -629,12 +595,8 @@ BOOL CCmdTarget::GetExtraConnectionPoints(CPtrArray*)
 	return FALSE;
 }
 
-#endif //!_AFX_NO_OLE_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // Root of command target maps
-
-#ifndef _AFX_NO_DOCOBJECT_SUPPORT
 
 const AFX_OLECMDMAP CCmdTarget::commandMap =
 {
@@ -658,8 +620,6 @@ const AFX_OLECMDMAP* CCmdTarget::GetThisCommandMap()
 	return &CCmdTarget::commandMap;
 }
 #endif
-
-#endif //!_AFX_NO_DOCOBJECT_SUPPORT
 
 /////////////////////////////////////////////////////////////////////////////
 // Special access to view routing info
@@ -873,7 +833,6 @@ void CCmdTarget::Dump(CDumpContext& dc) const
 {
 	CObject::Dump(dc);
 
-#ifndef _AFX_NO_OLE_SUPPORT
 	if (m_xDispatch.m_vtbl != 0)
 	{
 		dc << "with IDispatch (OLE Automation) capability\n";
@@ -892,7 +851,6 @@ void CCmdTarget::Dump(CDumpContext& dc) const
 			dc << "\nwith aggregation capability";
 		dc << "\n";
 	}
-#endif //!_AFX_NO_OLE_SUPPORT
 }
 
 void CCmdTarget::AssertValid() const

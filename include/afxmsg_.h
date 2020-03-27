@@ -60,6 +60,7 @@
 // h - handle
 // i - int
 // s - LPTSTR
+// S - LPCTSTR
 // v - void
 // l - LPARAM
 // M - CMenu*
@@ -73,6 +74,7 @@
 // CDS - COPYDATASTRUCT*
 // s - short
 // by - byte
+// F - CFont*
 
 enum AfxSig
 {
@@ -163,6 +165,16 @@ enum AfxSig
 	AfxSig_INPUTLANGCHANGE,			// void (UINT, UINT)
 	AfxSig_v_u_hkl,					// void (UINT, HKL)
 	AfxSig_INPUTDEVICECHANGE,		// void (unsigned short, HANDLE)
+	AfxSig_l_D_u,					// LRESULT (CDC*, UINT)
+	AfxSig_i_v_S,				// int (LPCTSTR)
+	AfxSig_v_F_b,				// void (CFont*, BOOL)
+	AfxSig_h_v_v,				// HANDLE ()
+	AfxSig_h_b_h,				// HANDLE (BOOL, HANDLE)
+	AfxSig_b_v_ii,				// BOOL (int, int)
+	AfxSig_h_h_h,				// HANDLE (HANDLE, HANDLE)
+	AfxSig_MDINext,				// void (CWnd*, BOOL)
+	AfxSig_u_u_l,				// UINT (UINT, LPARAM)
+
 // Old
 	AfxSig_bD = AfxSig_b_D_v,      // BOOL (CDC*)
 	AfxSig_bb = AfxSig_b_b_v,      // BOOL (BOOL)
@@ -438,6 +450,11 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< BOOL (AFX_MSG_CALL CWnd::*)(CDC*) > ( &ThisClass :: OnEraseBkgnd)) },
 
+#define ON_WM_PRINTCLIENT() \
+	{ WM_PRINTCLIENT, 0, 0, 0, AfxSig_l_D_u, \
+	(AFX_PMSG)(AFX_PMSGW) \
+	(static_cast< LRESULT (AFX_MSG_CALL CWnd::*)(CDC*, UINT) > ( &ThisClass :: OnPrintClient)) },
+
 #define ON_WM_SYSCOLORCHANGE() \
 	{ WM_SYSCOLORCHANGE, 0, 0, 0, AfxSig_vv, \
 		(AFX_PMSG)(AFX_PMSGW) \
@@ -448,22 +465,100 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnEndSession)) },
 
-#if(_WIN32_WINNT >= 0x0501)
+#define ON_WM_SETTEXT() \
+	{ WM_SETTEXT, 0, 0, 0, AfxSig_i_v_S, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< int (AFX_MSG_CALL CWnd::*)(LPCTSTR) > ( &ThisClass :: OnSetText)) },
+
+#define ON_WM_GETTEXT() \
+	{ WM_GETTEXT, 0, 0, 0, AfxSig_i_i_s, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< int (AFX_MSG_CALL CWnd::*)(int, LPTSTR) > ( &ThisClass :: OnGetText)) },
+
+#define ON_WM_GETTEXTLENGTH() \
+	{ WM_GETTEXTLENGTH, 0, 0, 0, AfxSig_u_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< UINT (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnGetTextLength)) },
+
+#define ON_WM_SETFONT() \
+	{ WM_SETFONT, 0, 0, 0, AfxSig_v_F_b, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(CFont*, BOOL) > ( &ThisClass :: OnSetFont)) },
+
+#define ON_WM_GETFONT() \
+	{ WM_GETFONT, 0, 0, 0, AfxSig_h_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< HFONT (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnGetFont)) },
+
+#define ON_WM_SETICON() \
+	{ WM_SETICON, 0, 0, 0, AfxSig_h_b_h, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< HICON (AFX_MSG_CALL CWnd::*)(BOOL, HICON) > ( &ThisClass :: OnSetIcon)) },
+
+#define ON_WM_MDISETMENU() \
+	{ WM_MDISETMENU, 0, 0, 0, AfxSig_h_h_h, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< HMENU (AFX_MSG_CALL CWnd::*)(HMENU, HMENU) > ( &ThisClass :: OnMDISetMenu)) },
+
+#define  ON_WM_MDIREFRESHMENU() \
+	{ WM_MDIREFRESHMENU, 0, 0, 0, AfxSig_h_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< HMENU (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnMDIRefreshMenu)) },
+
+#define  ON_WM_MDIDESTROY() \
+	{ WM_MDIDESTROY, 0, 0, 0, AfxSig_v_W_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*) > ( &ThisClass :: OnMDIDestroy)) },
+
+#define  ON_WM_MDINEXT() \
+	{ WM_MDINEXT, 0, 0, 0, AfxSig_MDINext, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*, BOOL) > ( &ThisClass :: OnMDINext)) },
+
+#define  ON_WM_CUT() \
+	{ WM_CUT, 0, 0, 0, AfxSig_v_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnCut)) },
+
+#define  ON_WM_COPY() \
+	{ WM_COPY, 0, 0, 0, AfxSig_v_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnCopy)) },
+
+#define  ON_WM_PASTE() \
+	{ WM_PASTE, 0, 0, 0, AfxSig_v_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnPaste)) },
+
+#define  ON_WM_CLEAR() \
+	{ WM_CLEAR, 0, 0, 0, AfxSig_v_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnClear)) },
+
+#define  ON_WM_DISPLAYCHANGE() \
+	{ WM_DISPLAYCHANGE, 0, 0, 0, AfxSig_v_u_ii, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, int, int) > ( &ThisClass :: OnDisplayChange)) },
+
+#define  ON_WM_DDE_INITIATE() \
+	{ WM_DDE_INITIATE, 0, 0, 0, AfxSig_v_W_uu, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*, UINT, UINT) > ( &ThisClass :: OnDDEInitiate)) },
+
+#define  ON_WM_DDE_EXECUTE() \
+	{ WM_DDE_EXECUTE, 0, 0, 0, AfxSig_v_W_h, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*, HANDLE) > ( &ThisClass :: OnDDEExecute)) },
+
+#define  ON_WM_DDE_TERMINATE() \
+	{ WM_DDE_TERMINATE, 0, 0, 0, AfxSig_v_W_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*) > ( &ThisClass :: OnDDETerminate)) },
 
 #define ON_WM_WTSSESSION_CHANGE() \
 	{ WM_WTSSESSION_CHANGE, 0, 0, 0, AfxSig_vww, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnSessionChange)) },
-
-#else
-
-#define ON_WM_WTSSESSION_CHANGE() \
-	__pragma(message("WM_WTSSESSION_CHANGE requires _WIN32_WINNT to be >= 0x501")) \
-	{ WM_WTSSESSION_CHANGE, 0, 0, 0, AfxSig_vww, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnSessionChange)) },
-
-#endif
 
 #define ON_WM_SHOWWINDOW() \
 	{ WM_SHOWWINDOW, 0, 0, 0, AfxSig_vbw, \
@@ -710,8 +805,6 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, CPoint) > ( &ThisClass :: OnNcMButtonDblClk)) },
 
-#if(_WIN32_WINNT >= 0x0500)
-
 #define ON_WM_NCXBUTTONDOWN() \
 	{ WM_NCXBUTTONDOWN, 0, 0, 0, AfxSig_MOUSE_NCXBUTTON, \
 		(AFX_PMSG)(AFX_PMSGW) \
@@ -726,28 +819,6 @@ enum AfxSig
 	{ WM_NCXBUTTONDBLCLK, 0, 0, 0, AfxSig_MOUSE_NCXBUTTON, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(short, UINT, CPoint) > ( &ThisClass :: OnNcXButtonDblClk)) },
-
-#else
-
-#define ON_WM_NCXBUTTONDOWN() \
-	__pragma(message("WM_NCXBUTTONDOWN requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_NCXBUTTONDOWN, 0, 0, 0, AfxSig_MOUSE_NCXBUTTON, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(short, UINT, CPoint) > ( &ThisClass :: OnNcXButtonDown)) },
-
-#define ON_WM_NCXBUTTONUP() \
-	__pragma(message("WM_NCXBUTTONUP requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_NCXBUTTONUP, 0, 0, 0, AfxSig_MOUSE_NCXBUTTON, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(short, UINT, CPoint) > ( &ThisClass :: OnNcXButtonUp)) },
-
-#define ON_WM_NCXBUTTONDBLCLK() \
-	__pragma(message("WM_NCXBUTTONDBLCLK requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_NCXBUTTONDBLCLK, 0, 0, 0, AfxSig_MOUSE_NCXBUTTON, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(short, UINT, CPoint) > ( &ThisClass :: OnNcXButtonDblClk)) },
-
-#endif
 
 #define ON_WM_KEYDOWN() \
 	{ WM_KEYDOWN, 0, 0, 0, AfxSig_vwww, \
@@ -769,22 +840,10 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT, UINT) > ( &ThisClass :: OnChar)) },
 
-#if(_WIN32_WINNT >= 0x0501)
-
 #define ON_WM_UNICHAR() \
 	{ WM_UNICHAR, 0, 0, 0, AfxSig_vwww, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT, UINT) > ( &ThisClass :: OnUniChar)) },
-
-#else
-
-#define ON_WM_UNICHAR() \
-	__pragma(message("WM_UNICHAR requires _WIN32_WINNT to be >= 0x501")) \
-	{ WM_UNICHAR, 0, 0, 0, AfxSig_vwww, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT, UINT) > ( &ThisClass :: OnUniChar)) },
-
-#endif
 
 #define ON_WM_DEADCHAR() \
 	{ WM_DEADCHAR, 0, 0, 0, AfxSig_vwww, \
@@ -826,56 +885,20 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnInputLangChangeRequest)) },
 
-#if(_WIN32_WINNT >= 0x0500)
-
 #define ON_WM_APPCOMMAND() \
 	{ WM_APPCOMMAND, 0, 0, 0, AfxSig_APPCOMMAND, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*, UINT, UINT, UINT) > ( &ThisClass :: OnAppCommand)) },
-
-#else
-
-#define ON_WM_APPCOMMAND() \
-	__pragma(message("WM_APPCOMMAND requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_APPCOMMAND, 0, 0, 0, AfxSig_APPCOMMAND, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*, UINT, UINT, UINT) > ( &ThisClass :: OnAppCommand)) },
-
-#endif
-
-#if(_WIN32_WINNT >= 0x0501)
 
 #define ON_WM_INPUT() \
 	{ WM_INPUT, 0, 0, 0, AfxSig_RAWINPUT, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, HRAWINPUT) > ( &ThisClass :: OnRawInput)) },
 
-#else
-
-#define ON_WM_INPUT() \
-	__pragma(message("WM_INPUT requires _WIN32_WINNT to be >= 0x501")) \
-	{ WM_INPUT, 0, 0, 0, AfxSig_RAWINPUT, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, HRAWINPUT) > ( &ThisClass :: OnRawInput)) },
-
-#endif /* _WIN32_WINNT >= 0x0501 */
-
-#if(_WIN32_WINNT >= 0x0600)
-
 #define ON_WM_INPUT_DEVICE_CHANGE() \
 	{ WM_INPUT_DEVICE_CHANGE, 0, 0, 0, AfxSig_INPUTDEVICECHANGE, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(unsigned short, HANDLE) > ( &ThisClass :: OnInputDeviceChange)) },
-
-#else
-
-#define ON_WM_INPUT_DEVICE_CHANGE() \
-	__pragma(message("WM_INPUT_DEVICE_CHANGE requires _WIN32_WINNT to be >= 0x600")) \
-	{ WM_INPUT_DEVICE_CHANGE, 0, 0, 0, AfxSig_INPUTDEVICECHANGE, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(unsigned short, HANDLE) > ( &ThisClass :: OnInputDeviceChange)) },
-
-#endif /* _WIN32_WINNT >= 0x0600 */
 
 #define ON_WM_TCARD() \
 	{ WM_TCARD, 0, 0, 0, AfxSig_vwl, \
@@ -927,22 +950,10 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< LRESULT (AFX_MSG_CALL CWnd::*)(UINT, UINT, CMenu*) > ( &ThisClass :: OnMenuChar)) },
 
-#if(WINVER >= 0x0500)
-
 #define ON_WM_MENURBUTTONUP() \
 	{ WM_MENURBUTTONUP, 0, 0, 0, AfxSig_v_u_M, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, CMenu*) > ( &ThisClass :: OnMenuRButtonUp)) },
-
-#else
-
-#define ON_WM_MENURBUTTONUP() \
-	__pragma(message("WM_MENURBUTTONUP requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_MENURBUTTONUP, 0, 0, 0, AfxSig_v_u_M, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, CMenu*) > ( &ThisClass :: OnMenuRButtonUp)) },
-
-#endif
 
 #define ON_WM_MENUDRAG() \
 	{ WM_MENUDRAG, 0, 0, 0, AfxSig_u_u_M, \
@@ -989,22 +1000,10 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< BOOL (AFX_MSG_CALL CWnd::*)(UINT, short, CPoint) > ( &ThisClass :: OnMouseWheel)) },
 
-#if (_WIN32_WINNT >= 0x0600)
-
 #define ON_WM_MOUSEHWHEEL() \
 	{ WM_MOUSEHWHEEL, 0, 0, 0, AfxSig_MOUSEHWHEEL, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, short, CPoint) > ( &ThisClass :: OnMouseHWheel)) },
-
-#else
-
-#define ON_WM_MOUSEHWHEEL() \
-	__pragma(message("WM_MOUSEHWHEEL requires _WIN32_WINNT to be >= 0x600")) \
-	{ WM_MOUSEHWHEEL, 0, 0, 0, AfxSig_MOUSEHWHEEL, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, short, CPoint) > ( &ThisClass :: OnMouseHWheel)) },
-
-#endif
 
 #define ON_WM_LBUTTONDOWN() \
 	{ WM_LBUTTONDOWN, 0, 0, 0, AfxSig_vwp, \
@@ -1051,8 +1050,6 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, CPoint) > ( &ThisClass :: OnMButtonDblClk)) },
 
-#if (_WIN32_WINNT >= 0x0500)
-
 #define ON_WM_XBUTTONDOWN() \
 	{ WM_XBUTTONDOWN, 0, 0, 0, AfxSig_MOUSE_XBUTTON, \
 		(AFX_PMSG)(AFX_PMSGW) \
@@ -1067,28 +1064,6 @@ enum AfxSig
 	{ WM_XBUTTONDBLCLK, 0, 0, 0, AfxSig_MOUSE_XBUTTON, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT, CPoint) > ( &ThisClass :: OnXButtonDblClk)) },
-
-#else
-
-#define ON_WM_XBUTTONDOWN() \
-	__pragma(message("WM_XBUTTONDOWN requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_XBUTTONDOWN, 0, 0, 0, AfxSig_MOUSE_XBUTTON, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT, CPoint) > ( &ThisClass :: OnXButtonDown)) },
-
-#define ON_WM_XBUTTONUP() \
-	__pragma(message("WM_XBUTTONUP requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_XBUTTONUP, 0, 0, 0, AfxSig_MOUSE_XBUTTON, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT, CPoint) > ( &ThisClass :: OnXButtonUp)) },
-
-#define ON_WM_XBUTTONDBLCLK() \
-	__pragma(message("WM_XBUTTONDBLCLK requires _WIN32_WINNT to be >= 0x500")) \
-	{ WM_XBUTTONDBLCLK, 0, 0, 0, AfxSig_MOUSE_XBUTTON, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT, CPoint) > ( &ThisClass :: OnXButtonDblClk)) },
-
-#endif
 
 #define ON_WM_PARENTNOTIFY() \
 	{ WM_PARENTNOTIFY, 0, 0, 0, AfxSig_vwl, \
@@ -1109,6 +1084,7 @@ enum AfxSig
 	{ WM_MDIACTIVATE, 0, 0, 0, AfxSig_vbWW, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL, CWnd*, CWnd*) > ( &ThisClass :: OnMDIActivate)) },
+
 #define ON_WM_RENDERFORMAT() \
 	{ WM_RENDERFORMAT, 0, 0, 0, AfxSig_vw, \
 		(AFX_PMSG)(AFX_PMSGW) \
@@ -1164,22 +1140,10 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(CWnd*, UINT, UINT) > ( &ThisClass :: OnHScrollClipboard)) },
 
-#if(_WIN32_WINNT >= 0x0600)
-
 #define ON_WM_CLIPBOARDUPDATE() \
 	{ WM_CLIPBOARDUPDATE, 0, 0, 0, AfxSig_v_v_v, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnClipboardUpdate)) },
-
-#else
-
-#define ON_WM_CLIPBOARDUPDATE() \
-	__pragma(message("WM_CLIPBOARDUPDATE requires _WIN32_WINNT to be >= 0x0600")) \
-	{ WM_CLIPBOARDUPDATE, 0, 0, 0, AfxSig_v_v_v, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnClipboardUpdate)) },
-
-#endif /* _WIN32_WINNT >= 0x0600 */
 
 #define ON_WM_QUERYNEWPALETTE() \
 	{ WM_QUERYNEWPALETTE, 0, 0, 0, AfxSig_bv, \
@@ -1262,17 +1226,15 @@ enum AfxSig
 		(static_cast< BOOL (AFX_MSG_CALL CWnd::*)(UINT, DWORD_PTR) > ( &ThisClass :: OnDeviceChange)) },
 
 #define ON_WM_POWERBROADCAST() \
-	{ WM_POWERBROADCAST, 0, 0, 0, AfxSig_u_u_u, \
+	{ WM_POWERBROADCAST, 0, 0, 0, AfxSig_u_u_l, \
 		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< UINT (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnPowerBroadcast)) },
+		(static_cast< UINT (AFX_MSG_CALL CWnd::*)(UINT, LPARAM) > ( &ThisClass :: OnPowerBroadcast)) },
 
 #define ON_WM_USERCHANGED() \
 	{ WM_USERCHANGED, 0, 0, 0, AfxSig_vv, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnUserChanged)) },
 
-#if(_WIN32_WINNT >= 0x0500 && WINVER >= 0x0500)
-
 #define ON_WM_CHANGEUISTATE() \
 	{ WM_CHANGEUISTATE, 0, 0, 0, AfxSig_vww2, \
 		(AFX_PMSG)(AFX_PMSGW) \
@@ -1287,42 +1249,11 @@ enum AfxSig
 	{ WM_QUERYUISTATE, 0, 0, 0, AfxSig_wv, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< UINT (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnQueryUIState)) },
-#else
 
-#define ON_WM_CHANGEUISTATE() \
-	__pragma(message("WM_CHANGEUISTATE requires _WIN32_WINNT and WINVER to be >= 0x500")) \
-	{ WM_CHANGEUISTATE, 0, 0, 0, AfxSig_vww2, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnChangeUIState)) },
-
-#define ON_WM_UPDATEUISTATE() \
-	__pragma(message("WM_UPDATEUISTATE requires _WIN32_WINNT and WINVER to be >= 0x500")) \
-	{ WM_UPDATEUISTATE, 0, 0, 0, AfxSig_vww2, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(UINT, UINT) > ( &ThisClass :: OnUpdateUIState)) },
-
-#define ON_WM_QUERYUISTATE() \
-	__pragma(message("WM_QUERYUISTATE requires _WIN32_WINNT and WINVER to be >= 0x500")) \
-	{ WM_QUERYUISTATE, 0, 0, 0, AfxSig_wv, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< UINT (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnQueryUIState)) },
-
-#endif // _WIN32_WINNT >= 0x0500 && WINVER >= 0x0500
-
-#if(_WIN32_WINNT >= 0x0501)
 #define ON_WM_THEMECHANGED() \
 	{ WM_THEMECHANGED, 0, 0, 0, AfxSig_l, \
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< LRESULT (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnThemeChanged)) },
-#else
-#define ON_WM_THEMECHANGED \
-	__pragma(message("ON_WM_THEMECHANGED requires _WIN32_WINNT >= 0x0501")) \
-	{ WM_THEMECHANGED, 0, 0, 0, AfxSig_l, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< LRESULT (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnThemeChanged)) },
-#endif	 // _WIN32_WINNT >= 0x0501
-
-#if(_WIN32_WINNT >= 0x0600)
 
 #define ON_WM_DWMCOMPOSITIONCHANGED() \
 	{ WM_DWMCOMPOSITIONCHANGED, 0, 0, 0, AfxSig_vv, \
@@ -1344,33 +1275,15 @@ enum AfxSig
 		(AFX_PMSG)(AFX_PMSGW) \
 		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnWindowMaximizedChange)) },
 
-#else
+#define ON_WM_DWMSENDICONICTHUMBNAIL() \
+	{ WM_DWMSENDICONICTHUMBNAIL, 0, 0, 0, AfxSig_b_v_ii, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< BOOL (AFX_MSG_CALL CWnd::*)(int, int) > ( &ThisClass :: OnSendIconicThumbnail)) },
 
-#define ON_WM_DWMCOMPOSITIONCHANGED \
-	__pragma(message("WM_DWMCOMPOSITIONCHANGED requires _WIN32_WINNT >= 0x0600")) \
-	{ WM_DWMCOMPOSITIONCHANGED, 0, 0, 0, AfxSig_vv, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnCompositionChanged)) },
-
-#define ON_WM_DWMNCRENDERINGCHANGED() \
-	__pragma(message("WM_DWMNCRENDERINGCHANGED requires _WIN32_WINNT >= 0x0600")) \
-	{ WM_DWMNCRENDERINGCHANGED, 0, 0, 0, AfxSig_vb, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnRenderingChanged)) },
-
-#define ON_WM_DWMCOLORIZATIONCOLORCHANGED() \
-	__pragma(message("WM_DWMCOLORIZATIONCOLORCHANGED requires _WIN32_WINNT >= 0x0600")) \
-	{ WM_DWMCOLORIZATIONCOLORCHANGED, 0, 0, 0, AfxSig_vww, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(DWORD, BOOL) > ( &ThisClass :: OnColorizationColorChanged)) },
-
-#define ON_WM_DWMWINDOWMAXIMIZEDCHANGE() \
-	__pragma(message("WM_DWMWINDOWMAXIMIZEDCHANGE requires _WIN32_WINNT >= 0x0600")) \
-	{ WM_DWMWINDOWMAXIMIZEDCHANGE, 0, 0, 0, AfxSig_vb, \
-		(AFX_PMSG)(AFX_PMSGW) \
-		(static_cast< void (AFX_MSG_CALL CWnd::*)(BOOL) > ( &ThisClass :: OnWindowMaximizedChange)) },
-
-#endif
+#define ON_WM_DWMSENDICONICLIVEPREVIEWBITMAP() \
+	{ WM_DWMSENDICONICLIVEPREVIEWBITMAP, 0, 0, 0, AfxSig_b_v_v, \
+	(AFX_PMSG) (AFX_PMSGW) \
+	(static_cast< BOOL (AFX_MSG_CALL CWnd::*)(void) > ( &ThisClass :: OnSendIconicLivePreviewBitmap)) },
 
 /////////////////////////////////////////////////////////////////////////////
 // Message map tables for Control Notification messages
@@ -1404,19 +1317,10 @@ enum AfxSig
 #define ON_EN_VSCROLL(id, memberFxn) \
 	ON_CONTROL(EN_VSCROLL, id, memberFxn)
 
-#if(_WIN32_WINNT >= 0x0500)
 #define ON_EN_ALIGN_LTR_EC(id, memberFxn) \
 	ON_CONTROL(EN_ALIGN_LTR_EC, id, memberFxn)
 #define ON_EN_ALIGN_RTL_EC(id, memberFxn) \
 	ON_CONTROL(EN_ALIGN_RTL_EC, id, memberFxn)
-#else
-#define ON_EN_ALIGN_LTR_EC(id, memberFxn) \
-	__pragma(message("EN_ALIGN_LTR_EC requires _WIN32_WINNT to be >= 0x0500")) \
-	ON_CONTROL(EN_ALIGN_LTR_EC, id, memberFxn)
-#define ON_EN_ALIGN_RTL_EC(id, memberFxn) \
-	__pragma(message("EN_ALIGN_RTL_EC requires _WIN32_WINNT to be >= 0x0500")) \
-	ON_CONTROL(EN_ALIGN_RTL_EC, id, memberFxn)
-#endif // _WIN32_WINNT >= 0x0500
 
 // Richedit Control Notification Codes
 #define ON_EN_IMECHANGE(id, memberFxn) \

@@ -17,10 +17,8 @@
 
 CDialogBar::CDialogBar()
 {
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_lpszTemplateName = NULL;
 	m_pOccDialogInfo = NULL;
-#endif
 }
 
 CDialogBar::~CDialogBar()
@@ -58,9 +56,7 @@ BOOL CDialogBar::Create(CWnd* pParentWnd, LPCTSTR lpszTemplateName,
 
 	// create a modeless dialog
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_lpszTemplateName = lpszTemplateName;
-#endif
 
 	// initialize common controls
 	VERIFY(AfxDeferRegisterClass(AFX_WNDCOMMCTLS_REG));
@@ -68,9 +64,7 @@ BOOL CDialogBar::Create(CWnd* pParentWnd, LPCTSTR lpszTemplateName,
 
 	BOOL bSuccess = CreateDlg(lpszTemplateName, pParentWnd);
 
-#ifndef _AFX_NO_OCC_SUPPORT
 	m_lpszTemplateName = NULL;
-#endif
 
 	if (!bSuccess)
 		return FALSE;
@@ -108,8 +102,6 @@ void CDialogBar::OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler)
 	UpdateDialogControls(pTarget, bDisableIfNoHndler);
 }
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 BEGIN_MESSAGE_MAP(CDialogBar, CControlBar)
 	ON_MESSAGE(WM_INITDIALOG,&CDialogBar::HandleInitDialog)
 END_MESSAGE_MAP()
@@ -138,8 +130,6 @@ BOOL CDialogBar::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO* pOccDialogInfo)
 	m_pOccDialogInfo = pOccDialogInfo;
 	return TRUE;
 }
-
-#endif //!_AFX_NO_OCC_SUPPORT
 
 
 IMPLEMENT_DYNAMIC(CDialogBar, CControlBar)

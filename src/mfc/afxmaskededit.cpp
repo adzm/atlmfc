@@ -29,12 +29,12 @@ BEGIN_MESSAGE_MAP(CMFCMaskedEdit, CEdit)
 	ON_WM_LBUTTONUP()
 	ON_WM_CREATE()
 	ON_CONTROL_REFLECT(EN_SETFOCUS, &CMFCMaskedEdit::OnSetFocusR)
-	ON_MESSAGE(WM_CUT, &CMFCMaskedEdit::OnCut)
-	ON_MESSAGE(WM_CLEAR, &CMFCMaskedEdit::OnClear)
-	ON_MESSAGE(WM_PASTE, &CMFCMaskedEdit::OnPaste)
-	ON_MESSAGE(WM_SETTEXT, &CMFCMaskedEdit::OnSetText)
-	ON_MESSAGE(WM_GETTEXT, &CMFCMaskedEdit::OnGetText)
-	ON_MESSAGE(WM_GETTEXTLENGTH, &CMFCMaskedEdit::OnGetTextLength)
+	ON_WM_CUT()
+	ON_WM_CLEAR()
+	ON_WM_PASTE()
+	ON_WM_SETTEXT()
+	ON_WM_GETTEXT()
+	ON_WM_GETTEXTLENGTH()
 	ON_MESSAGE(WM_MFC_INITCTRL, &CMFCMaskedEdit::OnInitControl)
 END_MESSAGE_MAP()
 
@@ -1488,7 +1488,7 @@ void CMFCMaskedEdit::OnSetFocusR()
 	}
 }
 
-LRESULT CMFCMaskedEdit::OnCut(WPARAM, LPARAM)
+void CMFCMaskedEdit::OnCut()
 {
 	m_bPasteProcessing = TRUE;
 
@@ -1514,11 +1514,9 @@ LRESULT CMFCMaskedEdit::OnCut(WPARAM, LPARAM)
 
 	CEdit::SetSel(nBeginOld, nBeginOld);
 	m_bPasteProcessing = FALSE;
-
-	return 0;
 }
 
-LRESULT CMFCMaskedEdit::OnClear(WPARAM, LPARAM)
+void CMFCMaskedEdit::OnClear()
 {
 	m_bPasteProcessing = TRUE;
 
@@ -1544,11 +1542,9 @@ LRESULT CMFCMaskedEdit::OnClear(WPARAM, LPARAM)
 
 	CEdit::SetSel(nBeginOld, nBeginOld);
 	m_bPasteProcessing = FALSE;
-
-	return 0;
 }
 
-LRESULT CMFCMaskedEdit::OnPaste(WPARAM, LPARAM)
+void CMFCMaskedEdit::OnPaste()
 {
 	m_bPasteProcessing = TRUE;
 
@@ -1611,28 +1607,26 @@ LRESULT CMFCMaskedEdit::OnPaste(WPARAM, LPARAM)
 	CEdit::SetSel(nBeginOld, nBeginOld);
 
 	m_bPasteProcessing = FALSE;
-
-	return 0L;
 }
 
 ///////////////////////////////////
 // Replace standard CWnd operations
 
-LRESULT CMFCMaskedEdit::OnSetText(WPARAM, LPARAM lParam)
+int CMFCMaskedEdit::OnSetText(LPCTSTR lpszText)
 {
-	if (m_bSetTextProcessing || m_bPasteProcessing)
+	if (m_bSetTextProcessing || m_bPasteProcessing || lpszText == NULL)
 	{
-		return Default();
+		return (int)Default();
 	}
 
 	m_bSetTextProcessing = TRUE;
 
-	BOOL bSetValueRes = SetValue((LPCTSTR)lParam, !m_bSetMaskedCharsOnly);
+	BOOL bSetValueRes = SetValue(lpszText, !m_bSetMaskedCharsOnly);
 	if (bSetValueRes)
 	{
 		LRESULT lRes = FALSE;
 		CString strNewValidated = GetValue();
-		if (strNewValidated.Compare((LPCTSTR)lParam) != 0)
+		if (strNewValidated.Compare(lpszText) != 0)
 		{
 			// validated new value should differ from lParam
 			lRes = (LRESULT)::SetWindowText(GetSafeHwnd(), (LPCTSTR)strNewValidated);
@@ -1643,28 +1637,26 @@ LRESULT CMFCMaskedEdit::OnSetText(WPARAM, LPARAM lParam)
 		}
 
 		m_bSetTextProcessing = FALSE;
-		return lRes;
+		return (int)lRes;
 	}
 
 	m_bSetTextProcessing = FALSE;
 	return FALSE;
 }
 
-LRESULT CMFCMaskedEdit::OnGetText(WPARAM wParam, LPARAM lParam)
+int CMFCMaskedEdit::OnGetText(int nMaxChars, LPTSTR lpszText)
 {
 	if (m_bPasteProcessing)
 	{
-		return Default();
+		return (int)Default();
 	}
 
-	int nMaxCount = (int)wParam;
-	if (nMaxCount == 0)
+	if (nMaxChars == 0)
 	{
 		return 0;       // nothing copied
 	}
 
-	LPTSTR lpszDestBuf = (LPTSTR)lParam;
-	if (lpszDestBuf == NULL)
+	if (lpszText == NULL)
 	{
 		return 0;       // nothing copied
 	}
@@ -1680,24 +1672,24 @@ LRESULT CMFCMaskedEdit::OnGetText(WPARAM wParam, LPARAM lParam)
 	}
 
 	// Copy text
-	int nCount = min(nMaxCount, strText.GetLength());
+	int nCount = min(nMaxChars, strText.GetLength());
 	LPCTSTR lpcszTmp = strText;
-	CopyMemory(lpszDestBuf, lpcszTmp, nCount * sizeof(TCHAR));
+	CopyMemory(lpszText, lpcszTmp, nCount * sizeof(TCHAR));
 
 	// Add terminating null character if possible
-	if (nMaxCount > nCount)
+	if (nMaxChars > nCount)
 	{
-		lpszDestBuf[nCount] = _T('\0');
+		lpszText[nCount] = _T('\0');
 	}
 	
 	return(nCount * sizeof(TCHAR));
 }
 
-LRESULT CMFCMaskedEdit::OnGetTextLength(WPARAM, LPARAM)
+UINT CMFCMaskedEdit::OnGetTextLength()
 {
 	if (m_bPasteProcessing)
 	{
-		return Default();
+		return (UINT)Default();
 	}
 
 	CString strText;
@@ -1710,7 +1702,7 @@ LRESULT CMFCMaskedEdit::OnGetTextLength(WPARAM, LPARAM)
 		strText = GetValue();
 	}
 
-	return (LRESULT) strText.GetLength();
+	return (UINT)strText.GetLength();
 }
 
 LRESULT CMFCMaskedEdit::OnInitControl(WPARAM wParam, LPARAM lParam)

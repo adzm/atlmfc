@@ -83,7 +83,7 @@ public:
 	// Retrieves the current minimum and maximum allowable times for the datetime picker control.
 	DWORD GetRange(_Out_ CTime* pMinRange, _Out_ CTime* pMaxRange) const;
 
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 	// REVIEW: Sets the style of the datetime picker control's child calendar control.
 	DWORD SetMonthCalStyle(_In_ DWORD dwStyle);
 
@@ -95,7 +95,7 @@ public:
 
 	// Retrieves the ideal size for the control (so that all the text fits).
 	BOOL GetIdealSize(_Out_ LPSIZE pSize) const;
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 // Operations
 	// Sets the time in the datetime picker control.
@@ -116,10 +116,10 @@ public:
 	// Retrieves the currently selected time from the datetime picker control.
 	DWORD GetTime(_Out_ LPSYSTEMTIME pTimeDest) const;
 
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if defined(UNICODE)
 	// REVIEW: Closes the datetime picker control.
 	void CloseMonthCal();
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // defined(UNICODE)
 
 // Overridables
 	virtual ~CDateTimeCtrl();
@@ -166,7 +166,7 @@ public:
 	// Retrieves the maximum width of the "today" string in the calendar control, in pixels.
 	DWORD GetMaxTodayWidth() const;
 
-#if (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#if (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 	// Determines whether the calendar control is in month view.
 	BOOL IsMonthView() const; // REVIEW: do we need this method?
 
@@ -222,7 +222,7 @@ public:
 	// REVIEW: Sets the current view of the calendar control.
 	BOOL SetCurrentView(_In_ DWORD dwNewView);
 
-#endif // (NTDDI_VERSION >= NTDDI_LONGHORN) && defined(UNICODE)
+#endif // (NTDDI_VERSION >= NTDDI_VISTA) && defined(UNICODE)
 
 // Operations
 	// Sizes the calendar control to the minimum size that fits a full month.

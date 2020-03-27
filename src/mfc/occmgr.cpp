@@ -20,8 +20,6 @@
 
 #define new DEBUG_NEW
 
-#ifndef _AFX_NO_OCC_SUPPORT
-
 /////////////////////////////////////////////////////////////////////////////
 // AfxEnableControlContainer - wire up control container functions
 
@@ -861,7 +859,6 @@ BOOL CControlSiteFactoryMgr::UnregisterSiteFactory(IControlSiteFactory* pFactory
 	return bRemoved;
 }
 
-
 BOOL AFXAPI AfxRegisterSiteFactory(IControlSiteFactory* pFactory)
 {
 	return _afxControlFactoryMgr->RegisterSiteFactory(pFactory);
@@ -871,7 +868,3 @@ BOOL AFXAPI AfxUnregisterSiteFactory(IControlSiteFactory* pFactory)
 {
 	return _afxControlFactoryMgr->UnregisterSiteFactory(pFactory);
 }
-
-
-
-#endif //!_AFX_NO_OCC_SUPPORT

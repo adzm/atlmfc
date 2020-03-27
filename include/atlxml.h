@@ -429,11 +429,13 @@ ATLPREFAST_UNSUPPRESS()
 					hr = Load(pStream);
 				}
 
+ATLPREFAST_SUPPRESS(6102)
 				if (pStream != NULL)
 				{
 					pStream->Release();
 				}
-			}
+ATLPREFAST_UNSUPPRESS()
+            }
 
 			::GlobalFree(hGlobal);
 		}
@@ -526,31 +528,33 @@ ATLPREFAST_UNSUPPRESS()
 				if (SUCCEEDED(Save(pStream)))
 				{
 					STATSTG stat = {0};
-					pStream->Stat(&stat, STATFLAG_NONAME);
-					size = (UINT)stat.cbSize.QuadPart;
-					if (size > 0)
-					{
-						*lpBuffer = _ATL_NEW BYTE[size];
-						if (*lpBuffer != NULL)
-						{
-							LARGE_INTEGER dlibMove = {0};
-							pStream->Seek(dlibMove, STREAM_SEEK_SET, NULL);
-							pStream->Read(*lpBuffer, size, NULL);
-
-							hr = S_OK;
-						}
-						else 
-						{
-							hr = E_OUTOFMEMORY;
-						}
+					if (SUCCEEDED(pStream->Stat(&stat, STATFLAG_NONAME)))
+                    {
+    					size = (UINT)stat.cbSize.QuadPart;
+	    				if (size > 0)
+		    			{
+			    			*lpBuffer = _ATL_NEW BYTE[size];
+				    		if (*lpBuffer != NULL)
+					    	{
+						    	LARGE_INTEGER dlibMove = {0};
+    							pStream->Seek(dlibMove, STREAM_SEEK_SET, NULL);
+                                hr = pStream->Read(*lpBuffer, size, NULL);
+		    				}
+			    			else 
+				    		{
+						    	hr = E_OUTOFMEMORY;
+					    	}
+                        }
 					}
 				}
 			}
 
+ATLPREFAST_SUPPRESS(6102)                
 			if (pStream != NULL)
 			{
 				pStream->Release();
 			}
+ATLPREFAST_UNSUPPRESS()                
 
 			::GlobalFree(hGlobal);
 		}

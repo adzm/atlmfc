@@ -465,7 +465,7 @@ CAnimationBaseObject::CAnimationBaseObject()
 	m_bAutodestroyTransitions = TRUE;
 }
 
-CAnimationBaseObject::CAnimationBaseObject(UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData)
+CAnimationBaseObject::CAnimationBaseObject(UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData)
 {
 	m_dwUserData = dwUserData;
 	m_pParentController = NULL;
@@ -650,7 +650,7 @@ CAnimationValue::CAnimationValue() : m_value(0.)
 {
 }
 
-CAnimationValue::CAnimationValue(DOUBLE dblDefaultValue, UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData) : 
+CAnimationValue::CAnimationValue(DOUBLE dblDefaultValue, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : 
 	CAnimationBaseObject(nGroupID, nObjectID, dwUserData), m_value(dblDefaultValue)
 {
 }
@@ -697,7 +697,7 @@ CAnimationPoint::CAnimationPoint()
 {
 }
 
-CAnimationPoint::CAnimationPoint(const CPoint& ptDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData) : 
+CAnimationPoint::CAnimationPoint(const CPoint& ptDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : 
 	CAnimationBaseObject(nGroupID, nObjectID, dwUserData), m_xValue(ptDefault.x), m_yValue(ptDefault.y)
 {
 }
@@ -765,7 +765,7 @@ CAnimationSize::CAnimationSize()
 {
 }
 
-CAnimationSize::CAnimationSize(const CSize& szDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData) : 
+CAnimationSize::CAnimationSize(const CSize& szDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : 
 	CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
 {
 	SetDefaultValue(szDefault);
@@ -835,7 +835,7 @@ CAnimationColor::CAnimationColor()
 {
 }
 
-CAnimationColor::CAnimationColor(COLORREF color, UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
+CAnimationColor::CAnimationColor(COLORREF color, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
 {
 	SetDefaultValue(color);
 }
@@ -922,14 +922,14 @@ CAnimationRect::CAnimationRect()
 	m_bFixedSize = FALSE;
 }
 
-CAnimationRect::CAnimationRect(const CRect& rect, UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
+CAnimationRect::CAnimationRect(const CRect& rect, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
 {
 	SetDefaultValue(rect);
 	m_szInitial = rect.Size();
 	m_bFixedSize = FALSE;
 }
 
-CAnimationRect::CAnimationRect(const CPoint& pt, const CSize& sz, UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
+CAnimationRect::CAnimationRect(const CPoint& pt, const CSize& sz, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
 {
 	CRect rect(pt, sz);
 	SetDefaultValue(rect);
@@ -937,7 +937,7 @@ CAnimationRect::CAnimationRect(const CPoint& pt, const CSize& sz, UINT32 nGroupI
 	m_bFixedSize = FALSE;
 }
 
-CAnimationRect::CAnimationRect(int nLeft, int nTop, int nRight, int nBottom, UINT32 nGroupID, UINT32 nObjectID, DWORD dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
+CAnimationRect::CAnimationRect(int nLeft, int nTop, int nRight, int nBottom, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
 {
 	CRect rect(nLeft, nTop, nRight, nBottom);
 	SetDefaultValue(rect);
@@ -1956,7 +1956,7 @@ BOOL CAnimationController::EnableStoryboardEventHandler(UINT32 nGroupID, BOOL bE
 	return TRUE;
 }
 
-BOOL CAnimationController::EnablePriorityComparisonHandler(DWORD dwHandlerType)
+BOOL CAnimationController::EnablePriorityComparisonHandler(DWORD_PTR dwHandlerType)
 {
 	IUIAnimationManager* pAnimationManager = GetUIAnimationManager();
 

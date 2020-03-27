@@ -46,7 +46,7 @@ BEGIN_MESSAGE_MAP(CMFCHeaderCtrl, CHeaderCtrl)
 	ON_WM_CANCELMODE()
 	ON_WM_CREATE()
 	ON_WM_MOUSELEAVE()
-	ON_MESSAGE(WM_SETFONT, &CMFCHeaderCtrl::OnSetFont)
+	ON_WM_SETFONT()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -512,19 +512,15 @@ void CMFCHeaderCtrl::CommonInit()
 	}
 }
 
-LRESULT CMFCHeaderCtrl::OnSetFont(WPARAM wParam, LPARAM lParam)
+void CMFCHeaderCtrl::OnSetFont(CFont* pFont, BOOL bRedraw)
 {
-	BOOL bRedraw = (BOOL) LOWORD(lParam);
-
-	m_hFont = (HFONT) wParam;
+	m_hFont = (HFONT)pFont->GetSafeHandle();
 
 	if (bRedraw)
 	{
 		Invalidate();
 		UpdateWindow();
 	}
-
-	return 0;
 }
 
 

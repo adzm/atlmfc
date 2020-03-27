@@ -39,8 +39,6 @@ AFX_STATIC inline BOOL IsDirSep(TCHAR ch)
 	return (ch == '\\' || ch == '/');
 }
 
-#ifndef _AFX_NO_OLE_SUPPORT
-
 #undef DEFINE_GUID
 
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
@@ -66,8 +64,6 @@ DEFINE_SHLGUID(IID_IShellLinkW, 0x000214F9L, 0, 0);
 #define IID_IShellLink afxIID_IShellLinkW
 #define IShellLink IShellLinkW
 #endif
-
-#endif !_AFX_NO_OLE_SUPPORT
 
 ////////////////////////////////////////////////////////////////////////////
 // CFile implementation
@@ -500,8 +496,6 @@ void PASCAL CFile::Remove(LPCTSTR lpszFileName, CAtlTransactionManager* pTM)
 #undef AfxGetFileName
 #endif
 
-#ifndef _AFX_NO_OLE_SUPPORT
-
 HRESULT AFX_COM::CreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
 	REFIID riid, LPVOID* ppv)
 {
@@ -600,8 +594,6 @@ BOOL AFXAPI AfxGetInProcServer(LPCTSTR lpszCLSID, CString& str)
 	str.ReleaseBuffer();
 	return b;
 }
-#endif  //!_AFX_NO_OLE_SUPPORT
-
 
 BOOL AFXAPI AfxResolveShortcut(CWnd* pWnd, LPCTSTR lpszFileIn,
 	_Out_writes_(cchPath) LPTSTR lpszFileOut, int cchPath)

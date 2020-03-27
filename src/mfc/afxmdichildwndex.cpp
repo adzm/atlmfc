@@ -86,8 +86,8 @@ BEGIN_MESSAGE_MAP(CMDIChildWndEx, CMDIChildWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_STYLECHANGED()
 	ON_WM_SYSCOMMAND()
-	ON_MESSAGE(WM_SETTEXT, &CMDIChildWndEx::OnSetText)
-	ON_MESSAGE(WM_SETICON, &CMDIChildWndEx::OnSetIcon)
+	ON_WM_SETTEXT()
+	ON_WM_SETICON()
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, &CMDIChildWndEx::OnIdleUpdateCmdUI)
 	ON_REGISTERED_MESSAGE(AFX_WM_CHANGEVISUALMANAGER, &CMDIChildWndEx::OnChangeVisualManager)
 END_MESSAGE_MAP()
@@ -177,7 +177,6 @@ void CMDIChildWndEx::RegisterTaskbarTab(CMDIChildWndEx* pWndBefore)
 		return;
 	}
 
-#if (WINVER >= 0x0601)
 	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
 	{
 		// attempt to create a proxy despite it has been already created
@@ -250,13 +249,13 @@ void CMDIChildWndEx::RegisterTaskbarTab(CMDIChildWndEx* pWndBefore)
 	{
 		InvalidateIconicBitmaps();
 	}
-
-#endif
 }
+
 BOOL CMDIChildWndEx::IsRegisteredWithTaskbarTabs()
 {
 	return m_tabProxyWnd.GetSafeHwnd() != NULL;
 }
+
 BOOL CMDIChildWndEx::IsTaskbarTabsSupportEnabled()
 {
 	CMDIFrameWndEx* pTopLevel = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
@@ -321,7 +320,6 @@ void CMDIChildWndEx::SetTaskbarTabOrder(CMDIChildWndEx* pWndBefore)
 
 	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
 	{
-#if (WINVER >= 0x0601)
 		ITaskbarList3* pTaskbarList = GetGlobalData()->GetITaskbarList3();
 		ASSERT(pTaskbarList != NULL);
 
@@ -330,9 +328,9 @@ void CMDIChildWndEx::SetTaskbarTabOrder(CMDIChildWndEx* pWndBefore)
 		{
 			pTaskbarList->SetTabOrder(m_tabProxyWnd.GetSafeHwnd(), hWndBefore);
 		}
-#endif
 	}
 }
+
 void CMDIChildWndEx::SetTaskbarTabProperties(DWORD dwFlags)
 {
 	ASSERT_VALID(this);
@@ -342,7 +340,6 @@ void CMDIChildWndEx::SetTaskbarTabProperties(DWORD dwFlags)
 		return;
 	}
 
-#if (WINVER >= 0x0601)
 	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
 	{
 		ITaskbarList3* pTaskbarList = GetGlobalData()->GetITaskbarList3();
@@ -360,8 +357,8 @@ void CMDIChildWndEx::SetTaskbarTabProperties(DWORD dwFlags)
 			}
 		}
 	}
-#endif
 }
+
 BOOL CMDIChildWndEx::DockPaneLeftOf(CPane* pBar, CPane* pLeftOf)
 {
 	m_dockManager.DockPaneLeftOf(pBar, pLeftOf);
@@ -371,7 +368,6 @@ void CMDIChildWndEx::SetTaskbarTabActive()
 {
 	ASSERT_VALID(this);
 
-#if (WINVER >= 0x0601)
 	if (!IsTaskbarTabsSupportEnabled())
 		return;
 
@@ -382,7 +378,6 @@ void CMDIChildWndEx::SetTaskbarTabActive()
 		ASSERT_VALID(pParentFrame);
 		pTaskbarList3->SetTabActive(m_tabProxyWnd.GetSafeHwnd(), pParentFrame->GetSafeHwnd(), 0);
 	}
-#endif
 }
 void CMDIChildWndEx::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd)
 {
@@ -404,7 +399,6 @@ void CMDIChildWndEx::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDe
 			m_pMDIFrame->m_wndClientArea.SetActiveTab(pActivateWnd->GetSafeHwnd());
 		}
 
-#if (WINVER >= 0x0601)
 		// If in MDI Tabbed or MDI Tabbed Group, mode, and if the application wants
 		// the behavior, set the MDI child as the active tab in the task bar tab list.
 		if (IsTaskbarTabsSupportEnabled() && IsRegisteredWithTaskbarTabs())
@@ -426,7 +420,6 @@ void CMDIChildWndEx::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDe
 				}
 			}
 		}
-#endif
 
 		bActivating = FALSE;
 
@@ -443,12 +436,10 @@ void CMDIChildWndEx::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDe
 		}
 	}
 
-#if (WINVER >= 0x0601)
 	if (bActivate && !IsTaskbarTabsSupportEnabled() || !IsRegisteredWithTaskbarTabs())
 	{
 		SetTaskbarThumbnailClipRect(CRect(0, 0, 0, 0));
 	}
-#endif
 }
 
 void CMDIChildWndEx::ActivateFrame(int nCmdShow)
@@ -480,7 +471,7 @@ void CMDIChildWndEx::ActivateFrame(int nCmdShow)
 	pWndParent->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
 }
 
-LRESULT CMDIChildWndEx::OnSetText(WPARAM, LPARAM lParam)
+int CMDIChildWndEx::OnSetText(LPCTSTR lpszText)
 {
 	LRESULT lRes = Default();
 
@@ -490,15 +481,15 @@ LRESULT CMDIChildWndEx::OnSetText(WPARAM, LPARAM lParam)
 		m_pMDIFrame->m_wndClientArea.UpdateTabs(TRUE);
 	}
 
-	m_Impl.OnSetText((LPCTSTR)lParam);
-	SetTaskbarTabText((LPCTSTR)lParam);
+	m_Impl.OnSetText(lpszText);
+	SetTaskbarTabText(lpszText);
 
-	return lRes;
+	return (int)lRes;
 }
 
 void CMDIChildWndEx::SetTaskbarTabText(LPCTSTR lpcszDefaultText)
 {
-	if (IsTaskbarTabsSupportEnabled() && IsRegisteredWithTaskbarTabs())
+	if (IsTaskbarTabsSupportEnabled() && IsRegisteredWithTaskbarTabs() && lpcszDefaultText != NULL)
 	{
 		CMDIFrameWndEx* pWnd = DYNAMIC_DOWNCAST(CMDIFrameWndEx, GetTopLevelFrame());
 		if (pWnd == NULL)
@@ -531,9 +522,9 @@ void CMDIChildWndEx::SetTaskbarTabText(LPCTSTR lpcszDefaultText)
 	}
 }
 
-LRESULT CMDIChildWndEx::OnSetIcon(WPARAM,LPARAM)
+HICON CMDIChildWndEx::OnSetIcon(BOOL /*bIsLarge*/, HICON /*hIcon*/)
 {
-	LRESULT lRes = Default();
+	HICON hIcon = (HICON)Default();
 
 	if (m_pMDIFrame != NULL)
 	{
@@ -541,7 +532,7 @@ LRESULT CMDIChildWndEx::OnSetIcon(WPARAM,LPARAM)
 		m_pMDIFrame->m_wndClientArea.UpdateTabs();
 	}
 
-	return lRes;
+	return hIcon;
 }
 
 CString CMDIChildWndEx::GetFrameText() const
@@ -916,7 +907,6 @@ void CMDIChildWndEx::OnSizing(UINT fwSide, LPRECT pRect)
 }
 void CMDIChildWndEx::UnregisterTaskbarTab(BOOL bCheckRegisteredMDIChildCount)
 {
-#if (WINVER >= 0x0601)
 	// If in MDI Tabbed or MDI Tabbed Group, mode, and if the application
 	// wants the behavior, remove the MDI child from the task bar tab list.
 	if (m_tabProxyWnd.GetSafeHwnd() != NULL)
@@ -946,7 +936,6 @@ void CMDIChildWndEx::UnregisterTaskbarTab(BOOL bCheckRegisteredMDIChildCount)
 			}
 		}
 	}
-#endif
 }
 void CMDIChildWndEx::OnDestroy()
 {
@@ -1252,7 +1241,6 @@ LRESULT CMDIChildWndEx::OnChangeVisualManager(WPARAM, LPARAM)
 	return 0;
 }
 
-#if (WINVER >= 0x0601)
 void CMDIChildWndEx::OnSendIconicThumbnail(WPARAM, LPARAM)
 {
 	CDC dcThumbnail;
@@ -1276,7 +1264,6 @@ void CMDIChildWndEx::OnSendIconicLivePreviewBitmap(WPARAM, LPARAM)
 	HBITMAP hBitmap = (HBITMAP)(dcThumbnail.GetCurrentBitmap()->m_hObject);
 	_AfxDwmSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, DWM_SIT_DISPLAYFRAME);
 }
-#endif
 
 BOOL CMDIChildWndEx::OnTaskbarTabThumbnailStretch(HBITMAP hBmpDst, const CRect& rectDst, HBITMAP hBmpSrc, const CRect& rectSrc)
 {
@@ -1537,12 +1524,11 @@ BOOL CMDIChildWndEx::IsTabbedMDIChild()
 //////////////////////////////////////////////////
 /// CMDITabProxyWnd
 
-#if (WINVER >= 0x0601)
 IMPLEMENT_DYNCREATE(CMDITabProxyWnd, CWnd)
 
 BEGIN_MESSAGE_MAP(CMDITabProxyWnd, CWnd)
-	ON_MESSAGE(WM_DWMSENDICONICTHUMBNAIL, &CMDITabProxyWnd::OnSendIconicThumbnail)
-	ON_MESSAGE(WM_DWMSENDICONICLIVEPREVIEWBITMAP, &CMDITabProxyWnd::OnSendIconicLivePreviewBitmap)
+	ON_WM_DWMSENDICONICTHUMBNAIL()
+	ON_WM_DWMSENDICONICLIVEPREVIEWBITMAP()
 	ON_WM_ACTIVATE()
 	ON_WM_MOUSEACTIVATE()
 	ON_WM_SYSCOMMAND()
@@ -1663,39 +1649,31 @@ HBITMAP CMDITabProxyWnd::GetClientBitmap (int nWidth, int nHeight, BOOL bIsThumb
 	return bmpDst.Detach();
 }
 
-LRESULT CMDITabProxyWnd::OnSendIconicThumbnail(WPARAM wParam, LPARAM lParam)
+BOOL CMDITabProxyWnd::OnSendIconicThumbnail(int cx, int cy)
 {
-	UNREFERENCED_PARAMETER(wParam);
-
 	if (m_pRelatedMDIChildFrame == NULL)
 	{
-		return Default();
+		return (BOOL)Default();
 	}
 
-	// Probably _xSize will be swapped with _ySize in Win7 Release, because usually width resides in LOWORD.
-	int nWidth = HIWORD(lParam); 
-	int nHeight = LOWORD(lParam);
-
-	HBITMAP hBitmap = m_pRelatedMDIChildFrame->OnGetIconicThumbnail(nWidth, nHeight); 
+	HBITMAP hBitmap = m_pRelatedMDIChildFrame->OnGetIconicThumbnail(cx, cy); 
 	if (hBitmap == NULL)
 	{
-		hBitmap = GetClientBitmap(nWidth, nHeight, TRUE);
+		hBitmap = GetClientBitmap(cx, cy, TRUE);
 	}
-
+			
 	_AfxDwmSetIconicThumbnail(GetSafeHwnd(), hBitmap, 0);
+
 	DeleteObject(hBitmap);
 
-	return Default();
+	return (BOOL)Default();
 }
 
-LRESULT CMDITabProxyWnd::OnSendIconicLivePreviewBitmap(WPARAM wParam, LPARAM lParam)
+BOOL CMDITabProxyWnd::OnSendIconicLivePreviewBitmap()
 {
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-
 	if (m_pRelatedMDIChildFrame == NULL)
 	{
-		return 0;
+		return TRUE;
 	}
 
 	ASSERT_VALID(m_pRelatedMDIChildFrame);
@@ -1723,7 +1701,7 @@ LRESULT CMDITabProxyWnd::OnSendIconicLivePreviewBitmap(WPARAM wParam, LPARAM lPa
 
 	_AfxDwmSetIconicLivePreviewBitmap(GetSafeHwnd(), hBitmap, &ptClient, 0);
 	DeleteObject(hBitmap);
-	return 0;
+	return FALSE;
 }
 
 void CMDITabProxyWnd::OnSysCommand(UINT nID, LPARAM lParam)
@@ -1781,4 +1759,3 @@ void CMDITabProxyWnd::OnClose()
 
 	m_pRelatedMDIChildFrame->OnPressTaskbarThmbnailCloseButton();
 }
-#endif
