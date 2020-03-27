@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -113,7 +113,7 @@ static LPCTSTR s_szTag_Image                = _T("IMAGE");
 static LPCTSTR s_szTag_Image_Small          = _T("IMAGE_SMALL");
 static LPCTSTR s_szTag_Image_Large          = _T("IMAGE_LARGE");
 
-static LPCTSTR s_szElementNames[] = 
+static LPCTSTR s_szElementNames[] =
 {
 	_T("Button"),
 	_T("Button_Check"),
@@ -607,7 +607,14 @@ INT_PTR CMFCRibbonInfo::XQAT::AddItem(const CMFCRibbonInfo::XQAT::XQATItem& rIte
 }
 
 CMFCRibbonInfo::XRibbonBar::XRibbonBar()
-: CMFCRibbonInfo::XBase(CMFCRibbonInfo::e_TypeRibbonBar), m_bToolTip(TRUE), m_bToolTipDescr(TRUE), m_bKeyTips(TRUE), m_bPrintPreview(TRUE), m_bDrawUsingFont(FALSE), m_btnMain(NULL), m_MainCategory(NULL)
+	: CMFCRibbonInfo::XBase(CMFCRibbonInfo::e_TypeRibbonBar)
+	, m_bToolTip(TRUE)
+	, m_bToolTipDescr(TRUE)
+	, m_bKeyTips(TRUE)
+	, m_bPrintPreview(TRUE)
+	, m_bDrawUsingFont(FALSE)
+	, m_MainCategory(NULL)
+	, m_btnMain(NULL)
 {
 }
 

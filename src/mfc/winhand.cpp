@@ -99,13 +99,11 @@ BOOL AFXAPI AfxUnlockTempMaps(BOOL bDeleteTemps)
 /////////////////////////////////////////////////////////////////////////////
 // CHandleMap implementation
 
-CHandleMap::CHandleMap(CRuntimeClass* pClass, 
-	void (PASCAL* pfnConstructObject)(CObject*), 
-	void (PASCAL* pfnDestructObject)(CObject*),
-	size_t nOffset, int nHandles) : 
-		m_permanentMap(10), 
-		m_temporaryMap(4), // small block size for temporary map
-		m_alloc(pClass->m_nObjectSize, 64)
+CHandleMap::CHandleMap(CRuntimeClass* pClass, void (PASCAL* pfnConstructObject)(CObject*),
+		void (PASCAL* pfnDestructObject)(CObject*), size_t nOffset, int nHandles)
+	: m_alloc(pClass->m_nObjectSize, 64)
+	, m_permanentMap(10)
+	, m_temporaryMap(4) // small block size for temporary map
 {
 	ENSURE_ARG(pClass != NULL);
 	ENSURE_ARG(pfnConstructObject != NULL);

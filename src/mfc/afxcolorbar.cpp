@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -292,10 +292,19 @@ CMFCColorBar::CMFCColorBar()
 }
 
 CMFCColorBar::CMFCColorBar(const CArray<COLORREF, COLORREF>& colors, COLORREF color, LPCTSTR lpszAutoColor, LPCTSTR lpszOtherColor, LPCTSTR lpszDocColors,
-		CList<COLORREF,COLORREF>& lstDocColors, int nColumns, int nRowsDockHorz, int nColDockVert, COLORREF colorAutomatic, UINT nCommandID, CMFCColorButton* pParentBtn) :
-	m_ColorSelected(color), m_strAutoColor(lpszAutoColor == NULL ? _T("") : lpszAutoColor), m_strOtherColor(lpszOtherColor == NULL ? _T("") : lpszOtherColor),
-	m_strDocColors(lpszDocColors == NULL ? _T("") : lpszDocColors), m_nNumColumns(nColumns), m_nNumRowsHorz(nRowsDockHorz), m_nNumColumnsVert(nColDockVert),
-	m_ColorAutomatic(colorAutomatic), m_bIsTearOff(FALSE), m_bStdColorDlg(FALSE), m_nCommandID(nCommandID), m_pParentBtn(pParentBtn)
+		CList<COLORREF,COLORREF>& lstDocColors, int nColumns, int nRowsDockHorz, int nColDockVert, COLORREF colorAutomatic, UINT nCommandID, CMFCColorButton* pParentBtn)
+	: m_nNumColumns(nColumns)
+	, m_nNumRowsHorz(nRowsDockHorz)
+	, m_nNumColumnsVert(nColDockVert)
+	, m_bStdColorDlg(FALSE)
+	, m_bIsTearOff(FALSE)
+	, m_nCommandID(nCommandID)
+	, m_ColorSelected(color)
+	, m_ColorAutomatic(colorAutomatic)
+	, m_strAutoColor(lpszAutoColor == NULL ? _T("") : lpszAutoColor)
+	, m_strOtherColor(lpszOtherColor == NULL ? _T("") : lpszOtherColor)
+	, m_strDocColors(lpszDocColors == NULL ? _T("") : lpszDocColors)
+	, m_pParentBtn(pParentBtn)
 {
 	m_pWndPropList = NULL;
 	m_pParentRibbonBtn = NULL;
@@ -324,10 +333,19 @@ CMFCColorBar::CMFCColorBar(const CArray<COLORREF, COLORREF>& colors, COLORREF co
 }
 
 CMFCColorBar::CMFCColorBar(const CArray<COLORREF, COLORREF>& colors, COLORREF color, LPCTSTR lpszAutoColor, LPCTSTR lpszOtherColor, LPCTSTR lpszDocColors,
-		CList<COLORREF,COLORREF>& lstDocColors, int nColumns, COLORREF colorAutomatic, UINT nCommandID, CMFCRibbonColorButton* pParentRibbonBtn) :
-	m_ColorSelected(color), m_strAutoColor(lpszAutoColor == NULL ? _T("") : lpszAutoColor), m_strOtherColor(lpszOtherColor == NULL ? _T("") : lpszOtherColor),
-	m_strDocColors(lpszDocColors == NULL ? _T("") : lpszDocColors), m_nNumColumns(nColumns), m_nNumRowsHorz(0), m_nNumColumnsVert(0), m_ColorAutomatic(colorAutomatic),
-	m_bIsTearOff(FALSE), m_bStdColorDlg(FALSE), m_nCommandID(nCommandID), m_pParentRibbonBtn(pParentRibbonBtn)
+		CList<COLORREF,COLORREF>& lstDocColors, int nColumns, COLORREF colorAutomatic, UINT nCommandID, CMFCRibbonColorButton* pParentRibbonBtn)
+	: m_nNumColumns(nColumns)
+	, m_nNumRowsHorz(0)
+	, m_nNumColumnsVert(0)
+	, m_bStdColorDlg(FALSE)
+	, m_bIsTearOff(FALSE)
+	, m_nCommandID(nCommandID)
+	, m_ColorSelected(color)
+	, m_ColorAutomatic(colorAutomatic)
+	, m_strAutoColor(lpszAutoColor == NULL ? _T("") : lpszAutoColor)
+	, m_strOtherColor(lpszOtherColor == NULL ? _T("") : lpszOtherColor)
+	, m_strDocColors(lpszDocColors == NULL ? _T("") : lpszDocColors)
+	, m_pParentRibbonBtn(pParentRibbonBtn)
 {
 	m_pWndPropList = NULL;
 	m_pParentBtn = NULL;
@@ -336,7 +354,7 @@ CMFCColorBar::CMFCColorBar(const CArray<COLORREF, COLORREF>& colors, COLORREF co
 
 	for (int i = 0; i < colors.GetSize(); i++)
 	{
-		m_colors [i] = colors [i];
+		m_colors[i] = colors[i];
 	}
 
 	m_lstDocColors.AddTail(&lstDocColors);
@@ -352,16 +370,24 @@ CMFCColorBar::CMFCColorBar(const CArray<COLORREF, COLORREF>& colors, COLORREF co
 	m_nHorzMargin = 4;
 }
 
-CMFCColorBar::CMFCColorBar(CMFCColorBar& src, UINT uiCommandID) :
-	m_ColorSelected(src.m_ColorSelected), m_strAutoColor(src.m_strAutoColor), m_strOtherColor(src.m_strOtherColor), m_strDocColors(src.m_strDocColors),
-	m_ColorAutomatic(src.m_ColorAutomatic), m_nNumColumns(src.m_nNumColumns), m_nNumRowsHorz(src.m_nNumRowsHorz), m_nNumColumnsVert(src.m_nNumColumnsVert),
-	m_bIsTearOff(TRUE), m_nCommandID(uiCommandID), m_bStdColorDlg(src.m_bStdColorDlg)
+CMFCColorBar::CMFCColorBar(CMFCColorBar& src, UINT uiCommandID)
+	: m_nNumColumns(src.m_nNumColumns)
+	, m_nNumRowsHorz(src.m_nNumRowsHorz)
+	, m_nNumColumnsVert(src.m_nNumColumnsVert)
+	, m_bStdColorDlg(src.m_bStdColorDlg)
+	, m_bIsTearOff(TRUE)
+	, m_nCommandID(uiCommandID)
+	, m_ColorSelected(src.m_ColorSelected)
+	, m_ColorAutomatic(src.m_ColorAutomatic)
+	, m_strAutoColor(src.m_strAutoColor)
+	, m_strOtherColor(src.m_strOtherColor)
+	, m_strDocColors(src.m_strDocColors)
 {
 	m_colors.SetSize(src.m_colors.GetSize());
 
 	for (int i = 0; i < src.m_colors.GetSize(); i++)
 	{
-		m_colors [i] = src.m_colors [i];
+		m_colors[i] = src.m_colors[i];
 	}
 
 	m_lstDocColors.AddTail(&src.m_lstDocColors);

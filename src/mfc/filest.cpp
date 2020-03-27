@@ -11,8 +11,8 @@
 #include "stdafx.h"
 #include <errno.h>
 #include <io.h>
-#include <sys\types.h>
-#include <sys\stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 
@@ -113,7 +113,7 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 		}
 		else
 		{
-			DWORD dwAttribute = m_pTM != NULL ? 
+			DWORD dwAttribute = m_pTM != NULL ?
 				m_pTM->GetFileAttributes(m_strFileName) :
 				::GetFileAttributes(m_strFileName);
 
@@ -147,7 +147,7 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 		{
 			rStatus.m_atime = CTime();
 		}
-		
+
 		if (CTime::IsValidFILETIME(ftModify))
 		{
 			rStatus.m_mtime = CTime(ftModify);
@@ -170,7 +170,7 @@ BOOL PASCAL CFile::GetStatus(LPCTSTR lpszFileName, CFileStatus& rStatus, CAtlTra
 {
 	ASSERT( lpszFileName != NULL );
 
-	if ( lpszFileName == NULL ) 
+	if ( lpszFileName == NULL )
 	{
 		return FALSE;
 	}
@@ -180,7 +180,7 @@ BOOL PASCAL CFile::GetStatus(LPCTSTR lpszFileName, CFileStatus& rStatus, CAtlTra
 		ASSERT(FALSE); // MFC requires paths with length < _MAX_PATH
 		return FALSE;
 	}
-	
+
 	// attempt to fully qualify path first
 	if (!AfxFullPath(rStatus.m_szFullName, lpszFileName))
 	{
@@ -249,7 +249,7 @@ void AFX_CDECL AfxTimeToFileTime(const CTime& time, LPFILETIME pFileTime)
 {
 	ASSERT(pFileTime != NULL);
 
-	if (pFileTime == NULL) 
+	if (pFileTime == NULL)
 	{
 		AfxThrowInvalidArgException();
 	}

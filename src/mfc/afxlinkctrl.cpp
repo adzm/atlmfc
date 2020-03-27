@@ -111,7 +111,7 @@ BOOL CMFCLinkCtrl::OnClicked()
 
 	if (::ShellExecute(NULL, NULL, m_strPrefix + strURL, NULL, NULL, SW_SHOWNORMAL) <(HINSTANCE) 32)
 	{
-		TRACE(_T("Can't open URL: %Ts\n"), strURL);
+		TRACE(_T("Can't open URL: %Ts\n"), strURL.GetString());
 	}
 
 	m_bVisited = TRUE;

@@ -10,9 +10,9 @@
 
 #include "stdafx.h"
 #include <winnetwk.h>
-#include <shlobj.h>
+#include <ShlObj.h>
 #include <shellapi.h>
-#include <Strsafe.h>
+#include <strsafe.h>
 #include "sal.h"
 
 AFX_STATIC void AFXAPI _AfxFillExceptionInfo(CFileException* pException,LPCTSTR lpszFileName)
@@ -202,7 +202,7 @@ BOOL CFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags, CFileException* pExcepti
 		}
 		return FALSE; // path is too long
 	}
-		
+
 	m_strFileName = szTemp;
 	ASSERT(shareCompat == 0);
 
@@ -282,12 +282,12 @@ BOOL CFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags, CFileException* pExcepti
 		dwFlags |= FILE_FLAG_SEQUENTIAL_SCAN;
 
 	// attempt file creation
-	HANDLE hFile = m_pTM != NULL ? 
+	HANDLE hFile = m_pTM != NULL ?
 		m_pTM->CreateFile(lpszFileName, dwAccess, dwShareMode, &sa, dwCreateFlag, dwFlags, NULL) :
 		::CreateFile(lpszFileName, dwAccess, dwShareMode, &sa, dwCreateFlag, dwFlags, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		_AfxFillExceptionInfo(pException,lpszFileName);		
+		_AfxFillExceptionInfo(pException,lpszFileName);
 		return FALSE;
 	}
 	m_hFile = hFile;
@@ -416,7 +416,7 @@ void CFile::LockRange(ULONGLONG dwPos, ULONGLONG dwCount)
 
    liPos.QuadPart = dwPos;
    liCount.QuadPart = dwCount;
-	if (!::LockFile(m_hFile, liPos.LowPart, liPos.HighPart, liCount.LowPart, 
+	if (!::LockFile(m_hFile, liPos.LowPart, liPos.HighPart, liCount.LowPart,
 	  liCount.HighPart))
    {
 		CFileException::ThrowOsError((LONG)::GetLastError(), m_strFileName);
@@ -501,19 +501,19 @@ HRESULT AFX_COM::CreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
 {
 	// find the object's class factory
 	LPCLASSFACTORY pf = NULL;
-	
+
 	if (ppv == NULL)
 		return E_INVALIDARG;
 	*ppv = NULL;
-	
+
 	HRESULT hRes = GetClassObject(rclsid, IID_IClassFactory, (LPVOID*)&pf);
 	if (FAILED(hRes))
 		return hRes;
 
 	if (pf == NULL)
 		return E_POINTER;
-		
-	// call it to create the instance	
+
+	// call it to create the instance
 	hRes = pf->CreateInstance(pUnkOuter, riid, ppv);
 
 	// let go of the factory
@@ -601,7 +601,7 @@ BOOL AFXAPI AfxResolveShortcut(CWnd* pWnd, LPCTSTR lpszFileIn,
 	AFX_COM com;
 	IShellLink* psl = NULL;
 	*lpszFileOut = 0;   // assume failure
-	
+
 	if (!pWnd)
 		return FALSE;
 
@@ -738,7 +738,7 @@ BOOL AFXAPI _AfxFullPath2(_Out_writes_z_(_MAX_PATH) LPTSTR lpszPathOut, LPCTSTR 
 			}
 		}
 	}
-	
+
 	return TRUE;
 }
 //Backward compatible wrapper that calls the new exception throwing func.

@@ -60,7 +60,10 @@ public:
 };
 
 CTraceClipboardData::CTraceClipboardData(DWORD dwTarget)
-	: m_dwTarget(dwTarget), m_dwSize(0), m_dwUsed(0), m_hMemory(NULL)
+	: m_hMemory(NULL)
+	, m_dwSize(0)
+	, m_dwUsed(0)
+	, m_dwTarget(dwTarget)
 {
 }
 

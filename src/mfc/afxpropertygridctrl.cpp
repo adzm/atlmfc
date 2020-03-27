@@ -56,7 +56,17 @@ IMPLEMENT_DYNAMIC(CMFCPropertyGridProperty, CObject)
 #define AFX_FORMAT_FLOAT  _T("%f")
 #define AFX_FORMAT_DOUBLE _T("%lf")
 
-CMFCPropertyGridProperty::CMFCPropertyGridProperty(const CString& strName, const COleVariant& varValue, LPCTSTR lpszDescr, DWORD_PTR dwData, LPCTSTR lpszEditMask, LPCTSTR lpszEditTemplate, LPCTSTR lpszValidChars) : m_strName(strName), m_varValue(varValue), m_varValueOrig(varValue), m_strDescr(lpszDescr == NULL ? _T("") : lpszDescr), m_strEditMask(lpszEditMask == NULL ? _T("") : lpszEditMask), m_strEditTempl(lpszEditTemplate == NULL ? _T("") : lpszEditTemplate), m_strValidChars(lpszValidChars == NULL ? _T("") : lpszValidChars), m_dwData(dwData)
+CMFCPropertyGridProperty::CMFCPropertyGridProperty(const CString& strName, const COleVariant& varValue,
+		LPCTSTR lpszDescr, DWORD_PTR dwData, LPCTSTR lpszEditMask, LPCTSTR lpszEditTemplate,
+		LPCTSTR lpszValidChars)
+	: m_varValue(varValue)
+	, m_varValueOrig(varValue)
+	, m_dwData(dwData)
+	, m_strName(strName)
+	, m_strDescr(lpszDescr == NULL ? _T("") : lpszDescr)
+	, m_strEditMask(lpszEditMask == NULL ? _T("") : lpszEditMask)
+	, m_strEditTempl(lpszEditTemplate == NULL ? _T("") : lpszEditTemplate)
+	, m_strValidChars(lpszValidChars == NULL ? _T("") : lpszValidChars)
 {
 	m_bGroup = FALSE;
 	m_bIsValueList = FALSE;
@@ -70,7 +80,10 @@ CMFCPropertyGridProperty::CMFCPropertyGridProperty(const CString& strName, const
 	}
 }
 
-CMFCPropertyGridProperty::CMFCPropertyGridProperty(const CString& strGroupName, DWORD_PTR dwData, BOOL bIsValueList) : m_strName(strGroupName), m_dwData(dwData), m_bIsValueList(bIsValueList)
+CMFCPropertyGridProperty::CMFCPropertyGridProperty(const CString& strGroupName, DWORD_PTR dwData, BOOL bIsValueList)
+	: m_dwData(dwData)
+	, m_bIsValueList(bIsValueList)
+	, m_strName(strGroupName)
 {
 	m_bGroup = TRUE;
 
@@ -5077,10 +5090,10 @@ void CMFCPropertyGridCtrl::OnDestroy()
 	CWnd::OnDestroy();
 }
 
+static CString strTipText;
+
 BOOL CMFCPropertyGridCtrl::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CString strTipText;
-
 	if (m_ToolTip.GetSafeHwnd() == NULL || pNMH->hwndFrom != m_ToolTip.GetSafeHwnd())
 	{
 		return FALSE;
@@ -5492,7 +5505,7 @@ HRESULT CMFCPropertyGridCtrl::get_accState(VARIANT varChild, VARIANT *pvarState)
 	pvarState->vt = VT_I4;
 	pvarState->lVal = STATE_SYSTEM_FOCUSABLE;
 	pvarState->lVal |= STATE_SYSTEM_SELECTABLE;
-	
+
 	if (m_pAccProp != NULL)
 	{
 		if (m_pAccProp->IsSelected())
@@ -5547,7 +5560,7 @@ HRESULT CMFCPropertyGridCtrl::get_accSelection(VARIANT *pvarChildren)
 
 HRESULT CMFCPropertyGridCtrl::get_accDefaultAction(VARIANT /*varChild*/, BSTR* /*pszDefaultAction*/)
 {
-	return DISP_E_MEMBERNOTFOUND; 
+	return DISP_E_MEMBERNOTFOUND;
 }
 
 HRESULT CMFCPropertyGridCtrl::accSelect(long flagsSelect, VARIANT varChild)

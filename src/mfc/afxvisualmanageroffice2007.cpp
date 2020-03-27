@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -293,7 +293,9 @@ IMPLEMENT_DYNCREATE(CMFCVisualManagerOffice2007, CMFCVisualManagerOffice2003)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMFCVisualManagerOffice2007::CMFCVisualManagerOffice2007() : m_bNcTextCenter(FALSE), m_bLoaded(FALSE)
+CMFCVisualManagerOffice2007::CMFCVisualManagerOffice2007()
+	: m_bLoaded(FALSE)
+	, m_bNcTextCenter(FALSE)
 {
 	m_szNcBtnSize[0] = CSize(0, 0);
 	m_szNcBtnSize[1] = CSize(0, 0);
@@ -362,7 +364,7 @@ BOOL __stdcall CMFCVisualManagerOffice2007::SetStyle(Style style, LPCTSTR lpszPa
 
 	if (::FindResource(hinstRes, strStyle, AFX_RT_STYLE_XML) == NULL)
 	{
-		TRACE(_T("Cannot load Style: %Ts\r\n"), strStyle);
+		TRACE(_T("Cannot load Style: %Ts\r\n"), strStyle.GetString());
 		ASSERT(FALSE);
 		return FALSE;
 	}
@@ -5024,7 +5026,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCategory(CDC* pDC, CMFCRibbonCateg
 }
 
 void CMFCVisualManagerOffice2007::OnDrawRibbonCategoryScroll (
-					CDC* pDC, 
+					CDC* pDC,
 					CRibbonCategoryScroll* pScroll)
 {
 	if (!CanDrawImage ())
@@ -5038,7 +5040,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCategoryScroll (
 
 	CRect rect = pScroll->GetRect ();
 
-	CMFCControlRenderer* pRenderer = 
+	CMFCControlRenderer* pRenderer =
 		&m_ctrlRibbonCategoryBtnPage[pScroll->IsLeftScroll () ? 0 : 1];
 	int index = 0;
 
@@ -5056,7 +5058,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCategoryScroll (
 	}
 
 	pRenderer->Draw (pDC, rect, index);
-	
+
 	BOOL bIsLeft = pScroll->IsLeftScroll ();
 	if (GetGlobalData()->m_bIsRTL)
 	{
@@ -5064,7 +5066,7 @@ void CMFCVisualManagerOffice2007::OnDrawRibbonCategoryScroll (
 	}
 
 	CMenuImages::Draw (pDC,
-		bIsLeft ? CMenuImages::IdArrowLeftLarge : CMenuImages::IdArrowRightLarge, 
+		bIsLeft ? CMenuImages::IdArrowLeftLarge : CMenuImages::IdArrowRightLarge,
 		rect);
 }
 

@@ -1249,10 +1249,10 @@ void CMFCCaptionBar::OnDestroy()
 	CPane::OnDestroy();
 }
 
+static CString strTipText;
+
 BOOL CMFCCaptionBar::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CString strTipText;
-
 	ENSURE(pNMH != NULL);
 
 	if (m_pToolTip->GetSafeHwnd() == NULL || pNMH->hwndFrom != m_pToolTip->GetSafeHwnd())

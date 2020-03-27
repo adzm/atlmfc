@@ -18,24 +18,24 @@
 #endif
 
 #ifndef __exdisp_h__
-	#include <exdisp.h>
+	#include <ExDisp.h>
 #endif
 
 #ifndef __mshtmhst_h__
-#include <mshtmhst.h>
+#include <MsHtmHst.h>
 #endif
 
 #ifndef __mshtml_h__
-#include <mshtml.h>
+#include <MsHTML.h>
 #endif
 
 #ifndef __mshtmcid_h__
-#include <mshtmcid.h>
+#include <MsHtmcid.h>
 #endif
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -175,7 +175,7 @@ public:
 
 // Overrides
 public:
-	virtual BOOL CreateControlSite(COleControlContainer* pContainer, 
+	virtual BOOL CreateControlSite(COleControlContainer* pContainer,
 	   COleControlSite** ppSite, UINT nID, REFCLSID clsid);
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 		DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID,
@@ -235,7 +235,7 @@ public:
 	virtual void OnNavigateError(LPCTSTR lpszURL, LPCTSTR lpszFrame, DWORD dwError, BOOL *pbCancel);
 
 	/// <summary>
-	/// Called by the framework when it needs to obtain a bitmap to be displayed on Windows 7 tab thumbnail, 
+	/// Called by the framework when it needs to obtain a bitmap to be displayed on Windows 7 tab thumbnail,
 	/// or on the client for application peek. </summary>
 	/// <remarks>
 	/// Calls OleDraw to display HTML elements.</remarks>
@@ -244,7 +244,7 @@ public:
 	/// <param name="szRequiredThumbnailSize"> Specifies the size of target thumbnail. Should be ignored if bIsThumbnail is FALSE.</param>
 	/// <param name="bIsThumbnail"> Specifies whether this method is called for iconic thumbnail or live preview (peek).</param>
 	/// <param name="bAlphaChannelSet"> Output parameter. Set it to TRUE if your implementation initializes alpha channel of a bitmap
-	/// selected in dc.</param> 
+	/// selected in dc.</param>
 	virtual void OnDrawIconicThumbnailOrLivePreview(CDC& dc, CRect rect, CSize szRequiredThumbnailSize, BOOL bIsThumbnail, BOOL& bAlphaChannelSet);
 
 // Implementation
@@ -311,7 +311,7 @@ public:
 		return TRUE;
 	}
 
-	// Sets the value of 
+	// Sets the value of
 	BOOL SetData(LPCTSTR szData)
 	{
 		_ATLTRY
@@ -328,9 +328,9 @@ public:
 // Implementation
 	STDMETHOD(QueryInterface)(REFIID iid, __RPC__deref_out void **ppUnk)
 	{
-		if (ppUnk == NULL) 
-		{ 
-			return E_POINTER; 
+		if (ppUnk == NULL)
+		{
+			return E_POINTER;
 		}
 		if (::InlineIsEqualGUID(iid, IID_IUnknown) ||
 			::InlineIsEqualGUID(iid, IID_IStream) ||
@@ -343,12 +343,12 @@ public:
 		return E_NOINTERFACE;
 	}
 
-	ULONG STDMETHODCALLTYPE AddRef( void) 
+	ULONG STDMETHODCALLTYPE AddRef( void)
 	{
 		return (ULONG)1;
 	}
 
-	ULONG STDMETHODCALLTYPE Release( void) 
+	ULONG STDMETHODCALLTYPE Release( void)
 	{
 		return (ULONG)1;
 	}
@@ -381,7 +381,7 @@ public:
 
 		if (pStart >= pEnd)
 			return S_FALSE; // no more data to read
-		
+
 		int bytes_left = (int)(pEnd-pStart);
 		int bytes_to_copy = (int)__min(bytes_left, (int)cb);
 		if (bytes_to_copy <= 0)
@@ -424,7 +424,7 @@ public:
 				m_strStream.Append(strTemp);
 				if (pcbWritten)
 					*pcbWritten = cb;
-				
+
 			}
 #else
 			int flags = IS_TEXT_UNICODE_UNICODE_MASK;
@@ -518,7 +518,7 @@ protected:
 // CHtmlEditCtrlBase
 
 template <class T>
-class CHtmlEditCtrlBase 
+class CHtmlEditCtrlBase
 {
 public:
 	BOOL SetDesignMode(BOOL bMode) const
@@ -556,7 +556,7 @@ public:
 	}
 	HRESULT ExecCommand(long cmdID, long cmdExecOpt, VARIANT* pInVar=NULL, VARIANT* pOutVar=NULL) const
 	{
-		return ExecCommand(&CGID_MSHTML, cmdID, cmdExecOpt, 
+		return ExecCommand(&CGID_MSHTML, cmdID, cmdExecOpt,
 					pInVar , pOutVar );
 	}
 
@@ -617,7 +617,7 @@ public:
 	}
 
 	HRESULT GetDocument(IHTMLDocument2** ppDoc) const
-	{	
+	{
 		const T* pT = static_cast<const T*>(this);
 		return pT->GetDHtmlDocument(ppDoc) ? S_OK : E_NOINTERFACE;
 	}
@@ -722,7 +722,7 @@ public:
 
 	HRESULT GetBlockFormatNames(CStringArray &sa) const
 	{
-		CComVariant vaRet;
+		::ATL::CComVariant vaRet;
 		HRESULT hr = E_FAIL;
 		long lStatus = QueryStatus(IDM_GETBLOCKFMTS);
 		if (lStatus & OLECMDF_ENABLED || lStatus & OLECMDF_LATCHED)
@@ -965,7 +965,7 @@ public:
 		{
 			return E_UNEXPECTED;
 		}
-		CComVariant vIn((LPCTSTR)strGlyphEntry);
+		::ATL::CComVariant vIn((LPCTSTR)strGlyphEntry);
 		return ExecCommand(IDM_ADDTOGLYPHTABLE, OLECMDEXECOPT_DODEFAULT, &vIn);
 	}
 
@@ -1370,7 +1370,7 @@ public:
 		return hr;
 	}
 
-	HRESULT ExecHelperSetVal(UINT nCmdID, 
+	HRESULT ExecHelperSetVal(UINT nCmdID,
 							 LPCTSTR szID=NULL,
 							 long nMinSupportLevel = OLECMDF_SUPPORTED|OLECMDF_ENABLED,
 							 long nExecOpt = OLECMDEXECOPT_DODEFAULT) const
@@ -1380,7 +1380,7 @@ public:
 		{
 			if (szID)
 			{
-				CComVariant vName(szID);
+				::ATL::CComVariant vName(szID);
 				return ExecCommand(nCmdID, nExecOpt, &vName);
 			}
 			else
@@ -1398,7 +1398,7 @@ public:
 		long lStatus = QueryStatus(nCmdID);
 		if ((lStatus & nMinSupportLevel) == nMinSupportLevel)
 		{
-			CComVariant vIn(bValue);
+			::ATL::CComVariant vIn(bValue);
 			hr = ExecCommand(nCmdID, nExecOpt, &vIn);
 		}
 		return hr;
@@ -1413,7 +1413,7 @@ public:
 		long lStatus = QueryStatus(nCmdID);
 		if ((lStatus & nMinSupportLevel) == nMinSupportLevel)
 		{
-			CComVariant vIn((short)nNewVal);
+			::ATL::CComVariant vIn((short)nNewVal);
 			hr = ExecCommand(nCmdID, nExecOpt, &vIn);
 		}
 		return hr;
@@ -1428,7 +1428,7 @@ public:
 		long lStatus = QueryStatus(nCmdID);
 		if ((lStatus & nMinSupportLevel) == nMinSupportLevel)
 		{
-			CComVariant vIn((int)nNewVal);
+			::ATL::CComVariant vIn((int)nNewVal);
 			hr = ExecCommand(nCmdID, nExecOpt, &vIn);
 		}
 		return hr;
@@ -1444,7 +1444,7 @@ public:
 		long lStatus = QueryStatus(nCmdID);
 		if ((lStatus & nMinSupportLevel) == nMinSupportLevel)
 		{
-			CComVariant vOut;
+			::ATL::CComVariant vOut;
 			hr = ExecCommand(nCmdID, nExecOpt, NULL, &vOut);
 			if (hr == S_OK)
 			{
@@ -1491,7 +1491,7 @@ public:
 		nValue = 0;
 		if ((lStatus & nMinSupportLevel) == nMinSupportLevel)
 		{
-			CComVariant vOut;
+			::ATL::CComVariant vOut;
 			hr = ExecCommand(nCmdID, nExecOpt, NULL, &vOut);
 			if (hr == S_OK)
 			{
@@ -1524,7 +1524,7 @@ public:
 							 long nExecOpt = OLECMDEXECOPT_DODEFAULT) const
 	{
 		HRESULT hr = E_FAIL;
-		CComVariant vaRet;
+		::ATL::CComVariant vaRet;
 		strValue.Empty();
 		long lStatus = QueryStatus(nCmdID);
 		if ((lStatus & nMinSupportLevel) == nMinSupportLevel)
@@ -1536,7 +1536,7 @@ public:
 				{
 				case VT_BSTR:
 					{
-					CW2T szVal(vaRet.bstrVal);
+					::ATL::CW2T szVal(vaRet.bstrVal);
 					strValue = szVal;
 					}
 					break;
@@ -1566,7 +1566,7 @@ public:
 	// Construct
 	CHtmlEditCtrl();
 
-	// Create a new instance of the control. This will also call the 
+	// Create a new instance of the control. This will also call the
 	// contained WebBrowser control's Navigate method to load a default
 	// document into the WebBrowser control.
 	virtual BOOL Create(LPCTSTR lpszWindowName, DWORD dwStyle,
@@ -1614,13 +1614,13 @@ public: \
 	static className##dhtml_cmd_mapping m_commands[];\
 
 #define DHTMLEDITING_CMD_ENTRY(cmdID, dhtmlcmdID)\
-{cmdID, dhtmlcmdID, AFX_UI_ELEMTYPE_NORMAL, NULL}, 
+{cmdID, dhtmlcmdID, AFX_UI_ELEMTYPE_NORMAL, NULL},
 
 #define DHTMLEDITING_CMD_ENTRY_FUNC(cmdID, dhtmlcmdID, member_func_name)\
 {cmdID, dhtmlcmdID, AFX_UI_ELEMTYPE_NORMAL, member_func_name},
 
 #define DHTMLEDITING_CMD_ENTRY_TYPE(cmdID, dhtmlcmdID, elemType)\
-{cmdID, dhtmlcmdID, elemType, NULL}, 
+{cmdID, dhtmlcmdID, elemType, NULL},
 
 #define DHTMLEDITING_CMD_ENTRY_FUNC_TYPE(cmdID, dhtmlcmdID, member_func_name, elemType)\
 {cmdID, dhtmlcmdID, elemType, member_func_name},
@@ -1712,7 +1712,7 @@ public:
 	// Open a URL into the view associated with this document
 	virtual BOOL OpenURL(LPCTSTR lpszURL);
 
-	// See if the associated view's WebBrowser control contains a 
+	// See if the associated view's WebBrowser control contains a
 	// document that has been modified by the user.
 	virtual BOOL IsModified();
 

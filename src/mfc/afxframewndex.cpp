@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -23,13 +23,11 @@
 #include "afxvisualmanager.h"
 #include "afxglobalutils.h"
 
-#pragma comment(lib,"imm32") // ImmXxx
+#pragma comment(lib, "Imm32.Lib")
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-#pragma comment(lib, "imm32.lib")
 
 /////////////////////////////////////////////////////////////////////////////
 // CFrameWndEx
@@ -38,8 +36,12 @@ IMPLEMENT_DYNCREATE(CFrameWndEx, CFrameWnd)
 
 #pragma warning(disable : 4355)
 
-CFrameWndEx::CFrameWndEx() :
-	m_Impl(this), m_bContextHelp(FALSE), m_bWasMaximized(FALSE), m_bIsMinimized(FALSE), m_pPrintPreviewFrame(NULL)
+CFrameWndEx::CFrameWndEx()
+	: m_bContextHelp(FALSE)
+	, m_bWasMaximized(FALSE)
+	, m_bIsMinimized(FALSE)
+	, m_Impl(this)
+	, m_pPrintPreviewFrame(NULL)
 {
 }
 

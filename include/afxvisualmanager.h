@@ -64,7 +64,6 @@ class CMFCRibbonGallery;
 class CMFCRibbonGalleryIcon;
 class CMFCRibbonContextCaption;
 class CMFCToolTipInfo;
-enum AFX_RibbonCategoryColor;
 class CMFCRibbonStatusBar;
 class CMFCRibbonStatusBarPane;
 class CMFCRibbonSlider;

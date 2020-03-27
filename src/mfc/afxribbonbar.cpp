@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -301,7 +301,7 @@ BOOL CMFCRibbonContextCaption::OnSetAccData(long lVal)
 		if (pCategory != NULL)
 		{
 			ASSERT_VALID(pCategory);
-			
+
 			CMFCRibbonTab* pTab = pCategory->GetTab();
 			if (pTab != NULL)
 			{
@@ -405,7 +405,7 @@ HRESULT CMFCRibbonContextCaption::get_accChildCount(long *pcountChildren)
 
 	int count = GetContextCategoryCount();
 
-	*pcountChildren = count; 
+	*pcountChildren = count;
 	return S_OK;
 }
 
@@ -472,7 +472,7 @@ HRESULT CMFCRibbonContextCaption::accNavigate(long navDir, VARIANT varStart, VAR
 		{
 			pvarEndUpAt->vt = VT_I4;
 			pvarEndUpAt->lVal = 1;
-			return S_OK;	
+			return S_OK;
 		}
 		break;
 
@@ -531,7 +531,7 @@ HRESULT CMFCRibbonContextCaption::accNavigate(long navDir, VARIANT varStart, VAR
 		}
 		break;
 
-	case NAVDIR_PREVIOUS: 
+	case NAVDIR_PREVIOUS:
 	case NAVDIR_LEFT:
 		if (varStart.lVal != CHILDID_SELF)
 		{
@@ -720,6 +720,8 @@ void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, 
 
 	if (m_pRibbonBar->IsWindows7Look())
 	{
+		double scale = GetGlobalData()->GetRibbonImageScale();
+
 		if (m_ImageWindows7.IsValid())
 		{
 			pImage = &m_ImageWindows7;
@@ -729,14 +731,22 @@ void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, 
 		vert = CMFCToolBarImages::ImageAlignVertCenter;
 
 		CSize sizeImage(pImage->GetImageSize());
-		if (sizeImage.cx > 16)
+
+		CSize sizeIdeal(16, 16);
+		if (scale > 1.)
 		{
-			sizeImage.cx = 16;
+			sizeIdeal.cx = (int)(.5 + scale * sizeIdeal.cx);
+			sizeIdeal.cy = (int)(.5 + scale * sizeIdeal.cy);
+		}
+
+		if (sizeImage.cx > sizeIdeal.cx)
+		{
+			sizeImage.cx = sizeIdeal.cx;
 			horz = CMFCToolBarImages::ImageAlignHorzStretch;
 		}
-		if (sizeImage.cy > 16)
+		if (sizeImage.cy > sizeIdeal.cy)
 		{
-			sizeImage.cy = 16;
+			sizeImage.cy = sizeIdeal.cy;
 			vert = CMFCToolBarImages::ImageAlignVertStretch;
 		}
 
@@ -746,7 +756,6 @@ void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, 
 		rectImage.bottom = rectImage.top + sizeImage.cy;
 
 		CSize sizeArrow (CMenuImages::Size());
-		double scale = GetGlobalData()->GetRibbonImageScale();
 		if (scale > 1.)
 		{
 			sizeArrow.cx = (int)(.5 + scale * sizeArrow.cx);
@@ -759,8 +768,8 @@ void CMFCRibbonApplicationButton::DrawImage(CDC* pDC, RibbonImageType /*type*/, 
 		CRect rectWhite = rectArrow;
 		rectWhite.OffsetRect(0, 1);
 
-		CMenuImages::IMAGES_IDS id = 
-			scale > 1. ? 
+		CMenuImages::IMAGES_IDS id =
+			scale > 1. ?
 			CMenuImages::IdArrowDownLarge : CMenuImages::IdArrowDown;
 
 		CMenuImages::Draw(pDC, id, rectWhite, CMenuImages::ImageWhite);
@@ -878,7 +887,7 @@ BOOL CMFCRibbonApplicationButton::SetACCData(CWnd* pParent, CAccessibilityData& 
 	data.m_strAccName = m_strText.IsEmpty() ? _T("Application menu") : m_strText;
 	data.m_nAccRole = ROLE_SYSTEM_BUTTONDROPDOWNGRID;
 	data.m_bAccState = STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_HASPOPUP;;
-	
+
 	return TRUE;
 }
 
@@ -1224,7 +1233,7 @@ CSize CMFCRibbonBar::CalcFixedLayout(BOOL, BOOL /*bHorz*/)
 			m_nCategoryHeight = 0;
 		}
 
-		m_nTabsHeight = tm.tmHeight + 2 * nYTabMargin;
+			m_nTabsHeight = tm.tmHeight + 2 * nYTabMargin;
 
 		if (m_bRecalcCategoryHeight)
 		{
@@ -2135,7 +2144,7 @@ void CMFCRibbonBar::OnLButtonDown(UINT nFlags, CPoint point)
 	if ((m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL) == AFX_RIBBONBAR_HIDE_ALL || IsWindows7Look())
 	{
 		CRect rectIcon = m_rectCaption;
-		rectIcon.right = rectIcon.left + rectIcon.Height();
+		rectIcon.right = IsQuickAccessToolbarOnTop() && !m_QAToolbar.m_rect.IsRectEmpty() ? m_QAToolbar.m_rect.left - 1 : rectIcon.left + rectIcon.Height();
 
 		if (rectIcon.PtInRect(point))
 		{
@@ -2713,13 +2722,18 @@ void CMFCRibbonBar::RecalcLayout()
 
 	// Reposition main button:
 	CSize sizeMainButton = m_sizeMainButton;
+	if (IsWindows7Look())
+	{
+		sizeMainButton.cx += 2 * nYTabMargin;
+	}
+
 	double scale = GetGlobalData()->GetRibbonImageScale();
 	if (scale > 1.)
 	{
 		sizeMainButton.cx = (int)(.5 + scale * sizeMainButton.cx);
 		sizeMainButton.cy = (int)(.5 + scale * sizeMainButton.cy);
 	}
-	
+
 	if (m_pMainButton != NULL)
 	{
 		ASSERT_VALID(m_pMainButton);
@@ -2748,7 +2762,7 @@ void CMFCRibbonBar::RecalcLayout()
 				CRect rectMainBtn = rect;
 				rectMainBtn.top = m_rectCaption.IsRectEmpty() ? rect.top : m_rectCaption.bottom;
 				rectMainBtn.bottom = rectMainBtn.top + m_nTabsHeight;
-				rectMainBtn.right = rectMainBtn.left + m_sizeMainButton.cx;
+				rectMainBtn.right = rectMainBtn.left + sizeMainButton.cx;
 
 				m_pMainButton->SetRect(rectMainBtn);
 
@@ -3516,10 +3530,10 @@ void CMFCRibbonBar::RemoveAllFromTabs()
 	}
 }
 
+static CString strTipText;
+
 BOOL CMFCRibbonBar::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CString strTipText;
-
 	if (!m_bToolTip)
 	{
 		return TRUE;
@@ -3623,7 +3637,7 @@ BOOL CMFCRibbonBar::PreTranslateMessage(MSG* pMsg)
 			ASSERT_VALID(pEdit);
 
 			CPoint point;
-			
+
 			::GetCursorPos(&point);
 			ScreenToClient(&point);
 
@@ -5385,7 +5399,7 @@ CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectByIndex(long lVal)
 	{
 		return m_pMainButton;
 	}
-	
+
 	if (lVal == nQatIndex)
 	{
 		return &m_QAToolbar;
@@ -5399,7 +5413,7 @@ CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectByIndex(long lVal)
 	if ((nContextTabsIndex <= lVal) && (lVal < nContextCountMax))
 	{
 		int nIndex = lVal - nContextTabsIndex;
-		
+
 		CArray<int, int> arCaptions;
 		GetVisibleContextCaptions(&arCaptions);
 
@@ -5414,7 +5428,7 @@ CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectByIndex(long lVal)
 		if (pCaption != NULL)
 		{
 			return pCaption;
-		}		
+		}
 	}
 
 	BOOL bHideCategory = (m_dwHideFlags & AFX_RIBBONBAR_HIDE_ELEMENTS);
@@ -5472,7 +5486,7 @@ CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectFromPoint(CPoint point)
 
 	// Maybe MainButton
 	if (m_pMainButton != NULL)
-	{	
+	{
 		ASSERT_VALID(m_pMainButton);
 
 		if (m_pMainButton->GetRect().PtInRect(point))
@@ -5481,7 +5495,7 @@ CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectFromPoint(CPoint point)
 		}
 	}
 
-	// Tabs 
+	// Tabs
 	CRect rectTabs = m_Tabs.GetRect();
 	if (rectTabs.PtInRect(point))
 	{
@@ -5533,12 +5547,12 @@ CMFCBaseAccessibleObject* CMFCRibbonBar::AccessibleObjectFromPoint(CPoint point)
 
 	if (IsCaptionButtons())
 	{
-		// Caption button 
+		// Caption button
 		for (i = 0; i < AFX_RIBBON_CAPTION_BUTTONS; i++)
 		{
 			if (m_CaptionButtons[i].GetRect().PtInRect(point))
 			{
-				return &m_CaptionButtons[i];	
+				return &m_CaptionButtons[i];
 			}
 		}
 	}
@@ -5550,7 +5564,7 @@ int CMFCRibbonBar::GetAccObjectCount()
 {
 	if ((m_dwHideFlags & AFX_RIBBONBAR_HIDE_ALL) || !IsVisible())
 	{
-		return 0;	
+		return 0;
 	}
 
 	int count = 1;
@@ -5732,7 +5746,7 @@ HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarE
 			{
 				pvarEndUpAt->vt = VT_I4;
 				pvarEndUpAt->lVal = 1;
-				return S_OK;	
+				return S_OK;
 			}
 			break;
 
@@ -5745,7 +5759,7 @@ HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarE
 			}
 			break;
 
-		case NAVDIR_NEXT:   
+		case NAVDIR_NEXT:
 		case NAVDIR_RIGHT:
 			if (varStart.lVal != CHILDID_SELF)
 			{
@@ -5760,7 +5774,7 @@ HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarE
 			}
 			break;
 
-		case NAVDIR_PREVIOUS: 
+		case NAVDIR_PREVIOUS:
 		case NAVDIR_LEFT:
 			if (varStart.lVal != CHILDID_SELF)
 			{
@@ -5788,7 +5802,7 @@ HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarE
 			{
 				pvarEndUpAt->vt = VT_I4;
 				pvarEndUpAt->lVal = 1;
-				return S_OK;	
+				return S_OK;
 			}
 			break;
 
@@ -5801,7 +5815,7 @@ HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarE
 			}
 			break;
 
-		case NAVDIR_NEXT:   
+		case NAVDIR_NEXT:
 		case NAVDIR_RIGHT:
 			if (varStart.lVal != CHILDID_SELF)
 			{
@@ -5813,12 +5827,12 @@ HRESULT CMFCRibbonBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarE
 					pvarEndUpAt->vt = VT_EMPTY;
 					return S_FALSE;
 				}
-				
+
 				return S_OK;
 			}
 			break;
 
-		case NAVDIR_PREVIOUS: 
+		case NAVDIR_PREVIOUS:
 		case NAVDIR_LEFT:
 			if (varStart.lVal != CHILDID_SELF)
 			{
@@ -5873,7 +5887,7 @@ HRESULT CMFCRibbonBar::accDoDefaultAction(VARIANT varChild)
 		return S_FALSE;
 	}
 
-	return S_FALSE;    
+	return S_FALSE;
 }
 
 HRESULT CMFCRibbonBar::accLocation(long *pxLeft, long *pyTop, long *pcxWidth, long *pcyHeight, VARIANT varChild)
@@ -5892,7 +5906,7 @@ HRESULT CMFCRibbonBar::accLocation(long *pxLeft, long *pyTop, long *pcxWidth, lo
 	{
 		CRect rc;
 		GetWindowRect (rc);
-		
+
 		*pxLeft = rc.left;
 		*pyTop = rc.top;
 		*pcxWidth = rc.Width();
@@ -6361,7 +6375,7 @@ BOOL CMFCRibbonBar::NavigateRibbon(int nChar)
 				else if (m_pActiveCategory != NULL)
 				{
 					ASSERT_VALID(m_pActiveCategory);
-					
+
 					pFocusedNew = &m_pActiveCategory->m_Tab;
 					pFocusedNew->m_bIsFocused = TRUE;
 					pFocusedNew->OnSetFocus(TRUE);
@@ -6457,12 +6471,12 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 				}
 
 				ASSERT_VALID(arElems [i]);
-				
+
 				if (bIsTabFocused && arElems [i]->IsKindOf(RUNTIME_CLASS(CMFCRibbonTab)))
 				{
 					continue;
 				}
-				
+
 				if (arElems [i]->IsTabStop() && !arElems [i]->GetRect().IsRectEmpty())
 				{
 					nNewIndex = i;
@@ -6500,7 +6514,7 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 				{
 					continue;
 				}
-				
+
 				if (arElems [i]->IsTabStop() && !arElems [i]->GetRect().IsRectEmpty())
 				{
 					nNewIndex = i;
@@ -6526,7 +6540,7 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 		case VK_LEFT:
 		case VK_RIGHT:
 			{
-				int xStart = nChar == VK_RIGHT ? 
+				int xStart = nChar == VK_RIGHT ?
 					rectCurr.right + 1 :
 					rectCurr.left - nStep - 1;
 				int xStep = nChar == VK_RIGHT ? nStep : -nStep;
@@ -6603,7 +6617,7 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 			{
 				int x = rectCurr.CenterPoint().x;
 
-				int yStart = nChar == VK_DOWN ? 
+				int yStart = nChar == VK_DOWN ?
 					rectCurr.bottom + 1 :
 					rectCurr.top - 1;
 
@@ -6631,7 +6645,7 @@ CMFCRibbonBaseElement* __stdcall CMFCRibbonBar::FindNextFocusedElement(
 						if (pFocusedNew != NULL)
 						{
 							ASSERT_VALID(pFocusedNew);
-							
+
 							if (!pFocusedNew->IsTabStop())
 							{
 								pFocusedNew = NULL;

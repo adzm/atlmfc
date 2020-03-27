@@ -689,7 +689,7 @@ QueryAgain:
 		{
 			CString strKey;
 			CString strCLSID = AfxStringFromCLSID(clsidFile);
-			strKey.Format(_T("CLSID\\%Ts\\DocObject"), strCLSID);
+			strKey.Format(_T("CLSID\\%Ts\\DocObject"), strCLSID.GetString());
 
 			HKEY hKey;
 			if (ERROR_SUCCESS ==

@@ -171,7 +171,7 @@ public:
 		}
 	}
 	~CPushRoutingView()
-	{ 
+	{
 		if (pThreadState != NULL)
 		{
 			ASSERT( pThreadState->m_pPushRoutingView == this );
@@ -278,7 +278,7 @@ typedef struct tagAFX_OLDREBARBANDINFO{
 	UINT cx;
 	HBITMAP hbmBack;
 	UINT wID;
-	UINT cyChild;  
+	UINT cyChild;
 	UINT cyMaxChild;
 	UINT cyIntegral;
 	UINT cxIdeal;
@@ -414,17 +414,10 @@ inline int AfxInvariantStrICmp(const char *pszLeft, const char *pszRight)
     return ::CompareStringA(LOCALE_INVARIANT, NORM_IGNORECASE, pszLeft, -1, pszRight, -1) - CSTR_EQUAL;
 }
 
-#if (NTDDI_VERSION < NTDDI_VISTA)
-#ifndef LOCALE_NAME_INVARIANT
-#define LOCALE_NAME_INVARIANT  L""
-#endif // LOCALE_NAME_INVARIANT
-#endif // (NTDDI_VERSION < NTDDI_VISTA)
-
 inline int AfxInvariantStrICmp(const wchar_t *pwszLeft, const wchar_t *pwszRight)
 {
-    return _AfxCompareStringEx(LOCALE_NAME_INVARIANT, NORM_IGNORECASE, pwszLeft, -1, pwszRight, -1) - CSTR_EQUAL;
+	return ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pwszLeft, -1, pwszRight, -1) - CSTR_EQUAL;
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 // static exceptions
@@ -487,9 +480,9 @@ void AFXAPI AfxCriticalTerm();
 #endif
 
 class CInternalGlobalLock {
-public:	
-	
-	
+public:
+
+
 	CInternalGlobalLock(int nLockType = INT_MAX)
 	: m_nLockType(nLockType)
 	{
@@ -503,7 +496,7 @@ public:
 		Unlock();
 	}
 	void Lock(int nLockType = INT_MAX) //Pass locktype in first call to lock, to avoid error C2362: initialization of 'winMsgLock' is skipped by 'goto LReturnTrue'
-	{		
+	{
 		if (nLockType!=INT_MAX)
 		{
 			ENSURE(m_nLockType == INT_MAX || m_nLockType == nLockType);
@@ -513,12 +506,12 @@ public:
 		AfxLockGlobals(m_nLockType);
 	}
 	void Unlock()
-	{		
+	{
 		if (m_nLockType!=INT_MAX)
 		{
-			AfxUnlockGlobals(m_nLockType);			
+			AfxUnlockGlobals(m_nLockType);
 			m_nLockType = INT_MAX;
-		}		
+		}
 	}
 private:
 	int m_nLockType;
@@ -735,7 +728,7 @@ class CVariantBoolPair
 {
 public:
 	CVariantBoolPair()
-	: m_pbool(NULL),m_pvarbool(NULL) 
+	: m_pbool(NULL),m_pvarbool(NULL)
 	{
 	}
 	CVariantBoolPair(BOOL* pbool,VARIANT_BOOL* pvarbool,BOOL bOwnBOOLMem = TRUE)
@@ -747,27 +740,27 @@ public:
 	{
 		if (m_bOwnBOOLMem)
 		{
-			delete m_pbool;		
+			delete m_pbool;
 		}
 #ifdef _DEBUG
 		m_pbool = NULL;
 		m_pvarbool=NULL;
 #endif
-		
+
 	}
 	CVariantBoolPair& operator =(const CVariantBoolPair& rhs)
 	{
-		if (this != &rhs ) 
-		{ 
+		if (this != &rhs )
+		{
 			m_pbool	      = rhs.Detach();
 			m_pvarbool    = rhs.m_pvarbool;
 			m_bOwnBOOLMem = rhs.m_bOwnBOOLMem;
 		}
-		return *this; 
+		return *this;
 	}
 
 	CVariantBoolPair(const CVariantBoolPair& rhs)
-	{		
+	{
 		m_pbool	      = rhs.Detach();
 		m_pvarbool    = rhs.m_pvarbool;
 		m_bOwnBOOLMem = rhs.m_bOwnBOOLMem;
@@ -785,7 +778,7 @@ public:
 	VARIANT_BOOL* m_pvarbool;
 	BOOL m_bOwnBOOLMem;
 };
-class CVariantBoolConverter 
+class CVariantBoolConverter
 {
 protected:
 	CArray<CVariantBoolPair> m_boolArgs;

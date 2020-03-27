@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -12,8 +12,8 @@
 #include "stdafx.h"
 #include "afxdatarecovery.h"
 
-#include <shlobj.h>
-#include <knownfolders.h>
+#include <ShlObj.h>
+#include <KnownFolders.h>
 
 #if defined(_UNICODE)
 #include "afxtaskdialog.h"
@@ -702,7 +702,7 @@ CString CDataRecoveryHandler::GetRecoveredDocumentTitle(_In_ const CString &strD
 	CString strFormat, strRecoveredTitle;
 	BOOL bRet = strFormat.LoadString(AFX_IDS_AUTOSAVE_RECOVERED);
 	ASSERT(bRet);
-	strRecoveredTitle.Format(strFormat, strDocumentTitle);
+	strRecoveredTitle.Format(strFormat, strDocumentTitle.GetString());
 	return strRecoveredTitle;
 }
 

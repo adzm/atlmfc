@@ -94,12 +94,12 @@ void CPageSetupDialog::GetMargins(LPRECT lpRectMargins, LPRECT lpRectMinMargins)
 {
 	if (lpRectMargins != NULL)
 	{
-		Checked::memcpy_s(lpRectMargins, sizeof(RECT), 
+		Checked::memcpy_s(lpRectMargins, sizeof(RECT),
 			&m_psd.rtMargin, sizeof(RECT));
 	}
 	if (lpRectMinMargins != NULL)
 	{
-		Checked::memcpy_s(lpRectMinMargins, sizeof(RECT), 
+		Checked::memcpy_s(lpRectMinMargins, sizeof(RECT),
 			&m_psd.rtMinMargin, sizeof(RECT));
 	}
 }
@@ -186,9 +186,9 @@ BEGIN_MESSAGE_MAP(CPrintDialog, CCommonDialog)
 	ON_COMMAND(psh1, &CPrintDialog::OnPrintSetup) // print setup button when print is displayed
 END_MESSAGE_MAP()
 
-CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly,
-	DWORD dwFlags, CWnd* pParentWnd)
-	: m_pd(m_pdActual), CCommonDialog(pParentWnd)
+CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly, DWORD dwFlags, CWnd* pParentWnd)
+	: CCommonDialog(pParentWnd)
+	, m_pd(m_pdActual)
 {
 	memset(&m_pdActual, 0, sizeof(m_pdActual));
 
@@ -215,7 +215,8 @@ CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly,
 
 // Helper ctor for AttachOnSetup
 CPrintDialog::CPrintDialog(PRINTDLG& pdInit)
-	: m_pd(pdInit), CCommonDialog(NULL)
+	: CCommonDialog(NULL)
+	, m_pd(pdInit)
 {
 }
 

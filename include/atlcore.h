@@ -21,10 +21,10 @@
 #pragma warning(disable: 4127) // constant expression
 
 #include <atldef.h>
-#include <windows.h>
-#include <ole2.h>
+#include <Windows.h>
+#include <Ole2.h>
 #ifdef _ATL_USE_WINAPI_FAMILY_PHONE_APP
-#include <oleauto.h>
+#include <OleAuto.h>
 #endif // _ATL_USE_WINAPI_FAMILY_PHONE_APP
 
 #include <limits.h>
@@ -34,10 +34,25 @@
 #include <atlchecked.h>
 #include <atlsimpcoll.h>
 #include <atlwinverapi.h>
+#include <type_traits>
 
 #pragma pack(push,_ATL_PACKING)
+
+#ifdef _ATL_NO_EXCEPTIONS
+#define _ATL_NOEXCEPT(...) throw()
+#else
+#define _ATL_NOEXCEPT(...) noexcept(__VA_ARGS__)
+#endif
+
 namespace ATL
 {
+
+namespace ATLImplementationDetails
+{
+	// "manual overload resolution priority tag" idiom
+	struct low_priority_tag {};
+	struct high_priority_tag : low_priority_tag {};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // Checking out the string len
@@ -143,7 +158,7 @@ public:
 	CRITICAL_SECTION m_sec;
 };
 
-class CComAutoCriticalSection : 
+class CComAutoCriticalSection :
 	public CComCriticalSection
 {
 public:
@@ -162,7 +177,7 @@ private :
 	HRESULT Term(); // Not implemented. CComAutoCriticalSection::Term should never be called
 };
 
-class CComSafeDeleteCriticalSection : 
+class CComSafeDeleteCriticalSection :
 	public CComCriticalSection
 {
 public:
@@ -217,7 +232,7 @@ private:
 	bool m_bInitialized;
 };
 
-class CComAutoDeleteCriticalSection : 
+class CComAutoDeleteCriticalSection :
 	public CComSafeDeleteCriticalSection
 {
 private:
@@ -262,7 +277,7 @@ struct _ATL_BASE_MODULE70
 };
 typedef _ATL_BASE_MODULE70 _ATL_BASE_MODULE;
 
-class CAtlBaseModule : 
+class CAtlBaseModule :
 	public _ATL_BASE_MODULE
 {
 public :

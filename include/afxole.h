@@ -21,12 +21,12 @@
 
 // include OLE Compound Document headers
 #ifndef _OLE2_H_
-	#include <ole2.h>
+	#include <Ole2.h>
 #endif
 
 // ActiveX Document support
 #ifndef __docobj_h__
-	#include <docobj.h>
+	#include <DocObj.h>
 #endif
 
 // URL Monikers support
@@ -40,7 +40,7 @@
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)

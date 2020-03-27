@@ -12,7 +12,7 @@
 #include <dde.h>        // for DDE execute shell requests
 
 #include "afxdatarecovery.h"
-#include <AtlConv.h>
+#include <atlconv.h>
 
 #define new DEBUG_NEW
 
@@ -417,7 +417,7 @@ void CFrameWnd::BeginModalState()
 	//  modeless windows anyway...
 	CWnd* pParent = EnsureTopLevelParent();
 
-	CArray<HWND,HWND> arrDisabledWnds;	
+	CArray<HWND,HWND> arrDisabledWnds;
 	// disable all windows connected to this frame (and add them to the list)
 	HWND hWnd = ::GetWindow(::GetDesktopWindow(), GW_CHILD);
 	while (hWnd != NULL)
@@ -427,8 +427,8 @@ void CFrameWnd::BeginModalState()
 			AfxIsDescendant(pParent->m_hWnd, hWnd) &&
 			::SendMessage(hWnd, WM_DISABLEMODAL, 0, 0) == 0)
 		{
-			::EnableWindow(hWnd, FALSE);			
-			arrDisabledWnds.Add(hWnd);				
+			::EnableWindow(hWnd, FALSE);
+			arrDisabledWnds.Add(hWnd);
 		}
 		hWnd = ::GetWindow(hWnd, GW_HWNDNEXT);
 	}
@@ -1220,7 +1220,7 @@ void CFrameWnd::OnDDEInitiate(CWnd* pWndClient, UINT uiAtomApp, UINT uiAtomTopic
 	}
 
 	CWinApp* pApp = AfxGetApp();
-	if (pApp != NULL && 
+	if (pApp != NULL &&
 		uiAtomApp != 0 && uiAtomTopic != 0 &&
 		(ATOM)uiAtomApp == pApp->m_atomApp &&
 		(ATOM)uiAtomTopic == pApp->m_atomSystemTopic)
@@ -1451,7 +1451,7 @@ void CFrameWnd::OnInitMenuPopup(CMenu* pMenu, UINT nIndex, BOOL bSysMenu)
 	}
 
 	ENSURE_VALID(pMenu);
-	
+
 	// check the enabled state of various menu items
 
 	CCmdUI state;
@@ -1740,7 +1740,7 @@ void CFrameWnd::DestroyDockBars()
 	pos = listDockBars.GetHeadPosition();
 	while (pos != NULL)
 	{
-		HWND hwndDock = listDockBars.GetNext(pos);		
+		HWND hwndDock = listDockBars.GetNext(pos);
 		CDockBar* pDockBar = DYNAMIC_DOWNCAST(CDockBar,CWnd::FromHandlePermanent(hwndDock));
 		if (pDockBar)
 		{
@@ -1761,8 +1761,8 @@ void CFrameWnd::DestroyDockBars()
 	while (pos != NULL)
 	{
 		HWND hwndCtrlBar = listCtrlBars.GetNext(pos);
-		//pDockBar->DestroyWindow() (see listDockBars) will destroy all child windows of this dockbar, 
-		//including control bars, so check if HWND is still valid. We do not want to destroy a second time. 		
+		//pDockBar->DestroyWindow() (see listDockBars) will destroy all child windows of this dockbar,
+		//including control bars, so check if HWND is still valid. We do not want to destroy a second time.
 		CControlBar *pCtrlBar  = DYNAMIC_DOWNCAST(CControlBar,CWnd::FromHandlePermanent(hwndCtrlBar));
 		if (pCtrlBar)
 		{
@@ -1951,7 +1951,7 @@ void CFrameWnd::UpdateFrameTitleForDocument(LPCTSTR lpszDocName)
 			if (m_nWindow > 0)
 			{
 				TCHAR szText[32];
-				
+
 				// :%d will produce a maximum of 11 TCHARs
 				_stprintf_s(szText, _countof(szText), _T(":%d"), m_nWindow);
 				WindowText += szText;
@@ -1973,7 +1973,7 @@ void CFrameWnd::UpdateFrameTitleForDocument(LPCTSTR lpszDocName)
 			if (m_nWindow > 0)
 			{
 				TCHAR szText[32];
-				
+
 				// :%d will produce a maximum of 11 TCHARs
 				_stprintf_s(szText, _countof(szText), _T(":%d"), m_nWindow);
 				WindowText += szText;
@@ -2379,7 +2379,7 @@ BOOL CFrameWnd::OnChevronPushed(UINT /* id */, NMHDR *pnm, LRESULT *pResult)
 
 			CRect rc = pnmReBarChevron->rc;
 			pReBar->ClientToScreen(&rc);
-			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, 
+			menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON,
 				rc.left, rc.bottom, this);
 
 			*pResult = 0;
@@ -2488,7 +2488,7 @@ IMPLEMENT_DYNAMIC(CView, CWnd)
 IMPLEMENT_DYNAMIC(CControlBar, CWnd)
 
 /////////////////////////////////////////////////////////////////////////////
-// CFrameWnd implementation of hide/unhide menu bar to confirm to Windows 
+// CFrameWnd implementation of hide/unhide menu bar to confirm to Windows
 // Vista Experience
 
 void CFrameWnd::SetMenuBarVisibility(DWORD dwStyle)
@@ -2505,7 +2505,7 @@ void CFrameWnd::SetMenuBarVisibility(DWORD dwStyle)
 			SetMenuBarState(AFX_MBS_VISIBLE);
 			break;
 		case AFX_MBV_DISPLAYONFOCUS:
-		case AFX_MBV_DISPLAYONFOCUS | AFX_MBV_DISPLAYONF10:		
+		case AFX_MBV_DISPLAYONFOCUS | AFX_MBV_DISPLAYONF10:
 			m_dwMenuBarVisibility = dwStyle;
 			SetMenuBarState(AFX_MBS_HIDDEN);
 			break;
@@ -2584,7 +2584,7 @@ CMenu* CFrameWnd::GetMenu() const
 	{
 		ENSURE(m_dwMenuBarState == AFX_MBS_HIDDEN);
 		return CMenu::FromHandle(m_hMenu);
-	}	
+	}
 }
 
 BOOL CFrameWnd::SetMenu(CMenu* pMenu)
@@ -2604,7 +2604,7 @@ BOOL CFrameWnd::SetMenu(CMenu* pMenu)
 
 BOOL CFrameWnd::GetMenuBarInfo(LONG idObject, LONG idItem, PMENUBARINFO pmbi) const
 {
-	ASSERT(::IsWindow(m_hWnd)); 
+	ASSERT(::IsWindow(m_hWnd));
 	ASSERT(pmbi != NULL);
 	if (m_dwMenuBarState == AFX_MBS_HIDDEN && idObject == OBJID_MENU)
 	{
@@ -2617,7 +2617,7 @@ BOOL CFrameWnd::GetMenuBarInfo(LONG idObject, LONG idItem, PMENUBARINFO pmbi) co
 
 		return bResult;
 	}
-	
+
 	return ::GetMenuBarInfo(m_hWnd, idObject, idItem, pmbi);
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -2639,12 +2639,12 @@ void CFrameWnd::SetProgressBarPosition(int nProgressPos)
 	ITaskbarList3* pTaskbarList = pApp->GetITaskbarList3();
 	ENSURE(pTaskbarList != NULL);
 
-	pTaskbarList->SetProgressValue(GetSafeHwnd(), nProgressPos - m_nProgressBarRangeMin, 
+	pTaskbarList->SetProgressValue(GetSafeHwnd(), nProgressPos - m_nProgressBarRangeMin,
 		m_nProgressBarRangeMax - m_nProgressBarRangeMin);
 }
 void CFrameWnd::SetProgressBarState(TBPFLAG tbpFlags)
 {
-	ASSERT(::IsWindow(m_hWnd)); 
+	ASSERT(::IsWindow(m_hWnd));
 
 	CWinApp* pApp = AfxGetApp();
 	if (pApp == NULL || !pApp->IsWindows7())
@@ -2667,7 +2667,7 @@ BOOL CFrameWnd::SetTaskbarOverlayIcon(UINT nIDResource, LPCTSTR lpcszDescr)
 		return FALSE;
 	}
 
-	HICON hIcon = (HICON) LoadImage(AfxGetResourceHandle(), MAKEINTRESOURCE(nIDResource), 
+	HICON hIcon = (HICON) LoadImage(AfxGetResourceHandle(), MAKEINTRESOURCE(nIDResource),
 		IMAGE_ICON, 16, 16, LR_LOADMAP3DCOLORS);
 
 	if (hIcon == NULL)

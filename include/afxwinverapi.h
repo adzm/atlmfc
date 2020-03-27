@@ -15,7 +15,7 @@
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -73,8 +73,6 @@
 		functionpointer = reinterpret_cast<decltype(::functionname)*>(::DecodePointer((PVOID)functionpointer)); \
 	} \
 	if (functionpointer != reinterpret_cast<decltype(::functionname)*>(NULL))
-
-int _AfxCompareStringEx(__in_opt LPCWSTR lpLocaleName, __in DWORD dwCmpFlags, __in LPCWSTR lpString1, __in int cchCount1, __in LPCWSTR lpString2, __in int cchCount2);
 
 // Wrappers for Win32 APIs that are only supported on higher versions of Windows
 int _AfxGetLocaleInfoEx(LPCWSTR lpLocaleName, LCTYPE LCType, LPWSTR lpLCData, int cchData);

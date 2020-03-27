@@ -54,10 +54,6 @@ code depending on the byte order we're targeting.
 #define AFX_ROP_DSPDxax  0x00E20746L
 #define AFX_ROP_PSDPxax  0x00B8074AL
 
-// Internal images:
-#define AFX_IMAGE_LIGHT  0
-#define AFX_IMAGE_SHADOW 1
-
 #ifndef M_PI
 #define M_PI       3.14159265358979323846
 #endif
@@ -279,8 +275,8 @@ inline double Filter_Lanczos3(double dValue)
 
 inline double Filter_Mitchell(double dValue)
 {
-	static double B = 1.0 / 3.0;
-	static double C = B;
+	static constexpr double B = 1.0 / 3.0;
+	static constexpr double C = B;
 
 	if (dValue < 0.0)
 	{
@@ -290,8 +286,8 @@ inline double Filter_Mitchell(double dValue)
 	const double tt = dValue * dValue;
 	if (dValue < 1.0)
 	{
-		return ((12.0 - 9.0 * B - 6.0 * C) * (dValue * tt) + 
-			(-18.0 + 12.0 * B + 6.0 * C) * tt + 
+		return ((12.0 - 9.0 * B - 6.0 * C) * (dValue * tt) +
+			(-18.0 + 12.0 * B + 6.0 * C) * tt +
 			(6.0 - 2.0 * B)) / 6.0;
 	}
 	else
@@ -299,7 +295,7 @@ inline double Filter_Mitchell(double dValue)
 		if (dValue < 2.0)
 		{
 			return ((-1.0 * B - 6.0 * C) *(dValue * tt) +
-				(6.0 * B + 30.0 * C) * tt + 
+				(6.0 * B + 30.0 * C) * tt +
 				(-12.0 * B - 48.0 * C) * dValue +
 				(8.0 * B + 24.0 * C)) / 6.0;
 		}
@@ -766,7 +762,7 @@ public:
 			pitch += 4 - (pitch % 4);
 		}
 
-		CMFCScanliner::attach((LPBYTE) bmp.bmBits, 
+		CMFCScanliner::attach((LPBYTE) bmp.bmBits,
 			size, size.cy, pitch, (BYTE) channels, bmp.bmHeight < 0);
 	}
 };
@@ -1134,6 +1130,8 @@ BOOL CMFCToolBarImages::Load(LPCTSTR lpszBmpFileName, DWORD dwMaxFileSize /* = 8
 
 BOOL CMFCToolBarImages::PrepareDrawImage(CAfxDrawState& ds, CSize sizeImageDest, BOOL bFadeInactive)
 {
+	UNREFERENCED_PARAMETER(bFadeInactive);
+
 	if (m_hbmImageWell == NULL)
 	{
 		return FALSE;
@@ -1144,25 +1142,7 @@ BOOL CMFCToolBarImages::PrepareDrawImage(CAfxDrawState& ds, CSize sizeImageDest,
 		m_CriticalSection.Lock();
 	}
 
-	if (bFadeInactive && m_nBitsPerPixel < 32 && m_hbmImageLight == NULL)
-	{
-		UpdateInternalImage(AFX_IMAGE_LIGHT);
-	}
-
-	if (m_nBitsPerPixel < 32 && m_hbmImageShadow == NULL && CMFCVisualManager::GetInstance()->IsShadowHighlightedImage() && !GetGlobalData()->IsHighContrastMode())
-	{
-		UpdateInternalImage(AFX_IMAGE_SHADOW);
-	}
-
 	m_bStretch = FALSE;
-
-	if (m_hbmImageLight == NULL || (m_nBitsPerPixel > 4 && !m_bAlwaysLight) || m_nBitsPerPixel == 0)
-	{
-		// Down't fade 256+ or unknown bitmaps
-		bFadeInactive = FALSE;
-	}
-
-	m_bFadeInactive = bFadeInactive;
 
 	ENSURE(m_hbmImageWell != NULL);
 	ENSURE(m_dcMem.GetSafeHdc() == NULL);
@@ -1170,7 +1150,7 @@ BOOL CMFCToolBarImages::PrepareDrawImage(CAfxDrawState& ds, CSize sizeImageDest,
 	ENSURE(m_pBmpOriginal == NULL);
 
 	// We need to kick-start the bitmap selection process.
-	ds.hbmOldGlyphs = (HBITMAP)SelectObject(hDCGlyphs, bFadeInactive && m_nBitsPerPixel < 32 ? m_hbmImageLight : m_hbmImageWell);
+	ds.hbmOldGlyphs = (HBITMAP)SelectObject(hDCGlyphs, m_hbmImageWell);
 
 	if (ds.hbmOldGlyphs == NULL)
 	{
@@ -1256,8 +1236,6 @@ void CMFCToolBarImages::EndDrawImage(CAfxDrawState& ds)
 		::DeleteDC(m_dcMem.Detach());
 	}
 
-	m_bFadeInactive = FALSE;
-
 	if (m_bMultiThreaded)
 	{
 		m_CriticalSection.Unlock();
@@ -1322,12 +1300,14 @@ HBITMAP CMFCToolBarImages::GetMask(int iImage)
 
 BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOOL bHilite, BOOL bDisabled, BOOL bIndeterminate, BOOL bShadow, BOOL bInactive, BYTE alphaSrc/* = 255*/)
 {
+	UNREFERENCED_PARAMETER(bInactive);
+
 	if (iImage < 0 || iImage >= m_iCount)
 	{
 		return FALSE;
 	}
 
-	if (bShadow && GetGlobalData()->m_nBitsPerPixel <= 8)
+	if (bShadow)
 	{
 		return TRUE;
 	}
@@ -1341,10 +1321,6 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 	}
 
 	HBITMAP hBmpOriginal = NULL;
-	if ((!bInactive || bDisabled) && m_bFadeInactive && m_nBitsPerPixel < 32)
-	{
-		hBmpOriginal = (HBITMAP) SelectObject(hDCGlyphs, m_hbmImageWell);
-	}
 
 	BOOL bStretchOld = m_bStretch;
 	BOOL bAlphaStretch =
@@ -1401,15 +1377,7 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 		bDisabledTrueColor = TRUE;
 	}
 
-	BOOL bShadowTrueColor = FALSE;
-
-	if (bShadow && m_nBitsPerPixel == 32)
-	{
-		bShadow = FALSE;
-		bShadowTrueColor = TRUE;
-	}
-
-	if (!bHilite && !bDisabled && !bShadow)
+	if (!bHilite && !bDisabled)
 	{
 		BOOL bIsReady = FALSE;
 
@@ -1420,11 +1388,6 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 			if (bDisabledTrueColor)
 			{
 				pixelblend.SourceConstantAlpha = m_nDisabledImageAlpha;
-			}
-
-			if (bInactive && m_bFadeInactive)
-			{
-				pixelblend.SourceConstantAlpha = m_nFadedImageAlpha;
 			}
 
 			const CSize sizeDest = bAlphaStretch ? m_sizeImageDest : m_sizeImage;
@@ -1515,23 +1478,14 @@ BOOL CMFCToolBarImages::Draw(CDC* pDCDest, int xDest, int yDest, int iImage, BOO
 			}
 		}
 	}
-	else if (bShadow && m_hbmImageShadow != NULL)
-	{
-		HBITMAP hbmpCurr =
-			(HBITMAP) SelectObject(hDCGlyphs, m_hbmImageShadow);
-
-		::BitBlt(pDC->m_hDC, x, y, nWidth, nHeight, hDCGlyphs, iImage * m_sizeImage.cx + xOffset, yOffset, SRCCOPY);
-
-		SelectObject(hDCGlyphs, hbmpCurr);
-	}
 	else
 	{
-		if (bDisabled || bIndeterminate || bShadow)
+		if (bDisabled || bIndeterminate)
 		{
 			// disabled or indeterminate version
 			CreateMask(iImage, TRUE, FALSE);
 
-			pDC->SetTextColor(bShadow ? m_clrImageShadow : 0L); // 0's in mono -> 0(for ROP)
+			pDC->SetTextColor(0L); // 0's in mono -> 0(for ROP)
 			pDC->SetBkColor((COLORREF)0x00FFFFFFL); // 1's in mono -> 1
 
 			if (bDisabled && CMFCVisualManager::GetInstance()->IsEmbossDisabledImage())
@@ -1703,15 +1657,15 @@ BOOL CMFCToolBarImages::DrawEx(CDC* pDC, CRect rect, int iImageIndex, ImageAlign
 		BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, alphaSrc, AC_SRC_ALPHA };
 
 		bRes = pDC->AlphaBlend(rectDst.left, rectDst.top,
-			rectDst.Width (), rectDst.Height (), 
-			CDC::FromHandle (hDCGlyphs), iImageIndex * m_sizeImage.cx + xOffset, yOffset, 
+			rectDst.Width (), rectDst.Height (),
+			CDC::FromHandle (hDCGlyphs), iImageIndex * m_sizeImage.cx + xOffset, yOffset,
 			nWidth, nHeight, pixelblend);
 	}
 	else if (m_clrTransparent == -1)
 	{
 		bRes = ::StretchBlt (pDC->m_hDC, rectDst.left, rectDst.top,
-			rectDst.Width (), rectDst.Height (), 
-			hDCGlyphs, iImageIndex * m_sizeImage.cx + xOffset, yOffset, 
+			rectDst.Width (), rectDst.Height (),
+			hDCGlyphs, iImageIndex * m_sizeImage.cx + xOffset, yOffset,
 			nWidth, nHeight, SRCCOPY);
 	}
 
@@ -2071,7 +2025,7 @@ int CMFCToolBarImages::AddImage(const CMFCToolBarImages& imageList, int nIndex)
 	if (!IsScaled())
 	{
 		m_sizeImage = imageList.m_sizeImage;
-		m_sizeImageDest = imageList.m_sizeImageDest;	
+		m_sizeImageDest = imageList.m_sizeImageDest;
 		m_clrTransparent = imageList.m_clrTransparent;
 		m_clrImageShadow = imageList.m_clrImageShadow;
 		m_bFadeInactive = imageList.m_bFadeInactive;
@@ -2310,9 +2264,6 @@ BOOL CMFCToolBarImages::DeleteImage(int iImage)
 	m_bModified = TRUE;
 
 	UpdateCount();
-	UpdateInternalImage(AFX_IMAGE_LIGHT);
-	UpdateInternalImage(AFX_IMAGE_SHADOW);
-
 	return TRUE;
 }
 
@@ -3123,120 +3074,8 @@ void CMFCToolBarImages::CopyTemp(CMFCToolBarImages& imagesDest)
 
 BOOL CMFCToolBarImages::UpdateInternalImage(int nIndex)
 {
-	HBITMAP& hbmpInternal = (nIndex == AFX_IMAGE_LIGHT) ? m_hbmImageLight : m_hbmImageShadow;
-
-	if (nIndex == AFX_IMAGE_LIGHT)
-	{
-		if ((m_nBitsPerPixel > 4 && !m_bAlwaysLight) || m_nBitsPerPixel == 0)
-		{
-			// Down't fade 256+ or unknown bitmaps
-			return FALSE;
-		}
-	}
-
-	AfxDeleteObject((HGDIOBJ*)&hbmpInternal);
-	hbmpInternal = NULL;
-
-	if (m_hbmImageWell == NULL)
-	{
-		return TRUE;
-	}
-
-	if (GetGlobalData()->m_nBitsPerPixel <= 8)
-	{
-		return TRUE;
-	}
-
-	// Create memory source DC and select an original bitmap:
-	CDC memDCSrc;
-	memDCSrc.CreateCompatibleDC(NULL);
-
-	BITMAP bmp;
-	if (::GetObject(m_hbmImageWell, sizeof(BITMAP), &bmp) == 0)
-	{
-		return FALSE;
-	}
-
-	int iBitmapWidth = bmp.bmWidth;
-	int iBitmapHeight = bmp.bmHeight;
-
-	HBITMAP hOldBitmapSrc = (HBITMAP) memDCSrc.SelectObject(m_hbmImageWell);
-	if (hOldBitmapSrc == NULL)
-	{
-		return FALSE;
-	}
-
-	// Create memory destination DC and select a new bitmap:
-	CDC memDCDst;
-	memDCDst.CreateCompatibleDC(&memDCSrc);
-
-	BITMAPINFO bi;
-
-	// Fill in the BITMAPINFOHEADER
-	bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bi.bmiHeader.biWidth = iBitmapWidth;
-	bi.bmiHeader.biHeight = iBitmapHeight;
-	bi.bmiHeader.biPlanes = 1;
-	bi.bmiHeader.biBitCount = 32;
-	bi.bmiHeader.biCompression = BI_RGB;
-	bi.bmiHeader.biSizeImage = iBitmapWidth * iBitmapHeight;
-	bi.bmiHeader.biXPelsPerMeter = 0;
-	bi.bmiHeader.biYPelsPerMeter = 0;
-	bi.bmiHeader.biClrUsed = 0;
-	bi.bmiHeader.biClrImportant = 0;
-
-	COLORREF* pBits = NULL;
-	hbmpInternal = CreateDIBSection(memDCDst.m_hDC, &bi, DIB_RGB_COLORS, (void **)&pBits, NULL, NULL);
-
-	if (hbmpInternal == NULL)
-	{
-		memDCSrc.SelectObject(hOldBitmapSrc);
-		return FALSE;
-	}
-
-	HBITMAP hOldBitmapDst = (HBITMAP) memDCDst.SelectObject(hbmpInternal);
-	if (hOldBitmapDst == NULL)
-	{
-		memDCSrc.SelectObject(hOldBitmapSrc);
-		::DeleteObject(hbmpInternal);
-		hbmpInternal = NULL;
-		return FALSE;
-	}
-
-	// Copy original bitmap to new:
-	COLORREF clrTransparent = m_nBitsPerPixel == 32 ? (COLORREF) -1 : m_clrTransparent;
-
-	memDCDst.BitBlt(0, 0, iBitmapWidth, iBitmapHeight, &memDCSrc, 0, 0, SRCCOPY);
-
-	if (nIndex == AFX_IMAGE_LIGHT)
-	{
-		CDrawingManager dm(memDCDst);
-
-		dm.HighlightRect(CRect(0, 0, iBitmapWidth, iBitmapHeight), m_nLightPercentage, clrTransparent == -1 ? GetGlobalData()->clrBtnFace : clrTransparent);
-	}
-	else
-	{
-		COLORREF clrTr = clrTransparent == -1 ? GetGlobalData()->clrBtnFace : clrTransparent;
-
-		COLORREF clrHL = CMFCVisualManager::GetInstance()->GetToolbarHighlightColor();
-		COLORREF clrShadow = GetGlobalData()->m_nBitsPerPixel <= 8 ? GetGlobalData()->clrBtnShadow : CDrawingManager::PixelAlpha(clrHL, 67);
-
-		for (int x = 0; x < iBitmapWidth; x++)
-		{
-			for (int y = 0; y < iBitmapHeight; y++)
-			{
-				COLORREF clr = memDCDst.GetPixel(x, y);
-				if (clr != clrTr)
-				{
-					memDCDst.SetPixel(x, y, clrShadow);
-				}
-			}
-		}
-	}
-
-	memDCDst.SelectObject(hOldBitmapDst);
-	memDCSrc.SelectObject(hOldBitmapSrc);
-
+	// This method is obsolete: light and shadow images are not used anymore.
+	UNREFERENCED_PARAMETER(nIndex);
 	return TRUE;
 }
 
@@ -3927,10 +3766,8 @@ void CMFCToolBarImages::SetSingleImage()
 	m_sizeImage.cy = bmp.bmHeight;
 
 	m_iCount = 1;
-
-	UpdateInternalImage(AFX_IMAGE_LIGHT);
-	UpdateInternalImage(AFX_IMAGE_SHADOW);
 }
+
 //////////////////////////////////////////////////////////////////////
 // CPngImage
 
@@ -4346,8 +4183,6 @@ BOOL CMFCToolBarImages::SmoothResize(double dblImageScale)
 
 	m_iCount = nOldCount;
 	m_nBitsPerPixel = 32;
-	UpdateInternalImage(AFX_IMAGE_LIGHT);
-	UpdateInternalImage(AFX_IMAGE_SHADOW);
 
 	return IsValid();
 }

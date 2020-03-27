@@ -34,7 +34,7 @@
 #undef new
 
 #pragma warning(push)
-#pragma warning(disable:4458)
+#pragma warning(disable:4263 4264 4458)
 
 ATLPREFAST_SUPPRESS(6385)
 #include <gdiplus.h>
@@ -45,7 +45,7 @@ ATLPREFAST_UNSUPPRESS()
 #pragma pop_macro("new")
 #pragma warning( pop )
 
-#include <shlwapi.h>
+#include <Shlwapi.h>
 
 #ifndef _ATL_NO_DEFAULT_LIBS
 #pragma comment(lib, "gdi32.lib")
@@ -69,7 +69,7 @@ class CImage;
 class CImageDC
 {
 public:
-	CImageDC(_In_ const CImage& image) throw( ... );
+	CImageDC(_In_ const CImage& image);
 	~CImageDC() throw();
 
 	operator HDC() const throw();
@@ -80,6 +80,11 @@ private:
 };
 
 #pragma warning(pop)
+
+namespace ATLImplementationDetails
+{
+	struct CImageStaticInitializer;
+}
 
 class CImage
 {
@@ -440,6 +445,7 @@ private:
 
 	static CInitGDIPlus* GetInitGDIPlusInstance()
 	{
+#pragma warning(suppress: 4640) // will always be initialized on entry thread by CImageStaticInitializer
 		static CInitGDIPlus gdiPlus;
 		return &gdiPlus;
 	}
@@ -493,23 +499,29 @@ private:
 
 	static CDCCache* GetCDCCacheInstance()
 	{
+#pragma warning(suppress: 4640) // will always be initialized on entry thread by CImageStaticInitializer
 		static CDCCache cache;
 		return &cache;
 	}
 
-	static bool CImageStaticInitialize()
-	{
-		GetInitGDIPlusInstance();
-		GetCDCCacheInstance();
-		return true;
-	}
-
-	static bool isCImageStaticInitialized;
+	friend ATLImplementationDetails::CImageStaticInitializer;
 };
 
-__declspec(selectany) bool CImage::isCImageStaticInitialized = CImage::CImageStaticInitialize();
+namespace ATLImplementationDetails
+{
+	struct CImageStaticInitializer
+	{
+		CImageStaticInitializer()
+		{
+			CImage::GetInitGDIPlusInstance();
+			CImage::GetCDCCacheInstance();
+		}
+	};
 
-inline CImageDC::CImageDC(_In_ const CImage& image) throw( ... ) :
+__declspec(selectany) CImageStaticInitializer InitializeCImage;
+}
+
+inline CImageDC::CImageDC(_In_ const CImage& image) :
 	m_image( image ),
 	m_hDC( image.GetDC() )
 {
@@ -541,7 +553,7 @@ inline CImage::CInitGDIPlus::CInitGDIPlus() throw() :
 inline CImage::CInitGDIPlus::~CInitGDIPlus() throw()
 {
 	ReleaseGDIPlus();
-	DeleteCriticalSection(&m_sect);
+	// intentionally leak m_sect to fix VSO#549929 while maintaining ABI compatibility, TRANSITION, VSO#549929
 }
 
 inline bool CImage::CInitGDIPlus::Init() throw()
@@ -658,17 +670,17 @@ inline void CImage::CDCCache::ReleaseDC(_In_ HDC hDC) throw()
 inline CImage::CImage() throw() :
 	m_hBitmap( NULL ),
 	m_pBits( NULL ),
-	m_hDC( NULL ),
-	m_nDCRefCount( 0 ),
-	m_hOldBitmap( NULL ),
 	m_nWidth( 0 ),
 	m_nHeight( 0 ),
 	m_nPitch( 0 ),
 	m_nBPP( 0 ),
+	m_bIsDIBSection( false ),
+	m_bHasAlphaChannel( false ),
 	m_iTransparentColor( -1 ),
 	m_clrTransparentColor( (COLORREF)-1 ),
-	m_bHasAlphaChannel( false ),
-	m_bIsDIBSection( false )
+	m_hDC( NULL ),
+	m_nDCRefCount( 0 ),
+	m_hOldBitmap( NULL )
 {
 	GetInitGDIPlusInstance()->IncreaseCImageCount();
 }
@@ -1203,7 +1215,7 @@ inline HRESULT CImage::GetImporterFilterString(
 	status = Gdiplus::GetImageDecodersSize( &nCodecs, &nSize );
     if (status != Gdiplus::Ok)
         return( E_FAIL );
-    
+
 	USES_ATL_SAFE_ALLOCA;
 	pCodecs = static_cast< Gdiplus::ImageCodecInfo* >( _ATL_SAFE_ALLOCA(nSize, _ATL_SAFE_ALLOCA_DEF_THRESHOLD) );
 

@@ -11,7 +11,7 @@
 #pragma once
 
 #ifndef _SHLOBJ_H_
-#include <shlobj.h>
+#include <ShlObj.h>
 #endif
 
 #include "afxcontrolbarutil.h"

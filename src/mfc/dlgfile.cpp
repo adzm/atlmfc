@@ -9,7 +9,7 @@
 // Microsoft Foundation Classes product.
 
 #include "stdafx.h"
-#include <shobjidl.h>
+#include <ShObjIdl.h>
 #include <dlgs.h>       // for standard control IDs for commdlg
 
 #define new DEBUG_NEW
@@ -114,12 +114,12 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,
 
 			if (m_bOpenFileDialog)
 			{
-				hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, 
+				hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
 									  IID_PPV_ARGS(&pIFileDialog));
 			}
 			else
 			{
-				hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER, 
+				hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
 									  IID_PPV_ARGS(&pIFileDialog));
 			}
 			if (FAILED(hr))
@@ -193,7 +193,7 @@ void CFileDialog::UpdateOFNFromShellDialog()
 				}
 
 				pSaveFile->Release();
-			}	
+			}
 
 			LPWSTR wcPathName = NULL;
 			hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &wcPathName);
@@ -1086,7 +1086,7 @@ CString CFileDialog::GetNextPathName(POSITION& pos) const
 		Checked::tsplitpath_s(strBasePath, strDrive, _MAX_DRIVE, strDir, _MAX_DIR, NULL, 0, NULL, 0);
 		Checked::tmakepath_s(strPath, _MAX_PATH, strDrive, strDir, strName, strExt);
 	}
-	
+
 	return strPath;
 }
 

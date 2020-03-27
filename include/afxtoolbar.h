@@ -446,7 +446,7 @@ public:
 	/// <summary> Specifies whether to scale or not toolbar images in high DPI mode.</summary>
 	AFX_IMPORT_DATA static BOOL   m_bDontScaleImages;    // don't scale shared images in high DPI mode
 
-	static void __stdcall CMFCToolBar::CleanUpImages();
+	static void __stdcall CleanUpImages();
 	void CleanUpLockedImages();
 
 	void AdjustSize();

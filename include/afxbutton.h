@@ -48,7 +48,7 @@ public:
 		ALIGN_RIGHT,
 		ALIGN_CENTER
 	};
-	
+
 	FlatStyle  m_nFlatStyle;
 	AlignStyle m_nAlignStyle;
 
@@ -66,6 +66,7 @@ public:
 	{
 		if (m_pToolTip == NULL)
 		{
+#pragma warning(suppress: 4640) // CWnd types are single threaded
 			static CToolTipCtrl _afxEmptyToolTip;
 			return _afxEmptyToolTip;
 		}

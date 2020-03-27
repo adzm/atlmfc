@@ -64,7 +64,7 @@ void AFXAPI AfxThrowDBException(RETCODE nRetCode, CDatabase* pdb, HSTMT hstmt)
 		VERIFY((bResult = pException->m_strError.LoadString(AFX_IDP_SQL_FIRST+(nRetCode-AFX_SQL_ERROR))) == TRUE);
 		if (!bResult)
 			pException->m_strError = szUnableToLoadErrorString;		
-		TRACE(traceDatabase, 0, _T("%Ts\n"), pException->m_strError);
+		TRACE(traceDatabase, 0, _T("%Ts\n"), pException->m_strError.GetString());
 	}
 	THROW(pException);
 }
@@ -171,16 +171,16 @@ void CDBException::TraceErrorMessage(LPCTSTR szTrace) const
 	CString strTrace = szTrace;
 
 	if (strTrace.GetLength() <= 80)
-		TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace);
+		TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace.GetString());
 	else
 	{
 		// Display 80 chars/line
 		while (strTrace.GetLength() > 80)
 		{
-			TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace.Left(80));
+			TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace.Left(80).GetString());
 			strTrace = strTrace.Right(strTrace.GetLength() - 80);
 		}
-		TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace);
+		TRACE(traceDatabase, 0, _T("%Ts\n"), strTrace.GetString());
 	}
 }
 #endif // _DEBUG

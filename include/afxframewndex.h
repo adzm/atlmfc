@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -58,13 +58,13 @@ public:
 	CMFCRibbonBar* GetRibbonBar() { return m_Impl.GetRibbonBar(); }
 
 protected:
-	BOOL  m_bIsTlbCustMode;
+	BOOL m_bIsTlbCustMode;
 	BOOL m_bContextHelp;
 	BOOL m_bWasMaximized;
 	BOOL m_bIsMinimized;
 	HMENU m_hmenuWindow;
 	CFrameImpl m_Impl;
-	CDockingManager  m_dockManager; // THE DockManager
+	CDockingManager m_dockManager; // THE DockManager
 
 	// workaround for Print Preview bug in VS 7.1
 	CFrameWnd* m_pPrintPreviewFrame;
@@ -87,7 +87,7 @@ public:
 
 	CBasePane* GetPane(UINT nID);
 	void ShowPane(CBasePane* pBar, BOOL bShow, BOOL bDelay, BOOL bActivate);
-	
+
 	virtual BOOL OnMoveMiniFrame(CWnd* pFrame);
 	virtual void RecalcLayout(BOOL bNotify = TRUE);
 

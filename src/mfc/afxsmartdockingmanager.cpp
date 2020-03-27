@@ -25,8 +25,14 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmartDockingManager::CSmartDockingManager() :
-m_bStarted(FALSE), m_bCreated(FALSE), m_bShown(FALSE), m_bCentralGroupShown(FALSE), m_nHiliteSideNo(CSmartDockingStandaloneGuide::sdNONE), m_pwndOwner(NULL), m_pDockingWnd(NULL)
+CSmartDockingManager::CSmartDockingManager()
+	: m_bStarted(FALSE)
+	, m_bCreated(FALSE)
+	, m_bShown(FALSE)
+	, m_bCentralGroupShown(FALSE)
+	, m_pwndOwner(NULL)
+	, m_pDockingWnd(NULL)
+	, m_nHiliteSideNo(CSmartDockingStandaloneGuide::sdNONE)
 {
 	ZeroMemory(m_arMarkers, sizeof(m_arMarkers));
 }

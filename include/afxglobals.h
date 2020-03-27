@@ -17,7 +17,7 @@
 #include <oleacc.h>
 
 #if (NTDDI_VERSION >= NTDDI_WIN7)
-#include <shobjidl.h>
+#include <ShObjIdl.h>
 #endif
 
 #ifdef _AFX_PACKING
@@ -239,7 +239,7 @@ struct AFX_GLOBAL_DATA
 	/// <summary>
 	/// Determines positions of Shell auto hide bars.</summary>
 	/// <returns> An integer value with encoded flags that specify positions of auto hide bars.
-	/// It may combine the following values: AFX_AUTOHIDE_BOTTOM, AFX_AUTOHIDE_TOP, AFX_AUTOHIDE_LEFT, 
+	/// It may combine the following values: AFX_AUTOHIDE_BOTTOM, AFX_AUTOHIDE_TOP, AFX_AUTOHIDE_LEFT,
 	/// AFX_AUTOHIDE_RIGHT.</returns>
 	int GetShellAutohideBars()
 	{
@@ -294,10 +294,10 @@ struct AFX_GLOBAL_DATA
 
 	/// <summary>
 	/// Creates and initializes a Shell item object from a parsing name.</summary>
-	/// <param name="pszPath">[in] A pointer to a display name.</param> 
-	/// <param name="pbc">A pointer to a bind context that controls the parsing operation.</param> 
-	/// <param name="riid">A reference to an interface ID.</param> 
-	/// <param name="ppv">[out] When this function returns, contains the interface pointer requested in riid. This will typically be IShellItem or IShellItem2.</param> 
+	/// <param name="pszPath">[in] A pointer to a display name.</param>
+	/// <param name="pbc">A pointer to a bind context that controls the parsing operation.</param>
+	/// <param name="riid">A reference to an interface ID.</param>
+	/// <param name="ppv">[out] When this function returns, contains the interface pointer requested in riid. This will typically be IShellItem or IShellItem2.</param>
 	/// <returns>Returns S_OK if successful, or an error value otherwise. </returns>
 	HRESULT ShellCreateItemFromParsingName(PCWSTR pszPath, IBindCtx *pbc, REFIID riid, void **ppv);
 

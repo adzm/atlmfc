@@ -383,7 +383,7 @@ void CMFCToolBarsListPropertyPage::OnResetToolbar()
 	m_pSelectedToolbar->GetWindowText(strName);
 
 	CString strPrompt;
-	strPrompt.Format(IDS_AFXBARRES_RESET_TOOLBAR_FMT, strName);
+	strPrompt.Format(IDS_AFXBARRES_RESET_TOOLBAR_FMT, strName.GetString());
 
 	if (AfxMessageBox(strPrompt, MB_YESNO | MB_ICONQUESTION) != IDYES)
 	{
@@ -449,7 +449,7 @@ void CMFCToolBarsListPropertyPage::OnDeleteToolbar()
 	m_pSelectedToolbar->GetWindowText(strName);
 
 	CString strPrompt;
-	strPrompt.Format(IDS_AFXBARRES_DELETE_TOOLBAR_FMT, strName);
+	strPrompt.Format(IDS_AFXBARRES_DELETE_TOOLBAR_FMT, strName.GetString());
 
 	if (AfxMessageBox(strPrompt, MB_YESNO | MB_ICONQUESTION) != IDYES)
 	{

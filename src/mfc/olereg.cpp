@@ -552,7 +552,7 @@ BOOL AFXAPI AfxRegisterPreviewHandler(LPCTSTR lpszCLSID, LPCTSTR lpszShortTypeNa
 
 	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID)lpszCLSID, (ULONG)(AtlStrLen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
 	{
-		TRACE(traceOle, 0, _T("Error: failed setting value '%Ts' for key HKEY_CLASSES_ROOT\\'%Ts'.\n"), lpszCLSID, strShellExKey);
+		TRACE(traceOle, 0, _T("Error: failed setting value '%Ts' for key HKEY_CLASSES_ROOT\\'%Ts'.\n"), lpszCLSID, strShellExKey.GetString());
 		return FALSE;
 	}
 
@@ -586,7 +586,7 @@ BOOL AFXAPI AfxRegisterThumbnailHandler(LPCTSTR lpszCLSID, LPCTSTR lpszFilterExt
 
 	if (regKey.SetValue(NULL, REG_SZ, (LPCVOID) lpszCLSID, (ULONG)(AtlStrLen(lpszCLSID) * sizeof(TCHAR))) != ERROR_SUCCESS)
 	{
-		TRACE(traceOle, 0, _T("Error: failed setting value '%Ts' for key HKEY_CLASSES_ROOT\\'%Ts'.\n"), lpszCLSID, strShellExKey);
+		TRACE(traceOle, 0, _T("Error: failed setting value '%Ts' for key HKEY_CLASSES_ROOT\\'%Ts'.\n"), lpszCLSID, strShellExKey.GetString());
 		return FALSE;
 	}
 	else

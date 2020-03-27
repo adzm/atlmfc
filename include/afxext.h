@@ -20,11 +20,11 @@
 	#include <afxdlgs.h>
 #endif
 
-#include <uxtheme.h>
+#include <Uxtheme.h>
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -223,7 +223,7 @@ public:
 	BOOL AllocElements(int nElements, int cbElement);
 	virtual BOOL SetStatusText(INT_PTR nHit);
 #ifdef _WIN64
-        /* 
+        /*
         Initial releases of 64 bit MFC had SetStatusText(int), same size as
         32 bit MFC. Since this function is virtual, it could be overridden.
 
@@ -478,7 +478,7 @@ protected:
 #define TBBS_INDETERMINATE  MAKELONG(0, TBSTATE_INDETERMINATE)  // third state
 #define TBBS_HIDDEN     MAKELONG(0, TBSTATE_HIDDEN) // button is hidden
 #define TBBS_WRAPPED    MAKELONG(0, TBSTATE_WRAP)   // button is wrapped at this point
-#define TBBS_ELLIPSES	MAKELONG(0, TBSTATE_ELIPSES) 
+#define TBBS_ELLIPSES	MAKELONG(0, TBSTATE_ELIPSES)
 #define TBBS_MARKED		MAKELONG(0, TBSTATE_MARKED)
 
 /*============================================================================*/
@@ -545,7 +545,7 @@ public:
 
 // Operations
 public:
-	BOOL AddBar(CWnd* pBar, LPCTSTR pszText = NULL, CBitmap* pbmp = NULL, 
+	BOOL AddBar(CWnd* pBar, LPCTSTR pszText = NULL, CBitmap* pbmp = NULL,
 		DWORD dwStyle = RBBS_GRIPPERALWAYS | RBBS_FIXEDBMP);
 	BOOL AddBar(CWnd* pBar, COLORREF clrFore, COLORREF clrBack,
 		LPCTSTR pszText = NULL, DWORD dwStyle = RBBS_GRIPPERALWAYS);
@@ -623,7 +623,7 @@ public:
 	// views inside the splitter
 	CWnd* GetPane(int row, int col) const;
 	BOOL IsChildPane(CWnd* pWnd, int* pRow, int* pCol);
-	AFX_DEPRECATED("IsChildPane(CWnd *, int&, int&) has been superseded by IsChildPane(CWnd*, int*, int*)") 
+	AFX_DEPRECATED("IsChildPane(CWnd *, int&, int&) has been superseded by IsChildPane(CWnd*, int*, int*)")
 			BOOL IsChildPane(CWnd* pWnd, int& row, int& col); // obsolete
 	int IdFromRowCol(int row, int col) const;
 
@@ -660,7 +660,7 @@ public:
 	virtual CWnd* GetActivePane(int* pRow = NULL, int* pCol = NULL);
 	virtual void SetActivePane(int row, int col, CWnd* pWnd = NULL);
 protected:
-	AFX_DEPRECATED("GetActivePane(int&, int&) has been superseded by GetActivePane(int*, int*)") 
+	AFX_DEPRECATED("GetActivePane(int&, int&) has been superseded by GetActivePane(int*, int*)")
 			CWnd* GetActivePane(int& row, int& col); // obsolete
 
 public:

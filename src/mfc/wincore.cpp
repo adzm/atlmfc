@@ -76,7 +76,7 @@ HRESULT WINAPI AccessibilityCreateInstance(_COM_Outptr_ CComObjectNoLock<Base>**
 			p = NULL;
 		}
 	}
-	*pp = p; 
+	*pp = p;
 	return hRes;
 }
 
@@ -188,7 +188,7 @@ AFX_STATIC void AFXAPI _AfxPostInitDialog(
 AFX_STATIC void AFXAPI
 _AfxHandleActivate(CWnd* pWnd, WPARAM nState, CWnd* pWndOther)
 {
-	ASSERT(pWnd != NULL);		
+	ASSERT(pWnd != NULL);
 
 	// send WM_ACTIVATETOPLEVEL when top-level parents change
 	if (!(pWnd->GetStyle() & WS_CHILD))
@@ -310,7 +310,7 @@ CHandleMap* PASCAL afxMapHWND(BOOL bCreate)
 		_PNH pnhOldHandler = AfxSetNewHandler(&AfxCriticalNewHandler);
 
 		pState->m_pmapHWND = new CHandleMap(RUNTIME_CLASS(CWnd),
-			ConstructDestruct<CWnd>::Construct, ConstructDestruct<CWnd>::Destruct, 
+			ConstructDestruct<CWnd>::Construct, ConstructDestruct<CWnd>::Destruct,
 			offsetof(CWnd, m_hWnd));
 
 		AfxSetNewHandler(pnhOldHandler);
@@ -410,7 +410,7 @@ AfxWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 
 	// all other messages route through message map
 	CWnd* pWnd = CWnd::FromHandlePermanent(hWnd);
-	ASSERT(pWnd != NULL);					
+	ASSERT(pWnd != NULL);
 	ASSERT(pWnd==NULL || pWnd->m_hWnd == hWnd);
 	if (pWnd == NULL || pWnd->m_hWnd != hWnd)
 		return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
@@ -436,7 +436,7 @@ LRESULT CALLBACK
 _AfxActivationWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
 	WNDPROC oldWndProc = (WNDPROC)::GetProp(hWnd, _afxOldWndProc);
-	ASSERT(oldWndProc != NULL);	
+	ASSERT(oldWndProc != NULL);
 
 	LRESULT lResult = 0;
 	TRY
@@ -579,7 +579,7 @@ _AfxCbtFilterHook(int code, WPARAM wParam, LPARAM lParam)
 			ASSERT(!bContextIsDLL);   // should never get here
 
 			static ATOM s_atomMenu = 0;
-			bool bSubclass = true;			
+			bool bSubclass = true;
 
 			if (s_atomMenu == 0)
 			{
@@ -597,7 +597,7 @@ _AfxCbtFilterHook(int code, WPARAM wParam, LPARAM lParam)
 						bSubclass = false;
 			}
 			else
-			{			
+			{
 				TCHAR szClassName[256];
 				if (::GetClassName(hWnd, szClassName, 256))
 				{
@@ -605,7 +605,7 @@ _AfxCbtFilterHook(int code, WPARAM wParam, LPARAM lParam)
 					if (_tcscmp(szClassName, _T("#32768")) == 0)
 						bSubclass = false;
 				}
-			}			
+			}
 			if (bSubclass)
 			{
 				// subclass the window with the proc which does gray backgrounds
@@ -685,9 +685,12 @@ BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 		const RECT& rect, CWnd* pParentWnd, UINT nID,
 		LPVOID lpParam /* = NULL */)
 {
+	// About nID: In x64 HMENU is 64 bits while UINT is 32 bits (unfortunately).
+	// HMENU only actually uses 32 bits, sign extended to 64 bits.
+	// Those bits are getting dropped in UINT, so sign extend here to restore them.
 	return CreateEx(dwExStyle, lpszClassName, lpszWindowName, dwStyle,
 		rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-		pParentWnd->GetSafeHwnd(), (HMENU)(UINT_PTR)nID, lpParam);
+		pParentWnd->GetSafeHwnd(), reinterpret_cast<HMENU>(static_cast<INT_PTR>(nID)), lpParam);
 }
 
 BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
@@ -695,10 +698,10 @@ BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 	int x, int y, int nWidth, int nHeight,
 	HWND hWndParent, HMENU nIDorHMenu, LPVOID lpParam)
 {
-	ASSERT(lpszClassName == NULL || AfxIsValidString(lpszClassName) || 
+	ASSERT(lpszClassName == NULL || AfxIsValidString(lpszClassName) ||
 		AfxIsValidAtom(lpszClassName));
 	ENSURE_ARG(lpszWindowName == NULL || AfxIsValidString(lpszWindowName));
-	
+
 	// allow modification of several common create parameters
 	CREATESTRUCT cs;
 	cs.dwExStyle = dwExStyle;
@@ -782,11 +785,14 @@ BOOL CWnd::Create(LPCTSTR lpszClassName,
 			_T("nID will overridden in CWnd::PreCreateWindow and GetDlgItem with nID == 0 will fail.\n"));
 	}
 
+	// About nID: In x64 HMENU is 64 bits while UINT is 32 bits (unfortunately).
+	// HMENU only actually uses 32 bits, sign extended to 64 bits.
+	// Those bits are getting dropped in UINT, so sign extend here to restore them.
 	return CreateEx(0, lpszClassName, lpszWindowName,
 		dwStyle | WS_CHILD,
 		rect.left, rect.top,
 		rect.right - rect.left, rect.bottom - rect.top,
-		pParentWnd->GetSafeHwnd(), (HMENU)(UINT_PTR)nID, (LPVOID)pContext);
+		pParentWnd->GetSafeHwnd(), reinterpret_cast<HMENU>(static_cast<INT_PTR>(nID)), (LPVOID)pContext);
 }
 
 CWnd::~CWnd()
@@ -1324,7 +1330,7 @@ BOOL CMenu::TrackPopupMenuEx(UINT fuFlags, int x, int y, CWnd* pWnd, LPTPMPARAMS
 	pThreadState->m_hTrackingMenu = hMenuOld;
 
 	return bOK;
-}	
+}
 
 AFX_STATIC CMenu* AFXAPI _AfxFindPopupMenuFromID(CMenu* pMenu, UINT nID)
 {
@@ -1336,10 +1342,19 @@ AFX_STATIC CMenu* AFXAPI _AfxFindPopupMenuFromID(CMenu* pMenu, UINT nID)
 		CMenu* pPopup = pMenu->GetSubMenu(iItem);
 		if (pPopup != NULL)
 		{
-			if(pPopup->m_hMenu == (HMENU)(UINT_PTR)nID) {
+			// In x64 HMENU is 64 bits while UINT is 32 bits (unfortunately).
+			// HMENU only actually uses 32 bits, sign extended to 64 bits.
+			// Therefore, compare only the lower 32 bits. This is slightly better than
+			// sign extending as in other places, because the check will still work if
+			// HMENU gets changed to use all 64 bits.
+#pragma warning (push)
+#pragma warning(disable : 4311 4302)
+			if(reinterpret_cast<UINT>(pPopup->m_hMenu) == nID) {
 				pMenu = CMenu::FromHandlePermanent(pMenu->m_hMenu);
 				return pMenu;
 			}
+#pragma warning (pop)
+
 			// recurse to child popup
 			pPopup = _AfxFindPopupMenuFromID(pPopup, nID);
 			// check popups on this popup
@@ -1406,7 +1421,7 @@ void CWnd::OnMeasureItem(int /*nIDCtl*/, LPMEASUREITEMSTRUCT lpMeasureItemStruct
 // like RegisterClass, except will automatically call UnregisterClass
 BOOL AFXAPI AfxRegisterClass(WNDCLASS* lpWndClass)
 {
-	WNDCLASS wndcls;		
+	WNDCLASS wndcls;
 	if (GetClassInfo(lpWndClass->hInstance, lpWndClass->lpszClassName,
 		&wndcls))
 	{
@@ -1465,7 +1480,7 @@ LPCTSTR AFXAPI AfxRegisterWndClass(UINT nClassStyle,
 		ATL_CRT_ERRORCHECK_SPRINTF(_sntprintf_s(lpszName, _AFX_TEMP_CLASS_NAME_SIZE, _AFX_TEMP_CLASS_NAME_SIZE - 1, _T("Afx:%p:%x:%p:%p:%p"), hInst, nClassStyle,
 			hCursor, hbrBackground, hIcon));
 	}
-	
+
 	// see if the class already exists
 	WNDCLASS wndcls;
 	if (GetClassInfo(hInst, lpszName, &wndcls))
@@ -1506,7 +1521,7 @@ struct AFX_CTLCOLOR
 
 LRESULT CWnd::OnNTCtlColor(WPARAM wParam, LPARAM lParam)
 {
-	// fill in special struct for compatiblity with 16-bit WM_CTLCOLOR
+	// fill in special struct for compatibility with 16-bit WM_CTLCOLOR
 	AFX_CTLCOLOR ctl;
 	ctl.hDC = (HDC)wParam;
 	ctl.hWnd = (HWND)lParam;
@@ -1528,15 +1543,15 @@ LRESULT CWnd::OnNTCtlColor(WPARAM wParam, LPARAM lParam)
 BOOL CWnd::RegisterTouchWindow(BOOL bRegister, ULONG ulFlags)
 {
 	m_bIsTouchWindowRegistered = FALSE;
-	
-	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
+
+	HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef BOOL (__stdcall *PFNREGISTERTOUCHWINDOW)(HWND, ULONG);
 	typedef BOOL (__stdcall *PFNUNREGISTERTOUCHWINDOW)(HWND);
 
-	static PFNREGISTERTOUCHWINDOW pfRegister = (PFNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "RegisterTouchWindow");
-	static PFNUNREGISTERTOUCHWINDOW pfUnregister = (PFNUNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "UnregisterTouchWindow");
+	PFNREGISTERTOUCHWINDOW pfRegister = (PFNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "RegisterTouchWindow");
+	PFNUNREGISTERTOUCHWINDOW pfUnregister = (PFNUNREGISTERTOUCHWINDOW)GetProcAddress(hUserDll, "UnregisterTouchWindow");
 
 	if (pfRegister == NULL || pfUnregister == NULL)
 	{
@@ -1547,18 +1562,18 @@ BOOL CWnd::RegisterTouchWindow(BOOL bRegister, ULONG ulFlags)
 	{
 		return (*pfUnregister)(GetSafeHwnd());
 	}
-	
+
 	m_bIsTouchWindowRegistered = (*pfRegister)(GetSafeHwnd(), ulFlags);
 	return m_bIsTouchWindowRegistered;
 }
 
 BOOL CWnd::IsTouchWindow() const
 {
-	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
+	HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *PFNISTOUCHWINDOW)(HWND);
-	static PFNISTOUCHWINDOW pfIsTouchWindow = (PFNISTOUCHWINDOW)GetProcAddress(hUserDll, "IsTouchWindow");
+	PFNISTOUCHWINDOW pfIsTouchWindow = (PFNISTOUCHWINDOW)GetProcAddress(hUserDll, "IsTouchWindow");
 
 	if (pfIsTouchWindow == NULL)
 	{
@@ -1581,6 +1596,8 @@ ULONG CWnd::GetGestureStatus(CPoint /*ptTouch*/)
 	return TABLET_DISABLE_PRESSANDHOLD;
 }
 
+#pragma warning(push)
+#pragma warning(disable: 4640) // message processing functions are single threaded
 LRESULT CWnd::OnTouchMessage(WPARAM wParam, LPARAM lParam)
 {
 	HANDLE hTouchInput = (HANDLE)lParam;
@@ -1625,6 +1642,7 @@ LRESULT CWnd::OnTouchMessage(WPARAM wParam, LPARAM lParam)
 
 	return bRes ? 0 : Default ();
 }
+#pragma warning(pop)
 
 BOOL CWnd::OnTouchInputs(UINT nInputsCount, PTOUCHINPUT pInputs)
 {
@@ -1659,11 +1677,11 @@ BOOL CWnd::SetGestureConfig(CGestureConfig* pConfig)
 	GESTURECONFIG* pConfigs = pConfig->m_pConfigs;
 	UINT cIDs = (UINT)pConfig->m_nConfigs;
 
-	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
+	HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *SETGESTURECONFIG)(HWND, DWORD, UINT, PGESTURECONFIG, UINT);
-	static SETGESTURECONFIG pfSetGestureConfig = (SETGESTURECONFIG)GetProcAddress(hUserDll, "SetGestureConfig");
+	SETGESTURECONFIG pfSetGestureConfig = (SETGESTURECONFIG)GetProcAddress(hUserDll, "SetGestureConfig");
 	if (pfSetGestureConfig == NULL)
 	{
 		return FALSE;
@@ -1687,11 +1705,11 @@ BOOL CWnd::GetGestureConfig(CGestureConfig* pConfig)
 	GESTURECONFIG* pConfigs = pConfig->m_pConfigs;
 	UINT cIDs = (UINT)pConfig->m_nConfigs;
 
-	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
+	HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
 	ENSURE(hUserDll != NULL);
 
 	typedef	BOOL (__stdcall *GETGESTURECONFIG)(HWND, DWORD, DWORD, PUINT, PGESTURECONFIG, UINT);
-	static GETGESTURECONFIG pfGetGestureConfig = (GETGESTURECONFIG)GetProcAddress(hUserDll, "GetGestureConfig");
+	GETGESTURECONFIG pfGetGestureConfig = (GETGESTURECONFIG)GetProcAddress(hUserDll, "GetGestureConfig");
 	if (pfGetGestureConfig == NULL)
 	{
 		return FALSE;
@@ -1700,6 +1718,8 @@ BOOL CWnd::GetGestureConfig(CGestureConfig* pConfig)
 	return (*pfGetGestureConfig)(GetSafeHwnd(), 0, 0, &cIDs, pConfigs, sizeof(GESTURECONFIG));
 }
 
+#pragma warning(push)
+#pragma warning(disable: 4640) // message processing functions are single threaded
 LRESULT CWnd::OnGesture(WPARAM /*wParam*/, LPARAM lParam)
 {
 	static HMODULE hUserDll = GetModuleHandleW(L"user32.dll");
@@ -1779,6 +1799,7 @@ LRESULT CWnd::OnGesture(WPARAM /*wParam*/, LPARAM lParam)
 
 	return bDefaultProcessing ? Default() : 0;
 }
+#pragma warning(pop)
 
 BOOL CWnd::OnGestureZoom(CPoint /*ptCenter*/, long /*lDelta*/)
 {
@@ -1931,7 +1952,7 @@ void CWnd::WinHelpInternal(DWORD_PTR dwData, UINT nCmd)
 	ASSERT_VALID(pApp);
 	if (pApp->m_eHelpType == afxHTMLHelp)
 	{
-		// translate from WinHelp commands and data to to HtmlHelp
+		// translate from WinHelp commands and data to HtmlHelp
 		ASSERT((nCmd == HELP_CONTEXT) || (nCmd == HELP_CONTENTS) || (nCmd == HELP_FINDER));
 		if (nCmd == HELP_CONTEXT)
 			nCmd = HH_HELP_CONTEXT;
@@ -1990,7 +2011,7 @@ const AFX_MSGMAP_ENTRY* AFXAPI
 AfxFindMessageEntry(const AFX_MSGMAP_ENTRY* lpEntry,
 	UINT nMsg, UINT nCode, UINT nID)
 {
-#if defined(_M_IX86)
+#if defined(_M_IX86) && !defined(_M_HYBRID)
 // 32-bit Intel 386/486 version.
 
 	ASSERT(offsetof(AFX_MSGMAP_ENTRY, nMessage) == 0);
@@ -2262,10 +2283,10 @@ LDispatch:
 		break;
 	case AfxSig_l_p:
 		{
-			CPoint point(lParam);		
+			CPoint point(lParam);
 			lResult = (this->*mmf.pfn_l_p)(point);
 			break;
-		}		
+		}
 	case AfxSig_b_D_v:
 		lResult = (this->*mmf.pfn_b_D)(CDC::FromHandle(reinterpret_cast<HDC>(wParam)));
 		break;
@@ -2295,7 +2316,7 @@ LDispatch:
 		break;
 
 	case AfxSig_v_u_W:
-		(this->*mmf.pfn_v_u_W)(static_cast<UINT>(wParam), 
+		(this->*mmf.pfn_v_u_W)(static_cast<UINT>(wParam),
 			CWnd::FromHandle(reinterpret_cast<HWND>(lParam)));
 		break;
 
@@ -2327,9 +2348,9 @@ LDispatch:
 			// special case for OnCtlColor to avoid too many temporary objects
 			ASSERT(message == WM_CTLCOLOR);
 			AFX_CTLCOLOR* pCtl = reinterpret_cast<AFX_CTLCOLOR*>(lParam);
-			CDC dcTemp; 
+			CDC dcTemp;
 			dcTemp.m_hDC = pCtl->hDC;
-			CWnd wndTemp; 
+			CWnd wndTemp;
 			wndTemp.m_hWnd = pCtl->hWnd;
 			UINT nCtlType = pCtl->nCtlType;
 			// if not coming from a permanent window, use stack temporary
@@ -2359,7 +2380,7 @@ LDispatch:
 			// special case for CtlColor to avoid too many temporary objects
 			ASSERT(message == WM_REFLECT_BASE+WM_CTLCOLOR);
 			AFX_CTLCOLOR* pCtl = reinterpret_cast<AFX_CTLCOLOR*>(lParam);
-			CDC dcTemp; 
+			CDC dcTemp;
 			dcTemp.m_hDC = pCtl->hDC;
 			UINT nCtlType = pCtl->nCtlType;
 			HBRUSH hbr = (this->*mmf.pfn_B_D_u)(&dcTemp, nCtlType);
@@ -2421,12 +2442,12 @@ LDispatch:
 		break;
 
 	case AfxSig_l_uu_M:
-		lResult = (this->*mmf.pfn_l_u_u_M)(LOWORD(wParam), HIWORD(wParam), 
+		lResult = (this->*mmf.pfn_l_u_u_M)(LOWORD(wParam), HIWORD(wParam),
 			CMenu::FromHandle(reinterpret_cast<HMENU>(lParam)));
 		break;
-		
+
 	case AfxSig_v_b_h:
-	    (this->*mmf.pfn_v_b_h)(static_cast<BOOL>(wParam), 
+	    (this->*mmf.pfn_v_b_h)(static_cast<BOOL>(wParam),
 			reinterpret_cast<HANDLE>(lParam));
 		break;
 
@@ -2435,7 +2456,7 @@ LDispatch:
 		break;
 
 	case AfxSig_v_h_h:
-	    (this->*mmf.pfn_v_h_h)(reinterpret_cast<HANDLE>(wParam), 
+	    (this->*mmf.pfn_v_h_h)(reinterpret_cast<HANDLE>(wParam),
 			reinterpret_cast<HANDLE>(lParam));
 		break;
 
@@ -2573,7 +2594,7 @@ LDispatch:
 		break;
 
 	case AfxSig_v_b_NCCALCSIZEPARAMS:
-		(this->*mmf.pfn_v_b_NCCALCSIZEPARAMS)(static_cast<BOOL>(wParam), 
+		(this->*mmf.pfn_v_b_NCCALCSIZEPARAMS)(static_cast<BOOL>(wParam),
 			reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam));
 		break;
 
@@ -3176,7 +3197,7 @@ void CWnd::ScrollWindow(int xAmount, int yAmount,
 void CWnd::RepositionBars(UINT nIDFirst, UINT nIDLast, UINT nIDLeftOver,
 	UINT nFlags, LPRECT lpRectParam, LPCRECT lpRectClient, BOOL bStretch)
 {
-	ASSERT(nFlags == 0 || (nFlags & ~reposNoPosLeftOver) == reposQuery || 
+	ASSERT(nFlags == 0 || (nFlags & ~reposNoPosLeftOver) == reposQuery ||
 			(nFlags & ~reposNoPosLeftOver) == reposExtra);
 
 	// walk kids in order, control bars get the resize notification
@@ -3481,7 +3502,7 @@ BOOL CWnd::ReflectChildNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* 
 	default:
 		if (uMsg >= WM_CTLCOLORMSGBOX && uMsg <= WM_CTLCOLORSTATIC)
 		{
-			// fill in special struct for compatiblity with 16-bit WM_CTLCOLOR
+			// fill in special struct for compatibility with 16-bit WM_CTLCOLOR
 			AFX_CTLCOLOR ctl;
 			ctl.hDC = (HDC)wParam;
 			ctl.nCtlType = uMsg - WM_CTLCOLORMSGBOX;
@@ -3512,7 +3533,7 @@ void CWnd::OnParentNotify(UINT message, LPARAM lParam)
 }
 
 void CWnd::OnSetFocus(CWnd*)
-{ 
+{
    BOOL bHandled;
 
    bHandled = FALSE;
@@ -3566,7 +3587,7 @@ void CWnd::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 	// force refresh of settings that we cache
 	_afxGotScrollLines = FALSE;
 
-	if (m_pCtrlCont != NULL) 
+	if (m_pCtrlCont != NULL)
 	{
 		m_pCtrlCont->BroadcastAmbientPropertyChange( DISPID_AMBIENT_LOCALEID );
 	}
@@ -3688,32 +3709,32 @@ HRESULT CWnd::XAccessible::Invoke(
 			/* [out][in] */ DISPPARAMS *pDispParams,
 			/* [out] */ VARIANT *pVarResult,
 			/* [out] */ EXCEPINFO *pExcepInfo,
-			/* [out] */ UINT *puArgErr) 
+			/* [out] */ UINT *puArgErr)
 {
 	METHOD_PROLOGUE(CWnd, Accessible)
 	return AtlIAccessibleInvokeHelper((IAccessible*)(void*)this, dispIdMember, refiid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-} 
+}
 
 HRESULT CWnd::XAccessible::GetIDsOfNames(
 	REFIID refiid,
 	LPOLESTR *rgszNames,
 	UINT cNames,
 	LCID lcid,
-	DISPID *rgDispId) 
+	DISPID *rgDispId)
 {
 	return AtlIAccessibleGetIDsOfNamesHelper(refiid, rgszNames, cNames, lcid, rgDispId);
 }
 
-HRESULT CWnd::XAccessible::GetTypeInfoCount(unsigned int*  pctinfo) 
+HRESULT CWnd::XAccessible::GetTypeInfoCount(unsigned int*  pctinfo)
 {
-	if (pctinfo == NULL) 
+	if (pctinfo == NULL)
 	{
 		return E_POINTER;
 	}
 	*pctinfo = 1;
 	return S_OK;
 }
-HRESULT CWnd::XAccessible::GetTypeInfo(unsigned int /*iTInfo*/, LCID /*lcid*/, ITypeInfo** /*ppTInfo*/) 
+HRESULT CWnd::XAccessible::GetTypeInfo(unsigned int /*iTInfo*/, LCID /*lcid*/, ITypeInfo** /*ppTInfo*/)
 {
 	return E_NOTIMPL;
 }
@@ -3909,7 +3930,7 @@ HRESULT CWnd::get_accName(VARIANT varChild, BSTR *pszName)
 }
 
 // Override in users code
-// Default inplementation will get window text and return it.
+// Default implementation will get window text and return it.
 HRESULT CWnd::get_accValue(VARIANT varChild, BSTR *pszValue)
 {
 	return m_pStdObject->get_accValue(varChild, pszValue);
@@ -4158,7 +4179,7 @@ HRESULT CWnd::GetAccessibleName(VARIANT varChild, BSTR* pszName)
 						}
 					}
 				}
-			}			
+			}
 		}
 	}
 	//out of range
@@ -4233,7 +4254,7 @@ HRESULT CWnd::GetAccessibilityHitTest(long xLeft, long yTop, VARIANT *pvarChild)
 					}
 				}
 			}
-		}			
+		}
 	}
 	return CWnd::accHitTest(xLeft, yTop, pvarChild);
 }
@@ -4702,7 +4723,7 @@ BOOL CWnd::SetOccDialogInfo(_AFX_OCC_DIALOG_INFO*)
 	return FALSE;
 }
 _AFX_OCC_DIALOG_INFO* CWnd::GetOccDialogInfo()
-{	
+{
 	return NULL;
 }
 
@@ -4887,7 +4908,7 @@ BOOL AFXAPI AfxEndDeferRegisterClass(LONG fToRegister)
 		fRegisteredClasses |= AFX_WNDCOMMCTLS_REG;
 	}
 
-	// must have registered at least as mamy classes as requested
+	// must have registered at least as many classes as requested
 	return (fToRegister & fRegisteredClasses) == fToRegister;
 }
 
@@ -5009,7 +5030,7 @@ BOOL CWnd::CreateControlContainer(COleControlContainer** ppContainer)
    return TRUE;
 }
 
-BOOL CWnd::CreateControlSite(COleControlContainer*, 
+BOOL CWnd::CreateControlSite(COleControlContainer*,
    COleControlSite** ppSite, UINT /* nID */, REFCLSID /* clsid */)
 {
    ENSURE_ARG( ppSite != NULL );

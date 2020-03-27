@@ -25,8 +25,10 @@ static void __stdcall Create16ColorsStdPalette(CPalette& pal);
 
 #pragma warning(disable : 4355)
 
-CMFCImageEditorDialog::CMFCImageEditorDialog(CBitmap* pBitmap, CWnd* pParent /*=NULL*/, int nBitsPixel /* = -1 */) :
-	CDialogEx(CMFCImageEditorDialog::IDD, pParent), m_pBitmap(pBitmap), m_wndLargeDrawArea(this)
+CMFCImageEditorDialog::CMFCImageEditorDialog(CBitmap* pBitmap, CWnd* pParent /*=NULL*/, int nBitsPixel /* = -1 */)
+	: CDialogEx(CMFCImageEditorDialog::IDD, pParent)
+	, m_wndLargeDrawArea(this)
+	, m_pBitmap(pBitmap)
 {
 	ASSERT_VALID(m_pBitmap);
 

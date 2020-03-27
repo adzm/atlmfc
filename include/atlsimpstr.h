@@ -921,8 +921,7 @@ public:
 	static const DWORD SET_LENGTH = 0x02;  // Set the length of the string object at GetBuffer time
 
 public:
-#pragma warning(suppress: 4987) // nonstandard extension used: 'throw(...)'
-	explicit CStrBufT(_In_ StringType& str) throw( ... ) :
+	explicit CStrBufT(_In_ StringType& str) :
 		m_str( str ),
 		m_pszBuffer( NULL ),
 #ifdef _DEBUG
@@ -936,8 +935,7 @@ public:
 	CStrBufT(
 			_In_ StringType& str,
 			_In_ int nMinLength,
-#pragma warning(suppress: 4987) // nonstandard extension used: 'throw(...)'
-			_In_ DWORD dwFlags = AUTO_LENGTH) throw( ... ) :
+			_In_ DWORD dwFlags = AUTO_LENGTH) :
 		m_str( str ),
 		m_pszBuffer( NULL ),
 #ifdef _DEBUG

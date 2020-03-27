@@ -171,10 +171,10 @@ IMPLEMENT_SERIAL(CMFCToolBar, CMFCBaseToolBar, VERSIONABLE_SCHEMA | 1)
 
 #pragma warning(disable : 4355)
 
-CMFCToolBar::CMFCToolBar() :
-m_bMenuMode(FALSE),
-m_Impl(this),
-m_bIgnoreSetText(FALSE)
+CMFCToolBar::CMFCToolBar()
+	: m_bMenuMode(FALSE)
+	, m_bIgnoreSetText(FALSE)
+	, m_Impl(this)
 {
 	if (GetGlobalData()->IsAccessibilitySupport())
 	{
@@ -7015,13 +7015,21 @@ void CMFCToolBar::UpdateTooltips()
 		return;
 	}
 
-	while (m_nTooltipsCount-- >= 0)
+	int i = 0;
+	TCHAR szTTText[INFOTIPSIZE];
+
+	for (i = m_pToolTip->GetToolCount() - 1; i >= 0; i--)
 	{
-		m_pToolTip->DelTool(this, m_nTooltipsCount);
+		TOOLINFO ti = { 0 };
+		ti.cbSize = sizeof(TOOLINFO);
+		ti.lpszText = szTTText;
+		m_pToolTip->SendMessage(TTM_ENUMTOOLS, i, reinterpret_cast<LPARAM>(&ti));
+		m_pToolTip->DelTool(this, ti.uId);
 	}
 
 	m_nTooltipsCount = 0;
-	for (int i = 0; i < m_Buttons.GetCount(); i++)
+
+	for (i = 0; i < m_Buttons.GetCount(); i++)
 	{
 		CMFCToolBarButton* pButton = GetButton(i);
 		ASSERT_VALID(pButton);
@@ -7044,10 +7052,10 @@ void CMFCToolBar::UpdateTooltips()
 	}
 }
 
+static CString cMfcToolbarTipText;
+
 BOOL CMFCToolBar::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CString strTipText;
-
 	if (m_pToolTip->GetSafeHwnd() == NULL || pNMH->hwndFrom != m_pToolTip->GetSafeHwnd())
 	{
 		return FALSE;
@@ -7069,10 +7077,10 @@ BOOL CMFCToolBar::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 	LPNMTTDISPINFO pTTDispInfo = (LPNMTTDISPINFO) pNMH;
 	ASSERT((pTTDispInfo->uFlags & TTF_IDISHWND) == 0);
 
-	strTipText = ti.lpszText;
+	cMfcToolbarTipText = ti.lpszText;
 	free(ti.lpszText);
 
-	pTTDispInfo->lpszText = const_cast<LPTSTR>((LPCTSTR) strTipText);
+	pTTDispInfo->lpszText = const_cast<LPTSTR>((LPCTSTR) cMfcToolbarTipText);
 
 	m_pToolTip->SetFont(&(GetGlobalData()->fontRegular), FALSE);
 	return TRUE;
@@ -7124,9 +7132,9 @@ BOOL CMFCToolBar::OnSetAccData(long lVal)
 	if (pButton != NULL)
 	{
 		pButton->SetACCData (this, m_AccData);
-		return TRUE;	
+		return TRUE;
 	}
-	
+
 	return FALSE;
 }
 
@@ -7158,7 +7166,7 @@ HRESULT CMFCToolBar::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
 				pButton->SetACCData(this, m_AccData);
 				break;
 			}
-			
+
 			count++;
 		}
 	}
@@ -7221,7 +7229,7 @@ HRESULT CMFCToolBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEnd
 		{
 			pvarEndUpAt->vt = VT_I4;
 			pvarEndUpAt->lVal = 1;
-			return S_OK;	
+			return S_OK;
 		}
 		break;
 
@@ -7234,7 +7242,7 @@ HRESULT CMFCToolBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEnd
 		}
 		break;
 
-	case NAVDIR_NEXT:   
+	case NAVDIR_NEXT:
 	case NAVDIR_RIGHT:
 		if (varStart.lVal != CHILDID_SELF)
 		{
@@ -7249,7 +7257,7 @@ HRESULT CMFCToolBar::accNavigate(long navDir, VARIANT varStart, VARIANT* pvarEnd
 		}
 		break;
 
-   	case NAVDIR_PREVIOUS: 
+   	case NAVDIR_PREVIOUS:
 	case NAVDIR_LEFT:
 		if (varStart.lVal != CHILDID_SELF)
 		{
@@ -7283,7 +7291,7 @@ HRESULT CMFCToolBar::accDoDefaultAction(VARIANT varChild)
 		{
 			if (!pButton->OnClickUp())
 			{
-				GetOwner()->SendMessage(WM_COMMAND, pButton->m_nID); 
+				GetOwner()->SendMessage(WM_COMMAND, pButton->m_nID);
 			}
 		}
 		else
@@ -7541,7 +7549,7 @@ LRESULT CMFCToolBar::OnPromptReset(WPARAM, LPARAM)
 	}
 
 	CString strPrompt;
-	strPrompt.Format(IDS_AFXBARRES_RESET_TOOLBAR_FMT, strCaption);
+	strPrompt.Format(IDS_AFXBARRES_RESET_TOOLBAR_FMT, strCaption.GetString());
 
 	//Ask for reset
 	if (AfxMessageBox(strPrompt, MB_OKCANCEL|MB_ICONWARNING) == IDOK)
@@ -7930,7 +7938,7 @@ void __stdcall CMFCToolBar::RedrawUnderlines()
 			ASSERT_VALID(pToolBar);
 
 			BOOL bRedrawButtons = FALSE;
-				
+
 			for (POSITION pos = pToolBar->m_Buttons.GetHeadPosition(); pos != NULL;)
 			{
 				CMFCToolBarButton* pButton = (CMFCToolBarButton*)pToolBar->m_Buttons.GetNext(pos);
@@ -7988,7 +7996,7 @@ CMFCToolBarButton* CMFCToolBar::AccGetButtonByChildId (long lVal)
 			{
 				return pButton;
 			}
-			
+
 			count++;
 		}
 	}
@@ -8017,7 +8025,7 @@ int CMFCToolBar::AccGetChildIdByButtonIndex(int nButtonIndex)
 			{
 				return count;
 			}
-			
+
 			count++;
 		}
 	}

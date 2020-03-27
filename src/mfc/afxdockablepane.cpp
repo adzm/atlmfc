@@ -3139,10 +3139,10 @@ void CDockablePane::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 	}
 }
 
+static CString strTipText;
+
 BOOL CDockablePane::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CString strTipText;
-
 	ENSURE(pNMH != NULL);
 
 	if (m_pToolTip->GetSafeHwnd() == NULL || pNMH->hwndFrom != m_pToolTip->GetSafeHwnd())

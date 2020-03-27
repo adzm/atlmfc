@@ -101,23 +101,6 @@ BOOL _AfxGetThreadPreferredUILanguages(__in DWORD dwFlags, __out PULONG pulNumLa
 #endif
 }
 
-int _AfxCompareStringEx(LPCWSTR lpLocaleName, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2)
-{
-#if _MFC_NTDDI_MIN >= NTDDI_VISTA
-	return CompareStringEx(lpLocaleName, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2, NULL, NULL, 0);
-#else
-	// use CompareStringEx if it is available (only on Vista+)...
-	IFDYNAMICGETCACHEDFUNCTIONFORMFC(L"kernel32.dll", CompareStringEx, pfCompareStringEx)
-	{
-		return (*pfCompareStringEx)(lpLocaleName, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2, NULL, NULL, 0);
-	}
-
-	// ...otherwise fall back to using CompareString.
-	return CompareStringW(_AtlDownlevelLocaleNameToLCID(lpLocaleName), dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
-#endif
-}
-
-
 HRESULT _AfxRegisterApplicationRestart(__in_opt PCWSTR pwzCommandline, __in DWORD dwFlags)
 {
 #if _MFC_NTDDI_MIN >= NTDDI_VISTA

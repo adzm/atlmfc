@@ -11,6 +11,8 @@
 // STDAFX.H is the header that includes the standard includes that are used
 //  for most of the project.  These are compiled into a pre-compiled header
 
+#define _CRT_RAND_S
+
 #include <winsdkver.h>
 
 #undef _WIN32_WINNT
@@ -81,7 +83,7 @@
 #include "afxext.h"
 
 #ifndef _OLE2_H_
-	#include <ole2.h>
+	#include <Ole2.h>
 #endif
 
 #include <winspool.h>
@@ -95,7 +97,7 @@
 
 // include OLE dialog/helper APIs
 #ifndef _OLEDLG_H_
-	#include <oledlg.h>
+	#include <OleDlg.h>
 #endif
 
 #include <winreg.h>
@@ -139,10 +141,10 @@
 
 #if defined(_UNICODE)
 	#include "afxtaskdialog.h"
-#endif 
+#endif
 
 #include <winreg.h>
-#include <winnls.h>
+#include <WinNls.h>
 #include <stddef.h>
 #include <limits.h>
 #include <malloc.h>

@@ -233,10 +233,10 @@ void CMFCTasksPaneFrameWnd::StopCaptionButtonsTracking()
 	}
 }
 
+static CString strTipText;
+
 BOOL CMFCTasksPaneFrameWnd::OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult)
 {
-	static CString strTipText;
-
 	ENSURE(pNMH != NULL);
 
 	if (m_pToolTip->GetSafeHwnd() == NULL || pNMH->hwndFrom != m_pToolTip->GetSafeHwnd())

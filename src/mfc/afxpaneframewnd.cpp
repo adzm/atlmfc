@@ -1018,7 +1018,7 @@ BOOL __stdcall CPaneFrameWnd::AddRemovePaneFromGlobalList(CBasePane* pWnd, BOOL 
 void CPaneFrameWnd::ReplacePane(CBasePane* pBarOrg, CBasePane* pBarReplaceWith)
 {
 	ASSERT_VALID(this);
-	
+
 	ENSURE(pBarOrg != NULL);
 	ENSURE(pBarReplaceWith != NULL);
 	ENSURE(pBarOrg != pBarReplaceWith);
@@ -2836,7 +2836,7 @@ void CPaneFrameWnd::SetDockState(CDockingManager* pDockManager)
 				{
 					SetDelayShow(TRUE);
 				}
-				
+
 				// Show with delay
 				pBar->ShowPane(bShow, !bExitingFullScreenMode, FALSE);
 
@@ -3251,10 +3251,10 @@ void CPaneFrameWnd::RecalcCaptionHeight()
 	m_sizeMinSize.cx = m_sizeMinSize.cy = m_nCaptionHeight + 15;
 }
 
+static CString strTipText;
+
 BOOL CPaneFrameWnd::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CString strTipText;
-
 	ENSURE(pNMH != NULL);
 
 	if (m_pToolTip->GetSafeHwnd() == NULL || pNMH->hwndFrom != m_pToolTip->GetSafeHwnd())

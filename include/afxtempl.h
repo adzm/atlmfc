@@ -17,7 +17,7 @@
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -107,11 +107,11 @@ void AFXAPI SerializeElements(CArchive& ar, TYPE* pElements, INT_PTR nCount)
 }
 
 template<class TYPE>
-void AFXAPI SerializeElementsInsertExtract(CArchive& ar, TYPE* pElements, 
+void AFXAPI SerializeElementsInsertExtract(CArchive& ar, TYPE* pElements,
 	INT_PTR nCount)
 {
 	ENSURE(nCount == 0 || pElements != NULL);
-	ASSERT((nCount == 0) || 
+	ASSERT((nCount == 0) ||
 		(AfxIsValidAddress(pElements, nCount*sizeof(TYPE))));
 
 	if (nCount == 0 || pElements == NULL)
@@ -283,44 +283,44 @@ AFX_INLINE void CArray<TYPE, ARG_TYPE>::RemoveAll()
 	{ SetSize(0, -1); }
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE TYPE& CArray<TYPE, ARG_TYPE>::GetAt(INT_PTR nIndex)
-{ 
+{
 	ASSERT(nIndex >= 0 && nIndex < m_nSize);
 	if(nIndex >= 0 && nIndex < m_nSize)
-		return m_pData[nIndex]; 
-	AfxThrowInvalidArgException();		
+		return m_pData[nIndex];
+	AfxThrowInvalidArgException();
 }
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE const TYPE& CArray<TYPE, ARG_TYPE>::GetAt(INT_PTR nIndex) const
 {
 	ASSERT(nIndex >= 0 && nIndex < m_nSize);
 	if(nIndex >= 0 && nIndex < m_nSize)
-		return m_pData[nIndex]; 
-	AfxThrowInvalidArgException();		
+		return m_pData[nIndex];
+	AfxThrowInvalidArgException();
 }
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArray<TYPE, ARG_TYPE>::SetAt(INT_PTR nIndex, ARG_TYPE newElement)
-{ 
+{
 	ASSERT(nIndex >= 0 && nIndex < m_nSize);
 	if(nIndex >= 0 && nIndex < m_nSize)
-		m_pData[nIndex] = newElement; 
+		m_pData[nIndex] = newElement;
 	else
-		AfxThrowInvalidArgException();		
+		AfxThrowInvalidArgException();
 }
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE const TYPE& CArray<TYPE, ARG_TYPE>::ElementAt(INT_PTR nIndex) const
-{ 
+{
 	ASSERT(nIndex >= 0 && nIndex < m_nSize);
 	if(nIndex >= 0 && nIndex < m_nSize)
-		return m_pData[nIndex]; 
-	AfxThrowInvalidArgException();		
+		return m_pData[nIndex];
+	AfxThrowInvalidArgException();
 }
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE TYPE& CArray<TYPE, ARG_TYPE>::ElementAt(INT_PTR nIndex)
-{ 
+{
 	ASSERT(nIndex >= 0 && nIndex < m_nSize);
 	if(nIndex >= 0 && nIndex < m_nSize)
-		return m_pData[nIndex]; 
-	AfxThrowInvalidArgException();		
+		return m_pData[nIndex];
+	AfxThrowInvalidArgException();
 }
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE const TYPE* CArray<TYPE, ARG_TYPE>::GetData() const
@@ -444,7 +444,7 @@ void CArray<TYPE, ARG_TYPE>::SetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 			nNewMax = nNewSize;  // no slush
 
 		ASSERT(nNewMax >= m_nMaxSize);  // no wrap around
-		
+
 		if(nNewMax  < m_nMaxSize)
 			AfxThrowInvalidArgException();
 
@@ -479,7 +479,7 @@ INT_PTR CArray<TYPE, ARG_TYPE>::Append(const CArray& src)
 {
 	ASSERT_VALID(this);
 	ASSERT(this != &src);   // cannot append to itself
-	
+
 	if(this == &src)
 		AfxThrowInvalidArgException();
 
@@ -534,7 +534,7 @@ void CArray<TYPE, ARG_TYPE>::SetAtGrow(INT_PTR nIndex, ARG_TYPE newElement)
 {
 	ASSERT_VALID(this);
 	ASSERT(nIndex >= 0);
-	
+
 	if(nIndex < 0)
 		AfxThrowInvalidArgException();
 
@@ -1178,7 +1178,7 @@ void CList<TYPE, ARG_TYPE>::Serialize(CArchive& ar)
 		{
 			ASSERT(AfxIsValidAddress(pNode, sizeof(CNode)));
 			TYPE* pData;
-			/* 
+			/*
 			 * in some cases the & operator might be overloaded, and we cannot use it to obtain
 			 * the address of a given object.  We then use the following trick to get the address
 			 */
@@ -1355,7 +1355,7 @@ AFX_INLINE POSITION CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::GetStartPosition() con
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
 const typename CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CPair* CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::PGetFirstAssoc() const
-{ 
+{
 	ASSERT_VALID(this);
 	if(m_nCount == 0) return NULL;
 
@@ -1374,7 +1374,7 @@ const typename CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CPair* CMap<KEY, ARG_KEY, V
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
 typename CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CPair* CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::PGetFirstAssoc()
-{ 
+{
 	ASSERT_VALID(this);
 	if(m_nCount == 0) return NULL;
 
@@ -1455,12 +1455,12 @@ void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::RemoveAll()
 				pAssoc->CAssoc::~CAssoc();
 			}
 		}
-		
+
 		// free hash table
 		delete[] m_pHashTable;
 		m_pHashTable = NULL;
 	}
-	
+
 	m_nCount = 0;
 	m_pFreeList = NULL;
 	m_pBlocks->FreeDataChain();
@@ -1686,10 +1686,10 @@ CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::PGetNextAssoc(const typename CMap<KEY, ARG
 
 	ASSERT(m_pHashTable != NULL);  // never call on empty map
 	ASSERT(pAssocRet != NULL);
-	
+
 	if(m_pHashTable == NULL || pAssocRet == NULL)
 		return NULL;
-		
+
 	ASSERT(pAssocRet != (CAssoc*)BEFORE_START_POSITION);
 
 	// find next association
@@ -1717,10 +1717,10 @@ CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::PGetNextAssoc(const typename CMap<KEY, ARG
 
 	ASSERT(m_pHashTable != NULL);  // never call on empty map
 	ASSERT(pAssocRet != NULL);
-	
+
 	if(m_pHashTable == NULL || pAssocRet == NULL)
 		return NULL;
-		
+
 	ASSERT(pAssocRet != (CAssoc*)BEFORE_START_POSITION);
 
 	// find next association
@@ -1761,9 +1761,9 @@ void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::Serialize(CArchive& ar)
 				{
 					KEY* pKey;
 					VALUE* pValue;
-					/* 
-					* in some cases the & operator might be overloaded, and we cannot use it to 
-					* obtain the address of a given object.  We then use the following trick to 
+					/*
+					* in some cases the & operator might be overloaded, and we cannot use it to
+					* obtain the address of a given object.  We then use the following trick to
 					* get the address
 					*/
 					pKey = reinterpret_cast< KEY* >( &reinterpret_cast< int& >( const_cast< KEY& > ( static_cast< const KEY& >( pAssoc->key ) ) ) );
@@ -1921,7 +1921,7 @@ public:
 	{
 		try
 		{
-			return BASE_CLASS::InsertBefore(position, newElement); 
+			return BASE_CLASS::InsertBefore(position, newElement);
 		}
 		catch(...)
 		{
@@ -1934,7 +1934,7 @@ public:
 	{
 		try
 		{
-			return BASE_CLASS::InsertAfter(position, newElement); 
+			return BASE_CLASS::InsertAfter(position, newElement);
 		}
 		catch(...)
 		{
@@ -1960,10 +1960,10 @@ public:
 
 	// transfer add before head or tail
 	POSITION TransferAddHead(TYPE newElement)
-	{ 
+	{
 		try
 		{
-			return BASE_CLASS::AddHead(newElement); 
+			return BASE_CLASS::AddHead(newElement);
 		}
 		catch(...)
 		{
@@ -1972,10 +1972,10 @@ public:
 		}
 	}
 	POSITION TransferAddTail(TYPE newElement)
-	{ 
+	{
 		try
 		{
-			return BASE_CLASS::AddTail(newElement); 
+			return BASE_CLASS::AddTail(newElement);
 		}
 		catch(...)
 		{
@@ -2049,7 +2049,7 @@ public:
 
 	// Lookup
 	BOOL Lookup(typename BASE_CLASS::BASE_ARG_KEY key, VALUE& rValue) const
-		{ return BASE_CLASS::Lookup(key, (BASE_CLASS::BASE_VALUE&)rValue); }
+		{ return BASE_CLASS::Lookup(key, (typename BASE_CLASS::BASE_VALUE&)rValue); }
 
 	// Lookup and add if not there
 	VALUE& operator[](typename BASE_CLASS::BASE_ARG_KEY key)
@@ -2065,8 +2065,8 @@ public:
 
 	// iteration
 	void GetNextAssoc(POSITION& rPosition, KEY& rKey, VALUE& rValue) const
-		{ BASE_CLASS::GetNextAssoc(rPosition, (BASE_CLASS::BASE_KEY&)rKey,
-			(BASE_CLASS::BASE_VALUE&)rValue); }
+		{ BASE_CLASS::GetNextAssoc(rPosition, (typename BASE_CLASS::BASE_KEY&)rKey,
+			(typename BASE_CLASS::BASE_VALUE&)rValue); }
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -1066,10 +1066,10 @@ void CMFCRibbonPanelMenuBar::OnSize(UINT nType, int cx, int cy)
 	}
 }
 
+static CString strTipText;
+
 BOOL CMFCRibbonPanelMenuBar::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CString strTipText;
-
 	if (m_pToolTip->GetSafeHwnd() == NULL || pNMH->hwndFrom != m_pToolTip->GetSafeHwnd())
 	{
 		return FALSE;
@@ -1678,7 +1678,7 @@ CMFCRibbonBaseElement* CMFCRibbonPanelMenuBar::GetFocused() const
 	}
 }
 
-BOOL CMFCRibbonPanelMenuBar::PreTranslateMessage(MSG* pMsg) 
+BOOL CMFCRibbonPanelMenuBar::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_TAB && OnKey(VK_TAB))
 	{
@@ -1693,7 +1693,7 @@ BOOL CMFCRibbonPanelMenuBar::PreTranslateMessage(MSG* pMsg)
 			ASSERT_VALID(pEdit);
 
 			CPoint point;
-			
+
 			::GetCursorPos(&point);
 			ScreenToClient(&point);
 
@@ -1882,7 +1882,7 @@ BOOL CMFCRibbonPanelMenu::IsScrollDnAvailable()
 	return m_wndRibbonBar.m_pPanel == NULL || m_wndRibbonBar.m_pPanel->m_bScrollDnAvailable;
 }
 
-void CMFCRibbonPanelMenu::OnDestroy() 
+void CMFCRibbonPanelMenu::OnDestroy()
 {
 	if (m_bEscClose && m_wndRibbonBar.GetCategory() != NULL && AFXGetTopLevelFrame(&m_wndRibbonBar) != NULL)
 	{

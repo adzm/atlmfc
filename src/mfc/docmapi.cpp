@@ -10,10 +10,10 @@
 
 #include "stdafx.h"
 #pragma warning(disable: 4228)
-#include <mapi.h>
+#include <MAPI.h>
 #pragma warning(default: 4228)
 
-
+extern void AfxGetTempFileName(LPCTSTR lpszPath, LPCTSTR lpszPrefix, LPTSTR lpszTempName, size_t sizeOfTempName);
 
 /////////////////////////////////////////////////////////////////////////////
 // MAPI implementation helpers and globals
@@ -75,7 +75,7 @@ void CDocument::OnFileSendMail()
 	{
 		// save to temporary path
 		VERIFY(GetTempPath(_countof(szPath), szPath) != 0);
-		VERIFY(GetTempFileName(szPath, _T("afx"), 0, szTempName) != 0);
+		AfxGetTempFileName(szPath, _T("afx"), szTempName, _MAX_PATH);
 
 		// save it, but remember original modified flag
 		BOOL bModified = IsModified();

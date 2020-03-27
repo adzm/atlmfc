@@ -13,6 +13,27 @@
 
 #include "afxdatarecovery.h"
 
+void AfxGetTempFileName(LPCTSTR lpszPath, LPCTSTR lpszPrefix, LPTSTR lpszTempName, size_t sizeOfTempName)
+{
+	ASSERT(lpszPrefix != NULL);
+	ASSERT(lpszTempName != NULL);
+
+	UINT nVal = 0;
+
+	do
+	{
+		if (rand_s(&nVal) != 0)
+		{
+			// Generating file name using rand_s was failed, use "standard way" (GetTempFileName):
+			GetTempFileName(lpszPath, lpszPrefix, 0, lpszTempName);
+			return;
+		}
+
+		_stprintf_s(lpszTempName, sizeOfTempName, _T("%s%s%X.tmp"), lpszPath, lpszPrefix, nVal);
+	} 
+	while (GetFileAttributes(lpszTempName) != INVALID_FILE_ATTRIBUTES);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CDocument
 
@@ -618,8 +639,7 @@ BOOL CMirrorFile::Open(LPCTSTR lpszFileName, UINT nOpenFlags,
 				*lpszName = NULL;
 
 				//let's create a temporary file name
-				GetTempFileName(szPath, _T("MFC"), 0,
-					m_strMirrorName.GetBuffer(_MAX_PATH+1));
+				AfxGetTempFileName(szPath, _T("MFC"), m_strMirrorName.GetBuffer(_MAX_PATH + 1), _MAX_PATH + 1);
 				m_strMirrorName.ReleaseBuffer();
 			}
 		}

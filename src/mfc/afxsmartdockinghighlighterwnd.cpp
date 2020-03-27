@@ -24,7 +24,11 @@
 /////////////////////////////////////////////////////////////////////////////
 // CSmartDockingHighlighterWnd
 
-CSmartDockingHighlighterWnd::CSmartDockingHighlighterWnd() : m_bTabbed(FALSE), m_bShown(FALSE), m_pWndOwner(NULL), m_bUseThemeColorInShading(FALSE)
+CSmartDockingHighlighterWnd::CSmartDockingHighlighterWnd()
+	: m_pWndOwner(NULL)
+	, m_bTabbed(FALSE)
+	, m_bShown(FALSE)
+	, m_bUseThemeColorInShading(FALSE)
 {
 	m_rectLast.SetRectEmpty();
 	m_rectTab.SetRectEmpty();

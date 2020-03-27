@@ -27,8 +27,10 @@
 
 IMPLEMENT_DYNCREATE(CMFCToolBarsKeyboardPropertyPage, CPropertyPage)
 
-CMFCToolBarsKeyboardPropertyPage::CMFCToolBarsKeyboardPropertyPage(CFrameWnd* pParentFrame, BOOL bAutoSet) :
-	CPropertyPage(CMFCToolBarsKeyboardPropertyPage::IDD), m_pParentFrame(pParentFrame), m_bAutoSet(bAutoSet)
+CMFCToolBarsKeyboardPropertyPage::CMFCToolBarsKeyboardPropertyPage(CFrameWnd* pParentFrame, BOOL bAutoSet)
+	: CPropertyPage(CMFCToolBarsKeyboardPropertyPage::IDD)
+	, m_bAutoSet(bAutoSet)
+	, m_pParentFrame(pParentFrame)
 {
 	ASSERT_VALID(m_pParentFrame);
 

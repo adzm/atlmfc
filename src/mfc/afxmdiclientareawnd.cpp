@@ -1053,7 +1053,12 @@ CMFCTabCtrl* CMDIClientAreaWnd::CreateTabGroup(CMFCTabCtrl* pWndTab)
 		if (!pWndTab->Create(m_mdiTabParams.m_style, CRect(0, 0, 0, 0), pParent, (UINT)-1, m_mdiTabParams.m_tabLocation, m_mdiTabParams.m_bTabCloseButton))
 		{
 			TRACE(_T("CMDIClientAreaWnd::OnCreate: can't create tabs window\n"));
-			delete pWndTab;
+
+			if (pWndTab != &m_wndTab)
+			{
+				delete pWndTab;
+			}
+
 			return NULL;
 		}
 

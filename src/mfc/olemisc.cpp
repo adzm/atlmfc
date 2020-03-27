@@ -987,7 +987,8 @@ HGLOBAL AFXAPI _AfxOleGetObjectDescriptorData(
 		::ATL::CComHeapPtr<OLECHAR>	sposzNewFullUserTypeName;
 		if(sposzNewFullUserTypeName.Allocate(nBuf))
 		{
-			ATL_CRT_ERRORCHECK_SPRINTF(_snwprintf_s(sposzNewFullUserTypeName, nBuf, nBuf - 1, strLinkedTypeFmt.GetString(), sposzFullUserTypeName));
+			ATL_CRT_ERRORCHECK_SPRINTF(_snwprintf_s(static_cast<OLECHAR*>(sposzNewFullUserTypeName), nBuf, nBuf - 1,
+													strLinkedTypeFmt.GetString(), static_cast<OLECHAR*>(sposzFullUserTypeName)));
 			sposzFullUserTypeName.Attach(sposzNewFullUserTypeName.Detach());
 		}
 	}

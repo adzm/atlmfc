@@ -53,8 +53,11 @@ IMPLEMENT_DYNCREATE(CPane, CBasePane)
 
 #pragma warning(disable : 4355)
 
-CPane::CPane() :
-m_bCaptured(false), m_nID(0), m_bDisableMove(false), m_recentDockInfo(this)
+CPane::CPane()
+	: m_bDisableMove(false)
+	, m_bCaptured(false)
+	, m_nID(0)
+	, m_recentDockInfo(this)
 {
 	m_cxLeftBorder = m_cxRightBorder = 6;
 	m_cxDefaultGap = 2;

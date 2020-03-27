@@ -231,7 +231,25 @@ BOOL CMFCKeyMapDialog::OnInitDialog()
 
 		if (reg.Open(pApp->GetRegSectionPath(AFX_WINDOW_PLACEMENT_REG_SECTION)) && reg.Read(AFX_WINDOW_RECT_REG_SECTION, rectPosition))
 		{
-			MoveWindow(rectPosition);
+			CRect rectDesktop;
+
+			MONITORINFO mi;
+			mi.cbSize = sizeof(MONITORINFO);
+			
+			if (GetMonitorInfo(MonitorFromPoint(rectPosition.TopLeft(), MONITOR_DEFAULTTONEAREST), &mi))
+			{
+				rectDesktop = mi.rcWork;
+			}
+			else
+			{
+				::SystemParametersInfo(SPI_GETWORKAREA, 0, &rectDesktop, 0);
+			}
+
+			CRect rectInter;
+			if (rectInter.IntersectRect(&rectDesktop, &rectPosition))
+			{
+				MoveWindow(rectPosition);
+			}
 		}
 	}
 

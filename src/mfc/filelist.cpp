@@ -12,7 +12,7 @@
 #include "sal.h"
 
 #include <ShlObj.h>
-#include <AtlConv.h>
+#include <atlconv.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // lpszCanon = C:\MYAPP\DEBUGS\C\TESWIN.C
@@ -132,13 +132,13 @@ CRecentFileList::CRecentFileList(UINT nStart, LPCTSTR lpszSection,
 	ENSURE_ARG(nSize >= 0);
 	m_arrNames = new CString[nSize];
 	ENSURE_ARG(m_arrNames != NULL);
-	
+
 	m_nSize = nSize;
 	m_nStart = nStart;
-	
+
 	m_strSectionName = lpszSection;
 	m_strEntryFormat = lpszEntryFormat;
-	
+
 	m_nMaxDisplayLength = nMaxDispLen;
 }
 
@@ -164,7 +164,7 @@ void CRecentFileList::Add(LPCTSTR lpszPathName)
 	}
 
 	AfxFullPath(szTemp, lpszPathName);
-	
+
 	// update the MRU list, if an existing MRU string matches file name
 	int iMRU;
 	for (iMRU = 0; iMRU < m_nSize-1; iMRU++)

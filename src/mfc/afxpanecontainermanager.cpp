@@ -31,8 +31,12 @@ static int g_nSliderID = 1;
 IMPLEMENT_DYNCREATE(CPaneContainerManager, CObject)
 
 // Construction/Destruction
-CPaneContainerManager::CPaneContainerManager() :
-m_pRootContainer(NULL), m_pDockSite(NULL), m_pContainerRTC(NULL), m_pDefaultSlider(NULL), m_bDestroyRootContainer(TRUE)
+CPaneContainerManager::CPaneContainerManager()
+	: m_pRootContainer(NULL)
+	, m_pContainerRTC(NULL)
+	, m_pDefaultSlider(NULL)
+	, m_bDestroyRootContainer(TRUE)
+	, m_pDockSite(NULL)
 {
 }
 

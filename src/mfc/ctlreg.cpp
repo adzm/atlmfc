@@ -79,7 +79,7 @@ void _AfxUnregisterInterfaces(ITypeLib* pTypeLib)
 
 BOOL AFXAPI AfxOleRegisterTypeLib(HINSTANCE hInstance, REFGUID tlid,
 	LPCTSTR pszFileName, LPCTSTR pszHelpDir)
-{	
+{
 	BOOL bSuccess = FALSE;
 	CStringW strPathNameW;
 	wchar_t *szPathNameW = strPathNameW.GetBuffer(_MAX_PATH);
@@ -134,7 +134,7 @@ BOOL AFXAPI AfxOleRegisterTypeLib(HINSTANCE hInstance, REFGUID tlid,
 				pfnRegisterTypeLib = (PFNREGISTERTYPELIB)&RegisterTypeLib;
 			}
 
-			if (SUCCEEDED(pfnRegisterTypeLib(ptlib,const_cast<LPWSTR>(strPathNameW.GetString()) , 
+			if (SUCCEEDED(pfnRegisterTypeLib(ptlib,const_cast<LPWSTR>(strPathNameW.GetString()) ,
 													const_cast<LPWSTR>(strHelpDir.GetString())  )))
 			{
 				bSuccess = TRUE;
@@ -145,13 +145,13 @@ BOOL AFXAPI AfxOleRegisterTypeLib(HINSTANCE hInstance, REFGUID tlid,
 	}
 	else
 	{
-		TRACE(traceAppMsg, 0, L"Warning: Could not load type library from %ls\n", strPathNameW);
+		TRACE(traceAppMsg, 0, L"Warning: Could not load type library from %ls\n", strPathNameW.GetString());
 	}
 
 	return bSuccess;
 }
 
-#if defined(_M_AMD64)
+#if defined(_M_X64)
 #define TYPELIB_PLATFORM_1   _T("win64")
 #define TYPELIB_PLATFORM_2   _T("win32")
 #else
@@ -336,7 +336,7 @@ BOOL AFXAPI AfxOleRegisterControlClass(HINSTANCE hInstance,
 	REFCLSID clsid, LPCTSTR pszProgID, UINT idTypeName, UINT idBitmap,
 	int nRegFlags, DWORD dwMiscStatus, REFGUID tlid, WORD wVerMajor,
 	WORD wVerMinor)
-{	
+{
 	BOOL bSuccess = FALSE;
 
 	// Format class ID as a string
@@ -349,8 +349,8 @@ BOOL AFXAPI AfxOleRegisterControlClass(HINSTANCE hInstance,
 		return FALSE;
 
 	// Format typelib guid as a string
-	
-	CString strTypeLibID;	
+
+	CString strTypeLibID;
 	OLECHAR szTypeLibID[GUID_CCH];
 	cchGuid = ::StringFromGUID2(tlid, szTypeLibID, GUID_CCH);
 
@@ -409,7 +409,7 @@ BOOL AFXAPI AfxOleRegisterControlClass(HINSTANCE hInstance,
 	{
 		return FALSE;
 	}
-	if (hkeyProgID.Create(hkeyRootKey, szProgID, NULL, 0, KEY_READ | KEY_WRITE, NULL, NULL) !=ERROR_SUCCESS) 
+	if (hkeyProgID.Create(hkeyRootKey, szProgID, NULL, 0, KEY_READ | KEY_WRITE, NULL, NULL) !=ERROR_SUCCESS)
 	{
         	return FALSE;
 	}
@@ -422,7 +422,7 @@ BOOL AFXAPI AfxOleRegisterControlClass(HINSTANCE hInstance,
 	rglpszSymbols[1] = strClassID;
 	bSuccess = AfxOleRegisterHelper(_afxCtrlProgID, rglpszSymbols, 2,
 		TRUE, hkeyProgID);
-	
+
 	if (!bSuccess)
 	{
 		return FALSE;
@@ -449,13 +449,13 @@ BOOL AFXAPI AfxOleRegisterControlClass(HINSTANCE hInstance,
 }
 
 BOOL AFXAPI AfxOleUnregisterClass(REFCLSID clsid, LPCTSTR pszProgID)
-{	
+{
 
 	// Format class ID as a string
 	OLECHAR szClassID[GUID_CCH];
 	int cchGuid = ::StringFromGUID2(clsid, szClassID, GUID_CCH);
 	const CString strClassID(szClassID);
-	
+
 
 	ASSERT(cchGuid == GUID_CCH);    // Did StringFromGUID2 work?
 	if (cchGuid != GUID_CCH)
@@ -532,7 +532,7 @@ BOOL AFXAPI AfxOleRegisterPropertyPageClass(HINSTANCE hInstance,
 	OLECHAR szClassID[GUID_CCH];
 	int cchGuid = ::StringFromGUID2(clsid, szClassID, GUID_CCH);
 	const CString strClassID(szClassID);
-	
+
 	ASSERT(cchGuid == GUID_CCH);    // Did StringFromGUID2 work?
 	if (cchGuid != GUID_CCH)
 		return FALSE;
@@ -580,8 +580,8 @@ LONG AFXAPI AfxRegCreateKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult, CAtlTr
 
 	DWORD dw = 0;
 
-	return pTM != NULL ? 
-		pTM->RegCreateKeyEx(hKey, strSubKey, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ, NULL, phkResult, &dw) : 
+	return pTM != NULL ?
+		pTM->RegCreateKeyEx(hKey, strSubKey, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ, NULL, phkResult, &dw) :
 		::RegCreateKeyEx(hKey, strSubKey, 0, REG_NONE, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ, NULL, phkResult, &dw);
 }
 
@@ -591,8 +591,8 @@ LONG AFXAPI AfxRegOpenKey(HKEY hKey, LPCTSTR lpSubKey, PHKEY phkResult, CAtlTran
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return pTM != NULL ? 
-		pTM->RegOpenKeyEx(hKey, strSubKey, 0, KEY_WRITE | KEY_READ, phkResult) : 
+	return pTM != NULL ?
+		pTM->RegOpenKeyEx(hKey, strSubKey, 0, KEY_WRITE | KEY_READ, phkResult) :
 		::RegOpenKeyEx(hKey, strSubKey, 0, KEY_WRITE | KEY_READ, phkResult);
 }
 
@@ -602,7 +602,7 @@ LONG AFXAPI AfxRegOpenKeyEx(HKEY hKey, LPCTSTR lpSubKey,  DWORD ulOptions, REGSA
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return pTM != NULL ? 
+	return pTM != NULL ?
 		pTM->RegOpenKeyEx(hKey, strSubKey, ulOptions, samDesired, phkResult) :
 		::RegOpenKeyEx(hKey, strSubKey, ulOptions, samDesired, phkResult);
 }
@@ -631,8 +631,8 @@ LONG AFXAPI AfxRegDeleteKey(HKEY hKey, LPCTSTR lpSubKey, CAtlTransactionManager*
 
 	_AFX_REDIRECT_REGISTRY_HIVE(hKey, strSubKey)
 
-	return pTM != NULL ? 
-		pTM->RegDeleteKey(hKey, strSubKey) : 
+	return pTM != NULL ?
+		pTM->RegDeleteKey(hKey, strSubKey) :
 		::RegDeleteKey(hKey, strSubKey);
 }
 

@@ -46,7 +46,7 @@ const LPCTSTR CHttpConnection::szHtmlVerbs[] = {
 };
 
 
-BOOL __internetSetOptionEx(HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, 
+BOOL __internetSetOptionEx(HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer,
 	DWORD dwBufferLength, DWORD dwFlags)
 {
 	BOOL fResult = FALSE;
@@ -127,27 +127,27 @@ AFX_STATIC BOOL AFXAPI _AfxParseURLWorker(LPCTSTR pstrURL,
 	BOOL bRetVal;
 	BOOL bMustFree = FALSE;
 
-	// Decoding is done in InternetCrackUrl/UrlUnescape 
+	// Decoding is done in InternetCrackUrl/UrlUnescape
 	// so we don't need the ICU_DECODE flag here.
-	
+
 	DWORD dwCanonicalizeFlags = dwFlags &
 		(ICU_NO_ENCODE | ICU_NO_META |
 		ICU_ENCODE_SPACES_ONLY | ICU_BROWSER_MODE);
 
 	DWORD dwCrackFlags = 0;
- 	
+
 	BOOL bUnescape = FALSE;
 
 	if((dwFlags & (ICU_ESCAPE | ICU_DECODE)) && (lpComponents->dwUrlPathLength != 0) )
 	{
-	
+
 		// We use only the ICU_ESCAPE flag for decoding even if
 		// ICU_DECODE is passed.
-		
+
 		// Also, if ICU_BROWSER_MODE is passed we do the unescaping
 		// manually because InternetCrackUrl doesn't do
 		// Browser mode unescaping
-		
+
 		if (dwFlags & ICU_BROWSER_MODE)
 			bUnescape = TRUE;
 		else
@@ -188,18 +188,18 @@ AFX_STATIC BOOL AFXAPI _AfxParseURLWorker(LPCTSTR pstrURL,
 	if(bUnescape)
 	{
 		// Length of buffer passed to UrlUnescape cannot be larger than INTERNET_MAX_URL_LENGTH characters.
-		if (AtlStrLen(lpComponents->lpszUrlPath) >= INTERNET_MAX_URL_LENGTH || 
+		if (AtlStrLen(lpComponents->lpszUrlPath) >= INTERNET_MAX_URL_LENGTH ||
 			FAILED(UrlUnescape(lpComponents->lpszUrlPath,NULL,NULL,URL_UNESCAPE_INPLACE | URL_DONT_UNESCAPE_EXTRA_INFO)))
 		{
 			if (bMustFree)
 				delete [] pstrCanonicalizedURL;
-		
+
 			return FALSE;
 		}
-		
+
 		lpComponents->dwUrlPathLength = static_cast<DWORD>(AtlStrLen(lpComponents->lpszUrlPath));
 	}
-	
+
 	if (bMustFree)
 	{
 		delete [] pstrCanonicalizedURL;
@@ -324,7 +324,7 @@ DWORD AFXAPI AfxGetInternetHandleType(HINTERNET hQuery)
 		return dwServiceType;
 }
 
-AFX_STATIC BOOL AFXAPI 
+AFX_STATIC BOOL AFXAPI
 _AfxQueryCStringInternetOption(HINTERNET hHandle, DWORD dwOption, CString& refString)
 {
 	DWORD dwLength = 0;
@@ -904,7 +904,7 @@ BOOL CInternetFile::SetReadBufferSize(UINT nReadSize)
 
 				if (dwMoved > 0 && dwMoved <= nReadSize)
 				{
-					Checked::memcpy_s(m_pbReadBuffer, nReadSize, 
+					Checked::memcpy_s(m_pbReadBuffer, nReadSize,
 						pbTemp + m_nReadBufferPos, dwMoved);
 
 					m_nReadBufferPos = 0;
@@ -951,7 +951,7 @@ BOOL CInternetFile::SetWriteBufferSize(UINT nWriteSize)
 			m_pbWriteBuffer = new BYTE[nWriteSize];
 			if (m_nWriteBufferPos <= nWriteSize)
 			{
-				Checked::memcpy_s(m_pbWriteBuffer, nWriteSize, 
+				Checked::memcpy_s(m_pbWriteBuffer, nWriteSize,
 					pbTemp, m_nWriteBufferPos);
 			}
 			delete [] pbTemp;
@@ -1002,7 +1002,7 @@ ULONGLONG CInternetFile::Seek(LONGLONG lOffset, UINT nFrom)
    }
 
 	LONG lRet;
-	lRet = InternetSetFilePointer(m_hFile, LONG(lOffset), NULL, nFrom, 
+	lRet = InternetSetFilePointer(m_hFile, LONG(lOffset), NULL, nFrom,
 	  m_dwContext);
 	if (lRet == -1)
 		AfxThrowInternetException(m_dwContext);
@@ -1015,7 +1015,7 @@ CInternetFile::~CInternetFile()
 	if (m_hFile != NULL)
 	{
 #ifdef _DEBUG
-		const CString strName(GetRuntimeClass()->m_lpszClassName);		
+		const CString strName(GetRuntimeClass()->m_lpszClassName);
 		TRACE(traceInternet, 0, _T("Warning: destroying an open %Ts with handle %8.8X\n"),
 			strName.GetString(), m_hFile);
 #endif
@@ -1106,7 +1106,7 @@ UINT CInternetFile::Read(LPVOID lpBuf, UINT nCount)
 		DWORD dwMoved = max(0, (long)m_nReadBufferBytes - (long)m_nReadBufferPos);
 		if (dwMoved <= nCount)
 		{
-			Checked::memcpy_s(lpBuf, nCount, 
+			Checked::memcpy_s(lpBuf, nCount,
 				m_pbReadBuffer + m_nReadBufferPos, dwMoved);
 		}
 		else
@@ -1126,7 +1126,7 @@ UINT CInternetFile::Read(LPVOID lpBuf, UINT nCount)
 			DWORD dwMoved = max(0, (long)m_nReadBufferBytes - (long)m_nReadBufferPos);
 			if (dwMoved <= nCount)
 			{
-				Checked::memcpy_s(lpbBuf, nCount, 
+				Checked::memcpy_s(lpbBuf, nCount,
 					m_pbReadBuffer + m_nReadBufferPos, dwMoved);
 			}
 			else
@@ -1202,7 +1202,7 @@ void CInternetFile::Write(const void* lpBuf, UINT nCount)
 		{
 			if (m_nWriteBufferPos + nCount <= m_nWriteBufferSize)
 			{
-				Checked::memcpy_s(m_pbWriteBuffer + m_nWriteBufferPos, 
+				Checked::memcpy_s(m_pbWriteBuffer + m_nWriteBufferPos,
 					m_nWriteBufferSize - m_nWriteBufferPos, lpBuf, nCount);
 				m_nWriteBufferPos += nCount;
 			}
@@ -1609,7 +1609,7 @@ BOOL CFtpConnection::SetCurrentDirectory(LPCTSTR pstrDirName)
 	return FtpSetCurrentDirectory(m_hConnection, pstrDirName);
 }
 
-BOOL CFtpConnection::GetCurrentDirectory(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName, 
+BOOL CFtpConnection::GetCurrentDirectory(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrDirName,
 	_Inout_ LPDWORD lpdwLen) const
 {
 	ASSERT_VALID(this);
@@ -1636,7 +1636,7 @@ BOOL CFtpConnection::GetCurrentDirectoryAsURL(CString& strDirName) const
 	return TRUE;
 }
 
-BOOL CFtpConnection::GetCurrentDirectoryAsURL(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrName, 
+BOOL CFtpConnection::GetCurrentDirectoryAsURL(_Out_writes_to_(*lpdwLen, *lpdwLen) LPTSTR pstrName,
 	_Inout_ LPDWORD lpdwLen) const
 {
 	ASSERT(lpdwLen != NULL);
@@ -1881,7 +1881,7 @@ BOOL CGopherConnection::GetAttribute(CGopherLocator& refLocator,
 
 	if (!GopherGetAttribute(m_hConnection, (LPCTSTR) refLocator,
 			pstrResult, NULL, dwLen, &dwLen,
-			NULL, m_dwContext)) 
+			NULL, m_dwContext))
 	{
 		bRet = FALSE;
 		strResult.ReleaseBuffer(0);
@@ -2082,9 +2082,10 @@ void CHttpConnection::AssertValid() const
 // CHttpFile
 
 CHttpFile::CHttpFile(HINTERNET hFile, HINTERNET hSession, LPCTSTR pstrObject,
-	LPCTSTR pstrServer, LPCTSTR pstrVerb, DWORD_PTR dwContext)
- : CInternetFile(hFile, hSession, pstrObject, pstrServer, dwContext, TRUE),
-	m_strVerb(pstrVerb), m_strObject(pstrObject)
+		LPCTSTR pstrServer, LPCTSTR pstrVerb, DWORD_PTR dwContext)
+	: CInternetFile(hFile, hSession, pstrObject, pstrServer, dwContext, TRUE)
+	, m_strObject(pstrObject)
+ 	, m_strVerb(pstrVerb)
 {
 	// caller must set _afxSessionMap!
 	ASSERT(AfxIsValidString(pstrVerb));
@@ -2094,8 +2095,9 @@ CHttpFile::CHttpFile(HINTERNET hFile, HINTERNET hSession, LPCTSTR pstrObject,
 
 CHttpFile::CHttpFile(HINTERNET hFile, LPCTSTR pstrVerb, LPCTSTR pstrObject,
 	CHttpConnection* pConnection)
- : CInternetFile(hFile, pstrObject, pConnection, TRUE),
-	m_strVerb(pstrVerb), m_strObject(pstrObject)
+	: CInternetFile(hFile, pstrObject, pConnection, TRUE)
+	, m_strObject(pstrObject)
+	, m_strVerb(pstrVerb)
 {
 	ASSERT(pstrVerb != NULL);
 	ASSERT(pstrObject != NULL);

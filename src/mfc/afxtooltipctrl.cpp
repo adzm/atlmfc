@@ -544,6 +544,10 @@ CSize CMFCToolTipCtrl::OnDrawDescription(CDC* pDC, CRect rect, BOOL bCalcOnly)
 	{
 		nFormat |= DT_CALCRECT;
 	}
+	else
+	{
+		nFormat |= DT_NOCLIP;
+	}
 
 	int nDescrHeight = pDC->DrawText(m_strDescription, rect, nFormat);
 	pDC->SelectObject(pOldFont);

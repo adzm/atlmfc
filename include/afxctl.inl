@@ -65,7 +65,7 @@ _AFXCTL_INLINE void COleControl::RequestAsynchronousExchange(DWORD dwVersion)
 	{ m_bDataPathPropertiesLoaded = FALSE; m_dwDataPathVersionToReport = dwVersion; }
 
 // CPropExchange inlines
-_AFXCTL_INLINE CPropExchange::CPropExchange() : m_dwVersion(0), m_bAsync(FALSE)
+_AFXCTL_INLINE CPropExchange::CPropExchange() : m_bAsync(FALSE), m_dwVersion(0)
 	{ }
 _AFXCTL_INLINE BOOL CPropExchange::IsLoading()
 	{ return m_bLoading; }

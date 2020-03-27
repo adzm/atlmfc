@@ -28,6 +28,8 @@ public:
 	_AFX_CHECKLIST_STATE();
 	virtual ~_AFX_CHECKLIST_STATE();
 
+	const CSize& GetCheckBoxSize(CWnd* pWndCheckList);
+
 	HBITMAP m_hbitmapCheck;
 	CSize m_sizeCheck;
 
@@ -38,14 +40,11 @@ public:
 
 _AFX_CHECKLIST_STATE::_AFX_CHECKLIST_STATE()
 {
+	m_sizeCheck = CSize(0, 0);
+
 	CBitmap bitmap;
 
 	VERIFY(bitmap.LoadBitmap(AFX_IDB_CHECKLISTBOX_95));
-
-	BITMAP bm;
-	bitmap.GetObject(sizeof (BITMAP), &bm);
-	m_sizeCheck.cx = bm.bmWidth / 3;
-	m_sizeCheck.cy = bm.bmHeight;
 	m_hbitmapCheck = (HBITMAP)bitmap.Detach();
 
 	// Cannot initialize here since conctl32.dll may not yet be loaded and/or
@@ -58,6 +57,62 @@ _AFX_CHECKLIST_STATE::~_AFX_CHECKLIST_STATE()
 	if (m_hbitmapCheck != NULL)
 		::DeleteObject(m_hbitmapCheck);
 }
+
+const CSize& _AFX_CHECKLIST_STATE::GetCheckBoxSize(CWnd* pWndCheckList)
+{
+	if (m_sizeCheck == CSize(0, 0))
+	{
+		if (m_dwVerComCtl32 == 0)
+		{
+			DWORD dwMinor = 0;
+
+			HRESULT hr = GetCommCtrlVersion(&m_dwVerComCtl32, &dwMinor);
+			if (FAILED(hr))
+			{
+				// Could not get comctl32's version. Default to < 6
+				m_dwVerComCtl32 = 5;
+			}
+		}
+
+		if (IsAppThemed() && m_dwVerComCtl32 >= 6)	// use of comctl32 6.0 or greater indicates that the control can be themed.
+		{
+			ASSERT(pWndCheckList->GetSafeHwnd() != NULL);
+
+			HTHEME hTheme = OpenThemeData(pWndCheckList->GetSafeHwnd(), L"Button");
+			if (hTheme != NULL)
+			{
+				CClientDC dc(pWndCheckList);
+				CFont* pOldFont = dc.SelectObject(pWndCheckList->GetFont());
+
+				SIZE size;
+				size.cx = size.cy = 0;
+
+				if (SUCCEEDED(GetThemePartSize(hTheme, dc.GetSafeHdc(), BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_TRUE, &size)))
+				{
+					m_sizeCheck = size;
+				}
+
+				dc.SelectObject(pOldFont);
+				CloseThemeData(hTheme);
+			}
+		}
+	}
+
+	if (m_sizeCheck == CSize(0, 0))
+	{
+		ASSERT(m_hbitmapCheck != NULL);	// Initialized in constructor
+
+		// Calculate "non-themed" size
+		BITMAP bm;
+		::GetObject(m_hbitmapCheck, sizeof(BITMAP), &bm);
+
+		m_sizeCheck.cx = bm.bmWidth / 3;
+		m_sizeCheck.cy = bm.bmHeight;
+	}
+
+	return m_sizeCheck;
+}
+
 
 EXTERN_PROCESS_LOCAL(_AFX_CHECKLIST_STATE, _afxChecklistState)
 
@@ -208,6 +263,11 @@ void CCheckListBox::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	ASSERT((GetStyle() & (LBS_OWNERDRAWFIXED | LBS_HASSTRINGS)) ==
 		(LBS_OWNERDRAWFIXED | LBS_HASSTRINGS));
 
+	if ((GetStyle() & (LBS_OWNERDRAWFIXED | LBS_HASSTRINGS)) == (LBS_OWNERDRAWFIXED | LBS_HASSTRINGS) && m_cyText == 0)
+	{
+		SetItemHeight(0, CalcMinimumItemHeight());
+	}
+
 	CDC* pDC = CDC::FromHandle(lpDrawItemStruct->hDC);
 	ENSURE(pDC);
 
@@ -296,8 +356,6 @@ bool CCheckListBox::PreDrawItemThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int nC
 				rectCheck.top += 1 + max(0, (cyItem - size.cy) / 2);
 				rectCheck.right = rectCheck.left + size.cx;
 				rectCheck.bottom = rectCheck.top + size.cy;
-				//ASSERT(rectCheck.IntersectRect(rectItem, rectCheckBox));
-				//ASSERT((rectCheck == rectCheckBox) && (rectCheckBox.Size() == pChecklistState->m_sizeCheck));
 
 				CRect rectItem = drawItem.rcItem;
 				rectItem.right = rectItem.left + size.cx + 2;
@@ -328,18 +386,20 @@ void CCheckListBox::PreDrawItemNonThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int
 
 		HBITMAP hOldBitmap = (HBITMAP)::SelectObject(bitmapDC.m_hDC, pChecklistState->m_hbitmapCheck);
 
+		const CSize sizeCheck = pChecklistState->GetCheckBoxSize(this);
+
 		CRect rectCheck = drawItem.rcItem;
 		rectCheck.left += 1;
-		rectCheck.top += 1 + max(0, (cyItem - pChecklistState->m_sizeCheck.cy) / 2);
-		rectCheck.right = rectCheck.left + pChecklistState->m_sizeCheck.cx;
-		rectCheck.bottom = rectCheck.top + pChecklistState->m_sizeCheck.cy;
+		rectCheck.top += 1 + max(0, (cyItem - sizeCheck.cy) / 2);
+		rectCheck.right = rectCheck.left + sizeCheck.cx;
+		rectCheck.bottom = rectCheck.top + sizeCheck.cy;
 
 		CRect rectItem = drawItem.rcItem;
-		rectItem.right = rectItem.left + pChecklistState->m_sizeCheck.cx + 2;
+		rectItem.right = rectItem.left + sizeCheck.cx + 2;
 		CRect rectCheckBox = OnGetCheckPosition(rectItem, rectCheck);
 
 		ASSERT(rectCheck.IntersectRect(rectItem, rectCheckBox));
-		ASSERT((rectCheck == rectCheckBox) && (rectCheckBox.Size() == pChecklistState->m_sizeCheck));
+		ASSERT((rectCheck == rectCheckBox) && (rectCheckBox.Size() == sizeCheck));
 
 		COLORREF newBkColor = GetSysColor(COLOR_WINDOW);
 
@@ -356,15 +416,15 @@ void CCheckListBox::PreDrawItemNonThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int
 		pDC->SetLayout(dwLayoutDC | LAYOUT_BITMAPORIENTATIONPRESERVED);
 
 		pDC->BitBlt(rectCheckBox.left, rectCheckBox.top,
-			pChecklistState->m_sizeCheck.cx, pChecklistState->m_sizeCheck.cy, &bitmapDC,
-			pChecklistState->m_sizeCheck.cx  * nCheck, 0, SRCCOPY);
+			sizeCheck.cx, sizeCheck.cy, &bitmapDC,
+			sizeCheck.cx  * nCheck, 0, SRCCOPY);
 
 		// Restore DC layout
 		pDC->SetLayout(dwLayoutDC);
 
 		bitmapDC.SetLayout(dwLayoutBitmapDC);
 		::SelectObject(bitmapDC.m_hDC, hOldBitmap);
-		drawItem.rcItem.left = drawItem.rcItem.left + pChecklistState->m_sizeCheck.cx + 3;
+		drawItem.rcItem.left = drawItem.rcItem.left + sizeCheck.cx + 3;
 	}
 }
 
@@ -534,6 +594,7 @@ int CCheckListBox::CalcMinimumItemHeight()
 	int nResult;
 
 	_AFX_CHECKLIST_STATE* pChecklistState = _afxChecklistState;
+	const CSize sizeCheck = pChecklistState->GetCheckBoxSize(this);
 
 	if ((GetStyle() & (LBS_HASSTRINGS | LBS_OWNERDRAWFIXED)) ==
 		(LBS_HASSTRINGS | LBS_OWNERDRAWFIXED))
@@ -544,12 +605,12 @@ int CCheckListBox::CalcMinimumItemHeight()
 		VERIFY (dc.GetTextMetrics ( &tm ));
 		dc.SelectObject(pOldFont);
 
-		m_cyText = tm.tmHeight;
-		nResult = max(pChecklistState->m_sizeCheck.cy + 1, m_cyText);
+		m_cyText = tm.tmHeight + tm.tmExternalLeading;
+		nResult = max(sizeCheck.cy + 1, m_cyText);
 	}
 	else
 	{
-		nResult = pChecklistState->m_sizeCheck.cy + 1;
+		nResult = sizeCheck.cy + 1;
 	}
 
 	return nResult;
@@ -561,7 +622,7 @@ void CCheckListBox::InvalidateCheck(int nIndex)
 	_AFX_CHECKLIST_STATE* pChecklistState = _afxChecklistState;
 
 	GetItemRect(nIndex, rect);
-	rect.right = rect.left + pChecklistState->m_sizeCheck.cx + 2;
+	rect.right = rect.left + pChecklistState->GetCheckBoxSize(this).cx + 2;
 	InvalidateRect(rect, FALSE);
 }
 
@@ -579,6 +640,8 @@ int CCheckListBox::CheckFromPoint(CPoint point, BOOL& bInCheck)
 	int nIndex = -1;
 
 	_AFX_CHECKLIST_STATE* pChecklistState = _afxChecklistState;
+	const CSize sizeCheck = pChecklistState->GetCheckBoxSize(this);
+
 	if ((GetStyle() & (LBS_OWNERDRAWFIXED|LBS_MULTICOLUMN)) == LBS_OWNERDRAWFIXED)
 	{
 		// optimized case for ownerdraw fixed, single column
@@ -586,7 +649,7 @@ int CCheckListBox::CheckFromPoint(CPoint point, BOOL& bInCheck)
 		if (point.y < cyItem * GetCount())
 		{
 			nIndex = GetTopIndex() + point.y / cyItem;
-			if (point.x < pChecklistState->m_sizeCheck.cx + 2)
+			if (point.x < sizeCheck.cx + 2)
 				++bInCheck;
 		}
 	}
@@ -600,7 +663,7 @@ int CCheckListBox::CheckFromPoint(CPoint point, BOOL& bInCheck)
 			if (itemRect.PtInRect(point))
 			{
 				nIndex = i;
-				if (point.x < itemRect.left + pChecklistState->m_sizeCheck.cx + 2)
+				if (point.x < itemRect.left + sizeCheck.cx + 2)
 					++bInCheck;
 				break;
 			}

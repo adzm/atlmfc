@@ -32,15 +32,20 @@ int CMFCToolBarFontComboBox::m_nFontHeight = 0;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMFCToolBarFontComboBox::CMFCToolBarFontComboBox() :
-	m_nCharSet(DEFAULT_CHARSET), m_nFontType(DEVICE_FONTTYPE | RASTER_FONTTYPE | TRUETYPE_FONTTYPE), m_nPitchAndFamily(DEFAULT_PITCH)
+CMFCToolBarFontComboBox::CMFCToolBarFontComboBox()
+	: m_nFontType(DEVICE_FONTTYPE | RASTER_FONTTYPE | TRUETYPE_FONTTYPE)
+	, m_nCharSet(DEFAULT_CHARSET)
+	, m_nPitchAndFamily(DEFAULT_PITCH)
 {
 	m_pLstFontsExternal = NULL;
 	m_nCount++;
 }
 
-CMFCToolBarFontComboBox::CMFCToolBarFontComboBox(UINT uiID, int iImage, int nFontType, BYTE nCharSet, DWORD dwStyle, int iWidth, BYTE nPitchAndFamily) :
-	CMFCToolBarComboBoxButton(uiID, iImage, dwStyle, iWidth), m_nFontType(nFontType), m_nCharSet(nCharSet), m_nPitchAndFamily(nPitchAndFamily)
+CMFCToolBarFontComboBox::CMFCToolBarFontComboBox(UINT uiID, int iImage, int nFontType, BYTE nCharSet, DWORD dwStyle, int iWidth, BYTE nPitchAndFamily)
+	: CMFCToolBarComboBoxButton(uiID, iImage, dwStyle, iWidth)
+	, m_nFontType(nFontType)
+	, m_nCharSet(nCharSet)
+	, m_nPitchAndFamily(nPitchAndFamily)
 {
 	m_pLstFontsExternal = NULL;
 

@@ -26,7 +26,7 @@
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +63,7 @@ public:
 	static const IID& GetIID()
 		{ ASSERT(_IID != NULL); return *_IID; }
 
-	// Construct empty in preperation for assignment.
+	// Construct empty in preparation for assignment.
 	_CIP();
 
 	// Copy the pointer and AddRef().
@@ -146,7 +146,7 @@ public:
 	}
 
 	// Saves/sets the interface only AddRef()ing if bAddRef is TRUE.
-	// This call will release any previously aquired interface.
+	// This call will release any previously acquired interface.
 	void Attach(Interface* pInterface, BOOL bAddRef)
 	{
 		_Release();
@@ -276,7 +276,7 @@ public:
 			reinterpret_cast<void**>(&pInterface));
 		if (FAILED(hr))
 		{
-			// If failed intialize interface to NULL and return HRESULT.
+			// If failed initialize interface to NULL and return HRESULT.
 			Attach(NULL);
 			return hr;
 		}
@@ -316,7 +316,7 @@ template<class _Interface, const IID* _IID>
 _CIP<_Interface, _IID>::~_CIP()
 {
 	// If we still have an interface then Release() it.  The interface
-	// may be NULL if Detach() has previosly been called, or if it was
+	// may be NULL if Detach() has previously been called, or if it was
 	// never set.
 
 	_Release();
@@ -330,10 +330,10 @@ public:
 	// access to base type
 	typedef _CIP<_Interface, _IID> BC;
 
-	// Provideds derived classes access to the interface type.
+	// Provides derived classes access to the interface type.
 	typedef _Interface Interface;
 
-	// Construct empty in preperation for assignment.
+	// Construct empty in preparation for assignment.
 	CIP() { }
 	~CIP();
 
@@ -353,7 +353,7 @@ public:
 		if (pUnknown == NULL)
 			return;
 		Interface* pInterface;
-		HRESULT hr = pUnknown->QueryInterface(GetIID(),
+		HRESULT hr = pUnknown->QueryInterface(this->GetIID(),
 			reinterpret_cast<void**>(&pInterface));
 		ASSERT(SUCCEEDED(hr));
 		Attach(pInterface);
@@ -375,7 +375,7 @@ public:
 
 	CIP& operator=(IUnknown* pUnknown)
 	{
-		HRESULT hr = QueryInterface(pUnknown);
+		HRESULT hr = this->QueryInterface(pUnknown);
 		ASSERT(SUCCEEDED(hr));
 		return *this;
 	}

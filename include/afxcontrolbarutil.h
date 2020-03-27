@@ -122,4 +122,15 @@ enum AFX_SMARTDOCK_THEME
 	AFX_SDT_VS2008 = 2		// VS 2008-style
 };
 
-
+// Ribbon contextual category (tab) color:
+enum AFX_RibbonCategoryColor
+{
+	AFX_CategoryColor_None,
+	AFX_CategoryColor_Red,
+	AFX_CategoryColor_Orange,
+	AFX_CategoryColor_Yellow,
+	AFX_CategoryColor_Green,
+	AFX_CategoryColor_Blue,
+	AFX_CategoryColor_Indigo,
+	AFX_CategoryColor_Violet
+};

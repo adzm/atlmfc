@@ -199,7 +199,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 		if (IsTracingEnabled(traceOle, 1))
 		{
 			CString strIID = AfxGetIIDString(*(IID*)(iid));
-			TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID);
+			TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID.GetString());
 		}
 #endif
 		return lpUnkHook;
@@ -232,7 +232,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 					if (IsTracingEnabled(traceOle, 1))
 					{
 						CString strIID = AfxGetIIDString(*(IID*)(iid));
-						TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID);
+						TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID.GetString());
 					}
 #endif
 					return lpUnk;
@@ -254,7 +254,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 		if (IsTracingEnabled(traceOle, 1))
 		{
 			CString strIID = AfxGetIIDString(*(IID*)(iid));
-			TRACE(traceOle, 1, _T("QueryInterface(%Ts) failed\n"), strIID);
+			TRACE(traceOle, 1, _T("QueryInterface(%Ts) failed\n"), strIID.GetString());
 		}
 #endif
 		// interface ID not found, fail the call
@@ -283,7 +283,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 					if (IsTracingEnabled(traceOle, 1))
 					{
 						CString strIID = AfxGetIIDString(*(IID*)(iid));
-						TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID);
+						TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID.GetString());
 					}
 #endif
 					return lpUnk;
@@ -306,7 +306,7 @@ LPUNKNOWN CCmdTarget::GetInterface(const void* iid)
 	if (IsTracingEnabled(traceOle, 1))
 	{
 		CString strIID = AfxGetIIDString(*(IID*)(iid));
-		TRACE(traceOle, 1, _T("QueryInterface(%Ts) failed\n"), strIID);
+		TRACE(traceOle, 1, _T("QueryInterface(%Ts) failed\n"), strIID.GetString());
 	}
 #endif
 	// interface ID not found, fail the call
@@ -391,9 +391,9 @@ DWORD CCmdTarget::ExternalQueryInterface(const void* iid,
 		{
 			CString strIID = AfxGetIIDString(*(IID*)(iid));
 			if (SUCCEEDED(hRes))
-				TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID);
+				TRACE(traceOle, 1, _T("QueryInterface(%Ts) succeeded\n"), strIID.GetString());
 			else
-				TRACE(traceOle, 1, _T("QueryInterface(%Ts) failed\n"), strIID);
+				TRACE(traceOle, 1, _T("QueryInterface(%Ts) failed\n"), strIID.GetString());
 		}
 #endif
 		return hRes;

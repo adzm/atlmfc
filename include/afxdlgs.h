@@ -30,7 +30,7 @@
 #define _WIN32_IE 0x0700
 #endif
 #ifndef __shobjidl_h__
-	#include <shobjidl.h>    // for IFileDialog/IFileOpenDialog/IFileSaveDialog
+	#include <ShObjIdl.h>    // for IFileDialog/IFileOpenDialog/IFileSaveDialog
 #endif
 
 // Avoid mapping GetFileTitle to GetFileTitle[A/W]
@@ -45,12 +45,12 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #endif
 
 #ifndef _RICHEDIT_
-	#include <richedit.h>
+	#include <Richedit.h>
 #endif
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifndef _AFX_NOFORCE_LIBS
 
@@ -101,7 +101,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 class CCommonDialog : public CDialog
 {
 	DECLARE_DYNAMIC(CCommonDialog)
-	
+
 public:
 	explicit CCommonDialog(CWnd* pParentWnd);
 
@@ -149,13 +149,13 @@ public:
 
 	/// <summary>
 	/// Determines if the current dialog in folder picker mode.</summary>
-	/// <returns> 
+	/// <returns>
 	/// If the dialog in the folder picker mode, the return value is TRUE. Otherwise - FALSE</returns>
 	BOOL IsPickFoldersMode() const { return m_bPickFoldersMode; }
 
 	/// <summary>
 	/// Determines if the current dialog in non-file system folder picker mode.</summary>
-	/// <returns> 
+	/// <returns>
 	/// If the dialog in the non-file system folder picker mode, the return value is TRUE. Otherwise - FALSE</returns>
 	BOOL IsPickNonFileSysFoldersMode() const { return m_bPickNonFileSysFoldersMode; }
 
@@ -202,19 +202,19 @@ public:
 
 	/// <summary>
 	/// Gets the choice that the user made in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// A pointer to an IShellItem that represents the user's choice</returns>
 	IShellItem* GetResult() throw();
 
 	/// <summary>
 	/// Gets the user's choices in a dialog that allows multiple selection.</summary>
-	/// <returns> 
+	/// <returns>
 	/// A pointer to an IShellItemArray through which the items selected in the dialog can be accessed</returns>
 	IShellItemArray* GetResults() throw();
 
 	/// <summary>
 	/// Provides a property store that defines the default values to be used for the item being saved.</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if successful, FALSE - otherwise</returns>
 	/// <param name="lpszPropList">A list of predefined properties divided by ";"</param>
 	BOOL SetProperties(LPCWSTR lpszPropList);
@@ -223,14 +223,14 @@ public:
 
 	/// <summary>
 	/// Enables a drop-down list on the Open or Save button in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the drop-down list</param>
 	HRESULT EnableOpenDropDown(DWORD dwIDCtl);
 
 	/// <summary>
 	/// Adds a menu to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the menu to add</param>
 	/// <param name="strLabel">The menu name</param>
@@ -238,7 +238,7 @@ public:
 
 	/// <summary>
 	/// Adds a button to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the button to add</param>
 	/// <param name="strLabel">The button name</param>
@@ -246,21 +246,21 @@ public:
 
 	/// <summary>
 	/// Adds a combo box to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the combo box to add</param>
 	HRESULT AddComboBox(DWORD dwIDCtl);
 
 	/// <summary>
 	/// Adds an option button (also known as radio button) group to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the option button group to add</param>
 	HRESULT AddRadioButtonList(DWORD dwIDCtl);
 
 	/// <summary>
 	/// Adds a check button to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the check button to add</param>
 	/// <param name="strLabel">The check button name</param>
@@ -269,7 +269,7 @@ public:
 
 	/// <summary>
 	/// Adds an edit box to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the edit box to add</param>
 	/// <param name="strText">The edit box name</param>
@@ -277,14 +277,14 @@ public:
 
 	/// <summary>
 	/// Adds a separator to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the separator add</param>
 	HRESULT AddSeparator(DWORD dwIDCtl);
 
 	/// <summary>
 	/// Adds text content to the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the text to add</param>
 	/// <param name="strText">The text name</param>
@@ -292,7 +292,7 @@ public:
 
 	/// <summary>
 	/// Sets the text associated with a control, such as button text or an edit box label.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the control</param>
 	/// <param name="strLabel">The control name</param>
@@ -300,7 +300,7 @@ public:
 
 	/// <summary>
 	/// Gets the current visibility and enabled states of a given control.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the control</param>
 	/// <param name="dwState">A reference to a variable that receives one or more values from the CDCONTROLSTATE enumeration that indicate the current state of the control.</param>
@@ -308,7 +308,7 @@ public:
 
 	/// <summary>
 	/// Sets the current visibility and enabled states of a given control.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the control</param>
 	/// <param name="dwState"> One or more values from the CDCONTROLSTATE enumeration that indicate the current state of the control.</param>
@@ -316,7 +316,7 @@ public:
 
 	/// <summary>
 	/// Gets the current text in an edit box control.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the edit box</param>
 	/// <param name="strText">The text value</param>
@@ -324,7 +324,7 @@ public:
 
 	/// <summary>
 	/// Sets the current text in an edit box control.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the edit box</param>
 	/// <param name="strText">The text value</param>
@@ -332,7 +332,7 @@ public:
 
 	/// <summary>
 	/// Gets the current state of a check button (check box) in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the check box</param>
 	/// <param name="bChecked">check box state: TRUE means checked; FALSE, unchecked</param>
@@ -340,7 +340,7 @@ public:
 
 	/// <summary>
 	/// Sets the current state of a check button (check box) in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the check box</param>
 	/// <param name="bChecked">check box state: TRUE means checked; FALSE, unchecked</param>
@@ -348,7 +348,7 @@ public:
 
 	/// <summary>
 	/// Adds an item to a container control in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the container control to which the item is to be added</param>
 	/// <param name="dwIDItem">The ID of the item</param>
@@ -357,7 +357,7 @@ public:
 
 	/// <summary>
 	/// Removes an item from a container control in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the container control from which the item is to be removed</param>
 	/// <param name="dwIDItem">The ID of the item</param>
@@ -365,7 +365,7 @@ public:
 
 	/// <summary>
 	/// Gets the current state of an item in a container control found in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the container control</param>
 	/// <param name="dwIDItem">The ID of the item</param>
@@ -374,7 +374,7 @@ public:
 
 	/// <summary>
 	/// Sets the current state of an item in a container control found in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the container control</param>
 	/// <param name="dwIDItem">The ID of the item</param>
@@ -383,7 +383,7 @@ public:
 
 	/// <summary>
 	/// Gets a particular item from specified container controls in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the container control</param>
 	/// <param name="dwIDItem">The ID of the item that the user selected in the control</param>
@@ -391,7 +391,7 @@ public:
 
 	/// <summary>
 	/// Sets the selected state of a particular item in an option button group or a combo box found in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the container control</param>
 	/// <param name="dwIDItem">The ID of the item that the user selected in the control</param>
@@ -399,7 +399,7 @@ public:
 
 	/// <summary>
 	/// Declares a visual group in the dialog. Subsequent calls to any "add" method add those elements to this group.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the visual group</param>
 	/// <param name="strLabel">The group name</param>
@@ -407,20 +407,20 @@ public:
 
 	/// <summary>
 	/// Stops the addition of elements to a visual group in the dialog.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	HRESULT EndVisualGroup();
 
 	/// <summary>
 	/// Places a control in the dialog so that it stands out compared to other added controls.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the control</param>
 	HRESULT MakeProminent(DWORD dwIDCtl);
 
 	/// <summary>
 	/// Sets the text of a control item. For example, the text that accompanies a radio button or an item in a menu.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns S_OK if successful, or an error value otherwise.</returns>
 	/// <param name="dwIDCtl">The ID of the container control</param>
 	/// <param name="dwIDItem">The ID of the item</param>
@@ -520,7 +520,7 @@ protected:
 #else
 	BEGIN_INTERFACE_PART(FileDialogEvents, IUnknown)
 	END_INTERFACE_PART_OPTIONAL(FileDialogEvents)
-	
+
 	BEGIN_INTERFACE_PART(FileDialogControlEvents, IUnknown)
 	END_INTERFACE_PART_OPTIONAL(FileDialogControlEvents)
 #endif // NTDDI_VERSION >= NTDDI_VISTA
@@ -758,7 +758,7 @@ protected:
 // CPrintDialogEx - Windows 2000 Print Dialog
 
 #ifndef __ocidl_h__
-	#include <ocidl.h>
+	#include <OCIdl.h>
 #endif
 
 class CPrintDialogEx :
@@ -908,13 +908,13 @@ public:
 	void Construct(LPCTSTR lpszTemplateName, UINT nIDCaption = 0);
 
 	// extended construction
-	CPropertyPage(UINT nIDTemplate, UINT nIDCaption, 
+	CPropertyPage(UINT nIDTemplate, UINT nIDCaption,
 		UINT nIDHeaderTitle, UINT nIDHeaderSubTitle = 0, DWORD dwSize = sizeof(PROPSHEETPAGE));
-	CPropertyPage(LPCTSTR lpszTemplateName, UINT nIDCaption, 
+	CPropertyPage(LPCTSTR lpszTemplateName, UINT nIDCaption,
 		UINT nIDHeaderTitle, UINT nIDHeaderSubTitle = 0, DWORD dwSize = sizeof(PROPSHEETPAGE));
-	void Construct(UINT nIDTemplate, UINT nIDCaption, 
+	void Construct(UINT nIDTemplate, UINT nIDCaption,
 		UINT nIDHeaderTitle, UINT nIDHeaderSubTitle = 0);
-	void Construct(LPCTSTR lpszTemplateName, UINT nIDCaption, 
+	void Construct(LPCTSTR lpszTemplateName, UINT nIDCaption,
 		UINT nIDHeaderTitle, UINT nIDHeaderSubTitle = 0);
 
 // Attributes
@@ -940,7 +940,7 @@ public:
 
 	virtual LRESULT OnWizardBack();
 	virtual LRESULT OnWizardNext();
-	virtual BOOL OnWizardFinish();	
+	virtual BOOL OnWizardFinish();
 	virtual HWND OnWizardFinishEx();
 
 	virtual CPropertySheet *GetParentSheet();
@@ -964,7 +964,7 @@ protected:
 	// implementation helpers
 	void AllocPSP(DWORD dwSize);
 	void CommonConstruct(LPCTSTR lpszTemplateName, UINT nIDCaption);
-	void CommonConstruct(LPCTSTR lpszTemplateName, UINT nIDCaption, 
+	void CommonConstruct(LPCTSTR lpszTemplateName, UINT nIDCaption,
 		UINT nIDHeaderTitle, UINT nIDHeaderSubTitle);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 	virtual BOOL PreTranslateMessage(MSG*);

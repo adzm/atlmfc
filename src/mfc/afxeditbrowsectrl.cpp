@@ -376,7 +376,7 @@ BOOL CMFCEditBrowseCtrl::OnIllegalFileName(CString& strFileName)
 	strError.LoadString(AFX_IDP_INVALID_FILENAME);
 
 	CString strMessage;
-	strMessage.Format(_T("%Ts\r\n%Ts"), strFileName, strError);
+	strMessage.Format(_T("%Ts\r\n%Ts"), strFileName.GetString(), strError.GetString());
 
 	MessageBox(strMessage, NULL, MB_OK | MB_ICONEXCLAMATION);
 	return FALSE;

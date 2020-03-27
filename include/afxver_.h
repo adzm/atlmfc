@@ -132,7 +132,7 @@
 
 // FASTCALL is used for static member functions with little or no params
 #ifndef FASTCALL
-	#define FASTCALL __fastcall     
+	#define FASTCALL __fastcall
 #endif
 
 // CDECL and EXPORT are defined in case WINDOWS.H doesn't
@@ -146,7 +146,7 @@
 
 // UNALIGNED is used for unaligned data access (in CArchive mostly)
 #if !defined(UNALIGNED)
-#if defined(_M_AMD64)
+#if defined(_M_X64)
 #define UNALIGNED __unaligned
 #else
 #define UNALIGNED
@@ -156,70 +156,70 @@
 // AFX_DEPRECATED is used for functions that should no longer be used
 #ifndef AFX_DEPRECATED
 #ifdef _AFX_DISABLE_DEPRECATED
-	#define AFX_DEPRECATED(_Message) 
+	#define AFX_DEPRECATED(_Message)
 #else
 	#define AFX_DEPRECATED(_Message) __declspec(deprecated(_Message))
-#endif 
+#endif
 #endif
 
-/* 
+/*
  * Why are these ANSI functions now deprecated?
- * 
- * AFX_ANSI_DEPRECATED is used to bring MFC into line with what messages and 
+ *
+ * AFX_ANSI_DEPRECATED is used to bring MFC into line with what messages and
  * modes Windows supports for its controls.
- * 
- * Historically, all core controls could be created ANSI (CreateWindowA) or 
- * UNICODE (CreateWindowW). /DUNICODE builds of MFC used CreateWindowW and 
- * hence got UNICODE controls. But the set of functions and messages available 
+ *
+ * Historically, all core controls could be created ANSI (CreateWindowA) or
+ * UNICODE (CreateWindowW). /DUNICODE builds of MFC used CreateWindowW and
+ * hence got UNICODE controls. But the set of functions and messages available
  * for the controls wasn't different between the two modes.
- * 
+ *
  * [Side note: There are some exceptions to this rule, both in MFC and Win32].
- * 
- * Windows XP came along and added comctrl version 6, which was not intended 
- * to be binary or behaviour compatible with previous versions. One of these 
- * incompatibilities was that the new controls are UNICODE from the ground up 
+ *
+ * Windows XP came along and added comctrl version 6, which was not intended
+ * to be binary or behaviour compatible with previous versions. One of these
+ * incompatibilities was that the new controls are UNICODE from the ground up
  * and do not support ANSI mode. These controls also have the new (at the time)
- * Windows XP "themed" look and feel applied to them, which made them very 
+ * Windows XP "themed" look and feel applied to them, which made them very
  * appealing to developers who wanted their apps to look up to date
- * 
- * To ensure that the new controls didn't break existing apps, you have to opt 
- * in to using comctrl version 6 (via a dependency entry in your Win32 XML 
- * manifest). 
- * 
- * Unfortunately, even though these controls are not supported or documented 
- * to work in ANSI mode, they do have some limited functionality in ANSI mode 
- * (to support various complicated compatibility scenarios where controls are 
- * mixed in a process by addins). 
- * 
- * As a result, after Windows XP shipped, some people took existing ANSI apps 
- * (that call CreateWindowA) and applied XML manifests to them. This should 
- * not have worked (and is not documented to work), but sometimes does 
- * actually work. 
- * 
- * To further muddy the waters, VC7.0 applied the manifest indiscriminately 
- * to all newly-created MFC apps (even ANSI ones), furthering the impression 
- * that ANSI apps could use the themed controls. This was the source of quite 
- * a few bugs in VC7.0. VC7.1 fixed this problem -- the manifest was only 
- * applied to newly created projects when compiled Unicode (via a #ifdef in 
- * the .rc file), and VC8 made it a bit simpler by using the new manifest 
+ *
+ * To ensure that the new controls didn't break existing apps, you have to opt
+ * in to using comctrl version 6 (via a dependency entry in your Win32 XML
+ * manifest).
+ *
+ * Unfortunately, even though these controls are not supported or documented
+ * to work in ANSI mode, they do have some limited functionality in ANSI mode
+ * (to support various complicated compatibility scenarios where controls are
+ * mixed in a process by addins).
+ *
+ * As a result, after Windows XP shipped, some people took existing ANSI apps
+ * (that call CreateWindowA) and applied XML manifests to them. This should
+ * not have worked (and is not documented to work), but sometimes does
+ * actually work.
+ *
+ * To further muddy the waters, VC7.0 applied the manifest indiscriminately
+ * to all newly-created MFC apps (even ANSI ones), furthering the impression
+ * that ANSI apps could use the themed controls. This was the source of quite
+ * a few bugs in VC7.0. VC7.1 fixed this problem -- the manifest was only
+ * applied to newly created projects when compiled Unicode (via a #ifdef in
+ * the .rc file), and VC8 made it a bit simpler by using the new manifest
  * generation scheme.
- * 
- * Another mistake we made in VC7 was to provide wrappers for the new 
- * control's new messages that were available in ANSI builds. This again 
- * allowed you to call some of these new methods on ANSI controls even though 
+ *
+ * Another mistake we made in VC7 was to provide wrappers for the new
+ * control's new messages that were available in ANSI builds. This again
+ * allowed you to call some of these new methods on ANSI controls even though
  * several of them wouldn't even work.
- * 
- * In VC9 we are fixing this issue and bringing our projects and wrappers into 
- * line with the supported OS behaviour for Windows XP and Windows Vista. 
- * 
- * Messages and functions that are only supposed to work on UNICODE controls 
- * are now only available on UNICODE controls. You will see a deprecation 
- * message if you use one of these unsupported messages. If you want to use 
- * the new control features that have been added since Windows XP, you'll need 
- * to compile your MFC-based project as UNICODE, and set appropriate values 
- * for the OS minimum version control macros (_WIN32_WINNT, _WIN32_IE, 
+ *
+ * In VC9 we are fixing this issue and bringing our projects and wrappers into
+ * line with the supported OS behaviour for Windows XP and Windows Vista.
+ *
+ * Messages and functions that are only supposed to work on UNICODE controls
+ * are now only available on UNICODE controls. You will see a deprecation
+ * message if you use one of these unsupported messages. If you want to use
+ * the new control features that have been added since Windows XP, you'll need
+ * to compile your MFC-based project as UNICODE, and set appropriate values
+ * for the OS minimum version control macros (_WIN32_WINNT, _WIN32_IE,
  * _NTDDI_VERSION, etc).
- * 
+ *
  */
 #ifndef AFX_ANSI_DEPRECATED
 #ifdef UNICODE

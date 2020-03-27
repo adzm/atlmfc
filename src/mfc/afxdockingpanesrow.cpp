@@ -23,7 +23,10 @@
 IMPLEMENT_DYNAMIC(CDockingPanesRow, CObject)
 
 // Construction/Destruction
-CDockingPanesRow::CDockingPanesRow(CDockSite* pParentDockBar, int nOffset, int nHeight) : m_pParentDockBar(pParentDockBar), m_nRowOffset(nOffset), m_nRowHeight(nHeight)
+CDockingPanesRow::CDockingPanesRow(CDockSite* pParentDockBar, int nOffset, int nHeight)
+	: m_nRowHeight(nHeight)
+	, m_nRowOffset(nOffset)
+	, m_pParentDockBar(pParentDockBar)
 {
 	ASSERT_VALID(pParentDockBar);
 	m_dwRowAlignment = pParentDockBar->GetCurrentAlignment();

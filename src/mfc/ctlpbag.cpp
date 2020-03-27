@@ -38,9 +38,9 @@ protected:
 	HGLOBAL m_hBlob;
 };
 
-CBlobProperty::CBlobProperty(HGLOBAL hBlob) :
-	m_hBlob(hBlob),
-	m_dwRef(1)
+CBlobProperty::CBlobProperty(HGLOBAL hBlob)
+	: m_dwRef(1)
+	, m_hBlob(hBlob)
 {
 }
 
@@ -237,7 +237,7 @@ BOOL CPropbagPropExchange::ExchangeProp(LPCTSTR pszPropName, VARTYPE vtProp,
 
 	const CStringW strPropName(pszPropName);
 	if (m_bLoading)
-	{		
+	{
 		if (FAILED(m_pPropBag->Read(strPropName.GetString(), &var, m_pErrorLog)))
 			return _AfxCopyPropValue(vtProp, pvProp, pvDefault);
 
@@ -402,7 +402,7 @@ BOOL CPropbagPropExchange::ExchangeFontProp(LPCTSTR pszPropName,
 	AfxVariantInit(&var);
 	V_VT(&var) = VT_UNKNOWN;
 
-	
+
 	const CStringW strPropName(pszPropName);
 	if (m_bLoading)
 	{
@@ -461,7 +461,7 @@ BOOL CPropbagPropExchange::ExchangePersistentProp(LPCTSTR pszPropName,
 	VARIANT var;
 	AfxVariantInit(&var);
 	V_VT(&var) = VT_UNKNOWN;
-	
+
 	const CStringW strPropName(pszPropName);
 	if (m_bLoading)
 	{

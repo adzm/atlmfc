@@ -30,14 +30,14 @@
 #endif
 
 #ifndef __shobjidl_h__
-	#include <shobjidl.h>
+	#include <ShObjIdl.h>
 #endif
 
 #pragma once
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -201,17 +201,17 @@ class CJumpList
 {
 public:
 	/// <summary>
-	/// Constructs a CJumpList object.  </summary> 
-	/// <param name="bAutoCommit"> If this parameter is FALSE the list is not automatically committed in 
+	/// Constructs a CJumpList object.  </summary>
+	/// <param name="bAutoCommit"> If this parameter is FALSE the list is not automatically committed in
 	/// destructor. </param>
 	CJumpList(BOOL bAutoCommit = TRUE);
 	~CJumpList();
 
 	/// <summary>
-	/// Begins a list-building transaction.  </summary> 
+	/// Begins a list-building transaction.  </summary>
 	/// <remarks>
-	/// You don't need to call this method explicitly unless you wish to retrieve a pointer to 
-	/// ICustomDestinationList using GetDestinationList, the number of available slots using GetMaxSlots, or 
+	/// You don't need to call this method explicitly unless you wish to retrieve a pointer to
+	/// ICustomDestinationList using GetDestinationList, the number of available slots using GetMaxSlots, or
 	/// list of removed items using GetRemovedItems.</remarks>
 	BOOL InitializeList();
 
@@ -228,18 +228,18 @@ public:
 	}
 
 	/// <summary>
-	/// Retrieves the maximum number of items, including category headers that can display in 
+	/// Retrieves the maximum number of items, including category headers that can display in
 	/// the calling application's destination menu. </summary>
 	/// <remarks>
-	/// Applications may only report a number of items and category headers combined up to this value.  
-	/// If calls to AppendCategory, AppendKnownCategory, or AddUserTasks exceed this number, they will 
+	/// Applications may only report a number of items and category headers combined up to this value.
+	/// If calls to AppendCategory, AppendKnownCategory, or AddUserTasks exceed this number, they will
 	/// return failure. </remarks>
 	UINT GetMaxSlots() const;
 
 	/// <summary>
 	/// Retrieves an interface pointer to destination list.</summary>
 	/// <remarks>
-	/// If the jump list has not been initialized, or has been committed or aborted, the 
+	/// If the jump list has not been initialized, or has been committed or aborted, the
 	/// returned value will be NULL. </remarks>
 	ICustomDestinationList* GetDestinationList()
 	{
@@ -250,11 +250,11 @@ public:
 	/// Returns array of items that represent removed destinations.
 	/// </summary>
 	/// <remarks>
-	/// The removed destinations are retrieved during initialization of jump list. 
-	/// When generating a new destination list, applications are expected to first process the removed 
-	/// destinations list, clearing their tracking data for any item returned by the removed list enumerator.  
-	/// If an application attempts to provide an item that was just removed in the transaction that the 
-	/// current call to BeginList started, the method call that re-added that item will fail, 
+	/// The removed destinations are retrieved during initialization of jump list.
+	/// When generating a new destination list, applications are expected to first process the removed
+	/// destinations list, clearing their tracking data for any item returned by the removed list enumerator.
+	/// If an application attempts to provide an item that was just removed in the transaction that the
+	/// current call to BeginList started, the method call that re-added that item will fail,
 	/// to ensure that applications are respecting the removed list.  </remarks>
 	IObjectArray* GetRemovedItems()
 	{
@@ -305,10 +305,10 @@ public:
 	BOOL AddDestination(LPCTSTR strCategoryName, IShellLink* pShellLink);
 
 	/// <summary>
-	/// Appends a Known Category to the list.</remarks>  
+	/// Appends a Known Category to the list.</remarks>
 	/// <remarks>
-	/// Known Categories are the Frequent and Recent categories that we will automatically calculate for every 
-	/// application that utilizes SHAddToRecentDocs (or indirectly uses it as the shell will call it on the 
+	/// Known Categories are the Frequent and Recent categories that we will automatically calculate for every
+	/// application that utilizes SHAddToRecentDocs (or indirectly uses it as the shell will call it on the
 	/// application's behalf in some scenarios).</remarks>
 	/// <param name="category"> Specifies a known category type. Can be either KDC_RECENT, or KDC_KNOWN. </param>
 	BOOL AddKnownCategory(KNOWNDESTCATEGORY category);
@@ -316,9 +316,9 @@ public:
 	/// <summary>
 	/// Adds items to the canonical Tasks category. </summary>
 	/// <remarks>
-	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List 
+	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List
 	/// during CommitList.
-	/// Task items will appear in a category at the bottom of the application's destination menu.  
+	/// Task items will appear in a category at the bottom of the application's destination menu.
 	/// This category takes precedence over all other categories when it is filled in the UI. </remarks>
 	/// <param name="strTargetExecutablePath"> Specifies the target task path.</param>
 	/// <param name="strCommandLineArgs"> Specifies command line arguments of the executable specified by strTargetExecutablePath.</param>
@@ -329,9 +329,9 @@ public:
 	/// <summary>
 	/// Adds items to the canonical Tasks category. </summary>
 	/// <remarks>
-	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List 
+	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List
 	/// during CommitList.
-	/// Task items will appear in a category at the bottom of the application's destination menu.  
+	/// Task items will appear in a category at the bottom of the application's destination menu.
 	/// This category takes precedence over all other categories when it is filled in the UI. </remarks>
 	/// <param name="pShellLink"> Shell Link that represents a task to be added.</param>
 	BOOL AddTask(IShellLink* pShellLink);
@@ -339,9 +339,9 @@ public:
 	/// <summary>
 	/// Adds items to the canonical Tasks category. </summary>
 	/// <remarks>
-	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List 
+	/// The instance of CJumpList accumulates specified tasks and adds them to the Destination List
 	/// during CommitList.
-	/// Task items will appear in a category at the bottom of the application's destination menu.  
+	/// Task items will appear in a category at the bottom of the application's destination menu.
 	/// This category takes precedence over all other categories when it is filled in the UI. </remarks>
 	/// <param name="pObjectCollection"> A collection of tasks to be added.</param>
 	BOOL AddTasks(IObjectArray* pObjectCollection);
@@ -365,13 +365,13 @@ public:
 	void ClearAll();
 
 	/// <summary>
-	/// Ends a list-building transaction and commits the reported list to the associated 
+	/// Ends a list-building transaction and commits the reported list to the associated
 	/// store (the registry in this case.) </summary>
-	/// <remarks> 
-	/// The commit is atomic.  An error will be returned if the commit fails.  When CommitList is called, 
+	/// <remarks>
+	/// The commit is atomic.  An error will be returned if the commit fails.  When CommitList is called,
 	/// the current list of removed items will be cleaned up.
-	/// Calling this method resets the object so that it does not have an active list-building transaction.  
-	/// To update the list, BeginList needs to be called again. </remarks> 
+	/// Calling this method resets the object so that it does not have an active list-building transaction.
+	/// To update the list, BeginList needs to be called again. </remarks>
 	BOOL CommitList();
 
 protected:

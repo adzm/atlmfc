@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -2473,7 +2473,7 @@ void CMFCRibbonPanel::RecalcWidths(CDC* pDC, int nHeight)
 			{
 				if (rect.Width() >= rectScreen.Width())
 				{
-					// If we see that after adding a lot of controls, the ribbon panel doesn’t fit the screen
+					// If we see that after adding a lot of controls, the ribbon panel doesn't fit the screen
 					// size, we create a panel with a large width (predefined = 32767). This prevents the panel
 					// from collapsing in design mode and allows the extra controls to be removed or moved to
 					// another panel. At run-time, that part of the ribbon panel will be off of the screen.
@@ -2527,7 +2527,7 @@ void CMFCRibbonPanel::Highlight(BOOL bHighlight, CPoint point)
 	ASSERT_VALID(this);
 
 	BOOL bRedrawPanel = m_bIsHighlighted != bHighlight;
-	
+
 	if (!bHighlight)
 	{
 		m_bMouseIsDown = FALSE;
@@ -2545,7 +2545,7 @@ void CMFCRibbonPanel::Highlight(BOOL bHighlight, CPoint point)
 		if (pHighlighted != NULL)
 		{
 			ASSERT_VALID(pHighlighted);
-			
+
 			if (!bMouseIsDown || pHighlighted->IsPressed())
 			{
 				pHighlighted->OnMouseMove(point);
@@ -3732,7 +3732,7 @@ void CMFCRibbonPanel::CleanUpSizes()
 		pElem->CleanUpSizes();
 	}
 
-	m_btnDefault.CleanUpSizes(); 
+	m_btnDefault.CleanUpSizes();
 }
 
 void CMFCRibbonPanel::ScrollPalette(int nScrollOffset, BOOL bIsDelta)
@@ -3992,7 +3992,7 @@ void CMFCRibbonPanel::SetFocused(CMFCRibbonBaseElement* pNewFocus)
 	{
 		return;
 	}
-			
+
 	if (pFocused != NULL)
 	{
 		ASSERT_VALID(pFocused);
@@ -4147,7 +4147,7 @@ HRESULT CMFCRibbonPanel::accLocation(long *pxLeft, long *pyTop, long *pcxWidth, 
 	}
 
 	if (varChild.vt == VT_I4 && varChild.lVal == CHILDID_SELF)
-	{	
+	{
 		if (GetParentWnd()->GetSafeHwnd() == NULL)
 		{
 			return S_FALSE;
@@ -4201,7 +4201,7 @@ HRESULT CMFCRibbonPanel::accNavigate(long navDir, VARIANT varStart, VARIANT* pva
 		{
 			pvarEndUpAt->vt = VT_I4;
 			pvarEndUpAt->lVal = 1;
-			return S_OK;	
+			return S_OK;
 		}
 		break;
 
@@ -4214,7 +4214,7 @@ HRESULT CMFCRibbonPanel::accNavigate(long navDir, VARIANT varStart, VARIANT* pva
 		}
 		break;
 
-	case NAVDIR_NEXT:   
+	case NAVDIR_NEXT:
 	case NAVDIR_RIGHT:
 		if (varStart.lVal != CHILDID_SELF)
 		{
@@ -4250,7 +4250,7 @@ HRESULT CMFCRibbonPanel::accNavigate(long navDir, VARIANT varStart, VARIANT* pva
 		}
 		break;
 
-	case NAVDIR_PREVIOUS: 
+	case NAVDIR_PREVIOUS:
 	case NAVDIR_LEFT:
 		if (varStart.lVal != CHILDID_SELF)
 		{
@@ -4334,7 +4334,7 @@ HRESULT CMFCRibbonPanel::accHitTest(long xLeft, long yTop, VARIANT *pvarChild)
 			ASSERT_VALID(pElem);
 
 			CRect rectElem = pElem->GetRect();
-		
+
 			if (rectElem.PtInRect(pt))
 			{
 				pvarChild->lVal = i + 1;
@@ -4394,7 +4394,7 @@ BOOL CMFCRibbonPanel::SetACCData(CWnd* /*pParent*/, CAccessibilityData& data)
 	if (m_pParent != NULL)
 	{
 		ASSERT_VALID(m_pParent);
-		
+
 		CMFCRibbonBar* pParentRibbonBar = m_pParent->GetParentRibbonBar();
 		if (pParentRibbonBar->GetSafeHwnd() != NULL)
 		{

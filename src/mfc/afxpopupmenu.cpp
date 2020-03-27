@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -81,7 +81,7 @@ protected:
 	CMFCPopupMenu* m_pOwner;
 	int m_nOffset;
 	CMFCShadowRenderer m_Shadow;
-	BOOL m_bIsRTL; 
+	BOOL m_bIsRTL;
 };
 
 BEGIN_MESSAGE_MAP(CMFCShadowWnd, CMiniFrameWnd)
@@ -168,7 +168,7 @@ void CMFCShadowWnd::OnSize(UINT nType, int cx, int cy)
 	dc.SelectObject (pBitmapOld);
 }
 
-void CMFCShadowWnd::Repos() 
+void CMFCShadowWnd::Repos()
 {
 	ASSERT_VALID (m_pOwner);
 
@@ -233,7 +233,9 @@ CMFCPopupMenu::CMFCPopupMenu() : m_pMenuCustomizationPage(NULL)
 	Initialize();
 }
 
-CMFCPopupMenu::CMFCPopupMenu(CMFCToolBarsMenuPropertyPage* pCustPage, LPCTSTR lpszTitle) : m_pMenuCustomizationPage(pCustPage), m_strCaption(lpszTitle)
+CMFCPopupMenu::CMFCPopupMenu(CMFCToolBarsMenuPropertyPage* pCustPage, LPCTSTR lpszTitle)
+	: m_strCaption(lpszTitle)
+	, m_pMenuCustomizationPage(pCustPage)
 {
 	Initialize();
 }
@@ -539,7 +541,7 @@ int CMFCPopupMenu::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		m_pWndShadow = new CMFCShadowWnd (this, m_iShadowSize);
 		m_iShadowSize = 0;
 
-		
+
 		m_pWndShadow->Create ();
 	}
 
@@ -3968,7 +3970,7 @@ void CMFCPopupMenu::TriggerResize()
 	GetMenuBar()->m_bResizeTracking = FALSE;
 }
 
-void CMFCPopupMenu::OnWindowPosChanged(WINDOWPOS FAR* lpwndpos) 
+void CMFCPopupMenu::OnWindowPosChanged(WINDOWPOS FAR* lpwndpos)
 {
 	CMiniFrameWnd::OnWindowPosChanged(lpwndpos);
 
@@ -4002,7 +4004,7 @@ HRESULT CMFCPopupMenu::get_accName(VARIANT varChild, BSTR *pszName)
 			*pszName = str.AllocSysString ();
 			return S_OK;
 		}
-	
+
 		return S_FALSE;
 	}
 

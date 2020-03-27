@@ -463,7 +463,10 @@ BOOL CSmartDockingGroupGuidesWnd::OnEraseBkgnd(CDC* /*pDC*/)
 
 // CSmartDockingGroupGuide
 
-CSmartDockingGroupGuide::CSmartDockingGroupGuide() : m_pCentralGroup(NULL), m_bVisible(TRUE), m_clrFrame((COLORREF)-1)
+CSmartDockingGroupGuide::CSmartDockingGroupGuide()
+	: m_pCentralGroup(NULL)
+	, m_clrFrame((COLORREF)-1)
+	, m_bVisible(TRUE)
 {
 }
 
@@ -614,7 +617,7 @@ void CSmartDockingGroupGuide::Draw(CDC& dc, BOOL bAlpha)
 
 	if (bAlpha && !m_bHiLited)
 	{
-		image.DrawEx(&dc, CRect(CPoint(m_nOffsetX, m_nOffsetY), image.GetImageSize()), 0, 
+		image.DrawEx(&dc, CRect(CPoint(m_nOffsetX, m_nOffsetY), image.GetImageSize()), 0,
 			CMFCToolBarImages::ImageAlignHorzLeft,
 			CMFCToolBarImages::ImageAlignVertTop,
 			CRect(0, 0, 0, 0), ALPHA_TRANSPARENT);
@@ -897,7 +900,7 @@ void CSmartDockingGroupGuidesManager::DrawCentralGroupGuides(CDC& dc, CBrush& br
 
 	if (m_Image.IsValid())
 	{
-		m_Image.DrawEx(&dc, rectClient, 0, 
+		m_Image.DrawEx(&dc, rectClient, 0,
 			CMFCToolBarImages::ImageAlignHorzCenter, CMFCToolBarImages::ImageAlignVertCenter,
 			CRect(0, 0, 0, 0), (BYTE)(bAlphaMarkers ? ALPHA_TRANSPARENT : 255));
 	}

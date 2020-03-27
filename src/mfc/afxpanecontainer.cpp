@@ -30,9 +30,16 @@ BOOL CPaneContainer::m_bRetainInternalSliderPosition = FALSE;
 CPaneContainerGC gc;
 
 // Construction/Destruction
-CPaneContainer::CPaneContainer(CPaneContainerManager* pManager, CDockablePane* pLeftBar, CDockablePane* pRightBar, CPaneDivider* pSlider) :
-m_pContainerManager(pManager), m_pBarLeftTop(pLeftBar), m_pBarRightBottom(pRightBar), m_pSlider(pSlider), m_pLeftContainer(NULL),
-m_pRightContainer(NULL), m_pParentContainer(NULL), m_dwRefCount(0)
+CPaneContainer::CPaneContainer(CPaneContainerManager* pManager, CDockablePane* pLeftBar, CDockablePane* pRightBar,
+		CPaneDivider* pSlider)
+	: m_pBarLeftTop(pLeftBar)
+	, m_pBarRightBottom(pRightBar)
+	, m_pSlider(pSlider)
+	, m_pLeftContainer(NULL)
+	, m_pRightContainer(NULL)
+	, m_pParentContainer(NULL)
+	, m_pContainerManager(pManager)
+	, m_dwRefCount(0)
 {
 	m_nSavedLeftBarID = (UINT)-1;
 	m_nSavedRightBarID = (UINT)-1;

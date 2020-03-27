@@ -29,12 +29,12 @@
 #endif
 
 #ifndef __docobj_h__
-	#include <docobj.h>     // defines Document Object interfaces
+	#include <DocObj.h>     // defines Document Object interfaces
 #endif
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)

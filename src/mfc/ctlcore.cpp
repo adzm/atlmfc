@@ -29,14 +29,18 @@
 #pragma warning(disable:4483) // expected C++ identifier
 
 #if defined(UNICODE)
-#if defined(_X86_)
+#if defined(_X86_) && !defined(_M_HYBRID)
 #define _imp_DefWindowProc __identifier("_imp__DefWindowProcW@16")
+#elif defined(_M_HYBRID)
+#define _imp_DefWindowProc __identifier("_imp_#DefWindowProcW@16")
 #else
 #define _imp_DefWindowProc __imp_DefWindowProcW
 #endif
 #else
-#if defined(_X86_)
+#if defined(_X86_) && !defined(_M_HYBRID)
 #define _imp_DefWindowProc __identifier("_imp__DefWindowProcA@16")
+#elif defined(_M_HYBRID)
+#define _imp_DefWindowProc __identifier("_imp_#DefWindowProcW@16")
 #else
 #define _imp_DefWindowProc __imp_DefWindowProcA
 #endif

@@ -2171,35 +2171,10 @@ COLORREF CMFCBaseTabCtrl::GetTabBkColor(int iTab) const
 
 	COLORREF color = pTab->m_clrBack;
 
-	CMFCTabInfo* pTabPrev = NULL;
-	if (iTab > 0)
-	{
-		pTabPrev = (CMFCTabInfo*) m_arTabs [iTab - 1];
-		ASSERT_VALID(pTabPrev);
-	}
-
 	if (color == (COLORREF)-1 && m_bIsAutoColor)
 	{
-		// try to make sure that unique tab colors are used
-		static int nLastColorIndexUsed = 0, nCyclicalColor = 0;
-		int nColorIndexUsed = iTab % m_arAutoColors.GetSize();
-		if (nColorIndexUsed == nLastColorIndexUsed)
-		{
-			nColorIndexUsed = ++nCyclicalColor % m_arAutoColors.GetSize();
-		}
-
-		if (pTabPrev != NULL)
-		{
-			COLORREF colorPrev = pTabPrev->m_clrBack;
-			if (colorPrev == m_arAutoColors[nColorIndexUsed])
-			{
-				nColorIndexUsed = ++nCyclicalColor % m_arAutoColors.GetSize();
-			}
-		}
-
-		color = m_arAutoColors[nColorIndexUsed];
+		color = m_arAutoColors[iTab % m_arAutoColors.GetSize()];
 		pTab->m_clrBack = color;
-		nLastColorIndexUsed = nColorIndexUsed;
 	}
 
 	return color;
@@ -2748,10 +2723,9 @@ BOOL CMFCBaseTabCtrl::EnableCustomToolTips(BOOL bEnable/* = TRUE*/)
 	return TRUE;
 }
 
+static CMFCTabToolTipInfo tipTextInfo;
 BOOL CMFCBaseTabCtrl::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult*/)
 {
-	static CMFCTabToolTipInfo info;
-
 	ENSURE(pNMH != NULL);
 
 	LPNMTTDISPINFO pTTDispInfo = (LPNMTTDISPINFO) pNMH;
@@ -2759,9 +2733,9 @@ BOOL CMFCBaseTabCtrl::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult
 
 	if (pNMH->hwndFrom == m_pToolTipClose->GetSafeHwnd())
 	{
-		ENSURE(info.m_strText.LoadString(IDS_AFXBARRES_CLOSEBAR));
+		ENSURE(tipTextInfo.m_strText.LoadString(IDS_AFXBARRES_CLOSEBAR));
 
-		pTTDispInfo->lpszText = const_cast<LPTSTR>((LPCTSTR) info.m_strText);
+		pTTDispInfo->lpszText = const_cast<LPTSTR>((LPCTSTR) tipTextInfo.m_strText);
 		return TRUE;
 	}
 
@@ -2774,7 +2748,7 @@ BOOL CMFCBaseTabCtrl::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult
 	CWnd* pParent = GetParent();
 	ASSERT_VALID(pParent);
 
-	info.m_pTabWnd = this;
+	tipTextInfo.m_pTabWnd = this;
 
 	CPoint ptCursor;
 	::GetCursorPos(&ptCursor);
@@ -2785,22 +2759,22 @@ BOOL CMFCBaseTabCtrl::OnNeedTipText(UINT /*id*/, NMHDR* pNMH, LRESULT* /*pResult
 		return FALSE;
 	}
 
-	info.m_nTabIndex = GetTabFromPoint(ptCursor);
-	info.m_strText.Empty();
+	tipTextInfo.m_nTabIndex = GetTabFromPoint(ptCursor);
+	tipTextInfo.m_strText.Empty();
 
-	pParent->SendMessage(AFX_WM_ON_GET_TAB_TOOLTIP, 0, (LPARAM) &info);
+	pParent->SendMessage(AFX_WM_ON_GET_TAB_TOOLTIP, 0, (LPARAM) &tipTextInfo);
 	if (pParent != pParentFrame && pParentFrame != NULL)
 	{
 		ASSERT_VALID(pParentFrame);
-		pParentFrame->SendMessage(AFX_WM_ON_GET_TAB_TOOLTIP, 0, (LPARAM) &info);
+		pParentFrame->SendMessage(AFX_WM_ON_GET_TAB_TOOLTIP, 0, (LPARAM) &tipTextInfo);
 	}
 
-	if (info.m_strText.IsEmpty())
+	if (tipTextInfo.m_strText.IsEmpty())
 	{
 		return FALSE;
 	}
 
-	pTTDispInfo->lpszText = const_cast<LPTSTR>((LPCTSTR) info.m_strText);
+	pTTDispInfo->lpszText = const_cast<LPTSTR>((LPCTSTR) tipTextInfo.m_strText);
 	return TRUE;
 }
 
@@ -2828,7 +2802,7 @@ BOOL CMFCBaseTabCtrl::OnSetAccData(long lVal)
 			return TRUE;
 		}
 	}
-	
+
 	return FALSE;
 }
 
@@ -2923,7 +2897,7 @@ HRESULT CMFCBaseTabCtrl::accNavigate(long navDir, VARIANT varStart, VARIANT* pva
 			pvarEndUpAt->vt = VT_I4;
 			pvarEndUpAt->lVal = 1;
 
-			return S_OK;	
+			return S_OK;
 		}
 		break;
 
@@ -2938,7 +2912,7 @@ HRESULT CMFCBaseTabCtrl::accNavigate(long navDir, VARIANT varStart, VARIANT* pva
 		break;
 
 
-	case NAVDIR_NEXT:   
+	case NAVDIR_NEXT:
 	case NAVDIR_RIGHT:
 		if (varStart.lVal != CHILDID_SELF)
 		{
@@ -2955,7 +2929,7 @@ HRESULT CMFCBaseTabCtrl::accNavigate(long navDir, VARIANT varStart, VARIANT* pva
 		}
 		break;
 
-	case NAVDIR_PREVIOUS: 
+	case NAVDIR_PREVIOUS:
 	case NAVDIR_LEFT:
 		if (varStart.lVal != CHILDID_SELF)
 		{
@@ -3018,7 +2992,7 @@ BOOL CMFCBaseTabCtrl::SetACCData(CMFCTabInfo* pTab, CAccessibilityData& data, BO
 
 	data.m_strAccName = pTab->m_strText;
 	data.m_strAccDefAction = _T("Switch");
-	
+
 	data.m_nAccHit = 1;
 	data.m_nAccRole = ROLE_SYSTEM_PAGETAB;
 
@@ -3026,7 +3000,7 @@ BOOL CMFCBaseTabCtrl::SetACCData(CMFCTabInfo* pTab, CAccessibilityData& data, BO
 	{
 		data.m_bAccState |= STATE_SYSTEM_SELECTED;
 	}
-	
+
 	data.m_rectAccLocation = pTab->m_rect;
 	ClientToScreen(&data.m_rectAccLocation);
 
@@ -3056,7 +3030,7 @@ HRESULT CMFCBaseTabCtrl::get_accRole(VARIANT varChild, VARIANT *pvarRole)
 
 		return S_OK;
 	}
-			
+
     return S_OK;
 }
 
@@ -3065,7 +3039,7 @@ HRESULT CMFCBaseTabCtrl::get_accValue(VARIANT varChild, BSTR *pszValue)
 	if (varChild.vt == VT_I4 && varChild.lVal > 0)
 	{
 		OnSetAccData(varChild.lVal);
-		
+
 		if (m_AccData.m_strAccValue.IsEmpty())
 		{
 			return S_FALSE;
@@ -3117,7 +3091,7 @@ HRESULT CMFCBaseTabCtrl::get_accState(VARIANT varChild, VARIANT *pvarState)
 		pvarState->vt = VT_I4;
 		pvarState->lVal = m_AccData.m_bAccState;
 
-		return S_OK; 
+		return S_OK;
 	}
 
 	return E_INVALIDARG;
@@ -3203,6 +3177,6 @@ HRESULT CMFCBaseTabCtrl::get_accDefaultAction(VARIANT varChild, BSTR *pszDefault
 		return S_FALSE;
 	}
 
-	*pszDefaultAction = m_AccData.m_strAccDefAction.AllocSysString();			
+	*pszDefaultAction = m_AccData.m_strAccDefAction.AllocSysString();
 	return S_OK;
 }

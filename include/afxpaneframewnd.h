@@ -330,7 +330,7 @@ protected:
 	AFX_PREDOCK_STATE m_preDockStateCurr;
 
 	AFX_IMPORT_DATA static CMap<UINT,UINT,HWND,HWND> m_mapFloatingBars;
-	AFX_IMPORT_DATA static CList<HWND, HWND> CPaneFrameWnd::m_lstFrames;
+	AFX_IMPORT_DATA static CList<HWND, HWND> m_lstFrames;
 	AFX_IMPORT_DATA static CFrameWnd* m_pParentWndForSerialize; // should be set by caller before starting serialization
 };
 

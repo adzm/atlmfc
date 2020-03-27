@@ -20,8 +20,8 @@
 #pragma warning(push)
 #pragma warning(disable: 4191) // unsafe conversion from 'functionptr1' to 'functionptr2'
 
-#include <winsock2.h>
-#include <mswsock.h>
+#include <WinSock2.h>
+#include <MSWSock.h>
 #include <wtypes.h>
 #include <atlconv.h>
 #include <tchar.h>
@@ -32,7 +32,7 @@
 /* psdk prefast noise */
 #pragma warning(disable : 6011)
 #endif
-#include <ws2tcpip.h>
+#include <WS2tcpip.h>
 #pragma warning(pop)
 
 #pragma comment(lib, "ws2_32.lib")
@@ -75,7 +75,7 @@ public:
 		_In_ int flags,						// 0 or combination of AI_PASSIVE, AI_CANONNAME or AI_NUMERICHOST
 		_In_ int addr_family,				// Address family (such as PF_INET)
 		_In_ int sock_type,					// Socket type (such as SOCK_STREAM)
-		_In_ int ai_proto);					// Protocol (such as IPPROTO_IP or IPPROTO_IPV6)
+		_In_ int ai_proto) throw();			// Protocol (such as IPPROTO_IP or IPPROTO_IPV6)
 
 	int FindAddr(
 		_In_z_ LPCTSTR szHost, 			// Host name or dotted IP address
@@ -107,7 +107,7 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////
-// CSocketAddr implmenetation.
+// CSocketAddr implementation.
 ////////////////////////////////////////////////////////////////////////////
 
 inline CSocketAddr::CSocketAddr() throw()

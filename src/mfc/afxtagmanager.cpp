@@ -193,7 +193,7 @@ BOOL CTagManager::LoadFromFile(LPCTSTR lpszFileName)
 		CStdioFile file;
 		if (!file.Open(strPath, CFile::modeRead))
 		{
-			TRACE(_T("CTagManager::LoadFromFile: File not found: %Ts"), strFileName);
+			TRACE(_T("CTagManager::LoadFromFile: File not found: %Ts"), strFileName.GetString());
 			return FALSE;
 		}
 

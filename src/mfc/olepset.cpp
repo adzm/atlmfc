@@ -10,8 +10,8 @@
 
 #include "stdafx.h"
 #include <malloc.h>
-#include <ole2.h>
-#include <oleauto.h>
+#include <Ole2.h>
+#include <OleAuto.h>
 
 
 
@@ -357,12 +357,12 @@ BOOL CProperty::Set(const  LPVOID pVal)
 		cbValue += cbItem;
 	}
 
-	
+
 	BOOL bOK=TRUE;
 	if (AllocValue(cbValue))
 	{
 		Checked::memcpy_s(m_pValue, (size_t)cbValue, pValue, (size_t)cbValue);
-	} 
+	}
 	else
 	{
 		TRACE(traceOle, 0, "CProperty::AllocValue failed");
@@ -374,7 +374,7 @@ BOOL CProperty::Set(const  LPVOID pVal)
 	if (bShouldFreeValue && pValue)
 	{
 		free(pValue);
-	}				
+	}
 	return bOK;
 }
 
@@ -794,7 +794,7 @@ BOOL CProperty::ReadFromStream(IStream* pIStream)
 
 			// Read the buffer from pIStream
 			pIStream->Read(m_pValue, cbValue, &cb);
-		  
+
 			if (cb != cbValue)
 				return FALSE;
 #ifdef _UNICODE
@@ -1259,7 +1259,7 @@ AFX_STATIC BOOL AFXAPI _AfxWriteNameDictEntry(IStream* pIStream, DWORD dwPropID,
 	// Persistent form is always ANSI/DBCS.  Convert from Unicode.
 	_wcstombsz(entry.sz, (LPCWSTR)strName, 256);
 #else // _UNICODE
-	Checked::memcpy_s(entry.sz, (size_t)entry.hdr.cb, 
+	Checked::memcpy_s(entry.sz, (size_t)entry.hdr.cb,
 		(LPCSTR)strName, (size_t)entry.hdr.cb);
 #endif // _UNICODE
 

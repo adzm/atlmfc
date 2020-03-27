@@ -32,8 +32,8 @@ DEFINE_GUID(IID_IDataSource,0x7c0ffab3L, 0xcd84, 0x11d0, 0x94, 0x9a, 0x00, 0xa0,
 BEGIN_INTERFACE_MAP(COleControlSite, CCmdTarget)
 	INTERFACE_PART(COleControlSite, IID_IOleClientSite, OleClientSite)
 	INTERFACE_PART(COleControlSite, IID_IOleInPlaceSite, OleIPSite)
-   INTERFACE_PART(COleControlSite, IID_IOleInPlaceSiteEx, OleIPSite)
-   INTERFACE_PART(COleControlSite, IID_IOleInPlaceSiteWindowless, OleIPSite)
+	INTERFACE_PART(COleControlSite, IID_IOleInPlaceSiteEx, OleIPSite)
+	INTERFACE_PART(COleControlSite, IID_IOleInPlaceSiteWindowless, OleIPSite)
 	INTERFACE_PART(COleControlSite, IID_IOleControlSite, OleControlSite)
 	INTERFACE_PART(COleControlSite, IID_IDispatch, AmbientProps)
 	INTERFACE_PART(COleControlSite, IID_IBoundObjectSite, BoundObjectSite)
@@ -41,27 +41,27 @@ BEGIN_INTERFACE_MAP(COleControlSite, CCmdTarget)
 	INTERFACE_PART(COleControlSite, IID_IRowsetNotify, RowsetNotify)
 END_INTERFACE_MAP()
 
-COleControlSite::COleControlSite(COleControlContainer* pCtrlCont) :
-	m_pCtrlCont(pCtrlCont),
-	m_pWndCtrl(NULL),
-   m_pDC(NULL),
-	m_nID((UINT)-1),
-	m_pObject(NULL),
-	m_pInPlaceObject(NULL),
-	m_pActiveObject(NULL),
-   m_pWindowlessObject(NULL),
-	m_dwEventSink(0),
-	m_dwPropNotifySink(0),
-	m_dwMiscStatus(0),
-	m_dwNotifyDBEvents(0),
-	m_pDataSourceControl(NULL),
-	m_pDSCSite(NULL),
-	m_defdispid(0),
-	m_dwType(0),
-	m_pBindings(NULL),
-	m_bIgnoreNotify(FALSE),
-	m_bIsDirty(FALSE),
-   m_bIsWindowless(FALSE)
+COleControlSite::COleControlSite(COleControlContainer* pCtrlCont)
+	: m_pCtrlCont(pCtrlCont)
+	, m_pWndCtrl(NULL)
+	, m_nID((UINT)-1)
+	, m_pObject(NULL)
+	, m_pInPlaceObject(NULL)
+	, m_pActiveObject(NULL)
+	, m_pWindowlessObject(NULL)
+	, m_dwEventSink(0)
+	, m_dwPropNotifySink(0)
+	, m_dwMiscStatus(0)
+	, m_bIsWindowless(FALSE)
+	, m_bIgnoreNotify(FALSE)
+	, m_dwNotifyDBEvents(0)
+	, m_pDataSourceControl(NULL)
+	, m_pBindings(NULL)
+	, m_pDSCSite(NULL)
+	, m_defdispid(0)
+	, m_dwType(0)
+	, m_bIsDirty(FALSE)
+	, m_pDC(NULL)
 {
 	memset(&m_varResult, 0, sizeof(VARIANT));
 	m_varResult.vt = VT_EMPTY;
@@ -113,11 +113,11 @@ COleControlSite::~COleControlSite()
 
 	BindProperty(DISPID_UNKNOWN, NULL);  // gets rid of complex bindings
 
-	if (m_defdispid != 0 && m_pDSCSite != NULL && 
+	if (m_defdispid != 0 && m_pDSCSite != NULL &&
 		m_pDSCSite->m_pDataSourceControl != NULL)
 	{
 		// get rid of simple bindings
-		m_pDSCSite->m_pDataSourceControl->BindProp(this, FALSE);  
+		m_pDSCSite->m_pDataSourceControl->BindProp(this, FALSE);
 	}
 
 	if (m_pCtrlCont && m_bIsWindowless)
@@ -294,7 +294,7 @@ HRESULT COleControlSite::CreateControlCommon(CWnd* pWndCtrl, REFCLSID clsid,cons
 			//Newly created control gets the focus.
 			if (SUCCEEDED(hr))
 			{
-				m_pCtrlCont->m_pSiteFocus = this; 
+				m_pCtrlCont->m_pSiteFocus = this;
 			}
 		}
 		else
@@ -331,10 +331,10 @@ HRESULT COleControlSite::CreateControlCommon(CWnd* pWndCtrl, REFCLSID clsid,cons
 
 		// Initialize the control's Caption or Text property, if any
 		if (lpszWindowName != NULL)
-			SetWindowText(lpszWindowName);		
+			SetWindowText(lpszWindowName);
 
 		// Initialize styles
-		ModifyStyle(0, m_dwStyle | (dwStyle & (WS_DISABLED|WS_BORDER)), 0);		
+		ModifyStyle(0, m_dwStyle | (dwStyle & (WS_DISABLED|WS_BORDER)), 0);
 	}
 
 	return hr;
@@ -511,7 +511,7 @@ HRESULT COleControlSite::CreateOrLoad(const CControlCreationInfo&)
 HRESULT COleControlSite::CreateOrLoad(REFCLSID clsid, CFile* pFile,
 	BOOL bStorage, BSTR bstrLicKey)
 
-{	
+{
 #ifdef _DEBUG
 	OLECHAR wszClsid[40];
 	StringFromGUID2(clsid, wszClsid, 40);
@@ -1191,7 +1191,7 @@ DWORD COleControlSite::GetStyle() const
 		//Override Win32 with DISPID_ENABLED, if control implement it.
 		BOOL bEnabled = TRUE;
 		GetProperty(DISPID_ENABLED, VT_BOOL, &bEnabled);
-		dwStyle = bEnabled ? dwStyle & ~WS_DISABLED : dwStyle | WS_DISABLED;		
+		dwStyle = bEnabled ? dwStyle & ~WS_DISABLED : dwStyle | WS_DISABLED;
 	}
 	END_TRY
 
@@ -1450,7 +1450,7 @@ BOOL COleControlSite::EnableWindow(BOOL bEnable)
 	}
 	END_CATCH_ALL
 
-	return bResult;    
+	return bResult;
 }
 
 CWnd* COleControlSite::SetFocus()
@@ -1795,7 +1795,7 @@ STDMETHODIMP COleControlSite::XOleIPSite::
    {
 	  ASSERT( pThis->m_pWindowlessObject == NULL );
 
-	  pThis->m_pObject->QueryInterface(IID_IOleInPlaceObjectWindowless, 
+	  pThis->m_pObject->QueryInterface(IID_IOleInPlaceObjectWindowless,
 		 (void**)&pThis->m_pWindowlessObject);
 	  ASSERT( pThis->m_pWindowlessObject != NULL );
 	  pThis->m_bIsWindowless = TRUE;
@@ -2407,22 +2407,22 @@ STDMETHODIMP COleControlSite::XEventSink::Invoke(
 // CDataSourceControl
 
 
-CDataSourceControl::CDataSourceControl(COleControlSite *pClientSite) :
-	m_pClientSite(pClientSite),
-	m_pCursorMove(NULL),
-	m_pCursorUpdateARow(NULL),
-	m_pMetaRowData(NULL),
-	m_pVarData(NULL),
-	m_nColumns(0),
-	m_nBindings(0),
-	m_pColumnBindings(NULL),
-	m_pValues(NULL),
-	m_bUpdateInProgress(FALSE),
-	m_pDataSource(NULL),
-	m_pRowPosition(NULL),
-	m_pRowset(NULL),
-	m_pDynamicAccessor(NULL),
-	m_dwRowsetNotify(0)
+CDataSourceControl::CDataSourceControl(COleControlSite *pClientSite)
+	: m_pClientSite(pClientSite)
+	, m_pCursorMove(NULL)
+	, m_pCursorUpdateARow(NULL)
+	, m_nColumns(0)
+	, m_pMetaRowData(NULL)
+	, m_pVarData(NULL)
+	, m_nBindings(0)
+	, m_pColumnBindings(NULL)
+	, m_pValues(NULL)
+	, m_bUpdateInProgress(FALSE)
+	, m_pDataSource(NULL)
+	, m_pRowPosition(NULL)
+	, m_pRowset(NULL)
+	, m_pDynamicAccessor(NULL)
+	, m_dwRowsetNotify(0)
 {
 	ASSERT(pClientSite);
 }
@@ -2438,7 +2438,7 @@ CDataSourceControl::~CDataSourceControl()
 		{
 			LPCONNECTIONPOINT pConnPt = NULL;
 
-			if (SUCCEEDED(pConnPtCont->FindConnectionPoint(IID_IRowsetNotify, 
+			if (SUCCEEDED(pConnPtCont->FindConnectionPoint(IID_IRowsetNotify,
 					&pConnPt)) && pConnPt)
 			{
 				pConnPt->Unadvise(m_dwRowsetNotify);
@@ -2785,7 +2785,7 @@ BOOL CDataSourceControl::CopyColumnID(
 			{
 				return FALSE;
 			}
-			ULONG ulChars=static_cast<ULONG>(cch);		
+			ULONG ulChars=static_cast<ULONG>(cch);
 			pcidDst->lpdbsz = (LPDBSTR) ::ATL::AtlCoTaskMemCAlloc(static_cast<ULONG>(sizeof(DBCHAR)), ulChars);
 			if (!pcidDst->lpdbsz)
 				return FALSE;
@@ -3427,13 +3427,13 @@ HRESULT CDataSourceControl::UpdateCursor()
 /////////////////////////////////////////////////////////////////////////////
 // CDataBoundProperty Handles Databound Controls
 
-CDataBoundProperty::CDataBoundProperty(CDataBoundProperty* pLast, DISPID dispid, WORD ctlid) :
-	m_dispid(dispid),
-	m_ctlid(ctlid),
-	m_pClientSite(NULL),
-	m_pDSCSite(NULL),
-	m_bIsDirty(FALSE),
-	m_pNext(pLast)
+CDataBoundProperty::CDataBoundProperty(CDataBoundProperty* pLast, DISPID dispid, WORD ctlid)
+	: m_pClientSite(NULL)
+	, m_ctlid(ctlid)
+	, m_dispid(dispid)
+	, m_pDSCSite(NULL)
+	, m_bIsDirty(FALSE)
+	, m_pNext(pLast)
 {
 }
 

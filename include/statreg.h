@@ -95,7 +95,7 @@ public:
 };
 
 // Implementation helper
-class CExpansionVector : 
+class CExpansionVector :
 	public CSimpleMap<LPTSTR, LPOLESTR, CExpansionVectorEqualHelper >
 {
 public:
@@ -513,14 +513,16 @@ inline HRESULT CRegObject::RegisterFromResource(
 	}
 
 #ifdef _UNICODE
-	DWORD uniSize = ::MultiByteToWideChar(_AtlGetConversionACP(), 0, szRegA, dwSize, szReg, dwSize);
-	if (uniSize == 0)
 	{
-		hr = AtlHresultFromLastError();
-		goto ReturnHR;
+		DWORD uniSize = ::MultiByteToWideChar(_AtlGetConversionACP(), 0, szRegA, dwSize, szReg, dwSize);
+		if (uniSize == 0)
+		{
+			hr = AtlHresultFromLastError();
+			goto ReturnHR;
+		}
+		// Append a NULL at the end.
+		szReg[uniSize] = _T('\0');
 	}
-	// Append a NULL at the end.
-	szReg[uniSize] = _T('\0');
 #else
 	Checked::memcpy_s(szReg, dwSize, szRegA, dwSize);
 	// Append a NULL at the end.
@@ -752,32 +754,31 @@ inline BOOL CRegParser::VTFromRegType(
 	_In_z_ LPCTSTR szValueType,
 	_Out_ VARTYPE& vt)
 {
-	struct typemap
+	if (!lstrcmpi(szValueType, szStringVal))
 	{
-		LPCTSTR lpsz;
-		VARTYPE vt;
-	};
-#pragma warning (push)
-#pragma warning (disable : 4640)	// construction of local static object is not thread-safe
-
-	static const typemap map[] = {
-		{szStringVal, VT_BSTR},
-		{multiszStringVal, VT_BSTR | VT_BYREF},
-		{szDwordVal,  VT_UI4},
-		{szBinaryVal, VT_UI1}
-	};
-
-#pragma warning (pop)
-
-	for (int i=0;i<sizeof(map)/sizeof(typemap);i++)
-	{
-		if (!lstrcmpi(szValueType, map[i].lpsz))
-		{
-			vt = map[i].vt;
-			return TRUE;
-		}
+		vt = VT_BSTR;
+		return TRUE;
 	}
 
+	if (!lstrcmpi(szValueType, multiszStringVal))
+	{
+		vt = VT_BSTR | VT_BYREF;
+		return TRUE;
+	}
+
+	if (!lstrcmpi(szValueType, szDwordVal))
+	{
+		vt = VT_UI4;
+		return TRUE;
+	}
+
+	if (!lstrcmpi(szValueType, szBinaryVal))
+	{
+		vt = VT_UI1;
+		return TRUE;
+	}
+
+	vt = VT_EMPTY;
 	return FALSE;
 }
 

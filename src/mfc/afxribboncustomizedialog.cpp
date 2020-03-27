@@ -204,7 +204,7 @@ void CMFCRibbonCustomizePropertyPage::OnToolbarReset()
 	CString strPrompt;
 
 	CString strCaption;
-	strPrompt.Format(IDS_AFXBARRES_RESET_TOOLBAR_FMT, strCaption);
+	strPrompt.Format(IDS_AFXBARRES_RESET_TOOLBAR_FMT, strCaption.GetString());
 
 	strPrompt.Remove(_T('\''));
 	strPrompt.Remove(_T('\''));

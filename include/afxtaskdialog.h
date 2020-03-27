@@ -18,7 +18,7 @@
 #error CTaskDialog is not supported on Windows versions prior to Vista.
 #endif
 
-#include <commctrl.h>
+#include <CommCtrl.h>
 #include <afxtempl.h>
 
 class CTaskDialog : public CObject

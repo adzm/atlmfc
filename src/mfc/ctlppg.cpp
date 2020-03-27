@@ -111,6 +111,8 @@ void _ValidatePageDialog(CDialogTemplate& dt, CString& strPage,
 #ifdef _DEBUG
 	BOOL bEnable = AfxEnableMemoryTracking(FALSE);
 #endif
+
+#pragma warning(suppress: 4640) // this code is not thread safe even if the local static init is
 	static CPtrList _classList;
 	BOOL bMessageBox = FALSE;
 	CRuntimeClass* pClass = pPage->GetRuntimeClass();
@@ -185,23 +187,23 @@ void _ValidatePageDialog(CDialogTemplate& dt, CString& strPage,
 /////////////////////////////////////////////////////////////////////////////
 // COlePropertyPage::COlePropertyPage
 
-COlePropertyPage::COlePropertyPage(UINT idDlg, UINT idCaption) :
+COlePropertyPage::COlePropertyPage(UINT idDlg, UINT idCaption)
+	: m_bDirty(FALSE)
+	, m_idDlg(idDlg)
+	, m_idCaption(idCaption)
+	, m_dwHelpContext(0)
+	, m_pPageSite(NULL)
+	, m_ppDisp(NULL)
+	, m_pAdvisors(NULL)
+	, m_bPropsChanged(FALSE)
+	, m_nObjects(0)
+	, m_bInitializing(TRUE)
+	, m_nControls(0)
+	, m_pStatus(NULL)
+	, m_hDialog(NULL)
 #ifdef _DEBUG
-	m_bNonStandardSize(FALSE),
+	, m_bNonStandardSize(FALSE)
 #endif
-	m_bDirty(FALSE),
-	m_idCaption(idCaption),
-	m_idDlg(idDlg),
-	m_pPageSite(NULL),
-	m_ppDisp(NULL),
-	m_pAdvisors(NULL),
-	m_bPropsChanged(FALSE),
-	m_nObjects(0),
-	m_bInitializing(TRUE),
-	m_nControls(0),
-	m_pStatus(NULL),
-	m_hDialog(NULL),
-	m_dwHelpContext(0)
 {
 	// m_lpDialogTemplate is needed later by CWnd::ExecuteDlgInit
 	m_lpszTemplateName = MAKEINTRESOURCE(m_idDlg);
@@ -1152,7 +1154,10 @@ DEFINE_GET_SET_PROP( long, 0L, long, VT_I4 );
 DEFINE_GET_SET_PROP( DWORD, 0UL, DWORD, VT_I4 );
 DEFINE_GET_SET_PROP( float, 0.0, float, VT_R4 );
 DEFINE_GET_SET_PROP( double, 0.0, double, VT_R8 );
+#pragma warning(push)
+#pragma warning(disable: 4640) // Ole is single threaded
 DEFINE_GET_SET_PROP( CString, "", LPCTSTR, VT_BSTR );
+#pragma warning(pop)
 
 BOOL COlePropertyPage::SetPropCheck(LPCTSTR pszPropName, int Value)
 {
@@ -1191,7 +1196,7 @@ BOOL COlePropertyPage::GetPropCheck(LPCTSTR pszPropName, int* pValue)
 	COleDispatchDriver PropDispDriver;
 	BOOL bSuccess = FALSE;
 
-	
+
 	const CStringW strPropName(pszPropName);
 	LPCOLESTR lpOleStr = pszPropName ? strPropName.GetString() : NULL;
 
@@ -1236,7 +1241,7 @@ BOOL COlePropertyPage::SetPropRadio(LPCTSTR pszPropName, int Value)
 {
 	COleDispatchDriver PropDispDriver;
 	BOOL bSuccess = FALSE;
-	
+
 	const CStringW strPropName(pszPropName);
 	LPCOLESTR lpOleStr = pszPropName ? strPropName.GetString() : NULL;
 

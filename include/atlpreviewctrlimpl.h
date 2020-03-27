@@ -69,9 +69,9 @@ public:
 		UNREFERENCED_PARAMETER(lParam);
 
 		PAINTSTRUCT ps;
-		BeginPaint(&ps);
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::BeginPaint(&ps);
 		DoPaint(ps.hdc);
-		EndPaint(&ps);
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::EndPaint(&ps);
 
 		bHandled = TRUE;
 
@@ -88,33 +88,33 @@ public:
 		_In_ const RECT* prc)
 	{
 		_U_RECT rect((LPRECT)prc);
-		CWindowImpl<CAtlPreviewCtrlImpl>::Create(hWndParent, rect);
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::Create(hWndParent, rect);
 		return TRUE;
 	}
 	/// <summary>
 	/// Called by a Rich Preview handler when it needs to destroy this control.</summary>
 	virtual void Destroy()
 	{
-		CWindowImpl<CAtlPreviewCtrlImpl>::DestroyWindow();
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::DestroyWindow();
 	}
 	/// <summary>
 	/// Sets a new parent for this control. </summary>
 	/// <param name="hWndParent">A handle to the new parent window.</param>
 	virtual void SetHost(_In_ HWND hWndParent)
 	{
-		CWindowImpl<CAtlPreviewCtrlImpl>::SetParent(hWndParent);
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::SetParent(hWndParent);
 	}
 	/// <summary>
 	/// Sets input focus to this control. </summary>
 	virtual void Focus()
 	{
-		CWindowImpl<CAtlPreviewCtrlImpl>::SetFocus();
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::SetFocus();
 	}
 	/// <summary>
 	/// Tells this control to redraw. </summary>
 	virtual void Redraw()
 	{
-		CWindowImpl<CAtlPreviewCtrlImpl>::RedrawWindow();
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::RedrawWindow();
 	}
 	/// <summary>
 	/// Sets a new bounding rectangle for this control. </summary>
@@ -130,7 +130,7 @@ public:
 		{
 			dwFlags |= SWP_NOREDRAW;
 		}
-		SetWindowPos(NULL, prc, dwFlags);
+		this->CWindowImpl<CAtlPreviewCtrlImpl>::SetWindowPos(NULL, prc, dwFlags);
 	}
 	/// <summary>
 	/// Called by a Rich Preview handler when it needs to set visuals of rich preview content.</summary>

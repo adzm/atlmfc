@@ -57,7 +57,7 @@
 #endif
 
 #ifndef __shobjidl_h__
-	#include <shobjidl.h>    // for IPreviewHandler, IPreviewHandlerVisuals
+	#include <ShObjIdl.h>    // for IPreviewHandler, IPreviewHandlerVisuals
 #endif
 
 #ifndef __IThumbnailProvider_INTERFACE_DEFINED__
@@ -89,7 +89,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #ifdef _WINSOCKAPI_
 	#error MFC requires use of Winsock2.h
 #endif
-	#include <winsock2.h>
+	#include <WinSock2.h>
 #endif
 
 #ifndef _WS2IPDEF_
@@ -97,7 +97,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #endif
 
 #ifndef _WINDNS_INCLUDED_
-	#include <windns.h>
+	#include <WinDNS.h>
 #endif
 
 #ifndef IPV6STRICT
@@ -122,7 +122,7 @@ AFX_INLINE short APIENTRY GetFileTitle(LPCTSTR lpszFile, LPTSTR lpszTitle, WORD 
 #undef CopyRgn
 #endif
 
-#include <htmlhelp.h>
+#include <HtmlHelp.h>
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)
@@ -251,7 +251,7 @@ CArchive& AFXAPI operator>>(CArchive& ar, SIZE& size);
 CArchive& AFXAPI operator>>(CArchive& ar, POINT& point);
 CArchive& AFXAPI operator>>(CArchive& ar, RECT& rect);
 
-// macro to be used in ATL search/organize/preview/thumbnail handlers with MFC document support 
+// macro to be used in ATL search/organize/preview/thumbnail handlers with MFC document support
 #define DECLARE_DOCUMENT(classDocument)\
 protected:\
 	virtual IDocument* CreateDocument()\
@@ -784,7 +784,7 @@ public:
 	BOOL Ellipse(LPCRECT lpRect);
 	BOOL Pie(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
 	BOOL Pie(LPCRECT lpRect, POINT ptStart, POINT ptEnd);
-	BOOL Polygon(const POINT* lpPoints, int nCount);	
+	BOOL Polygon(const POINT* lpPoints, int nCount);
 	BOOL PolyPolygon(const POINT* lpPoints, const INT* lpPolyCounts, int nCount);
 	BOOL Rectangle(int x1, int y1, int x2, int y2);
 	BOOL Rectangle(LPCRECT lpRect);
@@ -810,13 +810,13 @@ public:
 		int nWidth, int nHeight, CBitmap& maskBitmap, int xMask, int yMask);
 	BOOL SetPixelV(int x, int y, COLORREF crColor);
 	BOOL SetPixelV(POINT point, COLORREF crColor);
-   BOOL GradientFill(TRIVERTEX* pVertices, ULONG nVertices, 
+   BOOL GradientFill(TRIVERTEX* pVertices, ULONG nVertices,
 	  void* pMesh, ULONG nMeshElements, DWORD dwMode);
    BOOL TransparentBlt(int xDest, int yDest, int nDestWidth, int nDestHeight,
-	  CDC* pSrcDC, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight, 
+	  CDC* pSrcDC, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight,
 	  UINT clrTransparent);
    BOOL AlphaBlend(int xDest, int yDest, int nDestWidth, int nDestHeight,
-	  CDC* pSrcDC, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight, 
+	  CDC* pSrcDC, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight,
 	  BLENDFUNCTION blend);
 
 // Text Functions
@@ -1248,6 +1248,8 @@ protected: \
 	{																		\
 		typedef theClass< type_name > ThisClass;							\
 		typedef baseClass TheBaseClass;										\
+		__pragma(warning(push))												\
+		__pragma(warning(disable: 4640)) /* message maps can only be called by single threaded message pump */ \
 		static const AFX_MSGMAP_ENTRY _messageEntries[] =					\
 		{
 
@@ -1259,12 +1261,15 @@ protected: \
 	{ \
 		typedef theClass ThisClass;						   \
 		typedef baseClass TheBaseClass;					   \
+		__pragma(warning(push))							   \
+		__pragma(warning(disable: 4640)) /* message maps can only be called by single threaded message pump */ \
 		static const AFX_MSGMAP_ENTRY _messageEntries[] =  \
 		{
 
 #define END_MESSAGE_MAP() \
 		{0, 0, 0, 0, AfxSig_end, (AFX_PMSG)0 } \
 	}; \
+		__pragma(warning(pop))	\
 		static const AFX_MSGMAP messageMap = \
 		{ &TheBaseClass::GetThisMessageMap, &_messageEntries[0] }; \
 		return &messageMap; \
@@ -1289,8 +1294,8 @@ public:
 	CWnd* m_pDlgWnd;           // container usually a dialog
 
 // Operations (for implementors of DDX and DDV procs)
-	HWND PrepareCtrl(int nIDC);     
-	HWND PrepareEditCtrl(int nIDC); 
+	HWND PrepareCtrl(int nIDC);
+	HWND PrepareEditCtrl(int nIDC);
 	void Fail();                    // will throw exception
 
 	CDataExchange(CWnd* pDlgWnd, BOOL bSaveAndValidate);
@@ -1358,9 +1363,9 @@ typedef tagEXCEPINFO EXCEPINFO;
 
 /*============================================================================*/
 // CCmdTarget
-#ifdef _M_ARM64  
+#ifdef _M_ARM64
 typedef struct _ARM64_PARAMS ARM64_PARAMS, *PARM64_PARAMS;
-#endif 
+#endif
 // private structures
 struct AFX_CMDHANDLERINFO;  // info about where the command is handled
 struct AFX_EVENT;           // info about an event
@@ -1699,9 +1704,9 @@ protected: \
 /*============================================================================*/
 // CCmdTarget proper
 
-#ifdef _ARM64_  
+#ifdef _ARM64_
 typedef struct _ARM64_PARAMS ARM64_PARAMS, *PARM64_PARAMS;
-#endif 
+#endif
 
 class COccManager;      // forward reference (see ..\src\occimpl.h)
 
@@ -2025,63 +2030,63 @@ public:
 
 	/// <summary>
 	/// Determines whether the gesture zoom feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsZoomEnabled() const { return (Get(GID_ZOOM) & GC_ZOOM) == GC_ZOOM; }
 
 	/// <summary>
 	/// Determines whether the gesture rotate feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsRotateEnabled() const { return (Get(GID_ROTATE) & GC_ROTATE) == GC_ROTATE; }
 
 	/// <summary>
 	/// Determines whether the gesture 2 finger tap feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsTwoFingerTapEnabled() const { return (Get(GID_TWOFINGERTAP) & GC_TWOFINGERTAP) == GC_TWOFINGERTAP; }
 
 #if defined(GID_PRESSANDTAP) && defined(GC_PRESSANDTAP)
 	/// <summary>
 	/// Determines whether the gesture "press and tap" feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsPressAndTapEnabled() const { return (Get(GID_PRESSANDTAP) & GC_PRESSANDTAP) == GC_PRESSANDTAP; }
 #endif
 
 	/// <summary>
 	/// Determines whether the gesture pan feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsPanAllEnabled() const { return (Get(GID_PAN) & GC_PAN) == GC_PAN; }
 
 	/// <summary>
 	/// Determines whether the gesture pan vertical feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsPanVerticalEnabled() const { return (Get(GID_PAN) & GC_PAN_WITH_SINGLE_FINGER_VERTICALLY) == GC_PAN_WITH_SINGLE_FINGER_VERTICALLY; }
 
 	/// <summary>
 	/// Determines whether the gesture pan horizontal feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsPanHorizontalEnabled() const { return (Get(GID_PAN) & GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY) == GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY; }
 
 	/// <summary>
 	/// Determines whether the gesture pan with gutter feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsPanWithGutterEnabled() const { return (Get(GID_PAN) & GC_PAN_WITH_GUTTER) == GC_PAN_WITH_GUTTER; }
 
 	/// <summary>
 	/// Determines whether the gesture pan with inertia feature is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsPanWithInertiaEnabled() const { return (Get(GID_PAN) & GC_PAN_WITH_INERTIA) == GC_PAN_WITH_INERTIA; }
 
 	/// <summary>
 	/// Modify specific gesture touch paramaters</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if succeeds; otherwise FALSE.</returns>
 	/// <param name="dwID">Gesture feature ID. Can be one of the following: GID_ZOOM, GID_PAN, GID_ROTATE, GID_TWOFINGERTAP or GID_PRESSANDTAP</param>
 	/// <param name="dwWant">Gesture features to enable. Can be 0 or GC_ALLGESTURES for all features except GID_PAN and GC_PAN or combination of the following flags: GC_PAN_WITH_SINGLE_FINGER_VERTICALLY, GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY, GC_PAN_WITH_GUTTER and GC_PAN_WITH_INTERTIA for gesture pan</param>
@@ -2089,7 +2094,7 @@ public:
 
 	/// <summary>
 	/// Obtains a specific gesture touch paramaters</summary>
-	/// <returns> 
+	/// <returns>
 	/// Gesture features. Can be 0 or GC_ALLGESTURES for all features except GID_PAN and GC_PAN or combination of the following flags: GC_PAN_WITH_SINGLE_FINGER_VERTICALLY, GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY, GC_PAN_WITH_GUTTER and GC_PAN_WITH_INTERTIA for gesture pan</returns>
 	/// <param name="dwID">Gesture feature ID. Can be one of the following: GID_ZOOM, GID_PAN, GID_ROTATE, GID_TWOFINGERTAP or GID_PRESSANDTAP</param>
 	/// <param name="bWant">TRUE - the method returns the enabled features; FALSE - disabled</param>
@@ -2397,7 +2402,7 @@ public:
 // Layered Window
 
 	BOOL SetLayeredWindowAttributes(COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
-	BOOL UpdateLayeredWindow(CDC* pDCDst, POINT *pptDst, SIZE *psize, 
+	BOOL UpdateLayeredWindow(CDC* pDCDst, POINT *pptDst, SIZE *psize,
 		CDC* pDCSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
 	BOOL GetLayeredWindowAttributes(COLORREF *pcrKey, BYTE *pbAlpha, DWORD *pdwFlags) const;
 
@@ -2603,19 +2608,19 @@ public :
 	// Windows 7 taskbar Tabs support
 
 	/// <summary>
-	/// Called by the framework when it needs to obtain a bitmap to be displayed on Windows 7 tab thumbnail, 
+	/// Called by the framework when it needs to obtain a bitmap to be displayed on Windows 7 tab thumbnail,
 	/// or on the client for application peek. </summary>
 	/// <remarks>
 	/// Override this method in a derived class and draw on the specified device context in order to customize thumbnail and peek.
-	/// If bThumbnail is TRUE, szRequiredThumbnailSize can be ignored. In this case you should be aware 
-	/// that you draw full sized bitmap (e.g. a bitmap that cover the whole client area). The device context (dc) comes with selected 32 bits bitmap. 
+	/// If bThumbnail is TRUE, szRequiredThumbnailSize can be ignored. In this case you should be aware
+	/// that you draw full sized bitmap (e.g. a bitmap that cover the whole client area). The device context (dc) comes with selected 32 bits bitmap.
 	/// The default implementation sends WM_PRINT to this window with PRF_CLIENT, PRF_CHILDREN and PRF_NONCLIENT flags.</remarks>
 	/// <param name="dc"> Specifies the device context.</param>
 	/// <param name="rect"> Specifies the bounding rectangle of area to render.</param>
 	/// <param name="szRequiredThumbnailSize"> Specifies the size of target thumbnail. Should be ignored if bIsThumbnail is FALSE.</param>
 	/// <param name="bIsThumbnail"> Specifies whether this method is called for iconic thumbnail or live preview (peek).</param>
 	/// <param name="bAlphaChannelSet"> Output parameter. Set it to TRUE if your implementation initializes alpha channel of a bitmap
-	/// selected in dc.</param> 
+	/// selected in dc.</param>
 	virtual void OnDrawIconicThumbnailOrLivePreview(CDC& dc, CRect rect, CSize szRequiredThumbnailSize, BOOL bIsThumbnail, BOOL& bAlphaChannelSet);
 
 protected :
@@ -2631,11 +2636,11 @@ protected:
 	DECLARE_INTERFACE_MAP()
 
 	class XAccessible //: public IAccessible
-	{	
+	{
 	public:
-		virtual ULONG __stdcall AddRef(); 
-		virtual ULONG __stdcall Release(); 
-		virtual HRESULT __stdcall QueryInterface(REFIID iid, LPVOID* ppvObj); 
+		virtual ULONG __stdcall AddRef();
+		virtual ULONG __stdcall Release();
+		virtual HRESULT __stdcall QueryInterface(REFIID iid, LPVOID* ppvObj);
 		virtual HRESULT __stdcall Invoke(DISPID, REFIID, LCID, WORD, DISPPARAMS *, VARIANT *, EXCEPINFO *, UINT *);
 		virtual HRESULT __stdcall GetIDsOfNames(REFIID, LPOLESTR *, UINT, LCID, DISPID *);
 		virtual HRESULT __stdcall GetTypeInfoCount(unsigned int *);
@@ -2662,14 +2667,14 @@ protected:
 		virtual HRESULT __stdcall put_accName(VARIANT varChild, BSTR szName);
 		virtual HRESULT __stdcall put_accValue(VARIANT varChild, BSTR szValue);
 	} m_xAccessible;
-	friend class XAccessible; 
+	friend class XAccessible;
 
 	class XAccessibleServer //: public IAccessibleServer
-	{	
+	{
 	public:
-		virtual ULONG __stdcall AddRef(); 
-		virtual ULONG __stdcall Release(); 
-		virtual HRESULT __stdcall QueryInterface(REFIID iid, LPVOID* ppvObj); 
+		virtual ULONG __stdcall AddRef();
+		virtual ULONG __stdcall Release();
+		virtual HRESULT __stdcall QueryInterface(REFIID iid, LPVOID* ppvObj);
 		virtual HRESULT __stdcall SetProxy(IAccessibleProxy *pProxy);
 		virtual HRESULT __stdcall GetHWND(HWND *phWnd);
 		virtual HRESULT __stdcall GetEnumVariant(IEnumVARIANT **ppEnumVariant);
@@ -2929,7 +2934,7 @@ public:
 
 	/// <summary>
 	/// Register/Unregister window Windows touch support</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if succeeds; otherwise FALSE.</returns>
 	/// <param name="bRegister">TRUE - register Windows touch support; FALSE - otherwise.</param>
 	/// <param name="ulFlags">A set of bit flags that specify optional modifications. This field may contain 0 or one of the following values: TWF_FINETOUCH; TWF_WANTPALM</param>
@@ -2937,7 +2942,7 @@ public:
 
 	/// <summary>
 	/// Specifies whether CWnd has touch support</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if CWnd has touch support; otherwise FALSE.</returns>
 	BOOL IsTouchWindow() const;
 
@@ -2945,21 +2950,21 @@ public:
 #if (NTDDI_VERSION >= NTDDI_WIN7)
 	/// <summary>
 	/// Set gesture touch parameters</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if succeeds; otherwise FALSE.</returns>
 	/// <param name="pConfig">Pointer to CGestureConfig. Cannot be NULL.</param>
 	BOOL SetGestureConfig(CGestureConfig* pConfig);
 
 	/// <summary>
 	/// Get gesture touch parameters</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if succeeds; otherwise FALSE.</returns>
 	/// <param name="pConfig">Pointer to CGestureConfig. Cannot be NULL.</param>
 	BOOL GetGestureConfig(CGestureConfig* pConfig);
 
 	/// <summary>
 	/// Returns the current gesture information (PGESTUREINFO)</summary>
-	/// <returns> 
+	/// <returns>
 	/// Pointer to the current gesture info.</returns>
 	const PGESTUREINFO GetCurrentGestureInfo() const
 	{
@@ -2978,7 +2983,7 @@ public:
 	/// This function returns TRUE, if layout management is enabled for a window; otherwise FALSE.</summary>
 	/// <remarks>
 	/// Call EnableDynamicLayout in order to enable or disable layout management for a window.</remarks>
-	/// <returns> 
+	/// <returns>
 	/// TRUE, if layout management is enabled for a window; otherwise FALSE.</returns>
 	BOOL IsDynamicLayoutEnabled() const { return m_pDynamicLayout != NULL; }
 
@@ -2986,7 +2991,7 @@ public:
 	/// Call this function to retrieve a pointer to layout manager.</summary>
 	/// <remarks>
 	/// Call EnableDynamicLayout in order to enable or disable layout management for a window.</remarks>
-	/// <returns> 
+	/// <returns>
 	/// Returns a pointer to the window layout manager or NULL if layout wasn't enabled.</returns>
 	CMFCDynamicLayout* GetDynamicLayout() { return m_pDynamicLayout; }
 
@@ -3010,10 +3015,10 @@ protected:
 
 	// for touch:
 	BOOL m_bIsTouchWindowRegistered;
-	
+
 	/// <summary>
 	/// Process inputs from Windows touch</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if application processes Windows touch inputs; otherwise FALSE.</returns>
 	/// <param name="nInputsCount">total number of Windows touch inputs.</param>
 	/// <param name="pInputs">array of TOUCHINPUT.</param>
@@ -3021,7 +3026,7 @@ protected:
 
 	/// <summary>
 	/// Process single input from Windows touch</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if application processes Windows touch input; otherwise FALSE.</returns>
 	/// <param name="pt">point where screen has been tocuhed (in the client coordinates).</param>
 	/// <param name="nInputNumber">number of touch input.</param>
@@ -3031,7 +3036,7 @@ protected:
 
 	/// <summary>
 	/// The methods is called when the system asks a window which system gestures it would like to receive</summary>
-	/// <returns> 
+	/// <returns>
 	/// A value indicating which system gestures the window would like to receive (TABLET_* flags, see WM_TABLET_QUERYSYSTEMGESTURESTATUS message).</returns>
 	/// <param name="ptTouch">point where screen has been tocuhed (in the client coordinates).</param>
 	virtual ULONG GetGestureStatus(CPoint ptTouch);
@@ -3044,7 +3049,7 @@ protected:
 
 	/// <summary>
 	/// The method is called upon gesture zoom event</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if application processes this event; otherwise FALSE.</returns>
 	/// <param name="ptCenter">Zoom center point. In client coordinates</param>
 	/// <param name="lDelta">The distance from the center point. In pixels</param>
@@ -3052,7 +3057,7 @@ protected:
 
 	/// <summary>
 	/// The method is called upon gesture pan event</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if application processes this event; otherwise FALSE.</returns>
 	/// <param name="ptFrom">Pan starting point. In client coordinates</param>
 	/// <param name="ptTo">Pan current point. In client coordinates</param>
@@ -3060,7 +3065,7 @@ protected:
 
 	/// <summary>
 	/// The method is called upon gesture rotate event</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if application processes this event; otherwise FALSE.</returns>
 	/// <param name="ptCenter">Rotation center point. In client coordinates</param>
 	/// <param name="dblAngle">Rotation angle. In radians</param>
@@ -3068,14 +3073,14 @@ protected:
 
 	/// <summary>
 	/// The method is called upon gesture 2 finger tap event</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if application processes this event; otherwise FALSE.</returns>
 	/// <param name="ptCenter">Center point between 2 fingers. In client coordinates</param>
 	virtual BOOL OnGestureTwoFingerTap(CPoint ptCenter);
 
 	/// <summary>
 	/// The method is called upon gesture press and tap event</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if application processes this event; otherwise FALSE.</returns>
 	/// <param name="ptPress">"Pressed" point. In client coordinates</param>
 	/// <param name="lDelta">The distance from the "pressed" point. In pixels</param>
@@ -3085,7 +3090,7 @@ protected:
 	CMFCDynamicLayout* m_pDynamicLayout;
 
 	/// <summary>
-	/// The method is called to adjust positions of child controls. 
+	/// The method is called to adjust positions of child controls.
 	/// It recalculates positions of child controls if layout management is enabled for a window.</summary>
 	virtual void ResizeDynamicLayout();
 	void InitDynamicLayout();
@@ -3150,7 +3155,7 @@ protected:
 	friend class COleControlContainer;
 	BOOL InitControlContainer(BOOL bCreateFromResource=FALSE);
 	virtual BOOL CreateControlContainer(COleControlContainer** ppContainer);
-	virtual BOOL CreateControlSite(COleControlContainer* pContainer, 
+	virtual BOOL CreateControlSite(COleControlContainer* pContainer,
 		COleControlSite** ppSite, UINT nID, REFCLSID clsid);
 	virtual BOOL SetOccDialogInfo(struct _AFX_OCC_DIALOG_INFO* pOccDialogInfo);
 	virtual _AFX_OCC_DIALOG_INFO* GetOccDialogInfo();
@@ -3194,13 +3199,13 @@ protected:
 	// cch      - size of the buffer in TCHAR to be pass to the windows message, uMsg
 	// cchBegin - initial size to allocate
 	// cchEnd   - maximum size to allocate
-	// uMsg     - window message 
+	// uMsg     - window message
 	// lParam   - the LPARAM of the message.  This is pass by reference because it could potentially be alias of pszText/cch for some messages.
 	// wParam   - the WPARAM of the message.  This is pass by reference because it could potentially be alias of pszText/cch for some messages.
 	// strOut   - the CString containing the received text
 
 	template <class TReturnType, class TCchType >
-	TReturnType EnlargeBufferGetText(_In_ TReturnType errCode, LPTSTR& pszText, TCchType& cch, TCchType cchBegin, TCchType cchEnd, UINT uMsg, WPARAM& wParam, LPARAM& lParam, CString& strOut) const throw(...)
+	TReturnType EnlargeBufferGetText(_In_ TReturnType errCode, LPTSTR& pszText, TCchType& cch, TCchType cchBegin, TCchType cchEnd, UINT uMsg, WPARAM& wParam, LPARAM& lParam, CString& strOut) const
 	{
 		ENSURE(::IsWindow(m_hWnd));
 		ENSURE(cchBegin < cchEnd);
@@ -3208,7 +3213,7 @@ protected:
 		TReturnType retCode = errCode;
 		strOut = CString();
 		cch = cchBegin;
-		do 
+		do
 		{
 			pszText = strOut.GetBufferSetLength(cch);
 			retCode = static_cast<TReturnType>(this->SendMessage(uMsg, wParam, lParam));
@@ -3234,13 +3239,13 @@ protected:
 
 
 	template <class TReturnType>
-	inline TReturnType EnlargeBufferGetText(TReturnType errCode, LPTSTR& pszText, int& pcch, UINT uMsg, WPARAM& wParam, LPARAM& lParam, CString& strOut) const throw(...)
+	inline TReturnType EnlargeBufferGetText(TReturnType errCode, LPTSTR& pszText, int& pcch, UINT uMsg, WPARAM& wParam, LPARAM& lParam, CString& strOut) const
 	{
 		return EnlargeBufferGetText<TReturnType, int>(errCode, pszText, pcch, 256, INT_MAX, uMsg, wParam, lParam, strOut);
 	}
 
 	template <class TReturnType>
-	inline TReturnType EnlargeBufferGetText(TReturnType errCode, LPTSTR& pszText, UINT& pcch, UINT uMsg, WPARAM& wParam, LPARAM& lParam, CString& strOut) const throw(...)
+	inline TReturnType EnlargeBufferGetText(TReturnType errCode, LPTSTR& pszText, UINT& pcch, UINT uMsg, WPARAM& wParam, LPARAM& lParam, CString& strOut) const
 	{
 		// using INT_MAX instead of UINT_MAX here because CString has a INT_MAX limit
 		return EnlargeBufferGetText<TReturnType, UINT>(errCode, pszText, pcch, 256, INT_MAX, uMsg, wParam, lParam, strOut);
@@ -3261,19 +3266,19 @@ public:
 
 	/// <summary>
 	/// Determines whether the D2D support is enabled</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if the feature is enabled; otherwise FALSE.</returns>
 	BOOL IsD2DSupportEnabled();
 
 	/// <summary>
 	/// Get HWND render target associated with this window</summary>
-	/// <returns> 
+	/// <returns>
 	/// Pointer to the render target or NULL.</returns>
 	CHwndRenderTarget* GetRenderTarget();
 
 	/// <summary>
 	/// Get DC render target associated with this window</summary>
-	/// <returns> 
+	/// <returns>
 	/// Pointer to the render target or NULL.</returns>
 	CDCRenderTarget* GetDCRenderTarget();
 
@@ -3666,7 +3671,7 @@ protected:
 	void PreDeleteItem(LPDELETEITEMSTRUCT lpDeleteItemStruct);
 	bool PreDrawItemThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int nCheck, int cyItem);
 	void PreDrawItemNonThemed(CDC* pDC, DRAWITEMSTRUCT &drawItem, int nCheck, int cyItem);
-	void PreDrawItemHelper(LPDRAWITEMSTRUCT lpDrawItemStruct);	
+	void PreDrawItemHelper(LPDRAWITEMSTRUCT lpDrawItemStruct);
 
 	virtual BOOL OnChildNotify(UINT, WPARAM, LPARAM, LRESULT*);
 
@@ -3932,7 +3937,7 @@ public:
 #define AFX_PREVIEW_VIEW_ID 1
 
 /// <summary>
-/// This class implements a window that is placed on a host window provided by the Shell 
+/// This class implements a window that is placed on a host window provided by the Shell
 /// for Rich Preview. </summary>
 class CMFCPreviewCtrlImpl : public CWnd
 {
@@ -3947,7 +3952,7 @@ public:
 	virtual ~CMFCPreviewCtrlImpl();
 
 	/// <summary>
-	/// Called by preview handler to create a relationship between document implementation and 
+	/// Called by preview handler to create a relationship between document implementation and
 	/// preview control.</summary>
 	/// <param name="pDocument" A pointer to document implementation.</param>
 	void SetDocument(ATL::IDocument* pDocument)
@@ -3963,49 +3968,49 @@ public:
 		return m_pDocument;
 	}
 
-	/// <summary> 
+	/// <summary>
 	/// Called by a Rich Preview handler to create the Windows window. </summary>
 	/// <returns> TRUE if creation succeeded; otherwise FALSE.</returns>
-	/// <param name="hWndParent"> A handle to the host window supplied by the Shell for Rich Preview. </param> 
-	/// <param name="prc"> Specifies initial size and position of the window. </param> 
+	/// <param name="hWndParent"> A handle to the host window supplied by the Shell for Rich Preview. </param>
+	/// <param name="prc"> Specifies initial size and position of the window. </param>
 	virtual BOOL Create(HWND hWndParent, const RECT* prc);
 
-	/// <summary> 
+	/// <summary>
 	/// Called by a Rich Preview handler to create the Windows window. </summary>
 	/// <returns>TRUE if creation succeeded; otherwise FALSE.</returns>
-	/// <param name="hWndParent"> A handle to the host window supplied by the Shell for Rich Preview. </param> 
-	/// <param name="prc"> Specifies initial size and position of the window. </param> 
-	/// <param name="pContext"> A pointer to a creation context.</param> 
+	/// <param name="hWndParent"> A handle to the host window supplied by the Shell for Rich Preview. </param>
+	/// <param name="prc"> Specifies initial size and position of the window. </param>
+	/// <param name="pContext"> A pointer to a creation context.</param>
 	virtual BOOL Create(HWND hWndParent, const RECT* prc, CCreateContext* pContext);
 
-	/// <summary> 
+	/// <summary>
 	/// Called by a Rich Preview handler when it needs to set visuals of rich preview content.</summary>
-	/// <param name="clrBack"> Background color of preview window. </param> 
-	/// <param name="clrText"> Text color of preview window. </param> 
-	/// <param name="plf"> Font used to display texts in preview window. </param> 
+	/// <param name="clrBack"> Background color of preview window. </param>
+	/// <param name="clrText"> Text color of preview window. </param>
+	/// <param name="plf"> Font used to display texts in preview window. </param>
 	virtual void SetPreviewVisuals(COLORREF clrBack, COLORREF clrText, const LOGFONTW *plf);
 
-	/// <summary> 
+	/// <summary>
 	/// Called by a Rich Preview handler when it needs to destroy this control.</summary>
 	virtual void Destroy();
 
-	/// <summary> 
+	/// <summary>
 	/// Sets a new parent for this control. </summary>
 	/// <param name="hWndParent">A handle to the new parent window.</param>
 	virtual void SetHost(HWND hWndParent);
 
-	/// <summary> 
+	/// <summary>
 	/// Tells this control to redraw. </summary>
 	virtual void Redraw();
 
-	/// <summary> 
+	/// <summary>
 	/// Sets a new bounding rectangle for this control. </summary>
 	/// <remarks> Usually new bounding rectangle is set when the host control is resized.</remarks>
 	/// <param name="prc">Specifies the new size and position of preview control.</param>
 	/// <param name="bRedraw">Specifies whether the control should be redrawn.</param>
 	virtual void SetRect(const RECT* prc, BOOL bRedraw);
 
-	/// <summary> 
+	/// <summary>
 	/// Sets input focus to this control. </summary>
 	virtual void Focus();
 
@@ -4023,11 +4028,11 @@ protected:
 	virtual void DoPaint(CPaintDC* pDC);
 
 protected:
-	/// <summary> Background color of preview window. </summary> 
+	/// <summary> Background color of preview window. </summary>
 	COLORREF m_clrBackColor;
-	/// <summary> Text color of preview window. </summary> 
+	/// <summary> Text color of preview window. </summary>
 	COLORREF m_clrTextColor;
-	/// <summary> Font used to display texts in preview window. </summary> 
+	/// <summary> Font used to display texts in preview window. </summary>
 	CFont    m_font;
 	/// <summary> A pointer to a document whose content is previewed in the control.</summary>
 	ATL::IDocument* m_pDocument;
@@ -4136,7 +4141,7 @@ public:
 	/// <param name="nProgressPos">Specifies the position to set. It must be within range set by SetProgressBarRange.</param>
 	void SetProgressBarPosition(int nProgressPos);
 	/// <summary>Sets the type and state of the progress indicator displayed on a taskbar button.</summary>
-	/// <param name="tbpFlags">Flags that control the current state of the progress button. Specify only one of the following flags; all states are mutually exclusive of all others: 
+	/// <param name="tbpFlags">Flags that control the current state of the progress button. Specify only one of the following flags; all states are mutually exclusive of all others:
 	/// TBPF_NOPROGRESS, TBPF_INDETERMINATE, TBPF_NORMAL, TBPF_ERROR, TBPF_PAUSED.</param>
 	void SetProgressBarState(TBPFLAG tbpFlags);
 	/// <summary>
@@ -4148,8 +4153,8 @@ public:
 	/// <summary>
 	/// Applies an overlay to a taskbar button to indicate application status or a notification to the user.</summary>
 	/// <returns> TRUE if successful; FALSE if OS version is less than Windows 7 or if an error occurs setting the icon.</returns>
-	/// <param name="hIcon"> The handle of an icon to use as the overlay. This should be a small icon, measuring 16x16 pixels at 96 dots per inch (dpi). 
-	/// If an overlay icon is already applied to the taskbar button, that existing overlay is replaced. 
+	/// <param name="hIcon"> The handle of an icon to use as the overlay. This should be a small icon, measuring 16x16 pixels at 96 dots per inch (dpi).
+	/// If an overlay icon is already applied to the taskbar button, that existing overlay is replaced.
 	/// This value can be NULL. How a NULL value is handled depends on whether the taskbar button represents a single window or a group of windows.
 	/// It is the responsibility of the calling application to free hIcon when it is no longer needed.</param>
 	/// <param name="lpcszDescr">A pointer to a string that provides an alt text version of the information conveyed by the overlay, for accessibility purposes.</param>
@@ -4474,7 +4479,7 @@ public:
 	virtual void ActivateFrame(int nCmdShow = -1);
 	virtual void OnUpdateFrameMenu(BOOL bActive, CWnd* pActivateWnd,
 		HMENU hMenuAlt);
-	
+
 	virtual BOOL IsTabbedMDIChild() { return FALSE; }
 
 	BOOL m_bPseudoInactive;     // TRUE if window is MDI active according to
@@ -4976,7 +4981,7 @@ HINSTANCE AFXAPI AfxFindResourceHandle(LPCTSTR lpszName, LPCTSTR lpszType);
 
 /// <summary>
 /// Deletes the subkeys and values of the specified key recursively.</summary>
-/// <returns> 
+/// <returns>
 /// If the function succeeds, the return value is ERROR_SUCCESS. If the function fails, the return value is a nonzero error code defined in Winerror.h</returns>
 /// <param name="hKey">A handle to an open registry key.</param>
 /// <param name="lpSubKey">The name of the key to be deleted.</param>
@@ -5092,7 +5097,7 @@ public:
 #define _AFX_MRU_MAX_COUNT 16   // currently allocated id range supports 16
 
 #define _AFX_SYSPOLICY_NOTINITIALIZED			0
-#define _AFX_SYSPOLICY_NORUN					1 
+#define _AFX_SYSPOLICY_NORUN					1
 #define _AFX_SYSPOLICY_NODRIVES					2
 #define _AFX_SYSPOLICY_RESTRICTRUN				4
 #define _AFX_SYSPOLICY_NONETCONNECTDISCONNECTD	8
@@ -5214,7 +5219,7 @@ protected:
 	void SetRegistryKey(UINT nIDRegistryKey);
 
 	/// <summary>
-	/// Explicitly sets Application User Model ID for the application. This method should be called before any user interface 
+	/// Explicitly sets Application User Model ID for the application. This method should be called before any user interface
 	/// is presented to user (the best place is the application constructor).</summary>
 	/// <param name="lpcszAppID">Specifies the Application User Model ID.</param>
 	void SetAppID(LPCTSTR lpcszAppID);
@@ -5282,7 +5287,7 @@ public:
 
 	/// <summary>
 	/// Deletes the subkeys and values of the specified key recursively.</summary>
-	/// <returns> 
+	/// <returns>
 	/// If the function succeeds, the return value is ERROR_SUCCESS. If the function fails, the return value is a nonzero error code defined in Winerror.h</returns>
 	/// <param name="hParentKey">A handle to an open registry key.</param>
 	/// <param name="strKeyName">The name of the key to be deleted.</param>
@@ -5415,20 +5420,20 @@ public: // public for implementation access
 	int GetOpenDocumentCount();
 
 	virtual CDataRecoveryHandler *GetDataRecoveryHandler();
-	/// <summary> 
+	/// <summary>
 	/// Tells whether Windows 7 Taskbar interaction is enabled.</summary>
-	/// <returns> 
-	/// Returns TRUE if EnableTaskbarInteraction has been called and Operation System is 
+	/// <returns>
+	/// Returns TRUE if EnableTaskbarInteraction has been called and Operation System is
 	/// Windows 7 or higher.</returns>
-	/// <remarks> Taskbar interaction means that MDI application displays the content of MDI children 
+	/// <remarks> Taskbar interaction means that MDI application displays the content of MDI children
 	/// in separate tabbed thumbnails that appear when mouse pointer is over application taskbar button.</remarks>
 	virtual BOOL IsTaskbarInteractionEnabled();
 
 	/// <summary>
 	/// Enables Taskbar interaction</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns TRUE if taskbar interaction can be enabled or disabled (e.g. this method was called before creation of main window).</returns>
-	/// <remarks> 
+	/// <remarks>
 	/// This method must be called before creation of main window, otherwise it asserts and returns FALSE.</remarks>
 	/// <param name="bEnable"> Specifies whether interaction with Windows 7 taskbar should be enabled (TRUE), or disabled (FALSE).</param>
 	BOOL EnableTaskbarInteraction(BOOL bEnable = TRUE);
@@ -5482,7 +5487,7 @@ public:
 
 	/// <summary>
 	/// returns key for HKEY_CURRENT_USER\"Software"\RegistryKey\AppName\lpszSection.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Section key if the function succeeds, NULL - otherwise</returns>
 	/// <param name="lpszSection">The name of the key to be obtained.</param>
 	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
@@ -5490,14 +5495,14 @@ public:
 
 	/// <summary>
 	/// returns key for HKEY_CURRENT_USER\"Software"\RegistryKey\ProfileName.</summary>
-	/// <returns> 
+	/// <returns>
 	/// Applixation key if the function succeeds, NULL - otherwise</returns>
 	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
 	HKEY GetAppRegistryKey(CAtlTransactionManager* pTM = NULL);
 
 	/// <summary>
 	/// Enable application D2D support. This method should be called prior to initialization of the main window .</summary>
-	/// <returns> 
+	/// <returns>
 	/// Returns TRUE if D2D support was enabled, FALSE - otherwise</returns>
 	/// <param name="d2dFactoryType">The threading model of the D2D factory and the resources it creates.</param>
 	/// <param name="writeFactoryType">A value that specifies whether the write factory object will be shared or isolated</param>
@@ -5569,7 +5574,7 @@ public:
 	void SetServerInfo(UINT nIDOleEmbedding, UINT nIDOleInPlaceServer = 0,
 		CRuntimeClass* pOleFrameClass = NULL, CRuntimeClass* pOleViewClass = NULL);
 
-	/// <summary> 
+	/// <summary>
 	/// Setups out of process preview handler. </summary>
 	/// <param name="nIDPreviewFrame">Specifies a resource ID of preview frame.</param>
 	/// <param name="pPreviewFrameClass">Specifies a pointer to a runtime class information of preview frame.</param>
@@ -5684,7 +5689,7 @@ protected:
 		// windowTitle\ndocName\n ... (see DocStringIndex enum)
 
 	// need for preview handler. CDocument finds template by m_pDocClass in order to instantiate related frame/view
-	friend class CDocument; 
+	friend class CDocument;
 };
 
 // SDI support (1 document only)
@@ -5769,7 +5774,7 @@ public:
 	/// <remarks>
 	/// Search and Organize handlers are implemented in ATL DLLs, which can be MFC or not-MFC based.
 	/// Internally handlers refer to IDocument interface, whose implementation in the common case should be
-	/// supplied by a developer. CDocumentAdapter provides this implementation for MFC and basically calls 
+	/// supplied by a developer. CDocumentAdapter provides this implementation for MFC and basically calls
 	///	the appropriate methods of the parent CDocument.</remarks>
 	class CDocumentAdapter : public ATL::IDocument
 	{
@@ -5795,7 +5800,7 @@ public:
 
 		/// <summary>
 		/// Loads document data from a stream </summary>
-		/// <returns> 
+		/// <returns>
 		/// S_OK if succeeds; otherwise failed HRESULT.</returns>
 		/// <param name="pStream">A pointer to a stream. This stream is supplied by the Shell.</param>
 		/// <param name="grfMode">Access mode to the stream.</param>
@@ -5840,7 +5845,7 @@ public:
 		}
 		/// <summary>
 		/// Sets a chunk value. </summary>
-		/// <returns> 
+		/// <returns>
 		/// Nonzero if succeeds. Otherwise 0.</returns>
 		/// <param name="pValue"> Specifies a chunk value to set.</param>
 		virtual BOOL SetChunkValue(_In_ ATL::IFilterChunkValue* pValue)
@@ -5867,9 +5872,9 @@ public:
 			m_pParentDoc->BeginReadChunks();
 		}
 
-		/// <summary> 
+		/// <summary>
 		/// Reads next chunk value. </summary>
-		/// <returns> 
+		/// <returns>
 		/// Nonzero if succeeds. Otherwise 0.</returns>
 		/// <param name="ppValue"> Output parameter. When the function returns ppValue contains the value.</param>
 		virtual _Success_(return != FALSE) BOOL ReadNextChunkValue(_Outptr_result_maybenull_ ATL::IFilterChunkValue** ppValue)
@@ -5900,7 +5905,7 @@ public:
 
 		/// <summary>
 		/// Looks for a chunk with specified GUID </summary>
-		/// <returns> 
+		/// <returns>
 		/// Position in the internal chunk list if succeeds. Otherwise NULL.</returns>
 		/// <param name="guid> Specifies GUID of a chunk to find.</param>
 		/// <param name="pid> Specifies PID of a chunk to find.</param>
@@ -5937,7 +5942,7 @@ public:
 				TRACE0("CDocumentAdapter::GetThumbnail is called, but its CDocument is NULL.");
 				return FALSE;
 			}
-			return m_pParentDoc->GetThumbnail(cx, phbmp, pdwAlpha); 
+			return m_pParentDoc->GetThumbnail(cx, phbmp, pdwAlpha);
 		}
 
 	protected:
@@ -6016,33 +6021,33 @@ public:
 	virtual void ReleaseFile(CFile* pFile, BOOL bAbort);
 
 	// search/organize/preview/thumbnail notifications
-	/// <summary> 
+	/// <summary>
 	/// Called before Rich Preview font is changed. </summary>
 	virtual void OnBeforeRichPreviewFontChanged(){}
-	/// <summary> 
+	/// <summary>
 	/// Called when Rich Preview font has changed. </summary>
 	virtual void OnRichPreviewFontChanged(){}
-	/// <summary> 
+	/// <summary>
 	/// Called when Rich Preview text color has changed. </summary>
 	virtual void OnRichPreviewTextColorChanged(){}
-	/// <summary> 
+	/// <summary>
 	/// Called when Rich Preview background color has changed. </summary>
 	virtual void OnRichPreviewBackColorChanged(){}
-	/// <summary> 
+	/// <summary>
 	/// Called when Rich Preview site has changed. </summary>
 	virtual void OnRichPreviewSiteChanged(){}
-	/// <summary> 
+	/// <summary>
 	/// Called when Rich Preview is unloaded.</summary>
 	/// <remarks>
-	/// OnUnloadHandler allows to take some additional on handler unload. 
-	/// Overriding this method allows complete control on clean up process if you don't call the 
-	/// base implementation, which releases preview handler site, destroys preview frame and 
+	/// OnUnloadHandler allows to take some additional on handler unload.
+	/// Overriding this method allows complete control on clean up process if you don't call the
+	/// base implementation, which releases preview handler site, destroys preview frame and
 	/// releases the stream.</remarks>
 	virtual void OnRichPreviewUnload();
-	
+
 	// search/organize/preview/thumbnail helpers
 
-	/// <summary> 
+	/// <summary>
 	/// Called to load document data from stream. </summary>
 	/// <returns>S_OK if the load operation succeeds, otherwise HRESULT with error code.</returns>
 	/// <remarks>
@@ -6051,7 +6056,7 @@ public:
 	/// <param name="grfMode">Access mode to the stream.</param>
 	virtual HRESULT LoadDocumentFromStream(IStream* pStream, DWORD dwGrfMode);
 
-	/// <summary> 
+	/// <summary>
 	/// Called to create a bitmap to be used by thumbnail provider to display thumbnail. </summary>
 	/// <returns>Returns TRUE if a bitmap for thumbnail was created successfully; otherwise FALSE.</returns>
 	/// <param name="cx">Specifies width and height of the bitmap.</param>
@@ -6060,23 +6065,23 @@ public:
 	virtual BOOL GetThumbnail(UINT cx, HBITMAP* phbmp, WTS_ALPHATYPE* pdwAlpha);
 
 	// search/organize/preview/thumbnail support - search and chunk management
-	/// <summary> 
+	/// <summary>
 	/// Called to initialize search content for Search Handler. </summary>
 	/// <remarks>
-	/// You should override this method in a derived class to initialize search content. 
+	/// You should override this method in a derived class to initialize search content.
 	/// The content should be a string with parts delimited by ';'. For example, "point; rectangle; ole item". </remarks>
 	virtual void InitializeSearchContent ()
 	{
 		TRACE0("Override this method in a derived class to initialize chunk list for search filter.");
 	}
 
-	/// <summary> 
+	/// <summary>
 	/// Clears the chunk list. </summary>
 	virtual void ClearChunkList ();
 
 	/// <summary>
 	/// Sets a chunk value. </summary>
-	/// <returns> 
+	/// <returns>
 	/// Nonzero if succeeds. Otherwise 0.</returns>
 	/// <param name="pValue"> Specifies a chunk value to set.</param>
 	virtual BOOL SetChunkValue (ATL::IFilterChunkValue* pValue);
@@ -6085,9 +6090,9 @@ public:
 	/// Initializes chunk reading. </summary>
 	virtual void BeginReadChunks ();
 
-	/// <summary> 
+	/// <summary>
 	/// Reads next chunk value. </summary>
-	/// <returns> 
+	/// <returns>
 	/// Nonzero if succeeds. Otherwise 0.</returns>
 	/// <param name="ppValue"> Output parameter. When the function returns ppValue contains the value.</param>
 	virtual BOOL ReadNextChunkValue(ATL::IFilterChunkValue** ppValue);
@@ -6100,7 +6105,7 @@ public:
 
 	/// <summary>
 	/// Looks for a chunk with specified GUID </summary>
-	/// <returns> 
+	/// <returns>
 	/// Position in the internal chunk list if succeeds. Otherwise NULL.</returns>
 	/// <param name="guid"> Specifies GUID of a chunk to find.</param>
 	/// <param name="pid"> Specifies PID of a chunk to find.</param>
@@ -6139,7 +6144,7 @@ protected:
 	IStream* m_pStream; // stream to load the document data from
 	DWORD m_grfMode; // stream opening mode
 	CFrameWnd* m_pPreviewFrame; // frame to display the rich preview
-	
+
 	ATL::CComPtr<IUnknown> m_spUnkSite; // SetSite called through IObjectWithSite
 
 	// search support
@@ -6208,9 +6213,9 @@ public:
 	virtual HRESULT OnPreviewHandlerQueryFocus(HWND* phwnd);
 	/// <summary>
 	/// Directs the preview handler to handle a keystroke passed up from the message pump of the process in which the preview handler is running.</summary>
-	/// <returns>If the keystroke message can be processed by the preview handler, the handler will 
-	/// process it and return S_OK. If the preview handler cannot process the keystroke message, 
-	/// it will offer it to the host via IPreviewHandlerFrame::TranslateAccelerator. If the host processes the message, this method will return S_OK. If the host does not process the message, 
+	/// <returns>If the keystroke message can be processed by the preview handler, the handler will
+	/// process it and return S_OK. If the preview handler cannot process the keystroke message,
+	/// it will offer it to the host via IPreviewHandlerFrame::TranslateAccelerator. If the host processes the message, this method will return S_OK. If the host does not process the message,
 	/// this method will return S_FALSE.</returns>
 	/// <param name="pmsg">[in] A pointer to a window message.</param>
 	virtual HRESULT OnPreviewHandlerTranslateAccelerator(MSG* pmsg);
@@ -6304,15 +6309,15 @@ public:
 	/// Destructs the object</summary>
 	virtual ~CMFCFilterChunkValueImpl();
 
-	///<summary> 
+	///<summary>
 	/// Clear the ChunkValue. </summary>
 	void Clear();
 
-	/// <summary> 
-	/// Checks whether this property value valid, or not. </summary> 
+	/// <summary>
+	/// Checks whether this property value valid, or not. </summary>
 	/// <returns>TRUE if the current chunk value is valid; otherwise FALSE.</returns>
 	BOOL IsValid() const
-	{ 
+	{
 		return m_fIsValid;
 	}
 
@@ -6330,50 +6335,50 @@ public:
 		return m_propVariant;
 	}
 
-	/// <summary> 
+	/// <summary>
 	/// Gets the string value. </summary>
 	/// <returns> A string containing the chunk value. </returns>
 	CString &GetString()
-	{ 
-		return m_strValue; 
+	{
+		return m_strValue;
 	};
 
-	/// <summary> 
+	/// <summary>
 	/// Initializes this chunk value from the other value. </summary>
 	/// <param name="pValue"> Specifies the source value to copy from. </param>
 	void CopyFrom (ATL::IFilterChunkValue* pValue);
 
-	/// <summary> 
-	/// Copies this chunk to a structure describing the characteristics of a chunk. </summary> 
+	/// <summary>
+	/// Copies this chunk to a structure describing the characteristics of a chunk. </summary>
 	/// <param name="pStatChunk"> A pointer to destination value describing the characteristics of chunk. </param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
 	HRESULT CopyChunk(STAT_CHUNK *pStatChunk);
 
-	/// <summary> 
-	/// Gets chunk type. </summary> 
+	/// <summary>
+	/// Gets chunk type. </summary>
 	/// <returns> A CHUNKSTATE enumerated value, which specifies whether the current chunk is a text-type property or a value-type property</returns>
 	CHUNKSTATE GetChunkType() const
 	{
 		return m_chunk.flags;
 	}
 
-	/// <summary> 
-	/// Gets chunk GUID. </summary> 
+	/// <summary>
+	/// Gets chunk GUID. </summary>
 	/// <returns> A reference to GUID identifying the chunk.</returns>
 	REFGUID GetChunkGUID() const
 	{
 		return m_chunk.attribute.guidPropSet;
 	}
 
-	/// <summary> 
-	/// Gets chunk PID (property ID). </summary> 
+	/// <summary>
+	/// Gets chunk PID (property ID). </summary>
 	/// <returns> A DWORD value containing property ID.</returns>
 	DWORD GetChunkPID() const
 	{
 		return m_chunk.attribute.psProperty.propid;
 	}
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to a Unicode string. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="pszValue">Specifies the chunk value to set</param>
@@ -6383,11 +6388,11 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetTextValue(REFPROPERTYKEY pkey, LPCTSTR pszValue, CHUNKSTATE chunkType = CHUNK_VALUE, 
-		LCID locale = 0, DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, 
+	HRESULT SetTextValue(REFPROPERTYKEY pkey, LPCTSTR pszValue, CHUNKSTATE chunkType = CHUNK_VALUE,
+		LCID locale = 0, DWORD cwcLenSource = 0, DWORD cwcStartSource = 0,
 		CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to a bool. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="bVal">Specifies the chunk value to set</param>
@@ -6397,10 +6402,10 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetBoolValue(REFPROPERTYKEY pkey, BOOL bVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0, 
+	HRESULT SetBoolValue(REFPROPERTYKEY pkey, BOOL bVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0,
 		DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to a variant bool. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="bVal">Specifies the chunk value to set</param>
@@ -6410,10 +6415,10 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetBoolValue(REFPROPERTYKEY pkey, VARIANT_BOOL bVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0, 
+	HRESULT SetBoolValue(REFPROPERTYKEY pkey, VARIANT_BOOL bVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0,
 		DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to an int. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="nVal">Specifies the chunk value to set</param>
@@ -6423,11 +6428,11 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetIntValue(REFPROPERTYKEY pkey, int nVal, CHUNKSTATE chunkType = CHUNK_VALUE, 
-		LCID locale = 0, DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, 
+	HRESULT SetIntValue(REFPROPERTYKEY pkey, int nVal, CHUNKSTATE chunkType = CHUNK_VALUE,
+		LCID locale = 0, DWORD cwcLenSource = 0, DWORD cwcStartSource = 0,
 		CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to a LONG. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="lVal">Specifies the chunk value to set</param>
@@ -6437,10 +6442,10 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetLongValue(REFPROPERTYKEY pkey, long lVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0, 
+	HRESULT SetLongValue(REFPROPERTYKEY pkey, long lVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0,
 		DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to a DWORD. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="dwVal">Specifies the chunk value to set</param>
@@ -6450,10 +6455,10 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetDwordValue(REFPROPERTYKEY pkey, DWORD dwVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0, 
+	HRESULT SetDwordValue(REFPROPERTYKEY pkey, DWORD dwVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0,
 		DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to an int64. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="nVal">Specifies the chunk value to set</param>
@@ -6463,10 +6468,10 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetInt64Value(REFPROPERTYKEY pkey, __int64 nVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0, 
+	HRESULT SetInt64Value(REFPROPERTYKEY pkey, __int64 nVal, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale = 0,
 		DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to a SystemTime. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="systemTime">Specifies the chunk value to set</param>
@@ -6478,7 +6483,7 @@ public:
 	/// <returns> S_OK if success; otherwise error code.</returns>
 	HRESULT SetSystemTimeValue(REFPROPERTYKEY pkey, const SYSTEMTIME &systemTime, CHUNKSTATE chunkType = CHUNK_VALUE, LCID locale=0, DWORD cwcLenSource=0, DWORD cwcStartSource=0, CHUNK_BREAKTYPE chunkBreakType=CHUNK_NO_BREAK);
 
-	/// <summary> 
+	/// <summary>
 	/// Set the property by key to a filetime. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="dtVal">Specifies the chunk value to set</param>
@@ -6488,12 +6493,12 @@ public:
 	/// <param name="cwcStartSource">The offset from which the source text for a derived chunk starts in the source chunk. </param>
 	/// <param name="chunkBreakType">The type of break that separates the previous chunk from the current chunk. Values are from the CHUNK_BREAKTYPE enumeration.</param>
 	/// <returns> S_OK if success; otherwise error code.</returns>
-	HRESULT SetFileTimeValue(REFPROPERTYKEY pkey, FILETIME dtVal, CHUNKSTATE chunkType = CHUNK_VALUE, 
-		LCID locale = 0, DWORD cwcLenSource = 0, DWORD cwcStartSource = 0, 
+	HRESULT SetFileTimeValue(REFPROPERTYKEY pkey, FILETIME dtVal, CHUNKSTATE chunkType = CHUNK_VALUE,
+		LCID locale = 0, DWORD cwcLenSource = 0, DWORD cwcStartSource = 0,
 		CHUNK_BREAKTYPE chunkBreakType = CHUNK_NO_BREAK);
 
 protected:
-	/// <summary> 
+	/// <summary>
 	/// A helper function that sets chunk's common properties. </summary>
 	/// <param name="pkey">Specifies a property key.</param>
 	/// <param name="chunkType">Flags indicate whether this chunk contains a text-type or a value-type property. Flag values are taken from the CHUNKSTATE enumeration.</param>

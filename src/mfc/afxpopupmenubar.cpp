@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -63,7 +63,20 @@ int CMFCPopupMenuBar::m_nLastCommandIndex = -1;
 
 IMPLEMENT_SERIAL(CMFCPopupMenuBar, CMFCToolBar, 1)
 
-CMFCPopupMenuBar::CMFCPopupMenuBar() : m_uiDefaultMenuCmdId(0), m_pDelayedPopupMenuButton(NULL), m_pDelayedClosePopupMenuButton(NULL), m_bFirstClick(TRUE), m_bFirstMove(TRUE), m_iOffset(0), m_xSeparatorOffsetLeft(0), m_xSeparatorOffsetRight(0), m_iMaxWidth(-1), m_iMinWidth(-1), m_bAreAllCommandsShown(TRUE), m_bInCommand(FALSE), m_bTrackMode(FALSE)
+CMFCPopupMenuBar::CMFCPopupMenuBar()
+	: m_uiDefaultMenuCmdId(0)
+	, m_iOffset(0)
+	, m_xSeparatorOffsetLeft(0)
+	, m_xSeparatorOffsetRight(0)
+	, m_iMaxWidth(-1)
+	, m_iMinWidth(-1)
+	, m_bFirstClick(TRUE)
+	, m_bFirstMove(TRUE)
+	, m_bAreAllCommandsShown(TRUE)
+	, m_bInCommand(FALSE)
+	, m_bTrackMode(FALSE)
+	, m_pDelayedPopupMenuButton(NULL)
+	, m_pDelayedClosePopupMenuButton(NULL)
 {
 	m_bMenuMode = TRUE;
 	m_bIsClickOutsideItem = TRUE;

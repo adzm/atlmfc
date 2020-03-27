@@ -16,6 +16,8 @@
 #define new DEBUG_NEW
 #endif
 
+extern void AfxGetTempFileName(LPCTSTR lpszPath, LPCTSTR lpszPrefix, LPTSTR lpszTempName, size_t sizeOfTempName);
+
 CMenuHash afxMenuHash;
 
 // Construction/Destruction
@@ -51,7 +53,7 @@ BOOL CMenuHash::SaveMenuBar(HMENU hMenu, CMFCToolBar* pBar)
 
 	// Create a temporary file for the output....
 	CString strTempName;
-	GetTempFileName(strTempPath, _T("AFX"), 0, strTempName.GetBuffer(MAX_PATH));
+	AfxGetTempFileName(strTempPath.GetString(), _T("AFX"), strTempName.GetBuffer(MAX_PATH), MAX_PATH);
 	strTempName.ReleaseBuffer();
 
 	HANDLE hFile = ::CreateFile(strTempName, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);

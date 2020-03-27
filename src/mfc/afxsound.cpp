@@ -16,13 +16,12 @@
 #include "afxsound.h"
 #include "afxpopupmenu.h"
 
-#pragma comment (lib,"winmm") // PlaySound
+#pragma comment(lib, "WinMM.Lib")
 
+static CCriticalSection g_soundThreadCs;
 static int g_nSoundState = AFX_SOUND_NOT_STARTED;
 static HANDLE g_hThreadSound = NULL;
 static const int nThreadDelay = 5;
-
-#pragma comment(lib, "winmm.lib")
 
 void _cdecl AFXSoundThreadProc(LPVOID)
 {
@@ -82,8 +81,7 @@ void AFXPlaySystemSound(int nSound)
 			return;
 		}
 
-		static CCriticalSection cs;
-		cs.Lock();
+		g_soundThreadCs.Lock();
 
 		ENSURE(g_hThreadSound == NULL);
 
@@ -99,7 +97,7 @@ void AFXPlaySystemSound(int nSound)
 			g_hThreadSound = NULL;
 		}
 
-		cs.Unlock();
+		g_soundThreadCs.Unlock();
 	}
 	else
 	{

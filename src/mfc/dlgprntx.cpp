@@ -29,7 +29,8 @@ BEGIN_MESSAGE_MAP(CPrintDialogEx, CCommonDialog)
 END_MESSAGE_MAP()
 
 CPrintDialogEx::CPrintDialogEx(DWORD dwFlags, CWnd* pParentWnd)
-	: m_pUnkSite(NULL), CCommonDialog(pParentWnd)
+	: CCommonDialog(pParentWnd)
+	, m_pUnkSite(NULL)
 {
 	memset(&m_pdex, 0, sizeof(m_pdex));
 

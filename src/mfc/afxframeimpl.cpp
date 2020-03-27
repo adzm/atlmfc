@@ -57,7 +57,28 @@ UINT AFX_WM_POSTSETPREVIEWFRAME = ::RegisterWindowMessage(_T("AFX_WM_POSTSETPREV
 #pragma warning(disable : 4355)
 
 // Construction/Destruction
-CFrameImpl::CFrameImpl(CFrameWnd* pFrame) : m_pFrame(pFrame), m_pDockManager(NULL), m_uiUserToolbarFirst((UINT)-1), m_uiUserToolbarLast((UINT)-1), m_pMenuBar(NULL), m_hDefaultMenu(NULL), m_nIDDefaultResource(0), m_FullScreenMgr(this), m_bLoadDockState(TRUE), m_uiControlbarsMenuEntryID(0), m_bViewMenuShowsToolbarsOnly(FALSE), m_pRibbonBar(NULL), m_pRibbonStatusBar(NULL), m_bCaptured(FALSE), m_nHotSysButton(HTNOWHERE), m_nHitSysButton(HTNOWHERE), m_bIsWindowRgn(FALSE), m_bHasBorder(FALSE), m_bIsOleInPlaceActive(FALSE), m_bHadCaption(TRUE), m_bWindowPosChanging(FALSE)
+CFrameImpl::CFrameImpl(CFrameWnd* pFrame)
+	: m_uiUserToolbarFirst((UINT)-1)
+	, m_uiUserToolbarLast((UINT)-1)
+	, m_nIDDefaultResource(0)
+	, m_nHotSysButton(HTNOWHERE)
+	, m_nHitSysButton(HTNOWHERE)
+	, m_uiControlbarsMenuEntryID(0)
+	, m_bCaptured(FALSE)
+	, m_bIsWindowRgn(FALSE)
+	, m_bHasBorder(FALSE)
+	, m_bIsOleInPlaceActive(FALSE)
+	, m_bHadCaption(TRUE)
+	, m_bLoadDockState(TRUE)
+	, m_bViewMenuShowsToolbarsOnly(FALSE)
+	, m_bWindowPosChanging(FALSE)
+	, m_hDefaultMenu(NULL)
+	, m_pMenuBar(NULL)
+	, m_pFrame(pFrame)
+	, m_pDockManager(NULL)
+	, m_FullScreenMgr(this)
+	, m_pRibbonBar(NULL)
+	, m_pRibbonStatusBar(NULL)
 {
 	ASSERT_VALID(m_pFrame);
 
@@ -991,8 +1012,8 @@ BOOL CFrameImpl::ProcessMouseWheel(WPARAM wParam, LPARAM lParam)
 		{
 			CWnd* pFocus = CWnd::GetFocus();
 
-			BOOL bIsFloatyActive = (pFocus->GetSafeHwnd () != NULL && 
-				(pActivePopupMenu->IsChild (pFocus) || 
+			BOOL bIsFloatyActive = (pFocus->GetSafeHwnd () != NULL &&
+				(pActivePopupMenu->IsChild (pFocus) ||
 				pFocus->GetSafeHwnd () == pActivePopupMenu->GetSafeHwnd ()));
 
 			if (!bIsFloatyActive)
@@ -1661,17 +1682,22 @@ BOOL CFrameImpl::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS FAR* l
 	BOOL bIsRibbonCaption = FALSE;
 	CSize szSystemBorder(afxGlobalUtils.GetSystemBorders(m_pFrame));
 
-	if (m_pRibbonBar->GetSafeHwnd() != NULL && ((m_pRibbonBar->IsWindowVisible()|| IsFullScreeen ()) || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
+	BOOL bReturn = FALSE;
+
+	if (m_pRibbonBar->GetSafeHwnd() != NULL && ((m_pRibbonBar->IsWindowVisible() || IsFullScreeen()) || !m_pFrame->IsWindowVisible()) && m_pRibbonBar->IsReplaceFrameCaption())
 	{
 		bIsRibbonCaption = TRUE;
 
 		if (GetGlobalData()->IsDwmCompositionEnabled())
 		{
-			lpncsp->rgrc[0].left += szSystemBorder.cx;
-			lpncsp->rgrc[0].right -= szSystemBorder.cx;
-			lpncsp->rgrc[0].bottom -= szSystemBorder.cy;
+			if (GetGlobalData()->GetShellAutohideBars() == 0)
+			{
+				lpncsp->rgrc[0].left += szSystemBorder.cx;
+				lpncsp->rgrc[0].right -= szSystemBorder.cx;
+				lpncsp->rgrc[0].bottom -= szSystemBorder.cy;
+			}
 
-			return TRUE;
+			bReturn = TRUE;
 		}
 	}
 
@@ -1695,6 +1721,11 @@ BOOL CFrameImpl::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS FAR* l
 		{
 			m_pRibbonStatusBar->RecalcLayout();
 		}
+	}
+
+	if (bReturn)
+	{
+		return TRUE;
 	}
 
 	if (!bIsRibbonCaption && IsOwnerDrawCaption())

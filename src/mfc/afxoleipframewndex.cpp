@@ -29,7 +29,10 @@ IMPLEMENT_DYNCREATE(COleIPFrameWndEx, COleIPFrameWnd)
 
 #pragma warning(disable : 4355)
 
-COleIPFrameWndEx::COleIPFrameWndEx() : m_Impl(this), m_bContextHelp(FALSE), m_hwndLastTopLevelFrame(NULL)
+COleIPFrameWndEx::COleIPFrameWndEx()
+	: m_bContextHelp(FALSE)
+	, m_hwndLastTopLevelFrame(NULL)
+	, m_Impl(this)
 {
 	m_dockManager.Create(this);
 }

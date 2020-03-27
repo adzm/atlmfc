@@ -22,29 +22,29 @@
 	#include <objbase.h>
 #endif
 #ifndef _OLEAUTO_H_
-	#include <oleauto.h>
+	#include <OleAuto.h>
 #endif
 #ifndef _OLECTL_H_
-	#include <olectl.h>
+	#include <OleCtl.h>
 #endif
 #ifndef __ocidl_h__
-	#include <ocidl.h>
+	#include <OCIdl.h>
 #endif
- 
+
 #pragma warning(push)
 #pragma warning(disable:4091)
 
 // Shell interface support
 #ifndef _SHLOBJ_H_
-	#include <shlobj.h>
+	#include <ShlObj.h>
 #endif
 
 #pragma warning(pop)
 
 // Include ATL COM headers
 #include <atlcomcli.h>
-#include <atlcomtime.h>
-#include <atlcommem.h>
+#include <ATLComTime.h>
+#include <ATLComMem.h>
 #include <cstringt.h>
 
 using ATL::CComBSTR;
@@ -53,7 +53,7 @@ using ATL::COleDateTimeSpan;
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifndef _AFX_NOFORCE_LIBS
 
@@ -676,7 +676,7 @@ public:
 	virtual REFIID GetIID() = 0;
 	virtual void OnAdvise(BOOL bAdvise);
 	virtual int GetMaxConnections();
-	virtual HRESULT QuerySinkInterface(LPUNKNOWN pUnkSink, 
+	virtual HRESULT QuerySinkInterface(LPUNKNOWN pUnkSink,
 		void** ppInterface);
 
 // Implementation
@@ -1217,7 +1217,7 @@ void AFX_CDECL AfxEnableControlContainer(COccManager* pOccManager=NULL);
 #if defined(_M_IX86)
 	#pragma comment(linker, "/include:??0PostDllMain@@$$FQAE@XZ")
 	#pragma comment(linker, "/include:??0PostRawDllMain@@$$FQAE@XZ")
-#elif defined (_M_AMD64)
+#elif defined (_M_X64)
 	#pragma comment(linker, "/include:??0PostDllMain@@$$FQEAA@XZ")
 	#pragma comment(linker, "/include:??0PostRawDllMain@@$$FQEAA@XZ")
 #elif defined (_M_ARM)

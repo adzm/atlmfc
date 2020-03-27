@@ -71,7 +71,8 @@ private:
 
 public:
 	inline _AfxBindStatusCallback(CAsyncMonikerFile* pOwner, IUnknown* pUnkControlling)
-		: m_pOwner(pOwner), m_dwRef(0)
+		: m_dwRef(0)
+		, m_pOwner(pOwner)
 	{
 		m_UnkInner.SetpThis(this);
 		ASSERT(pOwner);
@@ -200,7 +201,7 @@ private:
 		AFX_MANAGE_STATE(m_pModuleState);
 		TRY
 		{
-			const CString strStatusText(szStatusText);			
+			const CString strStatusText(szStatusText);
 			m_pOwner->OnProgress(ulProgress, ulProgressMax, ulStatusCode, szStatusText ? strStatusText.GetString() : NULL);
 		}
 		CATCH_ALL(e)
@@ -280,8 +281,8 @@ private:
 		AFX_MANAGE_STATE(m_pModuleState);
 		ASSERT(m_pOwner->GetBinding());
 		TRY
-		{	
-			m_pOwner->m_bStopBindingReceived = TRUE;					
+		{
+			m_pOwner->m_bStopBindingReceived = TRUE;
 			const CString strError(szError);
 			m_pOwner->OnStopBinding(hresult, szError ? strError.GetString() : NULL );
 			if (m_pOwner)
@@ -345,8 +346,9 @@ AFX_STATIC inline IBindHost* AFXAPI _AfxTryQIForBindHost(IUnknown* pUnk)
 /////////////////////////////////////////////////////////////////////////////
 // CAsyncMonikerFile implementation
 
-CAsyncMonikerFile::CAsyncMonikerFile() : m_pFormatEtc(NULL),
-	m_pAfxBSCCurrent(NULL)
+CAsyncMonikerFile::CAsyncMonikerFile()
+	: m_pAfxBSCCurrent(NULL)
+	, m_pFormatEtc(NULL)
 {
 }
 

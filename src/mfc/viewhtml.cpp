@@ -10,10 +10,10 @@
 
 #include "stdafx.h"
 
-#include <exdispid.h>
-#include <mshtmcid.h>	// CMDSETID_Forms3 definition
-#include <mshtmhst.h>	// IDM_menu item definitions
-#include <mshtml.h>
+#include <ExDispid.h>
+#include <MsHtmcid.h>	// CMDSETID_Forms3 definition
+#include <MsHtmHst.h>	// IDM_menu item definitions
+#include <MsHTML.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -98,7 +98,7 @@ void CHtmlView::OnFilePrint()
 	// get the HTMLDocument
 
 	if (m_pBrowserApp != NULL)
-	{		
+	{
 		CComPtr<IDispatch> spDisp;
 		m_pBrowserApp->get_Document(&spDisp);
 		if (spDisp != NULL)
@@ -446,7 +446,7 @@ STDMETHODIMP CHtmlControlSite::XDocHostUIHandler::GetOptionKeyPath(
 	return pView->OnGetOptionKeyPath(pchKey, dwReserved);
 }
 
-HRESULT CHtmlView::OnGetOptionKeyPath(LPOLESTR*, DWORD)	
+HRESULT CHtmlView::OnGetOptionKeyPath(LPOLESTR*, DWORD)
 {
 	// no replacement option key
 	return S_FALSE;
@@ -523,13 +523,13 @@ STDMETHODIMP_(ULONG) CHtmlControlSite::XDocHostUIHandler::Release()
 }
 
 STDMETHODIMP CHtmlControlSite::XDocHostUIHandler::QueryInterface(
-		  REFIID iid, LPVOID far* ppvObj)     
+		  REFIID iid, LPVOID far* ppvObj)
 {
 	METHOD_PROLOGUE_EX_(CHtmlControlSite, DocHostUIHandler)
 	return pThis->ExternalQueryInterface(&iid, ppvObj);
 }
 
-BOOL CHtmlView::CreateControlSite(COleControlContainer* pContainer, 
+BOOL CHtmlView::CreateControlSite(COleControlContainer* pContainer,
    COleControlSite** ppSite, UINT /* nID */, REFCLSID /* clsid */)
 {
 	ASSERT(ppSite != NULL);
@@ -578,7 +578,7 @@ BOOL CHtmlView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 	return TRUE;
 }
 
-BOOL CHtmlView::PreTranslateMessage(MSG* pMsg) 
+BOOL CHtmlView::PreTranslateMessage(MSG* pMsg)
 {
 	ASSERT(pMsg != NULL);
 	ASSERT_VALID(this);
@@ -631,7 +631,7 @@ CString CHtmlView::GetType() const
 		ASSERT(FALSE);
 		return CString();
 	}
-		
+
 	CString retVal(bstr);
 	return retVal;
 }
@@ -644,7 +644,7 @@ long CHtmlView::GetLeft() const
 	HRESULT hr = m_pBrowserApp->get_Left(&result);
 	if(FAILED(hr))
 		AfxThrowUserException();
-	
+
 	return result;
 }
 
@@ -656,7 +656,7 @@ long CHtmlView::GetTop() const
 	HRESULT hr = m_pBrowserApp->get_Top(&result);
 	if(FAILED(hr))
 		AfxThrowUserException();
-	
+
 	return result;
 }
 
@@ -667,7 +667,7 @@ int CHtmlView::GetToolBar() const
 	HRESULT hr = m_pBrowserApp->get_ToolBar(&result);
 	if(FAILED(hr))
 		AfxThrowUserException();
-	
+
 	return result;
 }
 
@@ -678,7 +678,7 @@ long CHtmlView::GetHeight() const
 	HRESULT hr = m_pBrowserApp->get_Height(&result);
 	if(FAILED(hr))
 		AfxThrowUserException();
-	
+
 	return result;
 }
 
@@ -689,7 +689,7 @@ long CHtmlView::GetWidth() const
 	HRESULT hr = m_pBrowserApp->get_Width(&result);
 	if(FAILED(hr))
 		AfxThrowUserException();
-	
+
 	return result;
 }
 
@@ -704,7 +704,7 @@ BOOL CHtmlView::GetVisible() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-		
+
 	return result;
 }
 
@@ -735,7 +735,7 @@ CString CHtmlView::GetLocationURL() const
 		ASSERT(FALSE);
 		return CString();
 	}
-	
+
 	CString retVal(bstr);
 	return retVal;
 }
@@ -763,7 +763,7 @@ READYSTATE CHtmlView::GetReadyState() const
 	HRESULT hr = m_pBrowserApp->get_ReadyState(&result);
 	if(FAILED(hr))
 		AfxThrowUserException();
-		
+
 	return result;
 }
 
@@ -793,7 +793,7 @@ BOOL CHtmlView::GetSilent() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -808,7 +808,7 @@ LPDISPATCH CHtmlView::GetApplication() const
 		ASSERT(FALSE);
 		return NULL;
 	}
-	
+
 	return result;
 }
 
@@ -824,7 +824,7 @@ LPDISPATCH CHtmlView::GetParentBrowser() const
 		ASSERT(FALSE);
 		return NULL;
 	}
-	
+
 	return result;
 }
 
@@ -839,7 +839,7 @@ LPDISPATCH CHtmlView::GetContainer() const
 		ASSERT(FALSE);
 		return NULL;
 	}
-	
+
 	return result;
 }
 
@@ -854,7 +854,7 @@ LPDISPATCH CHtmlView::GetHtmlDocument() const
 		ASSERT(FALSE);
 		return NULL;
 	}
-	
+
 	return result;
 }
 
@@ -878,7 +878,7 @@ BOOL CHtmlView::GetMenuBar() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -893,7 +893,7 @@ BOOL CHtmlView::GetFullScreen() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -908,7 +908,7 @@ BOOL CHtmlView::GetStatusBar() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -920,7 +920,7 @@ OLECMDF CHtmlView::QueryStatusWB(OLECMDID cmdID) const
 	HRESULT hr = m_pBrowserApp->QueryStatusWB(cmdID, &result);
 	if(FAILED(hr))
 		AfxThrowUserException();
-		
+
 	return result;
 }
 
@@ -959,7 +959,7 @@ HRESULT CHtmlView::QueryFormsCommand(DWORD dwCommandID,
 
 	CComPtr<IDispatch> spDispDocument;
 	m_pBrowserApp->get_Document(&spDispDocument);
-	CComQIPtr<IHTMLDocument2> spDoc = spDispDocument;	
+	CComQIPtr<IHTMLDocument2> spDoc = spDispDocument;
 	if (spDoc != NULL)
 	{
 		CComQIPtr<IOleCommandTarget> spCmdTarget = spDoc;
@@ -997,7 +997,7 @@ BOOL CHtmlView::GetRegisterAsBrowser() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -1012,7 +1012,7 @@ BOOL CHtmlView::GetRegisterAsDropTarget() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -1027,7 +1027,7 @@ BOOL CHtmlView::GetTheaterMode() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -1042,7 +1042,7 @@ BOOL CHtmlView::GetAddressBar() const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	return result;
 }
 
@@ -1051,11 +1051,11 @@ BOOL CHtmlView::GetAddressBar() const
 
 BOOL CHtmlView::GetSource(CString& refString)
 {
-	ENSURE(m_pBrowserApp != NULL);	
+	ENSURE(m_pBrowserApp != NULL);
 
 	BOOL bRetVal = FALSE;
-	
-	CComPtr<IDispatch> spDisp; 
+
+	CComPtr<IDispatch> spDisp;
 	m_pBrowserApp->get_Document(&spDisp);
 	if (spDisp != NULL)
 	{
@@ -1297,7 +1297,7 @@ CString CHtmlView::GetFullName() const
 		ASSERT(FALSE);
 		return CString();
 	}
-	
+
 	CString retVal(bstr);
 	return retVal;
 }
@@ -1315,7 +1315,7 @@ void CHtmlView::NavigateComplete2(LPDISPATCH /* pDisp */, VARIANT* URL)
 
 void CHtmlView::BeforeNavigate2(LPDISPATCH /* pDisp */, VARIANT* URL,
 		VARIANT* Flags, VARIANT* TargetFrameName,
-		VARIANT* PostData, VARIANT* Headers, VARIANT_BOOL* Cancel) 
+		VARIANT* PostData, VARIANT* Headers, VARIANT_BOOL* Cancel)
 {
 	ASSERT(V_VT(URL) == VT_BSTR);
 	ASSERT(V_VT(TargetFrameName) == VT_BSTR);
@@ -1394,13 +1394,13 @@ void CHtmlView::NavigateError(LPDISPATCH pDisp, VARIANT* pvURL,
 		*pvbCancel = bCancel ? AFX_OLE_TRUE : AFX_OLE_FALSE;
 }
 
-void CHtmlView::OnEditCopy() 
+void CHtmlView::OnEditCopy()
 {
 	ExecFormsCommand(IDM_COPY, NULL, NULL);
 	return;
 }
 
-void CHtmlView::OnUpdateEditCopy(CCmdUI* pCmdUI) 
+void CHtmlView::OnUpdateEditCopy(CCmdUI* pCmdUI)
 {
 	BOOL bEnabled = FALSE;
 
@@ -1410,13 +1410,13 @@ void CHtmlView::OnUpdateEditCopy(CCmdUI* pCmdUI)
 	pCmdUI->Enable(bEnabled);
 }
 
-void CHtmlView::OnEditCut() 
+void CHtmlView::OnEditCut()
 {
 	ExecFormsCommand(IDM_CUT, NULL, NULL);
 	return;
 }
 
-void CHtmlView::OnUpdateEditCut(CCmdUI* pCmdUI) 
+void CHtmlView::OnUpdateEditCut(CCmdUI* pCmdUI)
 {
 	BOOL bEnabled = FALSE;
 
@@ -1426,13 +1426,13 @@ void CHtmlView::OnUpdateEditCut(CCmdUI* pCmdUI)
 	pCmdUI->Enable(bEnabled);
 }
 
-void CHtmlView::OnEditPaste() 
+void CHtmlView::OnEditPaste()
 {
 	ExecFormsCommand(IDM_PASTE, NULL, NULL);
 	return;
 }
 
-void CHtmlView::OnUpdateEditPaste(CCmdUI* pCmdUI) 
+void CHtmlView::OnUpdateEditPaste(CCmdUI* pCmdUI)
 {
 	BOOL bEnabled = FALSE;
 
@@ -1613,9 +1613,9 @@ BOOL CHtmlEditCtrl::GetDHtmlDocument(IHTMLDocument2 **ppDocument) const
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
+
 	*ppDocument = NULL;
-	
+
 	CHtmlEditCtrl *pThis = const_cast<CHtmlEditCtrl*>(this);
 	CComQIPtr<IWebBrowser2> pBrowserApp = pThis->GetControlUnknown();
 	ASSERT(pBrowserApp != NULL);
@@ -1632,7 +1632,7 @@ BOOL CHtmlEditCtrl::GetDHtmlDocument(IHTMLDocument2 **ppDocument) const
 }
 
 BOOL CHtmlEditCtrl::Create(LPCTSTR lpszWindowName, DWORD /*dwStyle*/, const RECT& rect, CWnd* pParentWnd,
-						   int nID, CCreateContext *pContext) 
+						   int nID, CCreateContext *pContext)
 {
 	BOOL bRet = FALSE;
 	// create the control window
@@ -1653,7 +1653,7 @@ BOOL CHtmlEditCtrl::Create(LPCTSTR lpszWindowName, DWORD /*dwStyle*/, const RECT
 			if (szDoc)
 			{
 				CComBSTR bstrStart(szDoc);
-				if (S_OK == pBrowserApp->Navigate(bstrStart, 
+				if (S_OK == pBrowserApp->Navigate(bstrStart,
 													&vEmpty,
 													&vEmpty,
 													&vEmpty,
@@ -1712,7 +1712,7 @@ LPCTSTR CHtmlEditView::GetStartDocument()
 
 BOOL CHtmlEditView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 	DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID,
-	CCreateContext* pContext) 
+	CCreateContext* pContext)
 {
 	// create the view window itself
 	if (!CHtmlView::Create(lpszClassName, lpszWindowName,
@@ -1805,7 +1805,7 @@ BOOL CHtmlEditView::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERIN
 
 	if (bHasExecFunc)
 	{
-		return ExecHandler(nID);		
+		return ExecHandler(nID);
 	}
 
 	return S_OK == ExecCommand(dhtmlCmdID, OLECMDEXECOPT_DODEFAULT, NULL, NULL) ? TRUE : FALSE;

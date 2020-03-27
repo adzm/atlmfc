@@ -35,14 +35,14 @@
 #pragma pack(push, _AFX_PACKING)
 #endif
 
-#include <uxtheme.h>
+#include <Uxtheme.h>
 
 #ifndef _RICHEDIT_
-	#include <richedit.h>
+	#include <Richedit.h>
 #endif
 #ifdef __AFXOLE_H__  // only include richole if OLE support is included
 	#ifndef _RICHOLE_
-		#include <richole.h>
+		#include <RichOle.h>
 		#define _RICHOLE_
 	#endif
 #else
@@ -523,7 +523,7 @@ public:
 	// Causes the control to rearrange items within its client area.
 	BOOL Arrange(_In_ UINT nCode);
 
-	// Causes the control to enter edit mode on the speficied item.
+	// Causes the control to enter edit mode on the specified item.
 	CEdit* EditLabel(_In_ int nItem);
 
 	// Inserts a column into a report-mode control.
@@ -649,10 +649,10 @@ public:
 
 	// REVIEW: Retrieves the next item in the list-view (by group/item index) based on the flags.
 	BOOL GetNextItemIndex(_In_ PLVITEMINDEX pItemIndex, _In_ int nFlags) const;
-	
+
 	// Retrieves the number of groups in the control.
 	int GetGroupCount() const;
-	
+
 	// REVIEW: Retrieves information about the specified group (by index) in the control.
 	BOOL GetGroupInfoByIndex(_In_ int iIndex, _Out_ PLVGROUP pGroup) const;
 
@@ -673,7 +673,7 @@ public:
 
 	// Maps the unique ID of an item in the control to an index.
 	UINT MapIDToIndex(_In_ UINT id) const;
-	
+
 	// Indicates if an item in the list-view control is visible.
 	BOOL IsItemVisible(_In_ int index) const;
 
@@ -894,13 +894,13 @@ public:
 
 	// Get the extended state of the item
 	UINT GetItemStateEx(_In_ HTREEITEM hItem) const;
-	
+
 	// Set the extended state of the item
 	BOOL SetItemStateEx(_In_ HTREEITEM hItem, _In_ UINT uStateEx);
 
 	// Get the expanded image index for the specified item
 	int GetItemExpandedImageIndex(_In_ HTREEITEM hItem) const;
-	
+
 	// Set the expanded image index for the specified item
 	BOOL SetItemExpandedImageIndex(_In_ HTREEITEM hItem, _In_ int nIndex);
 
@@ -1358,7 +1358,7 @@ public:
 	// REVIEW:
 	BOOL GetItemDropDownRect(_In_ int iItem, _Out_ LPRECT lpRect) const;
 
-	// REVIEW: 
+	// REVIEW:
 	BOOL GetOverflowRect(_Out_ LPRECT lpRect) const;
 
 	// REVIEW: Gets the item in the header control that has the focus.
@@ -2297,7 +2297,7 @@ public:
 	DWORD GetParaFormat(_Out_ PARAFORMAT &pf) const;
 	DWORD GetParaFormat(_Out_ PARAFORMAT2 &pf) const;
 	// richedit EM_GETSELTEXT is ANSI
-	_AFX_INSECURE_DEPRECATE("GetSelText(char *) is unsafe. Instead, use GetSelText(void) returning CString") 
+	_AFX_INSECURE_DEPRECATE("GetSelText(char *) is unsafe. Instead, use GetSelText(void) returning CString")
 	long GetSelText(_Pre_notnull_ _Post_z_ LPSTR lpBuf) const;
 	int GetTextRange(_In_ int nFirst, _In_ int nLast, _Out_ CString& refString) const;
 	CString GetSelText() const;

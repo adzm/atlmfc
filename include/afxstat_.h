@@ -81,7 +81,7 @@ typedef struct _GUID GUID;
 class CTypeLibCache
 {
 public:
-	CTypeLibCache() : m_cRef(0), m_lcid((LCID)-1), m_ptlib(NULL), m_ptinfo(NULL) {}
+	CTypeLibCache() : m_lcid((LCID)-1), m_ptlib(NULL), m_ptinfo(NULL), m_cRef(0) {}
 	void Lock();
 	void Unlock();
 	BOOL Lookup(LCID lcid, LPTYPELIB* pptlib);
@@ -114,7 +114,7 @@ typedef int (__cdecl * _PNH)( size_t );
 #define _PNH_DEFINED
 #endif
 
-template<class TYPE> 
+template<class TYPE>
 class CEmbeddedButActsLikePtr
 {
 public:
@@ -270,9 +270,9 @@ public:
 	// define thread local portions of module state
 	CThreadLocal<AFX_MODULE_THREAD_STATE> m_thread;
 
-	// bool indicating the return value of InitNetworkAddressControl() (from shell32.dll) 
+	// bool indicating the return value of InitNetworkAddressControl() (from shell32.dll)
 	BOOL m_bInitNetworkAddressControl;
-	// bool indicating whether or not InitNetworkAddressControl() (from shell32.dll) have been called for CNetAddressCtrl
+	// bool indicating whether or not InitNetworkAddressControl() (from shell32.dll) has been called for CNetAddressCtrl
 	BOOL m_bInitNetworkAddressControlCalled;
 };
 

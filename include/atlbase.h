@@ -63,15 +63,10 @@
 #endif
 
 #include <atldef.h>
-
-#ifndef _WINSOCKAPI_
-#include <winsock2.h>
-#endif
-
 #include <atlcore.h>
-#include <ole2.h>
+#include <Ole2.h>
 #ifdef _ATL_USE_WINAPI_FAMILY_PHONE_APP
-#include <oleauto.h>
+#include <OleAuto.h>
 #endif // _ATL_USE_WINAPI_FAMILY_PHONE_APP
 #include <atlcomcli.h>
 
@@ -84,9 +79,9 @@
 #include <limits.h>
 
 #ifndef _ATL_USE_WINAPI_FAMILY_PHONE_APP
-#include <olectl.h>
+#include <OleCtl.h>
 #else // _ATL_USE_WINAPI_FAMILY_PHONE_APP
-#include <ocidl.h>
+#include <OCIdl.h>
 #endif // _ATL_USE_WINAPI_FAMILY_PHONE_APP
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 #include <atliface.h>
@@ -100,7 +95,7 @@
 
 #include <atlconv.h>
 #ifndef _ATL_USE_WINAPI_FAMILY_PHONE_APP
-#include <shlwapi.h>
+#include <Shlwapi.h>
 #endif // _ATL_USE_WINAPI_FAMILY_PHONE_APP
 #include <atlsimpcoll.h>
 #include <atltrace.h>
@@ -222,7 +217,7 @@ struct _ATL_OBJMAP_ENTRY30
 };
 
 // Cache info about factories and cookies
-// This info is keept separate from _ATL_OBJMAP_ENTRY to make it const
+// This info is kept separate from _ATL_OBJMAP_ENTRY to make it const
 struct _ATL_OBJMAP_CACHE
 {
 	IUnknown* pCF;
@@ -237,7 +232,7 @@ struct _ATL_OBJMAP_ENTRY110
 	HRESULT (WINAPI *pfnUpdateRegistry)(_In_ BOOL bRegister);
 	_ATL_CREATORFUNC* pfnGetClassObject;
 	_ATL_CREATORFUNC* pfnCreateInstance;
-	_ATL_OBJMAP_CACHE* pCache;	
+	_ATL_OBJMAP_CACHE* pCache;
 	_ATL_DESCRIPTIONFUNC* pfnGetObjectDescription;
 	_ATL_CATMAPFUNC* pfnGetCategoryMap;
 	HRESULT WINAPI RevokeClassObject()
@@ -282,9 +277,7 @@ __declspec(selectany) __declspec(allocate("ATL$__a")) _ATL_OBJMAP_ENTRY_EX* __po
 __declspec(selectany) __declspec(allocate("ATL$__z")) _ATL_OBJMAP_ENTRY_EX* __pobjMapEntryLast = NULL;
 }
 
-#if !defined(_M_IA64)
 #pragma comment(linker, "/merge:ATL=.rdata")
-#endif
 
 struct _ATL_REGMAP_ENTRY
 {
@@ -346,7 +339,6 @@ template< class TLock >
 _Post_same_lock_(cs, this->m_cs)
 _When_(bInitialLock != 0, _Acquires_lock_(this->m_cs) _Post_satisfies_(this->m_bLocked != 0))
 _When_(bInitialLock == 0, _Post_satisfies_(this->m_bLocked == 0))
-#pragma warning(suppress: 26166 28196) // Constructor throws on failure of Lock() method
 inline CComCritSecLock< TLock >::CComCritSecLock(
 		_Inout_ TLock& cs,
 		_In_ bool bInitialLock) :
@@ -1158,7 +1150,7 @@ _Ret_writes_maybenull_(cEls) T* AtlSafeRealloc(
 		Reallocator::Free(pT);
 		return NULL;
 	}
-	
+
 	T *pTemp = static_cast<T*>(Reallocator::Reallocate(pT, nBytes));
 	if (pTemp == NULL)
 	{
@@ -1301,7 +1293,7 @@ public:
 	{
 		ATLASSUME( m_bLocked );
 		::LeaveCriticalSection( &m_cs );
-		m_bLocked = false;	
+		m_bLocked = false;
 	}
 
 // Implementation
@@ -1313,6 +1305,171 @@ private:
 	CCritSecLock(_In_ const CCritSecLock&) throw();
 	CCritSecLock& operator=(_In_ const CCritSecLock&) throw();
 };
+
+#ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
+/////////////////////////////////////////////////////////////////////////////
+// CRegKey - declarations
+
+class CRegKey
+{
+public:
+	/// <summary>
+	/// CRegKey constructor</summary>
+	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
+	CRegKey(_In_opt_ CAtlTransactionManager* pTM = NULL) throw();
+	CRegKey(_Inout_ CRegKey& key) throw();
+	explicit CRegKey(_In_ HKEY hKey) throw();
+	~CRegKey() throw();
+
+	CRegKey& operator=(_Inout_ CRegKey& key) throw();
+
+// Attributes
+public:
+	operator HKEY() const throw();
+	HKEY m_hKey;
+	REGSAM m_samWOW64;
+
+	/// <summary>
+	/// Pointer to CAtlTransactionManager object</summary>
+	CAtlTransactionManager* m_pTM;
+
+// Operations
+public:
+	ATL_DEPRECATED("CRegKey::SetValue(DWORD, TCHAR *valueName) has been superseded by CRegKey::SetDWORDValue")
+	LSTATUS SetValue(
+		_In_ DWORD dwValue,
+		_In_opt_z_ LPCTSTR lpszValueName);
+
+	ATL_DEPRECATED("CRegKey::SetValue(TCHAR *value, TCHAR *valueName) has been superseded by CRegKey::SetStringValue and CRegKey::SetMultiStringValue")
+	LSTATUS SetValue(
+		_In_z_ LPCTSTR lpszValue,
+		_In_opt_z_ LPCTSTR lpszValueName = NULL,
+		_In_ bool bMulti = false,
+		_In_ int nValueLen = -1);
+	LSTATUS SetValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_In_ DWORD dwType,
+		_In_opt_ const void* pValue,
+		_In_ ULONG nBytes) throw();
+	LSTATUS SetGUIDValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_In_ REFGUID guidValue) throw();
+	LSTATUS SetBinaryValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_In_opt_ const void* pValue,
+		_In_ ULONG nBytes) throw();
+	LSTATUS SetDWORDValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_In_ DWORD dwValue) throw();
+	LSTATUS SetQWORDValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_In_ ULONGLONG qwValue) throw();
+	LSTATUS SetStringValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_In_opt_z_ LPCTSTR pszValue,
+		_In_ DWORD dwType = REG_SZ) throw();
+	LSTATUS SetMultiStringValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_In_z_ LPCTSTR pszValue) throw();
+
+	ATL_DEPRECATED("CRegKey::QueryValue(DWORD, TCHAR *valueName) has been superseded by CRegKey::QueryDWORDValue")
+	LSTATUS QueryValue(
+		_Out_ DWORD& dwValue,
+		_In_opt_z_ LPCTSTR lpszValueName);
+
+	ATL_DEPRECATED("CRegKey::QueryValue(TCHAR *value, TCHAR *valueName) has been superseded by CRegKey::QueryStringValue and CRegKey::QueryMultiStringValue")
+	LSTATUS QueryValue(
+		_Out_writes_to_opt_(*pdwCount, *pdwCount) LPTSTR szValue,
+		_In_opt_z_ LPCTSTR lpszValueName,
+		_Inout_ DWORD* pdwCount);
+	LSTATUS QueryValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_Out_opt_ DWORD* pdwType,
+		_Out_opt_ void* pData,
+		_Inout_ ULONG* pnBytes) throw();
+	LSTATUS QueryGUIDValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_Out_ GUID& guidValue) throw();
+	LSTATUS QueryBinaryValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_Out_opt_ void* pValue,
+		_Inout_opt_ ULONG* pnBytes) throw();
+	LSTATUS QueryDWORDValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_Out_ DWORD& dwValue) throw();
+	LSTATUS QueryQWORDValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_Out_ ULONGLONG& qwValue) throw();
+	LSTATUS QueryStringValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
+		_Inout_ ULONG* pnChars) throw();
+	LSTATUS QueryMultiStringValue(
+		_In_opt_z_ LPCTSTR pszValueName,
+		_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
+		_Inout_ ULONG* pnChars) throw();
+
+	// Get the key's security attributes.
+	LSTATUS GetKeySecurity(
+		_In_ SECURITY_INFORMATION si,
+		_Out_opt_ PSECURITY_DESCRIPTOR psd,
+		_Inout_ LPDWORD pnBytes) throw();
+	// Set the key's security attributes.
+	LSTATUS SetKeySecurity(
+		_In_ SECURITY_INFORMATION si,
+		_In_ PSECURITY_DESCRIPTOR psd) throw();
+
+	LSTATUS SetKeyValue(
+		_In_z_ LPCTSTR lpszKeyName,
+		_In_opt_z_ LPCTSTR lpszValue,
+		_In_opt_z_ LPCTSTR lpszValueName = NULL) throw();
+	static LSTATUS WINAPI SetValue(
+		_In_ HKEY hKeyParent,
+		_In_z_ LPCTSTR lpszKeyName,
+		_In_opt_z_ LPCTSTR lpszValue,
+		_In_opt_z_ LPCTSTR lpszValueName = NULL);
+
+	// Create a new registry key (or open an existing one).
+	LSTATUS Create(
+		_In_ HKEY hKeyParent,
+		_In_z_ LPCTSTR lpszKeyName,
+		_In_opt_z_ LPTSTR lpszClass = REG_NONE,
+		_In_ DWORD dwOptions = REG_OPTION_NON_VOLATILE,
+		_In_ REGSAM samDesired = KEY_READ | KEY_WRITE,
+		_In_opt_ LPSECURITY_ATTRIBUTES lpSecAttr = NULL,
+		_Out_opt_ LPDWORD lpdwDisposition = NULL) throw();
+	// Open an existing registry key.
+	LSTATUS Open(
+		_In_ HKEY hKeyParent,
+		_In_opt_z_ LPCTSTR lpszKeyName,
+		_In_ REGSAM samDesired = KEY_READ | KEY_WRITE) throw();
+	// Close the registry key.
+	LSTATUS Close() throw();
+	// Flush the key's data to disk.
+	LSTATUS Flush() throw();
+
+	// Detach the CRegKey object from its HKEY.  Releases ownership.
+	HKEY Detach() throw();
+	// Attach the CRegKey object to an existing HKEY.  Takes ownership.
+	void Attach(_In_ HKEY hKey) throw();
+
+	// Enumerate the subkeys of the key.
+	LSTATUS EnumKey(
+		_In_ DWORD iIndex,
+		_Out_writes_to_(*pnNameLength, *pnNameLength) _Post_z_ LPTSTR pszName,
+		_Inout_ LPDWORD pnNameLength,
+		_Out_opt_ FILETIME* pftLastWriteTime = NULL) throw();
+	LSTATUS NotifyChangeKeyValue(
+		_In_ BOOL bWatchSubtree,
+		_In_ DWORD dwNotifyFilter,
+		_In_ HANDLE hEvent,
+		_In_ BOOL bAsync = TRUE) throw();
+
+	LSTATUS DeleteSubKey(_In_z_ LPCTSTR lpszSubKey) throw();
+	LSTATUS RecurseDeleteKey(_In_z_ LPCTSTR lpszKey) throw();
+	LSTATUS DeleteValue(_In_z_ LPCTSTR lpszValue) throw();
+};
+#endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 
 /////////////////////////////////////////////////////////////////////////////
 // Interface debugging
@@ -2421,7 +2578,7 @@ struct _QIThunk
 
 /////////////////////////////////////////////////////////////////////////////
 // Module Classes
-class CAtlComModule : 
+class CAtlComModule :
 	public _ATL_COM_MODULE
 {
 public:
@@ -2462,15 +2619,15 @@ public:
 			if (*ppEntry != NULL)
 			{
 				_ATL_OBJMAP_CACHE* pCache = (**ppEntry).pCache;
-				
+
 				if (pCache->pCF != NULL)
 				{
 					// Decode factory pointer if it's not null
 					IUnknown *factory = reinterpret_cast<IUnknown*>(::DecodePointer(pCache->pCF));
 					_Analysis_assume_(factory != nullptr);
-					factory->Release();					
+					factory->Release();
 					pCache->pCF = NULL;
-				}				
+				}
 			}
 		}
 		m_csObjMap.Term();
@@ -2481,7 +2638,7 @@ public:
 	}
 
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
-	
+
 	// Registry support (helpers)
 	HRESULT RegisterTypeLib()
 	{
@@ -2773,7 +2930,7 @@ inline ULONG _QIThunk::Release()
 
 #ifndef _ATL_NO_WIN_SUPPORT
 
-class CAtlWinModule : 
+class CAtlWinModule :
 	public _ATL_WIN_MODULE
 {
 public:
@@ -2868,7 +3025,7 @@ __declspec (selectany) void *_pAtlReleaseManagedClassFactories = &_AtlReleaseMan
 
 #ifndef _ATL_STATIC_LIB_IMPL
 
-class ATL_NO_VTABLE CAtlModule : 
+class ATL_NO_VTABLE CAtlModule :
 	public _ATL_MODULE
 {
 public :
@@ -2941,7 +3098,7 @@ public :
 	}
 
 	HRESULT AddTermFunc(
-		_In_ _ATL_TERMFUNC* pFunc, 
+		_In_ _ATL_TERMFUNC* pFunc,
 		_In_ DWORD_PTR dw) throw()
 	{
 		return AtlModuleAddTermFunc(this, pFunc, dw);
@@ -2994,7 +3151,7 @@ public :
 			return;
 		}
 		UINT i = 0;
-		// copy charecters to the destination buffer but leave the last char to be NULL.
+		// copy characters to the destination buffer but leave the last char to be NULL.
 		for (i=0; i < destSizeInChars-1 && *lp; i++)
 		{
 			*lpDest++ = *lp;
@@ -3016,7 +3173,7 @@ ATLPREFAST_SUPPRESS(6386)
 ATLPREFAST_UNSUPPRESS()
 	}
 
-	// search for an occurence of string p2 in string p1
+	// search for an occurrence of string p2 in string p1
 	static LPCTSTR FindOneOf(
 		_In_z_ LPCTSTR p1,
 		_In_z_ LPCTSTR p2) throw()
@@ -3034,28 +3191,34 @@ ATLPREFAST_UNSUPPRESS()
 		}
 		return NULL;
 	}
-#pragma warning(push)  // disable 4302
-#pragma warning(disable : 4302)	// 'type cast' : truncation from 'LPSTR' to 'TCHAR'
+
+// Cannot use TBYTE because it is not defined when <tchar.h> is #included
+#ifdef  UNICODE
+#define _ATL_TBYTE wchar_t
+#else
+#define _ATL_TBYTE unsigned char
+#endif
 
 	static int WordCmpI(
 		_In_z_ LPCTSTR psz1,
 		_In_z_ LPCTSTR psz2) throw()
 	{
-		TCHAR c1 = (TCHAR)CharUpper((LPTSTR)*psz1);
-		TCHAR c2 = (TCHAR)CharUpper((LPTSTR)*psz2);
+		TCHAR c1 = (TCHAR)(SIZE_T)CharUpper((LPTSTR)(_ATL_TBYTE)*psz1);
+		TCHAR c2 = (TCHAR)(SIZE_T)CharUpper((LPTSTR)(_ATL_TBYTE)*psz2);
 		while (c1 != _T('\0') && c1 == c2 && c1 != ' ' && c1 != '\t')
 		{
 			psz1 = CharNext(psz1);
 			psz2 = CharNext(psz2);
-			c1 = (TCHAR)CharUpper((LPTSTR)*psz1);
-			c2 = (TCHAR)CharUpper((LPTSTR)*psz2);
+			c1 = (TCHAR)(SIZE_T)CharUpper((LPTSTR)(_ATL_TBYTE)*psz1);
+			c2 = (TCHAR)(SIZE_T)CharUpper((LPTSTR)(_ATL_TBYTE)*psz2);
 		}
 		if ((c1 == _T('\0') || c1 == ' ' || c1 == '\t') && (c2 == _T('\0') || c2 == ' ' || c2 == '\t'))
 			return 0;
 
 		return (c1 < c2) ? -1 : 1;
 	}
-#pragma warning (pop)  // disable 4302
+
+#undef _ATL_TBYTE
 
 #endif // _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 };
@@ -3108,7 +3271,7 @@ inline HRESULT AtlGetGITPtr(_Outptr_ IGlobalInterfaceTable** ppGIT) throw()
 }
 
 template <class T>
-class ATL_NO_VTABLE CAtlModuleT : 
+class ATL_NO_VTABLE CAtlModuleT :
 	public CAtlModule
 {
 public :
@@ -3218,7 +3381,7 @@ namespace __identifier("<AtlImplementationDetails>")
 #ifndef _ATL_STATIC_LIB_IMPL
 
 template <class T>
-class ATL_NO_VTABLE CAtlDllModuleT : 
+class ATL_NO_VTABLE CAtlDllModuleT :
 	public CAtlModuleT<T>,
 	private CAtlValidateModuleConfiguration<true, T>
 {
@@ -3369,7 +3532,7 @@ inline BOOL WINAPI CAtlDllModuleT<T>::DllMain(
 
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 template <class T>
-class ATL_NO_VTABLE CAtlExeModuleT : 
+class ATL_NO_VTABLE CAtlExeModuleT :
 	public CAtlModuleT<T>,
 	private CAtlValidateModuleConfiguration<false, T>
 {
@@ -3391,9 +3554,9 @@ public :
 #ifndef _ATL_NO_COM_SUPPORT
 
 		: m_dwMainThreadID(::GetCurrentThreadId()),
+		m_hEventShutdown(NULL),
 		m_dwTimeOut(5000),
 		m_dwPause(1000),
-		m_hEventShutdown(NULL),
 		m_bDelayShutdown(true),
 		m_bComInitialized(false)
 
@@ -3417,7 +3580,7 @@ public :
 #endif
 
 		// Call term functions before COM is uninitialized
-		Term();
+		this->Term();
 
 #ifndef _ATL_NO_COM_SUPPORT
 
@@ -3562,10 +3725,10 @@ public :
 		TCHAR szTokens[] = _T("-/");
 
 		T* pT = static_cast<T*>(this);
-		LPCTSTR lpszToken = FindOneOf(lpCmdLine, szTokens);
+		LPCTSTR lpszToken = CAtlModuleT<T>::FindOneOf(lpCmdLine, szTokens);
 		while (lpszToken != NULL)
 		{
-			if (WordCmpI(lpszToken, _T("UnregServer"))==0)
+			if (CAtlModuleT<T>::WordCmpI(lpszToken, _T("UnregServer"))==0)
 			{
 				*pnRetCode = pT->UnregisterServer(TRUE);
 				if (SUCCEEDED(*pnRetCode))
@@ -3573,7 +3736,7 @@ public :
 				return false;
 			}
 
-			if (WordCmpI(lpszToken, _T("RegServer"))==0)
+			if (CAtlModuleT<T>::WordCmpI(lpszToken, _T("RegServer"))==0)
 			{
 				*pnRetCode = pT->RegisterAppId();
 				if (SUCCEEDED(*pnRetCode))
@@ -3581,7 +3744,7 @@ public :
 				return false;
 			}
 
-			if (WordCmpI(lpszToken, _T("UnregServerPerUser"))==0)
+			if (CAtlModuleT<T>::WordCmpI(lpszToken, _T("UnregServerPerUser"))==0)
 			{
 				*pnRetCode = AtlSetPerUserRegistration(true);
 				if (FAILED(*pnRetCode))
@@ -3595,7 +3758,7 @@ public :
 				return false;
 			}
 
-			if (WordCmpI(lpszToken, _T("RegServerPerUser"))==0)
+			if (CAtlModuleT<T>::WordCmpI(lpszToken, _T("RegServerPerUser"))==0)
 			{
 				*pnRetCode = AtlSetPerUserRegistration(true);
 				if (FAILED(*pnRetCode))
@@ -3609,7 +3772,7 @@ public :
 				return false;
 			}
 
-			lpszToken = FindOneOf(lpszToken, szTokens);
+			lpszToken = CAtlModuleT<T>::FindOneOf(lpszToken, szTokens);
 		}
 
 		return true;
@@ -3619,7 +3782,6 @@ public :
 	{
 		HRESULT hr = S_OK;
 		T* pT = static_cast<T*>(this);
-		pT;
 
 #ifndef _ATL_NO_COM_SUPPORT
 
@@ -3738,7 +3900,7 @@ public :
 
 #ifndef _ATL_NO_SERVICE
 template <class T, UINT nServiceNameID>
-class ATL_NO_VTABLE CAtlServiceModuleT : 
+class ATL_NO_VTABLE CAtlServiceModuleT :
 	public CAtlExeModuleT<T>
 {
 public :
@@ -3781,7 +3943,7 @@ public :
 
 #ifndef _ATL_NO_COM_SUPPORT
 		// COM must be uninitialized after Term method was called in local service scenario
-		if (!m_bService && m_bComInitialized)
+		if (!m_bService && this->m_bComInitialized)
 		{
 			T::UninitializeCom();
 		}
@@ -3830,7 +3992,7 @@ public :
 			return m_status.dwWin32ExitCode;
 		}
 		// local server - call Run() directly, rather than
-		// from ServiceMain()		
+		// from ServiceMain()
 #ifndef _ATL_NO_COM_SUPPORT
 		HRESULT hr = T::InitializeCom();
 		if (FAILED(hr))
@@ -3844,7 +4006,7 @@ public :
 		}
 		else
 		{
-			m_bComInitialized = true;
+			this->m_bComInitialized = true;
 		}
 #endif //_ATL_NO_COM_SUPPORT
 
@@ -3916,17 +4078,17 @@ public :
 		*pnRetCode = S_OK;
 
 		T* pT = static_cast<T*>(this);
-		LPCTSTR lpszToken = FindOneOf(lpCmdLine, szTokens);
+		LPCTSTR lpszToken = CAtlModuleT<T>::FindOneOf(lpCmdLine, szTokens);
 		while (lpszToken != NULL)
 		{
-			if (WordCmpI(lpszToken, _T("Service"))==0)
+			if (CAtlModuleT<T>::WordCmpI(lpszToken, _T("Service"))==0)
 			{
 				*pnRetCode = pT->RegisterAppId(true);
 				if (SUCCEEDED(*pnRetCode))
 					*pnRetCode = pT->RegisterServer(TRUE);
 				return false;
 			}
-			lpszToken = FindOneOf(lpszToken, szTokens);
+			lpszToken = CAtlModuleT<T>::FindOneOf(lpszToken, szTokens);
 		}
 		return true;
 	}
@@ -3968,16 +4130,16 @@ public :
 		}
 		else
 		{
-			m_bComInitialized = true;
+			this->m_bComInitialized = true;
 		}
 
-		m_bDelayShutdown = false;
+		this->m_bDelayShutdown = false;
 #endif //_ATL_NO_COM_SUPPORT
 		// When the Run function returns, the service has stopped.
 		m_status.dwWin32ExitCode = pT->Run(SW_HIDE);
 
 #ifndef _ATL_NO_COM_SUPPORT
-		if (m_bService && m_bComInitialized)
+		if (m_bService && this->m_bComInitialized)
 			T::UninitializeCom();
 #endif
 
@@ -4032,7 +4194,7 @@ public :
 
 		if (hr == S_OK)
 		{
-			if (m_bDelayShutdown)
+			if (this->m_bDelayShutdown)
 			{
 				CHandle h(pT->StartMonitor());
 				if (h.m_h == NULL)
@@ -4043,7 +4205,7 @@ public :
 				{
 					if (m_bService)
 					{
-						// Make sure that service was not stoped during initialization
+						// Make sure that service was not stopped during initialization
 						if (::InterlockedCompareExchange(&m_status.dwCurrentState, SERVICE_RUNNING, SERVICE_START_PENDING) == SERVICE_START_PENDING)
 						{
 							LogEvent(_T("Service started/resumed"));
@@ -4055,8 +4217,8 @@ public :
 					ATLASSERT(SUCCEEDED(hr));
 					if (FAILED(hr))
 					{
-						::SetEvent(m_hEventShutdown); // tell monitor to shutdown
-						::WaitForSingleObject(h, m_dwTimeOut * 2);
+						::SetEvent(this->m_hEventShutdown); // tell monitor to shutdown
+						::WaitForSingleObject(h, this->m_dwTimeOut * 2);
 					}
 				}
 			}
@@ -4064,7 +4226,7 @@ public :
 			{
 				if (m_bService)
 				{
-					// Make sure that service was not stoped during initialization
+					// Make sure that service was not stopped during initialization
 					if (::InterlockedCompareExchange(&m_status.dwCurrentState, SERVICE_RUNNING, SERVICE_START_PENDING) == SERVICE_START_PENDING)
 					{
 						LogEvent(_T("Service started/resumed"));
@@ -4081,14 +4243,14 @@ public :
 		}
 		else
 		{
-			m_bDelayShutdown = false;
+			this->m_bDelayShutdown = false;
 		}
 
 #else	// _ATL_NO_COM_SUPPORT
 
 		if (m_bService)
 		{
-			// Make sure that service was not stoped during initialization
+			// Make sure that service was not stopped during initialization
 			if (::InterlockedCompareExchange(&m_status.dwCurrentState, SERVICE_RUNNING, SERVICE_START_PENDING) == SERVICE_START_PENDING)
 			{
 				LogEvent(_T("Service started/resumed"));
@@ -4413,7 +4575,7 @@ public:
 
 #ifdef _AFX
 
-class CAtlMfcModule : 
+class CAtlMfcModule :
 	public ATL::CAtlModuleT<CAtlMfcModule>
 {
 public :
@@ -4492,7 +4654,7 @@ namespace __identifier("<AtlImplementationDetails>")
 	{
 		CComModule* Module;
 		HINSTANCE Instance;
-		_ATL_OBJMAP_ENTRY* ObjectMap;		
+		_ATL_OBJMAP_ENTRY* ObjectMap;
 		const GUID* LibraryId;
 
 		// Must NOT have any constructors
@@ -4522,7 +4684,7 @@ namespace __identifier("<AtlImplementationDetails>")
 
 
 __declspec(selectany) CComModule* _pModule = NULL;
-class CComModule : 
+class CComModule :
 	public CAtlModuleT<CComModule>
 {
 public :
@@ -4694,11 +4856,11 @@ public :
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
 	// Register/Revoke All Class Factories with the OS (EXE only)
 	HRESULT RegisterClassObjects(_In_ DWORD dwClsContext, _In_ DWORD dwFlags) throw();
-	HRESULT RevokeClassObjects() throw();	
+	HRESULT RevokeClassObjects() throw();
 
 	// Registry support (helpers)
 	HRESULT RegisterTypeLib() throw();
-	HRESULT RegisterTypeLib(_In_z_ LPCTSTR lpszIndex) throw();	
+	HRESULT RegisterTypeLib(_In_z_ LPCTSTR lpszIndex) throw();
 	HRESULT UnRegisterTypeLib() throw();
 	HRESULT UnRegisterTypeLib(_In_z_ LPCTSTR lpszIndex) throw();
 
@@ -4724,7 +4886,7 @@ public :
 		(pMapEntries);
 		return E_FAIL;
 	}
-	
+
 	virtual HRESULT WINAPI UpdateRegistryFromResourceD(
 		_In_ UINT nResID,
 		_In_ BOOL bRegister,
@@ -4880,7 +5042,7 @@ public :
 	{
 		return GetClassObject(rclsid, riid, ppv);
 	}
-	
+
 private:
 	static HRESULT RegisterProgIDHelper(
 		_In_z_ LPCTSTR lpszCLSID,
@@ -5100,7 +5262,7 @@ __interface IAtlAutoThreadModule
 __declspec(selectany) IAtlAutoThreadModule* _pAtlAutoThreadModule;
 
 template <class T, class ThreadAllocator = CComSimpleThreadAllocator, DWORD dwWait = INFINITE>
-class ATL_NO_VTABLE CAtlAutoThreadModuleT : 
+class ATL_NO_VTABLE CAtlAutoThreadModuleT :
 	public IAtlAutoThreadModule
 {
 // This class is not for use in a DLL.
@@ -5238,7 +5400,7 @@ public:
 	}
 };
 
-class CAtlAutoThreadModule : 
+class CAtlAutoThreadModule :
 	public CAtlAutoThreadModuleT<CAtlAutoThreadModule>
 {
 public :
@@ -5252,8 +5414,10 @@ class CComAutoThreadModule :
 	public CComModule,
 	public CAtlAutoThreadModuleT<CComAutoThreadModule<ThreadAllocator,dwWait>, ThreadAllocator, dwWait>
 {
+private:
+	typedef CAtlAutoThreadModuleT<CComAutoThreadModule<ThreadAllocator, dwWait>, ThreadAllocator, dwWait> _MyBase;
 public:
-	CComAutoThreadModule(_In_ int nThreads = GetDefaultThreads()) :
+	CComAutoThreadModule(_In_ int nThreads = _MyBase::GetDefaultThreads()) :
 		CAtlAutoThreadModuleT<CComAutoThreadModule<ThreadAllocator,dwWait>, ThreadAllocator, dwWait>(nThreads)
 	{
 	}
@@ -5261,10 +5425,10 @@ public:
 		_In_ _ATL_OBJMAP_ENTRY* p,
 		_In_ HINSTANCE h,
 		_In_opt_ const GUID* plibid = NULL,
-		_In_ int nThreads = GetDefaultThreads())
+		_In_ int nThreads = _MyBase::GetDefaultThreads())
 	{
 		nThreads;
-		ATLASSERT(nThreads == GetDefaultThreads() && _T("Set number of threads through the constructor"));
+		ATLASSERT(nThreads == _MyBase::GetDefaultThreads() && _T("Set number of threads through the constructor"));
 		return CComModule::Init(p, h, plibid);
 	}
 };
@@ -5333,13 +5497,13 @@ public:
 #endif
 	}
 
-	CComGITPtr(CComGITPtr&& rv)
+	CComGITPtr(_Inout_ CComGITPtr&& rv) throw()
 	{
 		m_dwCookie = rv.m_dwCookie;
 		rv.m_dwCookie = 0;
 	}
 
-	CComGITPtr& operator=(CComGITPtr&& rv)
+	CComGITPtr& operator=(_Inout_ CComGITPtr&& rv) throw()
 	{
 		if (this != &rv)
 		{
@@ -5525,169 +5689,8 @@ public:
 };
 
 #ifdef _ATL_USE_WINAPI_FAMILY_DESKTOP_APP
-
 /////////////////////////////////////////////////////////////////////////////
-// CRegKey
-
-class CRegKey
-{
-public:
-	/// <summary>
-	/// CRegKey constructor</summary>
-	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
-	CRegKey(_In_opt_ CAtlTransactionManager* pTM = NULL) throw();
-	CRegKey(_Inout_ CRegKey& key) throw();
-	explicit CRegKey(_In_ HKEY hKey) throw();
-	~CRegKey() throw();
-
-	CRegKey& operator=(_Inout_ CRegKey& key) throw();
-
-// Attributes
-public:
-	operator HKEY() const throw();
-	HKEY m_hKey;
-	REGSAM m_samWOW64;
-
-	/// <summary>
-	/// Pointer to CAtlTransactionManager object</summary>
-	CAtlTransactionManager* m_pTM;
-
-// Operations
-public:
-	ATL_DEPRECATED("CRegKey::SetValue(DWORD, TCHAR *valueName) has been superseded by CRegKey::SetDWORDValue")
-	LSTATUS SetValue(
-		_In_ DWORD dwValue,
-		_In_opt_z_ LPCTSTR lpszValueName);
-
-	ATL_DEPRECATED("CRegKey::SetValue(TCHAR *value, TCHAR *valueName) has been superseded by CRegKey::SetStringValue and CRegKey::SetMultiStringValue")
-	LSTATUS SetValue(
-		_In_z_ LPCTSTR lpszValue,
-		_In_opt_z_ LPCTSTR lpszValueName = NULL,
-		_In_ bool bMulti = false,
-		_In_ int nValueLen = -1);
-	LSTATUS SetValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_In_ DWORD dwType,
-		_In_opt_ const void* pValue,
-		_In_ ULONG nBytes) throw();
-	LSTATUS SetGUIDValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_In_ REFGUID guidValue) throw();
-	LSTATUS SetBinaryValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_In_opt_ const void* pValue,
-		_In_ ULONG nBytes) throw();
-	LSTATUS SetDWORDValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_In_ DWORD dwValue) throw();
-	LSTATUS SetQWORDValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_In_ ULONGLONG qwValue) throw();
-	LSTATUS SetStringValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_In_opt_z_ LPCTSTR pszValue,
-		_In_ DWORD dwType = REG_SZ) throw();
-	LSTATUS SetMultiStringValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_In_z_ LPCTSTR pszValue) throw();
-
-	ATL_DEPRECATED("CRegKey::QueryValue(DWORD, TCHAR *valueName) has been superseded by CRegKey::QueryDWORDValue")
-	LSTATUS QueryValue(
-		_Out_ DWORD& dwValue,
-		_In_opt_z_ LPCTSTR lpszValueName);
-
-	ATL_DEPRECATED("CRegKey::QueryValue(TCHAR *value, TCHAR *valueName) has been superseded by CRegKey::QueryStringValue and CRegKey::QueryMultiStringValue")
-	LSTATUS QueryValue(
-		_Out_writes_to_opt_(*pdwCount, *pdwCount) LPTSTR szValue,
-		_In_opt_z_ LPCTSTR lpszValueName,
-		_Inout_ DWORD* pdwCount);
-	LSTATUS QueryValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_opt_ DWORD* pdwType,
-		_Out_opt_ void* pData,
-		_Inout_ ULONG* pnBytes) throw();
-	LSTATUS QueryGUIDValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_ GUID& guidValue) throw();
-	LSTATUS QueryBinaryValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_opt_ void* pValue,
-		_Inout_opt_ ULONG* pnBytes) throw();
-	LSTATUS QueryDWORDValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_ DWORD& dwValue) throw();
-	LSTATUS QueryQWORDValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_ ULONGLONG& qwValue) throw();
-	LSTATUS QueryStringValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
-		_Inout_ ULONG* pnChars) throw();
-	LSTATUS QueryMultiStringValue(
-		_In_opt_z_ LPCTSTR pszValueName,
-		_Out_writes_to_opt_(*pnChars, *pnChars) LPTSTR pszValue,
-		_Inout_ ULONG* pnChars) throw();
-
-	// Get the key's security attributes.
-	LSTATUS GetKeySecurity(
-		_In_ SECURITY_INFORMATION si,
-		_Out_opt_ PSECURITY_DESCRIPTOR psd,
-		_Inout_ LPDWORD pnBytes) throw();
-	// Set the key's security attributes.
-	LSTATUS SetKeySecurity(
-		_In_ SECURITY_INFORMATION si,
-		_In_ PSECURITY_DESCRIPTOR psd) throw();
-
-	LSTATUS SetKeyValue(
-		_In_z_ LPCTSTR lpszKeyName,
-		_In_opt_z_ LPCTSTR lpszValue,
-		_In_opt_z_ LPCTSTR lpszValueName = NULL) throw();
-	static LSTATUS WINAPI SetValue(
-		_In_ HKEY hKeyParent,
-		_In_z_ LPCTSTR lpszKeyName,
-		_In_opt_z_ LPCTSTR lpszValue,
-		_In_opt_z_ LPCTSTR lpszValueName = NULL);
-
-	// Create a new registry key (or open an existing one).
-	LSTATUS Create(
-		_In_ HKEY hKeyParent,
-		_In_z_ LPCTSTR lpszKeyName,
-		_In_opt_z_ LPTSTR lpszClass = REG_NONE,
-		_In_ DWORD dwOptions = REG_OPTION_NON_VOLATILE,
-		_In_ REGSAM samDesired = KEY_READ | KEY_WRITE,
-		_In_opt_ LPSECURITY_ATTRIBUTES lpSecAttr = NULL,
-		_Out_opt_ LPDWORD lpdwDisposition = NULL) throw();
-	// Open an existing registry key.
-	LSTATUS Open(
-		_In_ HKEY hKeyParent,
-		_In_opt_z_ LPCTSTR lpszKeyName,
-		_In_ REGSAM samDesired = KEY_READ | KEY_WRITE) throw();
-	// Close the registry key.
-	LSTATUS Close() throw();
-	// Flush the key's data to disk.
-	LSTATUS Flush() throw();
-
-	// Detach the CRegKey object from its HKEY.  Releases ownership.
-	HKEY Detach() throw();
-	// Attach the CRegKey object to an existing HKEY.  Takes ownership.
-	void Attach(_In_ HKEY hKey) throw();
-
-	// Enumerate the subkeys of the key.   
-	LSTATUS EnumKey(
-		_In_ DWORD iIndex,
-		_Out_writes_to_(*pnNameLength, *pnNameLength) _Post_z_ LPTSTR pszName,
-		_Inout_ LPDWORD pnNameLength,
-		_Out_opt_ FILETIME* pftLastWriteTime = NULL) throw();
-	LSTATUS NotifyChangeKeyValue(
-		_In_ BOOL bWatchSubtree,
-		_In_ DWORD dwNotifyFilter,
-		_In_ HANDLE hEvent,
-		_In_ BOOL bAsync = TRUE) throw();
-
-	LSTATUS DeleteSubKey(_In_z_ LPCTSTR lpszSubKey) throw();
-	LSTATUS RecurseDeleteKey(_In_z_ LPCTSTR lpszKey) throw();
-	LSTATUS DeleteValue(_In_z_ LPCTSTR lpszValue) throw();
-};
+// CRegKey - definitions
 
 inline CRegKey::CRegKey(_In_opt_ CAtlTransactionManager* pTM) throw() :
 	m_hKey( NULL ), m_samWOW64(0), m_pTM(pTM)
@@ -6776,7 +6779,7 @@ inline HRESULT WINAPI CComModule::RegisterClassHelper(
 
 	// If the ModuleFileName's length is equal or greater than the 3rd parameter
 	// (length of the buffer passed),GetModuleFileName fills the buffer (truncates
-	// if neccessary), but doesn't null terminate it. It returns the same value as
+	// if necessary), but doesn't null terminate it. It returns the same value as
 	// the 3rd parameter passed. So if the return value is the same as the 3rd param
 	// then you have a non null terminated buffer (which may or may not be truncated)
 	// We pass (szModule + 1) because in case it's an EXE we need to quote the PATH
@@ -8126,7 +8129,7 @@ ATLINLINE ATLAPI AtlComModuleGetClassObject(
 			if ((pEntry->pfnGetClassObject != NULL) && InlineIsEqualGUID(rclsid, *pEntry->pclsid))
 			{
 				_ATL_OBJMAP_CACHE* pCache = pEntry->pCache;
-				
+
 				if (pCache->pCF == NULL)
 				{
 					CComCritSecLock<CComCriticalSection> lock(pComModule->m_csObjMap, false);
@@ -8262,13 +8265,13 @@ ATLINLINE ATLAPI AtlInternalQueryInterface(
 {
 	ATLASSERT(pThis != NULL);
 	ATLASSERT(pEntries!= NULL);
- 
+
 	if(pThis == NULL || pEntries == NULL)
 		return E_INVALIDARG;
 
 	// First entry in the com map should be a simple map entry
 	ATLASSERT(pEntries->pFunc == _ATL_SIMPLEMAPENTRY);
- 
+
 	if (ppvObject == NULL)
 		return E_POINTER;
 
@@ -8279,9 +8282,9 @@ ATLINLINE ATLAPI AtlInternalQueryInterface(
 		*ppvObject = pUnk;
 		return S_OK;
 	}
- 
+
 	HRESULT hRes;
- 
+
 	for (;; pEntries++)
 	{
 		if (pEntries->pFunc == NULL)
@@ -8301,9 +8304,9 @@ ATLINLINE ATLAPI AtlInternalQueryInterface(
 				*ppvObject = pUnk;
 				return S_OK;
 			}
- 
+
 			// Actual function call
- 
+
 			hRes = pEntries->pFunc(pThis,
 				iid, ppvObject, pEntries->dw);
 			if (hRes == S_OK)
@@ -8312,9 +8315,9 @@ ATLINLINE ATLAPI AtlInternalQueryInterface(
 				break;
 		}
 	}
- 
+
 	*ppvObject = NULL;
- 
+
 	return hRes;
 }
 

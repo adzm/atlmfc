@@ -118,13 +118,13 @@ BOOL CMouseManager::LoadState(LPCTSTR lpszProfileName)
 
 	if (!reg.Open(strProfileName))
 	{
-		TRACE(_T("CMouseManager::LoadState: Can't open registry %Ts!\n"), strProfileName);
+		TRACE(_T("CMouseManager::LoadState: Can't open registry %Ts!\n"), strProfileName.GetString());
 		return FALSE;
 	}
 
 	if (!reg.Read(AFX_MOUSE_KEY, &lpbData, &uiDataSize))
 	{
-		TRACE(_T("CMouseManager::LoadState: Can't load registry data %Ts!\n"), strProfileName);
+		TRACE(_T("CMouseManager::LoadState: Can't load registry data %Ts!\n"), strProfileName.GetString());
 		return FALSE;
 	}
 

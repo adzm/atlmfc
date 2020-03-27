@@ -25,27 +25,11 @@
 #endif
 #endif
 
-#ifndef NO_WARN_MBCS_MFC_DEPRECATION
-#ifdef _MBCS
-// Warn about MBCS support being deprecated: see http://go.microsoft.com/fwlink/p/?LinkId=279048 for more information.
-#pragma warning(push)
-#pragma warning(1 : 4996)
-inline __declspec(deprecated("MBCS support in MFC is deprecated and may be removed in a future version of MFC.")) void MBCS_Support_Deprecated_In_MFC() { }
-
-class MBCS_Deprecated_MFC
-{
-public:
-	MBCS_Deprecated_MFC() { MBCS_Support_Deprecated_In_MFC(); }
-};
-#pragma warning(pop)
-#endif
-#endif
-
-#if !defined(_M_IX86) && !defined(_M_AMD64) && !defined(_M_ARM) && !defined(_M_ARM64)
+#if !defined(_M_IX86) && !defined(_M_X64) && !defined(_M_ARM) && !defined(_M_ARM64)
 	#error Compiling for unsupported platform.  Only x86, x64, ARM, and ARM64 platforms are supported by MFC.
 #endif
 
-#if defined(_MANAGED) && !defined(_M_IX86) && !defined(_M_AMD64)
+#if defined(_MANAGED) && !defined(_M_IX86) && !defined(_M_X64)
 	#error Compiling for unsupported platform.  Managed MFC only supports x86 and x64 platforms.
 #endif
 
@@ -58,8 +42,8 @@ public:
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
- 
+#endif
+
 #ifdef __ATLDBGMEM_H__
 #error <atldbgmem.h> cannot be used in MFC projects. See AfxEnableMemoryTracking
 #endif
@@ -186,7 +170,7 @@ public:
 
 #ifndef AFX_NO_CLR_COINIT_STA
 #pragma comment(linker, "/CLRTHREADATTRIBUTE:STA")
-#endif 
+#endif
 
 #endif //_MANAGED
 /*============================================================================*/
@@ -240,7 +224,7 @@ class CDumpContext;                   // object diagnostic dumping
 #ifndef _INC_STDARG
 	#include <stdarg.h>
 #endif
-#ifndef _INC_ERRNO 
+#ifndef _INC_ERRNO
 #include <errno.h>
 #endif
 
@@ -317,7 +301,7 @@ typedef __POSITION* POSITION;
 #ifdef _AFXDLL
 #pragma warning(disable: 4204)  // non-constant aggregate initializer
 #endif
-#pragma warning(disable: 4263 4264)  // base class method is hidden
+#pragma warning(disable: 4263 4264 4266)  // base class member function is hidden
 
 /*============================================================================*/
 // Diagnostic support
@@ -351,7 +335,7 @@ void AFXAPI AfxDump(const CObject* pOb); // Dump an object from CodeView
 #define VERIFY(f)          ASSERT(f)
 #define DEBUG_ONLY(f)      (f)
 
-// The following trace macros are provided for backward compatiblity
+// The following trace macros are provided for backward compatibility
 //  (they also take a fixed number of parameters which provides
 //   some amount of extra error checking)
 #define TRACE0(sz)              TRACE(_T("%Ts"), _T(sz))
@@ -384,7 +368,7 @@ inline void AFX_CDECL AfxTrace(...) { }
 /* We use the name AFXASSUME to avoid name clashes */
 
 #if defined(_PREFAST_) || defined (_DEBUG)
-#define AFXASSUME(cond)			do { bool __afx_condVal=!!(cond); ASSERT(__afx_condVal); _Analysis_assume_(__afx_condVal); } while(0) 
+#define AFXASSUME(cond)			do { bool __afx_condVal=!!(cond); ASSERT(__afx_condVal); _Analysis_assume_(__afx_condVal); } while(0)
 #else
 #define AFXASSUME(cond)			((void)0)
 #endif
@@ -443,7 +427,7 @@ inline void AFX_CDECL AfxTrace(...) { }
 		REPORT_EXCEPTION((pException), _T("Exception thrown in destructor")); \
 		delete pException; \
 	} while (0)
-	
+
 #define AFX_BEGIN_DESTRUCTOR try {
 #define AFX_END_DESTRUCTOR   } catch (CException *pException) { EXCEPTION_IN_DTOR(pException); }
 
@@ -575,7 +559,7 @@ public:
 #endif
 
 	// Disable the copy constructor and assignment by default so you will get
-	//   compiler errors instead of unexpected behaviour if you pass objects
+	//   compiler errors instead of unexpected behavior if you pass objects
 	//   by value or assign objects.
 protected:
 	CObject();
@@ -781,7 +765,7 @@ protected:
 class CSimpleException : public CException
 {
 	DECLARE_DYNAMIC(CSimpleException)
-	
+
 	// base class for resource-critical MFC exceptions
 	// handles ownership and initialization of an error message
 
@@ -813,7 +797,7 @@ protected:
 };
 
 // helper routines for non-C++ EH implementations
-	// for THROW_LAST auto-delete backward compatiblity
+	// for THROW_LAST auto-delete backward compatibility
 	void AFXAPI AfxThrowLastCleanup();
 
 // other out-of-line helper functions
@@ -1120,7 +1104,7 @@ public:
 
 	/// <summary>
 	/// Open is designed for use with the default CFile constructor</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if succeeds; otherwise FALSE.</returns>
 	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
 	/// <param name="nOpenFlags">Sharing and access mode. Specifies the action to take when opening the file. You can combine options listed below by using the bitwise-OR (|) operator. One access permission and one share option are required; the modeCreate and modeNoInherit modes are optional.</param>
@@ -1139,11 +1123,11 @@ public:
 	/// This static function deletes the file specified by the path.</summary>
 	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
 	/// <param name="pTM">Pointer to CAtlTransactionManager object</param>
-	static void PASCAL Remove(LPCTSTR lpszFileName, CAtlTransactionManager* pTM = NULL); 
+	static void PASCAL Remove(LPCTSTR lpszFileName, CAtlTransactionManager* pTM = NULL);
 
 	/// <summary>
 	/// This method retrieves status information related to a given CFile object instance or a given file path.</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if succeeds; otherwise FALSE.</returns>
 	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
 	/// <param name="rStatus">A reference to a user-supplied CFileStatus structure that will receive the status information.</param>
@@ -1185,8 +1169,8 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 	enum BufferCommand { bufferRead, bufferWrite, bufferCommit, bufferCheck };
-	enum BufferFlags 
-	{ 
+	enum BufferFlags
+	{
 		bufferDirect = 0x01,
 		bufferBlocking = 0x02
 	};
@@ -1199,7 +1183,7 @@ protected:
 
 	BOOL m_bCloseOnDelete;
 	CString m_strFileName;
-	
+
 	/// <summary>
 	/// Pointer to CAtlTransactionManager object</summary>
 	CAtlTransactionManager* m_pTM;
@@ -1223,7 +1207,7 @@ public:
 
 	CStdioFile(FILE* pOpenStream);
 	CStdioFile(LPCTSTR lpszFileName, UINT nOpenFlags);
-	
+
 	/// <summary>
 	/// CStdioFile constructor</summary>
 	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
@@ -1253,7 +1237,7 @@ public:
 
 	/// <summary>
 	/// Open is designed for use with the default CStdioFile constructor</summary>
-	/// <returns> 
+	/// <returns>
 	/// TRUE if succeeds; otherwise FALSE.</returns>
 	/// <param name="lpszFileName">A string that is the path to the desired file. The path can be relative or absolute.</param>
 	/// <param name="nOpenFlags">Sharing and access mode. Specifies the action to take when opening the file. You can combine options listed below by using the bitwise-OR (|) operator. One access permission and one share option are required; the modeCreate and modeNoInherit modes are optional.</param>
@@ -1468,10 +1452,8 @@ void* AFX_CDECL operator new(size_t nSize, LPCSTR lpszFileName, int nLine);
 #define DEBUG_NEW new(THIS_FILE, __LINE__)
 void AFX_CDECL operator delete(void* p, LPCSTR lpszFileName, int nLine);
 
-_Ret_notnull_ _Post_writable_byte_size_(_Size) void * __cdecl operator new[](size_t _Size);
 void* __cdecl operator new[](size_t nSize, LPCSTR lpszFileName, int nLine);
 void __cdecl operator delete[](void* p, LPCSTR lpszFileName, int nLine);
-void __cdecl operator delete[](void *);
 
 _AFX_DECLSPEC_ALLOCATOR void* AFXAPI AfxAllocMemoryDebug(size_t nSize, BOOL bIsObject,
 	LPCSTR lpszFileName, int nLine);
@@ -1598,7 +1580,7 @@ class CArchive
 {
 protected:
 	enum SchemaMapReservedRefs { objTypeArrayRef = 1 };
-	enum LoadArrayObjType{ typeUndefined = 0, typeCRuntimeClass = 1, typeCObject = 2 };	
+	enum LoadArrayObjType{ typeUndefined = 0, typeCRuntimeClass = 1, typeCObject = 2 };
 public:
 // Flag values
 	enum Mode { store = 0, load = 1, bNoFlushOnDelete = 2, bNoByteSwap = 4 };
@@ -1662,9 +1644,9 @@ public:
 	template < typename BaseType , bool t_bMFCDLL>
 	CArchive& operator<<(const ATL::CSimpleStringT<BaseType, t_bMFCDLL>& str);
 
-	template< typename BaseType, class StringTraits >	
+	template< typename BaseType, class StringTraits >
 	CArchive& operator<<(const ATL::CStringT<BaseType, StringTraits>& str);
-	
+
 	template < typename BaseType , bool t_bMFCDLL>
 	CArchive& operator>>(ATL::CSimpleStringT<BaseType, t_bMFCDLL>& str);
 
@@ -1788,7 +1770,7 @@ public:
 	CDumpContext& operator<<(LPCWSTR lpsz); // automatically thinned
 #endif
 	template< typename BaseType, class StringTraits >
-	CDumpContext& operator<<(const ATL::CStringT<BaseType, 
+	CDumpContext& operator<<(const ATL::CStringT<BaseType,
 		StringTraits>& str)
 	{
 		*this << static_cast< const BaseType* >( str );

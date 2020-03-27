@@ -8,7 +8,7 @@
 // See these sources for detailed information regarding the
 // Active Template Library product.
 
-#include "StdAfx.H"
+#include "stdafx.H"
 
 #pragma warning( disable: 4073 )  // initializers put in library initialization area
 
@@ -16,7 +16,7 @@
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 #endif
 
-#include <windows.h>
+#include <Windows.h>
 
 namespace ATL
 {

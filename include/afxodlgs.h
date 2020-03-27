@@ -23,12 +23,12 @@
 
 // include OLE dialog/helper APIs
 #ifndef _OLEDLG_H_
-	#include <oledlg.h>
+	#include <OleDlg.h>
 #endif
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)

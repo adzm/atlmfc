@@ -162,18 +162,34 @@ HRESULT CALLBACK TaskDialogCallback(_In_ HWND hWnd, _In_ UINT uNotification, _In
 
 IMPLEMENT_DYNAMIC(CTaskDialog, CObject);
 
-CTaskDialog::CTaskDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction, _In_ const CString& strTitle,
-		_In_ int nCommonButtons /* = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON */,
+CTaskDialog::CTaskDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction,
+		_In_ const CString& strTitle, _In_ int nCommonButtons /* = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON */,
 		_In_ int nTaskDialogOptions /* = TDF_ENABLE_HYPERLINKS | TDF_USE_COMMAND_LINKS */,
-		_In_ const CString& strFooter /* = _T("") */) : CObject(),
-		m_hWnd(NULL), m_nCommonButton(nCommonButtons), m_nButtonDisabled(0), m_nButtonElevation(0),
-		m_nFlags(nTaskDialogOptions), m_nWidth(0), m_nDefaultCommandControl(0), m_nDefaultRadioButton(0),
-		m_strTitle(strTitle), m_strMainInstruction(strMainInstruction), m_strContent(strContent),
-		m_strFooter(strFooter), m_strVerification(_T("")), m_strInformation(_T("")),
-		m_strExpand(_T("")), m_strCollapse(_T("")),
-		m_nProgressRangeMin(CTaskDialog::PROGRESS_BAR_MIN), m_nProgressRangeMax(CTaskDialog::PROGRESS_BAR_MAX),
-		m_nProgressState(PBST_NORMAL), m_nProgressPos(CTaskDialog::PROGRESS_BAR_MIN),
-		m_bVerified(FALSE), m_nRadioId(0), m_nButtonId(0)
+		_In_ const CString& strFooter /* = _T("") */)
+	: CObject()
+	, m_hWnd(NULL)
+	, m_nCommonButton(nCommonButtons)
+	, m_nButtonDisabled(0)
+	, m_nButtonElevation(0)
+	, m_nFlags(nTaskDialogOptions)
+	, m_nWidth(0)
+	, m_nDefaultCommandControl(0)
+	, m_nDefaultRadioButton(0)
+	, m_strContent(strContent)
+	, m_strMainInstruction(strMainInstruction)
+	, m_strTitle(strTitle)
+	, m_strFooter(strFooter)
+	, m_strVerification(_T(""))
+	, m_strInformation(_T(""))
+	, m_strExpand(_T(""))
+	, m_strCollapse(_T(""))
+	, m_nProgressRangeMin(CTaskDialog::PROGRESS_BAR_MIN)
+	, m_nProgressRangeMax(CTaskDialog::PROGRESS_BAR_MAX)
+	, m_nProgressState(PBST_NORMAL)
+	, m_nProgressPos(CTaskDialog::PROGRESS_BAR_MIN)
+	, m_bVerified(FALSE)
+	, m_nRadioId(0)
+	, m_nButtonId(0)
 {
 	m_mainIcon.pszIcon = NULL;
 	m_footerIcon.pszIcon = NULL;
@@ -184,17 +200,34 @@ CTaskDialog::CTaskDialog(_In_ const CString& strContent, _In_ const CString& str
 	}
 }
 
-CTaskDialog::CTaskDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction, _In_ const CString& strTitle, _In_ int nIDCommandControlsFirst,
-		_In_ int nIDCommandControlsLast, _In_ int nCommonButtons, _In_ int nTaskDialogOptions /* = TDF_ENABLE_HYPERLINKS | TDF_USE_COMMAND_LINKS */,
-		_In_ const CString& strFooter /* = _T("") */) : CObject(),
-		m_hWnd(NULL), m_nCommonButton(nCommonButtons), m_nButtonDisabled(0), m_nButtonElevation(0),
-		m_nFlags(nTaskDialogOptions), m_nWidth(0), m_nDefaultCommandControl(0), m_nDefaultRadioButton(0),
-		m_strTitle(strTitle), m_strMainInstruction(strMainInstruction), m_strContent(strContent),
-		m_strFooter(strFooter), m_strVerification(_T("")), m_strInformation(_T("")),
-		m_strExpand(_T("")), m_strCollapse(_T("")),
-		m_nProgressRangeMin(CTaskDialog::PROGRESS_BAR_MIN), m_nProgressRangeMax(CTaskDialog::PROGRESS_BAR_MAX),
-		m_nProgressState(PBST_NORMAL), m_nProgressPos(CTaskDialog::PROGRESS_BAR_MIN),
-		m_bVerified(FALSE), m_nRadioId(0), m_nButtonId(0)
+CTaskDialog::CTaskDialog(_In_ const CString& strContent, _In_ const CString& strMainInstruction,
+		_In_ const CString& strTitle, _In_ int nIDCommandControlsFirst, _In_ int nIDCommandControlsLast,
+		_In_ int nCommonButtons, _In_ int nTaskDialogOptions /* = TDF_ENABLE_HYPERLINKS | TDF_USE_COMMAND_LINKS */,
+		_In_ const CString& strFooter /* = _T("") */)
+	: CObject()
+	, m_hWnd(NULL)
+	, m_nCommonButton(nCommonButtons)
+	, m_nButtonDisabled(0)
+	, m_nButtonElevation(0)
+	, m_nFlags(nTaskDialogOptions)
+	, m_nWidth(0)
+	, m_nDefaultCommandControl(0)
+	, m_nDefaultRadioButton(0)
+	, m_strContent(strContent)
+	, m_strMainInstruction(strMainInstruction)
+	, m_strTitle(strTitle)
+	, m_strFooter(strFooter)
+	, m_strVerification(_T(""))
+	, m_strInformation(_T(""))
+	, m_strExpand(_T(""))
+	, m_strCollapse(_T(""))
+	, m_nProgressRangeMin(CTaskDialog::PROGRESS_BAR_MIN)
+	, m_nProgressRangeMax(CTaskDialog::PROGRESS_BAR_MAX)
+	, m_nProgressState(PBST_NORMAL)
+	, m_nProgressPos(CTaskDialog::PROGRESS_BAR_MIN)
+	, m_bVerified(FALSE)
+	, m_nRadioId(0)
+	, m_nButtonId(0)
 {
 	m_mainIcon.pszIcon = NULL;
 	m_footerIcon.pszIcon = NULL;

@@ -67,7 +67,7 @@ class CMFCTabInfo : public CObject
 	friend class CMFCOutlookBarTabCtrl;
 
 	CMFCTabInfo(const CString& strText, const UINT uiIcon, CWnd* pWnd, const int iTabID, BOOL bDetachable) :
-		m_pWnd(pWnd), m_uiIcon(uiIcon), m_iTabID(iTabID), m_bIsDetachable(bDetachable)
+		m_uiIcon(uiIcon), m_pWnd(pWnd), m_iTabID(iTabID), m_bIsDetachable(bDetachable)
 	{
 		m_strText = strText;
 		m_rect.SetRectEmpty();
@@ -173,13 +173,13 @@ public:
 	virtual BOOL SetImageList(UINT uiID, int cx = 15, COLORREF clrTransp = RGB(255, 0, 255));
 	virtual BOOL SetImageList(HIMAGELIST hImageList);
 	virtual void ClearImageList();
-	
+
 	virtual void SetTabsHeight();
 	virtual int GetTabsHeight() const { return m_nTabsHeight; }
 	virtual void GetTabsRect(CRect& rect) const { rect.SetRectEmpty(); }
 
 	virtual void RecalcLayout() = 0;
-	
+
 	// Tab access:
 	virtual void AddTab(CWnd* pTabWnd, LPCTSTR lpszTabLabel, UINT uiImageId = (UINT)-1, BOOL bDetachable = TRUE);
 	virtual void AddTab(CWnd* pTabWnd, UINT uiResTabLabel, UINT uiImageId = (UINT)-1, BOOL bDetachable = TRUE);
@@ -238,7 +238,7 @@ public:
 
 	virtual void EnableInPlaceEdit(BOOL bEnable) = 0;
 	virtual void CalcRectEdit(CRect& rectEdit) = 0;
- 
+
 	void SetDrawNoPrefix(BOOL bNoPrefix, BOOL bRedraw = TRUE);
 	BOOL IsDrawNoPrefix() const { return m_bLabelNoPrefix; }
 
@@ -318,7 +318,7 @@ public:
 	void ResetImageList();
 	BOOL IsIconAdded(HICON hIcon, int& iIcon) { return (m_mapAddedIcons.Lookup(hIcon, iIcon)); }
 	void AddIcon(HICON hIcon, int iIcon) {m_mapAddedIcons.SetAt(hIcon, iIcon);}
-	
+
 	BOOL EnableCustomToolTips(BOOL bEnable = TRUE);
 
 // Attributes
@@ -351,6 +351,7 @@ public:
 	{
 		if (m_pToolTip == NULL)
 		{
+#pragma warning(suppress: 4640) // CWnd types are single threaded
 			static CToolTipCtrl _afxEmptyToolTip;
 			return _afxEmptyToolTip;
 		}
@@ -432,7 +433,7 @@ protected:
 	virtual BOOL SetACCData(CMFCTabInfo* pTab, CAccessibilityData& data, BOOL bIsActive);
 
 protected:
-	int CMFCBaseTabCtrl::FindTabInfo(int nBarID, CMFCTabInfo** ppTabInfo);
+	int FindTabInfo(int nBarID, CMFCTabInfo** ppTabInfo);
 
 	Location   m_location; // Tabs location
 	CPtrArray  m_arTabs;   // Array of CMFCTabInfo objects

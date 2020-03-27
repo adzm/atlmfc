@@ -13,7 +13,7 @@
 #pragma once
 
 #ifdef _WINDOWS_
-	#error WINDOWS.H already included.  MFC apps must not #include <windows.h>
+	#error WINDOWS.H already included.  MFC apps must not #include <Windows.h>
 #endif
 
 // STRICT is the only supported option (NOSTRICT is no longer supported)
@@ -150,7 +150,7 @@
 #pragma pack(push, _AFX_PACKING)
 #endif
 
-#include <windows.h>
+#include <Windows.h>
 
 #pragma pop_macro("_WINSOCKAPI_")
 
@@ -167,7 +167,7 @@ struct HKEY__;
 typedef struct HKEY__ *HKEY;
 
 #ifndef _INC_COMMCTRL
-	#include <commctrl.h>
+	#include <CommCtrl.h>
 
 	// Note: We must avoid using TB_ADDBUTTONW and TB_INSERTBUTTONW
 	//       in the Unicode build or else MFCXXU.DLL will not be

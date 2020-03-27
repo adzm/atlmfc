@@ -9,7 +9,7 @@
  * Microsoft Foundation Classes product.
  */
 
-#include <windows.h>
+#include <Windows.h>
 
 /* _RawDllMainProxy is used to correctly call RawDllMain (defined in dllmodul.cpp).
  * We need to call RawDllMain only when the user does not provide his/her own DllMain.

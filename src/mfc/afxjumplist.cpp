@@ -21,9 +21,9 @@
 #include <propkey.h>
 #include <atlconv.h>
 #include <propvarutil.h>
-#include <shobjidl.h>
+#include <ShObjIdl.h>
 
-CJumpList::CJumpList(BOOL bAutoCommit) 
+CJumpList::CJumpList(BOOL bAutoCommit)
 {
 	m_bInitialized = FALSE;
 	m_bIsSupported = FALSE;
@@ -63,8 +63,8 @@ void CJumpList::ClearAll()
 	}
 
 	ClearAllDestinations();
-	
-	if (m_destListPtr != NULL)	
+
+	if (m_destListPtr != NULL)
 	{
 		m_destListPtr.Detach()->Release();
 	}
@@ -110,7 +110,7 @@ BOOL CJumpList::InitializeList()
 
 	if (!m_bInitialized)
 	{
-		CString strAppID = m_strAppID; 
+		CString strAppID = m_strAppID;
 		if (strAppID.IsEmpty ())
 		{
 			// try WinApp
@@ -153,7 +153,7 @@ UINT CJumpList::GetMaxSlots() const
 
 BOOL CJumpList::AddKnownCategory(KNOWNDESTCATEGORY category)
 {
-	if (!InitializeList()) // always returns FALSE if OS < Win7 
+	if (!InitializeList()) // always returns FALSE if OS < Win7
 	{
 		return FALSE;
 	}
@@ -168,10 +168,10 @@ BOOL CJumpList::AddKnownCategory(KNOWNDESTCATEGORY category)
 	return TRUE;
 }
 
-BOOL CJumpList::AddTask(LPCTSTR strTargetExecutablePath, LPCTSTR strCommandLineArgs, 
+BOOL CJumpList::AddTask(LPCTSTR strTargetExecutablePath, LPCTSTR strCommandLineArgs,
 						LPCTSTR strTitle, LPCTSTR strIconPath, int iIconIndex)
 {
-	if (!InitializeList()) // always returns FALSE if OS < Win7 
+	if (!InitializeList()) // always returns FALSE if OS < Win7
 	{
 		return FALSE;
 	}
@@ -232,7 +232,7 @@ BOOL CJumpList::AddTask(LPCTSTR strTargetExecutablePath, LPCTSTR strCommandLineA
 
 BOOL CJumpList::AddTaskSeparator()
 {
-	if (!InitializeList()) // always returns FALSE if OS < Win7 
+	if (!InitializeList()) // always returns FALSE if OS < Win7
 	{
 		return FALSE;
 	}
@@ -294,7 +294,7 @@ BOOL CJumpList::AddTask(IShellLink* pShellLink)
 
 BOOL CJumpList::AddTasks(IObjectArray* pObjectCollection)
 {
-	if (!InitializeList()) // always returns FALSE if OS < Win7 
+	if (!InitializeList()) // always returns FALSE if OS < Win7
 	{
 		return FALSE;
 	}
@@ -441,7 +441,7 @@ IObjectCollection* CJumpList::GetObjectCollection(LPCTSTR lpcszCategoryName)
 	m_mapDestinations.Lookup(lpcszCategoryName, pColl);
 	if(pColl == NULL)
 	{
-		HRESULT hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC_SERVER, 
+		HRESULT hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC_SERVER,
 			IID_IObjectCollection, (LPVOID*) &pColl);
 		if (FAILED(hr))
 		{
@@ -457,7 +457,7 @@ IObjectCollection* CJumpList::GetObjectCollection(LPCTSTR lpcszCategoryName)
 
 BOOL CJumpList::CommitList()
 {
-	if (!InitializeList()) // always returns FALSE if OS < Win7 
+	if (!InitializeList()) // always returns FALSE if OS < Win7
 	{
 		return FALSE;
 	}
@@ -468,13 +468,13 @@ BOOL CJumpList::CommitList()
 		IObjectCollection* pColl = NULL;
 		m_mapDestinations.GetNextAssoc(pos, strCategory, pColl);
 
-		// remove items that could be in "removed" list from the collection being added  
+		// remove items that could be in "removed" list from the collection being added
 		IObjectCollection* pFinalCollection = CheckRemovedItems(pColl);
 
 		ASSERT(pFinalCollection != NULL);
 		if (pFinalCollection == NULL)
 		{
-			TRACE1("A final collection for Category \"%s\" is NULL. This category is not committed. \n", strCategory);
+			TRACE1("A final collection for Category \"%s\" is NULL. This category is not committed. \n", strCategory.GetString());
 			continue;
 		}
 
@@ -483,7 +483,7 @@ BOOL CJumpList::CommitList()
 
 		if (nDocCount == 0)
 		{
-			TRACE1("WARNING: A final collection for Category \"%s\" is empty. \n", strCategory);
+			TRACE1("WARNING: A final collection for Category \"%s\" is empty. \n", strCategory.GetString());
 		}
 
 #ifdef UNICODE
@@ -495,7 +495,7 @@ BOOL CJumpList::CommitList()
 #endif
 		if(FAILED(hr))
 		{
-			TRACE2("Append category %s failed , HRESULT: %x.\n", strCategory, hr);
+			TRACE2("Append category %s failed , HRESULT: %x.\n", strCategory.GetString(), hr);
 		}
 
 		ReleaseObjectArray(pFinalCollection);
@@ -551,7 +551,7 @@ IObjectCollection* CJumpList::CheckRemovedItems(IObjectCollection* pColl)
 		return pColl;
 	}
 
-	UINT nRemovedObjCount = 0; 
+	UINT nRemovedObjCount = 0;
 	UINT nCheckObjCount = 0;
 
 	if (FAILED(m_removedItemsPtr->GetCount(&nRemovedObjCount)) || nRemovedObjCount == 0)
@@ -566,7 +566,7 @@ IObjectCollection* CJumpList::CheckRemovedItems(IObjectCollection* pColl)
 
 	IObjectCollection* pFinalCollection = NULL;
 
-	HRESULT hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC_SERVER, 
+	HRESULT hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC_SERVER,
 		IID_IObjectCollection, (LPVOID*) &pFinalCollection);
 
 	if (FAILED(hr))
@@ -661,7 +661,7 @@ CAppDestinations::CAppDestinations()
 
 	if (pApp != NULL)
 	{
-		SetAppID(pApp->m_pszAppID);	
+		SetAppID(pApp->m_pszAppID);
 	}
 }
 

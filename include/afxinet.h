@@ -18,7 +18,7 @@
 #endif
 
 #ifndef _WININET_
-#include <wininet.h>
+#include <WinInet.h>
 #endif
 
 #ifdef _AFXDLL
@@ -518,7 +518,7 @@ public:
 	CGopherLocator CreateLocator(LPCTSTR pstrDisplayString,
 		LPCTSTR pstrSelectorString, DWORD dwGopherType);
 
-	BOOL CGopherConnection::GetAttribute(CGopherLocator& refLocator,
+	BOOL GetAttribute(CGopherLocator& refLocator,
 		CString strRequestedAttributes, CString& strResult);
 
 	static CGopherLocator CreateLocator(LPCTSTR pstrLocator);

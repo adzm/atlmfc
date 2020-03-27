@@ -33,7 +33,7 @@
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifndef _AFX_NOFORCE_LIBS
 
@@ -93,7 +93,7 @@ struct CODBCParamInfo;
 	{ \
 	} while ((nRetCode = (SQLFunc)) == SQL_STILL_EXECUTING)
 
-// Not really required, but kept for compatibilty
+// Not really required, but kept for compatibility
 #define AFX_SQL_SYNC(SQLFunc) \
 	do \
 	{ \
@@ -537,6 +537,55 @@ void AFXAPI DDX_FieldScroll(CDataExchange* pDX, int nIDC, int& value,
 	CRecordset* pRecordset);
 
 /*============================================================================*/
+// Info helper definitions
+#define AFX_CURRENT_RECORD_UNDEFINED (-2)
+#define AFX_CURRENT_RECORD_BOF (-1)
+
+// For returning status for a recordset
+struct CRecordsetStatus
+{
+	long m_lCurrentRecord;  // -2=Unknown,-1=BOF,0=1st record. . .
+	BOOL m_bRecordCountFinal;// Have we counted all records?
+};
+
+#pragma warning( push )
+#pragma warning( disable: 4121 )
+
+// Must maintain data binding info
+struct CFieldInfo
+{
+	// MFC specific info
+	void* m_pvDataCache;
+	LONG_PTR m_nLength;
+	int m_nDataType;
+	BYTE m_bStatus;
+#ifdef _DEBUG
+	void* m_pvBindAddress;
+#endif
+};
+
+#pragma warning( pop )
+
+struct CODBCFieldInfo
+{
+	// meta data from ODBC
+	CString m_strName;
+	SWORD m_nSQLType;
+	SQLULEN m_nPrecision;
+	SWORD m_nScale;
+	SWORD m_nNullability;
+};
+
+struct CODBCParamInfo
+{
+	// meta data from ODBC
+	SWORD m_nSQLType;
+	UDWORD m_nPrecision;
+	SWORD m_nScale;
+	SWORD m_nNullability;
+};
+
+/*============================================================================*/
 // CRecordset - the result of a SQL Statement
 
 #define AFX_DB_USE_DEFAULT_TYPE     (0xFFFFFFFF)
@@ -954,55 +1003,6 @@ protected:
 
 	friend class CFieldExchange;
 	friend class CRecordView;
-};
-
-/*============================================================================*/
-// Info helper definitions
-#define AFX_CURRENT_RECORD_UNDEFINED (-2)
-#define AFX_CURRENT_RECORD_BOF (-1)
-
-// For returning status for a recordset
-struct CRecordsetStatus
-{
-	long m_lCurrentRecord;  // -2=Unknown,-1=BOF,0=1st record. . .
-	BOOL m_bRecordCountFinal;// Have we counted all records?
-};
-
-#pragma warning( push )
-#pragma warning( disable: 4121 )
-
-// Must maintian data binding info
-struct CFieldInfo
-{
-	// MFC specific info
-	void* m_pvDataCache;
-	LONG_PTR m_nLength;
-	int m_nDataType;
-	BYTE m_bStatus;
-#ifdef _DEBUG
-	void* m_pvBindAddress;
-#endif
-};
-
-#pragma warning( pop )
-
-struct CODBCFieldInfo
-{
-	// meta data from ODBC
-	CString m_strName;
-	SWORD m_nSQLType;
-	SQLULEN m_nPrecision;
-	SWORD m_nScale;
-	SWORD m_nNullability;
-};
-
-struct CODBCParamInfo
-{
-	// meta data from ODBC
-	SWORD m_nSQLType;
-	UDWORD m_nPrecision;
-	SWORD m_nScale;
-	SWORD m_nNullability;
 };
 
 

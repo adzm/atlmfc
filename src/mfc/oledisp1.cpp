@@ -566,7 +566,7 @@ UINT PASCAL CCmdTarget::GetStackSize(const BYTE* pbParams, VARTYPE vtResult)
 			if (*pbParams == VT_R8)
 				nCount = (nCount + _ALIGN_DOUBLES-1) & ~(_ALIGN_DOUBLES-1);
 #endif
-			
+
 			nCount += rgnBytes[(BYTE)(*pbParams & ~VT_MFCBYREF)];
 #ifdef _ALIGN_STACK
 			nCount = (nCount + (_ALIGN_STACK-1)) & ~(_ALIGN_STACK-1);
@@ -585,7 +585,7 @@ UINT PASCAL CCmdTarget::GetStackSize(const BYTE* pbParams, VARTYPE vtResult)
 #if defined(_M_ARM64)
 SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
                                 void* pResult, VARTYPE vtResult, DISPPARAMS* pDispParams, UINT* puArgErr,
-                                VARIANT* rgTempVars, CVariantBoolConverter* pTempStackArgs, 
+                                VARIANT* rgTempVars, CVariantBoolConverter* pTempStackArgs,
                                 PUNSUPPORTEDPLAT_PARAMS pUnsupportedplatParams)
 #elif !defined(_SHADOW_DOUBLES)
 SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
@@ -934,7 +934,7 @@ _AfxDispatchCall(AFX_PMSG pfn, void* pArgs, UINT nSizeArgs);
 
 // disable run-time checks (/RTC1) in debug builds because this method
 // intentionally messes with the stack in order to call the OLE method.
-#if defined(_M_IX86) || defined(_M_AMD64)
+#if defined(_M_IX86) || defined(_M_X64)
 #pragma runtime_checks("", off)
 #endif
 
@@ -986,7 +986,7 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 		BYTE* pbPropSetParams = (BYTE*)_alloca(nParams+3);
  #pragma prefast(pop)
  #pragma warning(pop)
-			
+
 		ASSERT(pbPropSetParams != NULL);    // stack overflow?
 
 		ASSERT(!(pEntry->vt & VT_BYREF));
@@ -1023,7 +1023,7 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 #pragma prefast(pop)
 #pragma warning(pop)
 
-	
+
 	memset(rgTempVars, 0, pDispParams->cArgs * sizeof(VARIANT));
 
 	// determine size of arguments and allocate stack space
@@ -1034,7 +1034,7 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 	if (nSizeArgs < _STACK_MIN)
 #pragma warning( pop )
 		nSizeArgs = _STACK_MIN;
-	
+
 	if(!ATL::_ATL_SAFE_ALLOCA_IMPL::_AtlVerifyStackAvailable(nSizeArgs + _SCRATCH_SIZE))
 			return E_OUTOFMEMORY;
 #pragma warning(push)
@@ -1045,11 +1045,11 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 #pragma prefast(pop)
 #pragma warning(pop)
 
-	
+
 
 	// push all the args on to the stack allocated memory
 	AFX_RESULT result;
-	CVariantBoolConverter tempArgs;	
+	CVariantBoolConverter tempArgs;
 #if defined(_M_ARM64)
     SCODE sc = PushStackArgs(pStack, pbParams, &result, vtResult,
                              pDispParams, puArgErr, rgTempVars, &tempArgs, &UnsupportedplatParams);
@@ -1104,7 +1104,7 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 #else
                 result.dblVal = ((DATE(AFXAPI*)(AFX_PMSG, void*, UINT))
                     pfnDispatch)(pfn, pStack, nSizeArgs);
-#endif			
+#endif
                 break;
 			case VT_I8:
 			case VT_UI8:
@@ -1194,7 +1194,7 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 			//Test only lower 2 bytes (0 - false, otherwise - true).
 			//BOOL users should return only TRUE or FALSE.
 			VARIANT_BOOL sBool=(VARIANT_BOOL)dwResult;
-			V_BOOL(pvarResult) = (sBool != 0 ? VARIANT_TRUE : VARIANT_FALSE);			
+			V_BOOL(pvarResult) = (sBool != 0 ? VARIANT_TRUE : VARIANT_FALSE);
 			break;
 			}
 		case VT_VARIANT:
@@ -1229,7 +1229,7 @@ SCODE CCmdTarget::CallMemberFunc(const AFX_DISPMAP_ENTRY* pEntry, WORD wFlags,
 }
 
 // restore run-time check settings (/RTC1 in debug)
-#if defined(_M_IX86) || defined(_M_AMD64)
+#if defined(_M_IX86) || defined(_M_X64)
 #pragma runtime_checks("", restore)
 #endif
 

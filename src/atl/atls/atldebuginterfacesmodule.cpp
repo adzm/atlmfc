@@ -5,10 +5,10 @@
 // This source code is only intended as a supplement to the
 // Active Template Library Reference and related
 // electronic documentation provided with the library.
-// See these sources for detailed information regarding the	
+// See these sources for detailed information regarding the
 // Active Template Library product.
 
-#include "StdAfx.H"
+#include "stdafx.H"
 
 // C4073 - initializers put in library initialization area
 // C4740 - flow in or out of inline asm code suppresses global optimization

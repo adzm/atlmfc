@@ -23,10 +23,10 @@
 	#include <afxole.h>
 #endif
 #ifndef _RICHEDIT_
-	#include <richedit.h>
+	#include <Richedit.h>
 #endif
 #ifndef _RICHOLE_
-	#include <richole.h>
+	#include <RichOle.h>
 	#define _RICHOLE_
 #endif
 #ifndef __AFXCMN_H__
@@ -35,7 +35,7 @@
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)
-#endif 
+#endif
 
 #ifdef _AFX_PACKING
 #pragma pack(push, _AFX_PACKING)

@@ -472,7 +472,7 @@ void CMFCToolBarsMenuPropertyPage::OnResetMenu()
 
 	{
 		CString strPrompt;
-		strPrompt.Format(IDS_AFXBARRES_RESET_MENU_FMT, m_strContextMenuName);
+		strPrompt.Format(IDS_AFXBARRES_RESET_MENU_FMT, m_strContextMenuName.GetString());
 
 		if (AfxMessageBox(strPrompt, MB_YESNO | MB_ICONQUESTION) != IDYES)
 		{
@@ -520,7 +520,7 @@ void CMFCToolBarsMenuPropertyPage::OnResetFrameMenu()
 
 	{
 		CString strPrompt;
-		strPrompt.Format(IDS_AFXBARRES_RESET_MENU_FMT, m_strMenuName);
+		strPrompt.Format(IDS_AFXBARRES_RESET_MENU_FMT, m_strMenuName.GetString());
 
 		if (AfxMessageBox(strPrompt, MB_YESNO | MB_ICONQUESTION) != IDYES)
 		{

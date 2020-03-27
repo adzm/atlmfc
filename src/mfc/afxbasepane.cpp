@@ -38,7 +38,7 @@
 #include "afxglobalutils.h"
 #include "afxdockingmanager.h"
 
-#include <Basetsd.h>
+#include <basetsd.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -690,7 +690,7 @@ void CBasePane::ShowPane(BOOL bShow, BOOL bDelay, BOOL bActivate)
 			// call ShowWindow only if no delay or if we need to hide the pane
 			pParent->ShowWindow(nShowCmd);
 		}
-		
+
 		pParent->PostMessage(AFX_WM_CHECKEMPTYMINIFRAME);
 	}
 	else if (m_pParentDockBar != NULL)
@@ -1311,7 +1311,7 @@ HRESULT CBasePane::get_accState(VARIANT varChild, VARIANT *pvarState)
 		OnSetAccData(varChild.lVal);
 		pvarState->vt = VT_I4;
 		pvarState->lVal = m_AccData.m_bAccState;
-		return S_OK; 
+		return S_OK;
 	}
 
 	return S_FALSE;
@@ -1425,7 +1425,7 @@ HRESULT CBasePane::accSelect(long flagsSelect, VARIANT varChild)
 {
 	if (m_pStdObject != NULL)
 	{
-		return m_pStdObject->accSelect(flagsSelect, varChild); 
+		return m_pStdObject->accSelect(flagsSelect, varChild);
 	}
 
 	return E_INVALIDARG;

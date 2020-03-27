@@ -19,7 +19,7 @@ class CPrintingDialog : public CDialog
 {
 public:
 	enum { IDD = AFX_IDD_PRINTDLG };
-	CPrintingDialog::CPrintingDialog(CWnd* pParent)
+	CPrintingDialog(CWnd* pParent)
 		{
 			Create(CPrintingDialog::IDD, pParent);      // modeless !
 			_afxWinState->m_bUserAbort = FALSE;

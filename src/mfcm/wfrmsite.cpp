@@ -46,9 +46,9 @@ HRESULT CWinFormsControlSite::CreateOrLoad(const CControlCreationInfo& creationI
 	if (creationInfo.m_hk == CControlCreationInfo::ReflectionType)
 	{
 		System::Type^ pType=safe_cast<System::Type^>( (GCHandle::operator GCHandle(System::IntPtr(creationInfo.m_nHandle))).Target );
-		System::Object^ pObj = System::Activator::CreateInstance(pType);		
+		System::Object^ pObj = System::Activator::CreateInstance(pType);
 		pControl=safe_cast<System::Windows::Forms::Control^>(pObj);
-		
+
 	} else if (creationInfo.m_hk == CControlCreationInfo::ControlInstance)
 	{
 			pControl=safe_cast<System::Windows::Forms::Control^>( (GCHandle::operator GCHandle(System::IntPtr(creationInfo.m_nHandle))).Target );
@@ -70,7 +70,7 @@ HRESULT CWinFormsControlSite::CreateOrLoad(const CControlCreationInfo& creationI
 			hr=__super::CreateOrLoad(GUID_NULL, NULL,FALSE, NULL);
 		}
 	}
-	return hr;		
+	return hr;
 }
 
 
@@ -79,11 +79,11 @@ HRESULT CWinFormsControlSite::CreateControlCommon(CWnd* pWndCtrl, REFCLSID clsid
 		CFile* pPersist, BOOL bStorage, BSTR bstrLicKey)
 {
 	HRESULT hr=COleControlSite::CreateControlCommon(pWndCtrl, clsid,creationInfo,
-								  				lpszWindowName, dwStyle, ppt, 
+								  				lpszWindowName, dwStyle, ppt,
 												psize, nID, pPersist, bStorage, bstrLicKey);
 	if (SUCCEEDED(hr))
 	{
-		get_Control()->TabStop = m_dwStyle & WS_TABSTOP ? true : false;	
+		get_Control()->TabStop = m_dwStyle & WS_TABSTOP ? true : false;
 	}
 	return hr;
 }
@@ -96,10 +96,10 @@ void CWinFormsControlSite::GetProperty(DISPID dwDispID, VARTYPE vtProp, void* pv
 		ENSURE_ARG(vtProp==VT_BOOL);
 		ENSURE_ARG(pvProp!=NULL);
 		*(bool*)pvProp = get_Control()->Enabled;
-		break;		
+		break;
 	default:
 		__super::GetProperty(dwDispID, vtProp, pvProp);
-	}		
+	}
 }
 
 #pragma warning( push )
@@ -114,19 +114,19 @@ void CWinFormsControlSite::SetPropertyV(DISPID dwDispID, VARTYPE vtProp, va_list
 			ENSURE(vtProp==VT_BOOL);
 			BOOL bEnable=va_arg(argList, BOOL);
 			SetControlEnabled(bEnable ? true : false);
-			break;		
+			break;
 		}
 	default:
 		__super::SetPropertyV(dwDispID, vtProp, argList);
 
-	}		
+	}
 }
 
 #pragma warning( pop )
 
 DWORD CWinFormsControlSite::GetStyle() const
 {
-	DWORD dwStyle = __super::GetStyle();		
+	DWORD dwStyle = __super::GetStyle();
 	dwStyle = get_Control()->Visible ? dwStyle | WS_VISIBLE : dwStyle & ~WS_VISIBLE;
 	dwStyle = get_Control()->TabStop ? dwStyle | WS_TABSTOP : dwStyle & ~WS_TABSTOP;
 	return dwStyle;
@@ -134,12 +134,12 @@ DWORD CWinFormsControlSite::GetStyle() const
 
 void CWinFormsControlSite::OnHandleCreatedHandler()
 {
-		AttachWindow();			
+		AttachWindow();
 	//Fix Z-order after WinForms ReCreate a control (Ex: Button style changed).
 	//First find current site in the list, and then
 	//iterate backward, until a valid hWnd is found. Insert the recreated control
 	//in the correct Win32 z-order pos - after the found hWnd.
-	COleControlSiteOrWnd *pSiteOrWnd = NULL,*pPrevZorderSiteWnd=NULL;		
+	COleControlSiteOrWnd *pSiteOrWnd = NULL,*pPrevZorderSiteWnd=NULL;
 	ENSURE(m_pCtrlCont != NULL);
 	POSITION currentPos = NULL;
 	POSITION pos = m_pCtrlCont->m_listSitesOrWnds.GetHeadPosition();
@@ -161,12 +161,12 @@ void CWinFormsControlSite::OnHandleCreatedHandler()
 	{
 		m_pCtrlCont->m_listSitesOrWnds.GetPrev(currentPos);
 
-		HWND hWndBeforeInOrder = NULL;				
+		HWND hWndBeforeInOrder = NULL;
 		while(currentPos)
 		{
 			pPrevZorderSiteWnd = m_pCtrlCont->m_listSitesOrWnds.GetPrev(currentPos);
 			if (pPrevZorderSiteWnd)
-			{ 							
+			{
 				if (pPrevZorderSiteWnd->m_hWnd!=NULL)
 				{
 					hWndBeforeInOrder = pPrevZorderSiteWnd->m_hWnd;
@@ -176,7 +176,7 @@ void CWinFormsControlSite::OnHandleCreatedHandler()
 				}
 
 				if (hWndBeforeInOrder!=NULL)
-				{								
+				{
 					break;
 				}
 			}
@@ -196,7 +196,7 @@ void CWinFormsControlSite::OnHandleCreatedHandler()
 }
 
 void CWinFormsControlSite::OnHandleCreated( gcroot<System::Object^> , gcroot<System::EventArgs^> )
-{					
+{
 	OnHandleCreatedHandler();
 }
 
@@ -209,11 +209,11 @@ public:
 	{
 		COleControlSite* pSite=NULL;
 		if (InlineIsEqualGUID(creationInfo.m_clsid , CLSID_WinFormsControl))
-		{		
+		{
 			pSite=new CWinFormsControlSite(pCtrlCont);
 		}
 		return pSite;
-	}	
+	}
 
 };
 
@@ -222,12 +222,12 @@ struct CRegisterWinFormsFactory
 {
 	IControlSiteFactory* m_pFactory;
 	CRegisterWinFormsFactory()
-	{				
+	{
 		m_pFactory=new CWinFormsControlSiteFactory();
 		AfxRegisterSiteFactory(m_pFactory);
 	}
 	~CRegisterWinFormsFactory()
-	{		
+	{
 		delete m_pFactory;
 	}
 };
@@ -237,7 +237,7 @@ extern "C" {  CRegisterWinFormsFactory g_registerWinFormsFactory; }
 
 #if defined(_M_IX86)
 #pragma comment(linker, "/INCLUDE:_g_registerWinFormsFactory")
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
 #pragma comment(linker, "/INCLUDE:g_registerWinFormsFactory")
 #else
 #pragma message("Unknown platform.  Make sure the linker includes g_registerWinFormsFactory")

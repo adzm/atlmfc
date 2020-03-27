@@ -1,9 +1,9 @@
-// This MFC Library source code supports the Microsoft Office Fluent User Interface 
-// (the "Fluent UI") and is provided only as referential material to supplement the 
-// Microsoft Foundation Classes Reference and related electronic documentation 
-// included with the MFC C++ library software.  
-// License terms to copy, use or distribute the Fluent UI are available separately.  
-// To learn more about our Fluent UI licensing program, please visit 
+// This MFC Library source code supports the Microsoft Office Fluent User Interface
+// (the "Fluent UI") and is provided only as referential material to supplement the
+// Microsoft Foundation Classes Reference and related electronic documentation
+// included with the MFC C++ library software.
+// License terms to copy, use or distribute the Fluent UI are available separately.
+// To learn more about our Fluent UI licensing program, please visit
 // http://go.microsoft.com/fwlink/?LinkId=238214.
 //
 // Copyright (C) Microsoft Corporation
@@ -29,15 +29,13 @@
 #include "afxribbonbar.h"
 #include "afxribbonstatusbar.h"
 
-#include <Basetsd.h>
+#include <basetsd.h>
 
-#pragma comment(lib,"imm32") // ImmXxx
+#pragma comment(lib, "Imm32.Lib")
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-#pragma comment(lib, "imm32.lib")
 
 typedef BOOL (STDAPICALLTYPE *PFNCHANGEWINDOWMESSAGEFILTER)(UINT, DWORD);
 
@@ -52,10 +50,20 @@ extern UINT AFX_WM_AFTER_TASKBAR_ACTIVATE;
 
 #pragma warning(disable : 4355)
 
-CMDIFrameWndEx::CMDIFrameWndEx() :
-	m_Impl(this), m_hmenuWindow(NULL), m_bContextHelp(FALSE), m_bDoSubclass(TRUE), m_uiWindowsDlgMenuId(0),
-	m_bShowWindowsDlgAlways(FALSE), m_bShowWindowsDlgHelpButton(FALSE), m_bWasMaximized(FALSE), m_bIsMinimized(FALSE),
-	m_bClosing(FALSE), m_nFrameID(0), m_pPrintPreviewFrame(NULL), m_bCanConvertControlBarToMDIChild(FALSE)
+CMDIFrameWndEx::CMDIFrameWndEx()
+	: m_hmenuWindow(NULL)
+	, m_uiWindowsDlgMenuId(0)
+	, m_bContextHelp(FALSE)
+	, m_bDoSubclass(TRUE)
+	, m_bShowWindowsDlgAlways(FALSE)
+	, m_bShowWindowsDlgHelpButton(FALSE)
+	, m_bCanConvertControlBarToMDIChild(FALSE)
+	, m_bWasMaximized(FALSE)
+	, m_bIsMinimized(FALSE)
+	, m_bClosing(FALSE)
+	, m_nFrameID(0)
+	, m_pPrintPreviewFrame(NULL)
+	, m_Impl(this)
 {
 	// Allow WM_DWMSENDICONICTHUMBNAIL and WM_DWMSENDICONICLIVEPREVIEWBITMAP through the UIPI filter, so
 	// an MFC application running as administrator can show thumbnails correctly in the Windows7 taskbar.
@@ -1663,7 +1671,7 @@ int CMDIFrameWndEx::GetRegisteredWithTaskBarMDIChildCount()
 
 		if (pMDIChildFrame != NULL && pMDIChildFrame->IsRegisteredWithTaskbarTabs())
 		{
-			nCount++;	
+			nCount++;
 		}
 
 		hwndMDIChild = ::GetWindow(hwndMDIChild, GW_HWNDNEXT);

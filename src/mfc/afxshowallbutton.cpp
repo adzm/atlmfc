@@ -130,7 +130,7 @@ BOOL CMFCShowAllButton::OnToolHitTest(const CWnd* /*pWnd*/, TOOLINFO* pTI)
 	helper.Format(strKey);
 
 	CString strText;
-	strText.Format(IDS_AFXBARRES_EXPAND_FMT, strKey);
+	strText.Format(IDS_AFXBARRES_EXPAND_FMT, strKey.GetString());
 
 	pTI->lpszText = (LPTSTR) ::calloc((strText.GetLength() + 1), sizeof(TCHAR));
 	if (pTI->lpszText == NULL)

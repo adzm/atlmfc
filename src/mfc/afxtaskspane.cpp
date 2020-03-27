@@ -3443,10 +3443,10 @@ void CMFCTasksPane::StopCaptionButtonsTracking()
 	}
 }
 
+static CString strTipText;
+
 BOOL CMFCTasksPane::OnNeedTipText(UINT id, NMHDR* pNMH, LRESULT* pResult)
 {
-	static CString strTipText;
-
 	ENSURE(pNMH != NULL);
 
 	if (m_pToolTip->GetSafeHwnd() == NULL || pNMH->hwndFrom != m_pToolTip->GetSafeHwnd())
@@ -4437,7 +4437,7 @@ BOOL CMFCTasksPane::OnSetAccData(long lVal)
 	{
 		POSITION pos = m_lstTasksPanes.FindIndex(GetActivePage());
 		ASSERT(pos != NULL);
-	
+
 		CMFCTasksPanePropertyPage* pPage = (CMFCTasksPanePropertyPage*)m_lstTasksPanes.GetAt(pos);
 		if (pPage != NULL)
 		{

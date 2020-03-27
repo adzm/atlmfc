@@ -123,7 +123,7 @@ BOOL CBaseTransition::AddToStoryboardAtKeyframes(IUIAnimationStoryboard* pStoryb
 	{
 		if (m_pStartKeyframe != NULL && m_pEndKeyframe != NULL)
 		{
-			HRESULT hr = pStoryboard->AddTransitionBetweenKeyframes(m_pRelatedVariable->GetVariable(), m_transition, 
+			HRESULT hr = pStoryboard->AddTransitionBetweenKeyframes(m_pRelatedVariable->GetVariable(), m_transition,
 				m_pStartKeyframe->GetAnimationKeyframe(), m_pEndKeyframe->GetAnimationKeyframe());
 			if (FAILED(hr))
 			{
@@ -145,7 +145,7 @@ BOOL CBaseTransition::AddToStoryboardAtKeyframes(IUIAnimationStoryboard* pStoryb
 			m_bAdded = TRUE;
 		}
 	}
-	
+
 	return TRUE;
 }
 
@@ -160,7 +160,7 @@ BOOL CBaseKeyFrame::AddToStoryboard(IUIAnimationStoryboard* /*pStoryboard*/, BOO
 //////////////////////////////////////////////////////////////////////////
 // CKeyFrame implementation
 
-CKeyFrame::CKeyFrame(CBaseTransition* pTransition) : m_pTransition (pTransition) 
+CKeyFrame::CKeyFrame(CBaseTransition* pTransition) : m_pTransition (pTransition)
 {
 	ASSERT(pTransition != NULL);
 	m_bAdded = FALSE;
@@ -169,7 +169,7 @@ CKeyFrame::CKeyFrame(CBaseTransition* pTransition) : m_pTransition (pTransition)
 	m_pExistingKeyFrame = NULL;
 }
 
-CKeyFrame::CKeyFrame(CBaseKeyFrame* pKeyframe, UI_ANIMATION_SECONDS offset) : m_pExistingKeyFrame(pKeyframe), m_offset(offset)
+CKeyFrame::CKeyFrame(CBaseKeyFrame* pKeyframe, UI_ANIMATION_SECONDS offset) : m_offset(offset), m_pExistingKeyFrame(pKeyframe)
 {
 	ASSERT(pKeyframe != NULL);
 	m_bAdded = FALSE;
@@ -473,7 +473,7 @@ CAnimationBaseObject::CAnimationBaseObject(UINT32 nGroupID, UINT32 nObjectID, DW
 	SetID(nObjectID, nGroupID);
 }
 
-CAnimationBaseObject::~CAnimationBaseObject() 
+CAnimationBaseObject::~CAnimationBaseObject()
 {
 	if (m_pParentController != NULL)
 	{
@@ -611,7 +611,7 @@ BOOL CAnimationBaseObject::ContainsVariable(IUIAnimationVariable* pVariable)
 	for (POSITION pos = lst.GetHeadPosition(); pos != NULL;)
 	{
 		CAnimationVariable* pNextVar = lst.GetNext(pos);
-		
+
 		if (pNextVar == NULL)
 		{
 			continue;
@@ -650,7 +650,7 @@ CAnimationValue::CAnimationValue() : m_value(0.)
 {
 }
 
-CAnimationValue::CAnimationValue(DOUBLE dblDefaultValue, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : 
+CAnimationValue::CAnimationValue(DOUBLE dblDefaultValue, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) :
 	CAnimationBaseObject(nGroupID, nObjectID, dwUserData), m_value(dblDefaultValue)
 {
 }
@@ -697,7 +697,7 @@ CAnimationPoint::CAnimationPoint()
 {
 }
 
-CAnimationPoint::CAnimationPoint(const CPoint& ptDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : 
+CAnimationPoint::CAnimationPoint(const CPoint& ptDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) :
 	CAnimationBaseObject(nGroupID, nObjectID, dwUserData), m_xValue(ptDefault.x), m_yValue(ptDefault.y)
 {
 }
@@ -713,7 +713,7 @@ CPoint CAnimationPoint::GetDefaultValue()
 	return CPoint((int)m_xValue.GetDefaultValue(), (int)m_yValue.GetDefaultValue());
 }
 
-BOOL CAnimationPoint::GetValue(CPoint& ptValue) 
+BOOL CAnimationPoint::GetValue(CPoint& ptValue)
 {
 	DOUBLE dblValue = 0.0;
 	HRESULT hr = m_xValue.GetValue(dblValue);
@@ -736,7 +736,7 @@ BOOL CAnimationPoint::GetValue(CPoint& ptValue)
 
 	ptValue.y = (LONG)dblValue;
 
-	return TRUE; 
+	return TRUE;
 }
 
 void CAnimationPoint::AddTransition(CBaseTransition* pXTransition, CBaseTransition* pYTransition)
@@ -765,7 +765,7 @@ CAnimationSize::CAnimationSize()
 {
 }
 
-CAnimationSize::CAnimationSize(const CSize& szDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) : 
+CAnimationSize::CAnimationSize(const CSize& szDefault, UINT32 nGroupID, UINT32 nObjectID, DWORD_PTR dwUserData) :
 	CAnimationBaseObject(nGroupID, nObjectID, dwUserData)
 {
 	SetDefaultValue(szDefault);
@@ -805,7 +805,7 @@ BOOL CAnimationSize::GetValue(CSize& szValue)
 
 	szValue.cy = (LONG)dblValue;
 
-	return TRUE; 
+	return TRUE;
 }
 
 void CAnimationSize::AddTransition(CBaseTransition* pCXTransition, CBaseTransition* pCYTransition)
@@ -895,12 +895,12 @@ void CAnimationColor::AddTransition(CBaseTransition* pRTransition, CBaseTransiti
 	{
 		m_rValue.AddTransition(pRTransition);
 	}
-	
+
 	if (pGTransition != NULL)
 	{
 		m_gValue.AddTransition(pGTransition);
 	}
-	
+
 	if (pBTransition != NULL)
 	{
 		m_bValue.AddTransition(pBTransition);
@@ -956,7 +956,7 @@ void CAnimationRect::SetDefaultValue(const CRect& rect)
 
 CRect CAnimationRect::GetDefaultValue()
 {
-	CRect rect((int)m_leftValue.GetDefaultValue(), (int)m_topValue.GetDefaultValue(), (int)m_rightValue.GetDefaultValue(), 
+	CRect rect((int)m_leftValue.GetDefaultValue(), (int)m_topValue.GetDefaultValue(), (int)m_rightValue.GetDefaultValue(),
 		(int)m_bottomValue.GetDefaultValue());
 	return rect;
 }
@@ -1008,24 +1008,24 @@ BOOL CAnimationRect::GetValue(CRect& rect)
 	return TRUE;
 }
 
-void CAnimationRect::AddTransition(CBaseTransition* pLeftTransition, CBaseTransition* pTopTransition, 
+void CAnimationRect::AddTransition(CBaseTransition* pLeftTransition, CBaseTransition* pTopTransition,
 				   CBaseTransition* pRightTransition, CBaseTransition* pBottomTransition)
 {
 	if (pLeftTransition != NULL)
 	{
 		m_leftValue.AddTransition(pLeftTransition);
 	}
-	
+
 	if (pTopTransition != NULL)
 	{
 		m_topValue.AddTransition(pTopTransition);
 	}
-	
+
 	if (pRightTransition != NULL)
 	{
 		m_rightValue.AddTransition(pRightTransition);
 	}
-	
+
 	if (pBottomTransition != NULL)
 	{
 		m_bottomValue.AddTransition(pBottomTransition);
@@ -1043,8 +1043,12 @@ void CAnimationRect::GetAnimationVariableList(CList<CAnimationVariable*, CAnimat
 //////////////////////////////////////////////////////////////////////////
 // CAnimationGroup implementation
 
-CAnimationGroup::CAnimationGroup(CAnimationController* pParentController, UINT32 nGroupID) : m_nGroupID(nGroupID), m_bAutodestroyKeyframes(TRUE), m_bAutoclearTransitions(TRUE),
-	m_bAutodestroyAnimationObjects(FALSE), m_pParentController(pParentController)
+CAnimationGroup::CAnimationGroup(CAnimationController* pParentController, UINT32 nGroupID)
+	: m_nGroupID(nGroupID)
+	, m_pParentController(pParentController)
+	, m_bAutodestroyKeyframes(TRUE)
+	, m_bAutoclearTransitions(TRUE)
+	, m_bAutodestroyAnimationObjects(FALSE)
 {
 }
 
@@ -1163,13 +1167,13 @@ void CAnimationGroup::ApplyTransitions()
 	AddKeyframes(m_pStoryboard, FALSE);
 
 	// add transitions that do not depend on keyframes
-	AddTransitions(m_pStoryboard, FALSE);	
+	AddTransitions(m_pStoryboard, FALSE);
 
 	// add keyframes depending on transitions and other keyframes
 	AddKeyframes(m_pStoryboard, TRUE);
 
 	// add transitions that depend on keyframes
-	AddTransitions(m_pStoryboard, TRUE);	
+	AddTransitions(m_pStoryboard, TRUE);
 }
 
 void CAnimationGroup::RemoveTransitions()
@@ -1340,7 +1344,7 @@ IUIAnimationManager* CAnimationController::GetUIAnimationManager()
 		{
 			m_bIsValid = FALSE;
 		}
-		
+
 		return NULL;
 	}
 
@@ -1389,7 +1393,7 @@ IUIAnimationTimer* CAnimationController::GetUIAnimationTimer()
 	}
 
 	HRESULT hr = CoCreateInstance(CLSID_UIAnimationTimer, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pAnimationTimer));
-	
+
 	if (FAILED(hr))
 	{
 		TRACE1("Failed to create IUIAnimationTimer. Error code: %x\n", hr);
@@ -1417,7 +1421,7 @@ IUIAnimationTransitionFactory* CAnimationController::GetUITransitionFactory()
 	}
 
 	HRESULT hr = CoCreateInstance(CLSID_UIAnimationTransitionFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pTransitionFactory));
-	
+
 	if (FAILED(hr))
 	{
 		TRACE1("Failed to create IUIAnimationTransitionFactory. Error code: %x\n", hr);
@@ -1878,7 +1882,7 @@ BOOL CAnimationController::EnableAnimationManagerEvent(BOOL bEndble)
 		TRACE("Failed to set Animation Manager Event Handler.\n");
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 

@@ -204,7 +204,7 @@ BOOL CMFCStatusBar::SetIndicators(const UINT* lpIDArray, int nIDCount)
 		VERIFY(SetPaneText(i, NULL, FALSE));    // no update
 		//free Imagelist if any exist
 		SetPaneIcon(i, NULL, FALSE);
-
+		SetTipText(i, NULL);
 	}
 
 	// first allocate array for panes and copy initial data

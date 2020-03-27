@@ -8,7 +8,7 @@
 // See these sources for detailed information regarding the
 // Microsoft Foundation Classes product.
 
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "afxrendertarget.h"
 
 template<class Interface>
@@ -57,7 +57,7 @@ BOOL _AFX_D2D_STATE::InitD2D(D2D1_FACTORY_TYPE d2dFactoryType, DWRITE_FACTORY_TY
 		{
 			return FALSE;
 		}
-		
+
 		m_bComInitialized = TRUE;
 	}
 
@@ -134,7 +134,7 @@ void _AFX_D2D_STATE::ReleaseD2DRefs()
 
 		m_bD2DInitialized = FALSE;
 	}
-	
+
 	if (m_bComInitialized)
 	{
 		CoUninitialize();
@@ -1276,7 +1276,7 @@ D2D1_PIXEL_FORMAT CD2DBitmap::GetPixelFormat() const
 	if (m_pBitmap == NULL)
 	{
 		ASSERT(FALSE);
-	
+
 		D2D1_PIXEL_FORMAT format;
 		format.alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
 		format.format = DXGI_FORMAT_UNKNOWN;
@@ -1580,7 +1580,7 @@ CD2DResource(pParentTarget, bAutoDestroy)
 
 	if (_afxD2DState->GetWriteFactory() != NULL)
 	{
-		_afxD2DState->GetWriteFactory()->CreateTextFormat(T2CW(strFontFamilyName), pFontCollection, fontWeight, fontStyle, 
+		_afxD2DState->GetWriteFactory()->CreateTextFormat(T2CW(strFontFamilyName), pFontCollection, fontWeight, fontStyle,
 			fontStretch, fontSize, T2CW(strFontLocale), &m_pTextFormat);
 	}
 }
@@ -1658,7 +1658,7 @@ CD2DResource(pParentTarget, bAutoDestroy)
 
 	if (_afxD2DState->GetWriteFactory() != NULL)
 	{
-		_afxD2DState->GetWriteFactory()->CreateTextLayout(T2CW(strText), strText.GetLength(), textFormat, 
+		_afxD2DState->GetWriteFactory()->CreateTextLayout(T2CW(strText), strText.GetLength(), textFormat,
 			sizeMax.width, sizeMax.height, &m_pTextLayout);
 	}
 }
@@ -2018,7 +2018,7 @@ void CRenderTarget::DrawLine(const CD2DPointF& ptFrom, const CD2DPointF& ptTo, C
 	}
 }
 
-void CRenderTarget::FillOpacityMask(CD2DBitmap* pOpacityMask, CD2DBrush* pBrush, 
+void CRenderTarget::FillOpacityMask(CD2DBitmap* pOpacityMask, CD2DBrush* pBrush,
 	D2D1_OPACITY_MASK_CONTENT content, const CD2DRectF& rectDest, const CD2DRectF& rectSrc)
 {
 	if (m_pRenderTarget == NULL)
@@ -2053,7 +2053,7 @@ void CRenderTarget::DrawText(const CString& strText,
 	}
 
 	if (textFormat == NULL)
-	{		
+	{
 		// Use default text format
 		if (m_pTextFormatDefault == NULL)
 		{
@@ -2074,7 +2074,7 @@ void CRenderTarget::DrawText(const CString& strText,
 		return;
 	}
 
-	m_pRenderTarget->DrawText(T2CW(strText), strText.GetLength(), textFormat->m_pTextFormat, &rect, 
+	m_pRenderTarget->DrawText(T2CW(strText), strText.GetLength(), textFormat->m_pTextFormat, &rect,
 		*pForegroundBrush, options, measuringMode);
 }
 
@@ -2093,7 +2093,7 @@ void CRenderTarget::DrawTextLayout(const CD2DPointF& ptOrigin, CD2DTextLayout* t
 	}
 }
 
-void CRenderTarget::DrawBitmap(CD2DBitmap* pBitmap, const CD2DRectF& rect, float fOpacity, 
+void CRenderTarget::DrawBitmap(CD2DBitmap* pBitmap, const CD2DRectF& rect, float fOpacity,
 	D2D1_BITMAP_INTERPOLATION_MODE interpolationMode,
 	const CD2DRectF* pRectSrc)
 {
@@ -2325,7 +2325,7 @@ void CRenderTarget::GetTransform(D2D1_MATRIX_3X2_F* transform)
 	m_pRenderTarget->GetTransform(transform);
 }
 
-BOOL CRenderTarget::CreateCompatibleRenderTarget(CBitmapRenderTarget& bitmapTarget, CD2DSizeF sizeDesired, CD2DSizeU sizePixelDesired, 
+BOOL CRenderTarget::CreateCompatibleRenderTarget(CBitmapRenderTarget& bitmapTarget, CD2DSizeF sizeDesired, CD2DSizeU sizePixelDesired,
 	D2D1_PIXEL_FORMAT* desiredFormat, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options)
 {
 	if (m_pRenderTarget == NULL)
@@ -2335,8 +2335,8 @@ BOOL CRenderTarget::CreateCompatibleRenderTarget(CBitmapRenderTarget& bitmapTarg
 	}
 
 	HRESULT hr = m_pRenderTarget->CreateCompatibleRenderTarget(
-		sizeDesired.IsNull() ? NULL : &sizeDesired, 
-		sizePixelDesired.IsNull() ? NULL : &sizePixelDesired, 
+		sizeDesired.IsNull() ? NULL : &sizeDesired,
+		sizePixelDesired.IsNull() ? NULL : &sizePixelDesired,
 		desiredFormat, options, &bitmapTarget.m_pBitmapRenderTarget);
 	if (FAILED(hr))
 	{

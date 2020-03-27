@@ -29,7 +29,7 @@ class CUIAnimationCallbackBase :
     public IUIAnimationCallback
 {
 public:
-    
+
     // Creates an instance of CUIAnimationCallbackDerived and returns a pointer to its IUIAnimationCallback interface,
     // plus an optional pointer to the object itself.  Note that the latter is not AddRef'ed.
     static _Check_return_ COM_DECLSPEC_NOTHROW HRESULT
@@ -43,35 +43,35 @@ public:
         {
             *ppUIAnimationCallbackDerived = NULL;
         }
-        
+
         if (ppUIAnimationCallback == NULL)
         {
             return E_POINTER;
         }
-        
+
         CUIAnimationCallbackObject<IUIAnimationCallback, CUIAnimationCallbackDerived> *pUIAnimationCallbackDerived =
             new CUIAnimationCallbackObject<IUIAnimationCallback, CUIAnimationCallbackDerived>;
-        
+
         if (pUIAnimationCallbackDerived == NULL)
         {
             *ppUIAnimationCallback = NULL;
             return E_OUTOFMEMORY;
         }
-        
+
         *ppUIAnimationCallback = static_cast<IUIAnimationCallback *>(pUIAnimationCallbackDerived);
         (*ppUIAnimationCallback)->AddRef();
-        
-        // Do not AddRef class pointer; caller must ensure it has a shorter lifetime than the interface pointer        
+
+        // Do not AddRef class pointer; caller must ensure it has a shorter lifetime than the interface pointer
         if (ppUIAnimationCallbackDerived != NULL)
         {
             *ppUIAnimationCallbackDerived = pUIAnimationCallbackDerived;
         }
-        
+
         return S_OK;
     }
-    
+
 protected:
-    
+
     COM_DECLSPEC_NOTHROW HRESULT
     QueryInterfaceCallback
     (
@@ -84,28 +84,28 @@ protected:
         {
             return E_POINTER;
         }
-        
+
         static const IID IID_UNKNOWN = { 0x00000000, 0x0000, 0x0000, {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46} };
         if (::InlineIsEqualGUID(riid, IID_UNKNOWN))
         {
             *ppvObject = static_cast<IUIAnimationCallback *>(this);
-            AddRef();
+            this->AddRef();
             return S_OK;
         }
-        
+
         if (::InlineIsEqualGUID(riid, riidCallback))
         {
             *ppvObject = static_cast<IUIAnimationCallback *>(this);
-            AddRef();
+            this->AddRef();
             return S_OK;
         }
-        
+
         *ppvObject = NULL;
         return E_NOINTERFACE;
     }
-    
+
 private:
-    
+
     template <class IUIAnimationCallback, class CUIAnimationCallbackDerived>
 #pragma warning(push)
 #pragma warning(disable:6388)
@@ -113,16 +113,16 @@ private:
         public CUIAnimationCallbackDerived
     {
     public:
-        
+
         CUIAnimationCallbackObject
         (
         )
          : m_dwRef(0)
         {
         }
-        
+
         // IUnknown
-        
+
         IFACEMETHOD(QueryInterface)
         (
             REFIID riid,
@@ -130,16 +130,16 @@ private:
         )
         {
             IUIAnimationCallback **ppAnimationInterface = reinterpret_cast<IUIAnimationCallback **>(ppvObject);
-            return QueryInterfaceCallback(riid, IID_PPV_ARGS(ppAnimationInterface));
+            return this->QueryInterfaceCallback(riid, IID_PPV_ARGS(ppAnimationInterface));
         }
-        
+
         IFACEMETHOD_(ULONG, AddRef)
         (
         )
         {
             return ++m_dwRef;
         }
-        
+
         IFACEMETHOD_(ULONG, Release)
         (
         )
@@ -149,12 +149,12 @@ private:
                 delete this;
                 return 0;
             }
-            
+
             return m_dwRef;
         }
-        
+
     private:
-        
+
         DWORD m_dwRef;
     };
 #pragma warning(pop)
@@ -164,10 +164,10 @@ private:
 /***************************************************************************************\
 
   Callback Base Class Templates
-  
+
   To define a UIAnimation "callback object", simply derive a class from the appropriate
   template instantiation, e.g.:
-  
+
     class CMyStoryboardEventHandler :
         public CUIAnimationStoryboardEventHandlerBase<CMyStoryboardEventHandler>
     {
@@ -175,9 +175,9 @@ private:
         Implementations of IUIAnimationStoryboardEventHandler methods
         ...
     };
-  
-  Then, to create an instance of the class, call its static CreateInstance method: 
-  
+
+  Then, to create an instance of the class, call its static CreateInstance method:
+
     IUIAnimationStoryboardEventHandler *pStoryboardEventHandler;
     hr = CMyStoryboardEventHandler::CreateInstance(
         &pStoryboardEventHandler
@@ -189,9 +189,9 @@ private:
             );
         ...
     }
-  
+
   An optional temporary class pointer can be used to initialize the object:
-  
+
     IUIAnimationStoryboardEventHandler *pStoryboardEventHandler;
     CMyStoryboardEventHandler *pMyStoryboardEventHandler;
     hr = CMyStoryboardEventHandler::CreateInstance(
@@ -215,9 +215,9 @@ class CUIAnimationManagerEventHandlerBase :
     public CUIAnimationCallbackBase<IUIAnimationManagerEventHandler, CManagerEventHandlerDerived>
 {
 public:
-    
+
     // IUIAnimationManagerEventHandler
-    
+
     // Handles OnManagerStatusChanged events, which occur when the animation manager's status changes
     IFACEMETHOD(OnManagerStatusChanged)
     (
@@ -232,9 +232,9 @@ class CUIAnimationVariableChangeHandlerBase :
     public CUIAnimationCallbackBase<IUIAnimationVariableChangeHandler, CVariableChangeHandlerDerived>
 {
 public:
-    
+
     // IUIAnimationVariableChangeHandler
-    
+
     // Handles OnValueChanged events, which occur when an animation variable's value changes; receives value updates as DOUBLE
     IFACEMETHOD(OnValueChanged)
     (
@@ -251,9 +251,9 @@ class CUIAnimationVariableIntegerChangeHandlerBase :
     public CUIAnimationCallbackBase<IUIAnimationVariableIntegerChangeHandler, CVariableIntegerChangeHandlerDerived>
 {
 public:
-    
+
     // IUIAnimationVariableIntegerChangeHandler
-    
+
     // Handles OnIntegerValueChanged events, which occur when an animation variable's rounded value changes; receives value updates as INT32
     IFACEMETHOD(OnIntegerValueChanged)
     (
@@ -270,17 +270,17 @@ class CUIAnimationStoryboardEventHandlerBase :
     public CUIAnimationCallbackBase<IUIAnimationStoryboardEventHandler, CStoryboardEventHandlerDerived>
 {
 public:
-    
+
     // IUIAnimationStoryboardEventHandler
-    
+
     // Handles OnStoryboardStatusChanged events, which occur when a storyboard's status changes
     IFACEMETHOD(OnStoryboardStatusChanged)
     (
         _In_ IUIAnimationStoryboard *storyboard,                        // The storyboard that changed status
         _In_ UI_ANIMATION_STORYBOARD_STATUS newStatus,                  // The new status
-        _In_ UI_ANIMATION_STORYBOARD_STATUS previousStatus              // The previous status 
+        _In_ UI_ANIMATION_STORYBOARD_STATUS previousStatus              // The previous status
     ) PURE;
-    
+
     // Handles OnStoryboardUpdated events, which occur when a storyboard is updated
     IFACEMETHOD(OnStoryboardUpdated)
     (
@@ -294,9 +294,9 @@ class CUIAnimationPriorityComparisonBase :
     public CUIAnimationCallbackBase<IUIAnimationPriorityComparison, CPriorityComparisonDerived>
 {
 public:
-    
+
     // IUIAnimationPriorityComparison
-    
+
     // Determines the relative priority between a scheduled storyboard and a new storyboard
     IFACEMETHOD(HasPriority)
     (
@@ -312,48 +312,48 @@ class CUIAnimationInterpolatorBase :
     public CUIAnimationCallbackBase<IUIAnimationInterpolator, CInterpolatorDerived>
 {
 public:
-    
+
     // IUIAnimationInterpolator
-    
+
     // Sets the interpolator's initial value and velocity
     IFACEMETHOD(SetInitialValueAndVelocity)
     (
         _In_ DOUBLE initialValue,                                       // The initial value
         _In_ DOUBLE initialVelocity                                     // The initial velocity
     ) PURE;
-    
+
     // Sets the interpolator's duration
     IFACEMETHOD(SetDuration)
     (
         _In_ UI_ANIMATION_SECONDS duration                              // The interpolator duration
     ) PURE;
-    
+
     // Gets the interpolator's duration
     IFACEMETHOD(GetDuration)
     (
         _Out_ UI_ANIMATION_SECONDS *duration                            // The interpolator duration
     ) PURE;
-    
+
     // Gets the final value to which the interpolator leads
     IFACEMETHOD(GetFinalValue)
     (
         _Out_ DOUBLE *value                                             // The final value
     ) PURE;
-    
+
     // Interpolates the value at a given offset
     IFACEMETHOD(InterpolateValue)
     (
          _In_ UI_ANIMATION_SECONDS offset,                              // The offset
         _Out_ DOUBLE *value                                             // The interpolated value
     ) PURE;
-    
+
     // Interpolates the velocity at a given offset
     IFACEMETHOD(InterpolateVelocity)
     (
          _In_ UI_ANIMATION_SECONDS offset,                              // The offset
         _Out_ DOUBLE *velocity                                          // The interpolated velocity
     ) PURE;
-    
+
     // Gets the interpolator's dependencies
     IFACEMETHOD(GetDependencies)
     (
@@ -369,19 +369,19 @@ class CUIAnimationTimerEventHandlerBase :
     public CUIAnimationCallbackBase<IUIAnimationTimerEventHandler, CTimerEventHandlerDerived>
 {
 public:
-    
+
     // IUIAnimationTimerEventHandler
-    
+
     // Handles OnPreUpdate events, which occur before an animation udpate begins
     IFACEMETHOD(OnPreUpdate)
     (
     ) PURE;
-    
+
     // Handles OnPostUpdate events, which occur after an animation update is finished
     IFACEMETHOD(OnPostUpdate)
     (
     ) PURE;
-    
+
     // Handles OnRenderingTooSlow events, which occur when the rendering frame rate for an animation falls below the minimum acceptable frame rate
     IFACEMETHOD(OnRenderingTooSlow)
     (
@@ -407,22 +407,22 @@ UIAnimation_GetVariableTag
 )
 {
     HRESULT hr = pVariable->GetTag(ppObject, pId);
-    
+
     if (hr == UI_E_VALUE_NOT_SET)
     {
         if (ppObject != NULL)
         {
             *ppObject = NULL;
         }
-        
+
         if (pId != NULL)
         {
             *pId = idDefault;
         }
-        
+
         hr = S_OK;
     }
-    
+
     return hr;
 }
 
@@ -437,22 +437,22 @@ UIAnimation_GetStoryboardTag
 )
 {
     HRESULT hr = pStoryboard->GetTag(ppObject, pId);
-    
+
     if (hr == UI_E_VALUE_NOT_SET)
     {
         if (ppObject != NULL)
         {
             *ppObject = NULL;
         }
-        
+
         if (pId != NULL)
         {
             *pId = idDefault;
         }
-        
+
         hr = S_OK;
     }
-    
+
     return hr;
 }
 

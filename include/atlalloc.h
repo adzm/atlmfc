@@ -14,36 +14,21 @@
 #endif
 
 #include <atldef.h>
-#include <windows.h>
-#include <ole2.h>
+#include <Windows.h>
+#include <Ole2.h>
 
 #pragma pack(push,_ATL_PACKING)
 namespace ATL
 {
-
-/*
-This is	more than a	little unsatisfying. /Wp64 warns when we convert a size_t to an	int
-because	it knows such a	conversion won't port.
-But, when we have overloaded templates,	there may well exist both conversions and we need
-to fool	the	warning	into not firing	on 32 bit builds
-*/
-#if !defined(_ATL_W64)
-#if !defined(__midl) &&	(defined(_X86_)	|| defined(_M_IX86))
-#define	_ATL_W64 __w64
-#else
-#define	_ATL_W64
-#endif
-#endif
-
 /* Can't use ::std::numeric_limits<T> here because we don't want to introduce a new
-   deprendency of this code on SCL
+   dependency of this code on SCL
 */
 
 template<typename T>
 class AtlLimits;
 
 template<>
-class AtlLimits<int _ATL_W64>
+class AtlLimits<int>
 {
 public:
 	static const int _Min=INT_MIN;
@@ -51,7 +36,7 @@ public:
 };
 
 template<>
-class AtlLimits<unsigned int _ATL_W64>
+class AtlLimits<unsigned int>
 {
 public:
 	static const unsigned int _Min=0;
@@ -59,7 +44,7 @@ public:
 };
 
 template<>
-class AtlLimits<long _ATL_W64>
+class AtlLimits<long>
 {
 public:
 	static const long _Min=LONG_MIN;
@@ -67,7 +52,7 @@ public:
 };
 
 template<>
-class AtlLimits<unsigned long _ATL_W64>
+class AtlLimits<unsigned long>
 {
 public:
 	static const unsigned long _Min=0;
@@ -105,7 +90,7 @@ inline HRESULT AtlAdd(
 	return S_OK;
 }
 
-/* generic but compariatively slow version */
+/* generic but comparatively slow version */
 template<typename T>
 inline HRESULT AtlMultiply(
 	_Out_ T* ptResult,
@@ -126,64 +111,64 @@ inline HRESULT AtlMultiply(
 	return S_OK;
 }
 
-/* fast	version	for	32 bit integers	*/
+/* fast version for 32 bit integers */
 template<>
 inline HRESULT AtlMultiply(
-	_Out_ int _ATL_W64 *piResult,
-	_In_ int _ATL_W64 iLeft,
-	_In_ int _ATL_W64 iRight)
+	_Out_ int *piResult,
+	_In_ int iLeft,
+	_In_ int iRight)
 {
 	__int64 i64Result=static_cast<__int64>(iLeft) * static_cast<__int64>(iRight);
 	if(i64Result>INT_MAX || i64Result < INT_MIN)
 	{
 		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
-	*piResult=static_cast<int _ATL_W64>(i64Result);
+	*piResult=static_cast<int>(i64Result);
 	return S_OK;
 }
 
 template<>
 inline HRESULT AtlMultiply(
-	_Out_ unsigned int _ATL_W64 *piResult,
-	_In_ unsigned int _ATL_W64 iLeft,
-	_In_ unsigned int _ATL_W64 iRight)
+	_Out_ unsigned int *piResult,
+	_In_ unsigned int iLeft,
+	_In_ unsigned int iRight)
 {
 	unsigned __int64 i64Result=static_cast<unsigned __int64>(iLeft) * static_cast<unsigned __int64>(iRight);
 	if(i64Result>UINT_MAX)
 	{
 		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
-	*piResult=static_cast<unsigned int _ATL_W64>(i64Result);
+	*piResult=static_cast<unsigned int>(i64Result);
 	return S_OK;
 }
 
 template<>
 inline HRESULT AtlMultiply(
-	_Out_ long _ATL_W64 *piResult,
-	_In_ long _ATL_W64 iLeft,
-	_In_ long _ATL_W64 iRight)
+	_Out_ long *piResult,
+	_In_ long iLeft,
+	_In_ long iRight)
 {
 	__int64 i64Result=static_cast<__int64>(iLeft) * static_cast<__int64>(iRight);
 	if(i64Result>LONG_MAX || i64Result < LONG_MIN)
 	{
 		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
-	*piResult=static_cast<long _ATL_W64>(i64Result);
+	*piResult=static_cast<long>(i64Result);
 	return S_OK;
 }
 
 template<>
 inline HRESULT AtlMultiply(
-	_Out_ unsigned long _ATL_W64 *piResult,
-	_In_ unsigned long _ATL_W64 iLeft,
-	_In_ unsigned long _ATL_W64 iRight)
+	_Out_ unsigned long *piResult,
+	_In_ unsigned long iLeft,
+	_In_ unsigned long iRight)
 {
 	unsigned __int64 i64Result=static_cast<unsigned __int64>(iLeft) * static_cast<unsigned __int64>(iRight);
 	if(i64Result>ULONG_MAX)
 	{
 		return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 	}
-	*piResult=static_cast<unsigned long _ATL_W64>(i64Result);
+	*piResult=static_cast<unsigned long>(i64Result);
 	return S_OK;
 }
 
@@ -473,7 +458,7 @@ public:
 		{
 			return false;
 		}
-		return AllocateBytes(nBytes);
+		return this->AllocateBytes(nBytes);
 	}
 
 	// Reallocate the buffer to hold a given number of elements
@@ -484,7 +469,7 @@ public:
 		{
 			return false;
 		}
-		return ReallocateBytes(nBytes);
+		return this->ReallocateBytes(nBytes);
 	}
 };
 
@@ -497,8 +482,7 @@ public:
 	{
 	}
 
-#pragma warning(suppress: 4987)  // nonstandard extension used: 'throw(...)'
-	CTempBuffer(_In_ size_t nElements) throw( ... ) :
+	CTempBuffer(_In_ size_t nElements) :
 		m_p( NULL )
 	{
 		Allocate( nElements );
@@ -522,14 +506,12 @@ public:
 		return( m_p );
 	}
 
-#pragma warning(suppress: 4987)  // nonstandard extension used: 'throw(...)'
-	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Allocate(_In_ size_t nElements) throw( ... )
+	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Allocate(_In_ size_t nElements)
 	{
 		return( AllocateBytes( ::ATL::AtlMultiplyThrow(nElements,sizeof( T )) ) );
 	}
 
-#pragma warning(suppress: 4987)  // nonstandard extension used: 'throw(...)'
-	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Reallocate(_In_ size_t nElements) throw( ... )
+	_Ret_maybenull_ _Post_writable_byte_size_(nElements * sizeof(T)) T* Reallocate(_In_ size_t nElements)
 	{
 		ATLENSURE(nElements < size_t(-1)/sizeof(T) );
 		size_t nNewSize = nElements*sizeof( T ) ;
@@ -618,7 +600,7 @@ namespace _ATL_SAFE_ALLOCA_IMPL
 #ifndef _ATL_STACK_MARGIN
 #if defined(_M_IX86)
 #define _ATL_STACK_MARGIN	0x2000	// Minimum stack available after call to _ATL_SAFE_ALLOCA
-#elif defined _M_AMD64 || defined _M_IA64 || defined _M_ARM64
+#elif defined _M_X64 || defined _M_ARM64
 #define _ATL_STACK_MARGIN	0x4000
 #elif defined _M_ARM
 // ARMWORKITEM: Page size is the same as x86 so that should probably be the same value
@@ -673,16 +655,14 @@ private :
 		CAtlSafeAllocBufferNode* m_pNext;
 #if defined(_M_IX86)
 		BYTE _pad[4];
-#elif defined(_M_IA64)
-		BYTE _pad[8];
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
 		BYTE _pad[8];
 #elif defined(_M_ARM)
 		BYTE _pad[4];
 #elif defined(_M_ARM64)
 		BYTE _pad[8];
 #else
-	#error Only supported for X86, AMD64, IA64 and ARM
+	#error Only supported for X86, X64, ARM, and ARM64
 #endif
 		void* GetData()
 		{

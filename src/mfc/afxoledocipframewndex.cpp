@@ -27,7 +27,10 @@ IMPLEMENT_DYNCREATE(COleDocIPFrameWndEx, COleDocIPFrameWnd)
 
 #pragma warning(disable : 4355)
 
-COleDocIPFrameWndEx::COleDocIPFrameWndEx() : m_Impl(this), m_bContextHelp(FALSE), m_hwndLastTopLevelFrame(NULL)
+COleDocIPFrameWndEx::COleDocIPFrameWndEx()
+	: m_bContextHelp(FALSE)
+	, m_hwndLastTopLevelFrame(NULL)
+	, m_Impl(this)
 {
 }
 

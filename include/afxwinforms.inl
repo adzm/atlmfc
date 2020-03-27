@@ -23,18 +23,18 @@ namespace Microsoft {
 #define AFXWFRM_TEMPLATES_INL_INCLUDE_GUARD
 
 //CWinFormsEventsHelper
-inline CWinFormsEventsHelper::CWinFormsEventsHelper() 
-    {	
+inline CWinFormsEventsHelper::CWinFormsEventsHelper()
+    {
 		m_pSink = NULL;
-	}	
+	}
 inline void CWinFormsEventsHelper::Control::set(System::Windows::Forms::Control^ pControl)
 	{
 		ENSURE_ARG(pControl!=nullptr);
 		ENSURE(m_pControl == nullptr);
 		m_pControl=pControl;
-		  m_pControl->HandleCreated += 
+		  m_pControl->HandleCreated +=
 			  gcnew System::EventHandler(this, &CWinFormsEventsHelper::OnHandleCreated);
-		  m_pControl->HandleDestroyed += 
+		  m_pControl->HandleDestroyed +=
 			  gcnew System::EventHandler(this, &CWinFormsEventsHelper::OnHandleDestroyed);
 
 	}
@@ -43,7 +43,7 @@ inline System::Windows::Forms::Control^ CWinFormsEventsHelper::Control::get()
 		return m_pControl;
 	}
 inline void CWinFormsEventsHelper::Advise(IHandleEvents* pSink)
-	{	
+	{
 		ENSURE_ARG(pSink!=NULL);
 		ENSURE_ARG(m_pSink == NULL || m_pSink == pSink);
 		m_pSink = pSink;
@@ -68,14 +68,14 @@ inline void CWinFormsEventsHelper::OnHandleDestroyed( System::Object^ o, System:
 		{
 			m_pSink->OnHandleDestroyed(o, args);
 		}
-		
+
 	}
 
 //CWinFormsControl<class TManagedControl>
 
 template<class TManagedControl>
 CWinFormsControl<TManagedControl>::CWinFormsControl()
-	{		
+	{
 	}
 
 template<class TManagedControl>
@@ -106,7 +106,7 @@ template<class TManagedControl>
 inline HWND CWinFormsControl<TManagedControl>::GetControlHandle() const
 	{
 		return reinterpret_cast<HWND>(static_cast<INT_PTR>(GetControl()->Handle));
-	}	
+	}
 template<class TManagedControl>
 inline BOOL CWinFormsControl<TManagedControl>::InternalCreateManagedControl(const CControlCreationInfo& info,DWORD dwStyle,
 		const RECT& rect, CWnd* pParentWnd, int nID)
@@ -130,7 +130,7 @@ inline BOOL CWinFormsControl<TManagedControl>::CreateManagedControl(System::Type
 		CControlCreationInfoEx info;
 		info.Init(pType,CControlCreationInfo::ReflectionType);
 		info.m_clsid=CLSID_WinFormsControl;
-		return InternalCreateManagedControl(info,dwStyle,rect,pParentWnd,nID);		
+		return InternalCreateManagedControl(info,dwStyle,rect,pParentWnd,nID);
 	}
 
 template<class TManagedControl>
@@ -141,17 +141,17 @@ inline BOOL CWinFormsControl<TManagedControl>::CreateManagedControl(TManagedCont
 		CControlCreationInfoEx info;
 		info.Init(pControl,CControlCreationInfo::ControlInstance);
 		info.m_clsid=CLSID_WinFormsControl;
-		return InternalCreateManagedControl(info,dwStyle,rect,pParentWnd,nID);		
+		return InternalCreateManagedControl(info,dwStyle,rect,pParentWnd,nID);
 	}
 template<class TManagedControl>
 inline BOOL CWinFormsControl<TManagedControl>::CreateManagedControl(DWORD dwStyle,const RECT& rect, CWnd* pParentWnd, int nID)
 	{
-		return CreateManagedControl(TManagedControl::typeid,dwStyle,rect, pParentWnd, nID);		
+		return CreateManagedControl(TManagedControl::typeid,dwStyle,rect, pParentWnd, nID);
 	}
 template<class TManagedControl>
 inline BOOL CWinFormsControl<TManagedControl>::CreateManagedControl(DWORD dwStyle,
 		int nPlaceHolderID, CWnd* pParentWnd)
-	{		
+	{
 		ENSURE_ARG(pParentWnd!=NULL);
 		CWnd* pwnd = pParentWnd->GetDlgItem(nPlaceHolderID);
 		CRect rectPlaceHolder;
@@ -159,7 +159,7 @@ inline BOOL CWinFormsControl<TManagedControl>::CreateManagedControl(DWORD dwStyl
 		pwnd->GetWindowRect(&rectPlaceHolder);
 		pParentWnd->ScreenToClient(rectPlaceHolder);
 		//Combine caller supplied with place holder styles.
-		DWORD controlStyle = dwStyle | pwnd->GetStyle();		
+		DWORD controlStyle = dwStyle | pwnd->GetStyle();
 		BOOL ret=CreateManagedControl(controlStyle,rectPlaceHolder,pParentWnd,nPlaceHolderID);
 		// Set ZOrder only, so managed control replaces the STATIC place holder in the child windows list.
 		// This list affects Z-Order and Tab order.
@@ -168,9 +168,9 @@ inline BOOL CWinFormsControl<TManagedControl>::CreateManagedControl(DWORD dwStyl
 		BOOL ok=::SetWindowPos(GetControlHandle(), pwnd->m_hWnd, 0, 0, 0, 0,
 			SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 		ASSERT(ok);
-				
-		
-		//Also need to change the linked list of tab order, maintained to support MFC implementation of 
+
+
+		//Also need to change the linked list of tab order, maintained to support MFC implementation of
 		//IsDialogMessage, to delete the last entry (added by CreateControl), and change the place holder
 		//entry, to point at our new control.
 		COleControlSiteOrWnd *pThisSitePlaceHolderWnd=_AfxFindSiteOrWnd(pParentWnd,this);
@@ -212,14 +212,14 @@ CWinFormsDialog<TManagedControl>::CWinFormsDialog(UINT nIDTemplate, CWnd* pParen
 
 template <typename TManagedControl>
 BOOL CWinFormsDialog<TManagedControl>::OnInitDialog()
-{	
+{
 	BOOL bRet=CDialog::OnInitDialog();
 	ENSURE(bRet);
 	//Create an instance of the control and retrieve its Size
 	TManagedControl^ pControl = m_pWFControl;
-	//Adjust the size of the dialog to accommodate for the control size.	
+	//Adjust the size of the dialog to accommodate for the control size.
 	CRect rcDlg;
-	GetWindowRect(&rcDlg);	
+	GetWindowRect(&rcDlg);
 	CRect rcDlgClient;
 	GetClientRect(&rcDlgClient);
 	ClientToScreen(&rcDlgClient);
@@ -234,7 +234,7 @@ BOOL CWinFormsDialog<TManagedControl>::OnInitDialog()
 	//Host the new control in the mfc dialog
 	CControlCreationInfoEx info;
 	info.Init(pControl,CControlCreationInfo::ControlInstance);
-	info.m_clsid=CLSID_WinFormsControl;	
+	info.m_clsid=CLSID_WinFormsControl;
 
 	CRect rcCtrl;
 	rcCtrl.top  = 0;
@@ -253,29 +253,29 @@ inline TManagedControl^ CWinFormsDialog<TManagedControl>::GetControl() const
 	}
 
 template <typename TManagedControl>
-inline CWinFormsDialog<TManagedControl>::operator TManagedControl^() const
+inline CWinFormsDialog<TManagedControl>::operator TManagedControl^() const throw()
 	{
 		return GetControl();
 	}
 
 template <typename TManagedControl>
-inline TManagedControl^ CWinFormsDialog<TManagedControl>::operator->() const
+inline TManagedControl^ CWinFormsDialog<TManagedControl>::operator->() const throw()
 	{
 		return GetControl();
 	}
 
 template <typename TManagedControl>
-inline HWND CWinFormsDialog<TManagedControl>::GetControlHandle() const
+inline HWND CWinFormsDialog<TManagedControl>::GetControlHandle() const throw()
 	{
 		return reinterpret_cast<HWND>(static_cast<INT_PTR>(GetControl()->Handle));
 	}
 
 template <typename TManagedControl>
 void CWinFormsDialog<TManagedControl>::OnSize(UINT nType, int cx, int cy)
-{		
+{
 	__super::OnSize(nType, cx, cy);
 
-	//When view size changes, adjust the WinForms control (which is child of the view) 
+	//When view size changes, adjust the WinForms control (which is child of the view)
 	//size to occupy the entire client area of the view.
 	CRect rcView;
 	GetClientRect(&rcView);
@@ -289,10 +289,10 @@ void CWinFormsDialog<TManagedControl>::OnSize(UINT nType, int cx, int cy)
 
 template <typename T>
 void DDX_ManagedControl(CDataExchange* pDX, int nIDC,CWinFormsControl<T>& control)
-{	
-	if ((control.m_hWnd == NULL) && (control.GetControlUnknown() == NULL))    // not attached yet	
+{
+	if ((control.m_hWnd == NULL) && (control.GetControlUnknown() == NULL))    // not attached yet
 	{
-		ASSERT(!pDX->m_bSaveAndValidate);		
+		ASSERT(!pDX->m_bSaveAndValidate);
 
 		if (!control.CreateManagedControl(0,nIDC, pDX->m_pDlgWnd))
 		{
@@ -309,24 +309,24 @@ void DDX_ManagedControl(CDataExchange* pDX, int nIDC,CWinFormsControl<T>& contro
 //Inline in both Debug and Release - workaround for non-exportable __clrcall methods.
 
 inline void CWinFormsControlSite::OnHandleCreated( System::Object^ , System::EventArgs^ )
-	{		
+	{
 		OnHandleCreatedHandler();
 	}
 
 inline void CWinFormsControlSite::OnHandleDestroyed( System::Object^ , System::EventArgs^ )
-	{		
+	{
 		DetachWindow();
 	}
 
 inline void CControlCreationInfoEx::Init(System::Object^ p,HandleKind hk)
 	{
 		// no need to check for valid handle; was allocated in ctor
-		(GCHandle::operator GCHandle(static_cast<System::IntPtr>(m_nHandle) )).Target = p;		
+		(GCHandle::operator GCHandle(static_cast<System::IntPtr>(m_nHandle) )).Target = p;
 		m_hk=hk;
 	}
 
 inline System::Windows::Forms::Control^  CWinFormsControlSite::get_Control() const
-	{		
+	{
 		System::Windows::Forms::Control^ pControl=m_gcEventHelper->Control::get();
 		ENSURE((CWinFormsEventsHelper^)m_gcEventHelper!=nullptr && pControl!=nullptr);
 		return pControl;
@@ -335,8 +335,8 @@ inline System::Windows::Forms::Control^  CWinFormsControlSite::get_Control() con
 //CWinFormsView
 inline CWinFormsView::CWinFormsView(System::Type^ pManagedViewType)
 	: m_pManagedViewType(pManagedViewType)
-	{					
-		ASSERT((System::Type^)m_pManagedViewType!=nullptr);		
+	{
+		ASSERT((System::Type^)m_pManagedViewType!=nullptr);
 	}
 
 inline System::Windows::Forms::Control^ CWinFormsView::GetControl() const
@@ -357,7 +357,7 @@ inline CWinFormsView::operator System::Windows::Forms::Control^() const
 
 //CControlCreationInfoEx
 _AFXWIN_INLINE CControlCreationInfoEx::CControlCreationInfoEx()
-	{		
+	{
 		m_nHandle = static_cast<intptr_t>( GCHandle::operator System::IntPtr(GCHandle::Alloc(nullptr)) );
 	}
 
@@ -375,7 +375,7 @@ _AFXWIN_INLINE CWinFormsControlSite::CWinFormsControlSite(COleControlContainer* 
 		m_gcEventHelper->Advise(this);
 	}
 
-_AFXWIN_INLINE CWinFormsControlSite::~CWinFormsControlSite() 
+_AFXWIN_INLINE CWinFormsControlSite::~CWinFormsControlSite()
 	{
 		m_gcEventHelper->Unadvise(this);
 	}
